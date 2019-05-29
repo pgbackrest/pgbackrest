@@ -249,7 +249,7 @@ xmlNodeContent(XmlNode *this)
 Set node content
 ***********************************************************************************************************************************/
 void
-xmlNodeContentSet(XmlNode *this, String *content)
+xmlNodeContentSet(XmlNode *this, const String *content)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);

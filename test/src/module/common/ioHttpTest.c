@@ -380,6 +380,10 @@ testRun(void)
         HttpClient *client = NULL;
         ioBufferSizeSet(35);
 
+        // Reset statistics
+        httpClientStatLocal = (HttpClientStat){0};
+        TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
+
         TEST_ASSIGN(client, httpClientNew(strNew("localhost"), TLS_TEST_PORT, 500, true, NULL, NULL), "new client");
 
         TEST_ERROR(
@@ -444,6 +448,7 @@ testRun(void)
             httpClientRequest(client, strNew("GET"), strNew("/"), query, headerRequest, NULL, false), "request with no content");
         TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
         TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
+        TEST_RESULT_UINT(httpClientEof(client), true, "    io is eof");
         TEST_RESULT_STR(
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'ack', key1: '0', key2: 'value2'}",
             "    check response headers");
@@ -508,6 +513,8 @@ testRun(void)
         buffer = bufNew(35);
         TEST_RESULT_VOID(ioRead(httpClientIoRead(client), buffer),  "    read response");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901012", "    check response");
+
+        TEST_RESULT_BOOL(httpClientStatStr() != NULL, true, "check statistics exist");
 
         TEST_RESULT_VOID(httpClientFree(client), "free client");
     }

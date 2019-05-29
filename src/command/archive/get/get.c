@@ -185,7 +185,7 @@ cmdArchiveGet(void)
 
                     // Get a list of WAL segments left in the queue
                     StringList *queue = storageListP(
-                        storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .expression = WAL_SEGMENT_REGEXP_STR);
+                        storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .expression = WAL_SEGMENT_REGEXP_STR, .errorOnMissing = true);
 
                     if (strLstSize(queue) > 0)
                     {

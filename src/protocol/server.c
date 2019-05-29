@@ -131,7 +131,7 @@ Process requests
 void
 protocolServerProcess(ProtocolServer *this)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
     FUNCTION_LOG_END();
 

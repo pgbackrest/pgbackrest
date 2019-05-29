@@ -13,6 +13,7 @@ use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use File::Basename qw(dirname);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
@@ -20,6 +21,50 @@ use pgBackRest::Version;
 
 use BackRestDoc::Html::DocHtmlBuilder;
 use BackRestDoc::Html::DocHtmlElement;
+
+####################################################################################################################################
+# Generate an lcov configuration file
+####################################################################################################################################
+sub coverageLCovConfigGenerate
+{
+    my $oStorage = shift;
+    my $strOutFile = shift;
+    my $bCoverageSummary = shift;
+
+    my $strBranchFilter =
+        'OBJECT_DEFINE_[A-Z0-9_]+\(|\s{4}[A-Z][A-Z0-9_]+\([^\?]*\)|\s{4}(ASSERT|assert|switch\s)\(|\{\+{0,1}' .
+        ($bCoverageSummary ? 'uncoverable_branch' : 'uncover(ed|able)_branch');
+    my $strLineFilter = '\{\+{0,1}uncover' . ($bCoverageSummary ? 'able' : '(ed|able)') . '[^_]';
+
+    my $strConfig =
+        "# LCOV Settings\n" .
+        "\n" .
+        "# Specify if branch coverage data should be collected and processed\n" .
+        "lcov_branch_coverage=1\n" .
+        "\n" .
+        "# Specify the regular expression of lines to exclude from branch coverage\n" .
+        "#\n" .
+        '# OBJECT_DEFINE_[A-Z0-9_]+\( - exclude object definitions' . "\n" .
+        '# \s{4}[A-Z][A-Z0-9_]+\([^\?]*\) - exclude macros that do not take a conditional parameter and are not themselves a parameter' . "\n" .
+        '# ASSERT/(|assert\( - exclude asserts since it usually not possible to trigger both branches' . "\n" .
+        '# switch \( - lcov requires default: to show complete coverage but --Wswitch-enum enforces all enum values be present' . "\n" .
+        "lcov_excl_br_line=${strBranchFilter}\n" .
+        "\n" .
+        "# Specify the regular expression of lines to exclude\n" .
+        "lcov_excl_line=${strLineFilter}\n" .
+        "\n" .
+        "# Coverage rate limits\n" .
+        "genhtml_hi_limit = 100\n" .
+        "genhtml_med_limit = 90\n" .
+        "\n" .
+        "# Width of line coverage field in source code view\n" .
+        "genhtml_line_field_width = 9\n";
+
+    # Write configuration file
+    $oStorage->put($strOutFile, $strConfig);
+}
+
+push @EXPORT, qw(coverageLCovConfigGenerate);
 
 ####################################################################################################################################
 # Generate a C coverage report
@@ -479,5 +524,133 @@ sub coverageGenerate
 }
 
 push @EXPORT, qw(coverageGenerate);
+
+####################################################################################################################################
+# Generate a C coverage summary for the documentation
+####################################################################################################################################
+sub coverageDocSummaryGenerateValue
+{
+    my $iHit = shift;
+    my $iFound = shift;
+
+    if (!defined($iFound) || !defined($iHit) || $iFound == 0)
+    {
+        return "---";
+    }
+
+    my $fPercent = $iHit * 100 / $iFound;
+    my $strPercent;
+
+    if ($fPercent == 100)
+    {
+        $strPercent = '100.0';
+    }
+    elsif ($fPercent > 99.99)
+    {
+        $strPercent = '99.99';
+    }
+    else
+    {
+        $strPercent = sprintf("%.2f", $fPercent);
+    }
+
+    return "${iHit}/${iFound} (${strPercent}%)";
+}
+
+sub coverageDocSummaryGenerate
+{
+    my $oStorage = shift;
+    my $strCoveragePath = shift;
+    my $strOutFile = shift;
+
+    # Track coverage summary
+    my $rhSummary;
+
+    # Find all lcov files in the coverage path
+    my $rhManifest = $oStorage->manifest($strCoveragePath);
+
+    foreach my $strFileCov (sort(keys(%{$rhManifest})))
+    {
+        next if $strFileCov =~ /^test\//;
+
+        if ($strFileCov =~ /\.lcov$/)
+        {
+            my $strCoverage = ${$oStorage->get("${strCoveragePath}/${strFileCov}")};
+            my $strModule = dirname($strFileCov);
+
+            foreach my $strLine (split("\n", $strCoverage))
+            {
+                # Get Line Coverage
+                if ($strLine =~ /^LF\:/)
+                {
+                    $rhSummary->{$strModule}{line}{found} += substr($strLine, 3) + 0;
+                    $rhSummary->{zzztotal}{line}{found} += substr($strLine, 3) + 0;
+                }
+
+                if ($strLine =~ /^LH\:/)
+                {
+                    $rhSummary->{$strModule}{line}{hit} += substr($strLine, 3) + 0;
+                    $rhSummary->{zzztotal}{line}{hit} += substr($strLine, 3) + 0;
+                }
+
+                # Get Function Coverage
+                if ($strLine =~ /^FNF\:/)
+                {
+                    $rhSummary->{$strModule}{function}{found} += substr($strLine, 4) + 0;
+                    $rhSummary->{zzztotal}{function}{found} += substr($strLine, 4) + 0;
+                }
+
+                if ($strLine =~ /^FNH\:/)
+                {
+                    $rhSummary->{$strModule}{function}{hit} += substr($strLine, 4) + 0;
+                    $rhSummary->{zzztotal}{function}{hit} += substr($strLine, 4) + 0;
+                }
+
+                # Get Branch Coverage
+                if ($strLine =~ /^BRF\:/)
+                {
+                    $rhSummary->{$strModule}{branch}{found} += substr($strLine, 4) + 0;
+                    $rhSummary->{zzztotal}{branch}{found} += substr($strLine, 4) + 0;
+                }
+
+                if ($strLine =~ /^BRH\:/)
+                {
+                    $rhSummary->{$strModule}{branch}{hit} += substr($strLine, 4) + 0;
+                    $rhSummary->{zzztotal}{branch}{hit} += substr($strLine, 4) + 0;
+                }
+            }
+        }
+    }
+
+    # use Data::Dumper;confess Dumper($rhSummary);
+
+    my $strSummary;
+
+    foreach my $strModule (sort(keys(%{$rhSummary})))
+    {
+        my $rhModuleData = $rhSummary->{$strModule};
+
+        $strSummary .=
+            (defined($strSummary) ? "\n\n" : '') .
+            "<table-row>\n" .
+            "    <table-cell>" . ($strModule eq 'zzztotal' ? 'TOTAL' : $strModule) . "</table-cell>\n" .
+            "    <table-cell>" .
+                coverageDocSummaryGenerateValue($rhModuleData->{function}{hit}, $rhModuleData->{function}{found}) .
+                "</table-cell>\n" .
+            "    <table-cell>" .
+                coverageDocSummaryGenerateValue($rhModuleData->{branch}{hit}, $rhModuleData->{branch}{found}) .
+                "</table-cell>\n" .
+            "    <table-cell>" .
+                coverageDocSummaryGenerateValue($rhModuleData->{line}{hit}, $rhModuleData->{line}{found}) .
+                "</table-cell>\n" .
+            "</table-row>";
+    }
+
+
+    # Write coverage report
+    $oStorage->put($strOutFile, $strSummary);
+}
+
+push @EXPORT, qw(coverageDocSummaryGenerate);
 
 1;

@@ -36,7 +36,6 @@ my $strHintForce = "\nHINT: use stanza-create --force to force the stanza data t
 my $strInfoMissing = " information missing";
 my $strStanzaCreateErrorMsg = "not empty";
 my $strRepoEncryptedMsg = " and repo is encrypted and info file(s) are missing, --force cannot be used";
-my $strHintStanzaCreate = "\nHINT: has a stanza-create been performed?";
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -307,18 +306,22 @@ sub stanzaDelete
                 "\nHINT: has the pgbackrest stop command been run on this server?", ERROR_FILE_MISSING);
         }
 
-        # Get the master database object and index
-        my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
-
-        # Initialize the master file object and path
-        my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
-
-        # Check if Postgres is running and if so only continue when forced
-        if ($oStorageDbMaster->exists(DB_FILE_POSTMASTERPID) && !cfgOption(CFGOPT_FORCE))
+        # If a force has not been issued, then check the database
+        if (!cfgOption(CFGOPT_FORCE))
         {
-            confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
-                "To delete stanza '${strStanza}', shutdown the postmaster for stanza '${strStanza}' and try again, " .
-                "or use --force.", ERROR_POSTMASTER_RUNNING);
+            # Get the master database object and index
+            my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
+
+            # Initialize the master file object and path
+            my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
+
+            # Check if Postgres is running and if so only continue when forced
+            if ($oStorageDbMaster->exists(DB_FILE_POSTMASTERPID))
+            {
+                confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
+                    "To delete stanza '${strStanza}', shutdown the postmaster for stanza '${strStanza}' and try again, " .
+                    "or use --force.", ERROR_POSTMASTER_RUNNING);
+            }
         }
 
         # Delete the archive info files
@@ -588,8 +591,7 @@ sub infoObject
         {
             if ($iResult == ERROR_FILE_MISSING)
             {
-                confess &log(ERROR, cfgOptionValid(CFGOPT_FORCE) ? $strResultMessage . $strHintForce :
-                    $strResultMessage . $strHintStanzaCreate, $iResult);
+                confess &log(ERROR, cfgOptionValid(CFGOPT_FORCE) ? $strResultMessage . $strHintForce : $strResultMessage, $iResult);
             }
             else
             {

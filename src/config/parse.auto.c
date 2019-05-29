@@ -126,6 +126,13 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptBufferSize,
     },
 
+    // c option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_C,
+        .val = PARSE_OPTION_FLAG | cfgOptC,
+    },
+
     // checksum-page option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -277,6 +284,14 @@ static const struct option optionList[] =
     {
         .name = "reset-" CFGOPT_EXCLUDE,
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
+    },
+
+    // filter option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_FILTER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptFilter,
     },
 
     // force option
@@ -2022,27 +2037,35 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Token,
     },
 
-    // repo-s3-verify-ssl option and deprecations
+    // repo-s3-verify-tls option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_REPO1_S3_VERIFY_SSL,
-        .val = PARSE_OPTION_FLAG | cfgOptRepoS3VerifySsl,
+        .name = CFGOPT_REPO1_S3_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3VerifyTls,
     },
     {
-        .name = "no-" CFGOPT_REPO1_S3_VERIFY_SSL,
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifySsl,
+        .name = "no-" CFGOPT_REPO1_S3_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifyTls,
     },
     {
-        .name = "reset-" CFGOPT_REPO1_S3_VERIFY_SSL,
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3VerifySsl,
+        .name = "reset-" CFGOPT_REPO1_S3_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3VerifyTls,
     },
     {
         .name = "repo-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifySsl,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifyTls,
     },
     {
         .name = "no-repo-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifySsl,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifyTls,
+    },
+    {
+        .name = "repo1-s3-verify-ssl",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifyTls,
+    },
+    {
+        .name = "no-repo1-s3-verify-ssl",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifyTls,
     },
 
     // repo-type option and deprecations
@@ -2083,6 +2106,14 @@ static const struct option optionList[] =
         .name = CFGOPT_SET,
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptSet,
+    },
+
+    // sort option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_SORT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptSort,
     },
 
     // spool-path option
@@ -2238,6 +2269,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
+    cfgOptC,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
     cfgOptCommand,
@@ -2251,6 +2283,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptDbTimeout,
     cfgOptDelta,
     cfgOptExclude,
+    cfgOptFilter,
     cfgOptHostId,
     cfgOptLinkAll,
     cfgOptLinkMap,
@@ -2366,6 +2399,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoType,
     cfgOptResume,
     cfgOptSet,
+    cfgOptSort,
     cfgOptSpoolPath,
     cfgOptStartFast,
     cfgOptStopAuto,
@@ -2389,7 +2423,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
-    cfgOptRepoS3VerifySsl,
+    cfgOptRepoS3VerifyTls,
     cfgOptTarget,
     cfgOptTargetAction,
     cfgOptTargetExclusive,

@@ -988,6 +988,22 @@ sub run
                 'succeed on --no-' . cfgOptionName(CFGOPT_ONLINE) . ' with --' . cfgOptionName(CFGOPT_FORCE),
                 {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
         }
+
+        # Stanza-delete --force without access to pgbackrest on database host
+        #---------------------------------------------------------------------------------------------------------------------------
+        if ($bTestExtra && !$bS3 && $bHostBackup)
+        {
+            # With stanza-delete --force, allow stanza to be deleted regardless of accessiblility of database host
+            if ($bHostBackup)
+            {
+                $oHostDbMaster->stop();
+                $oHostBackup->stop({strStanza => $self->stanza});
+                $oHostBackup->stanzaDelete("delete stanza with --force when pgbackrest on pg host not accessible",
+                    {strOptionalParam => ' --' . cfgOptionName(CFGOPT_FORCE)});
+                $oHostDbMaster->start();
+                $oHostBackup->start();
+            }
+        }
     }
     }
     }

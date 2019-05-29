@@ -446,8 +446,8 @@
                         <example>us-east-1</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-SSL KEY -->
-                    <config-key id="repo-s3-verify-ssl" name="S3 Repository Verify SSL">
+                    <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-TLS KEY -->
+                    <config-key id="repo-s3-verify-tls" name="S3 Repository Verify TLS">
                         <summary>Verify S3 server certificate.</summary>
 
                         <text>Disables verification of the S3 server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
@@ -1214,6 +1214,47 @@
                         </code-block>
 
                         Stop new <backrest/> processes for all stanzas but allow any current process to complete.</text>
+                    </command-example>
+                </command-example-list>
+            </command>
+
+            <!-- OPERATION - LS COMMAND -->
+            <command id="ls" name="Storage List">
+                <summary>List paths/files in the repository.</summary>
+
+                <text>This is intended to be a general purpose list function, but for now it only works on the repository.</text>
+
+                <option-list>
+                    <!-- OPERATION - LS COMMAND - FILTER OPTION -->
+                    <option id="filter" name="Filter Output">
+                        <summary>Filter output with a regular expression.</summary>
+
+                        <text>The filter is applied against the file/path names before they are output.</text>
+
+                        <example>(F|D|I)$</example>
+                    </option>
+
+                    <!-- OPERATION - LS COMMAND - SORT OPTION -->
+                    <option id="sort" name="Sort Output">
+                        <summary>Sort output ascending/descending.</summary>
+
+                        <text>The following sort types are supported:
+                        <ul>
+                            <li><id>asc</id> - sort ascending.</li>
+                            <li><id>desc</id> - sort descending.</li>
+                        </ul></text>
+
+                        <example>desc</example>
+                    </option>
+                </option-list>
+
+                <command-example-list>
+                    <command-example title="List all backups in a stanza">
+                        <text><code-block title="">
+                            {[backrest-exe]} ls backup/demo
+                        </code-block>
+
+                        List all backups in the demo stanza.</text>
                     </command-example>
                 </command-example-list>
             </command>

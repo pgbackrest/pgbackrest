@@ -31,6 +31,8 @@ testRun(void)
         strLstAddZ(commandParamList, "param1");
         cfgCommandParamSet(commandParamList);
 
+        harnessLogLevelSet(logLevelInfo);
+
         TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameter");
         harnessLogResult(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --compress");
@@ -114,8 +116,13 @@ testRun(void)
 
         cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(true));
 
+        tlsClientNew(strNew("BOGUS"), 443, 1000, true, NULL, NULL);
+        httpClientNew(strNew("BOGUS"), 443, 1000, true, NULL, NULL);
+
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
-        harnessLogResultRegExp("P00   INFO\\: archive-get command end: completed successfully \\([0-9]+ms\\)");
+        harnessLogResultRegExp(
+            "P00   INFO: http statistics: objects 1, sessions 0, requests 0, retries 0, closes 0\n"
+            "P00   INFO\\: archive-get command end: completed successfully \\([0-9]+ms\\)");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -5,6 +5,7 @@ Local Command
 
 #include "command/archive/get/protocol.h"
 #include "command/archive/push/protocol.h"
+#include "command/restore/protocol.h"
 #include "common/debug.h"
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
@@ -33,6 +34,7 @@ cmdLocal(int handleRead, int handleWrite)
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);
         protocolServerHandlerAdd(server, archiveGetProtocol);
         protocolServerHandlerAdd(server, archivePushProtocol);
+        protocolServerHandlerAdd(server, restoreProtocol);
         protocolServerProcess(server);
     }
     MEM_CONTEXT_TEMP_END();

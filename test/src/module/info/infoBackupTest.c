@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Backup Info Handler
 ***********************************************************************************************************************************/
+#include "storage/storage.intern.h"
+
 #include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
@@ -24,11 +26,12 @@ testRun(void)
         TEST_ERROR_FMT(
             infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), FileMissingError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-            "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
-            "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?",
-            testPath(), testPath(), testPath(), testPath());
+            testPath(), testPath(),  strPtr(strNewFmt("%s/test.ini", testPath())),
+            strPtr(strNewFmt("%s/test.ini.copy", testPath())));
 
         // File exists, ignoreMissing=false, no backup:current section
         //--------------------------------------------------------------------------------------------------------------------------

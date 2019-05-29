@@ -37,6 +37,7 @@ STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-secur
 S3 query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_QUERY_CONTINUATION_TOKEN_STR,                      "continuation-token");
+STRING_STATIC(S3_QUERY_DELETE_STR,                                  "delete");
 STRING_STATIC(S3_QUERY_DELIMITER_STR,                               "delimiter");
 STRING_STATIC(S3_QUERY_LIST_TYPE_STR,                               "list-type");
 STRING_STATIC(S3_QUERY_PREFIX_STR,                                  "prefix");
@@ -46,11 +47,17 @@ STRING_STATIC(S3_QUERY_VALUE_LIST_TYPE_2_STR,                       "2");
 /***********************************************************************************************************************************
 XML tags
 ***********************************************************************************************************************************/
+STRING_STATIC(S3_XML_TAG_CODE_STR,                                  "Code");
 STRING_STATIC(S3_XML_TAG_COMMON_PREFIXES_STR,                       "CommonPrefixes");
 STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
+STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
+STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
+STRING_STATIC(S3_XML_TAG_MESSAGE_STR,                               "Message");
 STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinuationToken");
+STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
+STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
 
 /***********************************************************************************************************************************
 AWS authentication v4 constants
@@ -253,7 +260,6 @@ storageS3Request(
         // Calculate content-md5 header if there is content
         if (body != NULL)
         {
-
             char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
             encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, body)), HASH_TYPE_M5_SIZE, md5Hash);
             httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
@@ -270,7 +276,7 @@ storageS3Request(
         Buffer *response = httpClientRequest(this->httpClient, verb, uri, query, requestHeader, body, returnContent);
 
         // Error if the request was not successful
-        if (httpClientResponseCode(this->httpClient) != HTTP_RESPONSE_CODE_OK &&
+        if (!httpClientResponseCodeOk(this->httpClient) &&
             (!allowMissing || httpClientResponseCode(this->httpClient) != HTTP_RESPONSE_CODE_NOT_FOUND))
         {
             // General error message
@@ -384,47 +390,21 @@ storageS3Exists(THIS_VOID, const String *path)
 }
 
 /***********************************************************************************************************************************
-File/path info
-***********************************************************************************************************************************/
-static StorageInfo
-storageS3Info(THIS_VOID, const String *file, bool ignoreMissing, bool followLink)
-{
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_LOG_PARAM(BOOL, followLink);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(file != NULL);
-    ASSERT(followLink == false);
-
-    THROW(AssertError, "NOT YET IMPLEMENTED");
-
-    FUNCTION_LOG_RETURN(STORAGE_INFO, (StorageInfo){0});
-}
-
-/***********************************************************************************************************************************
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 static StringList *
-storageS3List(THIS_VOID, const String *path, bool errorOnMissing, const String *expression)
+storageS3List(THIS_VOID, const String *path, const String *expression)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
         FUNCTION_LOG_PARAM(STRING, expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(!errorOnMissing);
 
     StringList *result = NULL;
 
@@ -434,9 +414,9 @@ storageS3List(THIS_VOID, const String *path, bool errorOnMissing, const String *
         const String *continuationToken = NULL;
 
         // Prepare regexp if an expression was passed
-        RegExp *regExp = (expression == NULL) ? NULL : regExpNew(expression);
+        RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
 
-        // Build the base prefix by stripping of the initial /
+        // Build the base prefix by stripping off the initial /
         const String *basePrefix;
 
         if (strSize(path) == 1)
@@ -591,73 +571,114 @@ storageS3NewWrite(
 }
 
 /***********************************************************************************************************************************
-Create a path
-
-There are no physical paths on S3 so just return success.
-***********************************************************************************************************************************/
-static void
-storageS3PathCreate(THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
-{
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnExists);
-        FUNCTION_LOG_PARAM(BOOL, noParentCreate);
-        FUNCTION_LOG_PARAM(MODE, mode);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-    ASSERT(mode == 0);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
-static void
-storageS3PathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool recurse)
+static bool
+storageS3PathRemove(THIS_VOID, const String *path, bool recurse)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
         FUNCTION_LOG_PARAM(BOOL, recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *continuationToken = NULL;
 
-    FUNCTION_LOG_RETURN_VOID();
-}
+        // Build the base prefix by stripping off the initial /
+        const String *basePrefix;
 
-/***********************************************************************************************************************************
-Sync a path
+        if (strSize(path) == 1)
+            basePrefix = EMPTY_STR;
+        else
+            basePrefix = strNewFmt("%s/", strPtr(strSub(path, 1)));
 
-There's no need for this on S3 so just return success.
-***********************************************************************************************************************************/
-static void
-storageS3PathSync(THIS_VOID, const String *path, bool ignoreMissing)
-{
-    THIS(StorageS3);
+        // Loop as long as a continuation token returned
+        do
+        {
+            // Use an inner mem context here because we could potentially be retrieving millions of files so it is a good idea to
+            // free memory at regular intervals
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                HttpQuery *query = httpQueryNew();
 
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-    FUNCTION_LOG_END();
+                // Add continuation token from the prior loop if any
+                if (continuationToken != NULL)
+                    httpQueryAdd(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
 
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
+                // Use list type 2
+                httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
 
-    FUNCTION_LOG_RETURN_VOID();
+                // Don't specified empty prefix because it is the default
+                if (!strEmpty(basePrefix))
+                    httpQueryAdd(query, S3_QUERY_PREFIX_STR, basePrefix);
+
+                XmlNode *xmlRoot = xmlDocumentRoot(
+                    xmlDocumentNewBuf(storageS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false).response));
+
+                // Get file list to delete
+                XmlNodeList *fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
+                XmlDocument *delete = NULL;
+
+                for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
+                {
+                    // If there is something to delete then create the request
+                    if (delete == NULL)
+                    {
+                        delete = xmlDocumentNew(S3_XML_TAG_DELETE_STR);
+                        xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(delete), S3_XML_TAG_QUIET_STR), TRUE_STR);
+                    }
+
+                    // Add to delete list
+                    xmlNodeContentSet(
+                        xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(delete), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
+                        xmlNodeContent(xmlNodeChild(xmlNodeLstGet(fileList, fileIdx), S3_XML_TAG_KEY_STR, true)));
+                }
+
+                // If there is something to delete then send the request
+                if (delete != NULL)
+                {
+                    // Delete file list
+                    Buffer *xml = storageS3Request(
+                        this, HTTP_VERB_POST_STR, FSLASH_STR, httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
+                        xmlDocumentBuf(delete), true, false).response;
+
+                    // Nothing is returned when there are no errors
+                    if (xml != NULL)
+                    {
+                        XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(xml)), S3_XML_TAG_ERROR_STR);
+
+                        if (xmlNodeLstSize(errorList) > 0)
+                        {
+                            XmlNode *error = xmlNodeLstGet(errorList, 0);
+
+                            THROW_FMT(
+                                FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
+                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
+                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
+                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
+                        }
+                    }
+                }
+
+                // Get the continuation token and store it in the outer temp context
+                memContextSwitch(MEM_CONTEXT_OLD());
+                continuationToken = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
+                memContextSwitch(MEM_CONTEXT_TEMP());
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+        while (continuationToken != NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, true);
 }
 
 /***********************************************************************************************************************************
@@ -676,8 +697,9 @@ storageS3Remove(THIS_VOID, const String *file, bool errorOnMissing)
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(!errorOnMissing);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    storageS3Request(this, HTTP_VERB_DELETE_STR, file, NULL, NULL, false, false);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -717,7 +739,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
-        FUNCTION_TEST_PARAM(SIZE, partSize);
+        FUNCTION_LOG_PARAM(SIZE, partSize);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -758,9 +780,8 @@ storageS3New(
 
         this = storageNewP(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver,
-            .exists = storageS3Exists, .info = storageS3Info, .list = storageS3List, .newRead = storageS3NewRead,
-            .newWrite = storageS3NewWrite, .pathCreate = storageS3PathCreate, .pathRemove = storageS3PathRemove,
-            .pathSync = storageS3PathSync, .remove = storageS3Remove);
+            .exists = storageS3Exists, .list = storageS3List, .newRead = storageS3NewRead, .newWrite = storageS3NewWrite,
+            .pathRemove = storageS3PathRemove, .remove = storageS3Remove);
     }
     MEM_CONTEXT_NEW_END();
 

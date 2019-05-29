@@ -611,8 +611,8 @@ testRun(void)
                     "P00   INFO: push 2 WAL file(s) to archive: 000000010000000100000001...000000010000000100000002\n"
                     "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
                     "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
-                        "[55] raised from local-1 protocol: unable to open '%s/pg/pg_xlog/000000010000000100000002' for read: "
-                        "[2] No such file or directory", testPath())));
+                        "[55] raised from local-1 protocol: " STORAGE_ERROR_READ_MISSING,
+                    strPtr(strNewFmt("%s/pg/pg_xlog/000000010000000100000002", testPath())))));
 
         TEST_RESULT_BOOL(
             storageExistsNP(

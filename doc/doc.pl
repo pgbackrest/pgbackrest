@@ -64,9 +64,10 @@ doc.pl [options]
    --cache-only     Only use the execution cache - don't attempt to generate it
    --pre            Pre-build containers for execute elements marked pre
    --var            Override defined variable
-   --var-key        Override defined variable and use in cache key
+   --key-var        Override defined variable and use in cache key
    --doc-path       Document path to render (manifest.xml should be located here)
    --out            Output types (html, pdf, markdown)
+   --out-preserve   Don't clean output directory
    --require        Require only certain sections of the document (to speed testing)
    --include        Include source in generation (links will reference website)
    --exclude        Exclude source from generation (links will reference website)
@@ -90,6 +91,7 @@ my $rhVariableOverride = {};
 my $rhKeyVariableOverride = {};
 my $strDocPath;
 my @stryOutput;
+my $bOutPreserve = false;
 my @stryRequire;
 my @stryInclude;
 my @stryExclude;
@@ -103,6 +105,7 @@ GetOptions ('help' => \$bHelp,
             'quiet' => \$bQuiet,
             'log-level=s' => \$strLogLevel,
             'out=s@' => \@stryOutput,
+            'out-preserve' => \$bOutPreserve,
             'require=s@' => \@stryRequire,
             'include=s@' => \@stryInclude,
             'exclude=s@' => \@stryExclude,
@@ -277,6 +280,24 @@ eval
         }
 
         &log(INFO, "render ${strOutput} output");
+
+        # Clean contents of out directory
+        if (!$bOutPreserve)
+        {
+            my $strOutputPath = $strOutput eq 'pdf' ? "${strOutputPath}/latex" : "${strOutputPath}/$strOutput";
+
+            # Clean the current out path if it exists
+            if (-e $strOutputPath)
+            {
+                executeTest("rm -rf ${strOutputPath}/*");
+            }
+            # Else create the html path
+            else
+            {
+                mkdir($strOutputPath)
+                    or confess &log(ERROR, "unable to create path ${strOutputPath}");
+            }
+        }
 
         if ($strOutput eq 'markdown')
         {

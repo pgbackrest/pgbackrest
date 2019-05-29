@@ -41,9 +41,12 @@ regExpError(int error)
         FUNCTION_TEST_PARAM(INT, error);
     FUNCTION_TEST_END();
 
-    char buffer[4096];
-    regerror(error, NULL, buffer, sizeof(buffer));
-    THROW(FormatError, buffer);
+    if (error != 0 && error != REG_NOMATCH)
+    {
+        char buffer[4096];
+        regerror(error, NULL, buffer, sizeof(buffer));
+        THROW(FormatError, buffer);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -102,8 +105,7 @@ regExpMatch(RegExp *this, const String *string)
     int result = regexec(&this->regExp, strPtr(string), 0, NULL, 0);
 
     // Check for an error
-    if (result != 0 && result != REG_NOMATCH)                                   // {uncoverable - no error condition known}
-        regExpError(result);                                                    // {+uncoverable}
+    regExpError(result);
 
     FUNCTION_TEST_RETURN(result == 0);
 }

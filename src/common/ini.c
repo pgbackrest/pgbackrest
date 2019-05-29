@@ -144,7 +144,7 @@ iniGetList(const Ini *this, const String *section, const String *key)
     // Get the value
     const Variant *result = iniGetInternal(this, section, key, false);
 
-    FUNCTION_TEST_RETURN(result == NULL ? false : strLstNewVarLst(varVarLst(result)));
+    FUNCTION_TEST_RETURN(result == NULL ? NULL : strLstNewVarLst(varVarLst(result)));
 }
 
 /***********************************************************************************************************************************

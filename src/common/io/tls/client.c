@@ -30,6 +30,11 @@ TLS Client
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+static TlsClientStat tlsClientStatLocal;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct TlsClient
@@ -126,6 +131,8 @@ tlsClientNew(
             else
                 cryptoError(SSL_CTX_set_default_verify_paths(this->context) != 1, "unable to set default CA certificate location");
         }
+
+        tlsClientStatLocal.object++;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -253,17 +260,13 @@ tlsClientHostVerify(const String *host, X509 *certificate)
         if (!altNameFound)
         {
             X509_NAME *subjectName = X509_get_subject_name(certificate);
+            CHECK(subjectName != NULL);
 
-            if (subjectName != NULL)                            // {uncovered - not sure how to create cert with null common name}
-            {
-                int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
+            int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
+            CHECK(commonNameIndex >= 0);
 
-                if (commonNameIndex >= 0)                       // {uncovered - it seems this must be >= 0 if CN is not null}
-                {
-                    result = tlsClientHostVerifyName(
-                        host, asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));
-                }
-            }
+            result = tlsClientHostVerifyName(
+                host, asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -415,7 +418,7 @@ tlsClientEof(THIS_VOID)
 /***********************************************************************************************************************************
 Open connection if this is a new client or if the connection was closed by the server
 ***********************************************************************************************************************************/
-void
+bool
 tlsClientOpen(TlsClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -423,6 +426,8 @@ tlsClientOpen(TlsClient *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+
+    bool result = false;
 
     if (this->session == NULL)
     {
@@ -526,6 +531,8 @@ tlsClientOpen(TlsClient *this)
                     {
                         LOG_DEBUG("retry %s: %s", errorTypeName(errorType()), errorMessage());
                         retry = true;
+
+                        tlsClientStatLocal.retry++;
                     }
 
                     tlsClientClose(this);
@@ -574,9 +581,34 @@ tlsClientOpen(TlsClient *this)
             ioReadOpen(this->read);
         }
         MEM_CONTEXT_END();
+
+        tlsClientStatLocal.session++;
+        result = true;
     }
 
-    FUNCTION_LOG_RETURN_VOID();
+    tlsClientStatLocal.request++;
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
+Format statistics to a string
+***********************************************************************************************************************************/
+String *
+tlsClientStatStr(void)
+{
+    FUNCTION_TEST_VOID();
+
+    String *result = NULL;
+
+    if (tlsClientStatLocal.object > 0)
+    {
+        result = strNewFmt(
+            "tls statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64,
+            tlsClientStatLocal.object, tlsClientStatLocal.session, tlsClientStatLocal.request, tlsClientStatLocal.retry);
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

@@ -124,17 +124,13 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     Variant *archiveInfo = varNewKv(kvNew());
 
     // Get a list of WAL directories in the archive repo from oldest to newest, if any exist
-    StringList *walDir = storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR);
+    StringList *walDir = strLstSort(
+        storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
 
-    if (walDir != NULL)
+    if (strLstSize(walDir) > 0)
     {
-        unsigned int sizeWalDir = strLstSize(walDir);
-
-        if (sizeWalDir > 1)
-            walDir = strLstSort(walDir, sortOrderAsc);
-
         // Not every WAL dir has WAL files so check each
-        for (unsigned int idx = 0; idx < sizeWalDir; idx++)
+        for (unsigned int idx = 0; idx < strLstSize(walDir); idx++)
         {
             // Get a list of all WAL in this WAL dir
             StringList *list = storageListP(
@@ -152,7 +148,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         }
 
         // Iterate through the directory list in the reverse so processing newest first. Cast comparison to an int for readability.
-        for (unsigned int idx = sizeWalDir - 1; (int)idx >= 0; idx--)
+        for (unsigned int idx = strLstSize(walDir) - 1; (int)idx >= 0; idx--)
         {
             // Get a list of all WAL in this WAL dir
             StringList *list = storageListP(
@@ -551,12 +547,12 @@ infoRender(void)
         const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
 
         // Get a list of stanzas in the backup directory.
-        StringList *stanzaList = storageListP(storageRepo(), STORAGE_PATH_BACKUP_STR, .errorOnMissing = false);
+        StringList *stanzaList = storageListNP(storageRepo(), STORAGE_PATH_BACKUP_STR);
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 
         // If the backup storage exists, then search for and process any stanzas
-        if (stanzaList != NULL && strLstSize(stanzaList) > 0)
+        if (strLstSize(stanzaList) > 0)
             infoList = stanzaInfoList(stanza, stanzaList);
 
         // Format text output

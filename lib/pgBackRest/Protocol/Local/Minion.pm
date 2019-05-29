@@ -54,7 +54,6 @@ sub init
     my $hCommandMap =
     {
         &OP_BACKUP_FILE => sub {backupFile(@{shift()})},
-        &OP_RESTORE_FILE => sub {restoreFile(@{shift()})},
 
         # To be run after each command to keep the remote alive
         &OP_POST => sub {protocolKeepAlive()},

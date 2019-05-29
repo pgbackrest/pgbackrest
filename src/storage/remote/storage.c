@@ -60,14 +60,13 @@ storageRemoteExists(THIS_VOID, const String *path)
 File/path info
 ***********************************************************************************************************************************/
 static StorageInfo
-storageRemoteInfo(THIS_VOID, const String *file, bool ignoreMissing, bool followLink)
+storageRemoteInfo(THIS_VOID, const String *file, bool followLink)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, followLink);
     FUNCTION_LOG_END();
 
@@ -83,19 +82,17 @@ storageRemoteInfo(THIS_VOID, const String *file, bool ignoreMissing, bool follow
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 static StringList *
-storageRemoteList(THIS_VOID, const String *path, bool errorOnMissing, const String *expression)
+storageRemoteList(THIS_VOID, const String *path, const String *expression)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
         FUNCTION_LOG_PARAM(STRING, expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(!errorOnMissing);
 
     StringList *result = NULL;
 
@@ -103,7 +100,6 @@ storageRemoteList(THIS_VOID, const String *path, bool errorOnMissing, const Stri
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LIST_STR);
         protocolCommandParamAdd(command, VARSTR(path));
-        protocolCommandParamAdd(command, VARBOOL(errorOnMissing));
         protocolCommandParamAdd(command, VARSTR(expression));
 
         result = strLstMove(strLstNewVarLst(varVarLst(protocolClientExecute(this->client, command, true))), MEM_CONTEXT_OLD());
@@ -184,52 +180,106 @@ storageRemotePathCreate(THIS_VOID, const String *path, bool errorOnExists, bool 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR);
+        protocolCommandParamAdd(command, VARSTR(path));
+        protocolCommandParamAdd(command, VARBOOL(errorOnExists));
+        protocolCommandParamAdd(command, VARBOOL(noParentCreate));
+        protocolCommandParamAdd(command, VARUINT(mode));
+
+        protocolClientExecute(this->client, command, false);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-Remove a path
+Does a path exist?
 ***********************************************************************************************************************************/
-static void
-storageRemotePathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool recurse)
+static bool
+storageRemotePathExists(THIS_VOID, const String *path)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR);
+        protocolCommandParamAdd(command, VARSTR(path));
+
+        result = varBool(protocolClientExecute(this->client, command, true));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
+Remove a path
+***********************************************************************************************************************************/
+static bool
+storageRemotePathRemove(THIS_VOID, const String *path, bool recurse)
+{
+    THIS(StorageRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    bool result = false;
 
-    FUNCTION_LOG_RETURN_VOID();
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR);
+        protocolCommandParamAdd(command, VARSTR(path));
+        protocolCommandParamAdd(command, VARBOOL(recurse));
+
+        result = varBool(protocolClientExecute(this->client, command, true));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
 Sync a path.  There's no need for this on S3 so just return success.
 ***********************************************************************************************************************************/
 static void
-storageRemotePathSync(THIS_VOID, const String *path, bool ignoreMissing)
+storageRemotePathSync(THIS_VOID, const String *path)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR);
+        protocolCommandParamAdd(command, VARSTR(path));
+
+        protocolClientExecute(this->client, command, false);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -251,7 +301,15 @@ storageRemoteRemove(THIS_VOID, const String *file, bool errorOnMissing)
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE_STR);
+        protocolCommandParamAdd(command, VARSTR(file));
+        protocolCommandParamAdd(command, VARBOOL(errorOnMissing));
+
+        protocolClientExecute(this->client, command, false);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -283,11 +341,21 @@ storageRemoteNew(
         driver->memContext = MEM_CONTEXT_NEW();
         driver->client = client;
 
+        uint64_t feature = 0;
+
+        // Get storage features from the remote
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            feature = varUInt64(
+                protocolClientExecute(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR), true));
+        }
+        MEM_CONTEXT_TEMP_END();
+
         this = storageNewP(
-            STORAGE_REMOTE_TYPE_STR, NULL, modeFile, modePath, write, pathExpressionFunction, driver,
+            STORAGE_REMOTE_TYPE_STR, NULL, modeFile, modePath, write, pathExpressionFunction, driver, .feature = feature,
             .exists = storageRemoteExists, .info = storageRemoteInfo, .list = storageRemoteList, .newRead = storageRemoteNewRead,
-            .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate, .pathRemove = storageRemotePathRemove,
-            .pathSync = storageRemotePathSync, .remove = storageRemoteRemove);
+            .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate, .pathExists = storageRemotePathExists,
+            .pathRemove = storageRemotePathRemove, .pathSync = storageRemotePathSync, .remove = storageRemoteRemove);
     }
     MEM_CONTEXT_NEW_END();
 

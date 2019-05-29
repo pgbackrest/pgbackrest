@@ -23,6 +23,19 @@ typedef struct Storage Storage;
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Storage feature
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Does the storage support paths/directories as something that needs to be created and deleted?  Object stores (e.g. S3) often
+    // do not have paths/directories -- they are only inferred by the object name.  Therefore it doesn't make sense to create or
+    // remove directories since this implies something is happening on the storage and in the case of objects stores it would be a
+    // noop.  We'll error on any path operation (e.g. pathExists(), pathCreate(), non-recursive removes, error on missing paths,
+    // etc.) for storage that does not support paths.
+    storageFeaturePath,
+} StorageFeature;
+
+/***********************************************************************************************************************************
 storageCopy
 ***********************************************************************************************************************************/
 #define storageCopyNP(source, destination)                                                                                         \
@@ -44,6 +57,14 @@ typedef struct StorageExistsParam
     storageExists(this, pathExp, (StorageExistsParam){0})
 
 bool storageExists(const Storage *this, const String *pathExp, StorageExistsParam param);
+
+/***********************************************************************************************************************************
+storageFeature
+***********************************************************************************************************************************/
+#define storageFeatureNP(this, feature)                                                                                            \
+    storageFeature(this, feature)
+
+bool storageFeature(const Storage *this, StorageFeature feature);
 
 /***********************************************************************************************************************************
 storageGet
@@ -100,6 +121,7 @@ storageList
 typedef struct StorageListParam
 {
     bool errorOnMissing;
+    bool nullOnMissing;
     const String *expression;
 } StorageListParam;
 
@@ -210,17 +232,10 @@ void storagePathRemove(const Storage *this, const String *pathExp, StoragePathRe
 /***********************************************************************************************************************************
 storagePathSync
 ***********************************************************************************************************************************/
-typedef struct StoragePathSync
-{
-    bool ignoreMissing;
-} StoragePathSyncParam;
-
-#define storagePathSyncP(this, pathExp, ...)                                                                                       \
-    storagePathSync(this, pathExp, (StoragePathSyncParam){__VA_ARGS__})
 #define storagePathSyncNP(this, pathExp)                                                                                           \
-    storagePathSync(this, pathExp, (StoragePathSyncParam){0})
+    storagePathSync(this, pathExp)
 
-void storagePathSync(const Storage *this, const String *pathExp, StoragePathSyncParam param);
+void storagePathSync(const Storage *this, const String *pathExp);
 
 /***********************************************************************************************************************************
 storagePut

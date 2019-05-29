@@ -36,7 +36,7 @@ void cryptoInit(void);
 bool cryptoIsInit(void);
 
 void cryptoError(bool error, const char *description);
-void cryptoErrorCode(unsigned long code, const char *description);
+void cryptoErrorCode(unsigned long code, const char *description) __attribute__((__noreturn__));
 
 CipherType cipherType(const String *name);
 const String *cipherTypeName(CipherType type);

@@ -22,7 +22,7 @@ typedef struct StorageReadS3
 {
     MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
-    StorageS3 *storage;                                       // Storage that created this object
+    StorageS3 *storage;                                             // Storage that created this object
 
     HttpClient *httpClient;                                         // Http client for requests
 } StorageReadS3;
@@ -58,7 +58,7 @@ storageReadS3Open(THIS_VOID)
     // On success
     this->httpClient = storageS3HttpClient(this->storage);
 
-    if (httpClientResponseCode(this->httpClient) == HTTP_RESPONSE_CODE_OK)
+    if (httpClientResponseCodeOk(this->httpClient))
         result = true;
 
     // Else error unless ignore missing
@@ -83,6 +83,7 @@ storageReadS3(THIS_VOID, Buffer *buffer, bool block)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL && this->httpClient != NULL);
+    ASSERT(httpClientIoRead(this->httpClient) != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
     FUNCTION_LOG_RETURN(SIZE, ioRead(httpClientIoRead(this->httpClient), buffer));
@@ -101,6 +102,7 @@ storageReadS3Eof(THIS_VOID)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL && this->httpClient != NULL);
+    ASSERT(httpClientIoRead(this->httpClient) != NULL);
 
     FUNCTION_TEST_RETURN(ioReadEof(httpClientIoRead(this->httpClient)));
 }

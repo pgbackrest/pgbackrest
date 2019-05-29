@@ -1,6 +1,6 @@
 # Initialize configuration
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.14dev])
+AC_INIT([pgBackRest], [2.15dev])
 AC_CONFIG_SRCDIR([version.h])
 
 # Check compiler
@@ -27,7 +27,7 @@ then
 
     AC_SUBST(CWARNING, $warning)
 else
-    AC_SUBST(CWARNING, "$warning -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla")
+    AC_SUBST(CWARNING, "$warning -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla")
 fi
 
 # Set includes

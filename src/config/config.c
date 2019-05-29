@@ -17,6 +17,7 @@ typedef struct ConfigCommandData
 {
     const char *name;
 
+    bool internal:1;
     bool lockRequired:1;
     bool lockRemoteRequired:1;
     unsigned int lockType:2;
@@ -34,6 +35,8 @@ typedef struct ConfigCommandData
 #define CONFIG_COMMAND(...)                                                                                                        \
     {__VA_ARGS__},
 
+#define CONFIG_COMMAND_INTERNAL(internalParam)                                                                                     \
+    .internal = internalParam,
 #define CONFIG_COMMAND_LOCK_REQUIRED(lockRequiredParam)                                                                            \
     .lockRequired = lockRequiredParam,
 #define CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(lockRemoteRequiredParam)                                                               \
@@ -329,6 +332,21 @@ cfgExeSet(const String *exeParam)
 }
 
 /***********************************************************************************************************************************
+Is this command internal-only?
+***********************************************************************************************************************************/
+bool
+cfgCommandInternal(ConfigCommand commandId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandId < cfgCmdNone);
+
+    FUNCTION_TEST_RETURN(configCommandData[commandId].internal);
+}
+
+/***********************************************************************************************************************************
 Does this command require an immediate lock?
 ***********************************************************************************************************************************/
 bool
@@ -455,7 +473,55 @@ cfgOptionDefIdFromId(ConfigOption optionId)
 
 /***********************************************************************************************************************************
 Get/set option default
+
+Option defaults are generally not set in advance because the vast majority of them are never used.  It is more efficient to generate
+them when they are requested.
+
+Some defaults are (e.g. the exe path) are set at runtime.
 ***********************************************************************************************************************************/
+static Variant *
+cfgOptionDefaultValue(ConfigDefineOption optionDefId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionDefId);
+    FUNCTION_TEST_END();
+
+    Variant *result;
+    Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId));
+
+    switch (cfgDefOptionType(optionDefId))
+    {
+        case cfgDefOptTypeBoolean:
+        {
+            result = varNewBool(varBoolForce(defaultValue));
+            break;
+        }
+
+        case cfgDefOptTypeFloat:
+        {
+            result = varNewDbl(varDblForce(defaultValue));
+            break;
+        }
+
+        case cfgDefOptTypeInteger:
+        case cfgDefOptTypeSize:
+        {
+            result = varNewInt64(varInt64Force(defaultValue));
+            break;
+        }
+
+        case cfgDefOptTypePath:
+        case cfgDefOptTypeString:
+            result = varDup(defaultValue);
+            break;
+
+        default:
+            THROW_FMT(AssertError, "default value not available for option type %d", cfgDefOptionType(optionDefId));
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 const Variant *
 cfgOptionDefault(ConfigOption optionId)
 {
@@ -471,46 +537,11 @@ cfgOptionDefault(ConfigOption optionId)
 
         if (cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId) != NULL)
         {
-            MEM_CONTEXT_TEMP_BEGIN()
+            MEM_CONTEXT_BEGIN(configMemContext)
             {
-                Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId));
-
-                MEM_CONTEXT_BEGIN(configMemContext)
-                {
-                    switch (cfgDefOptionType(optionDefId))
-                    {
-                        case cfgDefOptTypeBoolean:
-                        {
-                            configOptionValue[optionId].defaultValue = varNewBool(varBoolForce(defaultValue));
-                            break;
-                        }
-
-                        case cfgDefOptTypeFloat:
-                        {
-                            configOptionValue[optionId].defaultValue = varNewDbl(varDblForce(defaultValue));
-                            break;
-                        }
-
-                        case cfgDefOptTypeInteger:
-                        case cfgDefOptTypeSize:
-                        {
-                            configOptionValue[optionId].defaultValue = varNewInt64(varInt64Force(defaultValue));
-                            break;
-                        }
-
-                        case cfgDefOptTypePath:
-                        case cfgDefOptTypeString:
-                            configOptionValue[optionId].defaultValue = varDup(defaultValue);
-                            break;
-
-                        default:                                    // {uncoverable - other types do not have defaults yet}
-                            THROW_FMT(                              // {+uncoverable}
-                                AssertError, "type for option '%s' does not support defaults", cfgOptionName(optionId));
-                    }
-                }
-                MEM_CONTEXT_END();
+                configOptionValue[optionId].defaultValue = cfgOptionDefaultValue(optionDefId);
             }
-            MEM_CONTEXT_TEMP_END();
+            MEM_CONTEXT_END();
         }
     }
 
@@ -681,18 +712,20 @@ cfgOptionIdFromDefId(ConfigDefineOption optionDefId, unsigned int index)
         FUNCTION_TEST_PARAM(UINT, index);
     FUNCTION_TEST_END();
 
-    ASSERT(optionDefId < cfgDefOptionTotal());
-    ASSERT(index < cfgDefOptionIndexTotal(optionDefId));
-
     // Search for the option
     ConfigOption optionId;
 
-    for (optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)     // {uncoverable - only a bug in code gen lets this loop end}
+    for (optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
+    {
         if (configOptionData[optionId].defineId == optionDefId)
             break;
+    }
 
     // If the mapping is not found then there is a bug in the code generator
     ASSERT(optionId != CFG_OPTION_TOTAL);
+
+    // Make sure the index is valid
+    ASSERT(index < cfgDefOptionIndexTotal(optionDefId));
 
     // Return with original index
     FUNCTION_TEST_RETURN(optionId + index);

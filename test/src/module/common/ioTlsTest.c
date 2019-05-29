@@ -130,7 +130,7 @@ testRun(void)
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------
         // Add test hosts
-        if (system(                                                                                 // {uncovered - test code}
+        if (system(                                                                                 // {uncoverable_branch}
                 "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" |"
                     " sudo tee -a /etc/hosts > /dev/null") != 0)
         {
@@ -177,6 +177,10 @@ testRun(void)
     {
         TlsClient *client = NULL;
 
+        // Reset statistics
+        tlsClientStatLocal = (TlsClientStat){0};
+        TEST_RESULT_STR(tlsClientStatStr(), NULL, "no stats yet");
+
         testTlsServer();
         ioBufferSizeSet(12);
 
@@ -219,6 +223,8 @@ testRun(void)
         output = bufNew(12);
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 0, "read no output after eof");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), true, "    check eof = true");
+
+        TEST_RESULT_BOOL(tlsClientStatStr() != NULL, true, "check statistics exist");
 
         TEST_RESULT_VOID(tlsClientFree(client), "free client");
     }

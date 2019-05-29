@@ -108,6 +108,8 @@ use constant CFGCMD_START                                           => 'start';
     push @EXPORT, qw(CFGCMD_START);
 use constant CFGCMD_STOP                                            => 'stop';
     push @EXPORT, qw(CFGCMD_STOP);
+use constant CFGCMD_STORAGE_LIST                                    => 'ls';
+    push @EXPORT, qw(CFGCMD_STORAGE_LIST);
 use constant CFGCMD_VERSION                                         => 'version';
     push @EXPORT, qw(CFGCMD_VERSION);
 
@@ -146,14 +148,23 @@ use constant CFGOPT_TYPE                                            => 'type';
 use constant CFGOPT_OUTPUT                                          => 'output';
     push @EXPORT, qw(CFGOPT_OUTPUT);
 
-# Command-line only local/remote optiosn
+# Command-line only local/remote options
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPT_C                                               => 'c';
+    push @EXPORT, qw(CFGOPT_C);
 use constant CFGOPT_COMMAND                                         => 'command';
     push @EXPORT, qw(CFGOPT_COMMAND);
 use constant CFGOPT_PROCESS                                         => 'process';
     push @EXPORT, qw(CFGOPT_PROCESS);
 use constant CFGOPT_HOST_ID                                         => 'host-id';
     push @EXPORT, qw(CFGOPT_HOST_ID);
+
+# Command-line only storage options
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPT_FILTER                                          => 'filter';
+    push @EXPORT, qw(CFGOPT_FILTER);
+use constant CFGOPT_SORT                                            => 'sort';
+    push @EXPORT, qw(CFGOPT_SORT);
 
 # Command-line only test options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -280,8 +291,8 @@ use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_RE
     push @EXPORT, qw(CFGOPT_REPO_S3_REGION);
 use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
     push @EXPORT, qw(CFGOPT_REPO_S3_TOKEN);
-use constant CFGOPT_REPO_S3_VERIFY_SSL                              => CFGDEF_REPO_S3 . '-verify-ssl';
-    push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_SSL);
+use constant CFGOPT_REPO_S3_VERIFY_TLS                              => CFGDEF_REPO_S3 . '-verify-tls';
+    push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_TLS);
 
 # Archive options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -585,6 +596,7 @@ my $rhCommandDefine =
 
     &CFGCMD_ARCHIVE_GET_ASYNC =>
     {
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_FILE => true,
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
@@ -601,6 +613,7 @@ my $rhCommandDefine =
 
     &CFGCMD_ARCHIVE_PUSH_ASYNC =>
     {
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_FILE => true,
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_REMOTE_REQUIRED => true,
@@ -641,11 +654,13 @@ my $rhCommandDefine =
 
     &CFGCMD_LOCAL =>
     {
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
     },
 
     &CFGCMD_REMOTE =>
     {
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
     },
 
@@ -677,6 +692,14 @@ my $rhCommandDefine =
 
     &CFGCMD_STOP =>
     {
+    },
+
+    &CFGCMD_STORAGE_LIST =>
+    {
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
+        &CFGDEF_PARAMETER_ALLOWED => true,
     },
 
     &CFGCMD_VERSION =>
@@ -716,6 +739,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -999,6 +1023,17 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_C =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_REMOTE => {},
+        }
+    },
+
     &CFGOPT_COMMAND =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
@@ -1034,6 +1069,33 @@ my %hConfigDefine =
                 &CFGDEF_REQUIRED => true,
             },
         },
+    },
+
+    # Command-line only storage options
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_FILTER =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_STORAGE_LIST => {},
+        }
+    },
+
+    &CFGOPT_SORT =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'asc',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'asc',
+            'desc',
+        ],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_STORAGE_LIST => {},
+        }
     },
 
     # Command-line only test options
@@ -1125,6 +1187,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1147,6 +1210,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1248,6 +1312,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1273,6 +1338,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1324,6 +1390,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1374,6 +1441,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1478,6 +1546,7 @@ my %hConfigDefine =
             },
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1504,6 +1573,7 @@ my %hConfigDefine =
             &CFGCMD_RESTORE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
         &CFGDEF_DEPEND =>
         {
@@ -1754,6 +1824,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1806,7 +1877,7 @@ my %hConfigDefine =
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
-    &CFGOPT_REPO_S3_VERIFY_SSL =>
+    &CFGOPT_REPO_S3_VERIFY_TLS =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
@@ -1816,6 +1887,7 @@ my %hConfigDefine =
         &CFGDEF_NAME_ALT =>
         {
             'repo-s3-verify-ssl' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'repo?-s3-verify-ssl' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
@@ -1856,6 +1928,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1938,6 +2011,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1971,6 +2045,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1998,6 +2073,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -2024,6 +2100,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -2503,6 +2580,12 @@ my %hConfigDefine =
 ####################################################################################################################################
 foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
 {
+    # Commands are external by default
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_INTERNAL}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_INTERNAL} = false;
+    }
+
     # Log files are created by default
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_FILE}))
     {

@@ -15,7 +15,6 @@ Posix Storage File write
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
-#include "storage/posix/common.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
 #include "storage/write.intern.h"
@@ -58,8 +57,7 @@ Close file handle
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_POSIX, LOG, logLevelTrace)
 {
-    if (this->handle != -1)
-        storagePosixFileClose(this->handle, this->interface.name, true);
+    THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strPtr(this->nameTmp));
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -78,19 +76,26 @@ storageWritePosixOpen(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->handle == -1);
 
-    // Open the file and handle errors
-    this->handle = storagePosixFileOpen(
-        this->nameTmp, FILE_OPEN_FLAGS, this->interface.modeFile, this->interface.createPath, true, FILE_OPEN_PURPOSE);
+    // Open the file
+    this->handle = open(strPtr(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
 
-    // If path is missing
-    if (this->handle == -1)
+    // Attempt the create the path if it is missing
+    if (this->handle == -1 && errno == ENOENT && this->interface.createPath)
     {
-        // Create the path
+         // Create the path
         storagePosixPathCreate(this->storage, this->path, false, false, this->interface.modePath);
 
-        // Try the open again
-        this->handle = storagePosixFileOpen(
-            this->nameTmp, FILE_OPEN_FLAGS, this->interface.modeFile, false, true, FILE_OPEN_PURPOSE);
+        // Open file again
+        this->handle = open(strPtr(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+    }
+
+    // Handle errors
+    if (this->handle == -1)
+    {
+        if (errno == ENOENT)
+            THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strPtr(this->interface.name));
+        else
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strPtr(this->interface.name));
     }
 
     // Set free callback to ensure file handle is freed
@@ -169,11 +174,11 @@ storageWritePosixClose(THIS_VOID)
     {
         // Sync the file
         if (this->interface.syncFile)
-            storagePosixFileSync(this->handle, this->nameTmp, true, false);
+            THROW_ON_SYS_ERROR_FMT(fsync(this->handle) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strPtr(this->nameTmp));
 
         // Close the file
-        storagePosixFileClose(this->handle, this->nameTmp, true);
         memContextCallbackClear(this->memContext);
+        THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strPtr(this->nameTmp));
         this->handle = -1;
 
         // Update modified time
@@ -198,7 +203,7 @@ storageWritePosixClose(THIS_VOID)
 
         // Sync the path
         if (this->interface.syncPath)
-            storagePosixPathSync(this->storage, this->path, false);
+            storagePosixPathSync(this->storage, this->path);
     }
 
     FUNCTION_LOG_RETURN_VOID();

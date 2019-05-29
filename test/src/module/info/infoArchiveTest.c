@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Archive Info Handler
 ***********************************************************************************************************************************/
+#include "storage/storage.intern.h"
+
 #include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
@@ -21,13 +23,14 @@ testRun(void)
         TEST_ERROR_FMT(
             infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), FileMissingError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-            "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
-            "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            testPath(), testPath(), testPath(), testPath());
+            testPath(), testPath(), strPtr(strNewFmt("%s/test.ini", testPath())),
+            strPtr(strNewFmt("%s/test.ini.copy", testPath())));
 
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew

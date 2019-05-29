@@ -304,6 +304,7 @@ Table Elements
 .table
 {
     margin-top: .5em;
+    border-spacing: .5em 0;
 }
 
 .table-caption
@@ -316,6 +317,14 @@ Table Elements
 
 .table-header-row
 {
+}
+
+.table-header-left,
+.table-header-center,
+.table-header-right
+{
+    white-space: nowrap;
+    border-bottom: 1px black solid;
 }
 
 .table-header-left
@@ -342,8 +351,16 @@ Table Elements
 {
 }
 
+.table-data-left,
+.table-data-center,
+.table-data-right
+{
+    white-space: nowrap;
+}
+
 .table-data-left
 {
+    padding-top: 0px;
     text-align: left;
 }
 

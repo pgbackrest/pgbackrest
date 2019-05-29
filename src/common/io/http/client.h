@@ -28,6 +28,8 @@ typedef struct HttpClient HttpClient;
 /***********************************************************************************************************************************
 HTTP Constants
 ***********************************************************************************************************************************/
+#define HTTP_VERB_DELETE                                            "DELETE"
+    STRING_DECLARE(HTTP_VERB_DELETE_STR);
 #define HTTP_VERB_GET                                               "GET"
     STRING_DECLARE(HTTP_VERB_GET_STR);
 #define HTTP_VERB_POST                                              "POST"
@@ -42,9 +44,20 @@ HTTP Constants
 #define HTTP_HEADER_ETAG                                            "etag"
     STRING_DECLARE(HTTP_HEADER_ETAG_STR);
 
-#define HTTP_RESPONSE_CODE_OK                                       200
 #define HTTP_RESPONSE_CODE_FORBIDDEN                                403
 #define HTTP_RESPONSE_CODE_NOT_FOUND                                404
+
+/***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+typedef struct HttpClientStat
+{
+    uint64_t object;                                                // Objects created
+    uint64_t session;                                               // TLS sessions created
+    uint64_t request;                                               // Requests (i.e. calls to httpClientRequest())
+    uint64_t retry;                                                 // Request retries
+    uint64_t close;                                                 // Closes forced by server
+} HttpClientStat;
 
 /***********************************************************************************************************************************
 Constructor
@@ -58,6 +71,7 @@ Functions
 Buffer *httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
     const Buffer *body, bool returnContent);
+String *httpClientStatStr(void);
 
 /***********************************************************************************************************************************
 Getters
@@ -66,6 +80,7 @@ IoRead *httpClientIoRead(const HttpClient *this);
 unsigned int httpClientResponseCode(const HttpClient *this);
 const HttpHeader *httpClientReponseHeader(const HttpClient *this);
 const String *httpClientResponseMessage(const HttpClient *this);
+bool httpClientResponseCodeOk(const HttpClient *this);
 
 /***********************************************************************************************************************************
 Destructor

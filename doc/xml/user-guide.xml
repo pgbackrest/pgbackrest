@@ -10,6 +10,16 @@
         <variable key="os-centos6">centos6</variable>
         <variable key="os-centos7">centos7</variable>
 
+        <!-- OS titles -->
+        <variable key="os-debian-title">Debian &amp; Ubuntu</variable>
+        <variable key="os-centos6-title">RHEL &amp; CentOS 6</variable>
+        <variable key="os-centos7-title">RHEL &amp; CentOS 7</variable>
+
+        <!-- Base PostgreSQL versions -->
+        <variable key="os-debian-pg-version">10</variable>
+        <variable key="os-centos6-pg-version">9.5</variable>
+        <variable key="os-centos7-pg-version">9.6</variable>
+
         <!-- User-defined package to use in documentation (use "apt" to install the current pgpd apt package) -->
         <variable key="package">none</variable>
 
@@ -27,9 +37,9 @@
         <variable key="os-image" if="{[os-type-is-centos6]}">centos:6</variable>
         <variable key="os-image" if="{[os-type-is-centos7]}">centos:7</variable>
 
-        <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">Debian &amp; Ubuntu</variable>
-        <variable key="user-guide-subtitle" if="{[os-type-is-centos6]}">RHEL &amp; CentOS 6</variable>
-        <variable key="user-guide-subtitle" if="{[os-type-is-centos7]}">RHEL &amp; CentOS 7</variable>
+        <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
+        <variable key="user-guide-subtitle" if="{[os-type-is-centos6]}">{[os-centos6-title]}</variable>
+        <variable key="user-guide-subtitle" if="{[os-type-is-centos7]}">{[os-centos7-title]}</variable>
 
         <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
         <variable key="user-guide-os" if="{[os-type-is-centos6]}">RHEL/CentOS 6</variable>
@@ -44,9 +54,17 @@
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
-        <variable key="pg-version" if="{[os-type-is-debian]}">10</variable>
-        <variable key="pg-version" if="{[os-type-is-centos6]}">9.5</variable>
-        <variable key="pg-version" if="{[os-type-is-centos7]}">9.6</variable>
+        <!-- Path where CA certificates are installed -->
+        <variable key="ca-cert-path" if="{[os-type-is-debian]}">/usr/local/share/ca-certificates</variable>
+        <variable key="ca-cert-path" if="{[os-type-is-centos]}">/etc/pki/ca-trust/source/anchors</variable>
+
+        <!-- Path where fake certificates are located -->
+        <variable key="fake-cert-path-relative">resource/fake-cert</variable>
+        <variable key="fake-cert-path">{[pgbackrest-host-repo-path]}/doc/{[fake-cert-path-relative]}</variable>
+
+        <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
+        <variable key="pg-version" if="{[os-type-is-centos6]}">{[os-centos6-pg-version]}</variable>
+        <variable key="pg-version" if="{[os-type-is-centos7]}">{[os-centos7-pg-version]}</variable>
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">11</variable>
@@ -118,6 +136,16 @@
         <variable key="pg-switch-wal" if="{[pg-version]} &lt; 10">pg_switch_xlog</variable>
         <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
+        <!-- S3 Settings -->
+        <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
+        <variable key="s3-local">y</variable>
+        <variable key="s3-bucket">demo-bucket</variable>
+        <variable key="s3-repo">demo-repo</variable>
+        <variable key="s3-region">us-east-1</variable>
+        <variable key="s3-endpoint">s3.{[s3-region]}.amazonaws.com</variable>
+        <variable key="s3-key">accessKey1</variable>
+        <variable key="s3-key-secret">verySecretKey1</variable>
+
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
 
@@ -155,7 +183,7 @@
         <variable key="host-repo1-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->
-        <variable key="cmd-backup-last">ls -1 {[backrest-repo-path]}/backup/demo | tail -5 | head -1</variable>
+        <variable key="cmd-backup-last">pgbackrest ls backup/demo --filter="(F|D|I)$" --sort=desc | head -1</variable>
 
         <!-- Data used to demonstrate backup/restore operations -->
         <variable key="test-table-data">Important Data</variable>
@@ -218,11 +246,18 @@
             echo '    StrictHostKeyChecking no' >> /root/.ssh/config &amp;&amp; \
             chmod 600 /root/.ssh/*
         </variable>
+
+        <variable key="minio-client-install">wget https://dl.min.io/client/mc/release/linux-amd64/mc -qO /usr/bin/mc &amp;&amp; \
+            chmod 755 /usr/bin/mc</variable>
+
+        <variable key="copy-ca-cert">COPY {[fake-cert-path-relative]}/ca.crt {[ca-cert-path]}/pgbackrest-ca.crt</variable>
     </variable-list>
 
     <!-- Setup hosts used to build the documentation
     ============================================================================================================================ -->
     <host-define if="{[os-type-is-debian]}" image="{[host-image]}" from="{[os-image]}">
+        {[copy-ca-cert]}
+
         # Fix root tty
         RUN sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile &amp;&amp; \
 
@@ -231,7 +266,10 @@
 
         # Install base packages
         RUN apt-get update &amp;&amp; \
-            apt-get install -y sudo ssh wget vim gnupg lsb-release 2>&amp;1
+            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates 2>&amp;1
+
+        # Install CA certificate
+        RUN update-ca-certificates
 
         # Install PostgreSQL
         RUN RELEASE_CODENAME=`lsb_release -c | awk '{print $2}'` &amp;&amp; \
@@ -251,12 +289,20 @@
         RUN adduser --disabled-password --gecos "" {[host-user]} &amp;&amp; \
             echo '%{[host-user]} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
+        RUN {[minio-client-install]}
+
         ENTRYPOINT service ssh restart &amp;&amp; bash
     </host-define>
 
     <host-define if="{[os-type-is-centos6]}" image="{[host-image]}" from="{[os-image]}">
+        {[copy-ca-cert]}
+
         # Install packages
         RUN yum install -y openssh-server openssh-clients sudo wget vim 2>&amp;1
+
+        # Install CA certificate
+        RUN update-ca-trust enable &amp;&amp; \
+            update-ca-trust extract
 
         # Regenerate SSH keys
         RUN rm -f /etc/ssh/ssh_host_rsa_key* &amp;&amp; \
@@ -274,11 +320,15 @@
         RUN adduser -n {[host-user]} &amp;&amp; \
             echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
 
+        RUN {[minio-client-install]}
+
         ENTRYPOINT /usr/sbin/sshd -D
     </host-define>
 
     <host-define if="{[os-type-is-centos7]}" image="{[host-image]}" from="{[os-image]}">
         ENV container docker
+
+        {[copy-ca-cert]}
 
         RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
             systemd-tmpfiles-setup.service ] || rm -f $i; done); \
@@ -294,6 +344,9 @@
 
         # Install packages
         RUN yum install -y openssh-server openssh-clients sudo wget vim 2>&amp;1
+
+        # Install CA certificate
+        RUN update-ca-trust extract
 
         # Regenerate SSH keys
         RUN rm -f /etc/ssh/ssh_host_rsa_key* &amp;&amp; \
@@ -317,6 +370,8 @@
         RUN systemctl enable systemd-user-sessions.service &amp;&amp; \
             ln -s /usr/lib/systemd/system/systemd-user-sessions.service \
                 /etc/systemd/system/default.target.wants/systemd-user-sessions.service
+
+        RUN {[minio-client-install]}
 
         CMD ["/usr/sbin/init"]
     </host-define>
@@ -530,9 +585,65 @@
         </execute-list>
     </block-define>
 
+    <!-- ======================================================================================================================= -->
+    <block-define id="s3-setup">
+        <execute-list host="{[s3-setup-host]}">
+            <title>Install packages required for S3-compatible object store support</title>
+
+            <execute if="{[os-type-is-debian]}" user="root" pre="y">
+                <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+             <execute if="{[os-type-is-centos]}" user="root" pre="y">
+                 <exe-cmd>yum install perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
+                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+             </execute>
+        </execute-list>
+
+        <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
+
+        <execute-list if="'{[s3-local]}' eq 'y'" host="{[s3-setup-host]}" show="n">
+            <title>Create the bucket</title>
+
+            <!-- Set host entries to redirect AWS to local s3 server -->
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>echo "{[host-s3-ip]} {[s3-bucket]}.{[s3-endpoint]} {[s3-endpoint]}" | tee -a /etc/hosts</exe-cmd>
+            </execute>
+
+            <execute show='n'>
+                <exe-cmd>mc config host add demo https://{[host-s3-ip]} {[s3-key]} {[s3-key-secret]} --insecure</exe-cmd>
+            </execute>
+
+            <execute if="'{[s3-setup-create-bucket]}' eq 'y'" show='n'>
+                <exe-cmd>mc mb demo/{[s3-bucket]} --insecure</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <backrest-config host="{[s3-setup-host]}" file="{[backrest-config-demo]}" owner="{[s3-setup-config-owner]}">
+            <title>Configure <proper>S3</proper></title>
+
+            <backrest-config-option section="global" key="repo1-type">s3</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-path">/{[s3-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-key">{[s3-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-key-secret">{[s3-key-secret]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-ca-file" if="{[os-type-is-centos]}">/etc/pki/tls/certs/ca-bundle.crt</backrest-config-option>
+
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
+
+        <admonition type="note">The region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>{[s3-region]}</id> region.</admonition>
+    </block-define>
+
     <!-- SECTION => INTRODUCTION -->
     <section id="introduction">
         <title>Introduction</title>
+
+        <!-- Create S3 server first to allow it time to boot before being used -->
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443 --compat" update-hosts="n"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example, the <link section="/backup">Backup</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section.  Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -709,14 +820,6 @@
     <!-- SECTION => INSTALLATION -->
     <section id="installation">
         <title>Installation</title>
-
-        <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="pgbackrest/test:s3-server-20180612A" os="{[os-type]}">
-            <!-- Set host entries to redirect AWS to local s3 server -->
-            <execute user="root" user-force="y">
-                <exe-cmd>echo "{[host-s3-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" | tee -a /etc/hosts</exe-cmd>
-            </execute>
-        </host-add>
 
         <p>A new host named <host>pg1</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
@@ -961,6 +1064,16 @@
             <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
         </section>
 
+        <section id="s3-support" if="'{[s3-all]}' eq 'y'">
+            <title>S3-Compatible Object Store Support</title>
+
+            <block id="s3-setup">
+                <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
+                <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
+            </block>
+        </section>
+
         <!-- SECTION => QUICKSTART - STANZA CREATE -->
         <section id="create-stanza">
             <title>Create the Stanza</title>
@@ -1130,7 +1243,7 @@
 
                 <execute if="{[os-type-is-centos7]}" user="root" output="y" err-expect="3">
                     <exe-cmd>{[pg-cluster-check]}</exe-cmd>
-                    <exe-highlight>could not find the database system</exe-highlight>
+                    <exe-highlight>Failed to start PostgreSQL</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -1956,56 +2069,14 @@
     </section>
 
     <!-- SECTION => S3-SUPPORT -->
-    <section id="s3-support" depend="/quickstart/configure-archiving">
+    <section id="s3-support" if="'{[s3-all]}' ne 'y'" depend="/quickstart/configure-archiving">
         <title>S3-Compatible Object Store Support</title>
 
-        <execute-list host="{[host-pg1]}">
-            <title>Install packages required for S3-compatible object store support</title>
-
-            <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-             <execute if="{[os-type-is-centos]}" user="root" pre="y">
-                 <exe-cmd>yum install perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
-                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-             </execute>
-        </execute-list>
-
-        <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
-
-        <execute-list host="{[host-s3]}" show="n">
-            <title>Create the bucket</title>
-
-            <execute show='n'>
-                <exe-cmd>aws s3 --no-verify-ssl mb s3://demo-bucket 2>&amp;1</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <backrest-config host="{[host-pg1]}" show="n" file="{[backrest-config-demo]}">
-            <title>Clear the cipher settings</title>
-
-            <backrest-config-option section="global" key="repo1-cipher-type">none</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-cipher-pass"></backrest-config-option>
-        </backrest-config>
-
-        <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
-            <title>Configure <proper>S3</proper></title>
-
-            <backrest-config-option section="global" key="repo1-type">s3</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/demo-repo</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key">accessKey1</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key-secret">verySecretKey1</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-bucket">demo-bucket</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-endpoint">s3.amazonaws.com</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-region">us-east-1</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-verify-ssl">n</backrest-config-option>
-
-            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
-        </backrest-config>
-
-        <admonition type="note">The region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>us-east-1</id> region.</admonition>
+        <block id="s3-setup">
+            <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
+            <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
+        </block>
 
         <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible.  This sample <proper>Amazon S3</proper> policy will restrict all reads and writes to the bucket and repository path.</p>
 
@@ -2019,13 +2090,13 @@
                             "s3:ListBucket"
                         ],
                         "Resource": [
-                            "arn:aws:s3:::demo-bucket"
+                            "arn:aws:s3:::{[s3-bucket]}"
                         ],
                         "Condition": {
                             "StringEquals": {
                                 "s3:prefix": [
                                     "",
-                                    "demo-repo"
+                                    "{[s3-repo]}"
                                 ],
                                 "s3:delimiter": [
                                     "/"
@@ -2039,12 +2110,12 @@
                             "s3:ListBucket"
                         ],
                         "Resource": [
-                            "arn:aws:s3:::demo-bucket"
+                            "arn:aws:s3:::{[s3-bucket]}"
                         ],
                         "Condition": {
                             "StringLike": {
                                 "s3:prefix": [
-                                    "demo-repo/*"
+                                    "{[s3-repo]}/*"
                                 ]
                             }
                         }
@@ -2057,7 +2128,7 @@
                             "s3:DeleteObject"
                         ],
                         "Resource": [
-                            "arn:aws:s3:::demo-bucket/demo-repo/*"
+                            "arn:aws:s3:::{[s3-bucket]}/{[s3-repo]}/*"
                         ]
                     }
                 ]
@@ -2068,11 +2139,6 @@
 
         <execute-list host="{[host-pg1]}">
             <title>Create the stanza</title>
-
-            <!-- Set host entries to redirect AWS to local s3 server -->
-            <execute user="root" user-force="y" show="n">
-                <exe-cmd>echo "{[host-s3-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" | tee -a /etc/hosts</exe-cmd>
-            </execute>
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
@@ -2265,6 +2331,14 @@
                     </exe-cmd>
                 </execute>
             </execute-list>
+
+            <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
+
+            <block id="s3-setup" if="'{[s3-all]}' eq 'y'">
+                <block-variable-replace key="s3-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
+            </block>
 
             <p>Create the stanza in the new repository.</p>
 

@@ -100,6 +100,10 @@ testS3Server(void)
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, "this is a sample file"));
 
+        // Get zero-length file
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file0.txt", NULL));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+
         // Throw non-404 error
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(303, "Some bad status", NULL, "CONTENT"));
@@ -302,8 +306,127 @@ testS3Server(void)
                 "   </CommonPrefixes>"
                 "</ListBucketResult>"));
 
-        harnessTlsServerClose();
+        // storageDriverPathRemove()
+        // -------------------------------------------------------------------------------------------------------------------------
+        // delete files from root
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2", NULL));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK", NULL,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                "    <Contents>"
+                "        <Key>test1.txt</Key>"
+                "    </Contents>"
+                "    <Contents>"
+                "        <Key>path1/xxx.zzz</Key>"
+                "    </Contents>"
+                "</ListBucketResult>"));
 
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                "<Delete><Quiet>true</Quiet>"
+                "<Object><Key>test1.txt</Key></Object>"
+                "<Object><Key>path1/xxx.zzz</Key></Object>"
+                "</Delete>\n"));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK", NULL, "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"></DeleteResult>"));
+
+        // nothing to do in empty subpath
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=path%2F", NULL));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK", NULL,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                "</ListBucketResult>"));
+
+        // delete with continuation
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=path%2Fto%2F", NULL));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK", NULL,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                "    <NextContinuationToken>continue</NextContinuationToken>"
+                "    <Contents>"
+                "        <Key>path/to/test1.txt</Key>"
+                "    </Contents>"
+                "    <Contents>"
+                "        <Key>path/to/test2.txt</Key>"
+                "    </Contents>"
+                "</ListBucketResult>"));
+
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                "<Delete><Quiet>true</Quiet>"
+                "<Object><Key>path/to/test1.txt</Key></Object>"
+                "<Object><Key>path/to/test2.txt</Key></Object>"
+                "</Delete>\n"));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_GET, "/?continuation-token=continue&list-type=2&prefix=path%2Fto%2F", NULL));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK", NULL,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                "    <Contents>"
+                "        <Key>path/to/test3.txt</Key>"
+                "    </Contents>"
+                "</ListBucketResult>"));
+
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                "<Delete><Quiet>true</Quiet>"
+                "<Object><Key>path/to/test3.txt</Key></Object>"
+                "</Delete>\n"));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+
+        // delete error
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=path%2F", NULL));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK", NULL,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                "    <Contents>"
+                "        <Key>path/sample.txt</Key>"
+                "    </Contents>"
+                "    <Contents>"
+                "        <Key>path/sample2.txt</Key>"
+                "    </Contents>"
+                "</ListBucketResult>"));
+
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                "<Delete><Quiet>true</Quiet>"
+                "<Object><Key>path/sample.txt</Key></Object>"
+                "<Object><Key>path/sample2.txt</Key></Object>"
+                "</Delete>\n"));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK", NULL,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                    "<Error><Key>sample2.txt</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error>"
+                    "</DeleteResult>"));
+
+        // storageDriverRemove()
+        // -------------------------------------------------------------------------------------------------------------------------
+        // remove file
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_DELETE, "/path/to/test.txt", NULL));
+        harnessTlsServerReply(testS3ServerResponse(204, "No Content", NULL, NULL));
+
+        harnessTlsServerClose();
         exit(0);
     }
 }
@@ -529,7 +652,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageS3*(), StorageS3FileRead, and StorageWriteS3"))
+    if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3"))
     {
         testS3Server();
 
@@ -538,7 +661,6 @@ testRun(void)
 
         // Coverage for noop functions
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathCreateNP(s3, strNew("path")), "path create is a noop");
         TEST_RESULT_VOID(storagePathSyncNP(s3, strNew("path")), "path sync is a noop");
 
         // storageS3NewRead() and StorageS3FileRead
@@ -551,6 +673,7 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(s3, strNew("file.txt"))))), "this is a sample file",
             "get file");
+        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(s3, strNew("file0.txt"))))), "", "get zero-length file");
 
         StorageRead *read = NULL;
         TEST_ASSIGN(read, storageNewReadP(s3, strNew("file.txt"), .ignoreMissing = true), "new read file");
@@ -616,7 +739,8 @@ testRun(void)
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError, "assertion '!errorOnMissing' failed");
+            storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError,
+            "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
         TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
             "S3 request failed with 344: Another bad status\n"
             "*** URI/Query ***:\n"
@@ -639,11 +763,21 @@ testRun(void)
             strPtr(strLstJoin(storageListP(s3, strNew("/path/to"), .expression = strNew("^test(1|3)")), ",")),
             "test1.path,test1.txt,test3.txt", "list files with expression");
 
-        // Coverage for unimplemented functions
+        // storageDriverPathRemove()
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(storageInfoNP(s3, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
-        TEST_ERROR(storagePathRemoveNP(s3, strNew("path")), AssertError, "NOT YET IMPLEMENTED");
-        TEST_ERROR(storageRemoveNP(s3, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
+        TEST_ERROR(
+            storagePathRemoveNP(s3, strNew("/")), AssertError,
+            "assertion 'param.recurse || storageFeature(this, storageFeaturePath)' failed");
+        TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/"), .recurse = true), "remove root path");
+        TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path"), .recurse = true), "nothing to do in empty subpath");
+        TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path/to"), .recurse = true), "delete with continuation");
+        TEST_ERROR(
+            storagePathRemoveP(s3, strNew("/path"), .recurse = true), FileRemoveError,
+            "unable to remove file 'sample2.txt': [AccessDenied] Access Denied");
+
+        // storageDriverRemove()
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(storageRemoveNP(s3, strNew("/path/to/test.txt")), "remove file");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

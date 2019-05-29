@@ -79,50 +79,6 @@ testRun(void)
     String *writeFile = strNewFmt("%s/writefile", testPath());
 
     // *****************************************************************************************************************************
-    if (testBegin("storagePosixFile*()"))
-    {
-        TEST_CREATE_NOPERM();
-
-        TEST_ERROR_FMT(
-            storagePosixFileOpen(pathNoPerm, O_RDONLY, 0, false, false, "test"), PathOpenError,
-            "unable to open '%s' for test: [13] Permission denied", strPtr(pathNoPerm));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        String *fileName = strNewFmt("%s/test.file", testPath());
-
-        TEST_ERROR_FMT(
-            storagePosixFileOpen(fileName, O_RDONLY, 0, false, true, "read"), FileMissingError,
-            "unable to open '%s' for read: [2] No such file or directory", strPtr(fileName));
-
-        TEST_RESULT_INT(storagePosixFileOpen(fileName, O_RDONLY, 0, true, true, "read"), -1, "missing file ignored");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        int handle = -1;
-
-        TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileName)))), 0, "create read file");
-        TEST_ASSIGN(handle, storagePosixFileOpen(fileName, O_RDONLY, 0, false, true, "read"), "open read file");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            storagePosixFileSync(-99, fileName, false, false), PathSyncError,
-            "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
-        TEST_ERROR_FMT(
-            storagePosixFileSync(-99, fileName, true, true), FileSyncError,
-            "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
-
-        TEST_RESULT_VOID(storagePosixFileSync(handle, fileName, true, false), "sync file");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            storagePosixFileClose(-99, fileName, true), FileCloseError,
-            "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
-
-        TEST_RESULT_VOID(storagePosixFileClose(handle, fileName, true), "close file");
-
-        TEST_RESULT_INT(system(strPtr(strNewFmt("rm %s", strPtr(fileName)))), 0, "remove read file");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("storageNew() and storageFree()"))
     {
         Storage *storageTest = NULL;
@@ -149,7 +105,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageExists()"))
+    if (testBegin("storageExists() and storagePathExists()"))
     {
         TEST_CREATE_NOPERM();
 
@@ -158,8 +114,15 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing"), .timeout = 100), false, "file does not exist");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, strNew("missing")), false, "path does not exist");
+        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, NULL), true, "test path exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageExistsNP(storageTest, fileNoPerm), FileOpenError,
+            "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
+        TEST_ERROR_FMT(
+            storagePathExistsNP(storageTest, fileNoPerm), PathOpenError,
             "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -167,6 +130,7 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, fileExists), true, "file exists");
+        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, fileExists), false, "not a path");
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -196,15 +160,15 @@ testRun(void)
         TEST_CREATE_NOPERM();
 
         TEST_ERROR_FMT(
-            storageInfoNP(storageTest, fileNoPerm), FileOpenError,
-            "unable to get info for '%s': [13] Permission denied", strPtr(fileNoPerm));
+            storageInfoNP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO ": [13] Permission denied",
+            strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/fileinfo", testPath());
 
         TEST_ERROR_FMT(
-            storageInfoNP(storageTest, fileName), FileOpenError,
-            "unable to get info for '%s': [2] No such file or directory", strPtr(fileName));
+            storageInfoNP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING ": [2] No such file or directory",
+            strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         StorageInfo info = {0};
@@ -223,8 +187,8 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0770, "    check mode");
         TEST_RESULT_UINT(info.timeModified, 1555160000, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
-        TEST_RESULT_STR(strPtr(info.user), getpwuid(getuid())->pw_name, "    check user");
-        TEST_RESULT_STR(strPtr(info.group), getgrgid(getgid())->gr_name, "    check group");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *buffer = BUFSTRDEF("TESTFILE");
@@ -259,8 +223,8 @@ testRun(void)
         TEST_RESULT_INT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0777, "    check mode");
         TEST_RESULT_STR(strPtr(info.linkDestination), "/tmp", "    check link destination");
-        TEST_RESULT_STR(strPtr(info.user), getpwuid(getuid())->pw_name, "    check user");
-        TEST_RESULT_STR(strPtr(info.group), getgrgid(getgid())->gr_name, "    check group");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         TEST_ASSIGN(info, storageInfoP(storageTest, linkName, .followLink = true), "get info from path pointed to by link");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
@@ -291,19 +255,19 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageInfoListP(storageTest, strNew(BOGUS_STR), (StorageInfoListCallback)1, NULL, .errorOnMissing = true),
-            PathOpenError, "unable to open path '%s/BOGUS' for read: [2] No such file or directory", testPath());
+            PathOpenError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(strNewFmt("%s/BOGUS", testPath())));
 
         TEST_RESULT_BOOL(
             storageInfoListNP(storageTest, strNew(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
 
         TEST_ERROR_FMT(
             storageInfoListNP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
-            "unable to open path '%s' for read: [13] Permission denied", strPtr(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
             storageInfoListNP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
-            "unable to open path '%s' for read: [13] Permission denied", strPtr(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         testStorageInfoListSize = 0;
@@ -330,20 +294,21 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageListP(storageTest, strNew(BOGUS_STR), .errorOnMissing = true), PathOpenError,
-            "unable to open path '%s/BOGUS' for read: [2] No such file or directory", testPath());
+            storageListP(storageTest, strNew(BOGUS_STR), .errorOnMissing = true), PathOpenError, STORAGE_ERROR_LIST_MISSING,
+             strPtr(strNewFmt("%s/BOGUS", testPath())));
 
-        TEST_RESULT_PTR(storageListNP(storageTest, strNew(BOGUS_STR)), NULL, "ignore missing dir");
+        TEST_RESULT_PTR(storageListP(storageTest, strNew(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
+        TEST_RESULT_UINT(strLstSize(storageListNP(storageTest, strNew(BOGUS_STR))), 0, "empty list for missing dir");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageListNP(storageTest, pathNoPerm), PathOpenError,
-            "unable to open path '%s' for read: [13] Permission denied", strPtr(pathNoPerm));
+            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
             storageListNP(storageTest, pathNoPerm), PathOpenError,
-            "unable to open path '%s' for read: [13] Permission denied", strPtr(pathNoPerm));
+            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
@@ -367,9 +332,7 @@ testRun(void)
         StorageRead *source = storageNewReadNP(storageTest, sourceFile);
         StorageWrite *destination = storageNewWriteNP(storageTest, destinationFile);
 
-        TEST_ERROR_FMT(
-            storageCopyNP(source, destination), FileMissingError,
-            "unable to open '%s' for read: [2] No such file or directory", strPtr(sourceFile));
+        TEST_ERROR_FMT(storageCopyNP(source, destination), FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(sourceFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
         source = storageNewReadP(storageTest, sourceFile, .ignoreMissing = true);
@@ -546,7 +509,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .errorOnMissing = true), PathRemoveError,
-            "unable to remove path '%s': [2] No such file or directory", strPtr(pathRemove1));
+            STORAGE_ERROR_PATH_REMOVE_MISSING, strPtr(pathRemove1));
         TEST_RESULT_VOID(storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "ignore missing path");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -555,18 +518,18 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo mkdir -p -m 700 %s", strPtr(pathRemove2)))), 0, "create noperm paths");
 
         TEST_ERROR_FMT(
-            storagePathRemoveNP(storageTest, pathRemove2), PathRemoveError,
-            "unable to remove path '%s': [13] Permission denied", strPtr(pathRemove2));
+            storagePathRemoveNP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE ": [13] Permission denied",
+            strPtr(pathRemove2));
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            "unable to open path '%s' for read: [13] Permission denied", strPtr(pathRemove2));
+            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chmod 777 %s", strPtr(pathRemove1)))), 0, "top path can be removed");
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            "unable to open path '%s' for read: [13] Permission denied", strPtr(pathRemove2));
+            STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileRemove = strNewFmt("%s/remove.txt", strPtr(pathRemove2));
@@ -579,7 +542,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            "unable to remove path/file '%s': [13] Permission denied", strPtr(fileRemove));
+            STORAGE_ERROR_PATH_REMOVE_FILE ": [13] Permission denied", strPtr(fileRemove));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chmod 777 %s", strPtr(pathRemove2)))), 0, "bottom path can be removed");
@@ -604,17 +567,20 @@ testRun(void)
         TEST_CREATE_NOPERM();
 
         TEST_ERROR_FMT(
-            storagePathSyncNP(storageTest, fileNoPerm), PathOpenError,
-            "unable to open '%s' for sync: [13] Permission denied", strPtr(fileNoPerm));
+            storagePathSyncNP(storageTest, fileNoPerm), PathOpenError, STORAGE_ERROR_PATH_SYNC_OPEN ": [13] Permission denied",
+            strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *pathName = strNewFmt("%s/testpath", testPath());
 
         TEST_ERROR_FMT(
-            storagePathSyncNP(storageTest, pathName), PathMissingError,
-            "unable to open '%s' for sync: [2] No such file or directory", strPtr(pathName));
+            storagePathSyncNP(storageTest, pathName), PathMissingError, STORAGE_ERROR_PATH_SYNC_MISSING, strPtr(pathName));
 
-        TEST_RESULT_VOID(storagePathSyncP(storageTest, pathName, .ignoreMissing = true), "ignore missing path");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR_FMT(
+            storagePathSyncNP(
+                storagePosixNew(strNew("/"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL), strNew("/proc")),
+            PathSyncError, STORAGE_ERROR_PATH_SYNC ": [22] Invalid argument", "/proc");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, pathName), "create path to sync");
@@ -628,9 +594,7 @@ testRun(void)
         String *fileName = strNewFmt("%s/readtest.txt", testPath());
 
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new read file (defaults)");
-        TEST_ERROR_FMT(
-            ioReadOpen(storageReadIo(file)), FileMissingError,
-            "unable to open '%s' for read: [2] No such file or directory", strPtr(fileName));
+        TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileName)))), 0, "create read file");
@@ -656,8 +620,8 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file (defaults)");
         TEST_ERROR_FMT(
-            ioWriteOpen(storageWriteIo(file)), FileOpenError,
-            "unable to open '%s' for write: [13] Permission denied", strPtr(fileNoPerm));
+            ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN ": [13] Permission denied",
+            strPtr(fileNoPerm));
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .user = strNew("bogus")), "new write file (bogus user)");
         TEST_ERROR(ioWriteOpen(storageWriteIo(file)), UserMissingError, "unable to find user 'bogus'");
@@ -668,9 +632,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             file,
-            storageNewWriteP(
-                storageTest, fileName, .user = strNew(getpwuid(getuid())->pw_name), .group = strNew(getgrgid(getgid())->gr_name),
-                .timeModified = 1),
+            storageNewWriteP(storageTest, fileName, .user = strNew(testUser()), .group = strNew(testGroup()), .timeModified = 1),
             "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_INT(
@@ -686,8 +648,7 @@ testRun(void)
         String *fileNameTmp = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(fileName));
 
         TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, fileName, .user = strNew(getpwuid(getuid())->pw_name)),
-            "new write file (defaults)");
+            file, storageNewWriteP(storageTest, fileName, .user = strNew(testUser())), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), BUFSTRDEF("TESTDATA")), "write data");
         TEST_RESULT_VOID(ioWriteFlush(storageWriteIo(file)), "flush data");
@@ -701,7 +662,8 @@ testRun(void)
         fileName = strNewFmt("%s/sub2/testfile", testPath());
 
         TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600), "new write file (set mode)");
+            file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600, .group = strNew(testGroup())),
+            "new write file (set mode)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
         TEST_RESULT_VOID(storageWritePosixClose(storageWriteDriver(file)), "   close file again");
@@ -805,16 +767,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileNoPerm), "new no perm read file");
         TEST_ERROR_FMT(
-            ioReadOpen(storageReadIo(file)), FileOpenError,
-            "unable to open '%s' for read: [13] Permission denied", strPtr(fileNoPerm));
+            ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN ": [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/test.file", testPath());
 
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new missing read file");
-        TEST_ERROR_FMT(
-            ioReadOpen(storageReadIo(file)), FileMissingError,
-            "unable to open '%s' for read: [2] No such file or directory", strPtr(fileName));
+        TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName, .ignoreMissing = true), "new missing read file");
@@ -914,16 +873,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(
-            ioWriteOpen(storageWriteIo(file)), FileOpenError,
-            "unable to open '%s' for write: [13] Permission denied", strPtr(fileNoPerm));
+            ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN ": [13] Permission denied",
+            strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/sub1/test.file", testPath());
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noCreatePath = true, .noAtomic = true), "new write file");
-        TEST_ERROR_FMT(
-            ioWriteOpen(storageWriteIo(file)), FileMissingError,
-            "unable to open '%s' for write: [2] No such file or directory", strPtr(fileName));
+        TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileMissingError, STORAGE_ERROR_WRITE_MISSING, strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileTmp = strNewFmt("%s.pgbackrest.tmp", strPtr(fileName));
@@ -942,15 +899,15 @@ testRun(void)
             storageWritePosix(storageWriteDriver(file), buffer), FileWriteError,
             "unable to write '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
-            storageWritePosixClose(storageWriteDriver(file)), FileSyncError,
-            "unable to sync '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
+            storageWritePosixClose(storageWriteDriver(file)), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [9] Bad file descriptor",
+            strPtr(fileTmp));
 
         // Disable file sync so close() can be reached
         ((StorageWritePosix *)file->driver)->interface.syncFile = false;
 
         TEST_ERROR_FMT(
-            storageWritePosixClose(storageWriteDriver(file)), FileCloseError,
-            "unable to close '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
+            storageWritePosixClose(storageWriteDriver(file)), FileCloseError, STORAGE_ERROR_WRITE_CLOSE ": [9] Bad file descriptor",
+            strPtr(fileTmp));
 
         // Set file handle to -1 so the close on free with not fail
         ((StorageWritePosix *)file->driver)->handle = -1;

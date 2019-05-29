@@ -41,6 +41,7 @@ sub new
         $self->{stryMount},
         $self->{strOption},
         $self->{strParam},
+        $self->{bHostUpdate},
     ) =
         logDebugParam
         (
@@ -53,6 +54,7 @@ sub new
             {name => 'stryMount', required => false, trace => true},
             {name => 'strOption', required => false, trace => true},
             {name => 'strParam', required => false, trace => true},
+            {name => 'bHostUpdate', required => false, trace => true, default => true},
         );
 
     executeTest("docker rm -f $self->{strContainer}", {bSuppressError => true});
@@ -248,6 +250,16 @@ sub copyFrom
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# hostUpdateGet
+####################################################################################################################################
+sub hostUpdateGet
+{
+    my $self = shift;
+
+    return $self->{bHostUpdate};
 }
 
 ####################################################################################################################################

@@ -29,6 +29,7 @@ Command Functions
 Access the current command and command parameters.
 ***********************************************************************************************************************************/
 ConfigCommand cfgCommand(void);
+bool cfgCommandInternal(ConfigCommand commandId);
 const char *cfgCommandName(ConfigCommand commandId);
 
 bool cfgLockRequired(void);

@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Configuration Parse
 ***********************************************************************************************************************************/
+#include "storage/storage.intern.h"
+
 #define TEST_BACKREST_EXE                                           "pgbackrest"
 
 #define TEST_COMMAND_ARCHIVE_GET                                    "archive-get"
@@ -14,7 +16,6 @@ Expose log internal data for unit testing/debugging
 ***********************************************************************************************************************************/
 extern LogLevel logLevelStdOut;
 extern LogLevel logLevelStdErr;
-extern LogLevel logLevelFile;
 
 /***********************************************************************************************************************************
 Option find test -- this is done a lot in the deprecated tests
@@ -154,6 +155,8 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
         parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
 
+        TEST_RESULT_VOID(cfgFileLoadPart(NULL, NULL), "check null part");
+
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue, oldConfigDefault)),
             "[global]\n"
@@ -173,16 +176,15 @@ testRun(void)
         TEST_ERROR(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
                 backupCmdDefConfigInclPathValue, oldConfigDefault), PathOpenError,
-                "unable to open path '/BOGUS' for read: [2] No such file or directory");
+                "unable to list files for missing path '/BOGUS'");
 
         // --config-include-path valid, --config invalid (does not exist)
         parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
         parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), strNewFmt("%s/%s", testPath(), BOGUS_STR));
 
-        TEST_ERROR(
-            cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-                backupCmdDefConfigInclPathValue, oldConfigDefault), FileMissingError,
-                strPtr(strNewFmt("unable to open '%s/%s' for read: [2] No such file or directory", testPath(), BOGUS_STR)));
+        TEST_ERROR_FMT(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
+            FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(strNewFmt("%s/BOGUS", testPath())));
 
         strLstFree(parseOptionList[cfgOptConfig].valueList);
         strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
@@ -468,6 +470,7 @@ testRun(void)
         double valueDbl = 0;
         String *value = strNew("10.0");
 
+        TEST_ERROR(sizeQualifierToMultiplier('w'), AssertError, "'w' is not a valid size qualifier");
         TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10.0' is not valid");
         strTrunc(value, strChr(value, '.'));
         strCat(value, "K2");
@@ -542,7 +545,6 @@ testRun(void)
         strCat(value, "99999999999999999999p");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_STR(strPtr(value), "225179981368524800000000000000000000", "value really large  to bytes");
-
     }
 
     // *****************************************************************************************************************************
@@ -1146,6 +1148,7 @@ testRun(void)
         setenv("PGBACKREST_RESET_REPO1_HOST", "", true);
         setenv("PGBACKREST_TARGET", "xxx", true);
         setenv("PGBACKREST_ONLINE", "y", true);
+        setenv("PGBACKREST_DELTA", "y", true);
         setenv("PGBACKREST_START_FAST", "n", true);
         setenv("PGBACKREST_PG1_SOCKET_PATH", "/path/to/socket", true);
 
@@ -1155,6 +1158,7 @@ testRun(void)
                 "[global]\n"
                 "compress-level=3\n"
                 "spool-path=/path/to/spool\n"
+                "lock-path=/\n"
                 "\n"
                 "[global:backup]\n"
                 "repo1-hardlink=y\n"
@@ -1194,6 +1198,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptLockPath)), "/", "    lock-path is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "    lock-path is source config");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgSocketPath)), "/path/to/socket", "    pg1-socket-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgSocketPath), cfgSourceConfig, "    pg1-socket-path is config param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online not is set");
@@ -1210,6 +1216,8 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "    compress-level is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "    backup-standby is source default");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "    delta is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_BOOL(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
 
@@ -1393,8 +1401,9 @@ testRun(void)
         testOptionFind("repo-s3-key", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Key);
         testOptionFind("repo-s3-key-secret", PARSE_DEPRECATE_FLAG | cfgOptRepoS3KeySecret);
         testOptionFind("repo-s3-region", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Region);
-        testOptionFind("repo-s3-verify-ssl", PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifySsl);
-        testOptionFind("no-repo-s3-verify-ssl", PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifySsl);
+        testOptionFind("repo-s3-verify-ssl", PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifyTls);
+        testOptionFind("repo1-s3-verify-ssl", PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifyTls);
+        testOptionFind("no-repo-s3-verify-ssl", PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifyTls);
 
         // PostreSQL options
         // -------------------------------------------------------------------------------------------------------------------------
