@@ -20,7 +20,7 @@ CODE:
     MEM_CONTEXT_XS_NEW_BEGIN("cryptoHashXs")
     {
         RETVAL = memNew(sizeof(CryptoHashXs));
-        RETVAL->memContext = MEM_COMTEXT_XS();
+        RETVAL->memContext = MEM_CONTEXT_XS();
         RETVAL->pxPayload = cryptoHashNew(strNew(type));
     }
     MEM_CONTEXT_XS_NEW_END();
