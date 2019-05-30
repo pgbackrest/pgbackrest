@@ -92,7 +92,7 @@ sub storageRepo
     # Create storage if not defined
     if (!defined($hStorage->{&STORAGE_REPO}))
     {
-        $hStorage->{&STORAGE_REPO} = new pgBackRest::Storage::Storage(STORAGE_REPO);
+        $hStorage->{&STORAGE_REPO} = new pgBackRest::Storage::Storage(STORAGE_REPO, cfgOption(CFGOPT_BUFFER_SIZE));
     }
 
     # Return from function and log return values if any

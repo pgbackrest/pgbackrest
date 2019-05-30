@@ -143,7 +143,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate(
             'stanza create',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            {strOptionalParam => '--log-level-console=trace --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    push first WAL');

@@ -351,22 +351,73 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_new)
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageRead") == 0);
 
     RETVAL = NULL;
+    StorageRead *read = storageNewReadP(storage->pxPayload, STR(file), .ignoreMissing = ignoreMissing);
 
-    MEM_CONTEXT_XS_NEW_BEGIN("StorageReadXs")
+    if (ioReadOpen(storageReadIo(read)))
     {
-        RETVAL = memNew(sizeof(StorageReadXs));
-        RETVAL->memContext = MEM_COMTEXT_XS();
+        MEM_CONTEXT_XS_NEW_BEGIN("StorageReadXs")
+        {
+            RETVAL = memNew(sizeof(StorageReadXs));
+            RETVAL->memContext = MEM_COMTEXT_XS();
 
-        RETVAL->storage = storage->pxPayload;
-        RETVAL->read = storageNewReadP(RETVAL->storage, STR(file), .ignoreMissing = ignoreMissing);
+            RETVAL->storage = storage->pxPayload;
+            RETVAL->read = read;
+        }
+        MEM_CONTEXT_XS_NEW_END();
     }
-    MEM_CONTEXT_XS_NEW_END();
+    else
+    {
+        storageReadFree(read);
+    }
 	{
 	    SV * RETVALSV;
 	    RETVALSV = sv_newmortal();
 	    sv_setref_pv(RETVALSV, "pgBackRest::LibC::StorageRead", (void*)RETVAL);
 	    ST(0) = RETVALSV;
 	}
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_read); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_read)
+{
+    dVAR; dXSARGS;
+    if (items != 3)
+       croak_xs_usage(cv,  "self, buffer, size");
+    {
+	pgBackRest__LibC__StorageRead	self;
+	SV *	buffer = ST(1)
+;
+	U32	size = (unsigned long)SvUV(ST(2))
+;
+	U32	RETVAL;
+	dXSTARG;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::StorageRead")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__StorageRead,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::StorageRead::read",
+			"self", "pgBackRest::LibC::StorageRead")
+;
+    RETVAL = 0;
+
+    MEM_CONTEXT_XS_BEGIN(self->memContext)
+    {
+        buffer = NEWSV(0, ioBufferSize());
+        SvPOK_only(buffer);
+
+        Buffer *tempBuffer = bufNewUseC(SvPV_nolen(buffer), size);
+        RETVAL = (uint32_t)ioRead(storageReadIo(self->read), tempBuffer);
+
+        SvCUR_set(buffer, RETVAL);
+    }
+    MEM_CONTEXT_XS_END();
+	XSprePUSH; PUSHu((UV)RETVAL);
     }
     XSRETURN(1);
 }
@@ -1580,6 +1631,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
         newXS_deffile("pgBackRest::LibC::storageRepoFree", XS_pgBackRest__LibC_storageRepoFree);
         newXS_deffile("pgBackRest::LibC::StorageRead::new", XS_pgBackRest__LibC__StorageRead_new);
+        newXS_deffile("pgBackRest::LibC::StorageRead::read", XS_pgBackRest__LibC__StorageRead_read);
         newXS_deffile("pgBackRest::LibC::StorageRead::DESTROY", XS_pgBackRest__LibC__StorageRead_DESTROY);
         newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
         newXS_deffile("pgBackRest::LibC::Storage::list", XS_pgBackRest__LibC__Storage_list);

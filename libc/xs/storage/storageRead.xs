@@ -15,16 +15,24 @@ CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageRead") == 0);
 
     RETVAL = NULL;
+    StorageRead *read = storageNewReadP(storage->pxPayload, STR(file), .ignoreMissing = ignoreMissing);
 
-    MEM_CONTEXT_XS_NEW_BEGIN("StorageReadXs")
+    if (ioReadOpen(storageReadIo(read)))
     {
-        RETVAL = memNew(sizeof(StorageReadXs));
-        RETVAL->memContext = MEM_COMTEXT_XS();
+        MEM_CONTEXT_XS_NEW_BEGIN("StorageReadXs")
+        {
+            RETVAL = memNew(sizeof(StorageReadXs));
+            RETVAL->memContext = MEM_COMTEXT_XS();
 
-        RETVAL->storage = storage->pxPayload;
-        RETVAL->read = storageNewReadP(RETVAL->storage, STR(file), .ignoreMissing = ignoreMissing);
+            RETVAL->storage = storage->pxPayload;
+            RETVAL->read = read;
+        }
+        MEM_CONTEXT_XS_NEW_END();
     }
-    MEM_CONTEXT_XS_NEW_END();
+    else
+    {
+        storageReadFree(read);
+    }
 OUTPUT:
     RETVAL
 
@@ -35,23 +43,17 @@ read(self, buffer, size)
     SV *buffer
     U32 size
 CODE:
-    RETVAL = NULL;
+    RETVAL = 0;
 
     MEM_CONTEXT_XS_BEGIN(self->memContext)
     {
-        StringList *fileList = storageListP(
-            self->pxPayload, STR(pathExp), .errorOnMissing = !ignoreMissing,
-            .expression = strlen(expression) == 0 ? NULL : STR(expression));
+        buffer = NEWSV(0, ioBufferSize());
+        SvPOK_only(buffer);
 
-        if (fileList != NULL)
-        {
-            const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
+        Buffer *tempBuffer = bufNewUseC(SvPV_nolen(buffer), size);
+        RETVAL = (uint32_t)ioRead(storageReadIo(self->read), tempBuffer);
 
-            RETVAL = NEWSV(0, strSize(fileListJson));
-            SvPOK_only(RETVAL);
-            memcpy(SvPV_nolen(RETVAL), strPtr(fileListJson), strSize(fileListJson));
-            SvCUR_set(RETVAL, strSize(fileListJson));
-        }
+        SvCUR_set(buffer, RETVAL);
     }
     MEM_CONTEXT_XS_END();
 OUTPUT:

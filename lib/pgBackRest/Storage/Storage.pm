@@ -30,11 +30,13 @@ sub new
     (
         my $strOperation,
         $self->{strType},
+        $self->{lBufferMax},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strType'},
+            {name => 'lBufferMax', default => 65536},
         );
 
     # Create C storage object
