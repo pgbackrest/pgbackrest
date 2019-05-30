@@ -916,7 +916,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_new)
     MEM_CONTEXT_XS_NEW_BEGIN("cryptoHashXs")
     {
         RETVAL = memNew(sizeof(CryptoHashXs));
-        RETVAL->memContext = MEM_COMTEXT_XS();
+        RETVAL->memContext = MEM_CONTEXT_XS();
         RETVAL->pxPayload = cryptoHashNew(strNew(type));
     }
     MEM_CONTEXT_XS_NEW_END();
@@ -1103,7 +1103,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_new)
     MEM_CONTEXT_XS_NEW_BEGIN("cipherBlockXs")
     {
         RETVAL = memNew(sizeof(CipherBlockXs));
-        RETVAL->memContext = MEM_COMTEXT_XS();
+        RETVAL->memContext = MEM_CONTEXT_XS();
 
         RETVAL->pxPayload = cipherBlockNew(mode, cipherType(STR(type)), BUF(key, keySize), digest == NULL ? NULL : STR(digest));
     }

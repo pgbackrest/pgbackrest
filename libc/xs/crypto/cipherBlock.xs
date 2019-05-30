@@ -29,7 +29,7 @@ CODE:
     MEM_CONTEXT_XS_NEW_BEGIN("cipherBlockXs")
     {
         RETVAL = memNew(sizeof(CipherBlockXs));
-        RETVAL->memContext = MEM_COMTEXT_XS();
+        RETVAL->memContext = MEM_CONTEXT_XS();
 
         RETVAL->pxPayload = cipherBlockNew(mode, cipherType(STR(type)), BUF(key, keySize), digest == NULL ? NULL : STR(digest));
     }

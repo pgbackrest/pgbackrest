@@ -48,6 +48,7 @@ sub codeCountScan
                  $strFile eq 'LICENSE' ||
                  $strFile =~ '^doc/example/' ||
                  $strFile =~ '^doc/output/' ||
+                 $strFile =~ '^doc/resource/fake\-cert' ||
                  $strFile =~ '\.png$' ||
                  $strFile =~ '\.eps$' ||
                  $strFile =~ '\.cache$' ||
