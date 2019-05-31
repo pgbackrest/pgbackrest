@@ -326,22 +326,12 @@ sub list
 
     # Get file list
     my @stryFileList;
-    my $strFileList = $self->{oStorageC}->list($strPathExp, $bIgnoreMissing, defined($strExpression) ? $strExpression : '');
+    my $strFileList = $self->{oStorageC}->list(
+        $strPathExp, $bIgnoreMissing, $strSortOrder eq 'forward', defined($strExpression) ? $strExpression : '');
 
-    if (defined($strFileList) && $strFileList ne '[]')
+    if (defined($strFileList))
     {
         @stryFileList = $self->{oJSON}->decode($strFileList);
-
-        # Reverse sort
-        if ($strSortOrder eq 'reverse')
-        {
-            @stryFileList = sort {$b cmp $a} @stryFileList;
-        }
-        # Normal sort
-        else
-        {
-            @stryFileList = sort @stryFileList;
-        }
     }
 
     # Return from function and log return values if any

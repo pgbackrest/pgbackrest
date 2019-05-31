@@ -628,12 +628,14 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_list); /* prototype to pass -Wmissing-prot
 XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
 {
     dVAR; dXSARGS;
-    if (items != 4)
-       croak_xs_usage(cv,  "self, pathExp, ignoreMissing, expression");
+    if (items != 5)
+       croak_xs_usage(cv,  "self, pathExp, ignoreMissing, sortAsc, expression");
     {
 	pgBackRest__LibC__Storage	self;
 	SV *	pathExp;
 	bool	ignoreMissing = (bool)SvTRUE(ST(2))
+;
+	bool	sortAsc = (bool)SvTRUE(ST(3))
 ;
 	const char *	expression;
 	SV *	RETVAL;
@@ -655,7 +657,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
 ;
 
     STRLEN expressionPvSize;
-    expression = (void *)SvPV(ST(3), expressionPvSize);
+    expression = (void *)SvPV(ST(4), expressionPvSize);
     ((char *)expression)[expressionPvSize] = 0
 ;
     RETVAL = NULL;
@@ -665,19 +667,18 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
         STRLEN pathExpSize;
         const void *pathExpPtr = SvPV(pathExp, pathExpSize);
 
-        StringList *fileList = storageListP(
-            self, strNewN(pathExpPtr, pathExpSize), .errorOnMissing = !ignoreMissing,
-            .expression = strlen(expression) == 0 ? NULL : STR(expression));
+        StringList *fileList = strLstSort(
+            storageListP(
+                self, strNewN(pathExpPtr, pathExpSize), .errorOnMissing = !ignoreMissing,
+                .expression = strlen(expression) == 0 ? NULL : STR(expression)),
+            sortAsc ? sortOrderAsc : sortOrderDesc);
 
-        if (fileList != NULL)
-        {
-            const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
+        const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
 
-            RETVAL = NEWSV(0, strSize(fileListJson));
-            SvPOK_only(RETVAL);
-            memcpy(SvPV_nolen(RETVAL), strPtr(fileListJson), strSize(fileListJson));
-            SvCUR_set(RETVAL, strSize(fileListJson));
-        }
+        RETVAL = NEWSV(0, strSize(fileListJson));
+        SvPOK_only(RETVAL);
+        memcpy(SvPV_nolen(RETVAL), strPtr(fileListJson), strSize(fileListJson));
+        SvCUR_set(RETVAL, strSize(fileListJson));
     }
     MEM_CONTEXT_XS_TEMP_END();
 	RETVAL = sv_2mortal(RETVAL);

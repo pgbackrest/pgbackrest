@@ -58,10 +58,11 @@ OUTPUT:
 
 ####################################################################################################################################
 SV *
-list(self, pathExp, ignoreMissing, expression)
+list(self, pathExp, ignoreMissing, sortAsc, expression)
     pgBackRest::LibC::Storage self
     SV *pathExp
     bool ignoreMissing
+    bool sortAsc
     const char *expression
 CODE:
     RETVAL = NULL;
@@ -71,19 +72,18 @@ CODE:
         STRLEN pathExpSize;
         const void *pathExpPtr = SvPV(pathExp, pathExpSize);
 
-        StringList *fileList = storageListP(
-            self, strNewN(pathExpPtr, pathExpSize), .errorOnMissing = !ignoreMissing,
-            .expression = strlen(expression) == 0 ? NULL : STR(expression));
+        StringList *fileList = strLstSort(
+            storageListP(
+                self, strNewN(pathExpPtr, pathExpSize), .errorOnMissing = !ignoreMissing,
+                .expression = strlen(expression) == 0 ? NULL : STR(expression)),
+            sortAsc ? sortOrderAsc : sortOrderDesc);
 
-        if (fileList != NULL)
-        {
-            const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
+        const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
 
-            RETVAL = NEWSV(0, strSize(fileListJson));
-            SvPOK_only(RETVAL);
-            memcpy(SvPV_nolen(RETVAL), strPtr(fileListJson), strSize(fileListJson));
-            SvCUR_set(RETVAL, strSize(fileListJson));
-        }
+        RETVAL = NEWSV(0, strSize(fileListJson));
+        SvPOK_only(RETVAL);
+        memcpy(SvPV_nolen(RETVAL), strPtr(fileListJson), strSize(fileListJson));
+        SvCUR_set(RETVAL, strSize(fileListJson));
     }
     MEM_CONTEXT_XS_TEMP_END();
 OUTPUT:

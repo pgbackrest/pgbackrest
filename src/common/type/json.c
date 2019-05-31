@@ -951,7 +951,13 @@ jsonFromVar(const Variant *var, unsigned int indent)
 
                     // Update the depth before processing the contents of the list element
                     strCat(indentDepth, strPtr(indentSpace));
-                    strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varLstGet(vl, vlIdx)), indentSpace, indentDepth)));
+
+                    Variant *varSub = varLstGet(vl, vlIdx);
+
+                    if (varType(varSub) == varTypeKeyValue)
+                        strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varSub), indentSpace, indentDepth)));
+                    else
+                        jsonFromStrInternal(jsonStr, varStr(varSub));
                 }
 
                 // Decrease the depth
