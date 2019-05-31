@@ -15,24 +15,16 @@ CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageRead") == 0);
 
     RETVAL = NULL;
-    StorageRead *read = storageNewReadP(storage->pxPayload, STR(file), .ignoreMissing = ignoreMissing);
 
-    if (ioReadOpen(storageReadIo(read)))
+    MEM_CONTEXT_XS_NEW_BEGIN("StorageReadXs")
     {
-        MEM_CONTEXT_XS_NEW_BEGIN("StorageReadXs")
-        {
-            RETVAL = memNew(sizeof(StorageReadXs));
-            RETVAL->memContext = MEM_CONTEXT_XS();
+        RETVAL = memNew(sizeof(StorageReadXs));
+        RETVAL->memContext = MEM_CONTEXT_XS();
 
-            RETVAL->storage = storage->pxPayload;
-            RETVAL->read = read;
-        }
-        MEM_CONTEXT_XS_NEW_END();
+        RETVAL->storage = storage->pxPayload;
+        RETVAL->read = storageNewReadP(storage->pxPayload, STR(file), .ignoreMissing = ignoreMissing);
     }
-    else
-    {
-        storageReadFree(read);
-    }
+    MEM_CONTEXT_XS_NEW_END();
 OUTPUT:
     RETVAL
 

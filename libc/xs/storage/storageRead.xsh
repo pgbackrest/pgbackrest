@@ -11,5 +11,5 @@ typedef struct StorageReadXs
 {
     MemContext *memContext;
     const Storage *storage;
-    const StorageRead *read;
+    StorageRead *read;
 } StorageReadXs, *pgBackRest__LibC__StorageRead;

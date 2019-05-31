@@ -48,6 +48,31 @@ OUTPUT:
 
 ####################################################################################################################################
 SV *
+get(self, read)
+    pgBackRest::LibC::Storage self
+    pgBackRest::LibC::StorageRead read
+CODE:
+    (void)self;
+    RETVAL = NULL;
+
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        Buffer *buffer = storageGetNP(read->read);
+
+        if (buffer != NULL)
+        {
+            RETVAL = NEWSV(0, bufUsed(buffer));
+            SvPOK_only(RETVAL);
+            memcpy(SvPV_nolen(RETVAL), bufPtr(buffer), bufUsed(buffer));
+            SvCUR_set(RETVAL, bufUsed(buffer));
+        }
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+OUTPUT:
+    RETVAL
+
+####################################################################################################################################
+SV *
 list(self, pathExp, ignoreMissing, expression)
     pgBackRest::LibC::Storage self
     SV *pathExp

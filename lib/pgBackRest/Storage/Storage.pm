@@ -98,6 +98,43 @@ sub exists
 }
 
 ####################################################################################################################################
+# get - reads a buffer from storage all at once
+####################################################################################################################################
+sub get
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $xFile,
+        $strCipherPass,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->get', \@_,
+            {name => 'xFile', required => false, trace => true},
+            {name => 'strCipherPass', optional => true, redact => true},
+        );
+
+    # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or
+    # if the repo has a user passphrase defined - else pass undef
+    my $oFileIo = defined($xFile) ? (ref($xFile) ? $xFile : $self->openRead(
+        $xFile, {strCipherPass => defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser()})) : undef;
+
+    # Get the file contents
+    my $tContent = $self->{oStorageC}->get($oFileIo);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'rtContent', value => defined($oFileIo) ? \$tContent : undef, trace => true},
+    );
+}
+
+####################################################################################################################################
 # hashSize - calculate sha1 hash and size of file. If special encryption settings are required, then the file objects from
 # openRead/openWrite must be passed instead of file names.
 ####################################################################################################################################

@@ -11,5 +11,5 @@ typedef struct StorageWriteXs
 {
     MemContext *memContext;
     const Storage *storage;
-    const StorageWrite *write;
+    StorageWrite *write;
 } StorageWriteXs, *pgBackRest__LibC__StorageWrite;
