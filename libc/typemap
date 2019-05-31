@@ -3,3 +3,16 @@ pgBackRest::LibC::Crypto::Hash T_PTROBJ
 pgBackRest::LibC::Storage T_PTROBJ
 pgBackRest::LibC::StorageRead T_PTROBJ
 pgBackRest::LibC::StorageWrite T_PTROBJ
+
+INPUT
+T_SV
+    STRLEN ${var}SvSize;
+    void *${var}SvPtr = SvPV($arg, ${var}SvSize);
+    (void)${var}SvPtr;
+    $var = $arg;
+
+INPUT
+T_PV
+    STRLEN ${var}PvSize;
+    $var = (void *)SvPV($arg, ${var}PvSize);
+    ((char *)$var)[${var}PvSize] = 0;
