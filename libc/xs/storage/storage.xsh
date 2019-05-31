@@ -7,8 +7,4 @@ Storage XS Header
 #include "common/type/json.h"
 #include "storage/helper.h"
 
-typedef struct StorageXs
-{
-    MemContext *memContext;
-    const Storage *pxPayload;
-} StorageXs, *pgBackRest__LibC__Storage;
+typedef Storage *pgBackRest__LibC__Storage;

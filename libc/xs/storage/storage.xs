@@ -12,21 +12,12 @@ new(class, type)
 CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") == 0);
 
-    RETVAL = NULL;
-
-    MEM_CONTEXT_XS_NEW_BEGIN("StorageXs")
-    {
-        RETVAL = memNew(sizeof(StorageXs));
-        RETVAL->memContext = MEM_CONTEXT_XS();
-
-        if (strcmp(type, "<LOCAL>") == 0)
-            RETVAL->pxPayload = storageLocalWrite();
-        else if (strcmp(type, "<REPO>") == 0)
-            RETVAL->pxPayload = storageRepoWrite();
-        else
-            THROW_FMT(AssertError, "unexpected storage type '%s'", type);
-    }
-    MEM_CONTEXT_XS_NEW_END();
+    if (strcmp(type, "<LOCAL>") == 0)
+        RETVAL = storageLocalWrite();
+    else if (strcmp(type, "<REPO>") == 0)
+        RETVAL = storageRepoWrite();
+    else
+        THROW_FMT(AssertError, "unexpected storage type '%s'", type);
 OUTPUT:
     RETVAL
 
@@ -36,13 +27,7 @@ exists(self, fileExp)
     pgBackRest::LibC::Storage self
     const char *fileExp
 CODE:
-    RETVAL = false;
-
-    MEM_CONTEXT_XS_BEGIN(self->memContext)
-    {
-        RETVAL = storageExistsNP(self->pxPayload, STR(fileExp));
-    }
-    MEM_CONTEXT_XS_END();
+    RETVAL = storageExistsNP(self, STR(fileExp));
 OUTPUT:
     RETVAL
 
@@ -57,7 +42,7 @@ CODE:
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        Buffer *buffer = storageGetNP(read->read);
+        Buffer *buffer = storageGetNP(read);
 
         if (buffer != NULL)
         {
@@ -81,13 +66,13 @@ list(self, pathExp, ignoreMissing, expression)
 CODE:
     RETVAL = NULL;
 
-    MEM_CONTEXT_XS_BEGIN(self->memContext)
+    MEM_CONTEXT_XS_TEMP_BEGIN()
     {
         STRLEN pathExpSize;
         const void *pathExpPtr = SvPV(pathExp, pathExpSize);
 
         StringList *fileList = storageListP(
-            self->pxPayload, strNewN(pathExpPtr, pathExpSize), .errorOnMissing = !ignoreMissing,
+            self, strNewN(pathExpPtr, pathExpSize), .errorOnMissing = !ignoreMissing,
             .expression = strlen(expression) == 0 ? NULL : STR(expression));
 
         if (fileList != NULL)
@@ -100,7 +85,7 @@ CODE:
             SvCUR_set(RETVAL, strSize(fileListJson));
         }
     }
-    MEM_CONTEXT_XS_END();
+    MEM_CONTEXT_XS_TEMP_END();
 OUTPUT:
     RETVAL
 
@@ -113,13 +98,9 @@ pathCreate(self, pathExp, mode, ignoreExists, createParent)
     bool ignoreExists
     bool createParent
 CODE:
-    MEM_CONTEXT_XS_BEGIN(self->memContext)
-    {
-        storagePathCreateP(
-            self->pxPayload, STR(pathExp), .mode = strlen(mode) == 0 ? 0 : cvtZToIntBase(mode, 8), .errorOnExists = !ignoreExists,
-            .noParentCreate = !createParent);
-    }
-    MEM_CONTEXT_XS_END();
+    storagePathCreateP(
+        self, STR(pathExp), .mode = strlen(mode) == 0 ? 0 : cvtZToIntBase(mode, 8), .errorOnExists = !ignoreExists,
+        .noParentCreate = !createParent);
 
 ####################################################################################################################################
 bool
@@ -127,13 +108,7 @@ pathExists(self, pathExp)
     pgBackRest::LibC::Storage self
     const char *pathExp
 CODE:
-    RETVAL = false;
-
-    MEM_CONTEXT_XS_BEGIN(self->memContext)
-    {
-        RETVAL = storagePathExistsNP(self->pxPayload, STR(pathExp));
-    }
-    MEM_CONTEXT_XS_END();
+    RETVAL = storagePathExistsNP(self, STR(pathExp));
 OUTPUT:
     RETVAL
 
@@ -145,7 +120,7 @@ pathGet(self, pathExp)
 CODE:
     RETVAL = NULL;
 
-    MEM_CONTEXT_XS_BEGIN(self->memContext)
+    MEM_CONTEXT_XS_TEMP_BEGIN()
     {
         String *path = storagePathNP(self->pxPayload, STR(pathExp));
 
@@ -154,13 +129,24 @@ CODE:
         memcpy(SvPV_nolen(RETVAL), strPtr(path), strSize(path));
         SvCUR_set(RETVAL, strSize(path));
     }
-    MEM_CONTEXT_XS_END();
+    MEM_CONTEXT_XS_TEMP_END();
 OUTPUT:
     RETVAL
 
 ####################################################################################################################################
-void
-DESTROY(self)
+U8
+put(self, write, buffer)
     pgBackRest::LibC::Storage self
+    pgBackRest::LibC::StorageWrite write
+    SV *buffer
 CODE:
-    MEM_CONTEXT_XS_DESTROY(self->memContext);
+    (void)self;
+
+    STRLEN bufferSize;
+    const void *bufferPtr = SvPV(buffer, bufferSize);
+
+    storagePutNP(write, BUF(bufferPtr, bufferSize));
+
+    RETVAL = bufferSize;
+OUTPUT:
+    RETVAL

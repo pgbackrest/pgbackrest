@@ -759,6 +759,45 @@ sub pathGet
 # }
 
 ####################################################################################################################################
+# put - writes a buffer out to storage all at once
+####################################################################################################################################
+sub put
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $xFile,
+        $xContent,
+        $strCipherPass,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->put', \@_,
+            {name => 'xFile', trace => true},
+            {name => 'xContent', required => false, trace => true},
+            {name => 'strCipherPass', optional => true, trace => true, redact => true},
+        );
+
+    # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or if
+    # the repo has a user passphrase defined - else pass undef
+    my $oFileIo = ref($xFile) ? $xFile : $self->openWrite(
+        $xFile, {strCipherPass => defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser()});
+
+    # Write the content
+    my $lSize = $self->{oStorageC}->put($oFileIo, ref($xContent) ? $$xContent : $xContent);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'lSize', value => $lSize, trace => true},
+    );
+}
+
+####################################################################################################################################
 # remove - remove path/file
 ####################################################################################################################################
 # sub remove

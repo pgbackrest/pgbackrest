@@ -14,53 +14,13 @@ new(class, storage, file, ignoreMissing)
 CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageRead") == 0);
 
-    RETVAL = NULL;
-
-    MEM_CONTEXT_XS_NEW_BEGIN("StorageReadXs")
-    {
-        RETVAL = memNew(sizeof(StorageReadXs));
-        RETVAL->memContext = MEM_CONTEXT_XS();
-
-        RETVAL->storage = storage->pxPayload;
-        RETVAL->read = storageNewReadP(storage->pxPayload, STR(file), .ignoreMissing = ignoreMissing);
-    }
-    MEM_CONTEXT_XS_NEW_END();
+    RETVAL = storageNewReadP(storage->pxPayload, STR(file), .ignoreMissing = ignoreMissing);
 OUTPUT:
     RETVAL
-
-####################################################################################################################################
-U32
-read(self, buffer, size)
-    pgBackRest::LibC::StorageRead self
-    SV *buffer
-    U32 size
-CODE:
-    RETVAL = 0;
-
-    MEM_CONTEXT_XS_BEGIN(self->memContext)
-    {
-        buffer = NEWSV(0, ioBufferSize());
-        SvPOK_only(buffer);
-
-        Buffer *tempBuffer = bufNewUseC(SvPV_nolen(buffer), size);
-        RETVAL = (uint32_t)ioRead(storageReadIo(self->read), tempBuffer);
-
-        SvCUR_set(buffer, RETVAL);
-    }
-    MEM_CONTEXT_XS_END();
-OUTPUT:
-    RETVAL
-
-####################################################################################################################################
-void
-close(self)
-    pgBackRest::LibC::StorageRead self
-CODE:
-    ioReadClose(storageReadIo(self->read));
 
 ####################################################################################################################################
 void
 DESTROY(self)
     pgBackRest::LibC::StorageRead self
 CODE:
-    MEM_CONTEXT_XS_DESTROY(self->memContext);
+    storageReadFree(self);
