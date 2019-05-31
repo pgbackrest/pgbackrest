@@ -20,7 +20,7 @@ CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageWrite") == 0);
 
     RETVAL = storageNewWriteP(
-        storage->pxPayload, STR(file), .modeFile = mode, .user = strlen(user) == 0 ? NULL : STR(user),
+        storage, STR(file), .modeFile = mode, .user = strlen(user) == 0 ? NULL : STR(user),
         .group = strlen(group) == 0 ? NULL : STR(group), .timeModified = (time_t)timeModified, .noCreatePath = !pathCreate,
         .noSyncPath = !atomic, .noAtomic = !atomic);
 OUTPUT:

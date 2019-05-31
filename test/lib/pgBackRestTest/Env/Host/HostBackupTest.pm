@@ -2049,8 +2049,8 @@ sub backupDestination {return shift->{strBackupDestination}}
 sub backrestExe {return testRunGet()->backrestExe()}
 sub bogusHost {return shift->{bBogusHost}}
 sub hardLink {return shift->{bHardLink}}
-sub hasLink {storageRepo()->driver()->className() eq STORAGE_POSIX_DRIVER}
-sub isFS {storageRepo()->driver()->className() ne STORAGE_S3_DRIVER}
+sub hasLink {storageRepo()->type() eq 'posix'}
+sub isFS {storageRepo()->type() ne 's3'}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
 sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}

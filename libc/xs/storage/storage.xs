@@ -13,9 +13,9 @@ CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") == 0);
 
     if (strcmp(type, "<LOCAL>") == 0)
-        RETVAL = storageLocalWrite();
+        RETVAL = (Storage *)storageLocalWrite();
     else if (strcmp(type, "<REPO>") == 0)
-        RETVAL = storageRepoWrite();
+        RETVAL = (Storage *)storageRepoWrite();
     else
         THROW_FMT(AssertError, "unexpected storage type '%s'", type);
 OUTPUT:
@@ -122,7 +122,7 @@ CODE:
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        String *path = storagePathNP(self->pxPayload, STR(pathExp));
+        String *path = storagePathNP(self, STR(pathExp));
 
         RETVAL = NEWSV(0, strSize(path));
         SvPOK_only(RETVAL);
@@ -148,5 +148,14 @@ CODE:
     storagePutNP(write, BUF(bufferPtr, bufferSize));
 
     RETVAL = bufferSize;
+OUTPUT:
+    RETVAL
+
+####################################################################################################################################
+const char *
+type(self)
+    pgBackRest::LibC::Storage self
+CODE:
+    RETVAL = strPtr(storageType(self));
 OUTPUT:
     RETVAL

@@ -14,7 +14,7 @@ new(class, storage, file, ignoreMissing)
 CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageRead") == 0);
 
-    RETVAL = storageNewReadP(storage->pxPayload, STR(file), .ignoreMissing = ignoreMissing);
+    RETVAL = storageNewReadP(storage, STR(file), .ignoreMissing = ignoreMissing);
 OUTPUT:
     RETVAL
 

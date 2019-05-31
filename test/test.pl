@@ -853,11 +853,10 @@ eval
                         ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
                     my $strLdFlags = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
                     my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
+                    my $strBuildFlags = "CFLAGS=${strCFlags}\nLDFLAGS=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
+                    my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
 
-                    my $bBuildOptionsDiffer = buildPutDiffers(
-                        $oStorageBackRest, "${strBinPath}/${strBuildVM}/build.flags",
-                        "CFLAGS=${strCFlags}\nLDFLAGS=${strLdFlags}\nCONFIGURE=${strConfigOptions}");
-
+                    my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
                     $bBuildOptionsDiffer |= grep(/^src\/configure|src\/Makefile.in|src\/build\.auto\.h$/, @stryModifiedList);
 
                     # Rebuild if the modification time of the smart file does equal the last changes in source paths
@@ -892,6 +891,7 @@ eval
                             "rsync -rt" . (!$bSmart || $bBuildOptionsDiffer ? " --delete-excluded" : '') .
                             " --include=" . join('/*** --include=', @stryBinSrcPath) . '/*** --exclude=*' .
                             " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
+                        buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
 
                         if (vmLintC($strVm) && !$bNoLint)
                         {

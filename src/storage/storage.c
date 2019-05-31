@@ -748,7 +748,7 @@ void *
 storageDriver(const Storage *this)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_TEST_PARAM(STORAGE, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -763,8 +763,8 @@ bool
 storageFeature(const Storage *this, StorageFeature feature)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE, this);
-        FUNCTION_LOG_PARAM(ENUM, feature);
+        FUNCTION_TEST_PARAM(STORAGE, this);
+        FUNCTION_TEST_PARAM(ENUM, feature);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -779,12 +779,27 @@ StorageInterface
 storageInterface(const Storage *this)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_TEST_PARAM(STORAGE, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->interface);
+}
+
+/***********************************************************************************************************************************
+Get the storage type (posix, cifs, etc.)
+***********************************************************************************************************************************/
+const String *
+storageType(const Storage *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->type);
 }
 
 /***********************************************************************************************************************************

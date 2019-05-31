@@ -953,8 +953,8 @@ sub encryptionValid
 ####################################################################################################################################
 # Getters
 ####################################################################################################################################
+sub type {shift->{oStorageC}->type()}
 # sub pathBase {shift->{strPathBase}}
-# sub driver {shift->{oDriver}}
 sub cipherType {shift->{strCipherType}}
 sub cipherPassUser {shift->{strCipherPassUser}}
 
