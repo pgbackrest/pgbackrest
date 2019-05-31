@@ -31,13 +31,18 @@ sub new
         my $strOperation,
         $self->{strType},
         $self->{lBufferMax},
+        $self->{strDefaultPathMode},
+        $self->{strDefaultFileMode},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strType'},
-            {name => 'lBufferMax', default => 65536},
+            {name => 'lBufferMax', optional => true, default => 65536},
+            {name => 'strDefaultPathMode', optional => true, default => '0750'},
+            {name => 'strDefaultFileMode', optional => true, default => '0640'},
         );
+
 
     # Create C storage object
     $self->{oStorageC} = new pgBackRest::LibC::Storage($self->{strType});
@@ -65,32 +70,32 @@ sub new
 ####################################################################################################################################
 # exists - check if file exists
 ####################################################################################################################################
-# sub exists
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strFileExp,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->exists', \@_,
-#             {name => 'strFileExp'},
-#         );
-#
-#     # Check exists
-#     my $bExists = $self->driver()->exists($self->pathGet($strFileExp));
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'bExists', value => $bExists}
-#     );
-# }
+sub exists
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileExp,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->exists', \@_,
+            {name => 'strFileExp'},
+        );
+
+    # Check exists
+    my $bExists = $self->{oStorageC}->exists($strFileExp);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bExists', value => $bExists}
+    );
+}
 
 ####################################################################################################################################
 # hashSize - calculate sha1 hash and size of file. If special encryption settings are required, then the file objects from
@@ -436,66 +441,65 @@ sub openRead
 ####################################################################################################################################
 # openWrite - open file for writing
 ####################################################################################################################################
-# sub openWrite
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $xFileExp,
-#         $strMode,
-#         $strUser,
-#         $strGroup,
-#         $lTimestamp,
-#         $bAtomic,
-#         $bPathCreate,
-#         $rhyFilter,
-#         $strCipherPass,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->openWrite', \@_,
-#             {name => 'xFileExp'},
-#             {name => 'strMode', optional => true, default => $self->{strDefaultFileMode}},
-#             {name => 'strUser', optional => true},
-#             {name => 'strGroup', optional => true},
-#             {name => 'lTimestamp', optional => true},
-#             {name => 'bAtomic', optional => true, default => false},
-#             {name => 'bPathCreate', optional => true, default => false},
-#             {name => 'rhyFilter', optional => true},
-#             {name => 'strCipherPass', optional => true, redact => true},
-#         );
-#
-#     # Open the file
-#     my $oFileIo = $self->driver()->openWrite($self->pathGet($xFileExp),
-#         {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lTimestamp, bPathCreate => $bPathCreate,
-#             bAtomic => $bAtomic});
-#
-#     # If cipher is set then add filter so that encryption is performed just before the data is actually written
-#     if (defined($self->cipherType()))
-#     {
-#         $oFileIo = &STORAGE_FILTER_CIPHER_BLOCK->new(
-#             $oFileIo, $self->cipherType(), defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser());
-#     }
-#
-#     # Apply any other filters
-#     if (defined($rhyFilter))
-#     {
-#         foreach my $rhFilter (reverse(@{$rhyFilter}))
-#         {
-#             $oFileIo = $rhFilter->{strClass}->new($oFileIo, @{$rhFilter->{rxyParam}});
-#         }
-#     }
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'oFileIo', value => $oFileIo, trace => true},
-#     );
-# }
+sub openWrite
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $xFileExp,
+        $strMode,
+        $strUser,
+        $strGroup,
+        $lTimestamp,
+        $bAtomic,
+        $bPathCreate,
+        $rhyFilter,
+        $strCipherPass,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->openWrite', \@_,
+            {name => 'xFileExp'},
+            {name => 'strMode', optional => true, default => $self->{strDefaultFileMode}},
+            {name => 'strUser', optional => true, default => ''},
+            {name => 'strGroup', optional => true, default => ''},
+            {name => 'lTimestamp', optional => true, default => '0'},
+            {name => 'bAtomic', optional => true, default => false},
+            {name => 'bPathCreate', optional => true, default => false},
+            {name => 'rhyFilter', optional => true},
+            {name => 'strCipherPass', optional => true, redact => true},
+        );
+
+    # Open the file
+    my $oFileIo = new pgBackRest::LibC::StorageWrite(
+        $self->{oStorageC}, $xFileExp, oct($strMode), $strUser, $strGroup, $lTimestamp, $bAtomic, $bPathCreate);
+
+    # # If cipher is set then add filter so that encryption is performed just before the data is actually written
+    # if (defined($self->cipherType()))
+    # {
+    #     $oFileIo = &STORAGE_FILTER_CIPHER_BLOCK->new(
+    #         $oFileIo, $self->cipherType(), defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser());
+    # }
+    #
+    # # Apply any other filters
+    # if (defined($rhyFilter))
+    # {
+    #     foreach my $rhFilter (reverse(@{$rhyFilter}))
+    #     {
+    #         $oFileIo = $rhFilter->{strClass}->new($oFileIo, @{$rhFilter->{rxyParam}});
+    #     }
+    # }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oFileIo', value => $oFileIo, trace => true},
+    );
+}
 
 ####################################################################################################################################
 # owner - change ownership of path/file

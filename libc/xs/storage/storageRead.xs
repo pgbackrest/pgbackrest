@@ -22,7 +22,7 @@ CODE:
         MEM_CONTEXT_XS_NEW_BEGIN("StorageReadXs")
         {
             RETVAL = memNew(sizeof(StorageReadXs));
-            RETVAL->memContext = MEM_COMTEXT_XS();
+            RETVAL->memContext = MEM_CONTEXT_XS();
 
             RETVAL->storage = storage->pxPayload;
             RETVAL->read = read;
@@ -58,6 +58,13 @@ CODE:
     MEM_CONTEXT_XS_END();
 OUTPUT:
     RETVAL
+
+####################################################################################################################################
+void
+close(self)
+    pgBackRest::LibC::StorageRead self
+CODE:
+    ioReadClose(storageReadIo(self->read));
 
 ####################################################################################################################################
 void

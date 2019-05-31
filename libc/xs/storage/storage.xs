@@ -17,7 +17,7 @@ CODE:
     MEM_CONTEXT_XS_NEW_BEGIN("StorageXs")
     {
         RETVAL = memNew(sizeof(StorageXs));
-        RETVAL->memContext = MEM_COMTEXT_XS();
+        RETVAL->memContext = MEM_CONTEXT_XS();
 
         if (strcmp(type, "<LOCAL>") == 0)
             RETVAL->pxPayload = storageLocalWrite();
@@ -31,10 +31,26 @@ OUTPUT:
     RETVAL
 
 ####################################################################################################################################
+bool
+exists(self, fileExp)
+    pgBackRest::LibC::Storage self
+    const char *fileExp
+CODE:
+    RETVAL = false;
+
+    MEM_CONTEXT_XS_BEGIN(self->memContext)
+    {
+        RETVAL = storageExistsNP(self->pxPayload, STR(fileExp));
+    }
+    MEM_CONTEXT_XS_END();
+OUTPUT:
+    RETVAL
+
+####################################################################################################################################
 SV *
 list(self, pathExp, ignoreMissing, expression)
     pgBackRest::LibC::Storage self
-    const char *pathExp
+    SV *pathExp
     bool ignoreMissing
     const char *expression
 CODE:
@@ -42,8 +58,11 @@ CODE:
 
     MEM_CONTEXT_XS_BEGIN(self->memContext)
     {
+        STRLEN pathExpSize;
+        const void *pathExpPtr = SvPV(pathExp, pathExpSize);
+
         StringList *fileList = storageListP(
-            self->pxPayload, STR(pathExp), .errorOnMissing = !ignoreMissing,
+            self->pxPayload, strNewN(pathExpPtr, pathExpSize), .errorOnMissing = !ignoreMissing,
             .expression = strlen(expression) == 0 ? NULL : STR(expression));
 
         if (fileList != NULL)
