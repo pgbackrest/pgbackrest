@@ -90,6 +90,32 @@ OUTPUT:
     RETVAL
 
 ####################################################################################################################################
+SV *
+manifest(self, path, filter=NULL)
+    pgBackRest::LibC::Storage self
+    SV *path
+    SV *filter = SvOK($arg) ? $arg : NULL;
+CODE:
+    RETVAL = NULL;
+
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        String *manifestJson = strNew("{}");
+
+        (void)self;
+        (void)path;
+        (void)filter;
+
+        RETVAL = NEWSV(0, strSize(manifestJson));
+        SvPOK_only(RETVAL);
+        memcpy(SvPV_nolen(RETVAL), strPtr(manifestJson), strSize(manifestJson));
+        SvCUR_set(RETVAL, strSize(manifestJson));
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+OUTPUT:
+    RETVAL
+
+####################################################################################################################################
 void
 pathCreate(self, pathExp, mode, ignoreExists, createParent)
     pgBackRest::LibC::Storage self

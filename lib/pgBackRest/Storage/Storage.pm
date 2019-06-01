@@ -343,35 +343,35 @@ sub list
 }
 
 ####################################################################################################################################
-# manifest - build path/file/link manifest starting with base path and including all subpaths
+# build path/file/link manifest starting with base path and including all subpaths
 ####################################################################################################################################
-# sub manifest
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strPathExp,
-#         $strFilter,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->manifest', \@_,
-#             {name => 'strPathExp'},
-#             {name => 'strFilter', optional => true, trace => true},
-#         );
-#
-#     my $hManifest = $self->driver()->manifest($self->pathGet($strPathExp), {strFilter => $strFilter});
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'hManifest', value => $hManifest, trace => true}
-#     );
-# }
+sub manifest
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+        $strFilter,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->manifest', \@_,
+            {name => 'strPathExp'},
+            {name => 'strFilter', optional => true, trace => true},
+        );
+
+    my $hManifest = $self->{oJSON}->decode($self->{oStorageC}->manifest($strPathExp, $strFilter));
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hManifest', value => $hManifest, trace => true}
+    );
+}
 
 ####################################################################################################################################
 # move - move path/file

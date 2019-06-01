@@ -688,6 +688,56 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC__Storage_manifest); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_manifest)
+{
+    dVAR; dXSARGS;
+    if (items < 2 || items > 3)
+       croak_xs_usage(cv,  "self, path, filter=NULL");
+    {
+	pgBackRest__LibC__Storage	self;
+	SV *	path;
+	SV *	filter = SvOK(ST(2)) ? ST(2) : NULL;
+	SV *	RETVAL;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Storage,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Storage::manifest",
+			"self", "pgBackRest::LibC::Storage")
+;
+
+    STRLEN pathSvSize;
+    void *pathSvPtr = SvPV(ST(1), pathSvSize);
+    (void)pathSvPtr;
+    path = ST(1)
+;
+    RETVAL = NULL;
+
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        String *manifestJson = strNew("{}");
+
+        (void)self;
+        (void)path;
+        (void)filter;
+
+        RETVAL = NEWSV(0, strSize(manifestJson));
+        SvPOK_only(RETVAL);
+        memcpy(SvPV_nolen(RETVAL), strPtr(manifestJson), strSize(manifestJson));
+        SvCUR_set(RETVAL, strSize(manifestJson));
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+	RETVAL = sv_2mortal(RETVAL);
+	ST(0) = RETVAL;
+    }
+    XSRETURN(1);
+}
+
+
 XS_EUPXS(XS_pgBackRest__LibC__Storage_pathCreate); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__Storage_pathCreate)
 {
@@ -1936,6 +1986,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::Storage::exists", XS_pgBackRest__LibC__Storage_exists);
         newXS_deffile("pgBackRest::LibC::Storage::get", XS_pgBackRest__LibC__Storage_get);
         newXS_deffile("pgBackRest::LibC::Storage::list", XS_pgBackRest__LibC__Storage_list);
+        newXS_deffile("pgBackRest::LibC::Storage::manifest", XS_pgBackRest__LibC__Storage_manifest);
         newXS_deffile("pgBackRest::LibC::Storage::pathCreate", XS_pgBackRest__LibC__Storage_pathCreate);
         newXS_deffile("pgBackRest::LibC::Storage::pathExists", XS_pgBackRest__LibC__Storage_pathExists);
         newXS_deffile("pgBackRest::LibC::Storage::pathGet", XS_pgBackRest__LibC__Storage_pathGet);
