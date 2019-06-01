@@ -9,6 +9,7 @@ T_SV
     STRLEN ${var}SvSize;
     void *${var}SvPtr = SvPV($arg, ${var}SvSize);
     (void)${var}SvPtr;
+    (void)${var};
     $var = $arg;
 
 INPUT

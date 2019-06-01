@@ -653,6 +653,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
     STRLEN pathExpSvSize;
     void *pathExpSvPtr = SvPV(ST(1), pathExpSvSize);
     (void)pathExpSvPtr;
+    (void)pathExp;
     pathExp = ST(1)
 ;
 
@@ -713,22 +714,23 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_manifest)
     STRLEN pathSvSize;
     void *pathSvPtr = SvPV(ST(1), pathSvSize);
     (void)pathSvPtr;
+    (void)path;
     path = ST(1)
 ;
     RETVAL = NULL;
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        String *manifestJson = strNew("{}");
+        StorageManifestXsCallbackData data = {.json = strNew("{"), .path = strNewN(pathSvPtr, pathSvSize)};
 
-        (void)self;
-        (void)path;
+        storageInfoListP(self, data.path, storageManifestXsCallback, &data, .errorOnMissing = true);
+        strCat(data.json, "}");
         (void)filter;
 
-        RETVAL = NEWSV(0, strSize(manifestJson));
+        RETVAL = NEWSV(0, strSize(data.json));
         SvPOK_only(RETVAL);
-        memcpy(SvPV_nolen(RETVAL), strPtr(manifestJson), strSize(manifestJson));
-        SvCUR_set(RETVAL, strSize(manifestJson));
+        memcpy(SvPV_nolen(RETVAL), strPtr(data.json), strSize(data.json));
+        SvCUR_set(RETVAL, strSize(data.json));
     }
     MEM_CONTEXT_XS_TEMP_END();
 	RETVAL = sv_2mortal(RETVAL);
@@ -892,6 +894,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_put)
     STRLEN bufferSvSize;
     void *bufferSvPtr = SvPV(ST(2), bufferSvSize);
     (void)bufferSvPtr;
+    (void)buffer;
     buffer = ST(2)
 ;
     (void)self;
@@ -1140,6 +1143,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_process)
     STRLEN messageSvSize;
     void *messageSvPtr = SvPV(ST(1), messageSvSize);
     (void)messageSvPtr;
+    (void)message;
     message = ST(1)
 ;
     MEM_CONTEXT_XS_TEMP_BEGIN()
@@ -1237,6 +1241,7 @@ XS_EUPXS(XS_pgBackRest__LibC_cryptoHashOne)
     STRLEN messageSvSize;
     void *messageSvPtr = SvPV(ST(1), messageSvSize);
     (void)messageSvPtr;
+    (void)message;
     message = ST(1)
 ;
     RETVAL = NULL;
@@ -1357,6 +1362,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_process)
     STRLEN sourceSvSize;
     void *sourceSvPtr = SvPV(ST(1), sourceSvSize);
     (void)sourceSvPtr;
+    (void)source;
     source = ST(1)
 ;
     RETVAL = NULL;
@@ -1888,6 +1894,7 @@ XS_EUPXS(XS_pgBackRest__LibC_encodeToStr)
     STRLEN sourceSvSize;
     void *sourceSvPtr = SvPV(ST(1), sourceSvSize);
     (void)sourceSvPtr;
+    (void)source;
     source = ST(1)
 ;
     RETVAL = NULL;

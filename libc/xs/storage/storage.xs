@@ -100,16 +100,16 @@ CODE:
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        String *manifestJson = strNew("{}");
+        StorageManifestXsCallbackData data = {.json = strNew("{"), .path = strNewN(pathSvPtr, pathSvSize)};
 
-        (void)self;
-        (void)path;
+        storageInfoListP(self, data.path, storageManifestXsCallback, &data, .errorOnMissing = true);
+        strCat(data.json, "}");
         (void)filter;
 
-        RETVAL = NEWSV(0, strSize(manifestJson));
+        RETVAL = NEWSV(0, strSize(data.json));
         SvPOK_only(RETVAL);
-        memcpy(SvPV_nolen(RETVAL), strPtr(manifestJson), strSize(manifestJson));
-        SvCUR_set(RETVAL, strSize(manifestJson));
+        memcpy(SvPV_nolen(RETVAL), strPtr(data.json), strSize(data.json));
+        SvCUR_set(RETVAL, strSize(data.json));
     }
     MEM_CONTEXT_XS_TEMP_END();
 OUTPUT:
