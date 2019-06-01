@@ -100,6 +100,7 @@ testRun(void)
 
         TEST_RESULT_PTR(storageInterface(storageTest).exists, storageTest->interface.exists, "    check interface");
         TEST_RESULT_PTR(storageDriver(storageTest), storageTest->driver, "    check driver");
+        TEST_RESULT_PTR(storageType(storageTest), storageTest->type, "    check type");
 
         TEST_RESULT_VOID(storageFree(storageTest), "free storage");
     }
