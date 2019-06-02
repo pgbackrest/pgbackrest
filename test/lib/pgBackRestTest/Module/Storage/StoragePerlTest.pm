@@ -93,19 +93,6 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin('openWrite()'))
-    {
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # my $oFileIo = $self->testResult(sub {$self->storageLocal()->openWrite($strFile)}, '[object]', 'open write');
-        #
-        # $self->testResult(sub {$oFileIo->write(\$strFileContent)}, $iFileSize, "write $iFileSize bytes");
-        # $self->testResult(sub {$oFileIo->close()}, true, 'close');
-        #
-        # # Check that it is not encrypted
-        # $self->testResult(sub {$self->storageLocal()->encrypted($strFile)}, false, 'test storage not encrypted');
-    }
-
-    ################################################################################################################################
     if ($self->begin('put()'))
     {
         #---------------------------------------------------------------------------------------------------------------------------
@@ -127,69 +114,27 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin('openRead()'))
-    {
-        # my $tContent;
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {$self->storageLocal()->openRead($strFile, {bIgnoreMissing => true})}, undef, 'ignore missing');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testException(
-        #     sub {$self->storageLocal()->openRead($strFile)}, ERROR_FILE_MISSING,
-        #     "unable to open '" . $self->storageLocal()->pathBase() . "/${strFile}': No such file or directory");
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # executeTest('sudo touch ' . $self->pathLocal() . "/${strFile} && sudo chmod 700 " . $self->pathLocal() . "/${strFile}");
-        #
-        # $self->testException(
-        #     sub {$self->storageLocal()->openRead($strFile)}, ERROR_FILE_OPEN,
-        #     "unable to open '" . $self->storageLocal()->pathBase() . "/${strFile}': Permission denied");
-        #
-        # executeTest('sudo rm ' . $self->pathLocal() . "/${strFile}");
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->storageLocal()->put($self->storageLocal()->openWrite($strFile), $strFileContent);
-        #
-        # my $oFileIo = $self->testResult(sub {$self->storageLocal()->openRead($strFile)}, '[object]', 'open read');
-        #
-        # $self->testResult(sub {$oFileIo->read(\$tContent, $iFileSize)}, $iFileSize, "read $iFileSize bytes");
-        # $self->testResult($tContent, $strFileContent, '    check read');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $oFileIo = $self->testResult(
-        #     sub {$self->storageLocal()->openRead($strFile, {rhyFilter => [{strClass => STORAGE_FILTER_SHA}]})}, '[object]',
-        #     'open read + checksum');
-        #
-        # undef($tContent);
-        # $self->testResult(sub {$oFileIo->read(\$tContent, $iFileSize)}, $iFileSize, "read $iFileSize bytes");
-        # $self->testResult(sub {$oFileIo->close()}, true, 'close');
-        # $self->testResult($tContent, $strFileContent, '    check read');
-        # $self->testResult($oFileIo->result(STORAGE_FILTER_SHA), cryptoHashOne('sha1', $strFileContent), '    check hash');
-    }
-
-    ################################################################################################################################
     if ($self->begin('get()'))
     {
-        # my $tBuffer;
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {$self->storageLocal()->get($self->storageLocal()->openRead($strFile, {bIgnoreMissing => true}))}, undef,
-        #     'get missing');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->storageLocal()->put($strFile);
-        # $self->testResult(sub {${$self->storageLocal()->get($strFile)}}, undef, 'get empty');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->storageLocal()->put($strFile, $strFileContent);
-        # $self->testResult(sub {${$self->storageLocal()->get($strFile)}}, $strFileContent, 'get');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {${$self->storageLocal()->get($self->storageLocal()->openRead($strFile))}}, $strFileContent, 'get from io');
+        my $tBuffer;
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$self->storageLocal()->get($self->storageLocal()->openRead($strFile, {bIgnoreMissing => true}))}, undef,
+            'get missing');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        # !!! empty files are not working
+        $self->storageLocal()->put($strFile);
+        $self->testResult(sub {${$self->storageLocal()->get($strFile)}}, undef, 'get empty');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->storageLocal()->put($strFile, $strFileContent);
+        $self->testResult(sub {${$self->storageLocal()->get($strFile)}}, $strFileContent, 'get');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {${$self->storageLocal()->get($self->storageLocal()->openRead($strFile))}}, $strFileContent, 'get from io');
     }
 
     ################################################################################################################################
@@ -266,7 +211,7 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin("manifest()"))
+    if ($self->begin("manifest() and list()"))
     {
         #---------------------------------------------------------------------------------------------------------------------------
         # my $strMissingFile = $self->testPath() . '/missing';
@@ -279,6 +224,7 @@ sub run
         # Setup test data
         executeTest('mkdir -m 750 ' . $self->testPath() . '/sub1');
         executeTest('mkdir -m 750 ' . $self->testPath() . '/sub1/sub2');
+        executeTest('mkdir -m 750 ' . $self->testPath() . '/sub2');
 
         executeTest("echo 'TESTDATA' > " . $self->testPath() . '/test.txt');
         utime(1111111111, 1111111111, $self->testPath() . '/test.txt');
@@ -322,10 +268,23 @@ sub run
             'sub1/test-sub1.txt => ' .
                 '{group => ' . $self->group() . ', mode => 0646, modification_time => 1111111112, size => 10, type => f, user => ' .
                 $self->pgUser() . '}, ' .
+            'sub2 => {group => ' . $self->group() . ', mode => 0750, type => d, user => ' . $self->pgUser() . '}, ' .
             'test.txt => ' .
                 '{group => ' . $self->group() . ', mode => 0640, modification_time => 1111111111, size => 9, type => f, user => ' .
                 $self->pgUser() . '}}',
             'complete manifest');
+
+        $self->testResult(sub {$self->storageLocal()->list($self->testPath())}, "(sub1, sub2, test.txt)", "list");
+        $self->testResult(sub {$self->storageLocal()->list($self->testPath(), {strExpression => "2\$"})}, "(sub2)", "list");
+        $self->testResult(
+            sub {$self->storageLocal()->list($self->testPath(), {strSortOrder => 'reverse'})}, "(test.txt, sub2, sub1)",
+            "list reverse");
+        $self->testResult(sub {$self->storageLocal()->list($self->testPath() . "/sub2")}, "[undef]", "list empty");
+        $self->testResult(
+            sub {$self->storageLocal()->list($self->testPath() . "/sub99", {bIgnoreMissing => true})}, "[undef]", "list missing");
+        $self->testException(
+            sub {$self->storageLocal()->list($self->testPath() . "/sub99")}, ERROR_PATH_MISSING,
+            "unable to list files for missing path '" . $self->testPath() . "/sub99'");
     }
 
     ################################################################################################################################

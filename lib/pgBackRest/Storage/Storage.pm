@@ -124,13 +124,20 @@ sub get
         $xFile, {strCipherPass => defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser()})) : undef;
 
     # Get the file contents
+    my $bEmpty = false;
     my $tContent = $self->{oStorageC}->get($oFileIo);
+
+    if (defined($tContent) && length($tContent) == 0)
+    {
+        $tContent = undef;
+        $bEmpty = true;
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'rtContent', value => defined($oFileIo) ? \$tContent : undef, trace => true},
+        {name => 'rtContent', value => defined($tContent) || $bEmpty ? \$tContent : undef, trace => true},
     );
 }
 
@@ -326,8 +333,7 @@ sub list
 
     # Get file list
     my @stryFileList;
-    my $strFileList = $self->{oStorageC}->list(
-        $strPathExp, $bIgnoreMissing, $strSortOrder eq 'forward', defined($strExpression) ? $strExpression : '');
+    my $strFileList = $self->{oStorageC}->list($strPathExp, $bIgnoreMissing, $strSortOrder eq 'forward', $strExpression);
 
     if (defined($strFileList) && $strFileList ne '[]')
     {

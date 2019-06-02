@@ -293,15 +293,11 @@ XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove)
     if (items != 3)
        croak_xs_usage(cv,  "path, errorOnMissing, recurse");
     {
-	const char *	path;
+	const char *	path = (const char *)SvPV_nolen(ST(0))
+;
 	bool	errorOnMissing = (bool)SvTRUE(ST(1))
 ;
 	bool	recurse = (bool)SvTRUE(ST(2))
-;
-
-    STRLEN pathPvSize;
-    path = (void *)SvPV(ST(0), pathPvSize);
-    ((char *)path)[pathPvSize] = 0
 ;
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
@@ -338,13 +334,17 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_new)
     if (items != 9)
        croak_xs_usage(cv,  "class, storage, file, mode, user, group, timeModified, atomic, pathCreate");
     {
-	const char *	class;
+	const char *	class = (const char *)SvPV_nolen(ST(0))
+;
 	pgBackRest__LibC__Storage	storage;
-	const char *	file;
+	SV *	file = ST(2)
+;
 	U32	mode = (unsigned long)SvUV(ST(3))
 ;
-	const char *	user;
-	const char *	group;
+	const char *	user = (const char *)SvPV_nolen(ST(4))
+;
+	const char *	group = (const char *)SvPV_nolen(ST(5))
+;
 	U8	timeModified = (U8)SvUV(ST(6))
 ;
 	bool	atomic = (bool)SvTRUE(ST(7))
@@ -352,11 +352,6 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_new)
 	bool	pathCreate = (bool)SvTRUE(ST(8))
 ;
 	pgBackRest__LibC__StorageWrite	RETVAL;
-
-    STRLEN classPvSize;
-    class = (void *)SvPV(ST(0), classPvSize);
-    ((char *)class)[classPvSize] = 0
-;
 
 	if (SvROK(ST(1)) && sv_derived_from(ST(1), "pgBackRest::LibC::Storage")) {
 	    IV tmp = SvIV((SV*)SvRV(ST(1)));
@@ -367,27 +362,18 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_new)
 			"pgBackRest::LibC::StorageWrite::new",
 			"storage", "pgBackRest::LibC::Storage")
 ;
-
-    STRLEN filePvSize;
-    file = (void *)SvPV(ST(2), filePvSize);
-    ((char *)file)[filePvSize] = 0
-;
-
-    STRLEN userPvSize;
-    user = (void *)SvPV(ST(4), userPvSize);
-    ((char *)user)[userPvSize] = 0
-;
-
-    STRLEN groupPvSize;
-    group = (void *)SvPV(ST(5), groupPvSize);
-    ((char *)group)[groupPvSize] = 0
-;
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageWrite") == 0);
 
-    RETVAL = storageNewWriteP(
-        storage, STR(file), .modeFile = mode, .user = strlen(user) == 0 ? NULL : STR(user),
-        .group = strlen(group) == 0 ? NULL : STR(group), .timeModified = (time_t)timeModified, .noCreatePath = !pathCreate,
-        .noSyncPath = !atomic, .noAtomic = !atomic);
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        RETVAL = storageNewWriteP(
+            storage, STR_NEW_SV(file), .modeFile = mode, .user = strlen(user) == 0 ? NULL : STR(user),
+            .group = strlen(group) == 0 ? NULL : STR(group), .timeModified = (time_t)timeModified, .noCreatePath = !pathCreate,
+            .noSyncPath = !atomic, .noAtomic = !atomic);
+
+        storageWriteMove(RETVAL, MEM_CONTEXT_XS_OLD());
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 	{
 	    SV * RETVALSV;
 	    RETVALSV = sv_newmortal();
@@ -433,17 +419,14 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_new)
     if (items != 4)
        croak_xs_usage(cv,  "class, storage, file, ignoreMissing");
     {
-	const char *	class;
+	const char *	class = (const char *)SvPV_nolen(ST(0))
+;
 	pgBackRest__LibC__Storage	storage;
-	const char *	file;
+	const char *	file = (const char *)SvPV_nolen(ST(2))
+;
 	bool	ignoreMissing = (bool)SvTRUE(ST(3))
 ;
 	pgBackRest__LibC__StorageRead	RETVAL;
-
-    STRLEN classPvSize;
-    class = (void *)SvPV(ST(0), classPvSize);
-    ((char *)class)[classPvSize] = 0
-;
 
 	if (SvROK(ST(1)) && sv_derived_from(ST(1), "pgBackRest::LibC::Storage")) {
 	    IV tmp = SvIV((SV*)SvRV(ST(1)));
@@ -453,11 +436,6 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_new)
 	    Perl_croak_nocontext("%s: %s is not of type %s",
 			"pgBackRest::LibC::StorageRead::new",
 			"storage", "pgBackRest::LibC::Storage")
-;
-
-    STRLEN filePvSize;
-    file = (void *)SvPV(ST(2), filePvSize);
-    ((char *)file)[filePvSize] = 0
 ;
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageRead") == 0);
 
@@ -507,19 +485,11 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
     if (items != 2)
        croak_xs_usage(cv,  "class, type");
     {
-	const char *	class;
-	const char *	type;
+	const char *	class = (const char *)SvPV_nolen(ST(0))
+;
+	const char *	type = (const char *)SvPV_nolen(ST(1))
+;
 	pgBackRest__LibC__Storage	RETVAL;
-
-    STRLEN classPvSize;
-    class = (void *)SvPV(ST(0), classPvSize);
-    ((char *)class)[classPvSize] = 0
-;
-
-    STRLEN typePvSize;
-    type = (void *)SvPV(ST(1), typePvSize);
-    ((char *)type)[typePvSize] = 0
-;
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") == 0);
 
     // logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
@@ -549,7 +519,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_exists)
        croak_xs_usage(cv,  "self, fileExp");
     {
 	pgBackRest__LibC__Storage	self;
-	const char *	fileExp;
+	SV *	fileExp = ST(1)
+;
 	bool	RETVAL;
 
 	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
@@ -561,12 +532,11 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_exists)
 			"pgBackRest::LibC::Storage::exists",
 			"self", "pgBackRest::LibC::Storage")
 ;
-
-    STRLEN fileExpPvSize;
-    fileExp = (void *)SvPV(ST(1), fileExpPvSize);
-    ((char *)fileExp)[fileExpPvSize] = 0
-;
-    RETVAL = storageExistsNP(self, STR(fileExp));
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        RETVAL = storageExistsNP(self, STR_NEW_SV(fileExp));
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 	ST(0) = boolSV(RETVAL);
     }
     XSRETURN(1);
@@ -612,10 +582,10 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_get)
 
         if (buffer != NULL)
         {
-            RETVAL = NEWSV(0, bufUsed(buffer));
-            SvPOK_only(RETVAL);
-            memcpy(SvPV_nolen(RETVAL), bufPtr(buffer), bufUsed(buffer));
-            SvCUR_set(RETVAL, bufUsed(buffer));
+            if (bufUsed(buffer) == 0)
+                RETVAL = newSVpv("", 0);
+            else
+                RETVAL = newSVpv((char *)bufPtr(buffer), bufUsed(buffer));
         }
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -634,12 +604,13 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
        croak_xs_usage(cv,  "self, pathExp, ignoreMissing, sortAsc, expression");
     {
 	pgBackRest__LibC__Storage	self;
-	SV *	pathExp;
+	SV *	pathExp = ST(1)
+;
 	bool	ignoreMissing = (bool)SvTRUE(ST(2))
 ;
 	bool	sortAsc = (bool)SvTRUE(ST(3))
 ;
-	const char *	expression;
+	SV *	expression = NULL_SV_OK(ST(4));
 	SV *	RETVAL;
 
 	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
@@ -651,37 +622,19 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
 			"pgBackRest::LibC::Storage::list",
 			"self", "pgBackRest::LibC::Storage")
 ;
-
-    STRLEN pathExpSvSize;
-    void *pathExpSvPtr = SvPV(ST(1), pathExpSvSize);
-    (void)pathExpSvPtr;
-    (void)pathExp;
-    pathExp = ST(1)
-;
-
-    STRLEN expressionPvSize;
-    expression = (void *)SvPV(ST(4), expressionPvSize);
-    ((char *)expression)[expressionPvSize] = 0
-;
     RETVAL = NULL;
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        STRLEN pathExpSize;
-        const void *pathExpPtr = SvPV(pathExp, pathExpSize);
-
         StringList *fileList = strLstSort(
             storageListP(
-                self, strNewN(pathExpPtr, pathExpSize), .errorOnMissing = !ignoreMissing,
-                .expression = strlen(expression) == 0 ? NULL : STR(expression)),
+                self, STR_NEW_SV(pathExp), .errorOnMissing = !ignoreMissing,
+                .expression = expression == NULL ? NULL : STR_NEW_SV(expression)),
             sortAsc ? sortOrderAsc : sortOrderDesc);
 
         const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
 
-        RETVAL = NEWSV(0, strSize(fileListJson));
-        SvPOK_only(RETVAL);
-        memcpy(SvPV_nolen(RETVAL), strPtr(fileListJson), strSize(fileListJson));
-        SvCUR_set(RETVAL, strSize(fileListJson));
+        RETVAL = newSVpv(strPtr(fileListJson), strSize(fileListJson));
     }
     MEM_CONTEXT_XS_TEMP_END();
 	RETVAL = sv_2mortal(RETVAL);
@@ -696,11 +649,12 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_manifest)
 {
     dVAR; dXSARGS;
     if (items < 2 || items > 3)
-       croak_xs_usage(cv,  "self, path, filter=NULL");
+       croak_xs_usage(cv,  "self, pathExp, filter=NULL");
     {
 	pgBackRest__LibC__Storage	self;
-	SV *	path;
-	SV *	filter = SvOK(ST(2)) ? ST(2) : NULL;
+	SV *	pathExp = ST(1)
+;
+	SV *	filter = NULL_SV_OK(ST(2));
 	SV *	RETVAL;
 
 	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
@@ -712,27 +666,17 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_manifest)
 			"pgBackRest::LibC::Storage::manifest",
 			"self", "pgBackRest::LibC::Storage")
 ;
-
-    STRLEN pathSvSize;
-    void *pathSvPtr = SvPV(ST(1), pathSvSize);
-    (void)pathSvPtr;
-    (void)path;
-    path = ST(1)
-;
     RETVAL = NULL;
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = strNewN(pathSvPtr, pathSvSize)};
+        StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = STR_NEW_SV(pathExp)};
 
         storageInfoListP(self, data.pathRoot, storageManifestXsCallback, &data, .errorOnMissing = true);
         strCat(data.json, "}");
         (void)filter;
 
-        RETVAL = NEWSV(0, strSize(data.json));
-        SvPOK_only(RETVAL);
-        memcpy(SvPV_nolen(RETVAL), strPtr(data.json), strSize(data.json));
-        SvCUR_set(RETVAL, strSize(data.json));
+        RETVAL = newSVpv((char *)strPtr(data.json), strSize(data.json));
     }
     MEM_CONTEXT_XS_TEMP_END();
 	RETVAL = sv_2mortal(RETVAL);
@@ -750,8 +694,10 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathCreate)
        croak_xs_usage(cv,  "self, pathExp, mode, ignoreExists, createParent");
     {
 	pgBackRest__LibC__Storage	self;
-	const char *	pathExp;
-	const char *	mode;
+	const char *	pathExp = (const char *)SvPV_nolen(ST(1))
+;
+	const char *	mode = (const char *)SvPV_nolen(ST(2))
+;
 	bool	ignoreExists = (bool)SvTRUE(ST(3))
 ;
 	bool	createParent = (bool)SvTRUE(ST(4))
@@ -765,16 +711,6 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathCreate)
 	    Perl_croak_nocontext("%s: %s is not of type %s",
 			"pgBackRest::LibC::Storage::pathCreate",
 			"self", "pgBackRest::LibC::Storage")
-;
-
-    STRLEN pathExpPvSize;
-    pathExp = (void *)SvPV(ST(1), pathExpPvSize);
-    ((char *)pathExp)[pathExpPvSize] = 0
-;
-
-    STRLEN modePvSize;
-    mode = (void *)SvPV(ST(2), modePvSize);
-    ((char *)mode)[modePvSize] = 0
 ;
     storagePathCreateP(
         self, STR(pathExp), .mode = strlen(mode) == 0 ? 0 : cvtZToIntBase(mode, 8), .errorOnExists = !ignoreExists,
@@ -792,7 +728,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathExists)
        croak_xs_usage(cv,  "self, pathExp");
     {
 	pgBackRest__LibC__Storage	self;
-	const char *	pathExp;
+	const char *	pathExp = (const char *)SvPV_nolen(ST(1))
+;
 	bool	RETVAL;
 
 	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
@@ -803,11 +740,6 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathExists)
 	    Perl_croak_nocontext("%s: %s is not of type %s",
 			"pgBackRest::LibC::Storage::pathExists",
 			"self", "pgBackRest::LibC::Storage")
-;
-
-    STRLEN pathExpPvSize;
-    pathExp = (void *)SvPV(ST(1), pathExpPvSize);
-    ((char *)pathExp)[pathExpPvSize] = 0
 ;
     RETVAL = storagePathExistsNP(self, STR(pathExp));
 	ST(0) = boolSV(RETVAL);
@@ -824,7 +756,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathGet)
        croak_xs_usage(cv,  "self, pathExp");
     {
 	pgBackRest__LibC__Storage	self;
-	const char *	pathExp;
+	const char *	pathExp = (const char *)SvPV_nolen(ST(1))
+;
 	SV *	RETVAL;
 
 	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
@@ -835,11 +768,6 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathGet)
 	    Perl_croak_nocontext("%s: %s is not of type %s",
 			"pgBackRest::LibC::Storage::pathGet",
 			"self", "pgBackRest::LibC::Storage")
-;
-
-    STRLEN pathExpPvSize;
-    pathExp = (void *)SvPV(ST(1), pathExpPvSize);
-    ((char *)pathExp)[pathExpPvSize] = 0
 ;
     RETVAL = NULL;
 
@@ -869,7 +797,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_put)
     {
 	pgBackRest__LibC__Storage	self;
 	pgBackRest__LibC__StorageWrite	write;
-	const Buffer *	buffer = SvOK(ST(2)) ? BUF(SvPV_nolen(ST(2)), SvCUR(ST(2))) : NULL;
+	const Buffer *	buffer = BUF_CONST_SV(ST(2));
 	U8	RETVAL;
 	dXSTARG;
 
@@ -893,7 +821,6 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_put)
 			"write", "pgBackRest::LibC::StorageWrite")
 ;
     (void)self;
-
     storagePutNP(write, buffer);
 
     RETVAL = buffer ? bufUsed(buffer) : 0;
@@ -940,18 +867,14 @@ XS_EUPXS(XS_pgBackRest__LibC_pageChecksum)
     if (items != 3)
        croak_xs_usage(cv,  "page, blockNo, pageSize");
     {
-	const char *	page;
+	const char *	page = (const char *)SvPV_nolen(ST(0))
+;
 	U32	blockNo = (unsigned long)SvUV(ST(1))
 ;
 	U32	pageSize = (unsigned long)SvUV(ST(2))
 ;
 	U16	RETVAL;
 	dXSTARG;
-
-    STRLEN pagePvSize;
-    page = (void *)SvPV(ST(0), pagePvSize);
-    ((char *)page)[pagePvSize] = 0
-;
     RETVAL = 0;
 
     ERROR_XS_BEGIN()
@@ -973,7 +896,8 @@ XS_EUPXS(XS_pgBackRest__LibC_pageChecksumTest)
     if (items != 5)
        croak_xs_usage(cv,  "page, blockNo, pageSize, ignoreWalId, ignoreWalOffset");
     {
-	const char *	page;
+	const char *	page = (const char *)SvPV_nolen(ST(0))
+;
 	U32	blockNo = (unsigned long)SvUV(ST(1))
 ;
 	U32	pageSize = (unsigned long)SvUV(ST(2))
@@ -983,11 +907,6 @@ XS_EUPXS(XS_pgBackRest__LibC_pageChecksumTest)
 	U32	ignoreWalOffset = (unsigned long)SvUV(ST(4))
 ;
 	bool	RETVAL;
-
-    STRLEN pagePvSize;
-    page = (void *)SvPV(ST(0), pagePvSize);
-    ((char *)page)[pagePvSize] = 0
-;
     RETVAL = false;
 
     ERROR_XS_BEGIN()
@@ -1009,7 +928,8 @@ XS_EUPXS(XS_pgBackRest__LibC_pageChecksumBufferTest)
     if (items != 6)
        croak_xs_usage(cv,  "pageBuffer, pageBufferSize, blockNoBegin, pageSize, ignoreWalId, ignoreWalOffset");
     {
-	const char *	pageBuffer;
+	const char *	pageBuffer = (const char *)SvPV_nolen(ST(0))
+;
 	U32	pageBufferSize = (unsigned long)SvUV(ST(1))
 ;
 	U32	blockNoBegin = (unsigned long)SvUV(ST(2))
@@ -1021,11 +941,6 @@ XS_EUPXS(XS_pgBackRest__LibC_pageChecksumBufferTest)
 	U32	ignoreWalOffset = (unsigned long)SvUV(ST(5))
 ;
 	bool	RETVAL;
-
-    STRLEN pageBufferPvSize;
-    pageBuffer = (void *)SvPV(ST(0), pageBufferPvSize);
-    ((char *)pageBuffer)[pageBufferPvSize] = 0
-;
     RETVAL = false;
 
     ERROR_XS_BEGIN()
@@ -1076,19 +991,11 @@ XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_new)
     if (items != 2)
        croak_xs_usage(cv,  "class, type");
     {
-	const char *	class;
-	const char *	type;
+	const char *	class = (const char *)SvPV_nolen(ST(0))
+;
+	const char *	type = (const char *)SvPV_nolen(ST(1))
+;
 	pgBackRest__LibC__Crypto__Hash	RETVAL;
-
-    STRLEN classPvSize;
-    class = (void *)SvPV(ST(0), classPvSize);
-    ((char *)class)[classPvSize] = 0
-;
-
-    STRLEN typePvSize;
-    type = (void *)SvPV(ST(1), typePvSize);
-    ((char *)type)[typePvSize] = 0
-;
     RETVAL = NULL;
 
     // Don't warn when class param is used
@@ -1120,7 +1027,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_process)
        croak_xs_usage(cv,  "self, message");
     {
 	pgBackRest__LibC__Crypto__Hash	self;
-	SV *	message;
+	SV *	message = ST(1)
+;
 
 	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Crypto::Hash")) {
 	    IV tmp = SvIV((SV*)SvRV(ST(0)));
@@ -1130,13 +1038,6 @@ XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_process)
 	    Perl_croak_nocontext("%s: %s is not of type %s",
 			"pgBackRest::LibC::Crypto::Hash::process",
 			"self", "pgBackRest::LibC::Crypto::Hash")
-;
-
-    STRLEN messageSvSize;
-    void *messageSvPtr = SvPV(ST(1), messageSvSize);
-    (void)messageSvPtr;
-    (void)message;
-    message = ST(1)
 ;
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
@@ -1221,21 +1122,11 @@ XS_EUPXS(XS_pgBackRest__LibC_cryptoHashOne)
     if (items != 2)
        croak_xs_usage(cv,  "type, message");
     {
-	const char *	type;
-	SV *	message;
+	const char *	type = (const char *)SvPV_nolen(ST(0))
+;
+	SV *	message = ST(1)
+;
 	SV *	RETVAL;
-
-    STRLEN typePvSize;
-    type = (void *)SvPV(ST(0), typePvSize);
-    ((char *)type)[typePvSize] = 0
-;
-
-    STRLEN messageSvSize;
-    void *messageSvPtr = SvPV(ST(1), messageSvSize);
-    (void)messageSvPtr;
-    (void)message;
-    message = ST(1)
-;
     RETVAL = NULL;
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
@@ -1268,37 +1159,23 @@ XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_new)
     if (items < 5 || items > 6)
        croak_xs_usage(cv,  "class, mode, type, key, keySize, digest = NULL");
     {
-	const char *	class;
+	const char *	class = (const char *)SvPV_nolen(ST(0))
+;
 	U32	mode = (unsigned long)SvUV(ST(1))
 ;
-	const char *	type;
-	unsigned char *	key;
+	const char *	type = (const char *)SvPV_nolen(ST(2))
+;
+	unsigned char *	key = (unsigned char *)SvPV_nolen(ST(3))
+;
 	I32	keySize = (I32)SvIV(ST(4))
 ;
 	const char *	digest;
 	pgBackRest__LibC__Cipher__Block	RETVAL;
 
-    STRLEN classPvSize;
-    class = (void *)SvPV(ST(0), classPvSize);
-    ((char *)class)[classPvSize] = 0
-;
-
-    STRLEN typePvSize;
-    type = (void *)SvPV(ST(2), typePvSize);
-    ((char *)type)[typePvSize] = 0
-;
-
-    STRLEN keyPvSize;
-    key = (void *)SvPV(ST(3), keyPvSize);
-    ((char *)key)[keyPvSize] = 0
-;
-
 	if (items < 6)
 	    digest = NULL;
 	else {
-    STRLEN digestPvSize;
-    digest = (void *)SvPV(ST(5), digestPvSize);
-    ((char *)digest)[digestPvSize] = 0
+	    digest = (const char *)SvPV_nolen(ST(5))
 ;
 	}
     RETVAL = NULL;
@@ -1338,7 +1215,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_process)
        croak_xs_usage(cv,  "self, source");
     {
 	pgBackRest__LibC__Cipher__Block	self;
-	SV *	source;
+	SV *	source = ST(1)
+;
 	SV *	RETVAL;
 
 	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Cipher::Block")) {
@@ -1349,13 +1227,6 @@ XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_process)
 	    Perl_croak_nocontext("%s: %s is not of type %s",
 			"pgBackRest::LibC::Cipher::Block::process",
 			"self", "pgBackRest::LibC::Cipher::Block")
-;
-
-    STRLEN sourceSvSize;
-    void *sourceSvPtr = SvPV(ST(1), sourceSvSize);
-    (void)sourceSvPtr;
-    (void)source;
-    source = ST(1)
 ;
     RETVAL = NULL;
 
@@ -1476,14 +1347,10 @@ XS_EUPXS(XS_pgBackRest__LibC_cfgCommandId)
     if (items != 1)
        croak_xs_usage(cv,  "commandName");
     {
-	const char *	commandName;
+	const char *	commandName = (const char *)SvPV_nolen(ST(0))
+;
 	I32	RETVAL;
 	dXSTARG;
-
-    STRLEN commandNamePvSize;
-    commandName = (void *)SvPV(ST(0), commandNamePvSize);
-    ((char *)commandName)[commandNamePvSize] = 0
-;
     RETVAL = 0;
 
     ERROR_XS_BEGIN()
@@ -1504,14 +1371,10 @@ XS_EUPXS(XS_pgBackRest__LibC_cfgOptionId)
     if (items != 1)
        croak_xs_usage(cv,  "optionName");
     {
-	const char *	optionName;
+	const char *	optionName = (const char *)SvPV_nolen(ST(0))
+;
 	I32	RETVAL;
 	dXSTARG;
-
-    STRLEN optionNamePvSize;
-    optionName = (void *)SvPV(ST(0), optionNamePvSize);
-    ((char *)optionName)[optionNamePvSize] = 0
-;
     RETVAL = 0;
 
     ERROR_XS_BEGIN()
@@ -1673,19 +1536,11 @@ XS_EUPXS(XS_pgBackRest__LibC_cfgParseTest)
     if (items != 2)
        croak_xs_usage(cv,  "backrestBin, parseParam");
     {
-	const char *	backrestBin;
-	const char *	parseParam;
+	const char *	backrestBin = (const char *)SvPV_nolen(ST(0))
+;
+	const char *	parseParam = (const char *)SvPV_nolen(ST(1))
+;
 	SV *	RETVAL;
-
-    STRLEN backrestBinPvSize;
-    backrestBin = (void *)SvPV(ST(0), backrestBinPvSize);
-    ((char *)backrestBin)[backrestBinPvSize] = 0
-;
-
-    STRLEN parseParamPvSize;
-    parseParam = (void *)SvPV(ST(1), parseParamPvSize);
-    ((char *)parseParam)[parseParamPvSize] = 0
-;
     RETVAL = NULL;
 
     ERROR_XS_BEGIN()
@@ -1804,29 +1659,17 @@ XS_EUPXS(XS_pgBackRest__LibC_lockAcquire)
     if (items != 5)
        croak_xs_usage(cv,  "lockPath, command, stanza, lockTimeout, failOnNoLock");
     {
-	const char *	lockPath;
-	const char *	command;
-	const char *	stanza;
+	const char *	lockPath = (const char *)SvPV_nolen(ST(0))
+;
+	const char *	command = (const char *)SvPV_nolen(ST(1))
+;
+	const char *	stanza = (const char *)SvPV_nolen(ST(2))
+;
 	double	lockTimeout = (double)SvNV(ST(3))
 ;
 	bool	failOnNoLock = (bool)SvTRUE(ST(4))
 ;
 	bool	RETVAL;
-
-    STRLEN lockPathPvSize;
-    lockPath = (void *)SvPV(ST(0), lockPathPvSize);
-    ((char *)lockPath)[lockPathPvSize] = 0
-;
-
-    STRLEN commandPvSize;
-    command = (void *)SvPV(ST(1), commandPvSize);
-    ((char *)command)[commandPvSize] = 0
-;
-
-    STRLEN stanzaPvSize;
-    stanza = (void *)SvPV(ST(2), stanzaPvSize);
-    ((char *)stanza)[stanzaPvSize] = 0
-;
     RETVAL = false;
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
@@ -1880,15 +1723,9 @@ XS_EUPXS(XS_pgBackRest__LibC_encodeToStr)
     {
 	int	encodeType = (int)SvIV(ST(0))
 ;
-	SV *	source;
-	SV *	RETVAL;
-
-    STRLEN sourceSvSize;
-    void *sourceSvPtr = SvPV(ST(1), sourceSvSize);
-    (void)sourceSvPtr;
-    (void)source;
-    source = ST(1)
+	SV *	source = ST(1)
 ;
+	SV *	RETVAL;
     RETVAL = NULL;
 
     STRLEN sourceSize;
@@ -1919,13 +1756,9 @@ XS_EUPXS(XS_pgBackRest__LibC_decodeToBin)
     {
 	int	encodeType = (int)SvIV(ST(0))
 ;
-	const char *	source;
-	SV *	RETVAL;
-
-    STRLEN sourcePvSize;
-    source = (void *)SvPV(ST(1), sourcePvSize);
-    ((char *)source)[sourcePvSize] = 0
+	const char *	source = (const char *)SvPV_nolen(ST(1))
 ;
+	SV *	RETVAL;
     RETVAL = NULL;
 
     ERROR_XS_BEGIN()

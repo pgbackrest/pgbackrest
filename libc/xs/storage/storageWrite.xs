@@ -9,7 +9,7 @@ pgBackRest::LibC::StorageWrite
 new(class, storage, file, mode, user, group, timeModified, atomic, pathCreate)
     const char *class
     pgBackRest::LibC::Storage storage
-    const char *file
+    SV *file
     U32 mode
     const char *user
     const char *group
@@ -19,10 +19,16 @@ new(class, storage, file, mode, user, group, timeModified, atomic, pathCreate)
 CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageWrite") == 0);
 
-    RETVAL = storageNewWriteP(
-        storage, STR(file), .modeFile = mode, .user = strlen(user) == 0 ? NULL : STR(user),
-        .group = strlen(group) == 0 ? NULL : STR(group), .timeModified = (time_t)timeModified, .noCreatePath = !pathCreate,
-        .noSyncPath = !atomic, .noAtomic = !atomic);
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        RETVAL = storageNewWriteP(
+            storage, STR_NEW_SV(file), .modeFile = mode, .user = strlen(user) == 0 ? NULL : STR(user),
+            .group = strlen(group) == 0 ? NULL : STR(group), .timeModified = (time_t)timeModified, .noCreatePath = !pathCreate,
+            .noSyncPath = !atomic, .noAtomic = !atomic);
+
+        storageWriteMove(RETVAL, MEM_CONTEXT_XS_OLD());
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 OUTPUT:
     RETVAL
 

@@ -12,7 +12,7 @@ new(class, type)
 CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") == 0);
 
-    logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
+    // logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
 
     if (strcmp(type, "<LOCAL>") == 0)
         RETVAL = (Storage *)storageLocalWrite();
@@ -27,9 +27,13 @@ OUTPUT:
 bool
 exists(self, fileExp)
     pgBackRest::LibC::Storage self
-    const char *fileExp
+    SV *fileExp
 CODE:
-    RETVAL = storageExistsNP(self, STR(fileExp));
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        RETVAL = storageExistsNP(self, STR_NEW_SV(fileExp));
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 OUTPUT:
     RETVAL
 
@@ -48,10 +52,10 @@ CODE:
 
         if (buffer != NULL)
         {
-            RETVAL = NEWSV(0, bufUsed(buffer));
-            SvPOK_only(RETVAL);
-            memcpy(SvPV_nolen(RETVAL), bufPtr(buffer), bufUsed(buffer));
-            SvCUR_set(RETVAL, bufUsed(buffer));
+            if (bufUsed(buffer) == 0)
+                RETVAL = newSVpv("", 0);
+            else
+                RETVAL = newSVpv((char *)bufPtr(buffer), bufUsed(buffer));
         }
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -65,27 +69,21 @@ list(self, pathExp, ignoreMissing, sortAsc, expression)
     SV *pathExp
     bool ignoreMissing
     bool sortAsc
-    const char *expression
+    SV *expression = NULL_SV_OK($arg);
 CODE:
     RETVAL = NULL;
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        STRLEN pathExpSize;
-        const void *pathExpPtr = SvPV(pathExp, pathExpSize);
-
         StringList *fileList = strLstSort(
             storageListP(
-                self, strNewN(pathExpPtr, pathExpSize), .errorOnMissing = !ignoreMissing,
-                .expression = strlen(expression) == 0 ? NULL : STR(expression)),
+                self, STR_NEW_SV(pathExp), .errorOnMissing = !ignoreMissing,
+                .expression = expression == NULL ? NULL : STR_NEW_SV(expression)),
             sortAsc ? sortOrderAsc : sortOrderDesc);
 
         const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
 
-        RETVAL = NEWSV(0, strSize(fileListJson));
-        SvPOK_only(RETVAL);
-        memcpy(SvPV_nolen(RETVAL), strPtr(fileListJson), strSize(fileListJson));
-        SvCUR_set(RETVAL, strSize(fileListJson));
+        RETVAL = newSVpv(strPtr(fileListJson), strSize(fileListJson));
     }
     MEM_CONTEXT_XS_TEMP_END();
 OUTPUT:
@@ -93,25 +91,22 @@ OUTPUT:
 
 ####################################################################################################################################
 SV *
-manifest(self, path, filter=NULL)
+manifest(self, pathExp, filter=NULL)
     pgBackRest::LibC::Storage self
-    SV *path
-    SV *filter = SvOK($arg) ? $arg : NULL;
+    SV *pathExp
+    SV *filter = NULL_SV_OK($arg);
 CODE:
     RETVAL = NULL;
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = strNewN(pathSvPtr, pathSvSize)};
+        StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = STR_NEW_SV(pathExp)};
 
         storageInfoListP(self, data.pathRoot, storageManifestXsCallback, &data, .errorOnMissing = true);
         strCat(data.json, "}");
         (void)filter;
 
-        RETVAL = NEWSV(0, strSize(data.json));
-        SvPOK_only(RETVAL);
-        memcpy(SvPV_nolen(RETVAL), strPtr(data.json), strSize(data.json));
-        SvCUR_set(RETVAL, strSize(data.json));
+        RETVAL = newSVpv((char *)strPtr(data.json), strSize(data.json));
     }
     MEM_CONTEXT_XS_TEMP_END();
 OUTPUT:
@@ -166,10 +161,9 @@ U8
 put(self, write, buffer)
     pgBackRest::LibC::Storage self
     pgBackRest::LibC::StorageWrite write
-    const Buffer *buffer = SvOK($arg) ? BUF(SvPV_nolen($arg), SvCUR($arg)) : NULL;
+    const Buffer *buffer = BUF_CONST_SV($arg);
 CODE:
     (void)self;
-
     storagePutNP(write, buffer);
 
     RETVAL = buffer ? bufUsed(buffer) : 0;
