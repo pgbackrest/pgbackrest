@@ -771,6 +771,35 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathGet)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC__Storage_pathSync); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_pathSync)
+{
+    dVAR; dXSARGS;
+    if (items != 2)
+       croak_xs_usage(cv,  "self, pathExp");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__Storage	self;
+	const String *	pathExp = STR_NEW_SV(ST(1));
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Storage,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Storage::pathSync",
+			"self", "pgBackRest::LibC::Storage")
+;
+    storagePathSyncNP(self, pathExp);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
 XS_EUPXS(XS_pgBackRest__LibC__Storage_put); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__Storage_put)
 {
@@ -1800,6 +1829,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::Storage::pathCreate", XS_pgBackRest__LibC__Storage_pathCreate);
         newXS_deffile("pgBackRest::LibC::Storage::pathExists", XS_pgBackRest__LibC__Storage_pathExists);
         newXS_deffile("pgBackRest::LibC::Storage::pathGet", XS_pgBackRest__LibC__Storage_pathGet);
+        newXS_deffile("pgBackRest::LibC::Storage::pathSync", XS_pgBackRest__LibC__Storage_pathSync);
         newXS_deffile("pgBackRest::LibC::Storage::put", XS_pgBackRest__LibC__Storage_put);
         newXS_deffile("pgBackRest::LibC::Storage::type", XS_pgBackRest__LibC__Storage_type);
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);

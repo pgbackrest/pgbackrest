@@ -732,27 +732,27 @@ sub pathGet
 ####################################################################################################################################
 # Sync path so newly added file entries are not lost
 ####################################################################################################################################
-# sub pathSync
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strPathExp,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->pathSync', \@_,
-#             {name => 'strPathExp'},
-#         );
-#
-#     $self->driver()->pathSync($self->pathGet($strPathExp));
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn($strOperation);
-# }
+sub pathSync
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathSync', \@_,
+            {name => 'strPathExp'},
+        );
+
+    $self->{oStorageC}->pathSync($strPathExp);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 
 ####################################################################################################################################
 # put - writes a buffer out to storage all at once

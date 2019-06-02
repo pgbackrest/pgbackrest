@@ -178,6 +178,21 @@ CLEANUP:
     MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
+void
+pathSync(self, pathExp)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::Storage self
+    const String *pathExp = STR_NEW_SV($arg);
+CODE:
+    storagePathSyncNP(self, pathExp);
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
 U8
 put(self, write, buffer)
 PREINIT:
