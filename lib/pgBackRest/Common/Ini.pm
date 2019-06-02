@@ -423,8 +423,10 @@ sub save
 
         # Save the file
         $self->{oStorage}->put($self->{strFileName}, iniRender($self->{oContent}), {strCipherPass => $self->{strCipherPass}});
+        $self->{oStorage}->pathSync(dirname($self->{strFileName}));
         $self->{oStorage}->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}),
             {strCipherPass => $self->{strCipherPass}});
+        $self->{oStorage}->pathSync(dirname($self->{strFileName}));
         $self->{bModified} = false;
 
         # Indicate the file now exists

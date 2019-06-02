@@ -682,6 +682,10 @@ sub infoFileCreate
     if ($iResult == 0)
     {
         $oInfo->save();
+
+        # Sync path
+        storageRepo()->pathSync(
+            defined($oInfo->{strArchiveClusterPath}) ? $oInfo->{strArchiveClusterPath} : $oInfo->{strBackupClusterPath});
     }
 
     # If a warning was issued, raise it
