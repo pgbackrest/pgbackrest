@@ -7,168 +7,193 @@ MODULE = pgBackRest::LibC PACKAGE = pgBackRest::LibC::Storage
 ####################################################################################################################################
 pgBackRest::LibC::Storage
 new(class, type)
-    const char *class
-    const char *type
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    const String *class = STR_NEW_SV($arg);
+    const String *type = STR_NEW_SV($arg);
 CODE:
-    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") == 0);
+    CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::Storage"));
 
     // logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
 
-    if (strcmp(type, "<LOCAL>") == 0)
+    if (strEqZ(type, "<LOCAL>"))
         RETVAL = (Storage *)storageLocalWrite();
-    else if (strcmp(type, "<REPO>") == 0)
+    else if (strEqZ(type, "<REPO>"))
         RETVAL = (Storage *)storageRepoWrite();
     else
-        THROW_FMT(AssertError, "unexpected storage type '%s'", type);
+        THROW_FMT(AssertError, "unexpected storage type '%s'", strPtr(type));
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 bool
 exists(self, fileExp)
-    pgBackRest::LibC::Storage self
-    SV *fileExp
-CODE:
+PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        RETVAL = storageExistsNP(self, STR_NEW_SV(fileExp));
-    }
-    MEM_CONTEXT_XS_TEMP_END();
+INPUT:
+    pgBackRest::LibC::Storage self
+    const String *fileExp = STR_NEW_SV($arg);
+CODE:
+    RETVAL = storageExistsNP(self, fileExp);
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 SV *
 get(self, read)
-    pgBackRest::LibC::Storage self
-    pgBackRest::LibC::StorageRead read
-CODE:
-    (void)self;
-    RETVAL = NULL;
-
+PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        Buffer *buffer = storageGetNP(read);
+INPUT:
+    pgBackRest::LibC::StorageRead read
+CODE:
+    RETVAL = NULL;
+    Buffer *buffer = storageGetNP(read);
 
-        if (buffer != NULL)
-        {
-            if (bufUsed(buffer) == 0)
-                RETVAL = newSVpv("", 0);
-            else
-                RETVAL = newSVpv((char *)bufPtr(buffer), bufUsed(buffer));
-        }
+    if (buffer != NULL)
+    {
+        if (bufUsed(buffer) == 0)
+            RETVAL = newSVpv("", 0);
+        else
+            RETVAL = newSVpv((char *)bufPtr(buffer), bufUsed(buffer));
     }
-    MEM_CONTEXT_XS_TEMP_END();
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 SV *
 list(self, pathExp, ignoreMissing, sortAsc, expression)
-    pgBackRest::LibC::Storage self
-    SV *pathExp
-    bool ignoreMissing
-    bool sortAsc
-    SV *expression = NULL_SV_OK($arg);
-CODE:
-    RETVAL = NULL;
-
+PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        StringList *fileList = strLstSort(
-            storageListP(
-                self, STR_NEW_SV(pathExp), .errorOnMissing = !ignoreMissing,
-                .expression = expression == NULL ? NULL : STR_NEW_SV(expression)),
-            sortAsc ? sortOrderAsc : sortOrderDesc);
+INPUT:
+    pgBackRest::LibC::Storage self
+    const String *pathExp = STR_NEW_SV($arg);
+    bool ignoreMissing
+    bool sortAsc
+    const String *expression = STR_NEW_SV($arg);
+CODE:
+    StringList *fileList = strLstSort(
+        storageListP(self, pathExp, .errorOnMissing = !ignoreMissing, .expression = expression),
+        sortAsc ? sortOrderAsc : sortOrderDesc);
 
-        const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
+    const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
 
-        RETVAL = newSVpv(strPtr(fileListJson), strSize(fileListJson));
-    }
-    MEM_CONTEXT_XS_TEMP_END();
+    RETVAL = newSVpv(strPtr(fileListJson), strSize(fileListJson));
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 SV *
 manifest(self, pathExp, filter=NULL)
-    pgBackRest::LibC::Storage self
-    SV *pathExp
-    SV *filter = NULL_SV_OK($arg);
-CODE:
-    RETVAL = NULL;
-
+PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = STR_NEW_SV(pathExp)};
+INPUT:
+    pgBackRest::LibC::Storage self
+    const String *pathExp = STR_NEW_SV($arg);
+    const String *filter = STR_NEW_SV($arg);
+CODE:
+    CHECK(filter == NULL); // !!! NOT YET IMPLEMENTED
 
-        storageInfoListP(self, data.pathRoot, storageManifestXsCallback, &data, .errorOnMissing = true);
-        strCat(data.json, "}");
-        (void)filter;
+    StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = pathExp};
+    storageInfoListP(self, data.pathRoot, storageManifestXsCallback, &data, .errorOnMissing = true);
+    strCat(data.json, "}");
 
-        RETVAL = newSVpv((char *)strPtr(data.json), strSize(data.json));
-    }
-    MEM_CONTEXT_XS_TEMP_END();
+    RETVAL = newSVpv((char *)strPtr(data.json), strSize(data.json));
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 void
 pathCreate(self, pathExp, mode, ignoreExists, createParent)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
     pgBackRest::LibC::Storage self
-    const char *pathExp
-    const char *mode
+    const String *pathExp = STR_NEW_SV($arg);
+    const String *mode = STR_NEW_SV($arg);
     bool ignoreExists
     bool createParent
 CODE:
     storagePathCreateP(
-        self, STR(pathExp), .mode = strlen(mode) == 0 ? 0 : cvtZToIntBase(mode, 8), .errorOnExists = !ignoreExists,
+        self, pathExp, .mode = strSize(mode) == 0 ? 0 : cvtZToIntBase(strPtr(mode), 8), .errorOnExists = !ignoreExists,
         .noParentCreate = !createParent);
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 bool
 pathExists(self, pathExp)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
     pgBackRest::LibC::Storage self
-    const char *pathExp
+    const String *pathExp = STR_NEW_SV($arg);
 CODE:
-    RETVAL = storagePathExistsNP(self, STR(pathExp));
+    RETVAL = storagePathExistsNP(self, pathExp);
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 SV *
 pathGet(self, pathExp)
-    pgBackRest::LibC::Storage self
-    const char *pathExp
-CODE:
-    RETVAL = NULL;
-
+PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        String *path = storagePathNP(self, STR(pathExp));
-
-        RETVAL = NEWSV(0, strSize(path));
-        SvPOK_only(RETVAL);
-        memcpy(SvPV_nolen(RETVAL), strPtr(path), strSize(path));
-        SvCUR_set(RETVAL, strSize(path));
-    }
-    MEM_CONTEXT_XS_TEMP_END();
+INPUT:
+    pgBackRest::LibC::Storage self
+    const String *pathExp = STR_NEW_SV($arg);
+CODE:
+    String *path = storagePathNP(self, pathExp);
+    RETVAL = newSVpv((char *)strPtr(path), strSize(path));
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 U8
 put(self, write, buffer)
-    pgBackRest::LibC::Storage self
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
     pgBackRest::LibC::StorageWrite write
     const Buffer *buffer = BUF_CONST_SV($arg);
 CODE:
-    (void)self;
     storagePutNP(write, buffer);
-
     RETVAL = buffer ? bufUsed(buffer) : 0;
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 const char *

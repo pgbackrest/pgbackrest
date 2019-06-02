@@ -7,30 +7,32 @@ MODULE = pgBackRest::LibC PACKAGE = pgBackRest::LibC::StorageWrite
 ####################################################################################################################################
 pgBackRest::LibC::StorageWrite
 new(class, storage, file, mode, user, group, timeModified, atomic, pathCreate)
-    const char *class
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    const String *class = STR_NEW_SV($arg);
     pgBackRest::LibC::Storage storage
-    SV *file
+    const String *file = STR_NEW_SV($arg);
     U32 mode
-    const char *user
-    const char *group
+    const String *user = STR_NEW_SV($arg);
+    const String *group = STR_NEW_SV($arg);
     U8 timeModified
     bool atomic
     bool pathCreate
 CODE:
-    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageWrite") == 0);
+    CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::StorageWrite"));
 
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-        RETVAL = storageNewWriteP(
-            storage, STR_NEW_SV(file), .modeFile = mode, .user = strlen(user) == 0 ? NULL : STR(user),
-            .group = strlen(group) == 0 ? NULL : STR(group), .timeModified = (time_t)timeModified, .noCreatePath = !pathCreate,
-            .noSyncPath = !atomic, .noAtomic = !atomic);
-
-        storageWriteMove(RETVAL, MEM_CONTEXT_XS_OLD());
-    }
-    MEM_CONTEXT_XS_TEMP_END();
+    RETVAL = storageWriteMove(
+        storageNewWriteP(
+            storage, file, .modeFile = mode, .user = user, .group = group, .timeModified = (time_t)timeModified,
+            .noCreatePath = !pathCreate, .noSyncPath = !atomic, .noAtomic = !atomic),
+        MEM_CONTEXT_XS_OLD());
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 void

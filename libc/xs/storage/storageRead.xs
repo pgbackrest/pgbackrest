@@ -7,16 +7,23 @@ MODULE = pgBackRest::LibC PACKAGE = pgBackRest::LibC::StorageRead
 ####################################################################################################################################
 pgBackRest::LibC::StorageRead
 new(class, storage, file, ignoreMissing)
-    const char *class
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    const String *class = STR_NEW_SV($arg);
     pgBackRest::LibC::Storage storage
-    const char *file
+    const String *file = STR_NEW_SV($arg);
     bool ignoreMissing
 CODE:
-    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageRead") == 0);
+    CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::StorageRead"));
 
-    RETVAL = storageNewReadP(storage, STR(file), .ignoreMissing = ignoreMissing);
+    RETVAL = storageReadMove(storageNewReadP(storage, file, .ignoreMissing = ignoreMissing), MEM_CONTEXT_XS_OLD());
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
 void
