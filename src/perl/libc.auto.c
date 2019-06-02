@@ -387,6 +387,8 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_DESTROY)
     if (items != 1)
        croak_xs_usage(cv,  "self");
     {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
 	pgBackRest__LibC__StorageWrite	self;
 
 	if (SvROK(ST(0))) {
@@ -399,6 +401,8 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_DESTROY)
 			"self")
 ;
     storageWriteFree(self);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
     }
     XSRETURN_EMPTY;
 }
@@ -455,6 +459,8 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_DESTROY)
     if (items != 1)
        croak_xs_usage(cv,  "self");
     {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
 	pgBackRest__LibC__StorageRead	self;
 
 	if (SvROK(ST(0))) {
@@ -467,6 +473,8 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_DESTROY)
 			"self")
 ;
     storageReadFree(self);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
     }
     XSRETURN_EMPTY;
 }
@@ -803,6 +811,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_type)
     if (items != 1)
        croak_xs_usage(cv,  "self");
     {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
 	pgBackRest__LibC__Storage	self;
 	const char *	RETVAL;
 	dXSTARG;
@@ -818,6 +828,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_type)
 ;
     RETVAL = strPtr(storageType(self));
 	sv_setpv(TARG, RETVAL); XSprePUSH; PUSHTARG;
+    }
+    MEM_CONTEXT_XS_TEMP_END();
     }
     XSRETURN(1);
 }

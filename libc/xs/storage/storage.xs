@@ -198,8 +198,15 @@ CLEANUP:
 ####################################################################################################################################
 const char *
 type(self)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
     pgBackRest::LibC::Storage self
 CODE:
     RETVAL = strPtr(storageType(self));
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();

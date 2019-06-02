@@ -37,6 +37,13 @@ CLEANUP:
 ####################################################################################################################################
 void
 DESTROY(self)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
     pgBackRest::LibC::StorageWrite self
 CODE:
     storageWriteFree(self);
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
