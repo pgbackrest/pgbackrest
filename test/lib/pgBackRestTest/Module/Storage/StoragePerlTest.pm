@@ -32,7 +32,7 @@ sub initModule
     my $self = shift;
 
     # Local path
-    $self->{strPathLocal} = $self->testPath() . '/local';
+    # $self->{strPathLocal} = $self->testPath() . '/local';
 
     # Create local storage
     $self->{oStorageLocal} = new pgBackRest::Storage::Storage('<LOCAL>');
@@ -68,7 +68,7 @@ sub initTest
     # executeTest(
     #     'ssh ' . $self->backrestUser() . '\@' . $self->host() . ' mkdir -m 700 ' . $self->pathRemote(), {bSuppressStdErr => true});
 
-    executeTest('mkdir -m 700 ' . $self->pathLocal());
+    # executeTest('mkdir -m 700 ' . $self->pathLocal());
 }
 
 ####################################################################################################################################
@@ -79,8 +79,8 @@ sub run
     my $self = shift;
 
     # Define test file
-    my $strFile = 'file.txt';
-    my $strFileCopy = 'file.txt.copy';
+    my $strFile = $self->testPath() . '/file.txt';
+    my $strFileCopy = $self->testPath() . '/file.txt.copy';
     my $strFileHash = 'bbbcf2c59433f68f22376cd2439d6cd309378df6';
     my $strFileContent = 'TESTDATA';
     my $iFileSize = length($strFileContent);
@@ -108,22 +108,22 @@ sub run
     ################################################################################################################################
     if ($self->begin('put()'))
     {
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {$self->storageLocal()->put($self->storageLocal()->openWrite($strFile))}, 0, 'put empty');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {$self->storageLocal()->put($strFile)}, 0, 'put empty (all defaults)');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {$self->storageLocal()->put($self->storageLocal()->openWrite($strFile), $strFileContent)}, $iFileSize, 'put');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {$self->storageLocal()->put($self->storageLocal()->openWrite($strFile), \$strFileContent)}, $iFileSize,
-        #     'put reference');
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$self->storageLocal()->put($self->storageLocal()->openWrite($strFile))}, 0, 'put empty');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$self->storageLocal()->put($strFile)}, 0, 'put empty (all defaults)');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$self->storageLocal()->put($self->storageLocal()->openWrite($strFile), $strFileContent)}, $iFileSize, 'put');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$self->storageLocal()->put($self->storageLocal()->openWrite($strFile), \$strFileContent)}, $iFileSize,
+            'put reference');
     }
 
     ################################################################################################################################
@@ -310,20 +310,20 @@ sub run
             'sub1/sub2/test => {group => ' . $self->group() . ', link_destination => ../.., type => l, user => ' .
                 $self->pgUser() . '}, ' .
             'sub1/sub2/test-hardlink.txt => ' .
-                '{group => ' . $self->group() . ', mode => 1640, modification_time => 1111111111, size => 9, type => f, user => ' .
+                '{group => ' . $self->group() . ', mode => 0640, modification_time => 1111111111, size => 9, type => f, user => ' .
                 $self->pgUser() . '}, ' .
             'sub1/sub2/test-sub2.txt => ' .
                 '{group => ' . $self->group() . ', mode => 0666, modification_time => 1111111113, size => 11, type => f, user => ' .
                 $self->pgUser() . '}, ' .
             'sub1/test => {group => ' . $self->group() . ', link_destination => .., type => l, user => ' . $self->pgUser() . '}, ' .
             'sub1/test-hardlink.txt => ' .
-                '{group => ' . $self->group() . ', mode => 1640, modification_time => 1111111111, size => 9, type => f, user => ' .
+                '{group => ' . $self->group() . ', mode => 0640, modification_time => 1111111111, size => 9, type => f, user => ' .
                 $self->pgUser() . '}, ' .
             'sub1/test-sub1.txt => ' .
                 '{group => ' . $self->group() . ', mode => 0646, modification_time => 1111111112, size => 10, type => f, user => ' .
                 $self->pgUser() . '}, ' .
             'test.txt => ' .
-                '{group => ' . $self->group() . ', mode => 1640, modification_time => 1111111111, size => 9, type => f, user => ' .
+                '{group => ' . $self->group() . ', mode => 0640, modification_time => 1111111111, size => 9, type => f, user => ' .
                 $self->pgUser() . '}}',
             'complete manifest');
     }

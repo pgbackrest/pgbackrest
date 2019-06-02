@@ -14,6 +14,8 @@ Manifest callback
 ***********************************************************************************************************************************/
 typedef struct StorageManifestXsCallbackData
 {
+    const Storage *storage;
+    const String *pathRoot;
     const String *path;
     String *json;
 //    RegExp *filter;
@@ -24,33 +26,53 @@ storageManifestXsCallback(void *callbackData, const StorageInfo *info)
 {
     StorageManifestXsCallbackData *data = (StorageManifestXsCallbackData *)callbackData;
 
-    if (strSize(data->json) != 1)
-        strCat(data->json, ",");
-
-    strCatFmt(
-        data->json, "%s:{\"group\":%s,\"user\":%s,\"mode\":\"%04o\",\"type\":\"", strPtr(jsonFromStr(info->name)),
-        strPtr(jsonFromStr(info->group)), strPtr(jsonFromStr(info->user)), info->mode);
-
-    switch (info->type)
+    if (data->path == NULL || !strEqZ(info->name, "."))
     {
-        case storageTypeFile:
-        {
-            strCatFmt(data->json, "d\",\"modification_time\":%" PRIu64 ",\"size\":%" PRIu64, info->timeModified, info->size);
-            break;
-        }
+        if (strSize(data->json) != 1)
+            strCat(data->json, ",");
 
-        case storageTypeLink:
-        {
-            strCatFmt(data->json, "l\",\"link_destination\":%s", strPtr(jsonFromStr(info->linkDestination)));
-            break;
-        }
+        strCatFmt(
+            data->json, "%s:{\"group\":%s,\"user\":%s,\"type\":\"",
+            strPtr(jsonFromStr(data->path == NULL ? info->name : strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)))),
+            strPtr(jsonFromStr(info->group)), strPtr(jsonFromStr(info->user)));
 
-        case storageTypePath:
+        switch (info->type)
         {
-            strCat(data->json, "d\"");
-            break;
+            case storageTypeFile:
+            {
+                strCatFmt(
+                    data->json, "f\",\"mode\":\"%04o\",\"modification_time\":%" PRIu64 ",\"size\":%" PRIu64 "}", info->mode,
+                    info->timeModified, info->size);
+                break;
+            }
+
+            case storageTypeLink:
+            {
+                strCatFmt(data->json, "l\",\"link_destination\":%s}", strPtr(jsonFromStr(info->linkDestination)));
+                break;
+            }
+
+            case storageTypePath:
+            {
+                strCatFmt(data->json, "d\",\"mode\":\"%04o\"}", info->mode);
+
+                if (!strEqZ(info->name, "."))
+                {
+                    StorageManifestXsCallbackData dataSub =
+                    {
+                        .storage = data->storage,
+                        .json = data->json,
+                        .pathRoot = data->pathRoot,
+                        .path = data->path == NULL ? info->name : strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)),
+                    };
+
+                    storageInfoListP(
+                        dataSub.storage, strNewFmt("%s/%s", strPtr(dataSub.pathRoot), strPtr(dataSub.path)),
+                        storageManifestXsCallback, &dataSub);
+                }
+
+                break;
+            }
         }
     }
-
-    strCat(data->json, "}");
 }

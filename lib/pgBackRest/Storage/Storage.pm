@@ -329,7 +329,7 @@ sub list
     my $strFileList = $self->{oStorageC}->list(
         $strPathExp, $bIgnoreMissing, $strSortOrder eq 'forward', defined($strExpression) ? $strExpression : '');
 
-    if (defined($strFileList))
+    if (defined($strFileList) && $strFileList ne '[]')
     {
         @stryFileList = $self->{oJSON}->decode($strFileList);
     }

@@ -522,6 +522,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
 ;
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") == 0);
 
+    // logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
+
     if (strcmp(type, "<LOCAL>") == 0)
         RETVAL = (Storage *)storageLocalWrite();
     else if (strcmp(type, "<REPO>") == 0)
@@ -721,9 +723,9 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_manifest)
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        StorageManifestXsCallbackData data = {.json = strNew("{"), .path = strNewN(pathSvPtr, pathSvSize)};
+        StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = strNewN(pathSvPtr, pathSvSize)};
 
-        storageInfoListP(self, data.path, storageManifestXsCallback, &data, .errorOnMissing = true);
+        storageInfoListP(self, data.pathRoot, storageManifestXsCallback, &data, .errorOnMissing = true);
         strCat(data.json, "}");
         (void)filter;
 
@@ -867,7 +869,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_put)
     {
 	pgBackRest__LibC__Storage	self;
 	pgBackRest__LibC__StorageWrite	write;
-	SV *	buffer;
+	const Buffer *	buffer = SvOK(ST(2)) ? BUF(SvPV_nolen(ST(2)), SvCUR(ST(2))) : NULL;
 	U8	RETVAL;
 	dXSTARG;
 
@@ -890,21 +892,11 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_put)
 			"pgBackRest::LibC::Storage::put",
 			"write", "pgBackRest::LibC::StorageWrite")
 ;
-
-    STRLEN bufferSvSize;
-    void *bufferSvPtr = SvPV(ST(2), bufferSvSize);
-    (void)bufferSvPtr;
-    (void)buffer;
-    buffer = ST(2)
-;
     (void)self;
 
-    STRLEN bufferSize;
-    const void *bufferPtr = SvPV(buffer, bufferSize);
+    storagePutNP(write, buffer);
 
-    storagePutNP(write, BUF(bufferPtr, bufferSize));
-
-    RETVAL = bufferSize;
+    RETVAL = buffer ? bufUsed(buffer) : 0;
 	XSprePUSH; PUSHu((UV)RETVAL);
     }
     XSRETURN(1);

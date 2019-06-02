@@ -12,6 +12,8 @@ new(class, type)
 CODE:
     CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") == 0);
 
+    logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
+
     if (strcmp(type, "<LOCAL>") == 0)
         RETVAL = (Storage *)storageLocalWrite();
     else if (strcmp(type, "<REPO>") == 0)
@@ -100,9 +102,9 @@ CODE:
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        StorageManifestXsCallbackData data = {.json = strNew("{"), .path = strNewN(pathSvPtr, pathSvSize)};
+        StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = strNewN(pathSvPtr, pathSvSize)};
 
-        storageInfoListP(self, data.path, storageManifestXsCallback, &data, .errorOnMissing = true);
+        storageInfoListP(self, data.pathRoot, storageManifestXsCallback, &data, .errorOnMissing = true);
         strCat(data.json, "}");
         (void)filter;
 
@@ -164,16 +166,13 @@ U8
 put(self, write, buffer)
     pgBackRest::LibC::Storage self
     pgBackRest::LibC::StorageWrite write
-    SV *buffer
+    const Buffer *buffer = SvOK($arg) ? BUF(SvPV_nolen($arg), SvCUR($arg)) : NULL;
 CODE:
     (void)self;
 
-    STRLEN bufferSize;
-    const void *bufferPtr = SvPV(buffer, bufferSize);
+    storagePutNP(write, buffer);
 
-    storagePutNP(write, BUF(bufferPtr, bufferSize));
-
-    RETVAL = bufferSize;
+    RETVAL = buffer ? bufUsed(buffer) : 0;
 OUTPUT:
     RETVAL
 
