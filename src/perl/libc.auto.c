@@ -771,6 +771,39 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathGet)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC__Storage_pathRemove); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_pathRemove)
+{
+    dVAR; dXSARGS;
+    if (items != 4)
+       croak_xs_usage(cv,  "self, pathExp, ignoreMissing, recurse");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__Storage	self;
+	const String *	pathExp = STR_NEW_SV(ST(1));
+	bool	ignoreMissing = (bool)SvTRUE(ST(2))
+;
+	bool	recurse = (bool)SvTRUE(ST(3))
+;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Storage,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Storage::pathRemove",
+			"self", "pgBackRest::LibC::Storage")
+;
+    storagePathRemoveP(self, pathExp, .errorOnMissing = !ignoreMissing, .recurse = recurse);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
 XS_EUPXS(XS_pgBackRest__LibC__Storage_pathSync); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__Storage_pathSync)
 {
@@ -830,6 +863,37 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_put)
     MEM_CONTEXT_XS_TEMP_END();
     }
     XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Storage_remove); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_remove)
+{
+    dVAR; dXSARGS;
+    if (items != 3)
+       croak_xs_usage(cv,  "self, fileExp, ignoreMissing");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__Storage	self;
+	const String *	fileExp = STR_NEW_SV(ST(1));
+	bool	ignoreMissing = (bool)SvTRUE(ST(2))
+;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Storage,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Storage::remove",
+			"self", "pgBackRest::LibC::Storage")
+;
+    storageRemoveP(self, fileExp, .errorOnMissing = !ignoreMissing);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
 }
 
 
@@ -1829,8 +1893,10 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::Storage::pathCreate", XS_pgBackRest__LibC__Storage_pathCreate);
         newXS_deffile("pgBackRest::LibC::Storage::pathExists", XS_pgBackRest__LibC__Storage_pathExists);
         newXS_deffile("pgBackRest::LibC::Storage::pathGet", XS_pgBackRest__LibC__Storage_pathGet);
+        newXS_deffile("pgBackRest::LibC::Storage::pathRemove", XS_pgBackRest__LibC__Storage_pathRemove);
         newXS_deffile("pgBackRest::LibC::Storage::pathSync", XS_pgBackRest__LibC__Storage_pathSync);
         newXS_deffile("pgBackRest::LibC::Storage::put", XS_pgBackRest__LibC__Storage_put);
+        newXS_deffile("pgBackRest::LibC::Storage::remove", XS_pgBackRest__LibC__Storage_remove);
         newXS_deffile("pgBackRest::LibC::Storage::type", XS_pgBackRest__LibC__Storage_type);
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);
         newXS_deffile("pgBackRest::LibC::pageChecksumTest", XS_pgBackRest__LibC_pageChecksumTest);

@@ -20,9 +20,10 @@ use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Local;
 
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Env::Host::HostBackupTest;
 
 ####################################################################################################################################
 # initModule - common objects and variables used by all tests.
@@ -124,7 +125,6 @@ sub run
             'get missing');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        # !!! empty files are not working
         $self->storageLocal()->put($strFile);
         $self->testResult(sub {${$self->storageLocal()->get($strFile)}}, undef, 'get empty');
 
@@ -202,23 +202,31 @@ sub run
     }
 
     ################################################################################################################################
+    if ($self->begin('exists()'))
+    {
+        $self->storageLocal()->put($self->testPath() . "/test.file");
+
+        $self->testResult(sub {$self->storageLocal()->exists($self->testPath() . "/test.file")}, true, 'existing file');
+        $self->testResult(sub {$self->storageLocal()->exists($self->testPath() . "/test.missing")}, false, 'missing file');
+        $self->testResult(sub {$self->storageLocal()->exists($self->testPath())}, false, 'path');
+    }
+
+    ################################################################################################################################
     if ($self->begin('info()'))
     {
-        # $self->testResult(sub {$self->storageLocal()->info($self->{strPathLocal})}, "[object]", 'stat dir successfully');
-        #
-        # $self->testException(sub {$self->storageLocal()->info($strFile)}, ERROR_FILE_MISSING,
-        #     "unable to stat '". $self->{strPathLocal} . "/" . $strFile ."': No such file or directory");
+        $self->testResult(sub {$self->storageLocal()->info($self->testPath())}, "[object]", 'stat dir successfully');
+
+        $self->testException(sub {$self->storageLocal()->info(BOGUS)}, ERROR_FILE_MISSING,
+            "unable to stat '/bogus': No such file or directory");
     }
 
     ################################################################################################################################
     if ($self->begin("manifest() and list()"))
     {
         #---------------------------------------------------------------------------------------------------------------------------
-        # my $strMissingFile = $self->testPath() . '/missing';
-
-        # $self->testException(
-        #     sub {$self->storageLocal()->manifest($strMissingFile)},
-        #     ERROR_FILE_MISSING, "unable to stat '${strMissingFile}': No such file or directory");
+        $self->testException(
+            sub {$self->storageLocal()->manifest($self->testPath() . '/missing')},
+            ERROR_PATH_MISSING, "unable to list file info for missing path '" . $self->testPath() . "/missing'");
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Setup test data
@@ -288,6 +296,55 @@ sub run
     }
 
     ################################################################################################################################
+    if ($self->begin('move()'))
+    {
+        my $strFileCopy = "${strFile}.copy";
+        my $strFileSub = $self->testPath() . '/sub/file.txt';
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testException(
+            sub {$self->storageLocal()->move($strFile, $strFileCopy)}, ERROR_FILE_MOVE,
+            "unable to move '${strFile}' to '${strFile}.copy': No such file or directory");
+    }
+
+    ################################################################################################################################
+    if ($self->begin('owner()'))
+    {
+        my $strFile = $self->testPath() . "/test.txt";
+
+        $self->testException(
+            sub {$self->storageLocal()->owner($strFile, 'root')}, ERROR_FILE_MISSING,
+            "unable to stat '${strFile}': No such file or directory");
+
+        executeTest("touch ${strFile}");
+
+        $self->testException(
+            sub {$self->storageLocal()->owner($strFile, BOGUS)}, ERROR_FILE_OWNER,
+            "unable to set ownership for '${strFile}' because user 'bogus' does not exist");
+        $self->testException(
+            sub {$self->storageLocal()->owner($strFile, undef, BOGUS)}, ERROR_FILE_OWNER,
+            "unable to set ownership for '${strFile}' because group 'bogus' does not exist");
+
+        $self->testResult(sub {$self->storageLocal()->owner($strFile)}, undef, "no ownership changes");
+        $self->testResult(sub {$self->storageLocal()->owner($strFile, TEST_USER)}, undef, "same user");
+        $self->testResult(sub {$self->storageLocal()->owner($strFile, undef, TEST_GROUP)}, undef, "same group");
+        $self->testResult(
+            sub {$self->storageLocal()->owner($strFile, TEST_USER, TEST_GROUP)}, undef,
+            "same user, group");
+
+        $self->testException(
+            sub {$self->storageLocal()->owner($strFile, 'root', undef)}, ERROR_FILE_OWNER,
+            "unable to set ownership for '${strFile}': Operation not permitted");
+        $self->testException(
+            sub {$self->storageLocal()->owner($strFile, undef, 'root')}, ERROR_FILE_OWNER,
+            "unable to set ownership for '${strFile}': Operation not permitted");
+
+        executeTest("sudo chown :root ${strFile}");
+        $self->testResult(
+            sub {$self->storageLocal()->owner($strFile, undef, TEST_GROUP)}, undef, "change group back from root");
+    }
+
+    ################################################################################################################################
     if ($self->begin('pathCreate()'))
     {
         # my $strTestPath = $self->{strPathLocal} . "/" . BOGUS;
@@ -300,6 +357,16 @@ sub run
         #
         # $self->testResult(sub {$self->storageLocal()->pathCreate($strTestPath, {bIgnoreExists => true})}, "[undef]",
         #     "ignore path exists");
+    }
+
+    ################################################################################################################################
+    if ($self->begin('pathExists()'))
+    {
+        $self->storageLocal()->put($self->testPath() . "/test.file");
+
+        $self->testResult(sub {$self->storageLocal()->pathExists($self->testPath() . "/test.file")}, false, 'existing file');
+        $self->testResult(sub {$self->storageLocal()->pathExists($self->testPath() . "/test.missing")}, false, 'missing file');
+        $self->testResult(sub {$self->storageLocal()->pathExists($self->testPath())}, true, 'path');
     }
 
     ################################################################################################################################

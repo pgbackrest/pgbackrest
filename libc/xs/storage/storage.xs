@@ -179,6 +179,23 @@ CLEANUP:
 
 ####################################################################################################################################
 void
+pathRemove(self, pathExp, ignoreMissing, recurse)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::Storage self
+    const String *pathExp = STR_NEW_SV($arg);
+    bool ignoreMissing
+    bool recurse
+CODE:
+    storagePathRemoveP(self, pathExp, .errorOnMissing = !ignoreMissing, .recurse = recurse);
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+void
 pathSync(self, pathExp)
 PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()
@@ -206,6 +223,22 @@ CODE:
     RETVAL = buffer ? bufUsed(buffer) : 0;
 OUTPUT:
     RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+void
+remove(self, fileExp, ignoreMissing)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::Storage self
+    const String *fileExp = STR_NEW_SV($arg);
+    bool ignoreMissing
+CODE:
+    storageRemoveP(self, fileExp, .errorOnMissing = !ignoreMissing);
 CLEANUP:
     }
     MEM_CONTEXT_XS_TEMP_END();

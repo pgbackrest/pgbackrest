@@ -10,6 +10,8 @@ use Carp qw(confess);
 use English '-no_match_vars';
 
 use File::Basename qw(dirname);
+use Fcntl qw(:mode);
+use File::stat qw{lstat};
 use JSON::PP;
 
 use pgBackRest::Common::Exception;
@@ -43,7 +45,6 @@ sub new
             {name => 'strDefaultFileMode', optional => true, default => '0640'},
         );
 
-
     # Create C storage object
     $self->{oStorageC} = new pgBackRest::LibC::Storage($self->{strType});
 
@@ -68,7 +69,7 @@ sub new
 }
 
 ####################################################################################################################################
-# exists - check if file exists
+# Check if file exists (not a path)
 ####################################################################################################################################
 sub exists
 {
@@ -93,12 +94,12 @@ sub exists
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bExists', value => $bExists}
+        {name => 'bExists', value => $bExists ? true : false}
     );
 }
 
 ####################################################################################################################################
-# get - reads a buffer from storage all at once
+# Read a buffer from storage all at once
 ####################################################################################################################################
 sub get
 {
@@ -203,36 +204,47 @@ sub get
 # }
 
 ####################################################################################################################################
-# info - get information for path/file
+# Get information for path/file
 ####################################################################################################################################
-# sub info
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strPathFileExp,
-#         $bIgnoreMissing,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '::fileStat', \@_,
-#             {name => 'strPathFileExp'},
-#             {name => 'bIgnoreMissing', optional => true, default => false},
-#         );
-#
-#     # Stat the path/file
-#     my $oInfo = $self->driver()->info($self->pathGet($strPathFileExp), {bIgnoreMissing => $bIgnoreMissing});
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'oInfo', value => $oInfo, trace => true}
-#     );
-# }
+sub info
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathFileExp,
+        $bIgnoreMissing,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::fileStat', \@_,
+            {name => 'strPathFileExp'},
+            {name => 'bIgnoreMissing', optional => true, default => false},
+        );
+
+    # Stat the path/file
+    my $oInfo = lstat($self->pathGet($strPathFileExp));
+
+    # Check for errors
+    if (!defined($oInfo))
+    {
+        if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
+        {
+            logErrorResult(
+                $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN,
+                "unable to stat '" . $self->pathGet($strPathFileExp) . "'", $OS_ERROR);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oInfo', value => $oInfo, trace => true}
+    );
+}
 
 ####################################################################################################################################
 # linkCreate - create a link
@@ -307,7 +319,7 @@ sub get
 # }
 
 ####################################################################################################################################
-# list - list all files/paths in path
+# List all files/paths in path
 ####################################################################################################################################
 sub list
 {
@@ -349,7 +361,7 @@ sub list
 }
 
 ####################################################################################################################################
-# build path/file/link manifest starting with base path and including all subpaths
+# Build path/file/link manifest starting with base path and including all subpaths
 ####################################################################################################################################
 sub manifest
 {
@@ -382,39 +394,41 @@ sub manifest
 ####################################################################################################################################
 # move - move path/file
 ####################################################################################################################################
-# sub move
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strSourcePathFileExp,
-#         $strDestinationPathFileExp,
-#         $bPathCreate,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->move', \@_,
-#             {name => 'strSourcePathExp'},
-#             {name => 'strDestinationPathExp'},
-#             {name => 'bPathCreate', optional => true, default => false, trace => true},
-#         );
-#
-#     # Set operation variables
-#     $self->driver()->move(
-#         $self->pathGet($strSourcePathFileExp), $self->pathGet($strDestinationPathFileExp), {bPathCreate => $bPathCreate});
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation
-#     );
-# }
+sub move
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSourceFileExp,
+        $strDestinationFileExp,
+        $bPathCreate,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->move', \@_,
+            {name => 'strSourceFileExp'},
+            {name => 'strDestinationFileExp'},
+        );
+
+    # Get source and destination paths
+    my $strSourceFile = $self->pathGet($strSourceFileExp);
+    my $strDestinationFile = $self->pathGet($strDestinationFileExp);
+
+    # Move the file
+    if (!rename($strSourceFile, $strDestinationFile))
+    {
+        logErrorResult(ERROR_FILE_MOVE, "unable to move '${strSourceFile}' to '${strDestinationFile}'", $OS_ERROR);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 
 ####################################################################################################################################
-# openRead - open file for reading
+# Open file for reading
 ####################################################################################################################################
 sub openRead
 {
@@ -472,7 +486,7 @@ sub openRead
 }
 
 ####################################################################################################################################
-# openWrite - open file for writing
+# Open file for writing
 ####################################################################################################################################
 sub openWrite
 {
@@ -535,41 +549,91 @@ sub openWrite
 }
 
 ####################################################################################################################################
-# owner - change ownership of path/file
+# Change ownership of path/file
 ####################################################################################################################################
-# sub owner
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strPathFileExp,
-#         $strUser,
-#         $strGroup
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->owner', \@_,
-#             {name => 'strPathFileExp'},
-#             {name => 'strUser', required => false},
-#             {name => 'strGroup', required => false}
-#         );
-#
-#     # Set ownership
-#     $self->driver()->owner($self->pathGet($strPathFileExp), {strUser => $strUser, strGroup => $strGroup});
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation
-#     );
-# }
+sub owner
+{
+    my $self = shift;
 
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathFileExp,
+        $strUser,
+        $strGroup
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->owner', \@_,
+            {name => 'strPathFileExp'},
+            {name => 'strUser', required => false},
+            {name => 'strGroup', required => false}
+        );
+
+    # Only proceed if user or group was specified
+    if (defined($strUser) || defined($strGroup))
+    {
+        my $strPathFile = $self->pathGet($strPathFileExp);
+        my $strMessage = "unable to set ownership for '${strPathFile}'";
+        my $iUserId;
+        my $iGroupId;
+
+        # If the user or group is not defined then get it by stat'ing the file.  This is because the chown function requires that
+        # both user and group be set.
+        my $oStat = $self->info($strPathFile);
+
+        if (!defined($strUser))
+        {
+            $iUserId = $oStat->uid;
+        }
+
+        if (!defined($strGroup))
+        {
+            $iGroupId = $oStat->gid;
+        }
+
+        # Lookup user if specified
+        if (defined($strUser))
+        {
+            $iUserId = getpwnam($strUser);
+
+            if (!defined($iUserId))
+            {
+                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because user '${strUser}' does not exist");
+            }
+        }
+
+        # Lookup group if specified
+        if (defined($strGroup))
+        {
+            $iGroupId = getgrnam($strGroup);
+
+            if (!defined($iGroupId))
+            {
+                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because group '${strGroup}' does not exist");
+            }
+        }
+
+        # Set ownership on the file if the user or group would be changed
+        if ($iUserId != $oStat->uid || $iGroupId != $oStat->gid)
+        {
+            if (!chown($iUserId, $iGroupId, $strPathFile))
+            {
+                logErrorResult(ERROR_FILE_OWNER, "${strMessage}", $OS_ERROR);
+            }
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
+    );
+}
 
 ####################################################################################################################################
-# pathAbsolute - generate an absolute path from an absolute base path and a relative path
+# Generate an absolute path from an absolute base path and a relative path
 ####################################################################################################################################
 sub pathAbsolute
 {
@@ -635,7 +699,7 @@ sub pathAbsolute
 }
 
 ####################################################################################################################################
-# pathCreate - create path
+# Create a path
 ####################################################################################################################################
 sub pathCreate
 {
@@ -670,7 +734,7 @@ sub pathCreate
 }
 
 ####################################################################################################################################
-# pathExists - check if path exists
+# Check if path exists
 ####################################################################################################################################
 sub pathExists
 {
@@ -695,12 +759,12 @@ sub pathExists
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bExists', value => $bExists}
+        {name => 'bExists', value => $bExists ? true : false}
     );
 }
 
 ####################################################################################################################################
-# pathGet - resolve a path expression into an absolute path
+# Resolve a path expression into an absolute path
 ####################################################################################################################################
 sub pathGet
 {
@@ -727,6 +791,35 @@ sub pathGet
         $strOperation,
         {name => 'strPath', value => $strPath, trace => true}
     );
+}
+
+####################################################################################################################################
+# Remove path and all files below it
+####################################################################################################################################
+sub pathRemove
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+        $bIgnoreMissing,
+        $bRecurse,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathRemove', \@_,
+            {name => 'strPathExp'},
+            {name => 'bIgnoreMissing', optional => true, default => true},
+            {name => 'bRecurse', optional => true, default => false},
+        );
+
+    $self->{oStorageC}->pathRemove($strPathExp, $bIgnoreMissing, $bRecurse);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -794,51 +887,31 @@ sub put
 }
 
 ####################################################################################################################################
-# remove - remove path/file
+# Remove file
 ####################################################################################################################################
-# sub remove
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $xstryPathFileExp,
-#         $bIgnoreMissing,
-#         $bRecurse,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->remove', \@_,
-#             {name => 'xstryPathFileExp'},
-#             {name => 'bIgnoreMissing', optional => true, default => true},
-#             {name => 'bRecurse', optional => true, default => false, trace => true},
-#         );
-#
-#     # Evaluate expressions for all files
-#     my @stryPathFileExp;
-#
-#     if (ref($xstryPathFileExp))
-#     {
-#         foreach my $strPathFileExp (@{$xstryPathFileExp})
-#         {
-#             push(@stryPathFileExp, $self->pathGet($strPathFileExp));
-#         }
-#     }
-#
-#     # Remove path(s)/file(s)
-#     my $bRemoved = $self->driver()->remove(
-#         ref($xstryPathFileExp) ? \@stryPathFileExp : $self->pathGet($xstryPathFileExp),
-#         {bIgnoreMissing => $bIgnoreMissing, bRecurse => $bRecurse});
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'bRemoved', value => $bRemoved}
-#     );
-# }
+sub remove
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileExp,
+        $bIgnoreMissing,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->remove', \@_,
+            {name => 'strFileExp'},
+            {name => 'bIgnoreMissing', optional => true, default => true},
+        );
+
+    $self->{oStorageC}->remove($strFileExp, $bIgnoreMissing);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 
 ####################################################################################################################################
 # encrypted - determine if the file is encrypted or not
