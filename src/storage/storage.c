@@ -299,7 +299,7 @@ storageInfoList(
         result = this->interface.infoList(this->driver, path, callback, callbackData);
 
         if (!result && param.errorOnMissing)
-            THROW_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));
+            THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -339,7 +339,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
         {
             // Error if requested
             if (param.errorOnMissing)
-                THROW_FMT(PathOpenError, STORAGE_ERROR_LIST_MISSING, strPtr(path));
+                THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_MISSING, strPtr(path));
 
             // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler
             // when they don't care if the path is missing.

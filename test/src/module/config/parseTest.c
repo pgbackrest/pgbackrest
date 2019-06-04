@@ -175,7 +175,7 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].valueList = strLstAddZ(strLstNew(), BOGUS_STR);
         TEST_ERROR(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-                backupCmdDefConfigInclPathValue, oldConfigDefault), PathOpenError,
+                backupCmdDefConfigInclPathValue, oldConfigDefault), PathMissingError,
                 "unable to list files for missing path '/BOGUS'");
 
         // --config-include-path valid, --config invalid (does not exist)
