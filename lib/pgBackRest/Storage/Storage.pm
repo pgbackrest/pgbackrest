@@ -16,6 +16,7 @@ use JSON::PP;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Storage::Base;
+use pgBackRest::Storage::Filter::CipherBlock;
 
 ####################################################################################################################################
 # new
@@ -50,12 +51,6 @@ sub new
 
     # Create JSON object
     $self->{oJSON} = JSON::PP->new()->allow_nonref();
-
-    if (defined($self->{oStorageC}->cipherType()))
-    {
-        require pgBackRest::Storage::Filter::CipherBlock;
-        pgBackRest::Storage::Filter::CipherBlock->import();
-    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -458,7 +453,8 @@ sub openRead
         # If cipher is set then decryption is the first filter applied to the read
         if (defined($self->cipherType()))
         {
-            $oFileIo->filterAdd(STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([false, $self->cipherPassUser()]));
+            $oFileIo->filterAdd(
+                STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([false, $self->cipherType(), $self->cipherPassUser()]));
         }
 
         # # Apply any other filters
@@ -518,6 +514,12 @@ sub openWrite
     my $oFileIo = new pgBackRest::LibC::StorageWrite(
         $self->{oStorageC}, $xFileExp, oct($strMode), $strUser, $strGroup, $lTimestamp, $bAtomic, $bPathCreate);
 
+    # If cipher is set then encryption is the last filter applied to the write
+    if (defined($self->cipherType()))
+    {
+        $oFileIo->filterAdd(
+            STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([true, $self->cipherType(), $self->cipherPassUser()]));
+    }
     # If cipher is set then add filter so that encryption is performed just before the data is actually written
     # if (defined($self->cipherType()))
     # {

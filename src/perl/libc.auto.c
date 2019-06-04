@@ -380,6 +380,44 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_new)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_filterAdd); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_filterAdd)
+{
+    dVAR; dXSARGS;
+    if (items != 3)
+       croak_xs_usage(cv,  "self, filter, param");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__StorageWrite	self;
+	const String *	filter = STR_NEW_SV(ST(1));
+	const String *	param = STR_NEW_SV(ST(2));
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::StorageWrite")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__StorageWrite,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::StorageWrite::filterAdd",
+			"self", "pgBackRest::LibC::StorageWrite")
+;
+    IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(self));
+
+    if (filterGroup == NULL)
+    {
+        filterGroup = ioFilterGroupNew();
+        ioWriteFilterGroupSet(storageWriteIo(self), filterGroup);
+    }
+
+    storageFilterXsAdd(filterGroup, filter, param);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
 XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_DESTROY); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_DESTROY)
 {
@@ -449,6 +487,44 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_new)
     MEM_CONTEXT_XS_TEMP_END();
     }
     XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_filterAdd); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_filterAdd)
+{
+    dVAR; dXSARGS;
+    if (items != 3)
+       croak_xs_usage(cv,  "self, filter, param");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__StorageRead	self;
+	const String *	filter = STR_NEW_SV(ST(1));
+	const String *	param = STR_NEW_SV(ST(2));
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::StorageRead")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__StorageRead,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::StorageRead::filterAdd",
+			"self", "pgBackRest::LibC::StorageRead")
+;
+    IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(self));
+
+    if (filterGroup == NULL)
+    {
+        filterGroup = ioFilterGroupNew();
+        ioReadFilterGroupSet(storageReadIo(self), filterGroup);
+    }
+
+    storageFilterXsAdd(filterGroup, filter, param);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
 }
 
 
@@ -1925,8 +2001,10 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
         newXS_deffile("pgBackRest::LibC::storageRepoFree", XS_pgBackRest__LibC_storageRepoFree);
         newXS_deffile("pgBackRest::LibC::StorageWrite::new", XS_pgBackRest__LibC__StorageWrite_new);
+        newXS_deffile("pgBackRest::LibC::StorageWrite::filterAdd", XS_pgBackRest__LibC__StorageWrite_filterAdd);
         newXS_deffile("pgBackRest::LibC::StorageWrite::DESTROY", XS_pgBackRest__LibC__StorageWrite_DESTROY);
         newXS_deffile("pgBackRest::LibC::StorageRead::new", XS_pgBackRest__LibC__StorageRead_new);
+        newXS_deffile("pgBackRest::LibC::StorageRead::filterAdd", XS_pgBackRest__LibC__StorageRead_filterAdd);
         newXS_deffile("pgBackRest::LibC::StorageRead::DESTROY", XS_pgBackRest__LibC__StorageRead_DESTROY);
         newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
         newXS_deffile("pgBackRest::LibC::Storage::exists", XS_pgBackRest__LibC__Storage_exists);

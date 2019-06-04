@@ -27,6 +27,30 @@ CLEANUP:
 
 ####################################################################################################################################
 void
+filterAdd(self, filter, param)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::StorageRead self
+    const String *filter = STR_NEW_SV($arg);
+    const String *param = STR_NEW_SV($arg);
+CODE:
+    IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(self));
+
+    if (filterGroup == NULL)
+    {
+        filterGroup = ioFilterGroupNew();
+        ioReadFilterGroupSet(storageReadIo(self), filterGroup);
+    }
+
+    storageFilterXsAdd(filterGroup, filter, param);
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+void
 DESTROY(self)
 PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()

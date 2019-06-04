@@ -76,3 +76,23 @@ storageManifestXsCallback(void *callbackData, const StorageInfo *info)
         }
     }
 }
+
+/***********************************************************************************************************************************
+Add IO filter
+***********************************************************************************************************************************/
+void
+storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const String *paramJson)
+{
+    VariantList *paramList = jsonToVarLst(paramJson);
+
+    if (strEqZ(filter, "pgBackRest::Storage::Filter::CipherBlock"))
+    {
+        ioFilterGroupAdd(
+            filterGroup,
+            cipherBlockNew(
+                varUInt64(varLstGet(paramList, 0)) ? cipherModeEncrypt : cipherModeDecrypt,
+                cipherType(varStr(varLstGet(paramList, 1))), BUFSTR(varStr(varLstGet(paramList, 2))), NULL));
+    }
+    else
+        THROW_FMT(AssertError, "unknown filter '%s'", strPtr(filter));
+}

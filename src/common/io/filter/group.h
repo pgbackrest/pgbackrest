@@ -34,6 +34,8 @@ void ioFilterGroupOpen(IoFilterGroup *this);
 void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output);
 void ioFilterGroupClose(IoFilterGroup *this);
 
+IoFilterGroup *ioFilterGroupMove(IoFilterGroup *this, MemContext *parentNew);
+
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
