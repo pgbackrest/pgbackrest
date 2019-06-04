@@ -41,7 +41,7 @@ sub initModule
     # Create encrypted storage
     # $self->{oStorageEncrypt} = new pgBackRest::Storage::Local(
     #     $self->testPath(), new pgBackRest::Storage::Posix::Driver(),
-    #     {hRule => $hRule, bAllowTemp => false, strCipherType => CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC});
+    #     {bAllowTemp => false, strCipherType => CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC});
 
     # Remote path
     # $self->{strPathRemote} = $self->testPath() . '/remote';
@@ -478,7 +478,7 @@ sub run
 # Getters
 ####################################################################################################################################
 # sub host {return '127.0.0.1'}
-sub pathLocal {return shift->{strPathLocal}};
+# sub pathLocal {return shift->{strPathLocal}};
 # sub pathRemote {return shift->{strPathRemote}};
 sub storageLocal {return shift->{oStorageLocal}};
 # sub storageEncrypt {return shift->{oStorageEncrypt}};

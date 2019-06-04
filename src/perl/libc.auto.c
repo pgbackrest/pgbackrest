@@ -992,7 +992,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_cipherType)
     {
 	const char *	RETVAL;
 	dXSTARG;
-    if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
+    if (cfgOptionStr(cfgOptRepoCipherType) == NULL || cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
         RETVAL = NULL;
     else
         RETVAL = strPtr(cfgOptionStr(cfgOptRepoCipherType));

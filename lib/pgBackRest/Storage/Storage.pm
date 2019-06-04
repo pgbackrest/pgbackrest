@@ -920,47 +920,37 @@ sub encrypted
     my
     (
         $strOperation,
-        $strFileName,
+        $strFileExp,
         $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->encrypted', \@_,
-            {name => 'strFileName'},
+            {name => 'strFileExp'},
             {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
-    # my $tMagicSignature;
     my $bEncrypted = false;
 
-    # # Open the file via the driver
-    # my $oFile = $self->driver()->openRead($self->pathGet($strFileName), {bIgnoreMissing => $bIgnoreMissing});
-    #
-    # # If the file does not exist because we're ignoring missing (else it would error before this is executed) then determine if it
-    # # should be encrypted based on the repo
-    # if (!defined($oFile))
-    # {
-    #     if (defined($self->{strCipherType}))
-    #     {
-    #         $bEncrypted = true;
-    #     }
-    # }
-    # else
-    # {
-    #     # If the file does exist, then read the magic signature
-    #     my $lSizeRead = $oFile->read(\$tMagicSignature, length(CIPHER_MAGIC));
-    #
-    #     # Close the file handle
-    #     $oFile->close();
-    #
-    #     # If the file is able to be read, then if it is encrypted it must at least have the magic signature, even if it were
-    #     # originally a 0 byte file
-    #     if (($lSizeRead > 0) && substr($tMagicSignature, 0, length(CIPHER_MAGIC)) eq CIPHER_MAGIC)
-    #     {
-    #         $bEncrypted = true;
-    #     }
-    #
-    # }
+    # Open the file via the driver
+    # !!! NEED TO ADD LENGTH BACK, length(CIPHER_MAGIC));
+    my $rtMagicSignature = $self->get($self->openRead($strFileExp, {bIgnoreMissing => $bIgnoreMissing}));
+
+    # If the file does not exist because we're ignoring missing (else it would error before this is executed) then determine if it
+    # should be encrypted based on the repo
+    if (!defined($rtMagicSignature))
+    {
+        if (defined($self->{strCipherType}))
+        {
+            $bEncrypted = true;
+        }
+    }
+    # If the file is able to be read, then if it is encrypted it must at least have the magic signature, even if it were originally
+    # a 0 byte file
+    elsif (defined($$rtMagicSignature) && substr($$rtMagicSignature, 0, length(CIPHER_MAGIC)) eq CIPHER_MAGIC)
+    {
+        $bEncrypted = true;
+    }
 
     # Return from function and log return values if any
     return logDebugReturn

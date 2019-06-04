@@ -257,7 +257,7 @@ PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
 CODE:
-    if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
+    if (cfgOptionStr(cfgOptRepoCipherType) == NULL || cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
         RETVAL = NULL;
     else
         RETVAL = strPtr(cfgOptionStr(cfgOptRepoCipherType));
