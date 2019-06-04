@@ -942,16 +942,23 @@ jsonFromVar(const Variant *var, unsigned int indent)
                 // Add the indent formatting
                 strCatFmt(jsonStr, "[%s", strPtr(indentDepth));
 
-                // Currently only KeyValue list is supported
+                // Currently only KeyValue and String lists are supported
                 for (unsigned int vlIdx = 0; vlIdx < varLstSize(vl); vlIdx++)
                 {
                     // If going to add another key, append a comma and format for the next line
                     if (vlIdx > 0)
                         strCatFmt(jsonStr, ",%s", strPtr(indentDepth));
 
-                    // Update the depth before processing the contents of the list element
-                    strCat(indentDepth, strPtr(indentSpace));
-                    strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varLstGet(vl, vlIdx)), indentSpace, indentDepth)));
+                    Variant *varSub = varLstGet(vl, vlIdx);
+
+                    if (varType(varSub) == varTypeKeyValue)
+                    {
+                        // Update the depth before processing the contents of the list element
+                        strCat(indentDepth, strPtr(indentSpace));
+                        strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varSub), indentSpace, indentDepth)));
+                    }
+                    else
+                        jsonFromStrInternal(jsonStr, varStr(varSub));
                 }
 
                 // Decrease the depth
