@@ -768,14 +768,14 @@ storageS3New(
         driver->secretAccessKey = strDup(secretAccessKey);
         driver->securityToken = strDup(securityToken);
         driver->partSize = partSize;
-        driver->host = host == NULL ? strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(host);
+        driver->host = strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint));
         driver->port = port;
 
         // Force the signing key to be generated on the first run
         driver->signingKeyDate = YYYYMMDD_STR;
 
         // Create the http client used to service requests
-        driver->httpClient = httpClientNew(driver->host, driver->port, timeout, verifyPeer, caFile, caPath);
+        driver->httpClient = httpClientNew(host == NULL ? driver->host : host, driver->port, timeout, verifyPeer, caFile, caPath);
         driver->headerRedactList = strLstAdd(strLstNew(), S3_HEADER_AUTHORIZATION_STR);
 
         this = storageNewP(
