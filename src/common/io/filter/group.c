@@ -351,6 +351,25 @@ ioFilterGroupClose(IoFilterGroup *this)
 }
 
 /***********************************************************************************************************************************
+Move the object to a new context
+***********************************************************************************************************************************/
+IoFilterGroup *
+ioFilterGroupMove(IoFilterGroup *this, MemContext *parentNew)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
+    FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
+
+    if (this != NULL)
+        memContextMove(this->memContext, parentNew);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
 Is the filter group done processing?
 ***********************************************************************************************************************************/
 bool

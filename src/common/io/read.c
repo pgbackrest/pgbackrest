@@ -363,7 +363,7 @@ Get/set filters
 
 Filters must be set before open and cannot be reset.
 ***********************************************************************************************************************************/
-const IoFilterGroup *
+IoFilterGroup *
 ioReadFilterGroup(const IoRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -389,7 +389,7 @@ ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup)
     ASSERT(!this->opened && !this->closed);
     ASSERT(!ioReadBlock(this));
 
-    this->filterGroup = filterGroup;
+    this->filterGroup = ioFilterGroupMove(filterGroup, this->memContext);
 
     FUNCTION_LOG_RETURN_VOID();
 }

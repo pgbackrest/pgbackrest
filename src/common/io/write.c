@@ -269,7 +269,7 @@ Get/set filters
 
 Filters must be set before open and cannot be reset.
 ***********************************************************************************************************************************/
-const IoFilterGroup *
+IoFilterGroup *
 ioWriteFilterGroup(const IoWrite *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -277,7 +277,6 @@ ioWriteFilterGroup(const IoWrite *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->opened && this->closed);
 
     FUNCTION_TEST_RETURN(this->filterGroup);
 }
@@ -300,7 +299,7 @@ ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
     this->filterGroupSet = true;
 #endif
 
-    this->filterGroup = filterGroup;
+    this->filterGroup = ioFilterGroupMove(filterGroup, this->memContext);
 
     FUNCTION_LOG_RETURN_VOID();
 }
