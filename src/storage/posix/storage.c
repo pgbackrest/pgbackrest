@@ -47,17 +47,17 @@ struct StoragePosix
 Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
 static bool
-storagePosixExists(THIS_VOID,  const String *path)
+storagePosixExists(THIS_VOID, const String *file)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
-        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(STRING, file);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(path != NULL);
+    ASSERT(file != NULL);
 
     bool result = false;
 
@@ -65,10 +65,10 @@ storagePosixExists(THIS_VOID,  const String *path)
     struct stat statFile;
 
     // Any error other than entry not found should be reported
-    if (stat(strPtr(path), &statFile) == -1)
+    if (stat(strPtr(file), &statFile) == -1)
     {
         if (errno != ENOENT)
-            THROW_SYS_ERROR_FMT(FileOpenError, "unable to stat '%s'", strPtr(path));
+            THROW_SYS_ERROR_FMT(FileOpenError, "unable to stat '%s'", strPtr(file));
     }
     // Else found
     else

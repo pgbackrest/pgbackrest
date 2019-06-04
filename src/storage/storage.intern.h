@@ -57,7 +57,7 @@ typedef struct StorageInterface
     // Features implemented by the storage driver
     uint64_t feature;
 
-    bool (*exists)(void *driver, const String *path);
+    bool (*exists)(void *driver, const String *file);
     StorageInfo (*info)(void *driver, const String *path, bool followLink);
     bool (*infoList)(void *driver, const String *file, StorageInfoListCallback callback, void *callbackData);
     StringList *(*list)(void *driver, const String *path, const String *expression);

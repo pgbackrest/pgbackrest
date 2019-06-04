@@ -342,17 +342,17 @@ storageS3Request(
 Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
 static bool
-storageS3Exists(THIS_VOID, const String *path)
+storageS3Exists(THIS_VOID, const String *file)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(STRING, file);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(path != NULL);
+    ASSERT(file != NULL);
 
     bool result = false;
 
