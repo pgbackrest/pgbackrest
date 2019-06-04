@@ -498,7 +498,7 @@ sub run
             }
 
             my $oExec = new pgBackRestTest::Common::ExecuteTest(
-                $strCommand, {bSuppressError => false, bShowOutputAsync => $self->{bShowOutputAsync}});
+                $strCommand, {bSuppressError => true, bShowOutputAsync => $self->{bShowOutputAsync}});
 
             $oExec->begin();
 
