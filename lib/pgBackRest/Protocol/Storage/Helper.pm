@@ -240,28 +240,17 @@ sub storageRepo
 push @EXPORT, qw(storageRepo);
 
 ####################################################################################################################################
-# storageRepoCacheClear - FOR TESTING ONLY!
+# Clear the repo storage cache - FOR TESTING ONLY!
 ####################################################################################################################################
 sub storageRepoCacheClear
 {
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strStanza,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::storageRepoCacheClear', \@_,
-            {name => 'strStanza'},
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '::storageRepoCacheClear');
 
-    if (defined($hStorage->{&STORAGE_REPO}{$strStanza}))
-    {
-        delete($hStorage->{&STORAGE_REPO}{$strStanza});
-    }
+    delete($hStorage->{&STORAGE_REPO});
 
-    return;
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 push @EXPORT, qw(storageRepoCacheClear);

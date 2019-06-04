@@ -52,7 +52,7 @@ sub initTest
     my $self = shift;
 
     # Clear cache from the previous test
-    storageRepoCacheClear($self->stanza());
+    storageRepoCacheClear();
 
     # Load options
     $self->configTestClear();

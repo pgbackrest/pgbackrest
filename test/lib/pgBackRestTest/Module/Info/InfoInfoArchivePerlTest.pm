@@ -51,7 +51,7 @@ sub initTest
     my $self = shift;
 
     # Clear cache from the previous test
-    storageRepoCacheClear($self->stanza());
+    storageRepoCacheClear();
 
     # Load options
     $self->configTestClear();
@@ -116,7 +116,7 @@ sub run
 
         # Attempt to reconstruct from an encypted archived WAL with an encrypted repo
         #---------------------------------------------------------------------------------------------------------------------------
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
         $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
@@ -222,7 +222,7 @@ sub run
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         # Clear the storage repo settings
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
 
         # Create an encrypted storage and generate an encyption sub passphrase to store in the file
         my $strCipherPassSub = cipherPassGen();
