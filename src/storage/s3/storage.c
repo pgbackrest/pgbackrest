@@ -358,7 +358,7 @@ storageS3Exists(THIS_VOID, const String *file)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, false, true);
+        storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, true, true);
         result = httpClientResponseCodeOk(this->httpClient);
     }
     MEM_CONTEXT_TEMP_END();
