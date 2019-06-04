@@ -277,54 +277,13 @@ XS_EUPXS(XS_pgBackRest__LibC_libcUvSize)
 /* INCLUDE:  Including 'xs/storage/storage.xs' from 'xs/postgres/pageChecksum.xs' */
 
 
-/* INCLUDE:  Including 'xs/storage/storageRead.xs' from 'xs/storage/storage.xs' */
+/* INCLUDE:  Including 'xs/storage/storageHelper.xs' from 'xs/storage/storage.xs' */
+
+
+/* INCLUDE:  Including 'xs/storage/storageRead.xs' from 'xs/storage/storageHelper.xs' */
 
 
 /* INCLUDE:  Including 'xs/storage/storageWrite.xs' from 'xs/storage/storageRead.xs' */
-
-
-/* INCLUDE:  Including 'xs/storage/storageOld.xs' from 'xs/storage/storageWrite.xs' */
-
-
-XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove)
-{
-    dVAR; dXSARGS;
-    if (items != 3)
-       croak_xs_usage(cv,  "path, errorOnMissing, recurse");
-    {
-	const char *	path = (const char *)SvPV_nolen(ST(0))
-;
-	bool	errorOnMissing = (bool)SvTRUE(ST(1))
-;
-	bool	recurse = (bool)SvTRUE(ST(2))
-;
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-        storagePathRemoveP(
-            storagePosixNew(strNew("/"), 0640, 750, true, NULL), strNew(path), .errorOnMissing = errorOnMissing,
-            .recurse = recurse);
-    }
-    MEM_CONTEXT_XS_TEMP_END();
-    }
-    XSRETURN_EMPTY;
-}
-
-
-XS_EUPXS(XS_pgBackRest__LibC_storageRepoFree); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC_storageRepoFree)
-{
-    dVAR; dXSARGS;
-    if (items != 0)
-       croak_xs_usage(cv,  "");
-    {
-    storageHelperFree();
-    }
-    XSRETURN_EMPTY;
-}
-
-
-/* INCLUDE: Returning to 'xs/storage/storageWrite.xs' from 'xs/storage/storageOld.xs' */
 
 
 XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_new); /* prototype to pass -Wmissing-prototypes */
@@ -365,7 +324,8 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_new)
     RETVAL = storageWriteMove(
         storageNewWriteP(
             storage, file, .modeFile = mode, .user = user, .group = group, .timeModified = (time_t)timeModified,
-            .noCreatePath = !pathCreate, .noSyncPath = !atomic, .noAtomic = !atomic),
+            .noCreatePath = storageFeature(storage, storageFeaturePath) ? !pathCreate : false, .noSyncPath = !atomic,
+            .noAtomic = !atomic),
         MEM_CONTEXT_XS_OLD());
 	{
 	    SV * RETVALSV;
@@ -556,7 +516,48 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_DESTROY)
 }
 
 
-/* INCLUDE: Returning to 'xs/storage/storage.xs' from 'xs/storage/storageRead.xs' */
+/* INCLUDE: Returning to 'xs/storage/storageHelper.xs' from 'xs/storage/storageRead.xs' */
+
+
+XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove)
+{
+    dVAR; dXSARGS;
+    if (items != 3)
+       croak_xs_usage(cv,  "path, errorOnMissing, recurse");
+    {
+	const char *	path = (const char *)SvPV_nolen(ST(0))
+;
+	bool	errorOnMissing = (bool)SvTRUE(ST(1))
+;
+	bool	recurse = (bool)SvTRUE(ST(2))
+;
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        storagePathRemoveP(
+            storagePosixNew(strNew("/"), 0640, 750, true, NULL), strNew(path), .errorOnMissing = errorOnMissing,
+            .recurse = recurse);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC_storageRepoFree); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC_storageRepoFree)
+{
+    dVAR; dXSARGS;
+    if (items != 0)
+       croak_xs_usage(cv,  "");
+    {
+    storageHelperFree();
+    }
+    XSRETURN_EMPTY;
+}
+
+
+/* INCLUDE: Returning to 'xs/storage/storage.xs' from 'xs/storage/storageHelper.xs' */
 
 
 XS_EUPXS(XS_pgBackRest__LibC__Storage_new); /* prototype to pass -Wmissing-prototypes */
@@ -693,8 +694,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
 			"self", "pgBackRest::LibC::Storage")
 ;
     StringList *fileList = strLstSort(
-        storageListP(self, pathExp, .errorOnMissing = !ignoreMissing, .expression = expression),
-        sortAsc ? sortOrderAsc : sortOrderDesc);
+        storageListP(self, pathExp, .errorOnMissing = storageFeature(self, storageFeaturePath) ? !ignoreMissing : false,
+        .expression = expression), sortAsc ? sortOrderAsc : sortOrderDesc);
 
     const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
 
@@ -734,7 +735,9 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_manifest)
     CHECK(filter == NULL); // !!! NOT YET IMPLEMENTED
 
     StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = pathExp};
-    storageInfoListP(self, data.pathRoot, storageManifestXsCallback, &data, .errorOnMissing = true);
+    storageInfoListP(
+        self, data.pathRoot, storageManifestXsCallback, &data,
+        .errorOnMissing = storageFeature(self, storageFeaturePath) ? true : false);
     strCat(data.json, "}");
 
     RETVAL = newSVpv((char *)strPtr(data.json), strSize(data.json));
@@ -773,9 +776,10 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathCreate)
 			"pgBackRest::LibC::Storage::pathCreate",
 			"self", "pgBackRest::LibC::Storage")
 ;
-    storagePathCreateP(
-        self, pathExp, .mode = strSize(mode) == 0 ? 0 : cvtZToIntBase(strPtr(mode), 8), .errorOnExists = !ignoreExists,
-        .noParentCreate = !createParent);
+    if (storageFeature(self, storageFeaturePath))
+        storagePathCreateP(
+            self, pathExp, .mode = strSize(mode) == 0 ? 0 : cvtZToIntBase(strPtr(mode), 8), .errorOnExists = !ignoreExists,
+            .noParentCreate = !createParent);
     }
     MEM_CONTEXT_XS_TEMP_END();
     }
@@ -805,7 +809,10 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathExists)
 			"pgBackRest::LibC::Storage::pathExists",
 			"self", "pgBackRest::LibC::Storage")
 ;
-    RETVAL = storagePathExistsNP(self, pathExp);
+    RETVAL = true;
+
+    if (storageFeature(self, storageFeaturePath))
+        RETVAL = storagePathExistsNP(self, pathExp);
 	ST(0) = boolSV(RETVAL);
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -872,7 +879,8 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathRemove)
 			"pgBackRest::LibC::Storage::pathRemove",
 			"self", "pgBackRest::LibC::Storage")
 ;
-    storagePathRemoveP(self, pathExp, .errorOnMissing = !ignoreMissing, .recurse = recurse);
+    storagePathRemoveP(
+        self, pathExp, .errorOnMissing = storageFeature(self, storageFeaturePath) ? !ignoreMissing : false, .recurse = recurse);
     }
     MEM_CONTEXT_XS_TEMP_END();
     }
@@ -965,7 +973,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_remove)
 			"pgBackRest::LibC::Storage::remove",
 			"self", "pgBackRest::LibC::Storage")
 ;
-    storageRemoveP(self, fileExp, .errorOnMissing = !ignoreMissing);
+    storageRemoveP(self, fileExp, .errorOnMissing = storageFeature(self, storageFeaturePath) ? !ignoreMissing : false);
     }
     MEM_CONTEXT_XS_TEMP_END();
     }
@@ -1998,14 +2006,14 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
 #endif
 
         newXS_deffile("pgBackRest::LibC::libcUvSize", XS_pgBackRest__LibC_libcUvSize);
-        newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
-        newXS_deffile("pgBackRest::LibC::storageRepoFree", XS_pgBackRest__LibC_storageRepoFree);
         newXS_deffile("pgBackRest::LibC::StorageWrite::new", XS_pgBackRest__LibC__StorageWrite_new);
         newXS_deffile("pgBackRest::LibC::StorageWrite::filterAdd", XS_pgBackRest__LibC__StorageWrite_filterAdd);
         newXS_deffile("pgBackRest::LibC::StorageWrite::DESTROY", XS_pgBackRest__LibC__StorageWrite_DESTROY);
         newXS_deffile("pgBackRest::LibC::StorageRead::new", XS_pgBackRest__LibC__StorageRead_new);
         newXS_deffile("pgBackRest::LibC::StorageRead::filterAdd", XS_pgBackRest__LibC__StorageRead_filterAdd);
         newXS_deffile("pgBackRest::LibC::StorageRead::DESTROY", XS_pgBackRest__LibC__StorageRead_DESTROY);
+        newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
+        newXS_deffile("pgBackRest::LibC::storageRepoFree", XS_pgBackRest__LibC_storageRepoFree);
         newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
         newXS_deffile("pgBackRest::LibC::Storage::exists", XS_pgBackRest__LibC__Storage_exists);
         newXS_deffile("pgBackRest::LibC::Storage::get", XS_pgBackRest__LibC__Storage_get);

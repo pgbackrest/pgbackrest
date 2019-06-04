@@ -88,7 +88,7 @@ sub run
         {vm => VM2, remote =>  true, s3 => false, encrypt =>  true},
         {vm => VM3, remote => false, s3 => false, encrypt =>  true},
         {vm => VM3, remote =>  true, s3 =>  true, encrypt => false},
-        {vm => VM4, remote => false, s3 => false, encrypt =>  true},
+        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true},
         {vm => VM4, remote =>  true, s3 => false, encrypt => false},
     )
     {
@@ -143,7 +143,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate(
             'stanza create',
-            {strOptionalParam => '--log-level-console=trace --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    push first WAL');

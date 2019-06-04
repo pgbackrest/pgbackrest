@@ -87,12 +87,31 @@ push @EXPORT, qw(storageDb);
 sub storageRepo
 {
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '::storageRepo');
+    my
+    (
+        $strOperation,
+        $strStanza,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::storageRepo', \@_,
+            {name => 'strStanza', optional => true, trace => true},
+        );
 
     # Create storage if not defined
     if (!defined($hStorage->{&STORAGE_REPO}))
     {
-        $hStorage->{&STORAGE_REPO} = new pgBackRest::Storage::Storage(STORAGE_REPO, {lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
+        if (isRepoLocal())
+        {
+            $hStorage->{&STORAGE_REPO} = new pgBackRest::Storage::Storage(
+                STORAGE_REPO, {lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
+        }
+        else
+        {
+            # Create remote storage
+            $hStorage->{&STORAGE_REPO} = new pgBackRest::Protocol::Storage::Remote(
+                protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP));
+        }
     }
 
     # Return from function and log return values if any

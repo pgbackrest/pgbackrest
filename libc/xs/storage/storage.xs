@@ -86,8 +86,8 @@ INPUT:
     const String *expression = STR_NEW_SV($arg);
 CODE:
     StringList *fileList = strLstSort(
-        storageListP(self, pathExp, .errorOnMissing = !ignoreMissing, .expression = expression),
-        sortAsc ? sortOrderAsc : sortOrderDesc);
+        storageListP(self, pathExp, .errorOnMissing = storageFeature(self, storageFeaturePath) ? !ignoreMissing : false,
+        .expression = expression), sortAsc ? sortOrderAsc : sortOrderDesc);
 
     const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
 
@@ -112,7 +112,9 @@ CODE:
     CHECK(filter == NULL); // !!! NOT YET IMPLEMENTED
 
     StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = pathExp};
-    storageInfoListP(self, data.pathRoot, storageManifestXsCallback, &data, .errorOnMissing = true);
+    storageInfoListP(
+        self, data.pathRoot, storageManifestXsCallback, &data,
+        .errorOnMissing = storageFeature(self, storageFeaturePath) ? true : false);
     strCat(data.json, "}");
 
     RETVAL = newSVpv((char *)strPtr(data.json), strSize(data.json));
@@ -135,9 +137,10 @@ INPUT:
     bool ignoreExists
     bool createParent
 CODE:
-    storagePathCreateP(
-        self, pathExp, .mode = strSize(mode) == 0 ? 0 : cvtZToIntBase(strPtr(mode), 8), .errorOnExists = !ignoreExists,
-        .noParentCreate = !createParent);
+    if (storageFeature(self, storageFeaturePath))
+        storagePathCreateP(
+            self, pathExp, .mode = strSize(mode) == 0 ? 0 : cvtZToIntBase(strPtr(mode), 8), .errorOnExists = !ignoreExists,
+            .noParentCreate = !createParent);
 CLEANUP:
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -152,7 +155,10 @@ INPUT:
     pgBackRest::LibC::Storage self
     const String *pathExp = STR_NEW_SV($arg);
 CODE:
-    RETVAL = storagePathExistsNP(self, pathExp);
+    RETVAL = true;
+
+    if (storageFeature(self, storageFeaturePath))
+        RETVAL = storagePathExistsNP(self, pathExp);
 OUTPUT:
     RETVAL
 CLEANUP:
@@ -189,7 +195,8 @@ INPUT:
     bool ignoreMissing
     bool recurse
 CODE:
-    storagePathRemoveP(self, pathExp, .errorOnMissing = !ignoreMissing, .recurse = recurse);
+    storagePathRemoveP(
+        self, pathExp, .errorOnMissing = storageFeature(self, storageFeaturePath) ? !ignoreMissing : false, .recurse = recurse);
 CLEANUP:
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -238,7 +245,7 @@ INPUT:
     const String *fileExp = STR_NEW_SV($arg);
     bool ignoreMissing
 CODE:
-    storageRemoveP(self, fileExp, .errorOnMissing = !ignoreMissing);
+    storageRemoveP(self, fileExp, .errorOnMissing = storageFeature(self, storageFeaturePath) ? !ignoreMissing : false);
 CLEANUP:
     }
     MEM_CONTEXT_XS_TEMP_END();

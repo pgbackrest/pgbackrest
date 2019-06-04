@@ -105,6 +105,6 @@ INCLUDE: xs/crypto/hash.xs
 INCLUDE: xs/crypto/random.xs
 INCLUDE: xs/postgres/pageChecksum.xs
 INCLUDE: xs/storage/storage.xs
+INCLUDE: xs/storage/storageHelper.xs
 INCLUDE: xs/storage/storageRead.xs
 INCLUDE: xs/storage/storageWrite.xs
-INCLUDE: xs/storage/storageOld.xs
