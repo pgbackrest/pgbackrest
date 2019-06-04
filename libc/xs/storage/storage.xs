@@ -245,6 +245,37 @@ CLEANUP:
 
 ####################################################################################################################################
 const char *
+cipherType(self)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+CODE:
+    if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
+        RETVAL = NULL;
+    else
+        RETVAL = strPtr(cfgOptionStr(cfgOptRepoCipherType));
+OUTPUT:
+    RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+const char *
+cipherPass(self)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+CODE:
+    RETVAL = strPtr(cfgOptionStr(cfgOptRepoCipherPass));
+OUTPUT:
+    RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+const char *
 type(self)
 PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()

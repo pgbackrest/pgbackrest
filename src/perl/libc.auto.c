@@ -897,6 +897,49 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_remove)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC__Storage_cipherType); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_cipherType)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	const char *	RETVAL;
+	dXSTARG;
+    if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
+        RETVAL = NULL;
+    else
+        RETVAL = strPtr(cfgOptionStr(cfgOptRepoCipherType));
+	sv_setpv(TARG, RETVAL); XSprePUSH; PUSHTARG;
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Storage_cipherPass); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_cipherPass)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	const char *	RETVAL;
+	dXSTARG;
+    RETVAL = strPtr(cfgOptionStr(cfgOptRepoCipherPass));
+	sv_setpv(TARG, RETVAL); XSprePUSH; PUSHTARG;
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
 XS_EUPXS(XS_pgBackRest__LibC__Storage_type); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__Storage_type)
 {
@@ -1897,6 +1940,8 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::Storage::pathSync", XS_pgBackRest__LibC__Storage_pathSync);
         newXS_deffile("pgBackRest::LibC::Storage::put", XS_pgBackRest__LibC__Storage_put);
         newXS_deffile("pgBackRest::LibC::Storage::remove", XS_pgBackRest__LibC__Storage_remove);
+        newXS_deffile("pgBackRest::LibC::Storage::cipherType", XS_pgBackRest__LibC__Storage_cipherType);
+        newXS_deffile("pgBackRest::LibC::Storage::cipherPass", XS_pgBackRest__LibC__Storage_cipherPass);
         newXS_deffile("pgBackRest::LibC::Storage::type", XS_pgBackRest__LibC__Storage_type);
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);
         newXS_deffile("pgBackRest::LibC::pageChecksumTest", XS_pgBackRest__LibC_pageChecksumTest);

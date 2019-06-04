@@ -2,7 +2,6 @@
 # C Storage Interface
 ####################################################################################################################################
 package pgBackRest::Storage::Storage;
-use parent 'pgBackRest::Storage::Base';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -16,6 +15,7 @@ use JSON::PP;
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::Storage::Base;
 
 ####################################################################################################################################
 # new
@@ -51,14 +51,11 @@ sub new
     # Create JSON object
     $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
-    # $self->{strCipherType} = $strCipherType;
-    # $self->{strCipherPassUser} = $strCipherPassUser;
-
-    # if (defined($self->{strCipherType}))
-    # {
-    #     require pgBackRest::Storage::Filter::CipherBlock;
-    #     pgBackRest::Storage::Filter::CipherBlock->import();
-    # }
+    if (defined($self->{oStorageC}->cipherType()))
+    {
+        require pgBackRest::Storage::Filter::CipherBlock;
+        pgBackRest::Storage::Filter::CipherBlock->import();
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -456,26 +453,23 @@ sub openRead
     my $oFileIo = new pgBackRest::LibC::StorageRead($self->{oStorageC}, $xFileExp, $bIgnoreMissing);
 
     # Apply filters if file is defined
-    # if (defined($oFileIo))
-    # {
-    #     # If cipher is set then add the filter so that decryption is the first filter applied to the data read before any of the
-    #     # other filters
-    #     if (defined($self->cipherType()))
-    #     {
-    #         $oFileIo = &STORAGE_FILTER_CIPHER_BLOCK->new(
-    #             $oFileIo, $self->cipherType(), defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser(),
-    #             {strMode => STORAGE_DECRYPT});
-    #     }
-    #
-    #     # Apply any other filters
-    #     if (defined($rhyFilter))
-    #     {
-    #         foreach my $rhFilter (@{$rhyFilter})
-    #         {
-    #             $oFileIo = $rhFilter->{strClass}->new($oFileIo, @{$rhFilter->{rxyParam}});
-    #         }
-    #     }
-    # }
+    if (defined($oFileIo))
+    {
+        # If cipher is set then decryption is the first filter applied to the read
+        if (defined($self->cipherType()))
+        {
+            $oFileIo->filterAdd(STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([false, $self->cipherPassUser()]));
+        }
+
+        # # Apply any other filters
+        # if (defined($rhyFilter))
+        # {
+        #     foreach my $rhFilter (@{$rhyFilter})
+        #     {
+        #         $oFileIo = $rhFilter->{strClass}->new($oFileIo, @{$rhFilter->{rxyParam}});
+        #     }
+        # }
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -524,13 +518,13 @@ sub openWrite
     my $oFileIo = new pgBackRest::LibC::StorageWrite(
         $self->{oStorageC}, $xFileExp, oct($strMode), $strUser, $strGroup, $lTimestamp, $bAtomic, $bPathCreate);
 
-    # # If cipher is set then add filter so that encryption is performed just before the data is actually written
+    # If cipher is set then add filter so that encryption is performed just before the data is actually written
     # if (defined($self->cipherType()))
     # {
     #     $oFileIo = &STORAGE_FILTER_CIPHER_BLOCK->new(
     #         $oFileIo, $self->cipherType(), defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser());
     # }
-    #
+
     # # Apply any other filters
     # if (defined($rhyFilter))
     # {
@@ -993,29 +987,13 @@ sub encryptionValid
             {name => 'bEncrypted'},
         );
 
-    my $bValid = true;
-
-    # # If encryption is set on the file then make sure the repo is encrypted and visa-versa
-    # if ($bEncrypted)
-    # {
-    #     if (!defined($self->{strCipherType}))
-    #     {
-    #         $bValid = false;
-    #     }
-    # }
-    # else
-    # {
-    #     if (defined($self->{strCipherType}))
-    #     {
-    #         $bValid = false;
-    #     }
-    # }
+    my $bValid = ($bEncrypted && defined($self->{strCipherType})) || (!$bEncrypted && !defined($self->{strCipherType}));
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bValid', value => $bValid}
+        {name => 'bValid', value => $bValid ? true : false}
     );
 }
 
@@ -1023,8 +1001,7 @@ sub encryptionValid
 # Getters
 ####################################################################################################################################
 sub type {shift->{oStorageC}->type()}
-# sub pathBase {shift->{strPathBase}}
-sub cipherType {shift->{strCipherType}}
-sub cipherPassUser {shift->{strCipherPassUser}}
+sub cipherType {shift->{oStorageC}->cipherType()}
+sub cipherPassUser {shift->{oStorageC}->cipherPass()}
 
 1;
