@@ -108,13 +108,12 @@ sub get
         (
             __PACKAGE__ . '->get', \@_,
             {name => 'xFile', required => false, trace => true},
-            {name => 'strCipherPass', optional => true, redact => true},
+            {name => 'strCipherPass', optional => true, default => $self->cipherPassUser(), redact => true},
         );
 
     # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or
     # if the repo has a user passphrase defined - else pass undef
-    my $oFileIo = defined($xFile) ? (ref($xFile) ? $xFile : $self->openRead(
-        $xFile, {strCipherPass => defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser()})) : undef;
+    my $oFileIo = defined($xFile) ? (ref($xFile) ? $xFile : $self->openRead($xFile, {strCipherPass => $strCipherPass})) : undef;
 
     # Get the file contents
     my $bEmpty = false;
@@ -441,7 +440,7 @@ sub openRead
             {name => 'xFileExp'},
             {name => 'bIgnoreMissing', optional => true, default => false},
             {name => 'rhyFilter', optional => true},
-            {name => 'strCipherPass', optional => true, redact => true},
+            {name => 'strCipherPass', optional => true, default => $self->cipherPassUser(), redact => true},
         );
 
     # Open the file
@@ -454,7 +453,7 @@ sub openRead
         if (defined($self->cipherType()))
         {
             $oFileIo->filterAdd(
-                STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([false, $self->cipherType(), $self->cipherPassUser()]));
+                STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([false, $self->cipherType(), $strCipherPass]));
         }
 
         # # Apply any other filters
@@ -507,7 +506,7 @@ sub openWrite
             {name => 'bAtomic', optional => true, default => false},
             {name => 'bPathCreate', optional => true, default => false},
             {name => 'rhyFilter', optional => true},
-            {name => 'strCipherPass', optional => true, redact => true},
+            {name => 'strCipherPass', optional => true, default => $self->cipherPassUser(), redact => true},
         );
 
     # Open the file
@@ -517,15 +516,8 @@ sub openWrite
     # If cipher is set then encryption is the last filter applied to the write
     if (defined($self->cipherType()))
     {
-        $oFileIo->filterAdd(
-            STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([true, $self->cipherType(), $self->cipherPassUser()]));
+        $oFileIo->filterAdd(STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([true, $self->cipherType(), $strCipherPass]));
     }
-    # If cipher is set then add filter so that encryption is performed just before the data is actually written
-    # if (defined($self->cipherType()))
-    # {
-    #     $oFileIo = &STORAGE_FILTER_CIPHER_BLOCK->new(
-    #         $oFileIo, $self->cipherType(), defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser());
-    # }
 
     # # Apply any other filters
     # if (defined($rhyFilter))
@@ -863,13 +855,12 @@ sub put
             __PACKAGE__ . '->put', \@_,
             {name => 'xFile', trace => true},
             {name => 'xContent', required => false, trace => true},
-            {name => 'strCipherPass', optional => true, trace => true, redact => true},
+            {name => 'strCipherPass', optional => true, default => $self->cipherPassUser(), trace => true, redact => true},
         );
 
     # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or if
     # the repo has a user passphrase defined - else pass undef
-    my $oFileIo = ref($xFile) ? $xFile : $self->openWrite(
-        $xFile, {strCipherPass => defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser()});
+    my $oFileIo = ref($xFile) ? $xFile : $self->openWrite($xFile, {strCipherPass => $strCipherPass});
 
     # Write the content
     my $lSize = $self->{oStorageC}->put($oFileIo, ref($xContent) ? $$xContent : $xContent);
@@ -934,20 +925,18 @@ sub encrypted
 
     # Open the file via the driver
     # !!! NEED TO ADD LENGTH BACK, length(CIPHER_MAGIC));
-    my $rtMagicSignature = $self->get($self->openRead($strFileExp, {bIgnoreMissing => $bIgnoreMissing}));
+    my $tBuffer = $self->get(new pgBackRest::LibC::StorageRead($self->{oStorageC}, $strFileExp, $bIgnoreMissing));
 
     # If the file does not exist because we're ignoring missing (else it would error before this is executed) then determine if it
     # should be encrypted based on the repo
-    if (!defined($rtMagicSignature))
+    if (!defined($tBuffer))
     {
-        if (defined($self->{strCipherType}))
+        if (defined($self->cipherType()))
         {
             $bEncrypted = true;
         }
     }
-    # If the file is able to be read, then if it is encrypted it must at least have the magic signature, even if it were originally
-    # a 0 byte file
-    elsif (defined($$rtMagicSignature) && substr($$rtMagicSignature, 0, length(CIPHER_MAGIC)) eq CIPHER_MAGIC)
+    elsif (defined($$tBuffer) && substr($$tBuffer, 0, length(CIPHER_MAGIC)) eq CIPHER_MAGIC)
     {
         $bEncrypted = true;
     }
@@ -979,7 +968,7 @@ sub encryptionValid
             {name => 'bEncrypted'},
         );
 
-    my $bValid = ($bEncrypted && defined($self->{strCipherType})) || (!$bEncrypted && !defined($self->{strCipherType}));
+    my $bValid = ($bEncrypted && defined($self->cipherType())) || (!$bEncrypted && !defined($self->cipherType()));
 
     # Return from function and log return values if any
     return logDebugReturn
