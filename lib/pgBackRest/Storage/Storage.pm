@@ -335,19 +335,19 @@ sub list
         );
 
     # Get file list
-    my @stryFileList;
+    my $rstryFileList = ();
     my $strFileList = $self->{oStorageC}->list($strPathExp, $bIgnoreMissing, $strSortOrder eq 'forward', $strExpression);
 
     if (defined($strFileList) && $strFileList ne '[]')
     {
-        @stryFileList = @{$self->{oJSON}->decode($strFileList)};
+        $rstryFileList = $self->{oJSON}->decode($strFileList);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'stryFileList', value => \@stryFileList}
+        {name => 'stryFileList', value => $rstryFileList}
     );
 }
 

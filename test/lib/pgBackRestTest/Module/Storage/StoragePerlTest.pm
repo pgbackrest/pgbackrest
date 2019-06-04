@@ -281,7 +281,7 @@ sub run
             'complete manifest');
 
         $self->testResult(sub {$self->storageLocal()->list($self->testPath())}, "(sub1, sub2, test.txt)", "list");
-        $self->testResult(sub {$self->storageLocal()->list($self->testPath(), {strExpression => "2\$"})}, "(sub2)", "list");
+        $self->testResult(sub {$self->storageLocal()->list($self->testPath(), {strExpression => "2\$"})}, "sub2", "list");
         $self->testResult(
             sub {$self->storageLocal()->list($self->testPath(), {strSortOrder => 'reverse'})}, "(test.txt, sub2, sub1)",
             "list reverse");
