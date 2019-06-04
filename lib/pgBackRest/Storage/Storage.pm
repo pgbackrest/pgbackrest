@@ -341,7 +341,7 @@ sub list
 
     if (defined($strFileList) && $strFileList ne '[]')
     {
-        @stryFileList = $self->{oJSON}->decode($strFileList);
+        @stryFileList = @{$self->{oJSON}->decode($strFileList)};
     }
 
     # Return from function and log return values if any

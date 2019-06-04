@@ -409,9 +409,6 @@ sub reconstruct
         # Get the db-system-id from the WAL file depending on the version of postgres
         my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
 
-        # Read first 8k of WAL segment
-        my $tBlock;
-
         # Error if the file encryption setting is not valid for the repo
         if (!storageRepo()->encryptionValid(storageRepo()->encrypted($strArchiveFilePath)))
         {
@@ -420,14 +417,12 @@ sub reconstruct
         }
 
         # If the file is encrypted, then the passprase from the info file is required, else getEncryptionKeySub returns undefined
-        my $oFileIo = storageRepo()->openRead(
+        # !!! Add limited GET
+        my $tBlock = ${storageRepo()->get(storageRepo()->openRead(
             $strArchiveFilePath,
             {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
                 [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef,
-            strCipherPass => $self->cipherPassSub()});
-
-        $oFileIo->read(\$tBlock, 512, true);
-        $oFileIo->close();
+            strCipherPass => $self->cipherPassSub()}))};
 
         # Get the required data from the file that was pulled into scalar $tBlock
         my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
