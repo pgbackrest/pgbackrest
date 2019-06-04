@@ -30,24 +30,24 @@ struct StorageRemote
 Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
 static bool
-storageRemoteExists(THIS_VOID, const String *path)
+storageRemoteExists(THIS_VOID, const String *file)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
-        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(STRING, file);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(path != NULL);
+    ASSERT(file != NULL);
 
     bool result = false;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_EXISTS_STR);
-        protocolCommandParamAdd(command, VARSTR(path));
+        protocolCommandParamAdd(command, VARSTR(file));
 
         result = varBool(protocolClientExecute(this->client, command, true));
     }

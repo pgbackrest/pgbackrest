@@ -342,17 +342,17 @@ storageS3Request(
 Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
 static bool
-storageS3Exists(THIS_VOID, const String *path)
+storageS3Exists(THIS_VOID, const String *file)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(STRING, file);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(path != NULL);
+    ASSERT(file != NULL);
 
     bool result = false;
 
@@ -361,7 +361,7 @@ storageS3Exists(THIS_VOID, const String *path)
         HttpQuery *query = httpQueryNew();
 
         // Generate the file name as a prefix.  Muliple files may be returned but this will narrow down the list.
-        String *prefix = strNewFmt("%s", strPtr(strSub(path, 1)));
+        String *prefix = strNewFmt("%s", strPtr(strSub(file, 1)));
         httpQueryAdd(query, S3_QUERY_PREFIX_STR, prefix);
 
         // Build the query using list type 2
