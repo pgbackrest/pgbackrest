@@ -269,7 +269,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
-            PathOpenError, "unable to list files for missing path '%s/spool/archive/test1/in'", testPath());
+            PathMissingError, "unable to list files for missing path '%s/spool/archive/test1/in'", testPath());
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
