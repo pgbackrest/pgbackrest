@@ -286,6 +286,7 @@ testRun(void)
 
         TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create buffer read object");
         IoFilterGroup *filterGroup = NULL;
+        TEST_RESULT_VOID(ioFilterGroupMove(filterGroup, memContextTop()), "move null filter group is a noop");
         TEST_ASSIGN(filterGroup, ioFilterGroupNew(), "    create new filter group");
         IoFilter *sizeFilter = ioSizeNew();
         TEST_RESULT_PTR(ioFilterGroupAdd(filterGroup, sizeFilter), filterGroup, "    add filter to filter group");

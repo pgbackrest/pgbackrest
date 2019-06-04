@@ -9,6 +9,7 @@ Test S3 Storage
 /***********************************************************************************************************************************
 Test server
 ***********************************************************************************************************************************/
+#define S3_TEST_HOST                                                "bucket.s3.amazonaws.com"
 #define DATE_REPLACE                                                "????????"
 #define DATETIME_REPLACE                                            "????????T??????Z"
 #define SHA256_REPLACE                                                                                                             \
@@ -41,7 +42,7 @@ testS3ServerRequest(const char *verb, const char *uri, const char *content)
 
     strCatFmt(
         request,
-        "host:" TLS_TEST_HOST "\r\n"
+        "host:" S3_TEST_HOST "\r\n"
         "x-amz-content-sha256:%s\r\n"
         "x-amz-date:" DATETIME_REPLACE "\r\n"
         "\r\n",
@@ -171,43 +172,12 @@ testS3Server(void)
         // storageDriverExists()
         // -------------------------------------------------------------------------------------------------------------------------
         // File missing
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=BOGUS", NULL));
-        harnessTlsServerReply(
-            testS3ServerResponse(
-                200, "OK", NULL,
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                "</ListBucketResult>"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/BOGUS", NULL));
+        harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
 
         // File exists
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=subdir%2Ffile1.txt", NULL));
-        harnessTlsServerReply(
-            testS3ServerResponse(
-                200, "OK", NULL,
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                "    <Contents>"
-                "        <Key>subdir/file1.txts</Key>"
-                "    </Contents>"
-                "    <Contents>"
-                "        <Key>subdir/file1.txt</Key>"
-                "    </Contents>"
-                "</ListBucketResult>"));
-
-        // File does not exist but files with same prefix do
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=subdir%2Ffile1.txt", NULL));
-        harnessTlsServerReply(
-            testS3ServerResponse(
-                200, "OK", NULL,
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                "    <Contents>"
-                "        <Key>subdir/file1.txta</Key>"
-                "    </Contents>"
-                "    <Contents>"
-                "        <Key>subdir/file1.txtb</Key>"
-                "    </Contents>"
-                "</ListBucketResult>"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", "content-length:999", NULL));
 
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
@@ -506,7 +476,9 @@ testRun(void)
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
-        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->host), strPtr(host), "    check host");
+        TEST_RESULT_STR(
+            strPtr(((StorageS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
+            "    check host");
         TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 443, "    check port");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
         TEST_RESULT_STR(
@@ -565,7 +537,9 @@ testRun(void)
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
-        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->host), strPtr(host), "    check host");
+        TEST_RESULT_STR(
+            strPtr(((StorageS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
+            "    check host");
         TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 7777, "    check port");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
         TEST_RESULT_STR(
@@ -688,7 +662,7 @@ testRun(void)
             "*** Request Headers ***:\n"
             "authorization: <redacted>\n"
             "content-length: 0\n"
-            "host: " TLS_TEST_HOST "\n"
+            "host: " S3_TEST_HOST "\n"
             "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
             "x-amz-date: <redacted>\n"
             "*** Response Headers ***:\n"
@@ -733,8 +707,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(storageExistsNP(s3, strNew("BOGUS")), false, "file does not exist");
         TEST_RESULT_BOOL(storageExistsNP(s3, strNew("subdir/file1.txt")), true, "file exists");
-        TEST_RESULT_BOOL(
-            storageExistsNP(s3, strNew("subdir/file1.txt")), false, "file does not exist but files with same prefix do");
 
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
@@ -748,7 +720,7 @@ testRun(void)
             "*** Request Headers ***:\n"
             "authorization: <redacted>\n"
             "content-length: 0\n"
-            "host: " TLS_TEST_HOST "\n"
+            "host: " S3_TEST_HOST "\n"
             "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
             "x-amz-date: <redacted>");
 

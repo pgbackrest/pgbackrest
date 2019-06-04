@@ -752,8 +752,7 @@ storageS3New(
         driver->signingKeyDate = YYYYMMDD_STR;
 
         // Create the http client used to service requests
-        driver->httpClient = httpClientNew(
-            host == NULL ? driver->host : strDup(host), driver->port, timeout, verifyPeer, caFile, caPath);
+        driver->httpClient = httpClientNew(host == NULL ? driver->host : host, driver->port, timeout, verifyPeer, caFile, caPath);
         driver->headerRedactList = strLstAdd(strLstNew(), S3_HEADER_AUTHORIZATION_STR);
 
         this = storageNewP(
