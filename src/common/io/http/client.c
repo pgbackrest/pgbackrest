@@ -21,6 +21,7 @@ Http constants
 
 STRING_EXTERN(HTTP_VERB_DELETE_STR,                                 HTTP_VERB_DELETE);
 STRING_EXTERN(HTTP_VERB_GET_STR,                                    HTTP_VERB_GET);
+STRING_EXTERN(HTTP_VERB_HEAD_STR,                                   HTTP_VERB_HEAD);
 STRING_EXTERN(HTTP_VERB_POST_STR,                                   HTTP_VERB_POST);
 STRING_EXTERN(HTTP_VERB_PUT_STR,                                    HTTP_VERB_PUT);
 

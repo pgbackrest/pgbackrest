@@ -32,6 +32,8 @@ HTTP Constants
     STRING_DECLARE(HTTP_VERB_DELETE_STR);
 #define HTTP_VERB_GET                                               "GET"
     STRING_DECLARE(HTTP_VERB_GET_STR);
+#define HTTP_VERB_HEAD                                              "HEAD"
+    STRING_DECLARE(HTTP_VERB_HEAD_STR);
 #define HTTP_VERB_POST                                              "POST"
     STRING_DECLARE(HTTP_VERB_POST_STR);
 #define HTTP_VERB_PUT                                               "PUT"

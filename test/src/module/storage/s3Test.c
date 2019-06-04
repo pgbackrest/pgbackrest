@@ -172,43 +172,12 @@ testS3Server(void)
         // storageDriverExists()
         // -------------------------------------------------------------------------------------------------------------------------
         // File missing
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=BOGUS", NULL));
-        harnessTlsServerReply(
-            testS3ServerResponse(
-                200, "OK", NULL,
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                "</ListBucketResult>"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/BOGUS", NULL));
+        harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
 
         // File exists
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=subdir%2Ffile1.txt", NULL));
-        harnessTlsServerReply(
-            testS3ServerResponse(
-                200, "OK", NULL,
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                "    <Contents>"
-                "        <Key>subdir/file1.txts</Key>"
-                "    </Contents>"
-                "    <Contents>"
-                "        <Key>subdir/file1.txt</Key>"
-                "    </Contents>"
-                "</ListBucketResult>"));
-
-        // File does not exist but files with same prefix do
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=subdir%2Ffile1.txt", NULL));
-        harnessTlsServerReply(
-            testS3ServerResponse(
-                200, "OK", NULL,
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                "    <Contents>"
-                "        <Key>subdir/file1.txta</Key>"
-                "    </Contents>"
-                "    <Contents>"
-                "        <Key>subdir/file1.txtb</Key>"
-                "    </Contents>"
-                "</ListBucketResult>"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", "content-length:999", NULL));
 
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
@@ -738,8 +707,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(storageExistsNP(s3, strNew("BOGUS")), false, "file does not exist");
         TEST_RESULT_BOOL(storageExistsNP(s3, strNew("subdir/file1.txt")), true, "file exists");
-        TEST_RESULT_BOOL(
-            storageExistsNP(s3, strNew("subdir/file1.txt")), false, "file does not exist but files with same prefix do");
 
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
