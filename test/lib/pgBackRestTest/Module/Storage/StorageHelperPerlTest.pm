@@ -125,11 +125,9 @@ sub run
     {
         my $strStanzaEncrypt = 'test-encrypt';
         $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
-        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-
-        # Encryption passphrase required when encryption type not 'none' (default)
-        $self->testException(sub {storageRepo({strStanza => $strStanzaEncrypt})}, ERROR_ASSERT, 'option ' .
-            cfgOptionName(CFGOPT_REPO_CIPHER_PASS) . ' is required');
+        $self->testException(
+            sub {$self->configTestLoad(CFGCMD_ARCHIVE_PUSH)}, ERROR_OPTION_REQUIRED,
+            'archive-push command requires option: repo1-cipher-pass');
 
         # Set the encryption passphrase and confirm passphrase and type have been set in the storage object
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');

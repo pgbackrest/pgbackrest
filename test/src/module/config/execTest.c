@@ -24,19 +24,18 @@ testRun(void)
         strLstAddZ(argList, "--reset-neutral-umask");
         strLstAddZ(argList, "--repo-cipher-type=aes-256-cbc");
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Set repo1-cipher-pass to make sure it is not passed on the command line
-        cfgOptionValidSet(cfgOptRepoCipherPass, true);
-        cfgOptionSet(cfgOptRepoCipherPass, cfgSourceConfig, varNewStrZ("1234"));
+        setenv("PGBACKREST_REPO1_CIPHER_PASS", "1234", true);
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(cfgExecParam(cfgCmdLocal, NULL), "|")),
             strPtr(
                 strNewFmt(
-                    "--no-config|--log-subprocess|--pg1-path=\"%s/db path\"|--repo1-cipher-type=aes-256-cbc|--repo1-path=%s/repo"
-                        "|--stanza=test1|local",
-                    testPath(), testPath())),
+                    "--no-config|--log-subprocess|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo|--stanza=test1|local", testPath(),
+                    testPath())),
             "exec archive-get -> local");
 
         // -------------------------------------------------------------------------------------------------------------------------

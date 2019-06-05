@@ -7670,7 +7670,7 @@ static const EmbeddedModule embeddedModule[] =
             "my $strOption = cfgOptionName($iOptionId);\n"
             "my $bSecure = cfgDefOptionSecure($iOptionId);\n"
             "\n\n"
-            "next if ($bSecure && !$bDisplayOnly);\n"
+            "next if (($bSecure || $iOptionId == CFGOPT_REPO_CIPHER_TYPE) && !$bDisplayOnly);\n"
             "\n\n"
             "if (defined($oOptionOverride->{$iOptionId}))\n"
             "{\n"
