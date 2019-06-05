@@ -61,9 +61,8 @@ sub storageDb
     {
         if (isDbLocal({iRemoteIdx => $iRemoteIdx}))
         {
-            $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Storage::Local(
-                cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), new pgBackRest::Storage::Posix::Driver(),
-                {strTempExtension => STORAGE_TEMP_EXT, lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
+            $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Storage::Storage(
+                STORAGE_DB, {lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
         }
         else
         {

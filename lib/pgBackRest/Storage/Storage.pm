@@ -61,6 +61,42 @@ sub new
 }
 
 ####################################################################################################################################
+# copy - copy a file. If special encryption settings are required, then the file objects from openRead/openWrite must be passed
+# instead of file names.
+####################################################################################################################################
+sub copy
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $xSourceFile,
+        $xDestinationFile,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->copy', \@_,
+            {name => 'xSourceFile'},
+            {name => 'xDestinationFile'},
+        );
+
+    # Is source/destination an IO object or a file expression?
+    my $oSourceFileIo = ref($xSourceFile) ? $xSourceFile : $self->openRead($xSourceFile);
+    my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($xDestinationFile);
+
+    # Copy file
+    my $bResult = $self->{oStorageC}->copy($oSourceFileIo, $oDestinationFileIo) ? true : false;
+
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => $bResult, trace => true},
+    );
+}
+
+####################################################################################################################################
 # Check if file exists (not a path)
 ####################################################################################################################################
 sub exists
@@ -335,7 +371,7 @@ sub list
         );
 
     # Get file list
-    my $rstryFileList = ();
+    my $rstryFileList = [];
     my $strFileList = $self->{oStorageC}->list($strPathExp, $bIgnoreMissing, $strSortOrder eq 'forward', $strExpression);
 
     if (defined($strFileList) && $strFileList ne '[]')

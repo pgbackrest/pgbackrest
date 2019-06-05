@@ -16,14 +16,33 @@ INPUT:
 CODE:
     CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::Storage"));
 
-    // logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
+    logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
 
     if (strEqZ(type, "<LOCAL>"))
         RETVAL = (Storage *)storageLocalWrite();
     else if (strEqZ(type, "<REPO>"))
         RETVAL = (Storage *)storageRepoWrite();
+    else if (strEqZ(type, "<DB>"))
+        RETVAL = (Storage *)storagePgWrite();
     else
         THROW_FMT(AssertError, "unexpected storage type '%s'", strPtr(type));
+OUTPUT:
+    RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+bool
+copy(self, source, destination)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::StorageRead source
+    pgBackRest::LibC::StorageWrite destination
+CODE:
+    RETVAL = storageCopyNP(source, destination);
 OUTPUT:
     RETVAL
 CLEANUP:

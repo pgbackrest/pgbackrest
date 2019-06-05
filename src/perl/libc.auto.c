@@ -574,12 +574,14 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
 	pgBackRest__LibC__Storage	RETVAL;
     CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::Storage"));
 
-    // logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
+    logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
 
     if (strEqZ(type, "<LOCAL>"))
         RETVAL = (Storage *)storageLocalWrite();
     else if (strEqZ(type, "<REPO>"))
         RETVAL = (Storage *)storageRepoWrite();
+    else if (strEqZ(type, "<DB>"))
+        RETVAL = (Storage *)storagePgWrite();
     else
         THROW_FMT(AssertError, "unexpected storage type '%s'", strPtr(type));
 	{
@@ -588,6 +590,47 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
 	    sv_setref_pv(RETVALSV, "pgBackRest::LibC::Storage", (void*)RETVAL);
 	    ST(0) = RETVALSV;
 	}
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Storage_copy); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_copy)
+{
+    dVAR; dXSARGS;
+    if (items != 3)
+       croak_xs_usage(cv,  "self, source, destination");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__StorageRead	source;
+	pgBackRest__LibC__StorageWrite	destination;
+	bool	RETVAL;
+
+	if (SvROK(ST(1)) && sv_derived_from(ST(1), "pgBackRest::LibC::StorageRead")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(1)));
+	    source = INT2PTR(pgBackRest__LibC__StorageRead,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Storage::copy",
+			"source", "pgBackRest::LibC::StorageRead")
+;
+
+	if (SvROK(ST(2)) && sv_derived_from(ST(2), "pgBackRest::LibC::StorageWrite")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(2)));
+	    destination = INT2PTR(pgBackRest__LibC__StorageWrite,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Storage::copy",
+			"destination", "pgBackRest::LibC::StorageWrite")
+;
+    RETVAL = storageCopyNP(source, destination);
+	ST(0) = boolSV(RETVAL);
     }
     MEM_CONTEXT_XS_TEMP_END();
     }
@@ -2015,6 +2058,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
         newXS_deffile("pgBackRest::LibC::storageRepoFree", XS_pgBackRest__LibC_storageRepoFree);
         newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
+        newXS_deffile("pgBackRest::LibC::Storage::copy", XS_pgBackRest__LibC__Storage_copy);
         newXS_deffile("pgBackRest::LibC::Storage::exists", XS_pgBackRest__LibC__Storage_exists);
         newXS_deffile("pgBackRest::LibC::Storage::get", XS_pgBackRest__LibC__Storage_get);
         newXS_deffile("pgBackRest::LibC::Storage::list", XS_pgBackRest__LibC__Storage_list);
