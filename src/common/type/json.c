@@ -907,12 +907,10 @@ jsonFromVar(const Variant *var, unsigned int indent)
         FUNCTION_LOG_PARAM(UINT, indent);
     FUNCTION_LOG_END();
 
-    ASSERT(var != NULL);
-
     String *result = NULL;
 
-    // Currently the variant to parse must be either a VariantList or a KeyValue type.
-    if (varType(var) != varTypeVariantList && varType(var) != varTypeKeyValue)
+    // Currently the variant to render must be null, a VariantList, or a KeyValue
+    if (var != NULL && varType(var) != varTypeVariantList && varType(var) != varTypeKeyValue)
         THROW(JsonFormatError, "variant type is invalid");
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -932,7 +930,11 @@ jsonFromVar(const Variant *var, unsigned int indent)
         strCat(indentDepth, strPtr(indentSpace));
 
         // If VariantList then process each item in the array. Currently the list must be KeyValue types.
-        if (varType(var) == varTypeVariantList)
+        if (var == NULL)
+        {
+            strCat(jsonStr, strPtr(NULL_STR));
+        }
+        else if (varType(var) == varTypeVariantList)
         {
             const VariantList *vl = varVarLst(var);
 

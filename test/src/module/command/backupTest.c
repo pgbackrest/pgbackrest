@@ -1,10 +1,11 @@
 /***********************************************************************************************************************************
 Test Common Functions and Definitions for Backup and Expire Commands
 ***********************************************************************************************************************************/
-#include "common/harnessConfig.h"
-#include "storage/posix/storage.h"
+#include "common/io/sinkWrite.h"
+#include "common/regExp.h"
+#include "common/type/json.h"
 
-#include <common/regExp.h>
+#include "common/harnessConfig.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -109,6 +110,23 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PageChecksum"))
     {
+        unsigned pageSize = 8192;
+
+        // Test pages with all zeros (these are considered valid)
+        // -------------------------------------------------------------------------------------------------------------------------
+        Buffer *buffer = bufNew(pageSize * 3);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        IoWrite *write = ioWriteFilterGroupSet(
+            ioSinkWriteNew(), ioFilterGroupAdd(ioFilterGroupNew(), pageChecksumNew(0, 0, pageSize)));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR(
+            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)), "null",
+            "all zero pages");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
