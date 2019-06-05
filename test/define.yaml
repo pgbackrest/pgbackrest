@@ -672,11 +672,12 @@ unit:
           command/archive/push/push: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: backup-common
-        total: 1
+      - name: backup
+        total: 2
 
         coverage:
           command/backup/common: full
+          command/backup/pageChecksum: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command

@@ -106,5 +106,10 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("PageChecksum"))
+    {
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }
