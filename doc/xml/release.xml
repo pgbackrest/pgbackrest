@@ -36,6 +36,18 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="patrick.mclaughlin"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <setting>wal_level=replica</setting> in the documentation for <postgres/> &amp;ge; 9.6.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2019-05-20" version="2.14" title="Bug Fix and Improvements">
@@ -7307,6 +7319,11 @@
         <contributor id="nj.baliyan">
             <contributor-name-display>Nj Baliyan</contributor-name-display>
             <contributor-id type="github">nj3110</contributor-id>
+        </contributor>
+
+        <contributor id="patrick.mclaughlin">
+            <contributor-name-display>Patrick McLaughlin</contributor-name-display>
+            <contributor-id type="github">hitech73</contributor-id>
         </contributor>
 
         <contributor id="pritam.barhate">

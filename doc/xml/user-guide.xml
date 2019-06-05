@@ -67,6 +67,10 @@
         <variable key="pg-version" if="{[os-type-is-centos7]}">{[os-centos7-pg-version]}</variable>
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
+        <!-- WAL level should be the minimum required for replication -->
+        <variable key="wal-level" if="{[pg-version]} &lt; 9.6">hot_standby</variable>
+        <variable key="wal-level" if="{[pg-version]} &gt;= 9.6">replica</variable>
+
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">11</variable>
         <variable key="pg-version-upgrade" if="{[os-type-is-centos6]}">9.6</variable>
         <variable key="pg-version-upgrade" if="{[os-type-is-centos7]}">10</variable>
@@ -997,11 +1001,11 @@
 
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">hot_standby</postgres-config-option>
+                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             </postgres-config>
 
-            <p>The <pg-option>wal_level</pg-option> setting must be set to <pg-setting>archive</pg-setting> at a minimum but <pg-setting>hot_standby</pg-setting> and <pg-setting>logical</pg-setting> also work fine for backups.  Setting <pg-option>wal_level</pg-option> to <pg-setting>hot_standy</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if you do not currently run a hot standby as this will allow them to be added later without restarting the primary cluster.</p>
+            <p>Setting <pg-option>wal_level</pg-option> to at least <pg-setting>{[wal-level]}</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
 
             <p>The <postgres/> cluster must be restarted after making these changes and before performing a backup.</p>
 
@@ -2672,7 +2676,7 @@
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">hot_standby</postgres-config-option>
+                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
                 <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
                 <postgres-config-option key="log_line_prefix">''</postgres-config-option>
@@ -3178,7 +3182,7 @@
 
             <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
             <postgres-config-option key="archive_mode">on</postgres-config-option>
-            <postgres-config-option key="wal_level">hot_standby</postgres-config-option>
+            <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
             <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             <postgres-config-option key="listen_addresses">'*'</postgres-config-option>
             <postgres-config-option key="log_line_prefix">''</postgres-config-option>
