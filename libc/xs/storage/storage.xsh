@@ -96,3 +96,21 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
     else
         THROW_FMT(AssertError, "unknown filter '%s'", strPtr(filter));
 }
+
+/***********************************************************************************************************************************
+Get result from IO filter
+***********************************************************************************************************************************/
+String *
+storageFilterXsResult(const IoFilterGroup *filterGroup, const String *filter)
+{
+    const Variant *result;
+
+    if (strEqZ(filter, "pgBackRest::Storage::Filter::CipherBlock"))
+    {
+        result = ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR);
+    }
+    else
+        THROW_FMT(AssertError, "unknown filter '%s'", strPtr(filter));
+
+    return jsonFromVar(result, 0);
+}
