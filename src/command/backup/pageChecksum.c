@@ -21,6 +21,11 @@ Object type
 typedef struct PageChecksum
 {
     MemContext *memContext;                                         // Mem context of filter
+
+    unsigned int segmentNo;                                         // Segment number for calculating offsets
+    uint64_t lsnLimit;                                              // Lower limit of pages that could be torn
+    unsigned int pageSize;                                          // Page size
+
     bool valid;                                                     // Is the relation structure valid?
     bool align;                                                     // Is the relation alignment valid?
     VariantList *error;                                             // List of checksum errors
@@ -83,9 +88,13 @@ pageChecksumResult(THIS_VOID)
 New object
 ***********************************************************************************************************************************/
 IoFilter *
-pageChecksumNew(void)
+pageChecksumNew(unsigned int segmentNo, uint64_t lsnLimit, unsigned int pageSize)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(UINT, segmentNo);
+        FUNCTION_LOG_PARAM(UINT64, lsnLimit);
+        FUNCTION_LOG_PARAM(UINT, pageSize);
+    FUNCTION_LOG_END();
 
     IoFilter *this = NULL;
 
@@ -93,6 +102,11 @@ pageChecksumNew(void)
     {
         PageChecksum *driver = memNew(sizeof(PageChecksum));
         driver->memContext = memContextCurrent();
+
+        driver->segmentNo = segmentNo;
+        driver->lsnLimit = lsnLimit;
+        driver->pageSize = pageSize;
+
         driver->valid = true;
         driver->align = true;
 
