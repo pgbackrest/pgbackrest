@@ -809,6 +809,11 @@ jsonFromKvInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
                             strCat(indentDepth, strPtr(indentSpace));
                             strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(arrayValue)), indentSpace, indentDepth)));
                         }
+                        else if (varType(arrayValue) == varTypeVariantList)
+                        {
+                            strCat(indentDepth, strPtr(indentSpace));
+                            strCat(result, strPtr(jsonFromVar(arrayValue, 0)));
+                        }
                         // Numeric, Boolean or other type
                         else
                             strCat(result, strPtr(varStrForce(arrayValue)));
@@ -958,6 +963,14 @@ jsonFromVar(const Variant *var, unsigned int indent)
                         // Update the depth before processing the contents of the list element
                         strCat(indentDepth, strPtr(indentSpace));
                         strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varSub), indentSpace, indentDepth)));
+                    }
+                    else if (varType(varSub) == varTypeUInt)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromUInt(varUInt(varSub))));
+                    }
+                    else if (varType(varSub) == varTypeUInt64)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromUInt64(varUInt64(varSub))));
                     }
                     else
                         jsonFromStrInternal(jsonStr, varStr(varSub));

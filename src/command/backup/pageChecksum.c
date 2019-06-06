@@ -95,12 +95,13 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     {
         for (unsigned int pageIdx = 0; pageIdx < pageTotal; pageIdx++)
         {
+            unsigned char *pagePtr = bufPtr(input) + (pageIdx * this->pageSize);
             unsigned int pageNo = this->pageNoOffset + pageIdx;
             size_t pageSize = this->align || pageIdx < pageTotal - 1 ? this->pageSize : pageRemainder;
 
             if (!pageChecksumTest(
-                    bufPtr(input) + (pageIdx * this->pageSize), pageNo, (unsigned int)pageSize,
-                    (unsigned int)(this->lsnLimit >> 32), (unsigned int)(this->lsnLimit & 0xFFFFFFFF)))
+                    pagePtr, pageNo, (unsigned int)pageSize, (unsigned int)(this->lsnLimit >> 32),
+                    (unsigned int)(this->lsnLimit & 0xFFFFFFFF)))
             {
                 MEM_CONTEXT_BEGIN(this->memContext)
                 {
@@ -111,7 +112,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                     // Add page number and lsn to the error list
                     VariantList *pair = varLstNew();
                     varLstAdd(pair, varNewUInt(pageNo));
-                    varLstAdd(pair, varNewUInt64(666));
+                    varLstAdd(pair, varNewUInt64(pageLsn(pagePtr)));
                     varLstAdd(this->error, varNewVarLst(pair));
                 }
                 MEM_CONTEXT_END();
@@ -137,11 +138,11 @@ pageChecksumResult(THIS_VOID)
     ASSERT(this != NULL);
 
     KeyValue *result = kvNew();
-    kvPut(result, varNewStrZ("bValid"), varNewBool(this->valid));
-    kvPut(result, varNewStrZ("bAlign"), varNewBool(this->align));
+    kvPut(result, varNewStrZ("valid"), varNewBool(this->valid));
+    kvPut(result, varNewStrZ("align"), varNewBool(this->align));
 
     if (this->error != NULL)
-        kvPut(result, varNewStrZ("iyPageError"), varNewVarLst(this->error));
+        kvPut(result, varNewStrZ("error"), varNewVarLst(this->error));
 
     FUNCTION_LOG_RETURN(VARIANT, varNewKv(result));
 }

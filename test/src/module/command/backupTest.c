@@ -147,7 +147,7 @@ testRun(void)
 
         TEST_RESULT_STR(
             strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
-            "{\"bAlign\":true,\"bValid\":true}", "all zero pages");
+            "{\"align\":true,\"valid\":true}", "all zero pages");
 
         // Various checksum errors some of which will be skipped because of the LSN
         // -------------------------------------------------------------------------------------------------------------------------
@@ -157,6 +157,8 @@ testRun(void)
 
         // Page 0 has bogus checksum
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_upper = 0x01;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.walid = 0xF0F0F0F0;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.xrecoff = 0xF0F0F0F0;
 
         // Page 1 has bogus checksum but lsn above the limit
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_upper = 0x01;
@@ -165,12 +167,15 @@ testRun(void)
 
         // Page 2 has bogus checksum
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_upper = 0x01;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_lsn.xrecoff = 0x2;
 
         // Page 3 has bogus checksum
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_upper = 0x01;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_lsn.xrecoff = 0x3;
 
         // Page 5 has bogus checksum (and is misaligned but large enough to test)
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x05)))->pd_upper = 0x01;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x05)))->pd_lsn.xrecoff = 0x5;
 
         write = ioWriteFilterGroupSet(
             ioSinkWriteNew(),
@@ -182,7 +187,39 @@ testRun(void)
 
         TEST_RESULT_STR(
             strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
-            "{\"bAlign\":false,\"bValid\":true,\"iyPageError\":[0,[2-3],5]}", "various checksum errors");
+            "{\"align\":false,\"error\":[[0,17361641481138401520],[2,2],[3,3],[5,5]],\"valid\":true}", "various checksum errors");
+
+        // Impossibly misaligned page
+        // -------------------------------------------------------------------------------------------------------------------------
+        buffer = bufNew(256);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        write = ioWriteFilterGroupSet(
+            ioSinkWriteNew(),
+            ioFilterGroupAdd(
+                ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR(
+            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
+            "{\"align\":false,\"valid\":false}", "various checksum errors");
+
+        // Two misaligned buffers in a row
+        // -------------------------------------------------------------------------------------------------------------------------
+        buffer = bufNew(513);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        write = ioWriteFilterGroupSet(
+            ioSinkWriteNew(),
+            ioFilterGroupAdd(
+                ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
