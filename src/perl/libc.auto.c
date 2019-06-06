@@ -474,6 +474,8 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_filterAdd)
 ;
     IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(self));
 
+    LOG_WARN("filter %s, param %s", strPtr(filter), strPtr(param));
+
     if (filterGroup == NULL)
     {
         filterGroup = ioFilterGroupNew();
@@ -606,7 +608,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
 	pgBackRest__LibC__Storage	RETVAL;
     CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::Storage"));
 
-    logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
+    logInit(logLevelTrace, logLevelOff, logLevelOff, false, 999);
 
     if (strEqZ(type, "<LOCAL>"))
         RETVAL = (Storage *)storageLocalWrite();

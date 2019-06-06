@@ -492,14 +492,16 @@ sub openRead
                 STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([false, $self->cipherType(), $strCipherPass]));
         }
 
-        # # Apply any other filters
-        # if (defined($rhyFilter))
-        # {
-        #     foreach my $rhFilter (@{$rhyFilter})
-        #     {
-        #         $oFileIo = $rhFilter->{strClass}->new($oFileIo, @{$rhFilter->{rxyParam}});
-        #     }
-        # }
+        # Apply any other filters
+        if (defined($rhyFilter))
+        {
+            foreach my $rhFilter (@{$rhyFilter})
+            {
+                $oFileIo->filterAdd(
+                    $rhFilter->{strClass},
+                    defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode(@{$rhFilter->{rxyParam}}) : undef);
+            }
+        }
     }
 
     # Return from function and log return values if any

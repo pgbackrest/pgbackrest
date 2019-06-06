@@ -435,5 +435,15 @@ Render as string for logging
 String *
 ioFilterGroupToLog(const IoFilterGroup *this)
 {
-    return strNewFmt("{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
+    return strNewFmt(
+        "{inputSame: %s, done: %s"
+#ifdef DEBUG
+            ", opened %s, flushing %s, closed %s"
+#endif
+            "}",
+        cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done)
+#ifdef DEBUG
+        , cvtBoolToConstZ(this->opened), cvtBoolToConstZ(this->flushing), cvtBoolToConstZ(this->closed)
+#endif
+    );
 }

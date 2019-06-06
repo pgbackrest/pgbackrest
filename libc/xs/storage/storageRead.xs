@@ -38,6 +38,8 @@ INPUT:
 CODE:
     IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(self));
 
+    LOG_WARN("filter %s, param %s", strPtr(filter), strPtr(param));
+
     if (filterGroup == NULL)
     {
         filterGroup = ioFilterGroupNew();

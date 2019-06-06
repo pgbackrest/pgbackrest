@@ -93,8 +93,12 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
                 varUInt64(varLstGet(paramList, 0)) ? cipherModeEncrypt : cipherModeDecrypt,
                 cipherType(varStr(varLstGet(paramList, 1))), BUFSTR(varStr(varLstGet(paramList, 2))), NULL));
     }
+    else if (strEqZ(filter, "pgBackRest::Storage::Filter::Sha"))
+    {
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+    }
     else
-        THROW_FMT(AssertError, "unknown filter '%s'", strPtr(filter));
+        THROW_FMT(AssertError, "unable to add filter '%s'", strPtr(filter));
 }
 
 /***********************************************************************************************************************************
@@ -105,12 +109,12 @@ storageFilterXsResult(const IoFilterGroup *filterGroup, const String *filter)
 {
     const Variant *result;
 
-    if (strEqZ(filter, "pgBackRest::Storage::Filter::CipherBlock"))
+    if (strEqZ(filter, "pgBackRest::Storage::Filter::Sha"))
     {
         result = ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR);
     }
     else
-        THROW_FMT(AssertError, "unknown filter '%s'", strPtr(filter));
+        THROW_FMT(AssertError, "unable to get result for filter '%s'", strPtr(filter));
 
     return jsonFromVar(result, 0);
 }
