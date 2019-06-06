@@ -4,8 +4,28 @@ Test Common Functions and Definitions for Backup and Expire Commands
 #include "common/io/sinkWrite.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
+#include "postgres/interface.h"
 
 #include "common/harnessConfig.h"
+
+/***********************************************************************************************************************************
+Need these structures to mock up test data
+***********************************************************************************************************************************/
+typedef struct
+{
+    uint32_t walid;                                                 // high bits
+    uint32_t xrecoff;                                               // low bits
+} PageWalRecPtr;
+
+typedef struct PageHeaderData
+{
+    // LSN is member of *any* block, not only page-organized ones
+    PageWalRecPtr pd_lsn;                                           // Lsn for last change to this page
+    uint16_t pd_checksum;                                           // checksum
+    uint16_t pd_flags;                                              // flag bits, see below
+    uint16_t pd_lower;                                              // offset to start of free space
+    uint16_t pd_upper;                                              // offset to end of free space
+} PageHeaderData;
 
 /***********************************************************************************************************************************
 Test Run
@@ -110,23 +130,59 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PageChecksum"))
     {
-        unsigned pageSize = 8192;
+        TEST_RESULT_UINT(PG_SEGMENT_PAGE_DEFAULT, 131072, "check pages per segment");
 
         // Test pages with all zeros (these are considered valid)
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *buffer = bufNew(pageSize * 3);
+        Buffer *buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
         IoWrite *write = ioWriteFilterGroupSet(
-            ioSinkWriteNew(), ioFilterGroupAdd(ioFilterGroupNew(), pageChecksumNew(0, 0, pageSize)));
+            ioSinkWriteNew(),
+            ioFilterGroupAdd(ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0)));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
 
         TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)), "null",
-            "all zero pages");
+            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
+            "{\"bAlign\":true,\"bValid\":true}", "all zero pages");
+
+        // Various checksum errors some of which will be skipped because of the LSN
+        // -------------------------------------------------------------------------------------------------------------------------
+        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 6 - (PG_PAGE_SIZE_DEFAULT - 512));
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        // Page 0 has bogus checksum
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_upper = 0x01;
+
+        // Page 1 has bogus checksum but lsn above the limit
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_upper = 0x01;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_lsn.walid = 0xFACEFACE;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_lsn.xrecoff = 0x00000000;
+
+        // Page 2 has bogus checksum
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_upper = 0x01;
+
+        // Page 3 has bogus checksum
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_upper = 0x01;
+
+        // Page 5 has bogus checksum (and is misaligned but large enough to test)
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x05)))->pd_upper = 0x01;
+
+        write = ioWriteFilterGroupSet(
+            ioSinkWriteNew(),
+            ioFilterGroupAdd(
+                ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR(
+            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
+            "{\"bAlign\":false,\"bValid\":true,\"iyPageError\":[0,[2-3],5]}", "various checksum errors");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

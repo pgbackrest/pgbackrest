@@ -69,6 +69,7 @@ minimize register spilling. For less sophisticated compilers it might be benefic
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/log.h"
+#include "postgres/interface.h"
 #include "postgres/pageChecksum.h"
 
 /***********************************************************************************************************************************
@@ -225,8 +226,8 @@ pageChecksumTest(
         ((PageHeader)page)->pd_upper == 0 ||
         // LSN is after the backup started so checksum is not tested because pages may be torn
         (((PageHeader)page)->pd_lsn.walid >= ignoreWalId && ((PageHeader)page)->pd_lsn.xrecoff >= ignoreWalOffset) ||
-        // Checksum is valid
-        ((PageHeader)page)->pd_checksum == pageChecksum(page, blockNo, pageSize));
+        // Checksum is valid if a full page
+        (pageSize == PG_PAGE_SIZE_DEFAULT && ((PageHeader)page)->pd_checksum == pageChecksum(page, blockNo, pageSize)));
 }
 
 /***********************************************************************************************************************************
