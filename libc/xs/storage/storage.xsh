@@ -2,6 +2,7 @@
 Storage XS Header
 ***********************************************************************************************************************************/
 #include "common/assert.h"
+#include "common/io/filter/size.h"
 #include "common/memContext.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
@@ -83,7 +84,7 @@ Add IO filter
 void
 storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const String *paramJson)
 {
-    VariantList *paramList = jsonToVarLst(paramJson);
+    VariantList *paramList = paramJson ? jsonToVarLst(paramJson) : NULL;
 
     if (strEqZ(filter, "pgBackRest::Storage::Filter::CipherBlock"))
     {
@@ -97,8 +98,12 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
     {
         ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
     }
+    else if (strEqZ(filter, "pgBackRest::Common::Io::Handle"))
+    {
+        ioFilterGroupAdd(filterGroup, ioSizeNew());
+    }
     else
-        THROW_FMT(AssertError, "unable to add filter '%s'", strPtr(filter));
+        THROW_FMT(AssertError, "unable to add invalid filter '%s'", strPtr(filter));
 }
 
 /***********************************************************************************************************************************
@@ -113,8 +118,15 @@ storageFilterXsResult(const IoFilterGroup *filterGroup, const String *filter)
     {
         result = ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR);
     }
+    else if (strEqZ(filter, "pgBackRest::Common::Io::Handle"))
+    {
+        result = ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR);
+    }
     else
-        THROW_FMT(AssertError, "unable to get result for filter '%s'", strPtr(filter));
+        THROW_FMT(AssertError, "unable to get result for invalid filter '%s'", strPtr(filter));
+
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to find result for filter '%s'", strPtr(filter));
 
     return jsonFromVar(result, 0);
 }

@@ -2198,7 +2198,7 @@ static const EmbeddedModule embeddedModule[] =
             "if ($bCopy)\n"
             "{\n"
             "\n"
-            "my $rhyFilter = [{strClass => STORAGE_FILTER_SHA}];\n"
+            "my $rhyFilter = [{strClass => COMMON_IO_HANDLE}, {strClass => STORAGE_FILTER_SHA}];\n"
             "\n\n"
             "if ($bChecksumPage)\n"
             "{\n"

@@ -16,7 +16,7 @@ INPUT:
 CODE:
     CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::Storage"));
 
-    logInit(logLevelTrace, logLevelOff, logLevelOff, false, 999);
+    logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
 
     if (strEqZ(type, "<LOCAL>"))
         RETVAL = (Storage *)storageLocalWrite();

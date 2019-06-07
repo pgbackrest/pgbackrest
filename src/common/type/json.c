@@ -914,10 +914,6 @@ jsonFromVar(const Variant *var, unsigned int indent)
 
     String *result = NULL;
 
-    // Currently the variant to render must be null, a VariantList, or a KeyValue
-    if (var != NULL && varType(var) != varTypeVariantList && varType(var) != varTypeKeyValue)
-        THROW(JsonFormatError, "variant type is invalid");
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *jsonStr = strNew("");
@@ -938,6 +934,18 @@ jsonFromVar(const Variant *var, unsigned int indent)
         if (var == NULL)
         {
             strCat(jsonStr, strPtr(NULL_STR));
+        }
+        else if (varType(var) == varTypeUInt)
+        {
+            strCat(jsonStr, strPtr(jsonFromUInt(varUInt(var))));
+        }
+        else if (varType(var) == varTypeUInt64)
+        {
+            strCat(jsonStr, strPtr(jsonFromUInt64(varUInt64(var))));
+        }
+        else if (varType(var) == varTypeString)
+        {
+            jsonFromStrInternal(jsonStr, varStr(var));
         }
         else if (varType(var) == varTypeVariantList)
         {
@@ -987,9 +995,12 @@ jsonFromVar(const Variant *var, unsigned int indent)
             else
                 strCat(jsonStr, "[]");
         }
-        // Else just convert the KeyValue
-        else
+        else if (varType(var) == varTypeKeyValue)
+        {
             strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(var), indentSpace, indentDepth)));
+        }
+        else
+            THROW(JsonFormatError, "variant type is invalid");
 
         // Add terminating linefeed for pretty print
         if (indent > 0)

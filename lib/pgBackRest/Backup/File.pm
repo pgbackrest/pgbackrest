@@ -163,8 +163,8 @@ sub backupFile
     # Copy the file
     if ($bCopy)
     {
-        # Add sha filter
-        my $rhyFilter = [{strClass => STORAGE_FILTER_SHA}];
+        # Add size and sha filters
+        my $rhyFilter = [{strClass => COMMON_IO_HANDLE}, {strClass => STORAGE_FILTER_SHA}];
 
         # Add page checksum filter
         if ($bChecksumPage)
