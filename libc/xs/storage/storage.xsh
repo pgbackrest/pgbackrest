@@ -47,7 +47,7 @@ storageManifestXsCallback(void *callbackData, const StorageInfo *info)
             {
                 strCatFmt(
                     data->json, "f\",\"mode\":\"%04o\",\"modification_time\":%" PRId64 ",\"size\":%" PRIu64 "}", info->mode,
-                    info->timeModified, info->size);
+                    (int64_t)info->timeModified, info->size);
                 break;
             }
 
