@@ -1,11 +1,15 @@
 /***********************************************************************************************************************************
 Storage XS Header
 ***********************************************************************************************************************************/
+#include "command/backup/pageChecksum.h"
 #include "common/assert.h"
+#include "common/compress/gzip/compress.h"
+#include "common/compress/gzip/decompress.h"
 #include "common/io/filter/size.h"
 #include "common/memContext.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
+#include "postgres/interface.h"
 #include "storage/helper.h"
 
 typedef Storage *pgBackRest__LibC__Storage;
@@ -91,7 +95,7 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
         ioFilterGroupAdd(
             filterGroup,
             cipherBlockNew(
-                varUInt64(varLstGet(paramList, 0)) ? cipherModeEncrypt : cipherModeDecrypt,
+                varUInt64Force(varLstGet(paramList, 0)) ? cipherModeEncrypt : cipherModeDecrypt,
                 cipherType(varStr(varLstGet(paramList, 1))), BUFSTR(varStr(varLstGet(paramList, 2))), NULL));
     }
     else if (strEqZ(filter, "pgBackRest::Storage::Filter::Sha"))
@@ -101,6 +105,26 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
     else if (strEqZ(filter, "pgBackRest::Common::Io::Handle"))
     {
         ioFilterGroupAdd(filterGroup, ioSizeNew());
+    }
+    else if (strEqZ(filter, "pgBackRest::Backup::Filter::PageChecksum"))
+    {
+        ioFilterGroupAdd(
+            filterGroup,
+            pageChecksumNew(
+                varUInt64Force(varLstGet(paramList, 0)), PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT,
+                (uint64_t)varUIntForce(varLstGet(paramList, 1)) << 32 | varUIntForce(varLstGet(paramList, 2))));
+    }
+    else if (strEqZ(filter, "pgBackRest::Storage::Filter::Gzip"))
+    {
+        if (strEqZ(varStr(varLstGet(paramList, 0)), "compress"))
+        {
+            ioFilterGroupAdd(
+                filterGroup, gzipCompressNew(varUIntForce(varLstGet(paramList, 2)), varBoolForce(varLstGet(paramList, 1))));
+        }
+        else
+        {
+            ioFilterGroupAdd(filterGroup, gzipDecompressNew(varBoolForce(varLstGet(paramList, 1))));
+        }
     }
     else
         THROW_FMT(AssertError, "unable to add invalid filter '%s'", strPtr(filter));
@@ -121,6 +145,10 @@ storageFilterXsResult(const IoFilterGroup *filterGroup, const String *filter)
     else if (strEqZ(filter, "pgBackRest::Common::Io::Handle"))
     {
         result = ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR);
+    }
+    else if (strEqZ(filter, "pgBackRest::Backup::Filter::PageChecksum"))
+    {
+        result = ioFilterGroupResult(filterGroup, PAGE_CHECKSUM_FILTER_TYPE_STR);
     }
     else
         THROW_FMT(AssertError, "unable to get result for invalid filter '%s'", strPtr(filter));

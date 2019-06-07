@@ -86,7 +86,7 @@ sub run
             my $rhyFilter;
 
             push(@{$rhyFilter}, {strClass => STORAGE_FILTER_SHA});
-            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{iLevel => 6}]}) if ($bGzip);
+            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, 6]}) if ($bGzip);
 
             my $lTimeTotal = 0;
             my $lTimeBegin;

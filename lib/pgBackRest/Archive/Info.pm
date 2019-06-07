@@ -421,7 +421,7 @@ sub reconstruct
         my $tBlock = ${storageRepo()->get(storageRepo()->openRead(
             $strArchiveFilePath,
             {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
-                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef,
+                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]}] : undef,
             strCipherPass => $self->cipherPassSub()}))};
 
         # Get the required data from the file that was pulled into scalar $tBlock

@@ -496,7 +496,7 @@ sub openRead
         foreach my $rhFilter (@{$rhyFilter})
         {
             $oFileIo->filterAdd(
-                $rhFilter->{strClass}, defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode(@{$rhFilter->{rxyParam}}) : undef);
+                $rhFilter->{strClass}, defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode($rhFilter->{rxyParam}) : undef);
         }
     }
 
@@ -553,7 +553,7 @@ sub openWrite
         foreach my $rhFilter (@{$rhyFilter})
         {
             $oFileIo->filterAdd(
-                $rhFilter->{strClass}, defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode(@{$rhFilter->{rxyParam}}) : undef);
+                $rhFilter->{strClass}, defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode($rhFilter->{rxyParam}) : undef);
         }
     }
 

@@ -979,7 +979,9 @@ sub process
                 # Add compression filter
                 if ($bCompress)
                 {
-                    push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP});
+                    push(
+                        @{$rhyFilter},
+                        {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, cfgOption(CFGOPT_COMPRESS_LEVEL)]});
                 }
 
                 # If the backups are encrypted, then the passphrase for the backup set from the manifest file is required to access
@@ -1096,7 +1098,7 @@ sub process
             {'strCipherPass' => $strCipherPassManifest}),
         $oStorageRepo->openWrite(
             "${strHistoryPath}/${strBackupLabel}.manifest." . COMPRESS_EXT,
-            {rhyFilter => [{strClass => STORAGE_FILTER_GZIP}],
+            {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, 9]}],
                 bPathCreate => true, bAtomic => true,
                 strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef}));
 

@@ -203,8 +203,7 @@ sub openRead
     {
         push(
             @{$rhParam->{rhyFilter}},
-            {strClass => STORAGE_FILTER_GZIP,
-                rxyParam => [{iLevel => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK), bWantGzip => false}]});
+            {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, true, cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK)]});
     }
 
     my $oSourceFileIo =
@@ -255,7 +254,7 @@ sub openWrite
     {
         push(
             @{$rhParam->{rhyFilter}},
-            {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS, bWantGzip => false}]});
+            {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, true]});
     }
 
     # Open the remote file

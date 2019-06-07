@@ -198,7 +198,7 @@ sub run
             storageRepo()->copy(
                 storageRepo()->openRead(
                     STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz",
-                    {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}]}),
+                    {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]}]}),
                 STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
 
             $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',

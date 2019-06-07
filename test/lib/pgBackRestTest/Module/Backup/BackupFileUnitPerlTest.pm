@@ -163,10 +163,9 @@ sub run
             MANIFEST_SUBKEY_CHECKSUM, $strPgControlHash)}, true, "manifest updated for pg_control");
 
         # Neither backup.manifest nor backup.manifest.copy written because size threshold not met
-        $self->testException(sub {storageRepo()->openRead("$strBackupPath/" . FILE_MANIFEST . INI_COPY_EXT)}, ERROR_FILE_MISSING,
-            "unable to open '$strBackupPath/" . FILE_MANIFEST . INI_COPY_EXT . "': No such file or directory");
-        $self->testException(sub {storageRepo()->openRead("$strBackupPath/" . FILE_MANIFEST)}, ERROR_FILE_MISSING,
-            "unable to open '$strBackupPath/" . FILE_MANIFEST . "': No such file or directory");
+        $self->testResult(sub {storageRepo()->exists("$strBackupPath/" . FILE_MANIFEST)}, false, "backup.manifest missing");
+        $self->testResult(
+            sub {storageRepo()->exists("$strBackupPath/" . FILE_MANIFEST . INI_COPY_EXT)}, false, "backup.manifest.copy missing");
 
         #---------------------------------------------------------------------------------------------------------------------------
         # No prior checksum, no compression, no page checksum, no extra, no delta, no hasReference
@@ -180,8 +179,7 @@ sub run
             $lResultCopySize == $lFileSize && $lResultRepoSize == $lFileSize), true,
             'file copied to repo successfully');
 
-        $self->testException(sub {storageRepo()->openRead("$strFileRepo.gz")}, ERROR_FILE_MISSING,
-            "unable to open '$strFileRepo.gz': No such file or directory");
+        $self->testResult(sub {storageRepo()->exists("${strFileRepo}.gz")}, false, "${strFileRepo}.gz missing");
 
         ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
             $oBackupManifest,
@@ -212,17 +210,17 @@ sub run
         # Backup.manifest not written but backup.manifest.copy written because size threshold  met
         $self->testResult(sub {storageTest()->exists("$strBackupPath/" . FILE_MANIFEST . INI_COPY_EXT)}, true,
             'backup.manifest.copy exists in repo');
-        $self->testException(sub {storageRepo()->openRead("$strBackupPath/" . FILE_MANIFEST)}, ERROR_FILE_MISSING,
-            "unable to open '$strBackupPath/" . FILE_MANIFEST . "': No such file or directory");
+        $self->testResult(
+            sub {storageRepo()->exists("$strBackupPath/" . FILE_MANIFEST)}, false, 'backup.manifest.copy missing in repo');
 
         storageTest()->remove($strFileRepo);
         storageTest()->remove($strPgControlRepo);
 
         #---------------------------------------------------------------------------------------------------------------------------
         # No prior checksum, yes compression, yes page checksum, no extra, no delta, no hasReference
-        $self->testException(sub {backupFile($strFileDb, $strRepoFile, $lFileSize, undef, true,
-            $strBackupLabel, true, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef)}, ERROR_ASSERT,
-            "iWalId is required in Backup::Filter::PageChecksum->new");
+        # $self->testException(sub {backupFile($strFileDb, $strRepoFile, $lFileSize, undef, true,
+        #     $strBackupLabel, true, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef)}, ERROR_ASSERT,
+        #     "iWalId is required in Backup::Filter::PageChecksum->new");
 
         # Build the lsn start parameter to pass to the extra function
         my $hStartLsnParam =
@@ -243,8 +241,7 @@ sub run
             $lResultRepoSize == $lRepoFileCompressSize && $rResultExtra->{bValid}), true, 'file copied to repo successfully');
 
         # Only the compressed version of the file exists
-        $self->testException(sub {storageRepo()->openRead("$strFileRepo")}, ERROR_FILE_MISSING,
-            "unable to open '$strFileRepo': No such file or directory");
+        $self->testResult(sub {storageRepo()->exists("$strFileRepo")}, false, "only compressed version exists");
 
         ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
             $oBackupManifest,

@@ -143,7 +143,7 @@ sub backupFile
 
                 if ($bCompress)
                 {
-                    push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
+                    push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]});
                 }
 
                 # Get the checksum
@@ -181,22 +181,20 @@ sub backupFile
         # Add compression
         if ($bCompress)
         {
-            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{iLevel => $iCompressLevel}]});
+            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, $iCompressLevel]});
         }
 
-        # Open the file
+        # Open the source and destination files
         my $oSourceFileIo = storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => $bIgnoreMissing});
 
-        # If source file exists
-        if (defined($oSourceFileIo))
-        {
-            my $oDestinationFileIo = $oStorageRepo->openWrite(
-                STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass,
-                    rhyFilter => [{strClass => COMMON_IO_HANDLE}]});
+        my $oDestinationFileIo = $oStorageRepo->openWrite(
+            STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
+            {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass,
+                rhyFilter => [{strClass => COMMON_IO_HANDLE}]});
 
-            # Copy the file
-            $oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo);
+        # Copy the file
+        if ($oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo))
+        {
 
             # Get sha checksum and size
             $strCopyChecksum = $oSourceFileIo->result(STORAGE_FILTER_SHA);
@@ -209,7 +207,8 @@ sub backupFile
             }
 
             # Get results of page checksum validation
-            $rExtra = $bChecksumPage ? $oSourceFileIo->result(BACKUP_FILTER_PAGECHECKSUM) : undef;
+            my $rExtraRaw = $bChecksumPage ? $oSourceFileIo->result(BACKUP_FILTER_PAGECHECKSUM) : undef;
+            $rExtra = {bValid => $rExtraRaw->{valid} ? true : false, bAlign => $rExtraRaw->{align} ? true : false};
         }
         # Else if source file is missing the database removed it
         else
@@ -235,11 +234,11 @@ sub backupFile
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iCopyResult', value => $iCopyResult, trace => true},
-        {name => 'lCopySize', value => $lCopySize, trace => true},
-        {name => 'lRepoSize', value => $lRepoSize, trace => true},
-        {name => 'strCopyChecksum', value => $strCopyChecksum, trace => true},
-        {name => 'rExtra', value => $rExtra, trace => true},
+        {name => 'iCopyResult', value => $iCopyResult},
+        {name => 'lCopySize', value => $lCopySize},
+        {name => 'lRepoSize', value => $lRepoSize},
+        {name => 'strCopyChecksum', value => $strCopyChecksum},
+        {name => 'rExtra', value => $rExtra},
     );
 }
 
