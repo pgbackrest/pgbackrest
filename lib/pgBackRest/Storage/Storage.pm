@@ -14,9 +14,11 @@ use File::stat qw{lstat};
 use JSON::PP;
 
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Io::Handle;
 use pgBackRest::Common::Log;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::CipherBlock;
+use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::StorageRead;
 use pgBackRest::Storage::StorageWrite;
 
@@ -172,65 +174,53 @@ sub get
 }
 
 ####################################################################################################################################
-# hashSize - calculate sha1 hash and size of file. If special encryption settings are required, then the file objects from
-# openRead/openWrite must be passed instead of file names.
+# Calculate sha1 hash and size of file. If special encryption settings are required, then the file objects from openRead/openWrite
+# must be passed instead of file names.
 ####################################################################################################################################
-# sub hashSize
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $xFileExp,
-#         $bIgnoreMissing,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->hashSize', \@_,
-#             {name => 'xFileExp'},
-#             {name => 'bIgnoreMissing', optional => true, default => false},
-#         );
-#
-#     # Set operation variables
-#     my $strHash;
-#     my $lSize;
-#
-#     # Is this an IO object or a file expression?
-#     my $oFileIo =
-#         defined($xFileExp) ? (ref($xFileExp) ? $xFileExp :
-#             $self->openRead($self->pathGet($xFileExp), {bIgnoreMissing => $bIgnoreMissing})) : undef;
-#
-#     if (defined($oFileIo))
-#     {
-#         $lSize = 0;
-#         my $oShaIo = new pgBackRest::Storage::Filter::Sha($oFileIo);
-#         my $lSizeRead;
-#
-#         do
-#         {
-#             my $tContent;
-#             $lSizeRead = $oShaIo->read(\$tContent, $self->{lBufferMax});
-#             $lSize += $lSizeRead;
-#         }
-#         while ($lSizeRead != 0);
-#
-#         # Close the file
-#         $oShaIo->close();
-#
-#         # Get the hash
-#         $strHash = $oShaIo->result(STORAGE_FILTER_SHA);
-#     }
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'strHash', value => $strHash},
-#         {name => 'lSize', value => $lSize}
-#     );
-# }
+sub hashSize
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $xFileExp,
+        $bIgnoreMissing,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->hashSize', \@_,
+            {name => 'xFileExp'},
+            {name => 'bIgnoreMissing', optional => true, default => false},
+        );
+
+    # Set operation variables
+    my $strHash;
+    my $lSize;
+
+    # Is this an IO object or a file expression?
+    my $oFileIo = ref($xFileExp) ? $xFileExp : $self->openRead($self->pathGet($xFileExp), {bIgnoreMissing => $bIgnoreMissing});
+
+    # Add size and sha filters
+    $oFileIo->{oStorageCRead}->filterAdd(COMMON_IO_HANDLE, undef);
+    $oFileIo->{oStorageCRead}->filterAdd(STORAGE_FILTER_SHA, undef);
+
+    # Read the file and set results if it exists
+    if ($self->{oStorageC}->readDrain($oFileIo->{oStorageCRead}))
+    {
+        $strHash = $oFileIo->result(STORAGE_FILTER_SHA);
+        $lSize = $oFileIo->result(COMMON_IO_HANDLE);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strHash', value => $strHash},
+        {name => 'lSize', value => $lSize}
+    );
+}
 
 ####################################################################################################################################
 # Get information for path/file
@@ -278,74 +268,108 @@ sub info
 ####################################################################################################################################
 # linkCreate - create a link
 ####################################################################################################################################
-# sub linkCreate
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strSourcePathFileExp,
-#         $strDestinationLinkExp,
-#         $bHard,
-#         $bRelative,
-#         $bPathCreate,
-#         $bIgnoreExists,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->linkCreate', \@_,
-#             {name => 'strSourcePathFileExp'},
-#             {name => 'strDestinationLinkExp'},
-#             {name => 'bHard', optional=> true, default => false},
-#             {name => 'bRelative', optional=> true, default => false},
-#             {name => 'bPathCreate', optional=> true, default => true},
-#             {name => 'bIgnoreExists', optional => true, default => false},
-#         );
-#
-#     # Get source and destination paths
-#     my $strSourcePathFile = $self->pathGet($strSourcePathFileExp);
-#     my $strDestinationLink = $self->pathGet($strDestinationLinkExp);
-#
-#     # Generate relative path if requested
-#     if ($bRelative)
-#     {
-#         # Determine how much of the paths are common
-#         my @strySource = split('/', $strSourcePathFile);
-#         my @stryDestination = split('/', $strDestinationLink);
-#
-#         while (defined($strySource[0]) && defined($stryDestination[0]) && $strySource[0] eq $stryDestination[0])
-#         {
-#             shift(@strySource);
-#             shift(@stryDestination);
-#         }
-#
-#         # Add relative path sections
-#         $strSourcePathFile = '';
-#
-#         for (my $iIndex = 0; $iIndex < @stryDestination - 1; $iIndex++)
-#         {
-#             $strSourcePathFile .= '../';
-#         }
-#
-#         # Add path to source
-#         $strSourcePathFile .= join('/', @strySource);
-#
-#         logDebugMisc
-#         (
-#             $strOperation, 'apply relative path',
-#             {name => 'strSourcePathFile', value => $strSourcePathFile, trace => true}
-#         );
-#     }
-#
-#     # Create the link
-#     $self->driver()->linkCreate(
-#         $strSourcePathFile, $strDestinationLink, {bHard => $bHard, bPathCreate => $bPathCreate, bIgnoreExists => $bIgnoreExists});
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn($strOperation);
-# }
+sub linkCreate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSourcePathFileExp,
+        $strDestinationLinkExp,
+        $bHard,
+        $bRelative,
+        $bPathCreate,
+        $bIgnoreExists,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->linkCreate', \@_,
+            {name => 'strSourcePathFileExp'},
+            {name => 'strDestinationLinkExp'},
+            {name => 'bHard', optional=> true, default => false},
+            {name => 'bRelative', optional=> true, default => false},
+            {name => 'bPathCreate', optional=> true, default => true},
+            {name => 'bIgnoreExists', optional => true, default => false},
+        );
+
+    # Get source and destination paths
+    my $strSourcePathFile = $self->pathGet($strSourcePathFileExp);
+    my $strDestinationLink = $self->pathGet($strDestinationLinkExp);
+
+    # Generate relative path if requested
+    if ($bRelative)
+    {
+        # Determine how much of the paths are common
+        my @strySource = split('/', $strSourcePathFile);
+        my @stryDestination = split('/', $strDestinationLink);
+
+        while (defined($strySource[0]) && defined($stryDestination[0]) && $strySource[0] eq $stryDestination[0])
+        {
+            shift(@strySource);
+            shift(@stryDestination);
+        }
+
+        # Add relative path sections
+        $strSourcePathFile = '';
+
+        for (my $iIndex = 0; $iIndex < @stryDestination - 1; $iIndex++)
+        {
+            $strSourcePathFile .= '../';
+        }
+
+        # Add path to source
+        $strSourcePathFile .= join('/', @strySource);
+
+        logDebugMisc
+        (
+            $strOperation, 'apply relative path',
+            {name => 'strSourcePathFile', value => $strSourcePathFile, trace => true}
+        );
+    }
+
+    if (!($bHard ? link($strSourcePathFile, $strDestinationLink) : symlink($strSourcePathFile, $strDestinationLink)))
+    {
+        my $strMessage = "unable to create link '${strDestinationLink}'";
+
+        # If parent path or source is missing
+        if ($OS_ERROR{ENOENT})
+        {
+            # Check if source is missing
+            if (!$self->exists($strSourcePathFile))
+            {
+                confess &log(ERROR, "${strMessage} because source '${strSourcePathFile}' does not exist", ERROR_FILE_MISSING);
+            }
+
+            if (!$bPathCreate)
+            {
+                confess &log(ERROR, "${strMessage} because parent does not exist", ERROR_PATH_MISSING);
+            }
+
+            # Create parent path
+            $self->pathCreate(dirname($strDestinationLink), {bIgnoreExists => true, bCreateParent => true});
+
+            # Create link
+            $self->linkCreate($strSourcePathFile, $strDestinationLink, {bHard => $bHard});
+        }
+        # Else if link already exists
+        elsif ($OS_ERROR{EEXIST})
+        {
+            if (!$bIgnoreExists)
+            {
+                confess &log(ERROR, "${strMessage} because it already exists", ERROR_PATH_EXISTS);
+            }
+        }
+        else
+        {
+            logErrorResult(ERROR_PATH_CREATE, ${strMessage}, $OS_ERROR);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 
 ####################################################################################################################################
 # List all files/paths in path

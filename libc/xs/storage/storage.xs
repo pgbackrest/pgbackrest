@@ -92,6 +92,37 @@ CLEANUP:
     MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
+bool
+readDrain(self, read)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::StorageRead read
+CODE:
+    RETVAL = false;
+
+    if (ioReadOpen(storageReadIo(read)))
+    {
+        Buffer *buffer = bufNew(ioBufferSize());
+
+        do
+        {
+            ioRead(storageReadIo(read), buffer);
+            bufUsedZero(buffer);
+        }
+        while (!ioReadEof(storageReadIo(read)));
+
+        ioReadClose(storageReadIo(read));
+        RETVAL = true;
+    }
+OUTPUT:
+    RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
 SV *
 list(self, pathExp, ignoreMissing, sortAsc, expression)
 PREINIT:

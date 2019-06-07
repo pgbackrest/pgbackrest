@@ -365,7 +365,7 @@ sub run
         # do not ignoreMissing
         $self->testException(sub {backupFile("$strFileDb.1", "$strRepoFile.1", $lFileSize, $strFileHash,
             false, $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, false, undef, true, false, undef)},
-            ERROR_FILE_MISSING, "unable to open '$strFileDb.1': No such file or directory");
+            ERROR_FILE_MISSING, "unable to open missing file '${strFileDb}.1' for read");
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Restore the compressed file
@@ -515,7 +515,7 @@ sub run
 
         $self->testException(sub {backupFile($strFileDb, $strRepoFile, $lFileSize, $strFileHash,
             false, $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef)},
-            ERROR_FILE_MISSING, "unable to open '$strFileRepo': No such file or directory");
+            ERROR_FILE_MISSING, "unable to open missing file '${strFileRepo}' for read");
     }
 
     ################################################################################################################################

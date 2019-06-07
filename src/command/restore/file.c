@@ -90,7 +90,8 @@ restoreFile(
                             ioReadFilterGroupSet(read, filterGroup);
 
                             Buffer *buffer = bufNew(ioBufferSize());
-                            ioReadOpen(read);
+
+                            CHECK(ioReadOpen(read));
 
                             do
                             {
