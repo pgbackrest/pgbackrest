@@ -229,7 +229,7 @@ sub resumeClean
         if ($cType eq 'd')
         {
             logDebugMisc($strOperation, "remove path ${strName}");
-            $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strName}", {bRecurse => true});
+            $oStorageRepo->pathRemove(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strName}", {bRecurse => true});
         }
         # Else add the file/link to be deleted later
         else
@@ -745,7 +745,7 @@ sub process
                 &log(WARN, "aborted backup ${strAbortedBackup} cannot be resumed: ${strReason}");
                 &log(TEST, TEST_BACKUP_NORESUME);
 
-                $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strAbortedBackup}", {bRecurse => true});
+                $oStorageRepo->pathRemove(STORAGE_REPO_BACKUP . "/${strAbortedBackup}", {bRecurse => true});
                 undef($oAbortedManifest);
             }
 

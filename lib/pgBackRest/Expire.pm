@@ -204,7 +204,7 @@ sub process
         {
             &log(INFO, "remove expired backup ${strBackup}");
 
-            $oStorageRepo->remove("${strBackupClusterPath}/${strBackup}", {bRecurse => true});
+            $oStorageRepo->pathRemove("${strBackupClusterPath}/${strBackup}", {bRecurse => true});
         }
     }
 
@@ -396,7 +396,7 @@ sub process
                             {
                                 my $strFullPath = $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveId}") . "/${strPath}";
 
-                                $oStorageRepo->remove($strFullPath, {bRecurse => true});
+                                $oStorageRepo->pathRemove($strFullPath, {bRecurse => true});
 
                                 # Log expire info
                                 logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
