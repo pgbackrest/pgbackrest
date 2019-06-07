@@ -984,7 +984,9 @@ sub encrypted
 
     # Open the file via the driver
     # !!! NEED TO ADD LENGTH BACK, length(CIPHER_MAGIC));
-    my $tBuffer = $self->get(new pgBackRest::LibC::StorageRead($self->{oStorageC}, $strFileExp, $bIgnoreMissing));
+    my $tBuffer = $self->get(
+        new pgBackRest::Storage::StorageRead(
+            $self, new pgBackRest::LibC::StorageRead($self->{oStorageC}, $strFileExp, $bIgnoreMissing)));
 
     # If the file does not exist because we're ignoring missing (else it would error before this is executed) then determine if it
     # should be encrypted based on the repo

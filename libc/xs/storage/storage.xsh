@@ -71,7 +71,7 @@ storageManifestXsCallback(void *callbackData, const StorageInfo *info)
                         .path = data->path == NULL ? info->name : strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)),
                     };
 
-                    storageInfoListP(
+                    storageInfoListNP(
                         dataSub.storage, strNewFmt("%s/%s", strPtr(dataSub.pathRoot), strPtr(dataSub.path)),
                         storageManifestXsCallback, &dataSub);
                 }
