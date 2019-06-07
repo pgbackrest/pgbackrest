@@ -17,6 +17,8 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::CipherBlock;
+use pgBackRest::Storage::StorageRead;
+use pgBackRest::Storage::StorageWrite;
 
 ####################################################################################################################################
 # new
@@ -87,7 +89,7 @@ sub copy
     my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($xDestinationFile);
 
     # Copy file
-    my $bResult = $self->{oStorageC}->copy($oSourceFileIo, $oDestinationFileIo) ? true : false;
+    my $bResult = $self->{oStorageC}->copy($oSourceFileIo->{oStorageCRead}, $oDestinationFileIo->{oStorageCWrite}) ? true : false;
 
     return logDebugReturn
     (
@@ -153,7 +155,7 @@ sub get
 
     # Get the file contents
     my $bEmpty = false;
-    my $tContent = $self->{oStorageC}->get($oFileIo);
+    my $tContent = $self->{oStorageC}->get($oFileIo->{oStorageCRead});
 
     if (defined($tContent) && length($tContent) == 0)
     {
@@ -482,25 +484,19 @@ sub openRead
     # Open the file
     my $oFileIo = new pgBackRest::LibC::StorageRead($self->{oStorageC}, $xFileExp, $bIgnoreMissing);
 
-    # Apply filters if file is defined
-    if (defined($oFileIo))
+    # If cipher is set then decryption is the first filter applied to the read
+    if (defined($self->cipherType()))
     {
-        # If cipher is set then decryption is the first filter applied to the read
-        if (defined($self->cipherType()))
+        $oFileIo->filterAdd(STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([false, $self->cipherType(), $strCipherPass]));
+    }
+
+    # Apply any other filters
+    if (defined($rhyFilter))
+    {
+        foreach my $rhFilter (@{$rhyFilter})
         {
             $oFileIo->filterAdd(
-                STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([false, $self->cipherType(), $strCipherPass]));
-        }
-
-        # Apply any other filters
-        if (defined($rhyFilter))
-        {
-            foreach my $rhFilter (@{$rhyFilter})
-            {
-                $oFileIo->filterAdd(
-                    $rhFilter->{strClass},
-                    defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode(@{$rhFilter->{rxyParam}}) : undef);
-            }
+                $rhFilter->{strClass}, defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode(@{$rhFilter->{rxyParam}}) : undef);
         }
     }
 
@@ -508,7 +504,7 @@ sub openRead
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oFileIo', value => $oFileIo, trace => true},
+        {name => 'oFileIo', value => new pgBackRest::Storage::StorageRead($self, $oFileIo), trace => true},
     );
 }
 
@@ -551,26 +547,27 @@ sub openWrite
     my $oFileIo = new pgBackRest::LibC::StorageWrite(
         $self->{oStorageC}, $xFileExp, oct($strMode), $strUser, $strGroup, $lTimestamp, $bAtomic, $bPathCreate);
 
+    # Apply any other filters
+    if (defined($rhyFilter))
+    {
+        foreach my $rhFilter (@{$rhyFilter})
+        {
+            $oFileIo->filterAdd(
+                $rhFilter->{strClass}, defined($rhFilter->{rxyParam}) ? $self->{oJSON}->encode(@{$rhFilter->{rxyParam}}) : undef);
+        }
+    }
+
     # If cipher is set then encryption is the last filter applied to the write
     if (defined($self->cipherType()))
     {
         $oFileIo->filterAdd(STORAGE_FILTER_CIPHER_BLOCK, $self->{oJSON}->encode([true, $self->cipherType(), $strCipherPass]));
     }
 
-    # # Apply any other filters
-    # if (defined($rhyFilter))
-    # {
-    #     foreach my $rhFilter (reverse(@{$rhyFilter}))
-    #     {
-    #         $oFileIo = $rhFilter->{strClass}->new($oFileIo, @{$rhFilter->{rxyParam}});
-    #     }
-    # }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oFileIo', value => $oFileIo, trace => true},
+        {name => 'oFileIo', value => new pgBackRest::Storage::StorageWrite($self, $oFileIo), trace => true},
     );
 }
 
@@ -901,7 +898,7 @@ sub put
     my $oFileIo = ref($xFile) ? $xFile : $self->openWrite($xFile, {strCipherPass => $strCipherPass});
 
     # Write the content
-    my $lSize = $self->{oStorageC}->put($oFileIo, ref($xContent) ? $$xContent : $xContent);
+    my $lSize = $self->{oStorageC}->put($oFileIo->{oStorageCWrite}, ref($xContent) ? $$xContent : $xContent);
 
     # Return from function and log return values if any
     return logDebugReturn

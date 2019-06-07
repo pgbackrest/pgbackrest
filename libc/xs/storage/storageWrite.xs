@@ -60,6 +60,23 @@ CLEANUP:
     MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
+const char *
+result(self, filter)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::StorageWrite self
+    const String *filter = STR_NEW_SV($arg);
+CODE:
+    RETVAL = strPtr(storageFilterXsResult(ioWriteFilterGroup(storageWriteIo(self)), filter));
+OUTPUT:
+    RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
 void
 DESTROY(self)
 PREINIT:

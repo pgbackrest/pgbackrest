@@ -192,7 +192,8 @@ sub backupFile
         {
             my $oDestinationFileIo = $oStorageRepo->openWrite(
                 STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass});
+                {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass,
+                    rhyFilter => [{strClass => COMMON_IO_HANDLE}]});
 
             # Copy the file
             $oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo);
@@ -223,7 +224,8 @@ sub backupFile
     #
     # If the file was checksummed then get the size in all cases since we don't already have it.
     if ((($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY) &&
-            $oStorageRepo->driver()->capability(STORAGE_CAPABILITY_SIZE_DIFF)) ||
+    # !!! NEED TO MAKE THIS A CAPABILITY
+            $oStorageRepo->type() eq 'posix') ||
         $iCopyResult == BACKUP_FILE_CHECKSUM)
     {
         $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}"))->size();
