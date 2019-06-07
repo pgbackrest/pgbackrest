@@ -34,7 +34,7 @@ Getters/Setters
 bool ioReadBlock(const IoRead *this);
 bool ioReadEof(const IoRead *this);
 IoFilterGroup *ioReadFilterGroup(const IoRead *this);
-void ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup);
+IoRead *ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup);
 int ioReadHandle(const IoRead *this);
 
 /***********************************************************************************************************************************

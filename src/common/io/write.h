@@ -34,7 +34,7 @@ void ioWriteClose(IoWrite *this);
 Getters/Setters
 ***********************************************************************************************************************************/
 IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
-void ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup);
+IoWrite *ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup);
 int ioWriteHandle(const IoWrite *this);
 
 /***********************************************************************************************************************************

@@ -281,7 +281,7 @@ ioWriteFilterGroup(const IoWrite *this)
     FUNCTION_TEST_RETURN(this->filterGroup);
 }
 
-void
+IoWrite *
 ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -301,7 +301,7 @@ ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
 
     this->filterGroup = ioFilterGroupMove(filterGroup, this->memContext);
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(IO_WRITE, this);
 }
 
 /***********************************************************************************************************************************

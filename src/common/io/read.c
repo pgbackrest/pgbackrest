@@ -375,7 +375,7 @@ ioReadFilterGroup(const IoRead *this)
     FUNCTION_TEST_RETURN(this->filterGroup);
 }
 
-void
+IoRead *
 ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -391,7 +391,7 @@ ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup)
 
     this->filterGroup = ioFilterGroupMove(filterGroup, this->memContext);
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(IO_READ, this);
 }
 
 /***********************************************************************************************************************************
