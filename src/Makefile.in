@@ -23,7 +23,7 @@ CINCLUDE = @CINCLUDE@
 CLIBRARY = @CLIBRARY@
 
 # Concatenate options for easy usage
-CMAKE = $(CSTANDARD) $(COPTIMIZE) $(CWARNING) $(CINCLUDE) $(CLIBRARY)
+CMAKE = $(CPPFLAGS) $(CSTANDARD) $(COPTIMIZE) $(CWARNING) $(CINCLUDE) $(CLIBRARY)
 
 ####################################################################################################################################
 # Linker options
