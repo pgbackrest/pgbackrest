@@ -11,6 +11,7 @@ Storage XS Header
 #include "common/type/json.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
+#include "storage/storage.intern.h"
 
 typedef Storage *pgBackRest__LibC__Storage;
 
@@ -26,6 +27,40 @@ typedef struct StorageManifestXsCallbackData
 //    RegExp *filter;
 } StorageManifestXsCallbackData;
 
+String *
+storageManifestXsInfo(const String *path, const StorageInfo *info)
+{
+    String *json = strNewFmt(
+        "%s:{\"group\":%s,\"user\":%s,\"type\":\"",
+        strPtr(jsonFromStr(path == NULL ? info->name : strNewFmt("%s/%s", strPtr(path), strPtr(info->name)))),
+        strPtr(jsonFromStr(info->group)), strPtr(jsonFromStr(info->user)));
+
+    switch (info->type)
+    {
+        case storageTypeFile:
+        {
+            strCatFmt(
+                json, "f\",\"mode\":\"%04o\",\"modification_time\":%" PRId64 ",\"size\":%" PRIu64 "}", info->mode,
+                (int64_t)info->timeModified, info->size);
+            break;
+        }
+
+        case storageTypeLink:
+        {
+            strCatFmt(json, "l\",\"link_destination\":%s}", strPtr(jsonFromStr(info->linkDestination)));
+            break;
+        }
+
+        case storageTypePath:
+        {
+            strCatFmt(json, "d\",\"mode\":\"%04o\"}", info->mode);
+            break;
+        }
+    }
+
+    return json;
+}
+
 void
 storageManifestXsCallback(void *callbackData, const StorageInfo *info)
 {
@@ -36,47 +71,23 @@ storageManifestXsCallback(void *callbackData, const StorageInfo *info)
         if (strSize(data->json) != 1)
             strCat(data->json, ",");
 
-        strCatFmt(
-            data->json, "%s:{\"group\":%s,\"user\":%s,\"type\":\"",
-            strPtr(jsonFromStr(data->path == NULL ? info->name : strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)))),
-            strPtr(jsonFromStr(info->group)), strPtr(jsonFromStr(info->user)));
+        strCat(data->json, strPtr(storageManifestXsInfo(data->path, info)));
 
-        switch (info->type)
+        if (info->type == storageTypePath)
         {
-            case storageTypeFile:
+            if (!strEqZ(info->name, "."))
             {
-                strCatFmt(
-                    data->json, "f\",\"mode\":\"%04o\",\"modification_time\":%" PRId64 ",\"size\":%" PRIu64 "}", info->mode,
-                    (int64_t)info->timeModified, info->size);
-                break;
-            }
-
-            case storageTypeLink:
-            {
-                strCatFmt(data->json, "l\",\"link_destination\":%s}", strPtr(jsonFromStr(info->linkDestination)));
-                break;
-            }
-
-            case storageTypePath:
-            {
-                strCatFmt(data->json, "d\",\"mode\":\"%04o\"}", info->mode);
-
-                if (!strEqZ(info->name, "."))
+                StorageManifestXsCallbackData dataSub =
                 {
-                    StorageManifestXsCallbackData dataSub =
-                    {
-                        .storage = data->storage,
-                        .json = data->json,
-                        .pathRoot = data->pathRoot,
-                        .path = data->path == NULL ? info->name : strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)),
-                    };
+                    .storage = data->storage,
+                    .json = data->json,
+                    .pathRoot = data->pathRoot,
+                    .path = data->path == NULL ? info->name : strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)),
+                };
 
-                    storageInfoListNP(
-                        dataSub.storage, strNewFmt("%s/%s", strPtr(dataSub.pathRoot), strPtr(dataSub.path)),
-                        storageManifestXsCallback, &dataSub);
-                }
-
-                break;
+                storageInfoListNP(
+                    dataSub.storage, strNewFmt("%s/%s", strPtr(dataSub.pathRoot), strPtr(dataSub.path)), storageManifestXsCallback,
+                    &dataSub);
             }
         }
     }

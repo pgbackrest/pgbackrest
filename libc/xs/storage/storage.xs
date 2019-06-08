@@ -23,7 +23,13 @@ CODE:
     else if (strEqZ(type, "<REPO>"))
         RETVAL = (Storage *)storageRepoWrite();
     else if (strEqZ(type, "<DB>"))
-        RETVAL = (Storage *)storagePgWrite();
+    {
+        memContextSwitch(MEM_CONTEXT_XS_OLD());
+        RETVAL = storagePosixNew(
+            cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+        storagePathEnforceSet((Storage *)RETVAL, false);
+        memContextSwitch(MEM_CONTEXT_XS_TEMP());
+    }
     else
         THROW_FMT(AssertError, "unexpected storage type '%s'", strPtr(type));
 OUTPUT:
@@ -131,9 +137,18 @@ CODE:
     CHECK(filter == NULL); // !!! NOT YET IMPLEMENTED
 
     StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = pathExp};
-    storageInfoListP(
-        self, data.pathRoot, storageManifestXsCallback, &data,
-        .errorOnMissing = storageFeature(self, storageFeaturePath) ? true : false);
+
+    StorageInfo info = storageInfoNP(self, pathExp);
+
+    if (info.type == storageTypePath)
+    {
+        storageInfoListP(
+            self, data.pathRoot, storageManifestXsCallback, &data,
+            .errorOnMissing = storageFeature(self, storageFeaturePath) ? true : false);
+    }
+    else
+        strCat(data.json, strPtr(storageManifestXsInfo(NULL, &info)));
+
     strCat(data.json, "}");
 
     RETVAL = newSVpv((char *)strPtr(data.json), strSize(data.json));
