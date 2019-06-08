@@ -17,7 +17,7 @@ INPUT:
     U32 mode
     const String *user = STR_NEW_SV($arg);
     const String *group = STR_NEW_SV($arg);
-    U8 timeModified
+    IV timeModified
     bool atomic
     bool pathCreate
 CODE:

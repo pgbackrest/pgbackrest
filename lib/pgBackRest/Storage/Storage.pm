@@ -943,17 +943,20 @@ sub remove
     my
     (
         $strOperation,
-        $strFileExp,
+        $xFileExp,
         $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->remove', \@_,
-            {name => 'strFileExp'},
+            {name => 'xFileExp'},
             {name => 'bIgnoreMissing', optional => true, default => true},
         );
 
-    $self->{oStorageC}->remove($strFileExp, $bIgnoreMissing);
+    foreach my $strFileExp (ref($xFileExp) ? @{$xFileExp} : ($xFileExp))
+    {
+        $self->{oStorageC}->remove($strFileExp, $bIgnoreMissing);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

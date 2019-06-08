@@ -198,8 +198,8 @@ sub run
 
         # Attempt to save without proper path
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oManifest->save()}, ERROR_PATH_MISSING,
-            "unable to open '" . $strBackupManifestFile . "': No such file or directory");
+        $self->testException(sub {$oManifest->save()}, ERROR_FILE_MISSING,
+            "unable to open file '${strBackupManifestFile}' for write in missing path");
 
         # Create path and save
         #---------------------------------------------------------------------------------------------------------------------------
@@ -226,8 +226,8 @@ sub run
 
         # Build error if offline = true and no tablespace path
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false)}, ERROR_FILE_MISSING,
-            "unable to stat '" . $self->{strDbPath} . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false)}, ERROR_PATH_MISSING,
+            "unable to list file info for missing path '" . $self->{strDbPath} . "/" . MANIFEST_TARGET_PGTBLSPC . "'");
 
         # bOnline = true tests
         #---------------------------------------------------------------------------------------------------------------------------
@@ -236,7 +236,11 @@ sub run
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
 
         # Create expected manifest from base
+        my $oStorageTemp = $oManifestBase->{oStorage};
+        $oManifestBase->{oStorage} = undef;
         my $oManifestExpected = dclone($oManifestBase);
+        $oManifestBase->{oStorage} = $oStorageTemp;
+        $oManifestExpected->{oStorage} = $oStorageTemp;
 
         # Add global/pg_control file and PG_VERSION file and create a directory with a different modes than default
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_PGCONTROL,

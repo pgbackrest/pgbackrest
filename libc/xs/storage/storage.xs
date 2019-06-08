@@ -92,37 +92,6 @@ CLEANUP:
     MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
-bool
-readDrain(self, read)
-PREINIT:
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-INPUT:
-    pgBackRest::LibC::StorageRead read
-CODE:
-    RETVAL = false;
-
-    if (ioReadOpen(storageReadIo(read)))
-    {
-        Buffer *buffer = bufNew(ioBufferSize());
-
-        do
-        {
-            ioRead(storageReadIo(read), buffer);
-            bufUsedZero(buffer);
-        }
-        while (!ioReadEof(storageReadIo(read)));
-
-        ioReadClose(storageReadIo(read));
-        RETVAL = true;
-    }
-OUTPUT:
-    RETVAL
-CLEANUP:
-    }
-    MEM_CONTEXT_XS_TEMP_END();
-
-####################################################################################################################################
 SV *
 list(self, pathExp, ignoreMissing, sortAsc, expression)
 PREINIT:
@@ -267,7 +236,7 @@ CLEANUP:
     MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
-U8
+UV
 put(self, write, buffer)
 PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()
@@ -278,6 +247,37 @@ INPUT:
 CODE:
     storagePutNP(write, buffer);
     RETVAL = buffer ? bufUsed(buffer) : 0;
+OUTPUT:
+    RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+bool
+readDrain(self, read)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::StorageRead read
+CODE:
+    RETVAL = false;
+
+    if (ioReadOpen(storageReadIo(read)))
+    {
+        Buffer *buffer = bufNew(ioBufferSize());
+
+        do
+        {
+            ioRead(storageReadIo(read), buffer);
+            bufUsedZero(buffer);
+        }
+        while (!ioReadEof(storageReadIo(read)));
+
+        ioReadClose(storageReadIo(read));
+        RETVAL = true;
+    }
 OUTPUT:
     RETVAL
 CLEANUP:

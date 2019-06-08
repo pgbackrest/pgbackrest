@@ -594,7 +594,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 
     // It doesn't make sense to combine these parameters because if we are creating missing parent paths why error when they exist?
     // If this somehow wasn't caught in testing, the worst case is that the path would not be created and an error would be thrown.
-    ASSERT(!(param.noParentCreate && param.errorOnExists));
+    ASSERT(!(!param.noParentCreate && param.errorOnExists));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
