@@ -16,9 +16,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::LibC qw(:storage);
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Remote;
-use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Helper;
-use pgBackRest::Storage::Local;
 
 ####################################################################################################################################
 # Storage constants

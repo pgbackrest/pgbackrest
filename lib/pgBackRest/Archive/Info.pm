@@ -27,7 +27,6 @@ use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################

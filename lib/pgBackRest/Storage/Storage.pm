@@ -17,8 +17,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Handle;
 use pgBackRest::Common::Log;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::CipherBlock;
-use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::StorageRead;
 use pgBackRest::Storage::StorageWrite;
 

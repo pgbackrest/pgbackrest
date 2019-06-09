@@ -35,6 +35,16 @@ use constant CIPHER_MAGIC                                           => 'Salted__
     push @EXPORT, qw(CIPHER_MAGIC);
 
 ####################################################################################################################################
+# Filter constants
+####################################################################################################################################
+use constant STORAGE_FILTER_CIPHER_BLOCK                            => 'pgBackRest::Storage::Filter::CipherBlock';
+    push @EXPORT, qw(STORAGE_FILTER_CIPHER_BLOCK);
+use constant STORAGE_FILTER_GZIP                                    => 'pgBackRest::Storage::Filter::Gzip';
+    push @EXPORT, qw(STORAGE_FILTER_GZIP);
+use constant STORAGE_FILTER_SHA                                     => 'pgBackRest::Storage::Filter::Sha';
+    push @EXPORT, qw(STORAGE_FILTER_SHA);
+
+####################################################################################################################################
 # Capability constants
 ####################################################################################################################################
 # Can the size in the storage be different than what was written?  For example, a ZFS filesystem could be doing compression of a

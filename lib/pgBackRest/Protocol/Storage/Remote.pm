@@ -15,7 +15,6 @@ use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::File;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
 
 ####################################################################################################################################
 # new
@@ -199,23 +198,23 @@ sub openRead
     my $bProtocolCompress = protocolCompress($rhParam);
 
     # Compress on the remote side
-    if ($bProtocolCompress)
-    {
-        push(
-            @{$rhParam->{rhyFilter}},
-            {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, true, cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK)]});
-    }
+    # if ($bProtocolCompress)
+    # {
+    #     push(
+    #         @{$rhParam->{rhyFilter}},
+    #         {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, true, cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK)]});
+    # }
 
     my $oSourceFileIo =
         $self->{oProtocol}->cmdExecute(OP_STORAGE_OPEN_READ, [$strFileExp, $rhParam]) ?
             new pgBackRest::Protocol::Storage::File($self->{oProtocol}) : undef;
 
     # Decompress on the local side
-    if ($bProtocolCompress)
-    {
-        $oSourceFileIo = new pgBackRest::Storage::Filter::Gzip(
-            $oSourceFileIo, {strCompressType => STORAGE_DECOMPRESS, bWantGzip => false});
-    }
+    # if ($bProtocolCompress)
+    # {
+    #     $oSourceFileIo = new pgBackRest::Storage::Filter::Gzip(
+    #         $oSourceFileIo, {strCompressType => STORAGE_DECOMPRESS, bWantGzip => false});
+    # }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -250,23 +249,23 @@ sub openWrite
     my $bProtocolCompress = protocolCompress($rhParam);
 
     # Decompress on the remote side
-    if ($bProtocolCompress)
-    {
-        push(
-            @{$rhParam->{rhyFilter}},
-            {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, true]});
-    }
+    # if ($bProtocolCompress)
+    # {
+    #     push(
+    #         @{$rhParam->{rhyFilter}},
+    #         {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, true]});
+    # }
 
     # Open the remote file
     $self->{oProtocol}->cmdWrite(OP_STORAGE_OPEN_WRITE, [$strFileExp, $rhParam]);
     my $oDestinationFileIo = new pgBackRest::Protocol::Storage::File($self->{oProtocol});
 
     # Compress on local side
-    if ($bProtocolCompress)
-    {
-        $oDestinationFileIo = new pgBackRest::Storage::Filter::Gzip(
-            $oDestinationFileIo, {iLevel => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK), bWantGzip => false});
-    }
+    # if ($bProtocolCompress)
+    # {
+    #     $oDestinationFileIo = new pgBackRest::Storage::Filter::Gzip(
+    #         $oDestinationFileIo, {iLevel => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK), bWantGzip => false});
+    # }
 
     # Return from function and log return values if any
     return logDebugReturn

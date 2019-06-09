@@ -27,8 +27,6 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
-use pgBackRest::Storage::Local;
-use pgBackRest::Storage::S3::Driver;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -203,7 +201,7 @@ sub forceStorageMove
         );
 
     # If S3 then use storage commands to remove
-    if ($oStorage->driver()->className() eq STORAGE_S3_DRIVER)
+    if ($oStorage->type() eq 's3')
     {
         hostGroupGet()->hostGet(HOST_S3)->executeS3(
             'mv' . ($bRecurse ? ' --recursive' : '') . ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strSourcePathExp) .

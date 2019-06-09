@@ -1,9 +1,7 @@
 ####################################################################################################################################
-# Local Storage
-#
 # Implements storage functionality using drivers.
 ####################################################################################################################################
-package pgBackRest::Storage::Local;
+package pgBackRestTest::Common::Storage;
 use parent 'pgBackRest::Storage::Base';
 
 use strict;
@@ -17,7 +15,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Sha;
 
 ####################################################################################################################################
 # new
@@ -114,67 +111,6 @@ sub exists
     (
         $strOperation,
         {name => 'bExists', value => $bExists}
-    );
-}
-
-####################################################################################################################################
-# hashSize - calculate sha1 hash and size of file. If special encryption settings are required, then the file objects from
-# openRead/openWrite must be passed instead of file names.
-####################################################################################################################################
-sub hashSize
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $xFileExp,
-        $bIgnoreMissing,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->hashSize', \@_,
-            {name => 'xFileExp'},
-            {name => 'bIgnoreMissing', optional => true, default => false},
-        );
-
-    # Set operation variables
-    my $strHash;
-    my $lSize;
-
-    # Is this an IO object or a file expression?
-    my $oFileIo =
-        defined($xFileExp) ? (ref($xFileExp) ? $xFileExp :
-            $self->openRead($self->pathGet($xFileExp), {bIgnoreMissing => $bIgnoreMissing})) : undef;
-
-    if (defined($oFileIo))
-    {
-        $lSize = 0;
-        my $oShaIo = new pgBackRest::Storage::Filter::Sha($oFileIo);
-        my $lSizeRead;
-
-        do
-        {
-            my $tContent;
-            $lSizeRead = $oShaIo->read(\$tContent, $self->{lBufferMax});
-            $lSize += $lSizeRead;
-        }
-        while ($lSizeRead != 0);
-
-        # Close the file
-        $oShaIo->close();
-
-        # Get the hash
-        $strHash = $oShaIo->result(STORAGE_FILTER_SHA);
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strHash', value => $strHash},
-        {name => 'lSize', value => $lSize}
     );
 }
 

@@ -12,7 +12,6 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Backup::Filter::PageChecksum;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Handle;
 use pgBackRest::Common::Log;
@@ -20,9 +19,6 @@ use pgBackRest::Common::String;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
-use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -174,7 +170,7 @@ sub backupFile
 
             push(
                 @{$rhyFilter},
-                {strClass => BACKUP_FILTER_PAGECHECKSUM,
+                {strClass => "pgBackRest::Backup::Filter::PageChecksum",
                     rxyParam => [$iSegmentNo, $hExtraParam->{iWalId}, $hExtraParam->{iWalOffset}]});
         };
 

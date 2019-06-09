@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # Posix File Write
 ####################################################################################################################################
-package pgBackRest::Storage::Posix::FileWrite;
+package pgBackRestTest::Common::StoragePosixWrite;
 use parent 'pgBackRest::Common::Io::Handle';
 
 use strict;

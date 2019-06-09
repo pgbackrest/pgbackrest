@@ -35,11 +35,11 @@ use BackRestDoc::Markdown::DocMarkdown;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Storage::Local;
-use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
 
 ####################################################################################################################################
 # Usage
@@ -193,8 +193,8 @@ eval
     # Get the base path
     my $strBasePath = abs_path(dirname($0));
 
-    my $oStorageDoc = new pgBackRest::Storage::Local(
-        $strBasePath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorageDoc = new pgBackRestTest::Common::Storage(
+        $strBasePath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     if (!defined($strDocPath))
     {

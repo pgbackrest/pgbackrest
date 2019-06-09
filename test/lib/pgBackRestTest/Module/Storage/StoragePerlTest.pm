@@ -16,61 +16,12 @@ use pgBackRest::Config::Config;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::LibC qw(:crypto);
-use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Local;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
-
-####################################################################################################################################
-# initModule - common objects and variables used by all tests.
-####################################################################################################################################
-sub initModule
-{
-    my $self = shift;
-
-    # Local path
-    # $self->{strPathLocal} = $self->testPath() . '/local';
-
-    # Create local storage
-    $self->{oStorageLocal} = new pgBackRest::Storage::Storage('<LOCAL>');
-
-    # Create encrypted storage
-    # $self->{oStorageEncrypt} = new pgBackRest::Storage::Local(
-    #     $self->testPath(), new pgBackRest::Storage::Posix::Driver(),
-    #     {bAllowTemp => false, strCipherType => CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC});
-
-    # Remote path
-    # $self->{strPathRemote} = $self->testPath() . '/remote';
-    #
-    # # Create the repo path so the remote won't complain that it's missing
-    # mkdir($self->pathRemote())
-    #     or confess &log(ERROR, "unable to create repo directory '" . $self->pathRemote() . qw{'});
-    #
-    # # Remove repo path now that the remote is created
-    # rmdir($self->{strPathRemote})
-    #     or confess &log(ERROR, "unable to remove repo directory '" . $self->pathRemote() . qw{'});
-
-    # Create remote storage
-    # $self->{oStorageRemote} = new pgBackRest::Storage::Local(
-    #     $self->pathRemote(), new pgBackRest::Storage::Posix::Driver(), {hRule => $hRule});
-}
-
-####################################################################################################################################
-# initTest - initialization before each test
-####################################################################################################################################
-sub initTest
-{
-    my $self = shift;
-
-    # executeTest(
-    #     'ssh ' . $self->backrestUser() . '\@' . $self->host() . ' mkdir -m 700 ' . $self->pathRemote(), {bSuppressStdErr => true});
-
-    # executeTest('mkdir -m 700 ' . $self->pathLocal());
-}
 
 ####################################################################################################################################
 # run
@@ -85,6 +36,9 @@ sub run
     my $strFileHash = 'bbbcf2c59433f68f22376cd2439d6cd309378df6';
     my $strFileContent = 'TESTDATA';
     my $iFileSize = length($strFileContent);
+
+    # Create local storage
+    $self->{oStorageLocal} = new pgBackRest::Storage::Storage('<LOCAL>');
 
     ################################################################################################################################
     if ($self->begin("pathGet()"))

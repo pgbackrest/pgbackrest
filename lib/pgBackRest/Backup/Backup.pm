@@ -29,9 +29,6 @@ use pgBackRest::Protocol::Local::Process;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Common::Io::Handle;
-use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
-use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 

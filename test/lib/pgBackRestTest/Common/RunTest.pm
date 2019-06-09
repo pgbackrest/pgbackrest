@@ -19,13 +19,13 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Storage::Posix::Driver;
-use pgBackRest::Storage::Local;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
@@ -155,7 +155,7 @@ sub process
     $self->{bFirstTest} = true;
 
     # Initialize test storage
-    $oStorage = new pgBackRest::Storage::Local($self->testPath(), new pgBackRest::Storage::Posix::Driver());
+    $oStorage = new pgBackRestTest::Common::Storage($self->testPath(), new pgBackRestTest::Common::StoragePosix());
 
     # Generate backrest exe
     $self->{strBackRestExe} = testRunExe(
