@@ -955,7 +955,6 @@ sub remove
 ####################################################################################################################################
 # Getters/Setters
 ####################################################################################################################################
-sub capability {true}
 sub className {STORAGE_POSIX_DRIVER}
 sub tempExtension {shift->{strTempExtension}}
 sub tempExtensionSet {my $self = shift; $self->{strTempExtension} = shift}

@@ -29,6 +29,7 @@ use pgBackRest::Protocol::Local::Process;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Common::Io::Handle;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
@@ -320,7 +321,7 @@ sub processManifest
             storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strPath}", {bIgnoreExists => true});
         }
 
-        if (storageRepo()->driver()->capability(STORAGE_CAPABILITY_LINK))
+        if (storageRepo()->capability(STORAGE_CAPABILITY_LINK))
         {
             for my $strTarget ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
             {
@@ -1109,7 +1110,7 @@ sub process
     # Create a link to the most recent backup
     $oStorageRepo->remove(STORAGE_REPO_BACKUP . qw(/) . LINK_LATEST);
 
-    if (storageRepo()->driver()->capability(STORAGE_CAPABILITY_LINK))
+    if (storageRepo()->capability(STORAGE_CAPABILITY_LINK))
     {
         $oStorageRepo->linkCreate(
             STORAGE_REPO_BACKUP . "/${strBackupLabel}", STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST, {bRelative => true});

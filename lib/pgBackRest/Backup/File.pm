@@ -19,6 +19,7 @@ use pgBackRest::Common::String;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -203,7 +204,7 @@ sub backupFile
             }
 
             # Get results of page checksum validation
-            my $rExtraRaw = $bChecksumPage ? $oSourceFileIo->result(BACKUP_FILTER_PAGECHECKSUM) : undef;
+            my $rExtraRaw = $bChecksumPage ? $oSourceFileIo->result("pgBackRest::Backup::Filter::PageChecksum") : undef;
             $rExtra = {bValid => $rExtraRaw->{valid} ? true : false, bAlign => $rExtraRaw->{align} ? true : false};
         }
         # Else if source file is missing the database removed it

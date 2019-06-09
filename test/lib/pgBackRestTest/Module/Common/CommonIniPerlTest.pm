@@ -316,7 +316,7 @@ sub run
             "a user passphrase and sub passphrase are both required when encrypting");
 
         # Create Encrypted storage
-        my $oStorage = new pgBackRestTest::Common::Storage($self->testPath(), new pgBackRestTest::Common::StoragePosix()),
+        my $oStorage = new pgBackRestTest::Common::Storage($self->testPath(), new pgBackRestTest::Common::StoragePosix(),
             {strCipherType => CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC, strCipherPassUser => $strCipherPass});
 
         $self->testException(sub {new pgBackRest::Common::Ini($strTestFile, {oStorage => $oStorage})}, ERROR_CRYPTO,
