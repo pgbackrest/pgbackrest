@@ -901,7 +901,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathCreate)
 ;
     if (storageFeature(self, storageFeaturePath))
         storagePathCreateP(
-            self, pathExp, .mode = strSize(mode) == 0 ? 0 : cvtZToIntBase(strPtr(mode), 8), .errorOnExists = !ignoreExists,
+            self, pathExp, .mode = mode ? cvtZToIntBase(strPtr(mode), 8) : 0, .errorOnExists = !ignoreExists,
             .noParentCreate = !createParent);
     }
     MEM_CONTEXT_XS_TEMP_END();

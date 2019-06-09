@@ -280,7 +280,7 @@ sub run
         # Change the permissions on the archived file so reconstruction fails
         executeTest('sudo chmod 220 ' . $strArchivedFile);
         $self->testException(sub {(new pgBackRest::Stanza())->stanzaCreate()}, ERROR_FILE_OPEN,
-            "unable to open '" . $strArchivedFile . "': Permission denied");
+            "unable to open file '${strArchivedFile}' for read");
         executeTest('sudo chmod 644 ' . $strArchivedFile);
 
         # Clear the cached repo settings and change repo settings to encrypted
@@ -312,7 +312,10 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_94 . "-1");
         storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_94 . "-1/0000000100000001");
-        storageRepo()->put($strArchivedFile, $tUnencryptedArchiveContent);
+        storageRepo()->put(
+            storageRepo()->openWrite(
+                $strArchivedFile, {strCipherPass => new pgBackRest::Archive::Info($self->{strArchivePath})->cipherPassSub()}),
+            $tUnencryptedArchiveContent);
         storageRepo()->pathCreate($strBackupPath); # Empty backup path - no backup in progress
 
         # Confirm encrypted and create the stanza with force
@@ -477,7 +480,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         executeTest('sudo chmod 220 ' . $self->{strArchivePath});
         $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_ARCHIVE, $self->{strArchivePath})}, ERROR_FILE_OPEN,
-            "unable to open '" . $self->{strArchivePath} . "/archive.info': Permission denied");
+            "unable to open file '" . $self->{strArchivePath} . "/archive.info' for read");
         executeTest('sudo chmod 640 ' . $self->{strArchivePath});
 
         # Reset force option --------
@@ -492,8 +495,8 @@ sub run
         forceStorageRemove(storageRepo(), storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT));
         executeTest('sudo chmod 220 ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
         $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, ERROR_FILE_OPEN,
-            "unable to open '" . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) .
-            "': Permission denied");
+            "unable to open file '" . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) .
+            "' for read");
         executeTest('sudo chmod 640 ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
     }
 
@@ -762,8 +765,8 @@ sub run
         executeTest("sudo chown 7777 " . $self->{strArchivePath});
 
         lockStop();
-        $self->testException(sub {$oStanza->stanzaDelete()}, ERROR_FILE_OPEN,
-            "unable to remove file '" . $self->{strArchivePath} . "/" . ARCHIVE_INFO_FILE . "': Permission denied");
+        $self->testException(sub {$oStanza->stanzaDelete()}, ERROR_FILE_REMOVE,
+            "unable to remove '" . $self->{strArchivePath} . "/" . ARCHIVE_INFO_FILE . "'");
 
         # Remove the repo
         executeTest("sudo rm -rf " . $self->{strArchivePath});

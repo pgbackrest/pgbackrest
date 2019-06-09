@@ -278,7 +278,7 @@ sub forceStorageRemove
         );
 
     # If S3 then use storage commands to remove
-    if ($oStorage->driver()->className() eq STORAGE_S3_DRIVER)
+    if ($oStorage->type() eq 's3')
     {
         $oStorage->remove($strPathExp, {bRecurse => $bRecurse});
     }

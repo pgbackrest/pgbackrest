@@ -771,7 +771,7 @@ sub pathCreate
         );
 
     # Create path
-    $self->{oStorageC}->pathCreate($strPathExp, defined($strMode) ? $strMode : '', $bIgnoreExists, $bCreateParent);
+    $self->{oStorageC}->pathCreate($strPathExp, $strMode, $bIgnoreExists, $bCreateParent);
 
     # Return from function and log return values if any
     return logDebugReturn

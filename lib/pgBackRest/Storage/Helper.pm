@@ -37,11 +37,6 @@ use constant STORAGE_TEMP_EXT                                       => PROJECT_E
     push @EXPORT, qw(STORAGE_TEMP_EXT);
 
 ####################################################################################################################################
-# Cache storage so it can be retrieved quickly
-####################################################################################################################################
-my $hStorage;
-
-####################################################################################################################################
 # storageLocal - get local storage
 #
 # Local storage is generally read-only (except for locking) and can never reference a remote path.  Used for adhoc activities like
@@ -52,17 +47,11 @@ sub storageLocal
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '::storageLocal');
 
-    # Create storage if not defined
-    if (!defined($hStorage->{&STORAGE_LOCAL}))
-    {
-        $hStorage->{&STORAGE_LOCAL} = new pgBackRest::Storage::Storage(STORAGE_LOCAL);
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oStorageLocal', value => $hStorage->{&STORAGE_LOCAL}, trace => true},
+        {name => 'oStorageLocal', value => new pgBackRest::Storage::Storage(STORAGE_LOCAL), trace => true},
     );
 }
 

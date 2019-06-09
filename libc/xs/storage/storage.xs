@@ -174,7 +174,7 @@ INPUT:
 CODE:
     if (storageFeature(self, storageFeaturePath))
         storagePathCreateP(
-            self, pathExp, .mode = strSize(mode) == 0 ? 0 : cvtZToIntBase(strPtr(mode), 8), .errorOnExists = !ignoreExists,
+            self, pathExp, .mode = mode ? cvtZToIntBase(strPtr(mode), 8) : 0, .errorOnExists = !ignoreExists,
             .noParentCreate = !createParent);
 CLEANUP:
     }
