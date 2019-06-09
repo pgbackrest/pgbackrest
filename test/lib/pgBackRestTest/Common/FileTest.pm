@@ -166,7 +166,7 @@ sub forceStorageMode
         );
 
     # Mode commands are ignored on S3
-    if ($oStorage->driver()->className() ne STORAGE_S3_DRIVER)
+    if ($oStorage->type() ne 's3')
     {
         executeTest('sudo chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
     }
@@ -243,7 +243,7 @@ sub forceStorageOwner
         );
 
     # Mode commands are ignored on S3
-    if ($oStorage->driver()->className() ne STORAGE_S3_DRIVER)
+    if ($oStorage->type() ne 's3')
     {
         executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
     }
