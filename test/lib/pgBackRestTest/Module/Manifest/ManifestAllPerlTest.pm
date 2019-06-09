@@ -527,7 +527,11 @@ sub run
 
         # Unskip code path coverage
         #---------------------------------------------------------------------------------------------------------------------------
+        $oStorageTemp = $oManifestExpected->{oStorage};
+        $oManifestExpected->{oStorage} = undef;
         my $oManifestExpectedUnskip = dclone($oManifestExpected);
+        $oManifestExpected->{oStorage} = $oStorageTemp;
+        $oManifestExpectedUnskip->{oStorage} = $oStorageTemp;
 
         # Change DB version to 93
         $oManifest = new pgBackRest::Manifest(
@@ -958,7 +962,7 @@ sub run
         storageDb()->remove('postgresql.auto.conf');
         storageDb()->remove('hosts');
         storageDb()->remove('pg_log/logfile');
-        storageDb()->remove('global/exclude', {bRecurse => true});
+        storageDb()->pathRemove('global/exclude', {bRecurse => true});
 
         # Reload the manifest with version < 9.0
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1233,7 +1237,11 @@ sub run
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
 
         # Create expected manifest from base
+        my $oStorageTemp = $oManifestBase->{oStorage};
+        $oManifestBase->{oStorage} = undef;
         my $oManifestExpected = dclone($oManifestBase);
+        $oManifestBase->{oStorage} = $oStorageTemp;
+        $oManifestExpected->{oStorage} = $oStorageTemp;
 
         # Future timestamp on file
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1259,7 +1267,11 @@ sub run
 
         # Future timestamp in last manifest
         #---------------------------------------------------------------------------------------------------------------------------
+        $oStorageTemp = $oManifestExpected->{oStorage};
+        $oManifestExpected->{oStorage} = undef;
         my $oLastManifest = dclone($oManifestExpected);
+        $oManifestExpected->{oStorage} = $oStorageTemp;
+        $oLastManifest->{oStorage} = $oStorageTemp;
 
         # Set a backup label
         $oLastManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, BOGUS);
@@ -1511,7 +1523,12 @@ sub run
     {
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
             iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+
+        my $oStorageTemp = $oManifestBase->{oStorage};
+        $oManifestBase->{oStorage} = undef;
         my $oManifestExpected = dclone($oManifestBase);
+        $oManifestBase->{oStorage} = $oStorageTemp;
+        $oManifestExpected->{oStorage} = $oStorageTemp;
 
         # Add a bogus file - all traces to be removed after the manifest has been built to simulate an inital manifest and avoid
         # missing files error

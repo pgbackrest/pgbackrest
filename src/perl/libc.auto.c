@@ -845,20 +845,21 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_manifest)
 			"pgBackRest::LibC::Storage::manifest",
 			"self", "pgBackRest::LibC::Storage")
 ;
-    CHECK(filter == NULL); // !!! NOT YET IMPLEMENTED
+    StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = pathExp, .filter = filter};
 
-    StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = pathExp};
+    StorageInfo info = storageInfoP(self, pathExp, .ignoreMissing = true);
 
-    StorageInfo info = storageInfoNP(self, pathExp);
-
-    if (info.type == storageTypePath)
+    if (!info.exists || info.type == storageTypePath)
     {
         storageInfoListP(
             self, data.pathRoot, storageManifestXsCallback, &data,
             .errorOnMissing = storageFeature(self, storageFeaturePath) ? true : false);
     }
     else
+    {
+        info.name = strBase(storagePath(self, pathExp));
         strCat(data.json, strPtr(storageManifestXsInfo(NULL, &info)));
+    }
 
     strCat(data.json, "}");
 

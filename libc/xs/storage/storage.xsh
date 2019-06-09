@@ -24,7 +24,7 @@ typedef struct StorageManifestXsCallbackData
     const String *pathRoot;
     const String *path;
     String *json;
-//    RegExp *filter;
+    const String *filter;
 } StorageManifestXsCallbackData;
 
 String *
@@ -68,6 +68,9 @@ storageManifestXsCallback(void *callbackData, const StorageInfo *info)
 
     if (data->path == NULL || !strEqZ(info->name, "."))
     {
+        if (!strEqZ(info->name, ".") && data->filter && !strEq(data->filter, info->name))
+            return;
+
         if (strSize(data->json) != 1)
             strCat(data->json, ",");
 
