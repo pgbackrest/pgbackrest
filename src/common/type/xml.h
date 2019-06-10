@@ -48,12 +48,12 @@ XmlNode *xmlNodeAdd(XmlNode *this, const String *name);
 /***********************************************************************************************************************************
 Node Getters/Setters
 ***********************************************************************************************************************************/
-String *xmlNodeAttribute(XmlNode *this, const String *name);
-XmlNode *xmlNodeChild(XmlNode *this, const String *name, bool errorOnMissing);
-XmlNodeList *xmlNodeChildList(XmlNode *this, const String *name);
-XmlNode *xmlNodeChildN(XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
-unsigned int xmlNodeChildTotal(XmlNode *this, const String *name);
-String *xmlNodeContent(XmlNode *this);
+String *xmlNodeAttribute(const XmlNode *this, const String *name);
+XmlNode *xmlNodeChild(const XmlNode *this, const String *name, bool errorOnMissing);
+XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
+XmlNode *xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
+unsigned int xmlNodeChildTotal(const XmlNode *this, const String *name);
+String *xmlNodeContent(const XmlNode *this);
 void xmlNodeContentSet(XmlNode *this, const String *content);
 
 /***********************************************************************************************************************************

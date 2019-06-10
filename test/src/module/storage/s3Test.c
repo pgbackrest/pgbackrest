@@ -322,22 +322,13 @@ testS3Server(void)
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                 "    <NextContinuationToken>continue</NextContinuationToken>"
+                "   <CommonPrefixes>"
+                "       <Prefix>path/to/test3/</Prefix>"
+                "   </CommonPrefixes>"
                 "    <Contents>"
                 "        <Key>path/to/test1.txt</Key>"
                 "    </Contents>"
-                "    <Contents>"
-                "        <Key>path/to/test2.txt</Key>"
-                "    </Contents>"
                 "</ListBucketResult>"));
-
-        harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<Delete><Quiet>true</Quiet>"
-                "<Object><Key>path/to/test1.txt</Key></Object>"
-                "<Object><Key>path/to/test2.txt</Key></Object>"
-                "</Delete>\n"));
-        harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
         harnessTlsServerExpect(
             testS3ServerRequest(HTTP_VERB_GET, "/?continuation-token=continue&list-type=2&prefix=path%2Fto%2F", NULL));
@@ -349,13 +340,25 @@ testS3Server(void)
                 "    <Contents>"
                 "        <Key>path/to/test3.txt</Key>"
                 "    </Contents>"
+                "    <Contents>"
+                "        <Key>path/to/test2.txt</Key>"
+                "    </Contents>"
                 "</ListBucketResult>"));
 
         harnessTlsServerExpect(
             testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 "<Delete><Quiet>true</Quiet>"
+                "<Object><Key>path/to/test1.txt</Key></Object>"
                 "<Object><Key>path/to/test3.txt</Key></Object>"
+                "</Delete>\n"));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                "<Delete><Quiet>true</Quiet>"
+                "<Object><Key>path/to/test2.txt</Key></Object>"
                 "</Delete>\n"));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
@@ -556,7 +559,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StorageS3 *driver = (StorageS3 *)storageDriver(
             storageS3New(
-                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, NULL, 0, 0, true, NULL, NULL));
+                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, 2, NULL, 0, 0, true, NULL, NULL));
 
         HttpHeader *header = httpHeaderNew(NULL);
 
@@ -609,8 +612,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         driver = (StorageS3 *)storageDriver(
             storageS3New(
-                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, securityToken, 16, NULL, 0, 0, true, NULL,
-                NULL));
+                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, securityToken, 16, 2, NULL, 0, 0, true,
+                NULL, NULL));
 
         TEST_RESULT_VOID(
             storageS3Auth(
@@ -631,7 +634,8 @@ testRun(void)
         testS3Server();
 
         Storage *s3 = storageS3New(
-            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, host, port, 1000, true, NULL, NULL);
+            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, 2, host, port, 1000, true, NULL,
+            NULL);
 
         // Coverage for noop functions
         // -------------------------------------------------------------------------------------------------------------------------
