@@ -67,12 +67,6 @@ sub new
     $self->{strCipherType} = $strCipherType;
     $self->{strCipherPassUser} = $strCipherPassUser;
 
-    if (defined($self->{strCipherType}))
-    {
-        require pgBackRest::Storage::Filter::CipherBlock;
-        pgBackRest::Storage::Filter::CipherBlock->import();
-    }
-
     # Set temp extension in driver
     $self->driver()->tempExtensionSet($self->{strTempExtension}) if $self->driver()->can('tempExtensionSet');
 
