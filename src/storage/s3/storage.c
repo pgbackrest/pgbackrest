@@ -58,6 +58,7 @@ STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinu
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
 STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
+STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 
 /***********************************************************************************************************************************
 AWS authentication v4 constants
@@ -497,6 +498,71 @@ storageS3Exists(THIS_VOID, const String *file)
 }
 
 /***********************************************************************************************************************************
+Info for all files/paths in a path
+***********************************************************************************************************************************/
+typedef struct StorageS3InfoListData
+{
+    StorageInfoListCallback callback;                               // User-supplied callback function
+    void *callbackData;                                             // User-supplied callback data
+} StorageS3InfoListData;
+
+static void
+storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_S3, this);
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(XML_NODE, xml);
+    FUNCTION_TEST_END();
+
+    (void)this;
+    ASSERT(callbackData != NULL);
+    ASSERT(name != NULL);
+    ASSERT(xml != NULL);
+
+    StorageS3InfoListData *data = (StorageS3InfoListData *)callbackData;
+
+    StorageInfo info =
+    {
+        .type = type,
+        .name = name,
+        .size = type == storageTypeFile ? cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true)))) : 0,
+    };
+
+    data->callback(data->callbackData, &info);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static bool
+storageS3InfoList(THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData)
+{
+    THIS(StorageS3);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_S3, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+    ASSERT(callback != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        StorageS3InfoListData data = {.callback = callback, .callbackData = callbackData};
+        storageS3ListInternal(this, path, false, false, storageS3InfoListCallback, &data);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, true);
+}
+
+/***********************************************************************************************************************************
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 static void
@@ -827,8 +893,8 @@ storageS3New(
 
         this = storageNewP(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver,
-            .exists = storageS3Exists, .list = storageS3List, .newRead = storageS3NewRead, .newWrite = storageS3NewWrite,
-            .pathRemove = storageS3PathRemove, .remove = storageS3Remove);
+            .exists = storageS3Exists, .infoList = storageS3InfoList, .list = storageS3List, .newRead = storageS3NewRead,
+            .newWrite = storageS3NewWrite, .pathRemove = storageS3PathRemove, .remove = storageS3Remove);
     }
     MEM_CONTEXT_NEW_END();
 
