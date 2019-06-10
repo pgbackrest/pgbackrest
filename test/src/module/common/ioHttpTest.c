@@ -519,5 +519,10 @@ testRun(void)
         TEST_RESULT_VOID(httpClientFree(client), "free client");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("HttpClientCache"))
+    {
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }

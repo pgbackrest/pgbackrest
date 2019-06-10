@@ -62,6 +62,7 @@ my @stryCFile =
     'common/io/filter/group.c',
     'common/io/filter/size.c',
     'common/io/handleWrite.c',
+    'common/io/http/cache.c',
     'common/io/http/client.c',
     'common/io/http/common.c',
     'common/io/http/header.c',

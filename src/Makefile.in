@@ -81,6 +81,7 @@ SRCS = \
 	common/io/filter/size.c \
 	common/io/handleRead.c \
 	common/io/handleWrite.c \
+	common/io/http/cache.c \
 	common/io/http/client.c \
 	common/io/http/common.c \
 	common/io/http/header.c \
@@ -310,6 +311,9 @@ common/io/handleRead.o: common/io/handleRead.c build.auto.h common/assert.h comm
 
 common/io/handleWrite.o: common/io/handleWrite.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/handleWrite.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/io/handleWrite.c -o common/io/handleWrite.o
+
+common/io/http/cache.o: common/io/http/cache.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/cache.h common/io/http/client.h common/io/http/header.h common/io/http/query.h common/io/read.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/io/http/cache.c -o common/io/http/cache.o
 
 common/io/http/client.o: common/io/http/client.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/common.h common/io/http/header.h common/io/http/query.h common/io/io.h common/io/read.h common/io/read.intern.h common/io/tls/client.h common/io/write.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/io/http/client.c -o common/io/http/client.o
