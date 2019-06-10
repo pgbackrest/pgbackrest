@@ -119,6 +119,7 @@ httpClientRead(THIS_VOID, Buffer *buffer, bool block)
                 if (bufRemains(buffer) > this->contentRemaining)
                     bufLimitSet(buffer, bufSize(buffer) - (bufRemains(buffer) - (size_t)this->contentRemaining));
 
+                actualBytes = bufRemains(buffer);
                 this->contentRemaining -= ioRead(tlsClientIoRead(this->tls), buffer);
 
                 // Error if EOF but content read is not complete
