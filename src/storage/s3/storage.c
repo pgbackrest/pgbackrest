@@ -511,6 +511,8 @@ storageS3ListCallback(StorageS3 *this, void *data, const String *name, StorageTy
     FUNCTION_TEST_END();
 
     (void)this;
+    ASSERT(data != NULL);
+    ASSERT(name != NULL);
     (void)type;
     (void)xml;
 
@@ -659,7 +661,8 @@ storageS3PathRemoveCallback(StorageS3 *this, void *data, const String *name, Sto
 
     ASSERT(this != NULL);
     ASSERT(data != NULL);
-    ASSERT(name != NULL);
+    (void)name;
+    ASSERT(xml != NULL);
 
     // Only delete files since paths don't really exist
     if (type == storageTypeFile)
