@@ -201,7 +201,7 @@ xmlNodeLstAdd(XmlNodeList *this, xmlNodePtr node)
 Get node attribute
 ***********************************************************************************************************************************/
 String *
-xmlNodeAttribute(XmlNode *this, const String *name)
+xmlNodeAttribute(const XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -227,7 +227,7 @@ xmlNodeAttribute(XmlNode *this, const String *name)
 Get node content
 ***********************************************************************************************************************************/
 String *
-xmlNodeContent(XmlNode *this)
+xmlNodeContent(const XmlNode *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -268,7 +268,7 @@ xmlNodeContentSet(XmlNode *this, const String *content)
 Get a list of child nodes
 ***********************************************************************************************************************************/
 XmlNodeList *
-xmlNodeChildList(XmlNode *this, const String *name)
+xmlNodeChildList(const XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -293,7 +293,7 @@ xmlNodeChildList(XmlNode *this, const String *name)
 Get a child node
 ***********************************************************************************************************************************/
 XmlNode *
-xmlNodeChildN(XmlNode *this, const String *name, unsigned int index, bool errorOnMissing)
+xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -328,7 +328,7 @@ xmlNodeChildN(XmlNode *this, const String *name, unsigned int index, bool errorO
 }
 
 XmlNode *
-xmlNodeChild(XmlNode *this, const String *name, bool errorOnMissing)
+xmlNodeChild(const XmlNode *this, const String *name, bool errorOnMissing)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -345,7 +345,7 @@ xmlNodeChild(XmlNode *this, const String *name, bool errorOnMissing)
 Get child total
 ***********************************************************************************************************************************/
 unsigned int
-xmlNodeChildTotal(XmlNode *this, const String *name)
+xmlNodeChildTotal(const XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
