@@ -179,6 +179,16 @@ testS3Server(void)
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", "content-length:999", NULL));
 
+        // Info()
+        // -------------------------------------------------------------------------------------------------------------------------
+        // File missing
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/BOGUS", NULL));
+        harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
+
+        // File exists
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", "content-length:9999", NULL));
+
         // InfoList()
         // -------------------------------------------------------------------------------------------------------------------------
         harnessTlsServerExpect(
@@ -747,6 +757,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(storageExistsNP(s3, strNew("BOGUS")), false, "file does not exist");
         TEST_RESULT_BOOL(storageExistsNP(s3, strNew("subdir/file1.txt")), true, "file exists");
+
+        // Info()
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(storageInfoP(s3, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+        StorageInfo info;
+        TEST_ASSIGN(info, storageInfoNP(s3, strNew("subdir/file1.txt")), "file exists");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_UINT(info.size, 9999, "    check exists");
 
         // InfoList()
         // -------------------------------------------------------------------------------------------------------------------------

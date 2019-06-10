@@ -499,6 +499,38 @@ storageS3Exists(THIS_VOID, const String *file)
 }
 
 /***********************************************************************************************************************************
+File info
+***********************************************************************************************************************************/
+static StorageInfo
+storageS3Info(THIS_VOID, const String *file, bool followLink)
+{
+    THIS(StorageS3);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_S3, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
+    (void)followLink;
+
+    StorageInfo result = {0};
+
+    // Attempt to get file info
+    HttpHeader *responseHeader = storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, false, true).responseHeader;
+
+    // On success load info into a structure
+    if (httpClientResponseCodeOk(this->httpClient))
+    {
+        result.exists = true;
+        result.size = cvtZToUInt64(strPtr(httpHeaderGet(responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
+    }
+
+    FUNCTION_LOG_RETURN(STORAGE_INFO, result);
+}
+
+/***********************************************************************************************************************************
 Info for all files/paths in a path
 ***********************************************************************************************************************************/
 typedef struct StorageS3InfoListData
@@ -894,8 +926,9 @@ storageS3New(
 
         this = storageNewP(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver,
-            .exists = storageS3Exists, .infoList = storageS3InfoList, .list = storageS3List, .newRead = storageS3NewRead,
-            .newWrite = storageS3NewWrite, .pathRemove = storageS3PathRemove, .remove = storageS3Remove);
+            .exists = storageS3Exists, .info = storageS3Info, .infoList = storageS3InfoList, .list = storageS3List,
+            .newRead = storageS3NewRead, .newWrite = storageS3NewWrite, .pathRemove = storageS3PathRemove,
+            .remove = storageS3Remove);
     }
     MEM_CONTEXT_NEW_END();
 
