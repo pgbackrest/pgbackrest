@@ -179,6 +179,34 @@ testS3Server(void)
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", "content-length:999", NULL));
 
+        // Info()
+        // -------------------------------------------------------------------------------------------------------------------------
+        // File missing
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/BOGUS", NULL));
+        harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
+
+        // File exists
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", "content-length:9999", NULL));
+
+        // InfoList()
+        // -------------------------------------------------------------------------------------------------------------------------
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F", NULL));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK", NULL,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                "    <Contents>"
+                "        <Key>path/to/test_file</Key>"
+                "        <Size>787</Size>"
+                "    </Contents>"
+                "   <CommonPrefixes>"
+                "       <Prefix>path/to/test_path/</Prefix>"
+                "   </CommonPrefixes>"
+                "</ListBucketResult>"));
+
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
         // Throw error
@@ -402,6 +430,24 @@ testS3Server(void)
         harnessTlsServerClose();
         exit(0);
     }
+}
+
+/***********************************************************************************************************************************
+Callback and data for storageInfoList() tests
+***********************************************************************************************************************************/
+unsigned int testStorageInfoListSize = 0;
+StorageInfo testStorageInfoList[256];
+
+void
+testStorageInfoListCallback(void *callbackData, const StorageInfo *info)
+{
+    MEM_CONTEXT_BEGIN((MemContext *)callbackData)
+    {
+        testStorageInfoList[testStorageInfoListSize] = *info;
+        testStorageInfoList[testStorageInfoListSize].name = strDup(info->name);
+        testStorageInfoListSize++;
+    }
+    MEM_CONTEXT_END();
 }
 
 /***********************************************************************************************************************************
@@ -711,6 +757,32 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(storageExistsNP(s3, strNew("BOGUS")), false, "file does not exist");
         TEST_RESULT_BOOL(storageExistsNP(s3, strNew("subdir/file1.txt")), true, "file exists");
+
+        // Info()
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(storageInfoP(s3, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+        StorageInfo info;
+        TEST_ASSIGN(info, storageInfoNP(s3, strNew("subdir/file1.txt")), "file exists");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_UINT(info.size, 9999, "    check exists");
+
+        // InfoList()
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR(
+            storageInfoListP(s3, strNew("/"), testStorageInfoListCallback, NULL, .errorOnMissing = true),
+            AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
+
+        TEST_RESULT_VOID(
+            storageInfoListNP(s3, strNew("/path/to"), testStorageInfoListCallback, (void *)memContextCurrent()), "info list files");
+
+        TEST_RESULT_UINT(testStorageInfoListSize, 2, "    file and path returned");
+        TEST_RESULT_STR(strPtr(testStorageInfoList[0].name), "test_path", "    check name");
+        TEST_RESULT_UINT(testStorageInfoList[0].size, 0, "    check size");
+        TEST_RESULT_UINT(testStorageInfoList[0].type, storageTypePath, "    check type");
+        TEST_RESULT_STR(strPtr(testStorageInfoList[1].name), "test_file", "    check name");
+        TEST_RESULT_UINT(testStorageInfoList[1].size, 787, "    check size");
+        TEST_RESULT_UINT(testStorageInfoList[1].type, storageTypeFile, "    check type");
 
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
