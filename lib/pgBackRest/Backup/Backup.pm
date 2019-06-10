@@ -1064,7 +1064,7 @@ sub process
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
 
     # Sync backup path if supported
-    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    if ($oStorageRepo->capability(STORAGE_CAPABILITY_PATH_SYNC))
     {
         # Sync all paths in the backup
         $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
@@ -1101,7 +1101,7 @@ sub process
                 strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef}));
 
     # Sync history path if supported
-    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    if ($oStorageRepo->capability(STORAGE_CAPABILITY_PATH_SYNC))
     {
         $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY);
         $oStorageRepo->pathSync($strHistoryPath);
@@ -1120,7 +1120,7 @@ sub process
     $oBackupInfo->add($oBackupManifest);
 
     # Sync backup root path if supported
-    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    if ($oStorageRepo->capability(STORAGE_CAPABILITY_PATH_SYNC))
     {
         $oStorageRepo->pathSync(STORAGE_REPO_BACKUP);
     }

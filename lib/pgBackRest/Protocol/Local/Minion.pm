@@ -11,7 +11,6 @@ use Carp qw(confess);
 use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Storage::Local;
 use pgBackRest::Protocol::Base::Master;
 use pgBackRest::Protocol::Base::Minion;
 use pgBackRest::Protocol::Command::Minion;
