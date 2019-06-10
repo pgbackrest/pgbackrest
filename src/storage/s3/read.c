@@ -53,10 +53,7 @@ storageReadS3Open(THIS_VOID)
     bool result = false;
 
     // Request the file
-    storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, false, true);
-
-    // On success
-    this->httpClient = storageS3HttpClient(this->storage);
+    this->httpClient = storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, false, true).httpClient;
 
     if (httpClientResponseCodeOk(this->httpClient))
         result = true;

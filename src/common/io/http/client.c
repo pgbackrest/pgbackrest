@@ -244,8 +244,14 @@ httpClientRequest(
             retry = false;
 
             // Free the read interface
-            ioReadFree(this->ioRead);
-            this->ioRead = NULL;
+            if (this->ioRead != NULL)
+            {
+                if (!this->contentEof)
+                    tlsClientClose(this->tls);
+
+                ioReadFree(this->ioRead);
+                this->ioRead = NULL;
+            }
 
             // Free response status left over from the last request
             httpHeaderFree(this->responseHeader);
@@ -387,7 +393,7 @@ httpClientRequest(
                 }
 
                 // Was content returned in the response?
-                bool contentExists = this->contentChunked || this->contentSize > 0;
+                bool contentExists = this->contentChunked || (this->contentSize > 0 && !strEq(verb, HTTP_VERB_HEAD_STR));
                 this->contentEof = !contentExists;
 
                 // If all content should be returned from this function then read the buffer.  Also read the reponse if there has
@@ -481,6 +487,39 @@ httpClientStatStr(void)
     }
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Mark the client as done if read is complete
+***********************************************************************************************************************************/
+void
+httpClientDone(HttpClient *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    ioReadFree(this->ioRead);
+    this->ioRead = NULL;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Is the http object busy?
+***********************************************************************************************************************************/
+bool
+httpClientBusy(const HttpClient *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->ioRead);
 }
 
 /***********************************************************************************************************************************
