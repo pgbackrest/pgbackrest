@@ -89,6 +89,7 @@ struct StorageS3
     const String *secretAccessKey;                                  // Secret access key
     const String *securityToken;                                    // Security token, if any
     size_t partSize;                                                // Part size for multi-part upload
+    unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     const String *host;                                             // Defaults to {bucket}.{endpoint}
     unsigned int port;                                              // Host port
 
@@ -339,55 +340,28 @@ storageS3Request(
 }
 
 /***********************************************************************************************************************************
-Does a file exist? This function is only for files, not paths.
+General function for listing files to be used by other list routines
 ***********************************************************************************************************************************/
-static bool
-storageS3Exists(THIS_VOID, const String *file)
+static void
+storageS3ListInternal(
+    StorageS3 *this, const String *path, const String *expression, bool recurse,
+    void (*callback)(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml),
+    void *callbackData)
 {
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(file != NULL);
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, false, true);
-        result = httpClientResponseCodeOk(this->httpClient);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/***********************************************************************************************************************************
-Get a list of files from a directory
-***********************************************************************************************************************************/
-static StringList *
-storageS3List(THIS_VOID, const String *path, const String *expression)
-{
-    THIS(StorageS3);
-
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(STRING, expression);
+        FUNCTION_LOG_PARAM(BOOL, recurse);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    StringList *result = NULL;
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strLstNew();
         const String *continuationToken = NULL;
 
         // Prepare regexp if an expression was passed
@@ -430,8 +404,9 @@ storageS3List(THIS_VOID, const String *path, const String *expression)
                 if (continuationToken != NULL)
                     httpQueryAdd(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
 
-                // Add the delimiter so we don't recurse
-                httpQueryAdd(query, S3_QUERY_DELIMITER_STR, FSLASH_STR);
+                // Add the delimiter to not recurse
+                if (!recurse)
+                    httpQueryAdd(query, S3_QUERY_DELIMITER_STR, FSLASH_STR);
 
                 // Use list type 2
                 httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
@@ -449,16 +424,17 @@ storageS3List(THIS_VOID, const String *path, const String *expression)
 
                 for (unsigned int subPathIdx = 0; subPathIdx < xmlNodeLstSize(subPathList); subPathIdx++)
                 {
+                    const XmlNode *subPathNode = xmlNodeLstGet(subPathList, subPathIdx);
+
                     // Get subpath name
-                    const String *subPath = xmlNodeContent(
-                        xmlNodeChild(xmlNodeLstGet(subPathList, subPathIdx), S3_XML_TAG_PREFIX_STR, true));
+                    const String *subPath = xmlNodeContent(xmlNodeChild(subPathNode, S3_XML_TAG_PREFIX_STR, true));
 
                     // Strip off base prefix and final /
                     subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
 
                     // Add to list after checking expression if present
                     if (regExp == NULL || regExpMatch(regExp, subPath))
-                        strLstAdd(result, subPath);
+                        callback(this, callbackData, subPath, storageTypePath, subPathNode);
                 }
 
                 // Get file list
@@ -466,15 +442,17 @@ storageS3List(THIS_VOID, const String *path, const String *expression)
 
                 for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
                 {
+                    const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
+
                     // Get file name
-                    const String *file = xmlNodeContent(xmlNodeChild(xmlNodeLstGet(fileList, fileIdx), S3_XML_TAG_KEY_STR, true));
+                    const String *file = xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_KEY_STR, true));
 
                     // Strip off the base prefix when present
                     file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
 
                     // Add to list after checking expression if present
                     if (regExp == NULL || regExpMatch(regExp, file))
-                        strLstAdd(result, file);
+                        callback(this, callbackData, file, storageTypeFile, fileNode);
                 }
 
                 // Get the continuation token and store it in the outer temp context
@@ -485,7 +463,86 @@ storageS3List(THIS_VOID, const String *path, const String *expression)
             MEM_CONTEXT_TEMP_END();
         }
         while (continuationToken != NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
 
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Does a file exist? This function is only for files, not paths.
+***********************************************************************************************************************************/
+static bool
+storageS3Exists(THIS_VOID, const String *file)
+{
+    THIS(StorageS3);
+
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_S3, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, false, true);
+        result = httpClientResponseCodeOk(this->httpClient);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
+Get a list of files from a directory
+***********************************************************************************************************************************/
+static void
+storageS3ListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_S3, this);
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(XML_NODE, xml);
+    FUNCTION_TEST_END();
+
+    (void)this;
+    ASSERT(callbackData != NULL);
+    ASSERT(name != NULL);
+    (void)type;
+    (void)xml;
+
+    strLstAdd((StringList *)callbackData, name);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static StringList *
+storageS3List(THIS_VOID, const String *path, const String *expression)
+{
+    THIS(StorageS3);
+
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_S3, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(STRING, expression);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = strLstNew();
+
+        storageS3ListInternal(this, path, expression, false, storageS3ListCallback, result);
         strLstMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
@@ -550,6 +607,100 @@ storageS3NewWrite(
 /***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
+typedef struct StorageS3PathRemoveData
+{
+    MemContext *memContext;                                         // Mem context to create xml document in
+    unsigned int size;                                              // Size of delete request
+    XmlDocument *xml;                                               // Delete request
+} StorageS3PathRemoveData;
+
+static void
+storageS3PathRemoveInternal(StorageS3 *this, XmlDocument *request)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_S3, this);
+        FUNCTION_TEST_PARAM(XML_DOCUMENT, request);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(request != NULL);
+
+    Buffer *response = storageS3Request(
+        this, HTTP_VERB_POST_STR, FSLASH_STR, httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
+        xmlDocumentBuf(request), true, false).response;
+
+    // Nothing is returned when there are no errors
+    if (response != NULL)
+    {
+        XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
+
+        if (xmlNodeLstSize(errorList) > 0)
+        {
+            XmlNode *error = xmlNodeLstGet(errorList, 0);
+
+            THROW_FMT(
+                FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
+                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
+                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
+                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+storageS3PathRemoveCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_S3, this);
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(XML_NODE, xml);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(callbackData != NULL);
+    (void)name;
+    ASSERT(xml != NULL);
+
+    // Only delete files since paths don't really exist
+    if (type == storageTypeFile)
+    {
+        StorageS3PathRemoveData *data = (StorageS3PathRemoveData *)callbackData;
+
+        // If there is something to delete then create the request
+        if (data->xml == NULL)
+        {
+            MemContext *memContextOld = memContextSwitch(data->memContext);
+
+            data->xml = xmlDocumentNew(S3_XML_TAG_DELETE_STR);
+            xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_QUIET_STR), TRUE_STR);
+
+            memContextSwitch(memContextOld);
+        }
+
+        // Add to delete list
+        xmlNodeContentSet(
+            xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
+            xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_KEY_STR, true)));
+        data->size++;
+
+        // Delete list when it is full
+        if (data->size == this->deleteMax)
+        {
+            storageS3PathRemoveInternal(this, data->xml);
+
+            xmlDocumentFree(data->xml);
+            data->xml = NULL;
+            data->size = 0;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static bool
 storageS3PathRemove(THIS_VOID, const String *path, bool recurse)
 {
@@ -566,92 +717,11 @@ storageS3PathRemove(THIS_VOID, const String *path, bool recurse)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *continuationToken = NULL;
+        StorageS3PathRemoveData data = {.memContext = memContextCurrent()};
+        storageS3ListInternal(this, path, NULL, true, storageS3PathRemoveCallback, &data);
 
-        // Build the base prefix by stripping off the initial /
-        const String *basePrefix;
-
-        if (strSize(path) == 1)
-            basePrefix = EMPTY_STR;
-        else
-            basePrefix = strNewFmt("%s/", strPtr(strSub(path, 1)));
-
-        // Loop as long as a continuation token returned
-        do
-        {
-            // Use an inner mem context here because we could potentially be retrieving millions of files so it is a good idea to
-            // free memory at regular intervals
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                HttpQuery *query = httpQueryNew();
-
-                // Add continuation token from the prior loop if any
-                if (continuationToken != NULL)
-                    httpQueryAdd(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
-
-                // Use list type 2
-                httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
-
-                // Don't specified empty prefix because it is the default
-                if (!strEmpty(basePrefix))
-                    httpQueryAdd(query, S3_QUERY_PREFIX_STR, basePrefix);
-
-                XmlNode *xmlRoot = xmlDocumentRoot(
-                    xmlDocumentNewBuf(storageS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false).response));
-
-                // Get file list to delete
-                XmlNodeList *fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
-                XmlDocument *delete = NULL;
-
-                for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
-                {
-                    // If there is something to delete then create the request
-                    if (delete == NULL)
-                    {
-                        delete = xmlDocumentNew(S3_XML_TAG_DELETE_STR);
-                        xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(delete), S3_XML_TAG_QUIET_STR), TRUE_STR);
-                    }
-
-                    // Add to delete list
-                    xmlNodeContentSet(
-                        xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(delete), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
-                        xmlNodeContent(xmlNodeChild(xmlNodeLstGet(fileList, fileIdx), S3_XML_TAG_KEY_STR, true)));
-                }
-
-                // If there is something to delete then send the request
-                if (delete != NULL)
-                {
-                    // Delete file list
-                    Buffer *xml = storageS3Request(
-                        this, HTTP_VERB_POST_STR, FSLASH_STR, httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
-                        xmlDocumentBuf(delete), true, false).response;
-
-                    // Nothing is returned when there are no errors
-                    if (xml != NULL)
-                    {
-                        XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(xml)), S3_XML_TAG_ERROR_STR);
-
-                        if (xmlNodeLstSize(errorList) > 0)
-                        {
-                            XmlNode *error = xmlNodeLstGet(errorList, 0);
-
-                            THROW_FMT(
-                                FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
-                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
-                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
-                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
-                        }
-                    }
-                }
-
-                // Get the continuation token and store it in the outer temp context
-                memContextSwitch(MEM_CONTEXT_OLD());
-                continuationToken = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
-                memContextSwitch(MEM_CONTEXT_TEMP());
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-        while (continuationToken != NULL);
+        if (data.xml != NULL)
+            storageS3PathRemoveInternal(this, data.xml);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -703,8 +773,8 @@ Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, const String *region, const String *accessKey, const String *secretAccessKey,
-    const String *securityToken, size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath)
+    const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host, unsigned int port, TimeMSec timeout,
+    bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -745,6 +815,7 @@ storageS3New(
         driver->secretAccessKey = strDup(secretAccessKey);
         driver->securityToken = strDup(securityToken);
         driver->partSize = partSize;
+        driver->deleteMax = deleteMax;
         driver->host = strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint));
         driver->port = port;
 
