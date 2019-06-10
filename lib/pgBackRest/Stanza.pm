@@ -32,10 +32,10 @@ use pgBackRest::Protocol::Storage::Helper;
 ####################################################################################################################################
 # Global variables
 ####################################################################################################################################
-# my $strHintForce = "\nHINT: use stanza-create --force to force the stanza data to be recreated.";
+my $strHintForce = "\nHINT: use stanza-create --force to force the stanza data to be recreated.";
 my $strInfoMissing = " information missing";
 my $strStanzaCreateErrorMsg = "not empty";
-my $strRepoEncryptedMsg = " and repo is encrypted and info file(s) are missing";
+my $strRepoEncryptedMsg = " and repo is encrypted and info file(s) are missing, --force cannot be used";
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -114,7 +114,7 @@ sub stanzaCreate
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaCreate');
 
-    # my $bContinue = true;
+    my $bContinue = true;
 
     # Get the parent paths (create if not exist)
     my $strParentPathArchive = $self->parentPathGet(STORAGE_REPO_ARCHIVE);
@@ -129,79 +129,79 @@ sub stanzaCreate
     # If at least one directory is not empty, then check to see if the info files exist
     if (@stryFileListArchive || @stryFileListBackup)
     {
-        # my $strBackupInfoFile = &FILE_BACKUP_INFO;
-        # my $strArchiveInfoFile = &ARCHIVE_INFO_FILE;
-        #
-        # # If .info exists, set to true.
-        # my $bBackupInfoFileExists = grep(/^$strBackupInfoFile$/i, @stryFileListBackup);
-        # my $bArchiveInfoFileExists = grep(/^$strArchiveInfoFile$/i, @stryFileListArchive);
-        #
-        # # If .info does not exist, check for .info.copy
-        # if (!$bBackupInfoFileExists)
-        # {
-        #     $strBackupInfoFile .= &INI_COPY_EXT;
-        #     $bBackupInfoFileExists = grep(/^$strBackupInfoFile$/i, @stryFileListBackup);
-        # }
-        #
-        # if (!$bArchiveInfoFileExists)
-        # {
-        #     $strArchiveInfoFile .= &INI_COPY_EXT;
-        #     $bArchiveInfoFileExists = grep(/^$strArchiveInfoFile$/i, @stryFileListArchive);
-        # }
-        #
-        # # Determine if a file exists other than the info files
-        # my $strExistingFile = $self->existingFileName(STORAGE_REPO_BACKUP, $strParentPathBackup, &FILE_BACKUP_INFO);
-        # if (!defined($strExistingFile))
-        # {
-        #     $strExistingFile = $self->existingFileName(STORAGE_REPO_ARCHIVE, $strParentPathArchive, &ARCHIVE_INFO_FILE);
-        # }
-        #
-        # # If something other than the info files exist in the repo (maybe a backup is in progress) and the user is attempting to
-        # # change the repo encryption in anyway, then error
-        # if (defined($strExistingFile) && (!storageRepo()->encryptionValid(storageRepo()->encrypted($strExistingFile))))
-        # {
-        #     confess &log(ERROR, 'files exist - the encryption type or passphrase cannot be changed', ERROR_PATH_NOT_EMPTY);
-        # }
-        #
-        # # If the .info file exists in one directory but is missing from the other directory then there is clearly a mismatch
-        # # which requires force option so throw an error to indicate force is needed. If the repo is encrypted and something other
-        # # than the info files exist, then error that force cannot be used (the info files cannot be reconstructed since we no longer
-        # # have the passphrase that was in the info file to open the other files in the repo)
-        # if (!$bArchiveInfoFileExists && $bBackupInfoFileExists)
-        # {
-        #     $self->errorForce('archive' . $strInfoMissing, ERROR_FILE_MISSING, $strExistingFile, $bArchiveInfoFileExists,
-        #         $strParentPathArchive, $strParentPathBackup);
-        # }
-        # elsif (!$bBackupInfoFileExists && $bArchiveInfoFileExists)
-        # {
-        #     $self->errorForce('backup' . $strInfoMissing, ERROR_FILE_MISSING, $strExistingFile, $bBackupInfoFileExists,
-        #         $strParentPathArchive, $strParentPathBackup);
-        # }
-        # # If we get here then either both exist or neither exist so if neither file exists and something else exists in the
-        # # directories then need to use force option to recreate the missing info files - unless the repo is encrypted, then force
-        # # cannot be used if other than the info files exist. If only the info files exist then force must be used to overwrite the
-        # # files.
-        # else
-        # {
+        my $strBackupInfoFile = &FILE_BACKUP_INFO;
+        my $strArchiveInfoFile = &ARCHIVE_INFO_FILE;
+
+        # If .info exists, set to true.
+        my $bBackupInfoFileExists = grep(/^$strBackupInfoFile$/i, @stryFileListBackup);
+        my $bArchiveInfoFileExists = grep(/^$strArchiveInfoFile$/i, @stryFileListArchive);
+
+        # If .info does not exist, check for .info.copy
+        if (!$bBackupInfoFileExists)
+        {
+            $strBackupInfoFile .= &INI_COPY_EXT;
+            $bBackupInfoFileExists = grep(/^$strBackupInfoFile$/i, @stryFileListBackup);
+        }
+
+        if (!$bArchiveInfoFileExists)
+        {
+            $strArchiveInfoFile .= &INI_COPY_EXT;
+            $bArchiveInfoFileExists = grep(/^$strArchiveInfoFile$/i, @stryFileListArchive);
+        }
+
+        # Determine if a file exists other than the info files
+        my $strExistingFile = $self->existingFileName(STORAGE_REPO_BACKUP, $strParentPathBackup, &FILE_BACKUP_INFO);
+        if (!defined($strExistingFile))
+        {
+            $strExistingFile = $self->existingFileName(STORAGE_REPO_ARCHIVE, $strParentPathArchive, &ARCHIVE_INFO_FILE);
+        }
+
+        # If something other than the info files exist in the repo (maybe a backup is in progress) and the user is attempting to
+        # change the repo encryption in anyway, then error
+        if (defined($strExistingFile) && (!storageRepo()->encryptionValid(storageRepo()->encrypted($strExistingFile))))
+        {
+            confess &log(ERROR, 'files exist - the encryption type or passphrase cannot be changed', ERROR_PATH_NOT_EMPTY);
+        }
+
+        # If the .info file exists in one directory but is missing from the other directory then there is clearly a mismatch
+        # which requires force option so throw an error to indicate force is needed. If the repo is encrypted and something other
+        # than the info files exist, then error that force cannot be used (the info files cannot be reconstructed since we no longer
+        # have the passphrase that was in the info file to open the other files in the repo)
+        if (!$bArchiveInfoFileExists && $bBackupInfoFileExists)
+        {
+            $self->errorForce('archive' . $strInfoMissing, ERROR_FILE_MISSING, $strExistingFile, $bArchiveInfoFileExists,
+                $strParentPathArchive, $strParentPathBackup);
+        }
+        elsif (!$bBackupInfoFileExists && $bArchiveInfoFileExists)
+        {
+            $self->errorForce('backup' . $strInfoMissing, ERROR_FILE_MISSING, $strExistingFile, $bBackupInfoFileExists,
+                $strParentPathArchive, $strParentPathBackup);
+        }
+        # If we get here then either both exist or neither exist so if neither file exists and something else exists in the
+        # directories then need to use force option to recreate the missing info files - unless the repo is encrypted, then force
+        # cannot be used if other than the info files exist. If only the info files exist then force must be used to overwrite the
+        # files.
+        else
+        {
             $self->errorForce(
                 (@stryFileListBackup ? 'backup directory ' : '') .
                 ((@stryFileListBackup && @stryFileListArchive) ? 'and/or ' : '') .
                 (@stryFileListArchive ? 'archive directory ' : '') .
                 $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY,
                 $strExistingFile, $bArchiveInfoFileExists, $strParentPathArchive, $strParentPathBackup);
-        #
-        #     # If no error was thrown, then do not continue without --force
-        #     if (!cfgOption(CFGOPT_FORCE))
-        #     {
-        #         $bContinue = false;
-        #     }
-        # }
+
+            # If no error was thrown, then do not continue without --force
+            if (!cfgOption(CFGOPT_FORCE))
+            {
+                $bContinue = false;
+            }
+        }
     }
 
     my $iResult = 0;
 
-    # if ($bContinue)
-    # {
+    if ($bContinue)
+    {
         # Instantiate the info objects. Throws an error and aborts if force not used and an error occurs during instantiation.
         my $oArchiveInfo =
             $self->infoObject(STORAGE_REPO_ARCHIVE, $strParentPathArchive, {bRequired => false, bIgnoreMissing => true});
@@ -222,7 +222,7 @@ sub stanzaCreate
             &log(WARN, "unable to create stanza '" . cfgOption(CFGOPT_STANZA) . "'");
             confess &log(ERROR, $strResultMessage, $iResult);
         }
-    # }
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -490,7 +490,7 @@ sub errorForce
     {
         confess &log(ERROR, $strMessage . $strRepoEncryptedMsg, $iErrorCode);
     }
-    else
+    elsif (!cfgOption(CFGOPT_FORCE))
     {
         # If info files exist, check to see if the DB sections match the database - else an upgrade is required
         if ($bInfoFileExists && $iErrorCode == ERROR_PATH_NOT_EMPTY)
@@ -501,7 +501,7 @@ sub errorForce
                 ERROR_ARCHIVE_MISMATCH))
             {
                 confess &log(ERROR, "backup info file or archive info file invalid\n" .
-                    'HINT: use stanza-upgrade if the database has been upgraded', ERROR_FILE_INVALID);
+                    'HINT: use stanza-upgrade if the database has been upgraded or use --force', ERROR_FILE_INVALID);
             }
             else
             {
@@ -510,8 +510,8 @@ sub errorForce
         }
         else
         {
-            # If we get here something is wrong
-            confess &log(ERROR, $strMessage, $iErrorCode);
+            # If get here something is wrong so indicate force is required
+            confess &log(ERROR, $strMessage . $strHintForce, $iErrorCode);
         }
     }
 
@@ -591,7 +591,7 @@ sub infoObject
         {
             if ($iResult == ERROR_FILE_MISSING)
             {
-                confess &log(ERROR, cfgOptionValid(CFGOPT_FORCE) ? $strResultMessage : $strResultMessage, $iResult);
+                confess &log(ERROR, cfgOptionValid(CFGOPT_FORCE) ? $strResultMessage . $strHintForce : $strResultMessage, $iResult);
             }
             else
             {
