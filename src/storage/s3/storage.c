@@ -346,7 +346,8 @@ General function for listing files to be used by other list routines
 static void
 storageS3ListInternal(
     StorageS3 *this, const String *path, const String *expression, bool recurse,
-    void (*callback)(StorageS3 *this, void *data, const String *name, StorageType type, const XmlNode *xml), void *callbackData)
+    void (*callback)(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml),
+    void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -566,23 +567,23 @@ storageS3InfoList(THIS_VOID, const String *path, StorageInfoListCallback callbac
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 static void
-storageS3ListCallback(StorageS3 *this, void *data, const String *name, StorageType type, const XmlNode *xml)
+storageS3ListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_S3, this);
-        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
         FUNCTION_TEST_PARAM(STRING, name);
         FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(XML_NODE, xml);
     FUNCTION_TEST_END();
 
     (void)this;
-    ASSERT(data != NULL);
+    ASSERT(callbackData != NULL);
     ASSERT(name != NULL);
     (void)type;
     (void)xml;
 
-    strLstAdd((StringList *)data, name);
+    strLstAdd((StringList *)callbackData, name);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -715,51 +716,51 @@ storageS3PathRemoveInternal(StorageS3 *this, XmlDocument *request)
 }
 
 static void
-storageS3PathRemoveCallback(StorageS3 *this, void *data, const String *name, StorageType type, const XmlNode *xml)
+storageS3PathRemoveCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_S3, this);
-        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
         FUNCTION_TEST_PARAM(STRING, name);
         FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(XML_NODE, xml);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(data != NULL);
+    ASSERT(callbackData != NULL);
     (void)name;
     ASSERT(xml != NULL);
 
     // Only delete files since paths don't really exist
     if (type == storageTypeFile)
     {
-        StorageS3PathRemoveData *removeData = (StorageS3PathRemoveData *)data;
+        StorageS3PathRemoveData *data = (StorageS3PathRemoveData *)callbackData;
 
         // If there is something to delete then create the request
-        if (removeData->xml == NULL)
+        if (data->xml == NULL)
         {
-            MemContext *memContextOld = memContextSwitch(removeData->memContext);
+            MemContext *memContextOld = memContextSwitch(data->memContext);
 
-            removeData->xml = xmlDocumentNew(S3_XML_TAG_DELETE_STR);
-            xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(removeData->xml), S3_XML_TAG_QUIET_STR), TRUE_STR);
+            data->xml = xmlDocumentNew(S3_XML_TAG_DELETE_STR);
+            xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_QUIET_STR), TRUE_STR);
 
             memContextSwitch(memContextOld);
         }
 
         // Add to delete list
         xmlNodeContentSet(
-            xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(removeData->xml), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
+            xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
             xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_KEY_STR, true)));
-        removeData->size++;
+        data->size++;
 
         // Delete list when it is full
-        if (removeData->size == this->deleteMax)
+        if (data->size == this->deleteMax)
         {
-            storageS3PathRemoveInternal(this, removeData->xml);
+            storageS3PathRemoveInternal(this, data->xml);
 
-            xmlDocumentFree(removeData->xml);
-            removeData->xml = NULL;
-            removeData->size = 0;
+            xmlDocumentFree(data->xml);
+            data->xml = NULL;
+            data->size = 0;
         }
     }
 
