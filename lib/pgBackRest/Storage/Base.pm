@@ -88,9 +88,10 @@ sub new
     );
 }
 
+
 ####################################################################################################################################
-# copy - copy a file. If special encryption settings are required, then the file objects from openRead/openWrite must be passed
-# instead of file names.
+# Copy a file. If special encryption settings are required, then the file objects from openRead/openWrite must be passed instead of
+# file names.
 ####################################################################################################################################
 sub copy
 {
@@ -106,43 +107,57 @@ sub copy
         logDebugParam
         (
             __PACKAGE__ . '->copy', \@_,
-            {name => 'xSourceFile', required => false},
-            {name => 'xDestinationFile', required => false},
+            {name => 'xSourceFile'},
+            {name => 'xDestinationFile'},
         );
 
-    # Was the file copied?
+    # Is source/destination an IO object or a file expression?
+    my $oSourceFileIo = ref($xSourceFile) ? $xSourceFile : $self->openRead($xSourceFile);
+
+    # Does the source file exist?
     my $bResult = false;
 
-    # Is source an IO object or a file expression?
-    my $oSourceFileIo =
-        defined($xSourceFile) ?
-        (ref($xSourceFile) ? $xSourceFile : $self->openRead($self->pathGet($xSourceFile))) : undef;
-
-    # Proceed if source file exists
     if (defined($oSourceFileIo))
     {
-        # Is destination an IO object or a file expression?
-        my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($self->pathGet($xDestinationFile));
+        $bResult = defined($oSourceFileIo->{oStorageCRead}) ? $oSourceFileIo->open() : true;
+    }
 
-        # Copy the data
-        my $lSizeRead;
+    # Copy if the source file exists
+    if ($bResult)
+    {
+        my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($xDestinationFile);
 
-        do
+        # Use C copy if source and destination are C objects
+        if (defined($oSourceFileIo->{oStorageCRead}) && defined($oDestinationFileIo->{oStorageCWrite}))
         {
-            # Read data
-            my $tBuffer = '';
-
-            $lSizeRead = $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
-            $oDestinationFileIo->write(\$tBuffer);
+            $bResult = $self->{oStorageC}->copy(
+                $oSourceFileIo->{oStorageCRead}, $oDestinationFileIo->{oStorageCWrite}) ? true : false;
         }
-        while ($lSizeRead != 0);
+        else
+        {
+            # Open the destination file if it is a C object
+            if (defined($oDestinationFileIo->{oStorageCWrite}))
+            {
+                $oDestinationFileIo->open();
+            }
 
-        # Close files
-        $oSourceFileIo->close();
-        $oDestinationFileIo->close();
+            # Copy the data
+            my $lSizeRead;
 
-        # File was copied
-        $bResult = true;
+            do
+            {
+                # Read data
+                my $tBuffer = '';
+
+                $lSizeRead = $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
+                $oDestinationFileIo->write(\$tBuffer);
+            }
+            while ($lSizeRead != 0);
+
+            # Close files
+            $oSourceFileIo->close();
+            $oDestinationFileIo->close();
+        }
     }
 
     return logDebugReturn

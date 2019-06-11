@@ -2,6 +2,7 @@
 # C Storage Interface
 ####################################################################################################################################
 package pgBackRest::Storage::Storage;
+use parent 'pgBackRest::Storage::Base';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -59,42 +60,6 @@ sub new
     (
         $strOperation,
         {name => 'self', value => $self}
-    );
-}
-
-####################################################################################################################################
-# copy - copy a file. If special encryption settings are required, then the file objects from openRead/openWrite must be passed
-# instead of file names.
-####################################################################################################################################
-sub copy
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $xSourceFile,
-        $xDestinationFile,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->copy', \@_,
-            {name => 'xSourceFile'},
-            {name => 'xDestinationFile'},
-        );
-
-    # Is source/destination an IO object or a file expression?
-    my $oSourceFileIo = ref($xSourceFile) ? $xSourceFile : $self->openRead($xSourceFile);
-    my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($xDestinationFile);
-
-    # Copy file
-    my $bResult = $self->{oStorageC}->copy($oSourceFileIo->{oStorageCRead}, $oDestinationFileIo->{oStorageCWrite}) ? true : false;
-
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bResult', value => $bResult, trace => true},
     );
 }
 

@@ -50,6 +50,97 @@ sub new
 }
 
 ####################################################################################################################################
+# Open the file
+####################################################################################################################################
+sub open
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->open');
+
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => $self->{oStorageCRead}->open() ? true : false, trace => true},
+    );
+}
+
+####################################################################################################################################
+# Read data
+####################################################################################################################################
+sub read
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my (
+        $strOperation,
+        $rtBuffer,
+        $iSize,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->read', \@_,
+            {name => 'rtBuffer'},
+            {name => 'iSize'},
+        );
+
+    # Read the block
+    my $iActualSize = 0;
+
+    if (!$self->eof())
+    {
+        my $tBuffer = $self->{oStorageCRead}->read($iSize);
+        $iActualSize = length($tBuffer);
+        $$rtBuffer .= $tBuffer;
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iActualSize', value => $iActualSize}
+    );
+}
+
+####################################################################################################################################
+# Is the file at eof?
+####################################################################################################################################
+sub eof
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->eof');
+
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => $self->{oStorageCRead}->eof() ? true : false, trace => true},
+    );
+}
+
+####################################################################################################################################
+# Close the file
+####################################################################################################################################
+sub close
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->close');
+
+    $self->{oStorageCRead}->close();
+
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => true, trace => true},
+    );
+}
+
+####################################################################################################################################
 # Get a filter result
 ####################################################################################################################################
 sub result

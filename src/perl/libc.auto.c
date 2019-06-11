@@ -520,6 +520,133 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_filterAdd)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_open); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_open)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__StorageRead	self;
+	bool	RETVAL;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::StorageRead")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__StorageRead,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::StorageRead::open",
+			"self", "pgBackRest::LibC::StorageRead")
+;
+    RETVAL = ioReadOpen(storageReadIo(self));
+	ST(0) = boolSV(RETVAL);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_read); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_read)
+{
+    dVAR; dXSARGS;
+    if (items != 2)
+       croak_xs_usage(cv,  "self, bufferSize");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__StorageRead	self;
+	U32	bufferSize = (unsigned long)SvUV(ST(1))
+;
+	SV *	RETVAL;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::StorageRead")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__StorageRead,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::StorageRead::read",
+			"self", "pgBackRest::LibC::StorageRead")
+;
+    RETVAL = NEWSV(0, bufferSize);
+    SvPOK_only(RETVAL);
+
+    Buffer *bufferRead = bufNewUseC((unsigned char *)SvPV_nolen(RETVAL), bufferSize);
+    ioRead(storageReadIo(self), bufferRead);
+
+    SvCUR_set(RETVAL, bufUsed(bufferRead));
+	RETVAL = sv_2mortal(RETVAL);
+	ST(0) = RETVAL;
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_eof); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_eof)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__StorageRead	self;
+	bool	RETVAL;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::StorageRead")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__StorageRead,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::StorageRead::eof",
+			"self", "pgBackRest::LibC::StorageRead")
+;
+    RETVAL = ioReadEof(storageReadIo(self));
+	ST(0) = boolSV(RETVAL);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_close); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_close)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__StorageRead	self;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::StorageRead")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__StorageRead,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::StorageRead::close",
+			"self", "pgBackRest::LibC::StorageRead")
+;
+    ioReadClose(storageReadIo(self));
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
 XS_EUPXS(XS_pgBackRest__LibC__StorageRead_result); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__StorageRead_result)
 {
@@ -2180,6 +2307,10 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::StorageWrite::DESTROY", XS_pgBackRest__LibC__StorageWrite_DESTROY);
         newXS_deffile("pgBackRest::LibC::StorageRead::new", XS_pgBackRest__LibC__StorageRead_new);
         newXS_deffile("pgBackRest::LibC::StorageRead::filterAdd", XS_pgBackRest__LibC__StorageRead_filterAdd);
+        newXS_deffile("pgBackRest::LibC::StorageRead::open", XS_pgBackRest__LibC__StorageRead_open);
+        newXS_deffile("pgBackRest::LibC::StorageRead::read", XS_pgBackRest__LibC__StorageRead_read);
+        newXS_deffile("pgBackRest::LibC::StorageRead::eof", XS_pgBackRest__LibC__StorageRead_eof);
+        newXS_deffile("pgBackRest::LibC::StorageRead::close", XS_pgBackRest__LibC__StorageRead_close);
         newXS_deffile("pgBackRest::LibC::StorageRead::result", XS_pgBackRest__LibC__StorageRead_result);
         newXS_deffile("pgBackRest::LibC::StorageRead::DESTROY", XS_pgBackRest__LibC__StorageRead_DESTROY);
         newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
