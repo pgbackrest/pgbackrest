@@ -18,6 +18,9 @@ S3 Storage Read
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define STORAGE_READ_S3_TYPE                                        StorageReadS3
+#define STORAGE_READ_S3_PREFIX                                      storageReadS3
+
 typedef struct StorageReadS3
 {
     MemContext *memContext;                                         // Object mem context
@@ -34,6 +37,15 @@ Macros for function logging
     StorageReadS3 *
 #define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
     objToLog(value, "StorageReadS3", buffer, bufferSize)
+
+/***********************************************************************************************************************************
+Mark http client as done so it can be reused
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_S3, LOG, logLevelTrace)
+{
+    httpClientDone(this->httpClient);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
@@ -57,6 +69,7 @@ storageReadS3Open(THIS_VOID)
 
     if (httpClientResponseCodeOk(this->httpClient))
     {
+        memContextCallbackSet(this->memContext, storageReadS3FreeResource, this);
         result = true;
     }
     // Else error unless ignore missing
@@ -102,7 +115,8 @@ storageReadS3Close(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->httpClient != NULL);
 
-    httpClientDone(this->httpClient);
+    memContextCallbackClear(this->memContext);
+    storageReadS3FreeResource(this);
     this->httpClient = NULL;
 
     FUNCTION_LOG_RETURN_VOID();

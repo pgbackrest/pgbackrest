@@ -142,6 +142,16 @@ testHttpServer(void)
             "Connection:ack\r\n"
             "\r\n");
 
+        // Head request with no content-length but no content
+        harnessTlsServerExpect(
+            "HEAD / HTTP/1.1\r\n"
+            "\r\n");
+
+        harnessTlsServerReply(
+            "HTTP/1.1 200 OK\r\n"
+            "content-length:380\r\n"
+            "\r\n");
+
         // Error with content length 0 (with a few slow down errors)
         harnessTlsServerExpect(
             "GET / HTTP/1.1\r\n"
@@ -453,6 +463,17 @@ testRun(void)
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'ack', key1: '0', key2: 'value2'}",
             "    check response headers");
 
+        // Head request with no content-length but no content
+        TEST_RESULT_VOID(
+            httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
+            "head request with content-length");
+        TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
+        TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
+        TEST_RESULT_BOOL(httpClientEof(client), true, "    io is eof");
+        TEST_RESULT_BOOL(httpClientBusy(client), false, "    client is not busy");
+        TEST_RESULT_STR(
+            strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{content-length: '380'}", "    check response headers");
+
         // Error with content length 0
         TEST_RESULT_VOID(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "error with content length 0");
@@ -500,6 +521,7 @@ testRun(void)
         TEST_RESULT_VOID(
             httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, NULL, false),
             "request with content length error");
+        TEST_RESULT_BOOL(httpClientBusy(client), true, "    client is busy");
         TEST_ERROR(
             ioRead(httpClientIoRead(client), buffer), FileReadError, "unexpected EOF reading HTTP content");
 
@@ -522,6 +544,26 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("HttpClientCache"))
     {
+        HttpClientCache *cache = NULL;
+        HttpClient *client1 = NULL;
+        HttpClient *client2 = NULL;
+
+        TEST_ASSIGN(cache, httpClientCacheNew(strNew("localhost"), TLS_TEST_PORT, 500, true, NULL, NULL), "new http client cache");
+        TEST_ASSIGN(client1, httpClientCacheGet(cache), "get http client");
+        TEST_RESULT_PTR(client1, *(HttpClient **)lstGet(cache->clientList, 0), "    check http client");
+        TEST_RESULT_PTR(httpClientCacheGet(cache), *(HttpClient **)lstGet(cache->clientList, 0), "    get same http client");
+
+        // Make client 1 look like it is busy
+        client1->ioRead = (IoRead *)1;
+
+        TEST_ASSIGN(client2, httpClientCacheGet(cache), "get http client");
+        TEST_RESULT_PTR(client2, *(HttpClient **)lstGet(cache->clientList, 1), "    check http client");
+        TEST_RESULT_BOOL(client1 != client2, true, "clients are not the same");
+
+        // Set back to NULL so bad things don't happen during free
+        client1->ioRead = NULL;
+
+        TEST_RESULT_VOID(httpClientCacheFree(cache), "free http client cache");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
