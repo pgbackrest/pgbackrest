@@ -9,6 +9,7 @@ S3 Storage
 #include "common/crypto/hash.h"
 #include "common/encode.h"
 #include "common/debug.h"
+#include "common/io/http/cache.h"
 #include "common/io/http/common.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -81,7 +82,7 @@ Object type
 struct StorageS3
 {
     MemContext *memContext;
-    HttpClient *httpClient;                                         // Http client to service requests
+    HttpClientCache *httpClientCache;                               // Http client cache to service requests
     const StringList *headerRedactList;                             // List of headers to redact from logging
 
     const String *bucket;                                           // Bucket to store data in
@@ -91,13 +92,8 @@ struct StorageS3
     const String *securityToken;                                    // Security token, if any
     size_t partSize;                                                // Part size for multi-part upload
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
-    const String *endpoint;                                         // Defaults to {bucket}.{endpoint}
-    const String *host;                                             // The endpoint unless otherwise specified
+    const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
     unsigned int port;                                              // Host port
-    TimeMSec timeout;                                               // General timeout
-    bool verifyPeer;                                                // Should the server cert be verified?
-    const String *caFile;                                           // Alternate CA file
-    const String *caPath;                                           // Alternate CA path
 
     // Current signing key and date it is valid for
     const String *signingKeyDate;                                   // Date of cached signing key (so we know when to regenerate)
@@ -162,7 +158,7 @@ storageS3Auth(
         // Set required headers
         httpHeaderPut(httpHeader, S3_HEADER_CONTENT_SHA256_STR, payloadHash);
         httpHeaderPut(httpHeader, S3_HEADER_DATE_STR, dateTime);
-        httpHeaderPut(httpHeader, S3_HEADER_HOST_STR, this->endpoint);
+        httpHeaderPut(httpHeader, S3_HEADER_HOST_STR, this->bucketEndpoint);
 
         if (this->securityToken != NULL)
             httpHeaderPut(httpHeader, S3_HEADER_TOKEN_STR, this->securityToken);
@@ -280,16 +276,7 @@ storageS3Request(
                 bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
 
         // Get an http client
-        HttpClient *httpClient = this->httpClient;
-
-        if (httpClientBusy(httpClient))
-        {
-            MEM_CONTEXT_BEGIN(this->memContext)
-            {
-                httpClient = httpClientNew(this->host, this->port, this->timeout, this->verifyPeer, this->caFile, this->caPath);
-            }
-            MEM_CONTEXT_END();
-        }
+        HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
 
         // Process request
         Buffer *response = httpClientRequest(httpClient, verb, uri, query, requestHeader, body, returnContent);
@@ -508,7 +495,7 @@ storageS3Exists(THIS_VOID, const String *file)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = httpClientResponseCodeOk(storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, false, true).httpClient);
+        result = httpClientResponseCodeOk(storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, true, true).httpClient);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -535,7 +522,7 @@ storageS3Info(THIS_VOID, const String *file, bool followLink)
     StorageInfo result = {0};
 
     // Attempt to get file info
-    StorageS3RequestResult httpResult = storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, false, true);
+    StorageS3RequestResult httpResult = storageS3Request(this, HTTP_VERB_HEAD_STR, file, NULL, NULL, true, true);
 
     // On success load info into a structure
     if (httpClientResponseCodeOk(httpResult.httpClient))
@@ -861,7 +848,7 @@ storageS3Remove(THIS_VOID, const String *file, bool errorOnMissing)
     ASSERT(file != NULL);
     ASSERT(!errorOnMissing);
 
-    storageS3Request(this, HTTP_VERB_DELETE_STR, file, NULL, NULL, false, false);
+    storageS3Request(this, HTTP_VERB_DELETE_STR, file, NULL, NULL, true, false);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -916,20 +903,15 @@ storageS3New(
         driver->securityToken = strDup(securityToken);
         driver->partSize = partSize;
         driver->deleteMax = deleteMax;
-        driver->endpoint = strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint));
-        driver->host = host == NULL ? driver->endpoint : strDup(host);
+        driver->bucketEndpoint = strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint));
         driver->port = port;
-        driver->timeout = timeout;
-        driver->verifyPeer = verifyPeer;
-        driver->caFile = strDup(caFile);
-        driver->caPath = strDup(caPath);
 
         // Force the signing key to be generated on the first run
         driver->signingKeyDate = YYYYMMDD_STR;
 
-        driver->httpClient = httpClientNew(host == NULL ? driver->host : host, driver->port, timeout, verifyPeer, caFile, caPath);
-
-        // Create header redaction list
+        // Create the http client cache used to service requests
+        driver->httpClientCache = httpClientCacheNew(
+            host == NULL ? driver->bucketEndpoint : host, driver->port, timeout, verifyPeer, caFile, caPath);
         driver->headerRedactList = strLstAdd(strLstNew(), S3_HEADER_AUTHORIZATION_STR);
 
         this = storageNewP(

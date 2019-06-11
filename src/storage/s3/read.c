@@ -56,8 +56,9 @@ storageReadS3Open(THIS_VOID)
     this->httpClient = storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, false, true).httpClient;
 
     if (httpClientResponseCodeOk(this->httpClient))
+    {
         result = true;
-
+    }
     // Else error unless ignore missing
     else if (!this->interface.ignoreMissing)
         THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strPtr(this->interface.name));
@@ -84,6 +85,27 @@ storageReadS3(THIS_VOID, Buffer *buffer, bool block)
     ASSERT(buffer != NULL && !bufFull(buffer));
 
     FUNCTION_LOG_RETURN(SIZE, ioRead(httpClientIoRead(this->httpClient), buffer));
+}
+
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageReadS3Close(THIS_VOID)
+{
+    THIS(StorageReadS3);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_S3, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpClient != NULL);
+
+    httpClientDone(this->httpClient);
+    this->httpClient = NULL;
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -134,6 +156,7 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
 
             .ioInterface = (IoReadInterface)
             {
+                .close = storageReadS3Close,
                 .eof = storageReadS3Eof,
                 .open = storageReadS3Open,
                 .read = storageReadS3,

@@ -244,14 +244,7 @@ httpClientRequest(
             retry = false;
 
             // Free the read interface
-            if (this->ioRead != NULL)
-            {
-                if (!this->contentEof)
-                    tlsClientClose(this->tls);
-
-                ioReadFree(this->ioRead);
-                this->ioRead = NULL;
-            }
+            httpClientDone(this);
 
             // Free response status left over from the last request
             httpHeaderFree(this->responseHeader);
@@ -495,16 +488,22 @@ Mark the client as done if read is complete
 void
 httpClientDone(HttpClient *this)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
+    FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    ioReadFree(this->ioRead);
-    this->ioRead = NULL;
+    if (this->ioRead != NULL)
+    {
+        if (!this->contentEof)
+            tlsClientClose(this->tls);
 
-    FUNCTION_TEST_RETURN_VOID();
+        ioReadFree(this->ioRead);
+        this->ioRead = NULL;
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
