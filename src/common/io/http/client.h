@@ -70,6 +70,7 @@ HttpClient *httpClientNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+void httpClientDone(HttpClient *this);
 Buffer *httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
     const Buffer *body, bool returnContent);
@@ -78,6 +79,7 @@ String *httpClientStatStr(void);
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+bool httpClientBusy(const HttpClient *this);
 IoRead *httpClientIoRead(const HttpClient *this);
 unsigned int httpClientResponseCode(const HttpClient *this);
 const HttpHeader *httpClientReponseHeader(const HttpClient *this);

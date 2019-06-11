@@ -119,6 +119,7 @@ httpClientRead(THIS_VOID, Buffer *buffer, bool block)
                 if (bufRemains(buffer) > this->contentRemaining)
                     bufLimitSet(buffer, bufSize(buffer) - (bufRemains(buffer) - (size_t)this->contentRemaining));
 
+                actualBytes = bufRemains(buffer);
                 this->contentRemaining -= ioRead(tlsClientIoRead(this->tls), buffer);
 
                 // Error if EOF but content read is not complete
@@ -243,8 +244,7 @@ httpClientRequest(
             retry = false;
 
             // Free the read interface
-            ioReadFree(this->ioRead);
-            this->ioRead = NULL;
+            httpClientDone(this);
 
             // Free response status left over from the last request
             httpHeaderFree(this->responseHeader);
@@ -386,7 +386,7 @@ httpClientRequest(
                 }
 
                 // Was content returned in the response?
-                bool contentExists = this->contentChunked || this->contentSize > 0;
+                bool contentExists = this->contentChunked || (this->contentSize > 0 && !strEq(verb, HTTP_VERB_HEAD_STR));
                 this->contentEof = !contentExists;
 
                 // If all content should be returned from this function then read the buffer.  Also read the reponse if there has
@@ -480,6 +480,45 @@ httpClientStatStr(void)
     }
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Mark the client as done if read is complete
+***********************************************************************************************************************************/
+void
+httpClientDone(HttpClient *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    if (this->ioRead != NULL)
+    {
+        if (!this->contentEof)
+            tlsClientClose(this->tls);
+
+        ioReadFree(this->ioRead);
+        this->ioRead = NULL;
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Is the http object busy?
+***********************************************************************************************************************************/
+bool
+httpClientBusy(const HttpClient *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->ioRead);
 }
 
 /***********************************************************************************************************************************
