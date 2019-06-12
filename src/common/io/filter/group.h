@@ -42,6 +42,7 @@ Getters
 bool ioFilterGroupDone(const IoFilterGroup *this);
 bool ioFilterGroupInputSame(const IoFilterGroup *this);
 const Variant *ioFilterGroupResult(const IoFilterGroup *this, const String *filterType);
+const KeyValue *ioFilterGroupResultAll(const IoFilterGroup *this);
 
 /***********************************************************************************************************************************
 Destructor

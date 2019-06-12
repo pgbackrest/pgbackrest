@@ -168,4 +168,23 @@ sub result
     );
 }
 
+####################################################################################################################################
+# Get all filter results
+####################################################################################################################################
+sub resultAll
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->resultAll');
+
+    my $xResult = $self->{oStorage}->{oJSON}->decode($self->{oStorageCRead}->resultAll());
+
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'xResultAll', value => $xResult, trace => true},
+    );
+}
+
 1;

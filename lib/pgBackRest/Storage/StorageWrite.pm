@@ -69,7 +69,7 @@ sub open
 }
 
 ####################################################################################################################################
-# Read data
+# Write data
 ####################################################################################################################################
 sub write
 {
@@ -138,6 +138,25 @@ sub result
     (
         $strOperation,
         {name => 'xResult', value => $xResult, trace => true},
+    );
+}
+
+####################################################################################################################################
+# Get all filter results
+####################################################################################################################################
+sub resultAll
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->resultAll');
+
+    my $xResult = $self->{oStorage}->{oJSON}->decode($self->{oStorageCWrite}->resultAll());
+
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'xResultAll', value => $xResult, trace => true},
     );
 }
 

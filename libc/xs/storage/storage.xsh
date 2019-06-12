@@ -172,3 +172,45 @@ storageFilterXsResult(const IoFilterGroup *filterGroup, const String *filter)
 
     return jsonFromVar(result, 0);
 }
+
+/***********************************************************************************************************************************
+Get results from all IO filters
+***********************************************************************************************************************************/
+String *
+storageFilterXsResultAll(const IoFilterGroup *filterGroup)
+{
+    const VariantList *filterList = kvKeyList(ioFilterGroupResultAll(filterGroup));
+    String *result = strNew("{");
+
+    for (unsigned int filterIdx = 0; filterIdx < varLstSize(filterList); filterIdx++)
+    {
+        const String *filter = varStr(varLstGet(filterList, filterIdx));
+        const String *filterPerl = NULL;
+
+        if (strEq(filter, CRYPTO_HASH_FILTER_TYPE_STR))
+        {
+            filterPerl = STRDEF("pgBackRest::Storage::Filter::Sha");
+        }
+        else if (strEq(filter, SIZE_FILTER_TYPE_STR))
+        {
+            filterPerl = STRDEF("pgBackRest::Common::Io::Handle");
+        }
+        else if (strEq(filter, PAGE_CHECKSUM_FILTER_TYPE_STR))
+        {
+            filterPerl = STRDEF("pgBackRest::Backup::Filter::PageChecksum");
+        }
+
+        if (filterPerl != NULL)
+        {
+            if (strSize(result) > 1)
+                strCat(result, ",");
+
+            strCatFmt(
+                result, "%s:%s", strPtr(jsonFromStr(filterPerl)), strPtr(storageFilterXsResult(filterGroup, filterPerl)));
+        }
+    }
+
+    strCat(result, "}");
+
+    return result;
+}

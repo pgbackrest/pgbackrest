@@ -430,6 +430,22 @@ ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
 }
 
 /***********************************************************************************************************************************
+Get all filter results
+***********************************************************************************************************************************/
+const KeyValue *
+ioFilterGroupResultAll(const IoFilterGroup *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->closed);
+
+    FUNCTION_LOG_RETURN_CONST(KEY_VALUE, this->filterResult);
+}
+
+/***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
 String *

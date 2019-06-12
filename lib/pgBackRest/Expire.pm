@@ -277,7 +277,7 @@ sub process
                     {
                         my $strFullPath = $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveId}");
 
-                        $oStorageRepo->remove($strFullPath, {bRecurse => true});
+                        $oStorageRepo->pathRemove($strFullPath, {bRecurse => true});
 
                         &log(INFO, "remove archive path: ${strFullPath}");
                     }
