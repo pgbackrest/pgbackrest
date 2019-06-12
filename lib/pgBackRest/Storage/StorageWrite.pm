@@ -50,6 +50,72 @@ sub new
 }
 
 ####################################################################################################################################
+# Open the file
+####################################################################################################################################
+sub open
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->open');
+
+    $self->{oStorageCWrite}->open()
+
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => true, trace => true},
+    );
+}
+
+####################################################################################################################################
+# Read data
+####################################################################################################################################
+sub write
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my (
+        $strOperation,
+        $rtBuffer,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->write', \@_,
+            {name => 'rtBuffer'},
+        );
+
+    $self->{oStorageCWrite}->write($$rtBuffer);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iActualSize', value => length($$rtBuffer)}
+    );
+}
+
+####################################################################################################################################
+# Close the file
+####################################################################################################################################
+sub close
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->close');
+
+    $self->{oStorageCWrite}->close();
+
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => true, trace => true},
+    );
+}
+
+####################################################################################################################################
 # Get a filter result
 ####################################################################################################################################
 sub result
