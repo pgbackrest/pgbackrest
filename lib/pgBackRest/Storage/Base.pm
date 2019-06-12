@@ -117,13 +117,8 @@ sub copy
     # Does the source file exist?
     my $bResult = false;
 
-    if (defined($oSourceFileIo))
-    {
-        $bResult = defined($oSourceFileIo->{oStorageCRead}) ? $oSourceFileIo->open() : true;
-    }
-
     # Copy if the source file exists
-    if ($bResult)
+    if (defined($oSourceFileIo))
     {
         my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($xDestinationFile);
 
@@ -135,28 +130,34 @@ sub copy
         }
         else
         {
-            # Open the destination file if it is a C object
-            if (defined($oDestinationFileIo->{oStorageCWrite}))
+            # Open the source file if it is a C object
+            $bResult = defined($oSourceFileIo->{oStorageCRead}) ? $oSourceFileIo->open() : true;
+
+            if ($bResult)
             {
-                $oDestinationFileIo->open();
+                # Open the destination file if it is a C object
+                if (defined($oDestinationFileIo->{oStorageCWrite}))
+                {
+                    $oDestinationFileIo->open();
+                }
+
+                # Copy the data
+                my $lSizeRead;
+
+                do
+                {
+                    # Read data
+                    my $tBuffer = '';
+
+                    $lSizeRead = $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
+                    $oDestinationFileIo->write(\$tBuffer);
+                }
+                while ($lSizeRead != 0);
+
+                # Close files
+                $oSourceFileIo->close();
+                $oDestinationFileIo->close();
             }
-
-            # Copy the data
-            my $lSizeRead;
-
-            do
-            {
-                # Read data
-                my $tBuffer = '';
-
-                $lSizeRead = $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
-                $oDestinationFileIo->write(\$tBuffer);
-            }
-            while ($lSizeRead != 0);
-
-            # Close files
-            $oSourceFileIo->close();
-            $oDestinationFileIo->close();
         }
     }
 

@@ -52,6 +52,13 @@ sub new
     # Create C storage object
     $self->{oStorageC} = new pgBackRest::LibC::Storage($self->{strType});
 
+    # Get encryption settings
+    if ($self->{strType} eq '<REPO>')
+    {
+        $self->{strCipherType} = $self->{oStorageC}->cipherType();
+        $self->{strCipherPass} = $self->{oStorageC}->cipherPass();
+    }
+
     # Create JSON object
     $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
@@ -1010,7 +1017,7 @@ sub encryptionValid
 ####################################################################################################################################
 sub capability {shift->type() eq 'posix'}
 sub type {shift->{oStorageC}->type()}
-sub cipherType {shift->{oStorageC}->cipherType()}
-sub cipherPassUser {shift->{oStorageC}->cipherPass()}
+sub cipherType {shift->{strCipherType}}
+sub cipherPassUser {shift->{strCipherPass}}
 
 1;
