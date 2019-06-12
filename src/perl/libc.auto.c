@@ -906,27 +906,38 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_new); /* prototype to pass -Wmissing-proto
 XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
 {
     dVAR; dXSARGS;
-    if (items != 2)
-       croak_xs_usage(cv,  "class, type");
+    if (items != 3)
+       croak_xs_usage(cv,  "class, type, path");
     {
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
 	const String *	class = STR_NEW_SV(ST(0));
 	const String *	type = STR_NEW_SV(ST(1));
+	const String *	path = STR_NEW_SV(ST(2));
 	pgBackRest__LibC__Storage	RETVAL;
     CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::Storage"));
 
     // logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
 
     if (strEqZ(type, "<LOCAL>"))
-        RETVAL = (Storage *)storageLocalWrite();
-    else if (strEqZ(type, "<REPO>"))
-        RETVAL = (Storage *)storageRepoWrite();
-    else if (strEqZ(type, "<DB>"))
     {
         memContextSwitch(MEM_CONTEXT_XS_OLD());
         RETVAL = storagePosixNew(
-            cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+            path == NULL ? STRDEF("/") : path, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+        storagePathEnforceSet((Storage *)RETVAL, false);
+        memContextSwitch(MEM_CONTEXT_XS_TEMP());
+    }
+    else if (strEqZ(type, "<REPO>"))
+    {
+        CHECK(path == NULL);
+        RETVAL = (Storage *)storageRepoWrite();
+    }
+    else if (strEqZ(type, "<DB>"))
+    {
+        CHECK(path == NULL);
+
+        memContextSwitch(MEM_CONTEXT_XS_OLD());
+        RETVAL = storagePosixNew(cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
         storagePathEnforceSet((Storage *)RETVAL, false);
         memContextSwitch(MEM_CONTEXT_XS_TEMP());
     }

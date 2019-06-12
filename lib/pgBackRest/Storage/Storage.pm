@@ -36,6 +36,7 @@ sub new
     (
         my $strOperation,
         $self->{strType},
+        $self->{strPath},
         $self->{lBufferMax},
         $self->{strDefaultPathMode},
         $self->{strDefaultFileMode},
@@ -44,13 +45,14 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strType'},
+            {name => 'strPath', optional => true},
             {name => 'lBufferMax', optional => true, default => 65536},
             {name => 'strDefaultPathMode', optional => true, default => '0750'},
             {name => 'strDefaultFileMode', optional => true, default => '0640'},
         );
 
     # Create C storage object
-    $self->{oStorageC} = new pgBackRest::LibC::Storage($self->{strType});
+    $self->{oStorageC} = pgBackRest::LibC::Storage->new($self->{strType}, $self->{strPath});
 
     # Get encryption settings
     if ($self->{strType} eq '<REPO>')
@@ -476,7 +478,7 @@ sub openRead
         );
 
     # Open the file
-    my $oFileIo = new pgBackRest::LibC::StorageRead($self->{oStorageC}, $xFileExp, $bIgnoreMissing);
+    my $oFileIo = pgBackRest::LibC::StorageRead->new($self->{oStorageC}, $xFileExp, $bIgnoreMissing);
 
     # If cipher is set then decryption is the first filter applied to the read
     if (defined($self->cipherType()))
@@ -538,7 +540,7 @@ sub openWrite
         );
 
     # Open the file
-    my $oFileIo = new pgBackRest::LibC::StorageWrite(
+    my $oFileIo = pgBackRest::LibC::StorageWrite->new(
         $self->{oStorageC}, $xFileExp, oct($strMode), $strUser, $strGroup, $lTimestamp, $bAtomic, $bPathCreate);
 
     # Apply any other filters
@@ -959,7 +961,7 @@ sub encrypted
     # !!! NEED TO ADD LENGTH BACK, length(CIPHER_MAGIC));
     my $tBuffer = $self->get(
         new pgBackRest::Storage::StorageRead(
-            $self, new pgBackRest::LibC::StorageRead($self->{oStorageC}, $strFileExp, $bIgnoreMissing)));
+            $self, pgBackRest::LibC::StorageRead->new($self->{oStorageC}, $strFileExp, $bIgnoreMissing)));
 
     # If the file does not exist because we're ignoring missing (else it would error before this is executed) then determine if it
     # should be encrypted based on the repo

@@ -13,14 +13,9 @@ use File::Basename qw(basename);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Storage;
 use pgBackRest::Version;
-
-####################################################################################################################################
-# Storage constants
-####################################################################################################################################
-use constant STORAGE_LOCAL                                          => '<LOCAL>';
-    push @EXPORT, qw(STORAGE_LOCAL);
 
 ####################################################################################################################################
 # Compression extension
