@@ -60,6 +60,52 @@ CLEANUP:
     MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
+void
+open(self)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::StorageWrite self
+CODE:
+    ioWriteOpen(storageWriteIo(self));
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+UV
+write(self, buffer)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::StorageWrite self
+    const Buffer *buffer = BUF_CONST_SV($arg);
+CODE:
+    ioWrite(storageWriteIo(self), buffer);
+    RETVAL = bufUsed(buffer);
+OUTPUT:
+    RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+void
+close(self)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::StorageWrite self
+CODE:
+    ioWriteClose(storageWriteIo(self));
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
 const char *
 result(self, filter)
 PREINIT:

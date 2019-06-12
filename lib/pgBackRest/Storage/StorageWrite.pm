@@ -59,7 +59,7 @@ sub open
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->open');
 
-    $self->{oStorageCWrite}->open()
+    $self->{oStorageCWrite}->open();
 
     return logDebugReturn
     (
@@ -86,13 +86,11 @@ sub write
             {name => 'rtBuffer'},
         );
 
-    $self->{oStorageCWrite}->write($$rtBuffer);
-
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iActualSize', value => length($$rtBuffer)}
+        {name => 'iActualSize', value => $self->{oStorageCWrite}->write($$rtBuffer)}
     );
 }
 
