@@ -306,7 +306,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         {
             // Attempt to load the backup info file
             info = infoBackupNewLoad(
-                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanzaListName), INFO_BACKUP_FILE), false,
+                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanzaListName), INFO_BACKUP_FILE),
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
         CATCH(FileMissingError)

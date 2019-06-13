@@ -54,7 +54,7 @@ typedef struct InfoBackupData
 Constructor
 ***********************************************************************************************************************************/
 InfoBackup *infoBackupNewLoad(
-    const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass);
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Functions
