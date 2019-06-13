@@ -124,8 +124,6 @@ sub setup
         $oHostGroup->hostAdd($oHostS3, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
 
         # Wait for server to start
-        executeTest('docker logs -f ' . $oHostS3->container() . " | grep -m 1 \"server started\"");
-
         $oHostS3->executeS3('mb s3://' . HOST_S3_BUCKET);
     }
 

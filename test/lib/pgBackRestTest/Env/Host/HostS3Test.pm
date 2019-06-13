@@ -20,6 +20,7 @@ use pgBackRest::Backup::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
@@ -95,9 +96,26 @@ sub executeS3
             {name => 'strCommand', trace => true},
         );
 
-    executeTest(
-        'export PYTHONWARNINGS="ignore" && aws --endpoint-url=https://' . $self->ipGet() .
-        ' s3 --no-verify-ssl ' . $strCommand);
+    # Retry the command until timeout
+    my $oWait = waitInit(60);
+    my $bSuccess = false;
+    my $strTotalCommand =
+        'export PYTHONWARNINGS="ignore" && aws --endpoint-url=https://' . $self->ipGet() . ' s3 --no-verify-ssl ' . $strCommand;
+
+    do
+    {
+        my $oExec = new pgBackRestTest::Common::ExecuteTest($strTotalCommand, {bSuppressError => true, bSuppressStdErr => true});
+        $oExec->begin();
+
+        $bSuccess = $oExec->end() == 0;
+    }
+    while (!$bSuccess && waitMore($oWait));
+
+    # If no success run again to display the error
+    if (!$bSuccess)
+    {
+        executeTest($strTotalCommand);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
