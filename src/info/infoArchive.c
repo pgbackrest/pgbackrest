@@ -31,6 +31,27 @@ struct InfoArchive
 OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 
 /***********************************************************************************************************************************
+Create new object
+***********************************************************************************************************************************/
+InfoArchive *
+infoArchiveNew(void)
+{
+    FUNCTION_LOG_VOID(logLevelTrace);
+
+    InfoArchive *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("InfoArchive")
+    {
+        // Create object
+        this = memNew(sizeof(InfoArchive));
+        this->memContext = MEM_CONTEXT_NEW();
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
+}
+
+/***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoArchive *
@@ -47,14 +68,10 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    InfoArchive *this = NULL;
+    InfoArchive *this = infoArchiveNew();
 
-    MEM_CONTEXT_NEW_BEGIN("InfoArchive")
+    MEM_CONTEXT_BEGIN(this->memContext)
     {
-        // Create object
-        this = memNew(sizeof(InfoArchive));
-        this->memContext = MEM_CONTEXT_NEW();
-
         // Catch file missing error and add archive-specific hints before rethrowing
         TRY_BEGIN()
         {
@@ -76,7 +93,7 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
         // Store the archiveId for the current PG db-version db-id
         this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
     }
-    MEM_CONTEXT_NEW_END();
+    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }

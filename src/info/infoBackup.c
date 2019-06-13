@@ -48,6 +48,27 @@ struct InfoBackup
 OBJECT_DEFINE_FREE(INFO_BACKUP);
 
 /***********************************************************************************************************************************
+Create new object
+***********************************************************************************************************************************/
+InfoBackup *
+infoBackupNew(void)
+{
+    FUNCTION_LOG_VOID(logLevelTrace);
+
+    InfoBackup *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("InfoBackup")
+    {
+        // Create object
+        this = memNew(sizeof(InfoBackup));
+        this->memContext = MEM_CONTEXT_NEW();
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
+}
+
+/***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoBackup *
@@ -64,15 +85,11 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    InfoBackup *this = NULL;
+    InfoBackup *this = infoBackupNew();
 
-    MEM_CONTEXT_NEW_BEGIN("InfoBackup")
+    MEM_CONTEXT_BEGIN(this->memContext)
     {
         Ini *ini = NULL;
-
-        // Create object
-        this = memNew(sizeof(InfoBackup));
-        this->memContext = MEM_CONTEXT_NEW();
 
         // Catch file missing error and add backup-specific hints before rethrowing
         TRY_BEGIN()
@@ -144,7 +161,7 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
 
         iniFree(ini);
     }
-    MEM_CONTEXT_NEW_END();
+    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }

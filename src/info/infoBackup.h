@@ -51,8 +51,9 @@ typedef struct InfoBackupData
 } InfoBackupData;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
+InfoBackup *infoBackupNew(void);
 InfoBackup *infoBackupNewLoad(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 

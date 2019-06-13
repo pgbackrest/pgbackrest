@@ -23,8 +23,9 @@ Archive info filename
 #define INFO_ARCHIVE_FILE                                           "archive.info"
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
+InfoArchive *infoArchiveNew(void);
 InfoArchive *infoArchiveNewLoad(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
