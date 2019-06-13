@@ -508,7 +508,7 @@ sub run
             # a read error instead of an open error
             if (!$oHostDbStandby->bogusHost())
             {
-                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_OPEN});
+                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
             }
             else
             {
