@@ -186,13 +186,13 @@ sub backupFile
 
         my $oDestinationFileIo = $oStorageRepo->openWrite(
             STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-            {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass,
-                rhyFilter => [{strClass => COMMON_IO_HANDLE}]});
+            {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass});
+
+        $oDestinationFileIo->{oStorageCWrite}->filterAdd(COMMON_IO_HANDLE, undef);
 
         # Copy the file
         if ($oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo))
         {
-
             # Get sha checksum and size
             $strCopyChecksum = $oSourceFileIo->result(STORAGE_FILTER_SHA);
             $lCopySize = $oSourceFileIo->result(COMMON_IO_HANDLE);
@@ -228,10 +228,9 @@ sub backupFile
     # cannot be calculated in stream.
     #
     # If the file was checksummed then get the size in all cases since we don't already have it.
-    if ((($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY) &&
-    # !!! NEED TO MAKE THIS A CAPABILITY
-            $oStorageRepo->type() eq 'posix') ||
-        $iCopyResult == BACKUP_FILE_CHECKSUM)
+    if (($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY || $iCopyResult == BACKUP_FILE_CHECKSUM) &&
+        # !!! NEED TO MAKE THIS A CAPABILITY
+        $oStorageRepo->type() ne 's3')
     {
         $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}"))->size();
     }
