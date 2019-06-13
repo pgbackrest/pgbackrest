@@ -209,7 +209,7 @@ stanza-create db - gunzip fail on forced stanza-create (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [041]: unable to open '[TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001/000000010000000100000001-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz': Permission denied
+P00  ERROR: [041]: unable to open file '[TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001/000000010000000100000001-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz' for read: [13] Permission denied
 P00   INFO: stanza-create command end: aborted with exception [041]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info

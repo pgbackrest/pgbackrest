@@ -109,16 +109,18 @@ sub copy
         $strOperation,
         $xSourceFile,
         $xDestinationFile,
+        $bSourceOpen,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->copy', \@_,
-            {name => 'xSourceFile'},
+            {name => 'xSourceFile', required => false},
             {name => 'xDestinationFile'},
+            {name => 'bSourceOpen', optional => true, default => false},
         );
 
     # Is source/destination an IO object or a file expression?
-    my $oSourceFileIo = ref($xSourceFile) ? $xSourceFile : $self->openRead($xSourceFile);
+    my $oSourceFileIo = defined($xSourceFile) ? (ref($xSourceFile) ? $xSourceFile : $self->openRead($xSourceFile)) : undef;
 
     # Does the source file exist?
     my $bResult = false;
@@ -137,7 +139,7 @@ sub copy
         else
         {
             # Open the source file if it is a C object
-            $bResult = defined($oSourceFileIo->{oStorageCRead}) ? $oSourceFileIo->open() : true;
+            $bResult = defined($oSourceFileIo->{oStorageCRead}) ? ($bSourceOpen || $oSourceFileIo->open()) : true;
 
             if ($bResult)
             {
@@ -148,14 +150,12 @@ sub copy
                 }
 
                 # Copy the data
-                my $lSizeRead;
-
                 do
                 {
                     # Read data
                     my $tBuffer = '';
 
-                    $lSizeRead = $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
+                    $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
                     $oDestinationFileIo->write(\$tBuffer);
                 }
                 while (!$oSourceFileIo->eof());

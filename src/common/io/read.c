@@ -84,7 +84,13 @@ ioReadOpen(IoRead *this)
     {
         // If no filter group exists create one to do buffering
         if (this->filterGroup == NULL)
-            this->filterGroup = ioFilterGroupNew();
+        {
+            MEM_CONTEXT_BEGIN(this->memContext)
+            {
+                this->filterGroup = ioFilterGroupNew();
+            }
+            MEM_CONTEXT_END();
+        }
 
         ioFilterGroupOpen(this->filterGroup);
     }
@@ -154,6 +160,9 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
 
                 this->interface.read(this->driver, this->input, block);
                 bufLimitClear(this->input);
+
+                if (bufUsed(this->input) == 0 && ioReadEofDriver(this))
+                    this->input = NULL;
             }
             // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
             else
