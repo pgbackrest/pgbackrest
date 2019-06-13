@@ -467,6 +467,37 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_close)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_handle); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_handle)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__StorageWrite	self;
+	IV	RETVAL;
+	dXSTARG;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::StorageWrite")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__StorageWrite,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::StorageWrite::handle",
+			"self", "pgBackRest::LibC::StorageWrite")
+;
+    RETVAL = ioWriteHandle(storageWriteIo(self));
+	XSprePUSH; PUSHi((IV)RETVAL);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
 XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_result); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__StorageWrite_result)
 {
@@ -2468,6 +2499,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::StorageWrite::open", XS_pgBackRest__LibC__StorageWrite_open);
         newXS_deffile("pgBackRest::LibC::StorageWrite::write", XS_pgBackRest__LibC__StorageWrite_write);
         newXS_deffile("pgBackRest::LibC::StorageWrite::close", XS_pgBackRest__LibC__StorageWrite_close);
+        newXS_deffile("pgBackRest::LibC::StorageWrite::handle", XS_pgBackRest__LibC__StorageWrite_handle);
         newXS_deffile("pgBackRest::LibC::StorageWrite::result", XS_pgBackRest__LibC__StorageWrite_result);
         newXS_deffile("pgBackRest::LibC::StorageWrite::resultAll", XS_pgBackRest__LibC__StorageWrite_resultAll);
         newXS_deffile("pgBackRest::LibC::StorageWrite::DESTROY", XS_pgBackRest__LibC__StorageWrite_DESTROY);

@@ -36,6 +36,8 @@ use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::HostEnvTest;
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
 
 ####################################################################################################################################
 # run
@@ -270,7 +272,7 @@ sub run
             executeTest("sudo chmod 400 ${strDir}");
 
             $strComment = 'confirm master manifest->build executed';
-            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_OPEN});
+            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
             executeTest("sudo rmdir ${strDir}");
 
             # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
@@ -746,13 +748,19 @@ sub run
         {
             my ($strSHA1, $lSize) = storageTest()->hashSize($strDb1TablePath);
 
-            # Create a zeroed sparse file in the test directory that is the same size as the filenode.map
+            # Create a zeroed sparse file in the test directory that is the same size as the filenode.map.  We need to use the
+            # posix driver directly to do this because handles cannot be passed back from the C code.
+            my $oStorageTrunc = new pgBackRestTest::Common::Storage($self->testPath(), new pgBackRestTest::Common::StoragePosix());
+
             my $strTestTable = $self->testPath() . "/testtable";
-            my $oDestinationFileIo = storageTest()->openWrite($strTestTable);
+            my $oDestinationFileIo = $oStorageTrunc->openWrite($strTestTable);
             $oDestinationFileIo->open();
 
             # Truncate to the original size which will create a sparse file.
-            truncate($oDestinationFileIo->handle(), $lSize);
+            if (!truncate($oDestinationFileIo->handle(), $lSize))
+            {
+                confess "unable to truncate '$strTestTable' with handle " . $oDestinationFileIo->handle();
+            }
             $oDestinationFileIo->close();
 
             # Confirm the test filenode.map and the database test1 filenode.map are zeroed
