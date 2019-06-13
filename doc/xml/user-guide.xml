@@ -591,20 +591,6 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="s3-setup">
-        <execute-list host="{[s3-setup-host]}">
-            <title>Install packages required for S3-compatible object store support</title>
-
-            <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-             <execute if="{[os-type-is-centos]}" user="root" pre="y">
-                 <exe-cmd>yum install perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
-                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-             </execute>
-        </execute-list>
-
         <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
 
         <execute-list if="'{[s3-local]}' eq 'y'" host="{[s3-setup-host]}" show="n">
