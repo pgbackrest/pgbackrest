@@ -69,7 +69,7 @@ ioFilterGroupNew(void)
     {
         this = memNew(sizeof(IoFilterGroup));
         this->memContext = memContextCurrent();
-        this->done = true;
+        this->done = false;
         this->filterList = lstNew(sizeof(IoFilterData));
     }
     MEM_CONTEXT_NEW_END();
@@ -375,14 +375,14 @@ Is the filter group done processing?
 bool
 ioFilterGroupDone(const IoFilterGroup *this)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER_GROUP, this);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->opened && !this->closed);
 
-    FUNCTION_TEST_RETURN(this->done);
+    FUNCTION_LOG_RETURN(BOOL, this->done);
 }
 
 /***********************************************************************************************************************************

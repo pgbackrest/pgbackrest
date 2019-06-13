@@ -15076,7 +15076,7 @@ static const EmbeddedModule embeddedModule[] =
             "$lSizeRead = $oSourceFileIo->read(\\$tBuffer, $self->{lBufferMax});\n"
             "$oDestinationFileIo->write(\\$tBuffer);\n"
             "}\n"
-            "while ($lSizeRead != 0);\n"
+            "while (!$oSourceFileIo->eof());\n"
             "\n\n"
             "$oSourceFileIo->close();\n"
             "$oDestinationFileIo->close();\n"

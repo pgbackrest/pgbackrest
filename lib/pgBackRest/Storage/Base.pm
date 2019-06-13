@@ -158,7 +158,7 @@ sub copy
                     $lSizeRead = $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
                     $oDestinationFileIo->write(\$tBuffer);
                 }
-                while ($lSizeRead != 0);
+                while (!$oSourceFileIo->eof());
 
                 # Close files
                 $oSourceFileIo->close();
