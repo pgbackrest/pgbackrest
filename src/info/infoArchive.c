@@ -34,7 +34,7 @@ OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
+infoArchiveNewLoad(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);

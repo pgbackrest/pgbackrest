@@ -51,7 +51,7 @@ OBJECT_DEFINE_FREE(INFO_BACKUP);
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoBackup *
-infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
+infoBackupNewLoad(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);

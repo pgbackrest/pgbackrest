@@ -53,7 +53,7 @@ typedef struct InfoBackupData
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoBackup *infoBackupNew(
+InfoBackup *infoBackupNewLoad(
     const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************

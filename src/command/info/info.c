@@ -305,7 +305,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         TRY_BEGIN()
         {
             // Attempt to load the backup info file
-            info = infoBackupNew(
+            info = infoBackupNewLoad(
                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanzaListName), INFO_BACKUP_FILE), false,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
@@ -352,7 +352,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
                 varLstAdd(dbSection, pgInfo);
 
                 // Get the archive info for the DB from the archive.info file
-                InfoArchive *info = infoArchiveNew(
+                InfoArchive *info = infoArchiveNewLoad(
                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanzaListName), INFO_ARCHIVE_FILE),  false,
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
                 archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));

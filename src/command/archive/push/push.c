@@ -216,7 +216,7 @@ archivePushCheck(CipherType cipherType, const String *cipherPass)
         PgControl controlInfo = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
         // Attempt to load the archive info file
-        InfoArchive *info = infoArchiveNew(
+        InfoArchive *info = infoArchiveNewLoad(
             storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType, cipherPass);
 
         // Get archive id for the most recent version -- archive-push will only operate against the most recent version
