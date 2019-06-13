@@ -217,7 +217,7 @@ archivePushCheck(CipherType cipherType, const String *cipherPass)
 
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveNewLoad(
-            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType, cipherPass);
+            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType, cipherPass);
 
         // Get archive id for the most recent version -- archive-push will only operate against the most recent version
         String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));

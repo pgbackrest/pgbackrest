@@ -353,7 +353,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 
                 // Get the archive info for the DB from the archive.info file
                 InfoArchive *info = infoArchiveNewLoad(
-                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanzaListName), INFO_ARCHIVE_FILE),  false,
+                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanzaListName), INFO_ARCHIVE_FILE),
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
                 archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
             }

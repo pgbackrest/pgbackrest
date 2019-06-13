@@ -21,7 +21,7 @@ testRun(void)
     if (testBegin("infoArchiveNewLoad() and infoArchiveFree()"))
     {
         TEST_ERROR_FMT(
-            infoArchiveNewLoad(storageLocal(), fileName, true, cipherTypeNone, NULL), FileMissingError,
+            infoArchiveNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
@@ -48,7 +48,7 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put archive info to file");
 
-        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, true, cipherTypeNone, NULL), "    new archive info");
+        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "    new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher passphrase");
@@ -77,7 +77,7 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put archive info to file");
 
-        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, true, cipherTypeNone, NULL), "new archive info");
+        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089)), "9.5-2", "  full match found");
 
         TEST_RESULT_STR(strPtr(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702)), "9.4-1", "  partial match found");
