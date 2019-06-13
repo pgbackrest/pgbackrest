@@ -204,8 +204,17 @@ sub backupFile
             }
 
             # Get results of page checksum validation
-            my $rExtraRaw = $bChecksumPage ? $oSourceFileIo->result("pgBackRest::Backup::Filter::PageChecksum") : undef;
-            $rExtra = {bValid => $rExtraRaw->{valid} ? true : false, bAlign => $rExtraRaw->{align} ? true : false};
+            if ($bChecksumPage)
+            {
+                my $rExtraRaw = $oSourceFileIo->result("pgBackRest::Backup::Filter::PageChecksum");
+
+                $rExtra =
+                {
+                    bValid => $rExtraRaw->{valid} ? true : false,
+                    bAlign => $rExtraRaw->{align} ? true : false,
+                    iyPageError => $rExtraRaw->{error},
+                };
+            }
         }
         # Else if source file is missing the database removed it
         else

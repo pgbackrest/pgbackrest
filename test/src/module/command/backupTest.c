@@ -151,7 +151,7 @@ testRun(void)
 
         // Various checksum errors some of which will be skipped because of the LSN
         // -------------------------------------------------------------------------------------------------------------------------
-        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 6 - (PG_PAGE_SIZE_DEFAULT - 512));
+        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 8 - (PG_PAGE_SIZE_DEFAULT - 512));
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
@@ -173,9 +173,17 @@ testRun(void)
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_upper = 0x01;
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_lsn.xrecoff = 0x3;
 
-        // Page 5 has bogus checksum (and is misaligned but large enough to test)
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x05)))->pd_upper = 0x01;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x05)))->pd_lsn.xrecoff = 0x5;
+        // Page 4 has bogus checksum
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x04)))->pd_upper = 0x01;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x04)))->pd_lsn.xrecoff = 0x4;
+
+        // Page 6 has bogus checksum
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x06)))->pd_upper = 0x01;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x06)))->pd_lsn.xrecoff = 0x6;
+
+        // Page 7 has bogus checksum (and is misaligned but large enough to test)
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)))->pd_upper = 0x01;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)))->pd_lsn.xrecoff = 0x7;
 
         write = ioWriteFilterGroupSet(
             ioSinkWriteNew(),
@@ -187,7 +195,7 @@ testRun(void)
 
         TEST_RESULT_STR(
             strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
-            "{\"align\":false,\"error\":[[0,17361641481138401520],[2,2],[3,3],[5,5]],\"valid\":true}", "various checksum errors");
+            "{\"align\":false,\"error\":[0,[2,4],[6,7]],\"valid\":false}", "various checksum errors");
 
         // Impossibly misaligned page
         // -------------------------------------------------------------------------------------------------------------------------
@@ -205,7 +213,7 @@ testRun(void)
 
         TEST_RESULT_STR(
             strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
-            "{\"align\":false,\"valid\":false}", "various checksum errors");
+            "{\"align\":false,\"valid\":false}", "misalignment");
 
         // Two misaligned buffers in a row
         // -------------------------------------------------------------------------------------------------------------------------

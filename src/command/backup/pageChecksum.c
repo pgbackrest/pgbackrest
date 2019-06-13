@@ -118,6 +118,8 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                 MEM_CONTEXT_END();
             }
         }
+
+        this->pageNoOffset += pageTotal;
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -138,11 +140,62 @@ pageChecksumResult(THIS_VOID)
     ASSERT(this != NULL);
 
     KeyValue *result = kvNew();
-    kvPut(result, varNewStrZ("valid"), varNewBool(this->valid));
-    kvPut(result, varNewStrZ("align"), varNewBool(this->align));
 
     if (this->error != NULL)
-        kvPut(result, varNewStrZ("error"), varNewVarLst(this->error));
+    {
+        VariantList *errorList = varLstNew();
+        unsigned int errorIdx = 0;
+
+        do
+        {
+            unsigned int pageId = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx)), 0));
+
+            if (errorIdx == varLstSize(this->error) - 1)
+            {
+                varLstAdd(errorList, varNewUInt(pageId));
+                errorIdx++;
+            }
+            else
+            {
+                unsigned int pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
+
+                if (pageIdNext > pageId + 1)
+                {
+                    varLstAdd(errorList, varNewUInt(pageId));
+                    errorIdx++;
+                }
+                else
+                {
+                    unsigned int pageIdLast = pageIdNext;
+                    errorIdx++;
+
+                    while (errorIdx < varLstSize(this->error) - 1)
+                    {
+                        pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
+
+                        if (pageIdNext > pageIdLast + 1)
+                            break;
+
+                        pageIdLast = pageIdNext;
+                        errorIdx++;
+                    }
+
+                    VariantList *errorListSub = varLstNew();
+                    varLstAdd(errorListSub, varNewUInt(pageId));
+                    varLstAdd(errorListSub, varNewUInt(pageIdLast));
+                    varLstAdd(errorList, varNewVarLst(errorListSub));
+                    errorIdx++;
+                }
+            }
+        }
+        while (errorIdx < varLstSize(this->error));
+
+        this->valid = false;
+        kvPut(result, varNewStrZ("error"), varNewVarLst(errorList));
+    }
+
+    kvPut(result, varNewStrZ("valid"), varNewBool(this->valid));
+    kvPut(result, varNewStrZ("align"), varNewBool(this->align));
 
     FUNCTION_LOG_RETURN(VARIANT, varNewKv(result));
 }
