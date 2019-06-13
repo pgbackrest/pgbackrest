@@ -18,6 +18,9 @@ S3 Storage Read
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define STORAGE_READ_S3_TYPE                                        StorageReadS3
+#define STORAGE_READ_S3_PREFIX                                      storageReadS3
+
 typedef struct StorageReadS3
 {
     MemContext *memContext;                                         // Object mem context
@@ -34,6 +37,15 @@ Macros for function logging
     StorageReadS3 *
 #define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
     objToLog(value, "StorageReadS3", buffer, bufferSize)
+
+/***********************************************************************************************************************************
+Mark http client as done so it can be reused
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_S3, LOG, logLevelTrace)
+{
+    httpClientDone(this->httpClient);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
@@ -53,14 +65,13 @@ storageReadS3Open(THIS_VOID)
     bool result = false;
 
     // Request the file
-    storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, false, true);
-
-    // On success
-    this->httpClient = storageS3HttpClient(this->storage);
+    this->httpClient = storageS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, false, true).httpClient;
 
     if (httpClientResponseCodeOk(this->httpClient))
+    {
+        memContextCallbackSet(this->memContext, storageReadS3FreeResource, this);
         result = true;
-
+    }
     // Else error unless ignore missing
     else if (!this->interface.ignoreMissing)
         THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strPtr(this->interface.name));
@@ -87,6 +98,28 @@ storageReadS3(THIS_VOID, Buffer *buffer, bool block)
     ASSERT(buffer != NULL && !bufFull(buffer));
 
     FUNCTION_LOG_RETURN(SIZE, ioRead(httpClientIoRead(this->httpClient), buffer));
+}
+
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageReadS3Close(THIS_VOID)
+{
+    THIS(StorageReadS3);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_S3, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpClient != NULL);
+
+    memContextCallbackClear(this->memContext);
+    storageReadS3FreeResource(this);
+    this->httpClient = NULL;
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -137,6 +170,7 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
 
             .ioInterface = (IoReadInterface)
             {
+                .close = storageReadS3Close,
                 .eof = storageReadS3Eof,
                 .open = storageReadS3Open,
                 .read = storageReadS3,

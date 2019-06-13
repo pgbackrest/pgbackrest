@@ -22,6 +22,7 @@ Perform an S3 Request
 
 typedef struct StorageS3RequestResult
 {
+    HttpClient *httpClient;
     HttpHeader *responseHeader;
     Buffer *response;
 } StorageS3RequestResult;
@@ -29,11 +30,6 @@ typedef struct StorageS3RequestResult
 StorageS3RequestResult storageS3Request(
     StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
     bool allowMissing);
-
-/***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
-HttpClient *storageS3HttpClient(const StorageS3 *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -496,7 +496,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
         TEST_RESULT_STR(
-            strPtr(((StorageS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
+            strPtr(((StorageS3 *)storage->driver)->bucketEndpoint), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
             "    check host");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
         TEST_RESULT_STR(
@@ -526,7 +526,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
         TEST_RESULT_STR(
-            strPtr(((StorageS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
+            strPtr(((StorageS3 *)storage->driver)->bucketEndpoint), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
             "    check host");
         TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 443, "    check port");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
@@ -556,7 +556,9 @@ testRun(void)
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
-        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))), "    check host");
+        TEST_RESULT_STR(
+            strPtr(((StorageS3 *)storage->driver)->bucketEndpoint), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
+            "    check host");
         TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 999, "    check port");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
         TEST_RESULT_STR(
@@ -587,7 +589,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
         TEST_RESULT_STR(
-            strPtr(((StorageS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
+            strPtr(((StorageS3 *)storage->driver)->bucketEndpoint), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
             "    check host");
         TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 7777, "    check port");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");

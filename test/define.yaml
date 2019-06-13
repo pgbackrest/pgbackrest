@@ -230,9 +230,10 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
-        total: 4
+        total: 5
 
         coverage:
+          common/io/http/cache: full
           common/io/http/client: full
           common/io/http/common: full
           common/io/http/header: full

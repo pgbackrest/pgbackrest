@@ -151,7 +151,7 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
     // Continue until the write buffer has been exhausted
     do
     {
-        // Copy an many bytes as possible into the part buffer
+        // Copy as many bytes as possible into the part buffer
         size_t bytesNext = bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
             bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
         bufCatSub(this->partBuffer, buffer, bytesTotal, bytesNext);
@@ -208,13 +208,13 @@ storageWriteS3Close(THIS_VOID)
                 // Finalize the multi-part upload
                 storageS3Request(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                    httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), false, false);
+                    httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), true, false);
             }
             // Else upload all the data in a single put
             else
             {
                 storageS3Request(
-                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, NULL, this->partBuffer, false, false);
+                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, NULL, this->partBuffer, true, false);
             }
 
             bufFree(this->partBuffer);
