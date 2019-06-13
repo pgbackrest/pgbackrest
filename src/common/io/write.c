@@ -79,7 +79,13 @@ ioWriteOpen(IoWrite *this)
 
     // If no filter group exists create one to do buffering
     if (this->filterGroup == NULL)
-        this->filterGroup = ioFilterGroupNew();
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->filterGroup = ioFilterGroupNew();
+        }
+        MEM_CONTEXT_END();
+    }
 
     ioFilterGroupOpen(this->filterGroup);
 
