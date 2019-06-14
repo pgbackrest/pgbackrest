@@ -98,6 +98,15 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
 
+// CSHANG
+InfoArchive *
+infoArchiveCreate(CipherType cipherType, const String *cipherPass, const unsigned int pgVersion, const uint64_t pgSystemId)
+
+        Ini *ini = NULL; // DO I need this?
+
+        InfoArchive *this = infoArchiveNew();
+        this->infoPg = infoPgCreate(this->infoPg, infoPgArchive, cipherType, cipherPass, &ini);
+
 /***********************************************************************************************************************************
 Given a backrest history id and postgres systemId and version, return the archiveId of the best match
 ***********************************************************************************************************************************/

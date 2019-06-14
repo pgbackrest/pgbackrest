@@ -47,6 +47,30 @@ struct InfoPg
 OBJECT_DEFINE_FREE(INFO_PG);
 
 /***********************************************************************************************************************************
+Create new object
+***********************************************************************************************************************************/
+InfoPg *
+infoPgNew(void)
+{
+    FUNCTION_LOG_VOID(logLevelTrace);
+
+    InfoPg *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("InfoPg")
+    {
+        // Create object
+        this = memNew(sizeof(InfoPg));
+        this->memContext = MEM_CONTEXT_NEW();
+
+        // Get the pg history list
+        this->history = lstNew(sizeof(InfoPgData));
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(INFO_PG, this);
+}
+
+/***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoPg *
@@ -66,20 +90,13 @@ infoPgNewLoad(
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    InfoPg *this = NULL;
+    InfoPg *this = infoPgNew();
 
-    MEM_CONTEXT_NEW_BEGIN("InfoPg")
+    MEM_CONTEXT_BEGIN(this->memContext)
     {
-        // Create object
-        this = memNew(sizeof(InfoPg));
-        this->memContext = MEM_CONTEXT_NEW();
-
         // Load info
         Ini *iniLocal = NULL;
         this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, &iniLocal);
-
-        // Get the pg history list
-        this->history = lstNew(sizeof(InfoPgData));
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -135,7 +152,7 @@ infoPgNewLoad(
         if (ini != NULL)
             *ini = iniMove(iniLocal, MEM_CONTEXT_OLD());
     }
-    MEM_CONTEXT_NEW_END();
+    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN(INFO_PG, this);
 }
@@ -158,6 +175,16 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 
     FUNCTION_LOG_RETURN_VOID();
 }
+
+// CSHANG Maybe later can have this as a set function if there is already data and want to update?
+infoPgCreate()
+    // Instantiate the info object which in turn needs to instantiate the ini object for the cipherPass
+        InfoPg *this = infoPgNew();
+        this->info = infoNew();
+
+
+    MEM_CONTEXT_BEGIN(this->memContext)  // ?????
+    {
 
 /***********************************************************************************************************************************
 Save to file
