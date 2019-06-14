@@ -69,7 +69,7 @@ ioFilterGroupNew(void)
     {
         this = memNew(sizeof(IoFilterGroup));
         this->memContext = memContextCurrent();
-        this->done = true;
+        this->done = false;
         this->filterList = lstNew(sizeof(IoFilterData));
     }
     MEM_CONTEXT_NEW_END();
