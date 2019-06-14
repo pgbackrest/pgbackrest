@@ -160,9 +160,6 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
 
                 this->interface.read(this->driver, this->input, block);
                 bufLimitClear(this->input);
-
-                if (bufUsed(this->input) == 0 && ioReadEofDriver(this))
-                    this->input = NULL;
             }
             // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
             else

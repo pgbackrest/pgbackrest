@@ -331,12 +331,28 @@ testRun(void)
         TEST_RESULT_UINT(
             varUInt64(varLstGet(varVarLst(ioFilterGroupResult(filterGroup, ioFilterType(sizeFilter))), 1)), 9,
             "    check filter result");
+        TEST_RESULT_PTR(ioFilterGroupResultAll(filterGroup), filterGroup->filterResult, "    check filter result all");
 
         TEST_RESULT_PTR(ioFilterDriver(bufferFilter), bufferFilter->driver, "    check filter driver");
         TEST_RESULT_PTR(ioFilterInterface(bufferFilter), &bufferFilter->interface, "    check filter interface");
 
         TEST_RESULT_VOID(ioFilterFree(bufferFilter), "    free buffer filter");
         TEST_RESULT_VOID(ioFilterGroupFree(filterGroup), "    free filter group object");
+
+        // Read a zero-size buffer to ensure filters are still processed even when there is no input.  Some filters (e.g. encryption
+        // and compression) will produce output even if there is no input.
+        // -------------------------------------------------------------------------------------------------------------------------
+        ioBufferSizeSet(1024);
+        buffer = bufNew(1024);
+        bufferOriginal = bufNew(0);
+
+        TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create buffer read object");
+        TEST_RESULT_VOID(
+            ioReadFilterGroupSet(bufferRead, ioFilterGroupAdd(ioFilterGroupNew(), ioTestFilterMultiplyNew("double", 2, 5, 'Y'))),
+            "    add filter that produces output with no input");
+        TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open read");
+        TEST_RESULT_UINT(ioRead(bufferRead, buffer), 5, "    read 5 chars");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "YYYYY", "    check buffer");
 
         // Mixed line and buffer read
         // -------------------------------------------------------------------------------------------------------------------------

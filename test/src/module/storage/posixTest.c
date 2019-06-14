@@ -465,6 +465,11 @@ testRun(void)
             storagePathNP(storageTest, strNew("/path/toot")), AssertError,
             "absolute path '/path/toot' is not in base path '/path/to'");
 
+        // Path enforcement disabled
+        storagePathEnforceSet(storageTest, false);
+        TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("/bogus"))), "/bogus", "path enforce disabled");
+        storagePathEnforceSet(storageTest, true);
+
         TEST_ERROR(storagePathNP(storageTest, strNew("<TEST")), AssertError, "end > not found in path expression '<TEST'");
         TEST_ERROR(
             storagePathNP(storageTest, strNew("<TEST>" BOGUS_STR)), AssertError,
