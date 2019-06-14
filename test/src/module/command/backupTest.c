@@ -149,6 +149,29 @@ testRun(void)
             strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
             "{\"align\":true,\"valid\":true}", "all zero pages");
 
+        // Single checksum error
+        // -------------------------------------------------------------------------------------------------------------------------
+        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 1);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        // Page 0 has bogus checksum
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_upper = 0x01;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.walid = 0xF0F0F0F0;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.xrecoff = 0xF0F0F0F0;
+
+        write = ioWriteFilterGroupSet(
+            ioSinkWriteNew(),
+            ioFilterGroupAdd(
+                ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR(
+            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
+            "{\"align\":true,\"error\":[0],\"valid\":false}", "single checksum error");
+
         // Various checksum errors some of which will be skipped because of the LSN
         // -------------------------------------------------------------------------------------------------------------------------
         buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 8 - (PG_PAGE_SIZE_DEFAULT - 512));
