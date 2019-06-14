@@ -43,14 +43,11 @@ sub new
             __PACKAGE__ . '->new', \@_,
             {name => 'strPathBase'},
             {name => 'oDriver'},
-            {name => 'hRule', optional => true},
             {name => 'bAllowTemp', optional => true, default => true},
             {name => 'strTempExtension', optional => true, default => 'tmp'},
             {name => 'strDefaultPathMode', optional => true, default => '0750'},
             {name => 'strDefaultFileMode', optional => true, default => '0640'},
             {name => 'lBufferMax', optional => true},
-            {name => 'strCipherType', optional => true},
-            {name => 'strCipherPassUser', optional => true, redact => true},
         );
 
     # Create class
@@ -59,13 +56,10 @@ sub new
 
     $self->{strPathBase} = $strPathBase;
     $self->{oDriver} = $oDriver;
-    $self->{hRule} = $hRule;
     $self->{bAllowTemp} = $bAllowTemp;
     $self->{strTempExtension} = $strTempExtension;
     $self->{strDefaultPathMode} = $strDefaultPathMode;
     $self->{strDefaultFileMode} = $strDefaultFileMode;
-    $self->{strCipherType} = $strCipherType;
-    $self->{strCipherPassUser} = $strCipherPassUser;
 
     # Set temp extension in driver
     $self->driver()->tempExtensionSet($self->{strTempExtension}) if $self->driver()->can('tempExtensionSet');
@@ -344,42 +338,16 @@ sub openRead
         $strOperation,
         $xFileExp,
         $bIgnoreMissing,
-        $rhyFilter,
-        $strCipherPass,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->openRead', \@_,
             {name => 'xFileExp'},
             {name => 'bIgnoreMissing', optional => true, default => false},
-            {name => 'rhyFilter', optional => true},
-            {name => 'strCipherPass', optional => true, redact => true},
         );
 
     # Open the file
     my $oFileIo = $self->driver()->openRead($self->pathGet($xFileExp), {bIgnoreMissing => $bIgnoreMissing});
-
-    # Apply filters if file is defined
-    if (defined($oFileIo))
-    {
-        # If cipher is set then add the filter so that decryption is the first filter applied to the data read before any of the
-        # other filters
-        if (defined($self->cipherType()))
-        {
-            $oFileIo = &STORAGE_FILTER_CIPHER_BLOCK->new(
-                $oFileIo, $self->cipherType(), defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser(),
-                {strMode => STORAGE_DECRYPT});
-        }
-
-        # Apply any other filters
-        if (defined($rhyFilter))
-        {
-            foreach my $rhFilter (@{$rhyFilter})
-            {
-                $oFileIo = $rhFilter->{strClass}->new($oFileIo, @{$rhFilter->{rxyParam}});
-            }
-        }
-    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -407,8 +375,6 @@ sub openWrite
         $lTimestamp,
         $bAtomic,
         $bPathCreate,
-        $rhyFilter,
-        $strCipherPass,
     ) =
         logDebugParam
         (
@@ -420,30 +386,12 @@ sub openWrite
             {name => 'lTimestamp', optional => true},
             {name => 'bAtomic', optional => true, default => false},
             {name => 'bPathCreate', optional => true, default => false},
-            {name => 'rhyFilter', optional => true},
-            {name => 'strCipherPass', optional => true, redact => true},
         );
 
     # Open the file
     my $oFileIo = $self->driver()->openWrite($self->pathGet($xFileExp),
         {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lTimestamp, bPathCreate => $bPathCreate,
             bAtomic => $bAtomic});
-
-    # If cipher is set then add filter so that encryption is performed just before the data is actually written
-    if (defined($self->cipherType()))
-    {
-        $oFileIo = &STORAGE_FILTER_CIPHER_BLOCK->new(
-            $oFileIo, $self->cipherType(), defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser());
-    }
-
-    # Apply any other filters
-    if (defined($rhyFilter))
-    {
-        foreach my $rhFilter (reverse(@{$rhyFilter}))
-        {
-            $oFileIo = $rhFilter->{strClass}->new($oFileIo, @{$rhFilter->{rxyParam}});
-        }
-    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -585,51 +533,11 @@ sub pathGet
         $bAbsolute = true;
         $strPath = $strPathExp;
     }
+    # Else it must be relative
     else
     {
-        # Is it a rule type
-        if (defined($strPathExp) && index($strPathExp, qw(<)) == 0)
-        {
-            # Extract the rule type
-            my $iPos = index($strPathExp, qw(>));
-
-            if ($iPos == -1)
-            {
-                confess &log(ASSERT, "found < but not > in '${strPathExp}'");
-            }
-
-            my $strType = substr($strPathExp, 0, $iPos + 1);
-
-            # Extract the filename
-            if ($iPos < length($strPathExp) - 1)
-            {
-                $strFile = substr($strPathExp, $iPos + 2);
-            }
-
-            # Lookup the rule
-            if (!defined($self->{hRule}->{$strType}))
-            {
-                confess &log(ASSERT, "storage rule '${strType}' does not exist");
-            }
-
-            # If rule is a ref then call the function
-            if (ref($self->{hRule}->{$strType}))
-            {
-                $strPath = $self->pathBase();
-                $strFile = $self->{hRule}{$strType}{fnRule}->($strType, $strFile, $self->{hRule}{$strType}{xData});
-            }
-            # Else get the path
-            else
-            {
-                $strPath = $self->pathBase() . ($self->pathBase() =~ /\/$/ ? '' : qw{/}) . $self->{hRule}->{$strType};
-            }
-        }
-        # Else it must be relative
-        else
-        {
-            $strPath = $self->pathBase();
-            $strFile = $strPathExp;
-        }
+        $strPath = $self->pathBase();
+        $strFile = $strPathExp;
     }
 
     # Make sure a temp file is valid for this type and file
@@ -738,117 +646,11 @@ sub remove
 }
 
 ####################################################################################################################################
-# encrypted - determine if the file is encrypted or not
-####################################################################################################################################
-sub encrypted
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFileName,
-        $bIgnoreMissing,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->encrypted', \@_,
-            {name => 'strFileName'},
-            {name => 'bIgnoreMissing', optional => true, default => false},
-        );
-
-    my $tMagicSignature;
-    my $bEncrypted = false;
-
-    # Open the file via the driver
-    my $oFile = $self->driver()->openRead($self->pathGet($strFileName), {bIgnoreMissing => $bIgnoreMissing});
-
-    # If the file does not exist because we're ignoring missing (else it would error before this is executed) then determine if it
-    # should be encrypted based on the repo
-    if (!defined($oFile))
-    {
-        if (defined($self->{strCipherType}))
-        {
-            $bEncrypted = true;
-        }
-    }
-    else
-    {
-        # If the file does exist, then read the magic signature
-        my $lSizeRead = $oFile->read(\$tMagicSignature, length(CIPHER_MAGIC));
-
-        # Close the file handle
-        $oFile->close();
-
-        # If the file is able to be read, then if it is encrypted it must at least have the magic signature, even if it were
-        # originally a 0 byte file
-        if (($lSizeRead > 0) && substr($tMagicSignature, 0, length(CIPHER_MAGIC)) eq CIPHER_MAGIC)
-        {
-            $bEncrypted = true;
-        }
-
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bEncrypted', value => $bEncrypted}
-    );
-}
-
-####################################################################################################################################
-# encryptionValid - determine if encyption set properly based on the value passed
-####################################################################################################################################
-sub encryptionValid
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $bEncrypted,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->encryptionValid', \@_,
-            {name => 'bEncrypted'},
-        );
-
-    my $bValid = true;
-
-    # If encryption is set on the file then make sure the repo is encrypted and visa-versa
-    if ($bEncrypted)
-    {
-        if (!defined($self->{strCipherType}))
-        {
-            $bValid = false;
-        }
-    }
-    else
-    {
-        if (defined($self->{strCipherType}))
-        {
-            $bValid = false;
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bValid', value => $bValid}
-    );
-}
-
-####################################################################################################################################
 # Getters
 ####################################################################################################################################
 sub pathBase {shift->{strPathBase}}
 sub driver {shift->{oDriver}}
-sub cipherType {shift->{strCipherType}}
-sub cipherPassUser {shift->{strCipherPassUser}}
+sub cipherType {undef}
+sub cipherPassUser {undef}
 
 1;
