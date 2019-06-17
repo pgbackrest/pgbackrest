@@ -25,8 +25,8 @@ Archive info filename
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoArchive *infoArchiveNew(
-    const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass);
+InfoArchive *infoArchiveNewLoad(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Functions
