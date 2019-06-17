@@ -316,8 +316,8 @@ sub docGet
     my $strOperation = logDebugParam(__PACKAGE__ . '->docGet');
 
     # Load the git history
-    my $oStorageDoc = new pgBackRest::Storage::Local(
-        dirname(abs_path($0)), new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorageDoc = new pgBackRestTest::Common::Storage(
+        dirname(abs_path($0)), new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
     my @hyGitLog = @{(JSON::PP->new()->allow_nonref())->decode(${$oStorageDoc->get("resource/git-history.cache")})};
 
     # Get renderer
