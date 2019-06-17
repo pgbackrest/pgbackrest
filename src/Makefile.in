@@ -214,6 +214,9 @@ command/archive/push/push.o: command/archive/push/push.c build.auto.h command/ar
 command/backup/common.o: command/backup/common.c build.auto.h command/backup/common.h common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c command/backup/common.c -o command/backup/common.o
 
+command/backup/pageChecksum.o: command/backup/pageChecksum.c build.auto.h command/backup/pageChecksum.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h postgres/pageChecksum.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c command/backup/pageChecksum.c -o command/backup/pageChecksum.o
+
 command/command.o: command/command.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/header.h common/io/http/query.h common/io/read.h common/io/tls/client.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h version.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c command/command.c -o command/command.o
 
@@ -463,7 +466,7 @@ postgres/interface/v100.o: postgres/interface/v100.c build.auto.h common/assert.
 postgres/interface/v110.o: postgres/interface/v110.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/version.auto.h postgres/interface/version.h postgres/interface/version.intern.h postgres/version.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c postgres/interface/v110.c -o postgres/interface/v110.o
 
-postgres/pageChecksum.o: postgres/pageChecksum.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h postgres/pageChecksum.h
+postgres/pageChecksum.o: postgres/pageChecksum.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/pageChecksum.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) @COPTIMIZE_PAGE_CHECKSUM@ -c postgres/pageChecksum.c -o postgres/pageChecksum.o
 
 protocol/client.o: protocol/client.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h protocol/client.h protocol/command.h version.h

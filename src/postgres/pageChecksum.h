@@ -10,6 +10,7 @@ Checksum Implementation for Data Pages
 Functions
 ***********************************************************************************************************************************/
 uint16_t pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageSize);
+uint64_t pageLsn(const unsigned char *page);
 bool pageChecksumTest(
     const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset);
 bool pageChecksumBufferTest(
