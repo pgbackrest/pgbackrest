@@ -1,12 +1,12 @@
 /***********************************************************************************************************************************
 Test Common Functions and Definitions for Backup and Expire Commands
 ***********************************************************************************************************************************/
-#include "common/io/sinkWrite.h"
+#include "common/harnessConfig.h"
+#include "common/io/bufferWrite.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "postgres/interface.h"
-
-#include "common/harnessConfig.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Need these structures to mock up test data
@@ -135,11 +135,12 @@ testRun(void)
         // Test pages with all zeros (these are considered valid)
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+        Buffer *bufferOut = bufNew(0);
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
         IoWrite *write = ioWriteFilterGroupSet(
-            ioSinkWriteNew(),
+            ioBufferWriteNew(bufferOut),
             ioFilterGroupAdd(ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0)));
         ioWriteOpen(write);
         ioWrite(write, buffer);
@@ -161,7 +162,7 @@ testRun(void)
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.xrecoff = 0xF0F0F0F0;
 
         write = ioWriteFilterGroupSet(
-            ioSinkWriteNew(),
+            ioBufferWriteNew(bufferOut),
             ioFilterGroupAdd(
                 ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
         ioWriteOpen(write);
@@ -209,7 +210,7 @@ testRun(void)
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)))->pd_lsn.xrecoff = 0x7;
 
         write = ioWriteFilterGroupSet(
-            ioSinkWriteNew(),
+            ioBufferWriteNew(bufferOut),
             ioFilterGroupAdd(
                 ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
         ioWriteOpen(write);
@@ -227,7 +228,7 @@ testRun(void)
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
         write = ioWriteFilterGroupSet(
-            ioSinkWriteNew(),
+            ioBufferWriteNew(bufferOut),
             ioFilterGroupAdd(
                 ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
         ioWriteOpen(write);
@@ -245,7 +246,7 @@ testRun(void)
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
         write = ioWriteFilterGroupSet(
-            ioSinkWriteNew(),
+            ioBufferWriteNew(bufferOut),
             ioFilterGroupAdd(
                 ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
         ioWriteOpen(write);

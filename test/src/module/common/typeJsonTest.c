@@ -206,20 +206,20 @@ testRun(void)
                     strNew(
                     "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
                     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-                    "\"checksum-page-error\":[1],\"backup-timestamp-start\":1482182951}"))),
+                    "\"checksum-page-error\":[1,[4,6]],\"backup-timestamp-start\":1482182951}"))),
             "multpile values with array");
         TEST_ASSIGN(json, jsonFromKv(keyValue, 0), "  kvToJson - sorted, no indent");
         TEST_RESULT_STR(strPtr(json),
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1]}",
+            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1,[4,6]]}",
             "  check string no pretty print");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("jsonFromVar()"))
     {
-        TEST_ERROR(jsonFromVar(varNewUInt64(100), 0), JsonFormatError, "variant type is invalid");
+        TEST_ERROR(jsonFromVar(varNewBool(true), 0), JsonFormatError, "variant type is invalid");
 
         String *json = NULL;
         Variant *keyValue = NULL;
@@ -357,6 +357,18 @@ testRun(void)
             "  }\n"
             "]\n",
             "  sorted json string result, pretty print");
+
+        VariantList *varList = varLstNew();
+        varLstAdd(varList, varNewUInt(32));
+        varLstAdd(varList, varNewUInt64(10000000000));
+
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewVarLst(varList), 0)), "[32,10000000000]", "list various types");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(strPtr(jsonFromVar(NULL, 0)), "null", "null variant");
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewUInt(66), 0)), "66", "uint variant");
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewUInt64(10000000001), 0)), "10000000001", "uint64 variant");
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewStrZ("test \" string"), 0)), "\"test \\\" string\"", "string variant");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

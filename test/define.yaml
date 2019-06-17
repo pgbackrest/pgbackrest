@@ -599,7 +599,7 @@ unit:
           command/archive/push/push: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: backup
+      - name: backup-common
         total: 2
 
         coverage:

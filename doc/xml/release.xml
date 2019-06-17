@@ -34,6 +34,22 @@
 
                         <p>Add most unimplemented functions to the remote storage driver.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Rename <code>info*New()</code> functions to <code>info*NewLoad()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add backup management functions to <code>InfoBackup</code>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

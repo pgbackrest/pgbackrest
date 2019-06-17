@@ -146,6 +146,8 @@ pageChecksumResult(THIS_VOID)
         VariantList *errorList = varLstNew();
         unsigned int errorIdx = 0;
 
+        // Convert the full list to an abbreviated list that the Perl code can understand.  In the future we want to return the
+        // entire list so pages can be verified in the WAL.
         do
         {
             unsigned int pageId = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx)), 0));

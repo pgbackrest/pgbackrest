@@ -21,12 +21,13 @@ typedef struct InfoArchive InfoArchive;
 Archive info filename
 ***********************************************************************************************************************************/
 #define INFO_ARCHIVE_FILE                                           "archive.info"
+#define REGEX_ARCHIVE_DIR_DB_VERSION                                "^[0-9]+(\\.[0-9]+)*-[0-9]+$"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoArchive *infoArchiveNew(
-    const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass);
+InfoArchive *infoArchiveNewLoad(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Functions
