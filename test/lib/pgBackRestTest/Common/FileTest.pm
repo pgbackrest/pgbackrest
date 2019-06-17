@@ -276,15 +276,22 @@ sub forceStorageRemove
         );
 
     # If S3 then use storage commands to remove
-    my $oInfo = $oStorage->info($strPathExp, {bIgnoreMissing => true});
-
-    if (defined($oInfo) && $oInfo->{type} eq 'f')
+    if ($oStorage->type() eq 's3')
     {
-        $oStorage->remove($strPathExp);
+        my $oInfo = $oStorage->info($strPathExp, {bIgnoreMissing => true});
+
+        if (defined($oInfo) && $oInfo->{type} eq 'f')
+        {
+            $oStorage->remove($strPathExp);
+        }
+        else
+        {
+            $oStorage->pathRemove($strPathExp, {bRecurse => $bRecurse});
+        }
     }
     else
     {
-        $oStorage->pathRemove($strPathExp, {bRecurse => $bRecurse});
+        executeTest('sudo rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any
