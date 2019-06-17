@@ -148,7 +148,7 @@ eval
 
         processBegin("${strVm} test" . (defined($strParam) ? ": ${strParam}" : ''));
         executeTest(
-            "${strTestExe} --log-level=debug --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" .
+            "${strTestExe} --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" .
                 (defined($strParam) ? " ${strParam}" : ''),
             {bShowOutputAsync => true});
         processEnd();
