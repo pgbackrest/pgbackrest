@@ -8962,7 +8962,6 @@ static const EmbeddedModule embeddedModule[] =
             "\n"
             "storage =>\n"
             "[\n"
-            "'storagePosixPathRemove',\n"
             "'storageRepoFree',\n"
             "],\n"
             "\n"

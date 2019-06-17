@@ -148,7 +148,6 @@ my $rhExport =
     'storage' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(
-            storagePosixPathRemove
             storageRepoFree
         )],
     },

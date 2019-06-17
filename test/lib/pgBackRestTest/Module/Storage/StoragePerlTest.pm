@@ -90,70 +90,6 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin('hashSize()'))
-    {
-        # my $tBuffer;
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {$self->storageLocal()->put($strFile, $strFileContent)}, 8, 'put');
-        #
-        # $self->testResult(
-        #     sub {$self->storageLocal()->hashSize($strFile)},
-        #     qw{(} . cryptoHashOne('sha1', $strFileContent) . ', ' . $iFileSize . qw{)}, '    check hash/size');
-        # $self->testResult(
-        #     sub {$self->storageLocal()->hashSize(BOGUS, {bIgnoreMissing => true})}, "([undef], [undef])",
-        #     '    check missing hash/size');
-    }
-
-    ################################################################################################################################
-    if ($self->begin('copy()'))
-    {
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testException(
-        #     sub {$self->storageLocal()->copy($self->storageLocal()->openRead($strFile), $strFileCopy)}, ERROR_FILE_MISSING,
-        #     "unable to open '" . $self->storageLocal()->pathBase() . "/${strFile}': No such file or directory");
-        # $self->testResult(
-        #     sub {$self->storageLocal()->exists($strFileCopy)}, false, '   destination does not exist');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {$self->storageLocal()->copy(
-        #         $self->storageLocal()->openRead($strFile, {bIgnoreMissing => true}),
-        #         $self->storageLocal()->openWrite($strFileCopy))},
-        #     false, 'missing source io');
-        # $self->testResult(
-        #     sub {$self->storageLocal()->exists($strFileCopy)}, false, '   destination does not exist');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testException(
-        #     sub {$self->storageLocal()->copy($self->storageLocal()->openRead($strFile), $strFileCopy)}, ERROR_FILE_MISSING,
-        #     "unable to open '" . $self->storageLocal()->pathBase() . "/${strFile}': No such file or directory");
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->storageLocal()->put($strFile, $strFileContent);
-        #
-        # $self->testResult(sub {$self->storageLocal()->copy($strFile, $strFileCopy)}, true, 'copy filename->filename');
-        # $self->testResult(sub {${$self->storageLocal()->get($strFileCopy)}}, $strFileContent, '    check copy');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->storageLocal()->remove($strFileCopy);
-        #
-        # $self->testResult(
-        #     sub {$self->storageLocal()->copy($self->storageLocal()->openRead($strFile), $strFileCopy)}, true, 'copy io->filename');
-        # $self->testResult(sub {${$self->storageLocal()->get($strFileCopy)}}, $strFileContent, '    check copy');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->storageLocal()->remove($strFileCopy);
-        #
-        # $self->testResult(
-        #     sub {$self->storageLocal()->copy(
-        #         $self->storageLocal()->openRead($strFile), $self->storageLocal()->openWrite($strFileCopy))},
-        #     true, 'copy io->io');
-        # $self->testResult(sub {${$self->storageLocal()->get($strFileCopy)}}, $strFileContent, '    check copy');
-    }
-
-    ################################################################################################################################
     if ($self->begin('exists()'))
     {
         $self->storageLocal()->put($self->testPath() . "/test.file");
@@ -300,21 +236,6 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin('pathCreate()'))
-    {
-        # my $strTestPath = $self->{strPathLocal} . "/" . BOGUS;
-        #
-        # $self->testResult(sub {$self->storageLocal()->pathCreate($strTestPath)}, "[undef]",
-        #     "test creation of path " . $strTestPath);
-        #
-        # $self->testException(sub {$self->storageLocal()->pathCreate($strTestPath)}, ERROR_PATH_EXISTS,
-        #     "unable to create path '". $strTestPath. "' because it already exists");
-        #
-        # $self->testResult(sub {$self->storageLocal()->pathCreate($strTestPath, {bIgnoreExists => true})}, "[undef]",
-        #     "ignore path exists");
-    }
-
-    ################################################################################################################################
     if ($self->begin('pathExists()'))
     {
         $self->storageLocal()->put($self->testPath() . "/test.file");
@@ -328,106 +249,6 @@ sub run
     if ($self->begin('pathSync()'))
     {
         $self->testResult(sub {$self->storageLocal()->pathSync($self->testPath())}, "[undef]", "test path sync");
-    }
-
-    ################################################################################################################################
-    if ($self->begin('encryption'))
-    {
-        # my $strCipherPass = 'x';
-        # $self->testResult(sub {cryptoHashOne('sha1', $strFileContent)}, $strFileHash, 'hash check contents to be written');
-        #
-        # # Error when passphrase not passed
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # my $oFileIo = $self->testException(sub {$self->storageEncrypt()->openWrite($strFile)},
-        #     ERROR_ASSERT, 'tCipherPass is required in Storage::Filter::CipherBlock->new');
-        #
-        # # Write an encrypted file
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $oFileIo = $self->testResult(sub {$self->storageEncrypt()->openWrite($strFile, {strCipherPass => $strCipherPass})},
-        #     '[object]', 'open write');
-        #
-        # my $iWritten = $oFileIo->write(\$strFileContent);
-        # $self->testResult(sub {$oFileIo->close()}, true, '    close');
-        #
-        # # Check that it is encrypted and valid for the repo encryption type
-        # $self->testResult(sub {$self->storageEncrypt()->encryptionValid($self->storageEncrypt()->encrypted($strFile))}, true,
-        #     '    test storage encrypted and valid');
-        #
-        # $self->testResult(
-        #     sub {cryptoHashOne('sha1', ${storageTest()->get($strFile)}) ne $strFileHash}, true, '    check written sha1 different');
-        #
-        # # Error when passphrase not passed
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $oFileIo = $self->testException(sub {$self->storageEncrypt()->openRead($strFile)},
-        #     ERROR_ASSERT, 'tCipherPass is required in Storage::Filter::CipherBlock->new');
-        #
-        # # Read it and confirm it decrypts and is same as original content
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $oFileIo = $self->testResult(sub {$self->storageEncrypt()->openRead($strFile, {strCipherPass => $strCipherPass})},
-        #     '[object]', 'open read and decrypt');
-        # my $strContent;
-        # $oFileIo->read(\$strContent, $iWritten);
-        # $self->testResult(sub {$oFileIo->close()}, true, '    close');
-        # $self->testResult($strContent, $strFileContent, '    decrypt read equal orginal contents');
-        #
-        # # Copy
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testResult(
-        #     sub {$self->storageEncrypt()->copy(
-        #         $self->storageEncrypt()->openRead($strFile, {strCipherPass => $strCipherPass}),
-        #         $self->storageEncrypt()->openWrite($strFileCopy, {strCipherPass => $strCipherPass}))},
-        #     true, 'copy - decrypt/encrypt');
-        #
-        # $self->testResult(
-        #     sub {cryptoHashOne('sha1', ${$self->storageEncrypt()->get($strFileCopy, {strCipherPass => $strCipherPass})})},
-        #     $strFileHash, '    check decrypted copy file sha1 same as original plaintext file');
-        #
-        # # Write an empty encrypted file
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # my $strFileZero = 'file-0.txt';
-        # my $strZeroContent = '';
-        # $oFileIo = $self->testResult(
-        #     sub {$self->storageEncrypt()->openWrite($strFileZero, {strCipherPass => $strCipherPass})}, '[object]',
-        #     'open write for zero');
-        #
-        # $self->testResult(sub {$oFileIo->write(\$strZeroContent)}, 0, '    zero written');
-        # $self->testResult(sub {$oFileIo->close()}, true, '    close');
-        #
-        # $self->testResult(sub {$self->storageEncrypt()->encrypted($strFile)}, true, '    test empty file encrypted');
-        #
-        # # Write an unencrypted file to the encrypted storage and check if the file is valid for that storage
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # my $strFileTest = $self->testPath() . qw{/} . 'test.file.txt';
-        #
-        # # Create empty file
-        # executeTest("touch ${strFileTest}");
-        # $self->testResult(sub {$self->storageEncrypt()->encrypted($strFileTest)}, false, 'empty file so not encrypted');
-        #
-        # # Add unencrypted content to the file
-        # executeTest("echo -n '${strFileContent}' | tee ${strFileTest}");
-        # $self->testResult(sub {$self->storageEncrypt()->encryptionValid($self->storageEncrypt()->encrypted($strFileTest))}, false,
-        #     'storage encryption and unencrypted file format do not match');
-        #
-        # # Unencrypted file valid in unencrypted storage
-        # $self->testResult(sub {$self->storageLocal()->encryptionValid($self->storageLocal()->encrypted($strFileTest))}, true,
-        #     'unencrypted file valid in unencrypted storage');
-        #
-        # # Prepend encryption Magic Signature and test encrypted file in unencrypted storage not valid
-        # executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strFileTest . ')" > ' . $strFileTest);
-        # $self->testResult(sub {$self->storageLocal()->encryptionValid($self->storageLocal()->encrypted($strFileTest))}, false,
-        #     'storage unencrypted and encrypted file format do not match');
-        #
-        # # Test a file that does not exist
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $strFileTest = $self->testPath() . qw{/} . 'testfile';
-        # $self->testException(sub {$self->storageEncrypt()->encrypted($strFileTest)}, ERROR_FILE_MISSING,
-        #     "unable to open '" . $strFileTest . "': No such file or directory");
-        #
-        # $self->testResult(sub {$self->storageEncrypt()->encrypted($strFileTest, {bIgnoreMissing => true})}, true,
-        #     'encryption for ignore missing file returns encrypted for encrypted storage');
-        #
-        # $self->testResult(sub {$self->storageLocal()->encrypted($strFileTest, {bIgnoreMissing => true})}, false,
-        #     'encryption for ignore missing file returns unencrypted for unencrypted storage');
     }
 }
 

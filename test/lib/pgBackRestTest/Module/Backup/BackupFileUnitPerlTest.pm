@@ -217,11 +217,6 @@ sub run
         storageTest()->remove($strPgControlRepo);
 
         #---------------------------------------------------------------------------------------------------------------------------
-        # No prior checksum, yes compression, yes page checksum, no extra, no delta, no hasReference
-        # $self->testException(sub {backupFile($strFileDb, $strRepoFile, $lFileSize, undef, true,
-        #     $strBackupLabel, true, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef)}, ERROR_ASSERT,
-        #     "iWalId is required in Backup::Filter::PageChecksum->new");
-
         # Build the lsn start parameter to pass to the extra function
         my $hStartLsnParam =
         {
@@ -229,7 +224,6 @@ sub run
             iWalOffset => 0xFFFF,
         };
 
-        #---------------------------------------------------------------------------------------------------------------------------
         # No prior checksum, yes compression, yes page checksum, yes extra, no delta, no hasReference
         ($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
             backupFile($strFileDb, $strRepoFile, $lFileSize, undef, true, $strBackupLabel, true,

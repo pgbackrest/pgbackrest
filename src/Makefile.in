@@ -88,7 +88,6 @@ SRCS = \
 	common/io/http/query.c \
 	common/io/io.c \
 	common/io/read.c \
-	common/io/sinkWrite.c \
 	common/io/tls/client.c \
 	common/io/write.c \
 	common/ini.c \
@@ -332,9 +331,6 @@ common/io/io.o: common/io/io.c build.auto.h common/assert.h common/debug.h commo
 
 common/io/read.o: common/io/read.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/read.h common/io/read.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/io/read.c -o common/io/read.o
-
-common/io/sinkWrite.o: common/io/sinkWrite.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/sinkWrite.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/io/sinkWrite.c -o common/io/sinkWrite.o
 
 common/io/tls/client.o: common/io/tls/client.c build.auto.h common/assert.h common/crypto/common.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/read.h common/io/read.intern.h common/io/tls/client.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h common/wait.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/io/tls/client.c -o common/io/tls/client.o
