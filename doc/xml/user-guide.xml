@@ -620,7 +620,6 @@
             <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-ca-file" if="{[os-type-is-centos]}">/etc/pki/tls/certs/ca-bundle.crt</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
