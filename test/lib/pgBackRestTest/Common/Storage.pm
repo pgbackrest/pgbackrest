@@ -29,14 +29,11 @@ sub new
         $strOperation,
         $strPathBase,
         $oDriver,
-        $hRule,
         $bAllowTemp,
         $strTempExtension,
         $strDefaultPathMode,
         $strDefaultFileMode,
         $lBufferMax,
-        $strCipherType,
-        $strCipherPassUser,
     ) =
         logDebugParam
         (
