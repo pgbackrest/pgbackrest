@@ -74,8 +74,6 @@ sub libcAutoExportTag
         checksum =>
         [
             'pageChecksum',
-            'pageChecksumBufferTest',
-            'pageChecksumTest',
         ],
 
         config =>

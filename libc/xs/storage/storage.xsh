@@ -5,6 +5,7 @@ Storage XS Header
 #include "common/assert.h"
 #include "common/compress/gzip/compress.h"
 #include "common/compress/gzip/decompress.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/io/filter/size.h"
 #include "common/memContext.h"
 #include "common/type/convert.h"

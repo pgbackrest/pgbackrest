@@ -8686,8 +8686,6 @@ static const EmbeddedModule embeddedModule[] =
             "checksum =>\n"
             "[\n"
             "'pageChecksum',\n"
-            "'pageChecksumBufferTest',\n"
-            "'pageChecksumTest',\n"
             "],\n"
             "\n"
             "config =>\n"

@@ -58,6 +58,7 @@ These includes are from the src directory.  There is no Perl-specific code in th
 ***********************************************************************************************************************************/
 #include "common/crypto/common.h"
 #include "common/error.h"
+#include "common/io/io.h"
 #include "common/lock.h"
 #include "config/config.h"
 #include "config/define.h"
@@ -77,7 +78,6 @@ XSH includes
 
 These includes define data structures that are required for the C to Perl interface but are not part of the regular C source.
 ***********************************************************************************************************************************/
-#include "xs/crypto/cipherBlock.xsh"
 #include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
 #include "xs/storage/storage.xsh"
@@ -262,10 +262,7 @@ XS_EUPXS(XS_pgBackRest__LibC_libcUvSize)
 /* INCLUDE:  Including 'xs/config/define.xs' from 'xs/config/configTest.xs' */
 
 
-/* INCLUDE:  Including 'xs/crypto/cipherBlock.xs' from 'xs/config/define.xs' */
-
-
-/* INCLUDE:  Including 'xs/crypto/hash.xs' from 'xs/crypto/cipherBlock.xs' */
+/* INCLUDE:  Including 'xs/crypto/hash.xs' from 'xs/config/define.xs' */
 
 
 /* INCLUDE:  Including 'xs/crypto/random.xs' from 'xs/crypto/hash.xs' */
@@ -277,10 +274,7 @@ XS_EUPXS(XS_pgBackRest__LibC_libcUvSize)
 /* INCLUDE:  Including 'xs/storage/storage.xs' from 'xs/postgres/pageChecksum.xs' */
 
 
-/* INCLUDE:  Including 'xs/storage/storageHelper.xs' from 'xs/storage/storage.xs' */
-
-
-/* INCLUDE:  Including 'xs/storage/storageRead.xs' from 'xs/storage/storageHelper.xs' */
+/* INCLUDE:  Including 'xs/storage/storageRead.xs' from 'xs/storage/storage.xs' */
 
 
 /* INCLUDE:  Including 'xs/storage/storageWrite.xs' from 'xs/storage/storageRead.xs' */
@@ -858,48 +852,7 @@ XS_EUPXS(XS_pgBackRest__LibC__StorageRead_DESTROY)
 }
 
 
-/* INCLUDE: Returning to 'xs/storage/storageHelper.xs' from 'xs/storage/storageRead.xs' */
-
-
-XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove)
-{
-    dVAR; dXSARGS;
-    if (items != 3)
-       croak_xs_usage(cv,  "path, errorOnMissing, recurse");
-    {
-	const char *	path = (const char *)SvPV_nolen(ST(0))
-;
-	bool	errorOnMissing = (bool)SvTRUE(ST(1))
-;
-	bool	recurse = (bool)SvTRUE(ST(2))
-;
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-        storagePathRemoveP(
-            storagePosixNew(strNew("/"), 0640, 750, true, NULL), strNew(path), .errorOnMissing = errorOnMissing,
-            .recurse = recurse);
-    }
-    MEM_CONTEXT_XS_TEMP_END();
-    }
-    XSRETURN_EMPTY;
-}
-
-
-XS_EUPXS(XS_pgBackRest__LibC_storageRepoFree); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC_storageRepoFree)
-{
-    dVAR; dXSARGS;
-    if (items != 0)
-       croak_xs_usage(cv,  "");
-    {
-    storageHelperFree();
-    }
-    XSRETURN_EMPTY;
-}
-
-
-/* INCLUDE: Returning to 'xs/storage/storage.xs' from 'xs/storage/storageHelper.xs' */
+/* INCLUDE: Returning to 'xs/storage/storage.xs' from 'xs/storage/storageRead.xs' */
 
 
 XS_EUPXS(XS_pgBackRest__LibC__Storage_new); /* prototype to pass -Wmissing-prototypes */
@@ -1586,72 +1539,6 @@ XS_EUPXS(XS_pgBackRest__LibC_pageChecksum)
 }
 
 
-XS_EUPXS(XS_pgBackRest__LibC_pageChecksumTest); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC_pageChecksumTest)
-{
-    dVAR; dXSARGS;
-    if (items != 5)
-       croak_xs_usage(cv,  "page, blockNo, pageSize, ignoreWalId, ignoreWalOffset");
-    {
-	const char *	page = (const char *)SvPV_nolen(ST(0))
-;
-	U32	blockNo = (unsigned long)SvUV(ST(1))
-;
-	U32	pageSize = (unsigned long)SvUV(ST(2))
-;
-	U32	ignoreWalId = (unsigned long)SvUV(ST(3))
-;
-	U32	ignoreWalOffset = (unsigned long)SvUV(ST(4))
-;
-	bool	RETVAL;
-    RETVAL = false;
-
-    ERROR_XS_BEGIN()
-    {
-        RETVAL = pageChecksumTest(
-            (const unsigned char *)page, blockNo, pageSize, ignoreWalId, ignoreWalOffset);
-    }
-    ERROR_XS_END();
-	ST(0) = boolSV(RETVAL);
-    }
-    XSRETURN(1);
-}
-
-
-XS_EUPXS(XS_pgBackRest__LibC_pageChecksumBufferTest); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC_pageChecksumBufferTest)
-{
-    dVAR; dXSARGS;
-    if (items != 6)
-       croak_xs_usage(cv,  "pageBuffer, pageBufferSize, blockNoBegin, pageSize, ignoreWalId, ignoreWalOffset");
-    {
-	const char *	pageBuffer = (const char *)SvPV_nolen(ST(0))
-;
-	U32	pageBufferSize = (unsigned long)SvUV(ST(1))
-;
-	U32	blockNoBegin = (unsigned long)SvUV(ST(2))
-;
-	U32	pageSize = (unsigned long)SvUV(ST(3))
-;
-	U32	ignoreWalId = (unsigned long)SvUV(ST(4))
-;
-	U32	ignoreWalOffset = (unsigned long)SvUV(ST(5))
-;
-	bool	RETVAL;
-    RETVAL = false;
-
-    ERROR_XS_BEGIN()
-    {
-        RETVAL = pageChecksumBufferTest(
-            (const unsigned char *)pageBuffer, pageBufferSize, blockNoBegin, pageSize, ignoreWalId, ignoreWalOffset);
-    }
-    ERROR_XS_END();
-	ST(0) = boolSV(RETVAL);
-    }
-    XSRETURN(1);
-}
-
-
 /* INCLUDE: Returning to 'xs/crypto/random.xs' from 'xs/postgres/pageChecksum.xs' */
 
 
@@ -1679,137 +1566,6 @@ XS_EUPXS(XS_pgBackRest__LibC_cryptoRandomBytes)
 
 
 /* INCLUDE: Returning to 'xs/crypto/hash.xs' from 'xs/crypto/random.xs' */
-
-
-XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_new); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_new)
-{
-    dVAR; dXSARGS;
-    if (items != 2)
-       croak_xs_usage(cv,  "class, type");
-    {
-	const char *	class = (const char *)SvPV_nolen(ST(0))
-;
-	const char *	type = (const char *)SvPV_nolen(ST(1))
-;
-	pgBackRest__LibC__Crypto__Hash	RETVAL;
-    RETVAL = NULL;
-
-    // Don't warn when class param is used
-    (void)class;
-
-    MEM_CONTEXT_XS_NEW_BEGIN("cryptoHashXs")
-    {
-        RETVAL = memNew(sizeof(CryptoHashXs));
-        RETVAL->memContext = MEM_CONTEXT_XS();
-        RETVAL->pxPayload = cryptoHashNew(strNew(type));
-    }
-    MEM_CONTEXT_XS_NEW_END();
-	{
-	    SV * RETVALSV;
-	    RETVALSV = sv_newmortal();
-	    sv_setref_pv(RETVALSV, "pgBackRest::LibC::Crypto::Hash", (void*)RETVAL);
-	    ST(0) = RETVALSV;
-	}
-    }
-    XSRETURN(1);
-}
-
-
-XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_process); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_process)
-{
-    dVAR; dXSARGS;
-    if (items != 2)
-       croak_xs_usage(cv,  "self, message");
-    {
-	pgBackRest__LibC__Crypto__Hash	self;
-	SV *	message = ST(1)
-;
-
-	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Crypto::Hash")) {
-	    IV tmp = SvIV((SV*)SvRV(ST(0)));
-	    self = INT2PTR(pgBackRest__LibC__Crypto__Hash,tmp);
-	}
-	else
-	    Perl_croak_nocontext("%s: %s is not of type %s",
-			"pgBackRest::LibC::Crypto::Hash::process",
-			"self", "pgBackRest::LibC::Crypto::Hash")
-;
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-        STRLEN messageSize;
-        const void *messagePtr = SvPV(message, messageSize);
-
-        if (messageSize > 0)
-            ioFilterProcessIn(self->pxPayload, BUF(messagePtr, messageSize));
-    }
-    MEM_CONTEXT_XS_TEMP_END();
-    }
-    XSRETURN_EMPTY;
-}
-
-
-XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_result); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_result)
-{
-    dVAR; dXSARGS;
-    if (items != 1)
-       croak_xs_usage(cv,  "self");
-    {
-	pgBackRest__LibC__Crypto__Hash	self;
-	SV *	RETVAL;
-
-	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Crypto::Hash")) {
-	    IV tmp = SvIV((SV*)SvRV(ST(0)));
-	    self = INT2PTR(pgBackRest__LibC__Crypto__Hash,tmp);
-	}
-	else
-	    Perl_croak_nocontext("%s: %s is not of type %s",
-			"pgBackRest::LibC::Crypto::Hash::result",
-			"self", "pgBackRest::LibC::Crypto::Hash")
-;
-    RETVAL = NULL;
-
-    MEM_CONTEXT_XS_TEMP_BEGIN()
-    {
-        const String *hash = varStr(ioFilterResult(self->pxPayload));
-
-        RETVAL = newSV(strSize(hash));
-        SvPOK_only(RETVAL);
-        strcpy((char *)SvPV_nolen(RETVAL), strPtr(hash));
-        SvCUR_set(RETVAL, strSize(hash));
-    }
-    MEM_CONTEXT_XS_TEMP_END();
-	RETVAL = sv_2mortal(RETVAL);
-	ST(0) = RETVAL;
-    }
-    XSRETURN(1);
-}
-
-
-XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_DESTROY); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_DESTROY)
-{
-    dVAR; dXSARGS;
-    if (items != 1)
-       croak_xs_usage(cv,  "self");
-    {
-	pgBackRest__LibC__Crypto__Hash	self;
-
-	if (SvROK(ST(0))) {
-	    IV tmp = SvIV((SV*)SvRV(ST(0)));
-	    self = INT2PTR(pgBackRest__LibC__Crypto__Hash,tmp);
-	}
-	else
-	    Perl_croak_nocontext("%s: %s is not a reference",
-			"pgBackRest::LibC::Crypto::Hash::DESTROY",
-			"self")
-;
-    MEM_CONTEXT_XS_DESTROY(self->memContext);
-    }
-    XSRETURN_EMPTY;
-}
 
 
 XS_EUPXS(XS_pgBackRest__LibC_cryptoHashOne); /* prototype to pass -Wmissing-prototypes */
@@ -1846,195 +1602,7 @@ XS_EUPXS(XS_pgBackRest__LibC_cryptoHashOne)
 }
 
 
-/* INCLUDE: Returning to 'xs/crypto/cipherBlock.xs' from 'xs/crypto/hash.xs' */
-
-
-XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_new); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_new)
-{
-    dVAR; dXSARGS;
-    if (items < 5 || items > 6)
-       croak_xs_usage(cv,  "class, mode, type, key, keySize, digest = NULL");
-    {
-	const char *	class = (const char *)SvPV_nolen(ST(0))
-;
-	U32	mode = (unsigned long)SvUV(ST(1))
-;
-	const char *	type = (const char *)SvPV_nolen(ST(2))
-;
-	unsigned char *	key = (unsigned char *)SvPV_nolen(ST(3))
-;
-	I32	keySize = (I32)SvIV(ST(4))
-;
-	const char *	digest;
-	pgBackRest__LibC__Cipher__Block	RETVAL;
-
-	if (items < 6)
-	    digest = NULL;
-	else {
-	    digest = (const char *)SvPV_nolen(ST(5))
-;
-	}
-    RETVAL = NULL;
-
-    CHECK(type != NULL);
-    CHECK(key != NULL);
-    CHECK(keySize != 0);
-
-    // Not much point to this but it keeps the var from being unused
-    if (strcmp(class, PACKAGE_NAME_LIBC "::Cipher::Block") != 0)
-        croak("unexpected class name '%s'", class);
-
-    MEM_CONTEXT_XS_NEW_BEGIN("cipherBlockXs")
-    {
-        RETVAL = memNew(sizeof(CipherBlockXs));
-        RETVAL->memContext = MEM_CONTEXT_XS();
-
-        RETVAL->pxPayload = cipherBlockNew(mode, cipherType(STR(type)), BUF(key, keySize), digest == NULL ? NULL : STR(digest));
-    }
-    MEM_CONTEXT_XS_NEW_END();
-	{
-	    SV * RETVALSV;
-	    RETVALSV = sv_newmortal();
-	    sv_setref_pv(RETVALSV, "pgBackRest::LibC::Cipher::Block", (void*)RETVAL);
-	    ST(0) = RETVALSV;
-	}
-    }
-    XSRETURN(1);
-}
-
-
-XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_process); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_process)
-{
-    dVAR; dXSARGS;
-    if (items != 2)
-       croak_xs_usage(cv,  "self, source");
-    {
-	pgBackRest__LibC__Cipher__Block	self;
-	SV *	source = ST(1)
-;
-	SV *	RETVAL;
-
-	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Cipher::Block")) {
-	    IV tmp = SvIV((SV*)SvRV(ST(0)));
-	    self = INT2PTR(pgBackRest__LibC__Cipher__Block,tmp);
-	}
-	else
-	    Perl_croak_nocontext("%s: %s is not of type %s",
-			"pgBackRest::LibC::Cipher::Block::process",
-			"self", "pgBackRest::LibC::Cipher::Block")
-;
-    RETVAL = NULL;
-
-    MEM_CONTEXT_XS_BEGIN(self->memContext)
-    {
-        STRLEN tSize;
-        const unsigned char *sourcePtr = (const unsigned char *)SvPV(source, tSize);
-
-        RETVAL = NEWSV(0, ioBufferSize());
-        SvPOK_only(RETVAL);
-
-        if (tSize > 0)
-        {
-            size_t outBufferUsed = 0;
-
-            do
-            {
-                SvGROW(RETVAL, outBufferUsed + ioBufferSize());
-                Buffer *outBuffer = bufNewUseC((unsigned char *)SvPV_nolen(RETVAL) + outBufferUsed, ioBufferSize());
-
-                ioFilterProcessInOut(self->pxPayload, BUF(sourcePtr, tSize), outBuffer);
-                outBufferUsed += bufUsed(outBuffer);
-            }
-            while (ioFilterInputSame(self->pxPayload));
-
-            SvCUR_set(RETVAL, outBufferUsed);
-        }
-        else
-            SvCUR_set(RETVAL, 0);
-    }
-    MEM_CONTEXT_XS_END();
-	RETVAL = sv_2mortal(RETVAL);
-	ST(0) = RETVAL;
-    }
-    XSRETURN(1);
-}
-
-
-XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_flush); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_flush)
-{
-    dVAR; dXSARGS;
-    if (items != 1)
-       croak_xs_usage(cv,  "self");
-    {
-	pgBackRest__LibC__Cipher__Block	self;
-	SV *	RETVAL;
-
-	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Cipher::Block")) {
-	    IV tmp = SvIV((SV*)SvRV(ST(0)));
-	    self = INT2PTR(pgBackRest__LibC__Cipher__Block,tmp);
-	}
-	else
-	    Perl_croak_nocontext("%s: %s is not of type %s",
-			"pgBackRest::LibC::Cipher::Block::flush",
-			"self", "pgBackRest::LibC::Cipher::Block")
-;
-    RETVAL = NULL;
-
-    MEM_CONTEXT_XS_BEGIN(self->memContext)
-    {
-        RETVAL = NEWSV(0, ioBufferSize());
-        SvPOK_only(RETVAL);
-
-        size_t outBufferUsed = 0;
-
-        do
-        {
-            SvGROW(RETVAL, outBufferUsed + ioBufferSize());
-            Buffer *outBuffer = bufNewUseC((unsigned char *)SvPV_nolen(RETVAL) + outBufferUsed, ioBufferSize());
-
-            ioFilterProcessInOut(self->pxPayload, NULL, outBuffer);
-            outBufferUsed += bufUsed(outBuffer);
-        }
-        while (!ioFilterDone(self->pxPayload));
-
-        SvCUR_set(RETVAL, outBufferUsed);
-    }
-    MEM_CONTEXT_XS_END();
-	RETVAL = sv_2mortal(RETVAL);
-	ST(0) = RETVAL;
-    }
-    XSRETURN(1);
-}
-
-
-XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_DESTROY); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_DESTROY)
-{
-    dVAR; dXSARGS;
-    if (items != 1)
-       croak_xs_usage(cv,  "self");
-    {
-	pgBackRest__LibC__Cipher__Block	self;
-
-	if (SvROK(ST(0))) {
-	    IV tmp = SvIV((SV*)SvRV(ST(0)));
-	    self = INT2PTR(pgBackRest__LibC__Cipher__Block,tmp);
-	}
-	else
-	    Perl_croak_nocontext("%s: %s is not a reference",
-			"pgBackRest::LibC::Cipher::Block::DESTROY",
-			"self")
-;
-    MEM_CONTEXT_XS_DESTROY(self->memContext);
-    }
-    XSRETURN_EMPTY;
-}
-
-
-/* INCLUDE: Returning to 'xs/config/define.xs' from 'xs/crypto/cipherBlock.xs' */
+/* INCLUDE: Returning to 'xs/config/define.xs' from 'xs/crypto/hash.xs' */
 
 
 XS_EUPXS(XS_pgBackRest__LibC_cfgCommandId); /* prototype to pass -Wmissing-prototypes */
@@ -2522,8 +2090,6 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::StorageRead::result", XS_pgBackRest__LibC__StorageRead_result);
         newXS_deffile("pgBackRest::LibC::StorageRead::resultAll", XS_pgBackRest__LibC__StorageRead_resultAll);
         newXS_deffile("pgBackRest::LibC::StorageRead::DESTROY", XS_pgBackRest__LibC__StorageRead_DESTROY);
-        newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
-        newXS_deffile("pgBackRest::LibC::storageRepoFree", XS_pgBackRest__LibC_storageRepoFree);
         newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
         newXS_deffile("pgBackRest::LibC::Storage::copy", XS_pgBackRest__LibC__Storage_copy);
         newXS_deffile("pgBackRest::LibC::Storage::exists", XS_pgBackRest__LibC__Storage_exists);
@@ -2543,18 +2109,8 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::Storage::cipherPass", XS_pgBackRest__LibC__Storage_cipherPass);
         newXS_deffile("pgBackRest::LibC::Storage::type", XS_pgBackRest__LibC__Storage_type);
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);
-        newXS_deffile("pgBackRest::LibC::pageChecksumTest", XS_pgBackRest__LibC_pageChecksumTest);
-        newXS_deffile("pgBackRest::LibC::pageChecksumBufferTest", XS_pgBackRest__LibC_pageChecksumBufferTest);
         newXS_deffile("pgBackRest::LibC::cryptoRandomBytes", XS_pgBackRest__LibC_cryptoRandomBytes);
-        newXS_deffile("pgBackRest::LibC::Crypto::Hash::new", XS_pgBackRest__LibC__Crypto__Hash_new);
-        newXS_deffile("pgBackRest::LibC::Crypto::Hash::process", XS_pgBackRest__LibC__Crypto__Hash_process);
-        newXS_deffile("pgBackRest::LibC::Crypto::Hash::result", XS_pgBackRest__LibC__Crypto__Hash_result);
-        newXS_deffile("pgBackRest::LibC::Crypto::Hash::DESTROY", XS_pgBackRest__LibC__Crypto__Hash_DESTROY);
         newXS_deffile("pgBackRest::LibC::cryptoHashOne", XS_pgBackRest__LibC_cryptoHashOne);
-        newXS_deffile("pgBackRest::LibC::Cipher::Block::new", XS_pgBackRest__LibC__Cipher__Block_new);
-        newXS_deffile("pgBackRest::LibC::Cipher::Block::process", XS_pgBackRest__LibC__Cipher__Block_process);
-        newXS_deffile("pgBackRest::LibC::Cipher::Block::flush", XS_pgBackRest__LibC__Cipher__Block_flush);
-        newXS_deffile("pgBackRest::LibC::Cipher::Block::DESTROY", XS_pgBackRest__LibC__Cipher__Block_DESTROY);
         newXS_deffile("pgBackRest::LibC::cfgCommandId", XS_pgBackRest__LibC_cfgCommandId);
         newXS_deffile("pgBackRest::LibC::cfgOptionId", XS_pgBackRest__LibC_cfgOptionId);
         newXS_deffile("pgBackRest::LibC::cfgDefOptionDefault", XS_pgBackRest__LibC_cfgDefOptionDefault);

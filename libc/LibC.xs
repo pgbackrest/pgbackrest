@@ -50,6 +50,7 @@ These includes are from the src directory.  There is no Perl-specific code in th
 ***********************************************************************************************************************************/
 #include "common/crypto/common.h"
 #include "common/error.h"
+#include "common/io/io.h"
 #include "common/lock.h"
 #include "config/config.h"
 #include "config/define.h"
@@ -69,7 +70,6 @@ XSH includes
 
 These includes define data structures that are required for the C to Perl interface but are not part of the regular C source.
 ***********************************************************************************************************************************/
-#include "xs/crypto/cipherBlock.xsh"
 #include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
 #include "xs/storage/storage.xsh"
@@ -100,11 +100,9 @@ INCLUDE: xs/common/lock.xs
 INCLUDE: xs/config/config.xs
 INCLUDE: xs/config/configTest.xs
 INCLUDE: xs/config/define.xs
-INCLUDE: xs/crypto/cipherBlock.xs
 INCLUDE: xs/crypto/hash.xs
 INCLUDE: xs/crypto/random.xs
 INCLUDE: xs/postgres/pageChecksum.xs
 INCLUDE: xs/storage/storage.xs
-INCLUDE: xs/storage/storageHelper.xs
 INCLUDE: xs/storage/storageRead.xs
 INCLUDE: xs/storage/storageWrite.xs
