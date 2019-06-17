@@ -215,7 +215,13 @@ sub info
             {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
-    my $rhInfo = $self->{oJSON}->decode($self->{oStorageC}->info($strPathFileExp, $bIgnoreMissing));
+    my $rhInfo;
+    my $strJson = $self->{oStorageC}->info($strPathFileExp, $bIgnoreMissing);
+
+    if (defined($strJson))
+    {
+        $rhInfo = $self->{oJSON}->decode($strJson);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn

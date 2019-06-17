@@ -528,6 +528,7 @@ storageS3Info(THIS_VOID, const String *file, bool followLink)
     if (httpClientResponseCodeOk(httpResult.httpClient))
     {
         result.exists = true;
+        result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
     }
 

@@ -1507,6 +1507,19 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_type)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC_storageRepoFree); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC_storageRepoFree)
+{
+    dVAR; dXSARGS;
+    if (items != 0)
+       croak_xs_usage(cv,  "");
+    {
+    storageHelperFree();
+    }
+    XSRETURN_EMPTY;
+}
+
+
 /* INCLUDE: Returning to 'xs/postgres/pageChecksum.xs' from 'xs/storage/storage.xs' */
 
 
@@ -2108,6 +2121,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::Storage::cipherType", XS_pgBackRest__LibC__Storage_cipherType);
         newXS_deffile("pgBackRest::LibC::Storage::cipherPass", XS_pgBackRest__LibC__Storage_cipherPass);
         newXS_deffile("pgBackRest::LibC::Storage::type", XS_pgBackRest__LibC__Storage_type);
+        newXS_deffile("pgBackRest::LibC::storageRepoFree", XS_pgBackRest__LibC_storageRepoFree);
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);
         newXS_deffile("pgBackRest::LibC::cryptoRandomBytes", XS_pgBackRest__LibC_cryptoRandomBytes);
         newXS_deffile("pgBackRest::LibC::cryptoHashOne", XS_pgBackRest__LibC_cryptoHashOne);

@@ -242,7 +242,7 @@ sub forceStorageOwner
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    # Mode commands are ignored on S3
+    # Owner commands are ignored on S3
     if ($oStorage->type() ne 's3')
     {
         executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
@@ -276,14 +276,15 @@ sub forceStorageRemove
         );
 
     # If S3 then use storage commands to remove
-    if ($oStorage->type() eq 's3')
+    my $oInfo = $oStorage->info($strPathExp, {bIgnoreMissing => true});
+
+    if (defined($oInfo) && $oInfo->{type} eq 'f')
     {
-        $oStorage->remove($strPathExp, {bRecurse => $bRecurse});
+        $oStorage->remove($strPathExp);
     }
-    # Else remove using filesystem commands
     else
     {
-        executeTest('sudo rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
+        $oStorage->pathRemove($strPathExp, {bRecurse => $bRecurse});
     }
 
     # Return from function and log return values if any

@@ -399,3 +399,11 @@ OUTPUT:
 CLEANUP:
     }
     MEM_CONTEXT_XS_TEMP_END();
+
+MODULE = pgBackRest::LibC PACKAGE = pgBackRest::LibC
+
+####################################################################################################################################
+void
+storageRepoFree()
+CODE:
+    storageHelperFree();
