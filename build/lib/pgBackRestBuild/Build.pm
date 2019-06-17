@@ -15,10 +15,11 @@ use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Storage::Local;
-use pgBackRest::Storage::Posix::Driver;
 
 use pgBackRestBuild::Build::Common;
+
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
 
 ####################################################################################################################################
 # Define generator used for auto generated warning messages
@@ -35,8 +36,8 @@ sub buildAll
     my $strFileExt = shift;
 
     # Storage object
-    my $oStorage = new pgBackRest::Storage::Local(
-        $strBuildPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorage = new pgBackRestTest::Common::Storage(
+        $strBuildPath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     # List of files actually built
     my @stryBuilt;

@@ -31,8 +31,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Storage::Posix::Driver;
-use pgBackRest::Storage::Local;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build;
@@ -55,6 +53,8 @@ use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::JobTest;
 use pgBackRestTest::Common::ListTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
@@ -328,8 +328,8 @@ eval
         $strTestPath = cwd() . '/test';
     }
 
-    my $oStorageTest = new pgBackRest::Storage::Local(
-        $strTestPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorageTest = new pgBackRestTest::Common::Storage(
+        $strTestPath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     if ($bCoverageOnly)
     {
@@ -357,8 +357,8 @@ eval
     # Get the base backrest path
     my $strBackRestBase = dirname(dirname(abs_path($0)));
 
-    my $oStorageBackRest = new pgBackRest::Storage::Local(
-        $strBackRestBase, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorageBackRest = new pgBackRestTest::Common::Storage(
+        $strBackRestBase, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     ################################################################################################################################
     # Build Docker containers

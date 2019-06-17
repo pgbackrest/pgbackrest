@@ -35,11 +35,11 @@ use BackRestDoc::Markdown::DocMarkdown;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Storage::Local;
-use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
 
 ####################################################################################################################################
 # Usage
@@ -124,8 +124,8 @@ eval
     my $strDocExe = "${strDocPath}/doc.pl";
     my $strTestExe = dirname($strDocPath) . "/test/test.pl";
 
-    my $oStorageDoc = new pgBackRest::Storage::Local(
-        $strDocPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorageDoc = new pgBackRestTest::Common::Storage(
+        $strDocPath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     # Determine if this is a dev release
     my $bDev = PROJECT_VERSION =~ /dev$/;
