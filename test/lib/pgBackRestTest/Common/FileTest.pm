@@ -286,7 +286,7 @@ sub forceStorageRemove
         }
         else
         {
-            $oStorage->pathRemove($strPathExp, {bRecurse => $bRecurse});
+            $oStorage->pathRemove($strPathExp, {bRecurse => true});
         }
     }
     else
