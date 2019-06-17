@@ -156,7 +156,7 @@ sub run
 
             $oHostDbMaster->check(
                 'fail on missing archive.info file',
-                {iTimeout => 0.5, iExpectedExitStatus => ERROR_FILE_MISSING});
+                {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
 
             # Backup.info was created earlier so force stanza-create to create archive info file
             $oHostBackup->stanzaCreate('force create stanza info files', {strOptionalParam => ' --' . cfgOptionName(CFGOPT_FORCE)});
@@ -166,12 +166,12 @@ sub run
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveEnabled => false});
 
             $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_FULL, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
-            $oHostDbMaster->check($strComment, {iTimeout => 0.5, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
 
             # If running the remote tests then also need to run check locally
             if ($bHostBackup)
             {
-                $oHostBackup->check($strComment, {iTimeout => 0.5, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
             }
 
             # Check ERROR_ARCHIVE_COMMAND_INVALID error
@@ -179,12 +179,12 @@ sub run
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchive => false});
 
             $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_FULL, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
-            $oHostDbMaster->check($strComment, {iTimeout => 0.5, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
 
             # If running the remote tests then also need to run check locally
             if ($bHostBackup)
             {
-                $oHostBackup->check($strComment, {iTimeout => 0.5, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
             }
 
             # When archive-check=n then ERROR_ARCHIVE_TIMEOUT will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
@@ -192,7 +192,7 @@ sub run
             $strComment = 'fail on archive timeout when archive-check=n';
             $oHostDbMaster->check(
                 $strComment,
-                {iTimeout => 0.5, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT, strOptionalParam => '--no-archive-check'});
+                {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT, strOptionalParam => '--no-archive-check'});
 
             # Stop the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterStop({bIgnoreLogError => true});
@@ -217,12 +217,12 @@ sub run
                 storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
                 {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
 
-            $oHostDbMaster->check($strComment, {iTimeout => 0.5, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
 
             # If running the remote tests then also need to run check locally
             if ($bHostBackup)
             {
-                $oHostBackup->check($strComment, {iTimeout => 0.5, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
             }
 
             # Restore the file to its original condition
@@ -232,12 +232,12 @@ sub run
             $strComment = 'fail on archive timeout';
 
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveInvalid => true});
-            $oHostDbMaster->check($strComment, {iTimeout => 0.5, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
+            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
 
             # If running the remote tests then also need to run check locally
             if ($bHostBackup)
             {
-                $oHostBackup->check($strComment, {iTimeout => 0.5, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
+                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
             }
 
             # Restart the cluster ignoring any errors in the postgresql log
