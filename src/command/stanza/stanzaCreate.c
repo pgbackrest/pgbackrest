@@ -70,7 +70,23 @@ cmdStanzaCreate(void)
             !storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE)) &&
             !storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT)))
         {
-            InfoArchive *infoArchive = infoArchiveCreate();
+            InfoArchive *infoArchive = infoArchiveCreate(// pgControl, cipher etc here);
+
+        // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent files
+        if (cipherType != cipherTypeNone)
+        {
+//In Perl:
+//my $strCipherPass = encodeToStr(ENCODE_TYPE_BASE64, cryptoRandomBytes($iKeySizeInBytes));  iKeySizeInBytes is 48 and no one ever calls w/o default
+// In c:
+// cryptoRandomBytes(unsigned char *buffer, size_t size)
+            size_t bufferSize = 48;
+            unsigned char *buffer = memNew(bufferSize);
+            cryptoRandomBytes(buffer, bufferSize);
+            char cipherSubPass[64];
+            encodeToStr(encodeBase64, buffer, bufferSize, cipherSubPass);
+            Info *this = infoNew(cipherSubPass);
+        }
+                Info *this = infoNew(NULL);
 
         // CSHANG Now we need to create the file - which we haven't done in c before. No other command should be creating the info files (expire updates backup.info). For infoArchiveSave - but that then needs to change to not store the catalog/control and replace db-system-id with db-id? - OR are we somehow going to rewrite the file on an upgrade to now have the same format? And what about the backup:current section db-id? I think we should just use db-id since it's used more than db-system-id
         }

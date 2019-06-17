@@ -211,9 +211,11 @@ infoLoad(Info *this, const Storage *storage, const String *fileName, bool copyFi
 Create new object
 ***********************************************************************************************************************************/
 Info *
-infoNew(void)
+infoNew(const String *cipherPassSub)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, cipherPassSub);      // Cipher used to encrypt/descrypt dependent files. Value may be NULL.
+    FUNCTION_LOG_END();
 
     Info *this = NULL;
 
@@ -222,6 +224,7 @@ infoNew(void)
         // Create object
         this = memNew(sizeof(Info));
         this->memContext = MEM_CONTEXT_NEW();
+        this->cipherPass = cipherPassSub;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -246,7 +249,7 @@ infoNewLoad(const Storage *storage, const String *fileName, CipherType cipherTyp
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    Info *this = infoNew();
+    Info *this = infoNew(NULL);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -353,40 +356,6 @@ infoSave(
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-
-/***********************************************************************************************************************************
-Accessor functions
-***********************************************************************************************************************************/
-void
-infoCipherPassSet(Info *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-//my $strCipherPass = encodeToStr(ENCODE_TYPE_BASE64, cryptoRandomBytes($iKeySizeInBytes));  sizeinbytes is 48 and no one ever calls w/o default
-// In c:
-// cryptoRandomBytes(unsigned char *buffer, size_t size)
-        size_t bufferSize = 48;
-        unsigned char *buffer = memNew(bufferSize);
-        cryptoRandomBytes(buffer, bufferSize);
-        char destinationEncode[64];
-        encodeToStr(encodeBase64, buffer, bufferSize, destinationEncode);
-
-// void encodeToStr(EncodeType encodeType, const unsigned char *source, size_t sourceSize, char *destination);
-// Not clear if want the CRLF:
-//         encodeToStr(encodeBase64, encode, strlen((char *)encode), destinationEncode);
-//         TEST_RESULT_STR(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ0K", "encode full string with \\r\\n");
-// or w/o (I think w/o)
-//         encodeToStr(encodeBase64, encode, strlen((char *)encode) - 2, destinationEncode);
-//         TEST_RESULT_STR(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ==", "encode full string");
-
-    this->cipherPass = strNew(destinationEncode);
-
-    FUNCTION_TEST_RETURN();
 }
 
 /***********************************************************************************************************************************

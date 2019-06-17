@@ -62,8 +62,13 @@ infoPgNew(void)
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
 
+        this->info = NULL;
+
         // Get the pg history list
         this->history = lstNew(sizeof(InfoPgData));
+
+// CSHANG Don't really like this because 0 is index to first history which here is empty. Might be nicer to have -1 and then can alway increment...
+        this->historyCurrent = 0;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -172,19 +177,57 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
     ASSERT(infoPgData != NULL);
 
     lstInsert(this->history, 0, infoPgData);
+// CSHANG If adding to the list, we need to update the historyCurrent, which means adding it here neews to update the infoPg tests
+    this->historyCurrent = 0;
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Create
+***********************************************************************************************************************************/
+
 // CSHANG Maybe later can have this as a set function if there is already data and want to update?
-infoPgCreate()
+infoPgCreate(InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const uint32_t pgControlVersion,
+    const uint32_t pgCatalogVersion, const String *cipherPassSub)
+{
+        FUNCTION_LOG_BEGIN(logLevelDebug);
+            FUNCTION_LOG_PARAM(ENUM, type);
+            FUNCTION_LOG_PARAM(UINT, pgVersion);
+            FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+            FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
+            FUNCTION_TEST_PARAM(UINT32, pgCatalogVersion);
+            FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+        FUNCTION_LOG_END();
+
+        ASSERT(pgVersion != NULL);
+        ASSERT(pgSystemId != NULL);
+        ASSERT(type == infoPgArchive || (pgControlVersion != NULL && pgCatologVersion != NULL));
+
     // Instantiate the info object which in turn needs to instantiate the ini object for the cipherPass
         InfoPg *this = infoPgNew();
-        this->info = infoNew();
+        this->info = infoNew(cipherPassSub);
 
+        // Set db values that are common to all info files
+        InfoPgData infoPgData =
+        {
+            .id = 1,
+            .version = pgVersion,
 
-    MEM_CONTEXT_BEGIN(this->memContext)  // ?????
-    {
+            // This is different in archive.info due to a typo that can't be fixed without a format version bump
+            .systemId = pgSystemId,
+        };
+
+        if (type == infoPgBackup || type == infoPgManifest)
+        {
+            infoPgData.catalogVersion = pgCatalogVersion;
+            infoPgData.controlVersion = pgControlVersion;
+        }
+        else if (type != infoPgArchive)
+            THROW_FMT(AssertError, "invalid InfoPg type %u", type);
+
+        infoPgAdd(this, &infoPgData);
+}
 
 /***********************************************************************************************************************************
 Save to file

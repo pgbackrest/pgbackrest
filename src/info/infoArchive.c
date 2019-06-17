@@ -100,12 +100,39 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
 
 // CSHANG
 InfoArchive *
-infoArchiveCreate(CipherType cipherType, const String *cipherPass, const unsigned int pgVersion, const uint64_t pgSystemId)
+infoArchiveCreate(
+    const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType, const String *cipherPass,
+    const String *cipherPassSub)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+    FUNCTION_LOG_END();
+
+    ASSERT(pgVersion != NULL);
+    ASSERT(pgSystemId != NULL);
+    ASSERT(cipherType == cipherTypeNone || (cipherPass != NULL && cipherPassSub != NULL));
 
         Ini *ini = NULL; // DO I need this?
 
         InfoArchive *this = infoArchiveNew();
-        this->infoPg = infoPgCreate(this->infoPg, infoPgArchive, cipherType, cipherPass, &ini);
+        this->infoPg = infoPgCreate(this->infoPg, infoPgArchive, cipherType, cipherPass, cipherPassSub);
+        // Store the archiveId for the current PG db-version db-id
+        this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
+
+                        // Get db values that are common to all info files
+                        InfoPgData infoPgData =
+                        {
+                            .id = cvtZToUInt(strPtr(strLstGet(pgHistoryKey, pgHistoryIdx))),
+                            .version = pgVersionFromStr(varStr(kvGet(pgDataKv, INFO_KEY_DB_VERSION_VAR))),
+
+                            // This is different in archive.info due to a typo that can't be fixed without a format version bump
+                            .systemId = varUInt64Force(
+                                kvGet(pgDataKv, type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
+                        };
 
 /***********************************************************************************************************************************
 Given a backrest history id and postgres systemId and version, return the archiveId of the best match
