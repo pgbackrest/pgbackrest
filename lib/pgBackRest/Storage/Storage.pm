@@ -951,23 +951,29 @@ sub encrypted
     my $bEncrypted = false;
 
     # Open the file via the driver
-    # !!! NEED TO ADD LENGTH BACK, length(CIPHER_MAGIC));
-    my $tBuffer = $self->get(
-        new pgBackRest::Storage::StorageRead(
-            $self, pgBackRest::LibC::StorageRead->new($self->{oStorageC}, $strFileExp, $bIgnoreMissing)));
+    my $oFileIo = new pgBackRest::Storage::StorageRead(
+        $self, pgBackRest::LibC::StorageRead->new($self->{oStorageC}, $strFileExp, $bIgnoreMissing));
 
     # If the file does not exist because we're ignoring missing (else it would error before this is executed) then determine if it
     # should be encrypted based on the repo
-    if (!defined($tBuffer))
+    if (!$oFileIo->open())
     {
         if (defined($self->cipherType()))
         {
             $bEncrypted = true;
         }
     }
-    elsif (defined($$tBuffer) && substr($$tBuffer, 0, length(CIPHER_MAGIC)) eq CIPHER_MAGIC)
+    else
     {
-        $bEncrypted = true;
+        # If the file does exist, then read the magic signature
+        my $tMagicSignature = '';
+        my $lSizeRead = $oFileIo->read(\$tMagicSignature, length(CIPHER_MAGIC));
+        $oFileIo->close();
+
+        if (substr($tMagicSignature, 0, length(CIPHER_MAGIC)) eq CIPHER_MAGIC)
+        {
+            $bEncrypted = true;
+        }
     }
 
     # Return from function and log return values if any

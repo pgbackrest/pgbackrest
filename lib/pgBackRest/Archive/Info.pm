@@ -416,12 +416,16 @@ sub reconstruct
         }
 
         # If the file is encrypted, then the passprase from the info file is required, else getEncryptionKeySub returns undefined
-        # !!! Add limited GET
-        my $tBlock = ${storageRepo()->get(storageRepo()->openRead(
+        my $oFileIo = storageRepo()->openRead(
             $strArchiveFilePath,
             {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
                 [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]}] : undef,
-            strCipherPass => $self->cipherPassSub()}))};
+            strCipherPass => $self->cipherPassSub()});
+        $oFileIo->open();
+
+        my $tBlock;
+        $oFileIo->read(\$tBlock, 512);
+        $oFileIo->close();
 
         # Get the required data from the file that was pulled into scalar $tBlock
         my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
