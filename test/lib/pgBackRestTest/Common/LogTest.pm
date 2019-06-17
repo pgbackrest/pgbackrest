@@ -380,6 +380,9 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace(
         $strLine, 'BACKUP-EXPR', 'strExpression \= \_[0-9]{8}\-[0-9]{6}', '\_[0-9]{8}\-[0-9]{6}$', false);
 
+    $strLine = $self->regExpReplace($strLine, 'TLS-STATISTICS', 'tls statistics\:.*$', '[^\:]+$', false);
+    $strLine = $self->regExpReplace($strLine, 'HTTP-STATISTICS', 'http statistics\:.*$', '[^\:]+$', false);
+
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'strGroup = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'group=\"[^"]+', '[^"]+$');

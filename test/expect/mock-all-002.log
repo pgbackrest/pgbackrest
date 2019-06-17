@@ -3350,11 +3350,11 @@ P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
-P00   INFO: http statistics: objects 1, sessions 1, requests 23, retries 0, closes 0
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
-P00   INFO: http statistics: objects 1, sessions 1, requests 30, retries 0, closes 0
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -3559,11 +3559,11 @@ P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
-P00   INFO: http statistics: objects 1, sessions 1, requests 26, retries 0, closes 0
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
-P00   INFO: http statistics: objects 1, sessions 1, requests 34, retries 0, closes 0
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

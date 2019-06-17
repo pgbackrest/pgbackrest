@@ -228,8 +228,8 @@ sub backupFile
     # cannot be calculated in stream.
     #
     # If the file was checksummed then get the size in all cases since we don't already have it.
-    # !!! NEED TO MAKE THIS A CAPABILITY
-    if ((($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY) && $oStorageRepo->type() ne 's3') ||
+    if ((($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY) &&
+            $oStorageRepo->capability(STORAGE_CAPABILITY_SIZE_DIFF)) ||
         $iCopyResult == BACKUP_FILE_CHECKSUM)
     {
         $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}"))->{size};
