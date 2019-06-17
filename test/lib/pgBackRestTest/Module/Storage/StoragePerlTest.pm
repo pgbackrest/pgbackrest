@@ -166,10 +166,13 @@ sub run
     ################################################################################################################################
     if ($self->begin('info()'))
     {
-        $self->testResult(sub {$self->storageLocal()->info($self->testPath())}, "[object]", 'stat dir successfully');
+        $self->testResult(
+            sub {$self->storageLocal()->info($self->testPath())},
+            "{group => " . $self->group() . ", mode => 0770, type => d, user => " . $self->pgUser() . "}",
+            'stat dir successfully');
 
-        $self->testException(sub {$self->storageLocal()->info(BOGUS)}, ERROR_FILE_MISSING,
-            "unable to stat '/bogus': No such file or directory");
+        $self->testException(sub {$self->storageLocal()->info(BOGUS)}, ERROR_FILE_OPEN,
+            "unable to get info for missing path/file '/bogus'");
     }
 
     ################################################################################################################################

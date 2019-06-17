@@ -590,6 +590,11 @@ sub owner
         # both user and group be set.
         my $oStat = lstat($strPathFile);
 
+        if (!defined($oStat))
+        {
+            confess &log(ERROR, "unable to stat '${strPathFile}': No such file or directory", ERROR_FILE_MISSING);
+        }
+
         if (!defined($strUser))
         {
             $iUserId = $oStat->uid;

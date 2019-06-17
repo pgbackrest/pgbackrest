@@ -497,7 +497,8 @@ sub backupCompare
             my $lRepoSize =
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
-                    lstat(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->size;
+                    (storageRepo()->info(STORAGE_REPO_BACKUP .
+                        "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->{size};
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
