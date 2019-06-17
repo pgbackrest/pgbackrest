@@ -30,10 +30,15 @@ typedef struct StorageManifestXsCallbackData
 String *
 storageManifestXsInfo(const String *path, const StorageInfo *info)
 {
-    String *json = strNewFmt(
-        "%s:{\"group\":%s,\"user\":%s,\"type\":\"",
-        strPtr(jsonFromStr(path == NULL ? info->name : strNewFmt("%s/%s", strPtr(path), strPtr(info->name)))),
-        strPtr(jsonFromStr(info->group)), strPtr(jsonFromStr(info->user)));
+    String *json = strNew("");
+
+    if (info->name != NULL)
+    {
+        strCatFmt(
+            json, "%s:", strPtr(jsonFromStr(path == NULL ? info->name : strNewFmt("%s/%s", strPtr(path), strPtr(info->name)))));
+    }
+
+    strCatFmt(json, "{\"group\":%s,\"user\":%s,\"type\":\"", strPtr(jsonFromStr(info->group)), strPtr(jsonFromStr(info->user)));
 
     switch (info->type)
     {

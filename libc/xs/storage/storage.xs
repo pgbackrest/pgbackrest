@@ -110,6 +110,32 @@ CLEANUP:
 
 ####################################################################################################################################
 SV *
+info(self, pathExp, ignoreMissing)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::Storage self
+    const String *pathExp = STR_NEW_SV($arg);
+    bool ignoreMissing
+CODE:
+    RETVAL = NULL;
+
+    StorageInfo info = storageInfoP(self, pathExp, .ignoreMissing = ignoreMissing);
+
+    if (info.exists)
+    {
+        String *json = storageManifestXsInfo(NULL, &info);
+        RETVAL = newSVpv((char *)strPtr(json), strSize(json));
+    }
+OUTPUT:
+    RETVAL
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+SV *
 list(self, pathExp, ignoreMissing, sortAsc, expression)
 PREINIT:
     MEM_CONTEXT_XS_TEMP_BEGIN()

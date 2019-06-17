@@ -210,30 +210,18 @@ sub info
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '::fileStat', \@_,
+            __PACKAGE__ . '->info', \@_,
             {name => 'strPathFileExp'},
             {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
-    # Stat the path/file
-    my $oInfo = lstat($self->pathGet($strPathFileExp));
-
-    # Check for errors
-    if (!defined($oInfo))
-    {
-        if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
-        {
-            logErrorResult(
-                $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN,
-                "unable to stat '" . $self->pathGet($strPathFileExp) . "'", $OS_ERROR);
-        }
-    }
+    my $rhInfo = $self->{oJSON}->decode($self->{oStorageC}->info($strPathFileExp, $bIgnoreMissing));
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oInfo', value => $oInfo, trace => true}
+        {name => 'rhInfo', value => $rhInfo, trace => true}
     );
 }
 
@@ -600,7 +588,7 @@ sub owner
 
         # If the user or group is not defined then get it by stat'ing the file.  This is because the chown function requires that
         # both user and group be set.
-        my $oStat = $self->info($strPathFile);
+        my $oStat = lstat($strPathFile);
 
         if (!defined($strUser))
         {

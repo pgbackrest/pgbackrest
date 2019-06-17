@@ -15,6 +15,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl ':mode';
 use File::Basename qw(dirname);
+use File::stat qw{lstat};
 use Storable qw(dclone);
 
 use pgBackRest::Archive::Info;
@@ -496,7 +497,7 @@ sub backupCompare
             my $lRepoSize =
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
-                    (storageRepo()->info(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->size;
+                    lstat(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->size;
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
@@ -1883,7 +1884,7 @@ sub restoreCompare
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
-            my $oStat = storageTest()->info($oActualManifest->dbPathGet($strSectionPath, $strName));
+            my $oStat = lstat($oActualManifest->dbPathGet($strSectionPath, $strName));
 
             # When performing a selective restore, the files for the database(s) that are not restored are still copied but as empty
             # sparse files (blocks == 0). If the file is not a sparse file or is a link, then get the actual checksum for comparison

@@ -224,7 +224,7 @@ sub manifestFileCreate
     my $strPathFile = $self->dbFileCreate($oManifestRef, $strTarget, $strFile, $strContent, $lTime, $strMode);
 
     # Stat the file
-    my $oStat = storageTest()->info($strPathFile);
+    my $oStat = lstat($strPathFile);
 
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
@@ -338,7 +338,7 @@ sub manifestLinkCreate
     my $strDbFile = $self->dbLinkCreate($oManifestRef, $strPath, $strFile, $strDestination);
 
     # Stat the link
-    my $oStat = storageTest()->info($strDbFile);
+    my $oStat = lstat($strDbFile);
 
     # Check for errors in stat
     if (!defined($oStat))
@@ -360,7 +360,7 @@ sub manifestLinkCreate
                               (defined(dirname($strPath)) ? dirname($strPath) : '') . "/${strDestination}";
     }
 
-    $oStat = storageTest()->info($strDestinationFile);
+    $oStat = lstat($strDestinationFile);
 
     my $strSection = MANIFEST_SECTION_TARGET_PATH;
 
@@ -556,7 +556,7 @@ sub manifestTablespaceCreate
     # Load linked path into manifest
     my $strLinkPath = $self->tablespacePath($iOid);
     my $strTarget = MANIFEST_TARGET_PGTBLSPC . "/${iOid}";
-    my $oStat = storageTest()->info($strLinkPath);
+    my $oStat = lstat($strLinkPath);
 
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_PATH}{$strTarget}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_PATH}{$strTarget}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
@@ -582,7 +582,7 @@ sub manifestTablespaceCreate
     }
 
     # Load tablespace path into manifest
-    $oStat = storageTest()->info($strTablespacePath);
+    $oStat = lstat($strTablespacePath);
 
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGTBLSPC} =
         ${$oManifestRef}{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA};
@@ -599,7 +599,7 @@ sub manifestTablespaceCreate
         or confess "unable to link ${strLink} to ${strLinkPath}";
 
     # Load link into the manifest
-    $oStat = storageTest()->info($strLink);
+    $oStat = lstat($strLink);
     my $strLinkTarget = MANIFEST_TARGET_PGDATA . "/${strTarget}";
 
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_LINK}{$strLinkTarget}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);

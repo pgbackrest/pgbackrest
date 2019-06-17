@@ -1068,6 +1068,48 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_get)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC__Storage_info); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_info)
+{
+    dVAR; dXSARGS;
+    if (items != 3)
+       croak_xs_usage(cv,  "self, pathExp, ignoreMissing");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__Storage	self;
+	const String *	pathExp = STR_NEW_SV(ST(1));
+	bool	ignoreMissing = (bool)SvTRUE(ST(2))
+;
+	SV *	RETVAL;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Storage,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Storage::info",
+			"self", "pgBackRest::LibC::Storage")
+;
+    RETVAL = NULL;
+
+    StorageInfo info = storageInfoP(self, pathExp, .ignoreMissing = ignoreMissing);
+
+    if (info.exists)
+    {
+        String *json = storageManifestXsInfo(NULL, &info);
+        RETVAL = newSVpv((char *)strPtr(json), strSize(json));
+    }
+	RETVAL = sv_2mortal(RETVAL);
+	ST(0) = RETVAL;
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
 XS_EUPXS(XS_pgBackRest__LibC__Storage_list); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
 {
@@ -2486,6 +2528,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::Storage::copy", XS_pgBackRest__LibC__Storage_copy);
         newXS_deffile("pgBackRest::LibC::Storage::exists", XS_pgBackRest__LibC__Storage_exists);
         newXS_deffile("pgBackRest::LibC::Storage::get", XS_pgBackRest__LibC__Storage_get);
+        newXS_deffile("pgBackRest::LibC::Storage::info", XS_pgBackRest__LibC__Storage_info);
         newXS_deffile("pgBackRest::LibC::Storage::list", XS_pgBackRest__LibC__Storage_list);
         newXS_deffile("pgBackRest::LibC::Storage::manifest", XS_pgBackRest__LibC__Storage_manifest);
         newXS_deffile("pgBackRest::LibC::Storage::pathCreate", XS_pgBackRest__LibC__Storage_pathCreate);
