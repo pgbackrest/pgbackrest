@@ -12,7 +12,9 @@ Backup Info Handler
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/ini.h"
 #include "common/object.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "info/info.h"
@@ -308,6 +310,67 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
+}
+
+/***********************************************************************************************************************************
+Delete a backup from the current backup list
+***********************************************************************************************************************************/
+void
+infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(STRING, backupDeleteLabel);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    for (unsigned int idx = 0; idx < infoBackupDataTotal(this); idx++)
+    {
+        InfoBackupData backupData = infoBackupData(this, idx);
+
+        if (strCmp(backupData.backupLabel, backupDeleteLabel) == 0)
+            lstRemove(this->backup, idx);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Return a list of current backup labels, applying a regex expression if provided
+***********************************************************************************************************************************/
+StringList *
+infoBackupDataLabelList(const InfoBackup *this, const String *expression)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(STRING, expression);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // Return a 0 sized list if no current backups or none matching the filter
+    StringList *result = strLstNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Prepare regexp if an expression was passed
+        RegExp *regExp = (expression == NULL) ? NULL : regExpNew(expression);
+
+        // For each backup label, compare it to the filter (if any) and sort it for return
+        for (unsigned int backupLabelIdx = 0; backupLabelIdx < infoBackupDataTotal(this); backupLabelIdx++)
+        {
+            InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
+
+            if (regExp == NULL || regExpMatch(regExp, backupData.backupLabel))
+            {
+                strLstAdd(result, backupData.backupLabel);
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
