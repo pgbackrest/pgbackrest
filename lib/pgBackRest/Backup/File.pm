@@ -16,6 +16,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Handle;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
@@ -180,13 +181,27 @@ sub backupFile
         {
             push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, $iCompressLevel]});
         }
+        elsif (!defined($strCipherPass))
+        {
+            push(
+                @{$rhyFilter},
+                {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, true, cfgOption(CFGOPT_COMPRESS_LEVEL)]});
+        }
 
-        # Open the source and destination files
+        # Open the source file
         my $oSourceFileIo = storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => $bIgnoreMissing});
+
+        # Open the destination file
+        $rhyFilter = undef;
+
+        if (!$bCompress && !defined($strCipherPass))
+        {
+            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, true]});
+        }
 
         my $oDestinationFileIo = $oStorageRepo->openWrite(
             STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-            {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass});
+            {bPathCreate => true, rhyFilter => $rhyFilter, strCipherPass => $strCipherPass});
 
         $oDestinationFileIo->{oStorageCWrite}->filterAdd(COMMON_IO_HANDLE, undef);
 
