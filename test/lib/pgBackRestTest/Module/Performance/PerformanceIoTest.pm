@@ -19,8 +19,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Storage::Filter::Gzip;
-use pgBackRest::Storage::Filter::Sha;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -41,6 +40,7 @@ sub initModule
     $self->{strTableLargeFile} = 'table-large.bin';
 
     my $oFileWrite = storageTest()->openWrite($self->{strTableLargeFile});
+    $oFileWrite->open();
 
     for (my $iIndex = 0; $iIndex < $self->{iTableLargeSize}; $iIndex++)
     {

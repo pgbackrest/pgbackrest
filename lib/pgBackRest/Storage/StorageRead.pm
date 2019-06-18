@@ -86,7 +86,7 @@ sub read
             {name => 'iSize'},
         );
 
-    # Read the block
+    # Read if not eof
     my $iActualSize = 0;
 
     if (!$self->eof())

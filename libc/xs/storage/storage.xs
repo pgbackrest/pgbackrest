@@ -17,8 +17,6 @@ INPUT:
 CODE:
     CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::Storage"));
 
-    // logInit(logLevelDebug, logLevelOff, logLevelOff, false, 999);
-
     if (strEqZ(type, "<LOCAL>"))
     {
         memContextSwitch(MEM_CONTEXT_XS_OLD());
@@ -173,6 +171,7 @@ INPUT:
 CODE:
     StorageManifestXsCallbackData data = {.storage = self, .json = strNew("{"), .pathRoot = pathExp, .filter = filter};
 
+    // If a path is specified
     StorageInfo info = storageInfoP(self, pathExp, .ignoreMissing = true);
 
     if (!info.exists || info.type == storageTypePath)
@@ -181,6 +180,7 @@ CODE:
             self, data.pathRoot, storageManifestXsCallback, &data,
             .errorOnMissing = storageFeature(self, storageFeaturePath) ? true : false);
     }
+    // Else a file is specified
     else
     {
         info.name = strBase(storagePath(self, pathExp));
@@ -317,6 +317,7 @@ INPUT:
 CODE:
     RETVAL = false;
 
+    // Read and discard all IO (this is useful for processing filters)
     if (ioReadOpen(storageReadIo(read)))
     {
         Buffer *buffer = bufNew(ioBufferSize());

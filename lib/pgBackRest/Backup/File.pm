@@ -181,6 +181,7 @@ sub backupFile
         {
             push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, $iCompressLevel]});
         }
+        # Else add protocol compression if the destination is not compressed and there is no encryption
         elsif (!defined($strCipherPass))
         {
             push(
@@ -194,6 +195,7 @@ sub backupFile
         # Open the destination file
         $rhyFilter = undef;
 
+        # Add protocol decompression if the destination is not compressed and there is no encryption
         if (!$bCompress && !defined($strCipherPass))
         {
             push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, true]});
