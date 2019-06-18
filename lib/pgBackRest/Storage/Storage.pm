@@ -1022,7 +1022,7 @@ sub encryptionValid
 ####################################################################################################################################
 # Getters
 ####################################################################################################################################
-sub capability {shift->type() eq 'posix'}
+sub capability {shift->type() eq STORAGE_POSIX}
 sub type {shift->{oStorageC}->type()}
 sub cipherType {shift->{strCipherType}}
 sub cipherPassUser {shift->{strCipherPass}}

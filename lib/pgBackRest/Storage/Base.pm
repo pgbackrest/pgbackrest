@@ -22,6 +22,11 @@ use pgBackRest::Common::Log;
 use constant STORAGE_LOCAL                                          => '<LOCAL>';
     push @EXPORT, qw(STORAGE_LOCAL);
 
+use constant STORAGE_S3                                             => 's3';
+    push @EXPORT, qw(STORAGE_S3);
+use constant STORAGE_POSIX                                          => 'posix';
+    push @EXPORT, qw(STORAGE_POSIX);
+
 ####################################################################################################################################
 # Compress constants
 ####################################################################################################################################

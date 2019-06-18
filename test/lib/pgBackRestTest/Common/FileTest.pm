@@ -27,6 +27,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
+use pgBackRest::Storage::Base;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -166,7 +167,7 @@ sub forceStorageMode
         );
 
     # Mode commands are ignored on S3
-    if ($oStorage->type() ne 's3')
+    if ($oStorage->type() ne STORAGE_S3)
     {
         executeTest('sudo chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
     }
@@ -201,7 +202,7 @@ sub forceStorageMove
         );
 
     # If S3 then use storage commands to remove
-    if ($oStorage->type() eq 's3')
+    if ($oStorage->type() eq STORAGE_S3)
     {
         hostGroupGet()->hostGet(HOST_S3)->executeS3(
             'mv' . ($bRecurse ? ' --recursive' : '') . ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strSourcePathExp) .
@@ -243,7 +244,7 @@ sub forceStorageOwner
         );
 
     # Owner commands are ignored on S3
-    if ($oStorage->type() ne 's3')
+    if ($oStorage->type() ne STORAGE_S3)
     {
         executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
     }
@@ -276,7 +277,7 @@ sub forceStorageRemove
         );
 
     # If S3 then use storage commands to remove
-    if ($oStorage->type() eq 's3')
+    if ($oStorage->type() eq STORAGE_S3)
     {
         my $oInfo = $oStorage->info($strPathExp, {bIgnoreMissing => true});
 
