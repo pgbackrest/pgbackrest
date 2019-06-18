@@ -16,6 +16,15 @@
             <release-core-list>
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="julian.zhang"/>
+                            <release-item-ideator id="janis.puris"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove hard-coded <postgres/> user so <id>$PGUSER</id> works.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>The <cmd>local</cmd> command for restore is implemented entirely in C.</p>
                     </release-item>
 
@@ -7208,6 +7217,11 @@
             <contributor-id type="github">jpabt</contributor-id>
         </contributor>
 
+        <contributor id="janis.puris">
+            <contributor-name-display>Janis Puris</contributor-name-display>
+            <contributor-id type="github">mashuma</contributor-id>
+        </contributor>
+
         <contributor id="jason.odonnell">
             <contributor-name-display>Jason O'Donnell</contributor-name-display>
             <contributor-id type="github">Dwaligon</contributor-id>
@@ -7240,6 +7254,11 @@
         <contributor id="john.harvey">
             <contributor-name-display>John Harvey</contributor-name-display>
             <contributor-id type="github">crunchyjohn</contributor-id>
+        </contributor>
+
+        <contributor id="julian.zhang">
+            <contributor-name-display>Julian Zhang</contributor-name-display>
+            <contributor-id type="github">julianzhang98</contributor-id>
         </contributor>
 
         <contributor id="jungle-boogie">

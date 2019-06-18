@@ -171,7 +171,6 @@ sub connect
         {
             # Connect to the db
             my $strDbName = 'postgres';
-            my $strDbUser = getpwuid($<);
             my $strDbSocketPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_SOCKET_PATH, $self->{iRemoteIdx}), false);
 
             # Make sure the socket path is absolute
@@ -190,10 +189,9 @@ sub connect
             (
                 $strOperation, undef,
                 {name => 'strDbUri', value => $strDbUri},
-                {name => 'strDbUser', value => $strDbUser}
             );
 
-            $self->{hDb} = DBI->connect($strDbUri, $strDbUser, undef,
+            $self->{hDb} = DBI->connect($strDbUri, undef, undef,
                                         {AutoCommit => 1, RaiseError => 0, PrintError => 0, Warn => 0});
 
             # If db handle is not valid then check error
