@@ -10,6 +10,7 @@ Main
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
 #include "command/command.h"
+#include "command/expire/expire.h"
 #include "command/help/help.h"
 #include "command/info/info.h"
 #include "command/local/local.h"
@@ -115,6 +116,7 @@ main(int argListSize, const char *argList[])
 
                     // Run expire
                     perlExec();
+                    cmdExpire();
 
                     break;
                 }
@@ -132,6 +134,7 @@ main(int argListSize, const char *argList[])
                 case cfgCmdExpire:
                 {
                     perlExec();
+                    cmdExpire();
                     break;
                 }
 

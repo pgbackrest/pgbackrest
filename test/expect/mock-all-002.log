@@ -3353,6 +3353,7 @@ P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -3560,6 +3561,7 @@ P00   INFO: new backup label = [BACKUP-DIFF-7]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

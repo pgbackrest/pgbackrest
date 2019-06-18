@@ -313,6 +313,8 @@ P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
 P00   INFO: remove archive path: /archive/db/9.3-1
 P00   INFO: full backup total < 2 - using oldest full backup for 9.4-2 archive retention
+P00 DETAIL: tls statistics:[TLS-STATISTICS]
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -496,7 +498,8 @@ P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
-P00   INFO: remove archive path: /archive/db/10.0-3
+P00 DETAIL: tls statistics:[TLS-STATISTICS]
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
