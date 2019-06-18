@@ -115,6 +115,10 @@ doc/resource/latex/preamble.tex:
   class: doc/core
   type: latex
 
+doc/xml/auto/metric-coverage-report.auto.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/coding.xml:
   class: doc/source
   type: xml
@@ -135,6 +139,10 @@ doc/xml/index.xml:
   class: doc/source
   type: xml
 
+doc/xml/metric.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/reference.xml:
   class: doc/source
   type: xml
@@ -144,6 +152,10 @@ doc/xml/release.xml:
   type: xml
 
 doc/xml/test.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/user-guide-index.xml:
   class: doc/source
   type: xml
 
@@ -487,9 +499,13 @@ libc/xs/storage/storage.xs:
   class: core
   type: xs
 
-src/Makefile:
+src/Makefile.in:
   class: build
   type: make
+
+src/build.auto.h.in:
+  class: core
+  type: c/h
 
 src/command/archive/common.c:
   class: core
@@ -887,11 +903,19 @@ src/common/logLevel.h:
   class: core
   type: c/h
 
+src/common/macro.h:
+  class: core
+  type: c/h
+
 src/common/memContext.c:
   class: core
   type: c
 
 src/common/memContext.h:
+  class: core
+  type: c/h
+
+src/common/object.h:
   class: core
   type: c/h
 
@@ -1074,6 +1098,14 @@ src/config/protocol.c:
 src/config/protocol.h:
   class: core
   type: c/h
+
+src/configure:
+  class: build
+  type: make
+
+src/configure.ac:
+  class: build
+  type: make
 
 src/info/info.c:
   class: core
@@ -1267,123 +1299,11 @@ src/protocol/server.h:
   class: core
   type: c/h
 
-src/storage/driver/cifs/storage.c:
+src/storage/cifs/storage.c:
   class: core
   type: c
 
-src/storage/driver/cifs/storage.h:
-  class: core
-  type: c/h
-
-src/storage/driver/posix/common.c:
-  class: core
-  type: c
-
-src/storage/driver/posix/common.h:
-  class: core
-  type: c/h
-
-src/storage/driver/posix/fileRead.c:
-  class: core
-  type: c
-
-src/storage/driver/posix/fileRead.h:
-  class: core
-  type: c/h
-
-src/storage/driver/posix/fileWrite.c:
-  class: core
-  type: c
-
-src/storage/driver/posix/fileWrite.h:
-  class: core
-  type: c/h
-
-src/storage/driver/posix/storage.c:
-  class: core
-  type: c
-
-src/storage/driver/posix/storage.h:
-  class: core
-  type: c/h
-
-src/storage/driver/remote/fileRead.c:
-  class: core
-  type: c
-
-src/storage/driver/remote/fileRead.h:
-  class: core
-  type: c/h
-
-src/storage/driver/remote/fileWrite.c:
-  class: core
-  type: c
-
-src/storage/driver/remote/fileWrite.h:
-  class: core
-  type: c/h
-
-src/storage/driver/remote/protocol.c:
-  class: core
-  type: c
-
-src/storage/driver/remote/protocol.h:
-  class: core
-  type: c/h
-
-src/storage/driver/remote/storage.c:
-  class: core
-  type: c
-
-src/storage/driver/remote/storage.h:
-  class: core
-  type: c/h
-
-src/storage/driver/s3/fileRead.c:
-  class: core
-  type: c
-
-src/storage/driver/s3/fileRead.h:
-  class: core
-  type: c/h
-
-src/storage/driver/s3/fileWrite.c:
-  class: core
-  type: c
-
-src/storage/driver/s3/fileWrite.h:
-  class: core
-  type: c/h
-
-src/storage/driver/s3/storage.c:
-  class: core
-  type: c
-
-src/storage/driver/s3/storage.h:
-  class: core
-  type: c/h
-
-src/storage/fileRead.c:
-  class: core
-  type: c
-
-src/storage/fileRead.h:
-  class: core
-  type: c/h
-
-src/storage/fileRead.intern.h:
-  class: core
-  type: c/h
-
-src/storage/fileWrite.c:
-  class: core
-  type: c
-
-src/storage/fileWrite.h:
-  class: core
-  type: c/h
-
-src/storage/fileWrite.intern.h:
+src/storage/cifs/storage.h:
   class: core
   type: c/h
 
@@ -1399,6 +1319,118 @@ src/storage/info.h:
   class: core
   type: c/h
 
+src/storage/posix/common.c:
+  class: core
+  type: c
+
+src/storage/posix/common.h:
+  class: core
+  type: c/h
+
+src/storage/posix/read.c:
+  class: core
+  type: c
+
+src/storage/posix/read.h:
+  class: core
+  type: c/h
+
+src/storage/posix/storage.c:
+  class: core
+  type: c
+
+src/storage/posix/storage.h:
+  class: core
+  type: c/h
+
+src/storage/posix/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/posix/write.c:
+  class: core
+  type: c
+
+src/storage/posix/write.h:
+  class: core
+  type: c/h
+
+src/storage/read.c:
+  class: core
+  type: c
+
+src/storage/read.h:
+  class: core
+  type: c/h
+
+src/storage/read.intern.h:
+  class: core
+  type: c/h
+
+src/storage/remote/protocol.c:
+  class: core
+  type: c
+
+src/storage/remote/protocol.h:
+  class: core
+  type: c/h
+
+src/storage/remote/read.c:
+  class: core
+  type: c
+
+src/storage/remote/read.h:
+  class: core
+  type: c/h
+
+src/storage/remote/storage.c:
+  class: core
+  type: c
+
+src/storage/remote/storage.h:
+  class: core
+  type: c/h
+
+src/storage/remote/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/remote/write.c:
+  class: core
+  type: c
+
+src/storage/remote/write.h:
+  class: core
+  type: c/h
+
+src/storage/s3/read.c:
+  class: core
+  type: c
+
+src/storage/s3/read.h:
+  class: core
+  type: c/h
+
+src/storage/s3/storage.c:
+  class: core
+  type: c
+
+src/storage/s3/storage.h:
+  class: core
+  type: c/h
+
+src/storage/s3/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/s3/write.c:
+  class: core
+  type: c
+
+src/storage/s3/write.h:
+  class: core
+  type: c/h
+
 src/storage/storage.c:
   class: core
   type: c
@@ -1408,6 +1440,18 @@ src/storage/storage.h:
   type: c/h
 
 src/storage/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/write.c:
+  class: core
+  type: c
+
+src/storage/write.h:
+  class: core
+  type: c/h
+
+src/storage/write.intern.h:
   class: core
   type: c/h
 
@@ -1679,6 +1723,14 @@ test/src/common/harnessFork.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessInfo.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessInfo.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessLog.c:
   class: test/harness
   type: c
@@ -1812,6 +1864,10 @@ test/src/module/common/logTest.c:
   type: c
 
 test/src/module/common/memContextTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/objectTest.c:
   class: test/module
   type: c
 

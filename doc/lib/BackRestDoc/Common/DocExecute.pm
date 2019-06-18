@@ -630,7 +630,6 @@ sub backrestConfig
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_LEVEL_STDERR});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_TIMESTAMP});
-            delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-verify-ssl'});
 
             if (keys(%{$$oConfigClean{&CFGDEF_SECTION_GLOBAL}}) == 0)
             {
@@ -1086,7 +1085,7 @@ sub sectionChildProcess
                     $self->{oManifest}->variableReplace($oChild->paramGet('user')), $$hCacheKey{os},
                     defined($oChild->paramGet('mount', false)) ?
                         [$self->{oManifest}->variableReplace($oChild->paramGet('mount'))] : undef,
-                    $$hCacheKey{option}, $$hCacheKey{param});
+                    $$hCacheKey{option}, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet('host-' . $hCacheKey->{id} . '-ip', $oHost->{strIP}, true);
@@ -1094,7 +1093,7 @@ sub sectionChildProcess
 
                 # Add to the host group
                 my $oHostGroup = hostGroupGet();
-                $oHostGroup->hostAdd($oHost, {bUpdateHosts => $$hCacheKey{'update-hosts'}});
+                $oHostGroup->hostAdd($oHost);
 
                 # Execute initialize commands
                 foreach my $oExecute ($oChild->nodeList('execute', false))

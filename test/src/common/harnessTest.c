@@ -1,10 +1,13 @@
 /***********************************************************************************************************************************
 C Test Harness
 ***********************************************************************************************************************************/
+#include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "common/harnessDebug.h"
 #include "common/harnessTest.h"
@@ -29,6 +32,9 @@ static const char *testExeData = NULL;
 static const char *testPathData = NULL;
 static const char *testRepoPathData = NULL;
 static const char *testExpectPathData = NULL;
+
+static char testUserData[64];
+static char testGroupData[64];
 
 /***********************************************************************************************************************************
 Extern functions
@@ -135,6 +141,21 @@ testExpectPathSet(const char *testExpectPath)
 }
 
 /***********************************************************************************************************************************
+Get test user/group
+***********************************************************************************************************************************/
+const char *
+testUser(void)
+{
+    return testUserData;
+}
+
+const char *
+testGroup(void)
+{
+    return testGroupData;
+}
+
+/***********************************************************************************************************************************
 Get the time in milliseconds
 ***********************************************************************************************************************************/
 uint64_t
@@ -200,6 +221,25 @@ testBegin(const char *name)
 
     if (testList[testRun - 1].selected)
     {
+        if (testFirst)
+        {
+            // Set test user
+            const char *testUserTemp = getpwuid(getuid())->pw_name;
+
+            if (strlen(testUserTemp) > sizeof(testUserData) - 1)
+                THROW_FMT(AssertError, "test user name must be less than %zu characters", sizeof(testUserData) - 1);
+
+            strcpy(testUserData, testUserTemp);
+
+            // Set test group
+            const char *testGroupTemp = getgrgid(getgid())->gr_name;
+
+            if (strlen(testGroupTemp) > sizeof(testGroupData) - 1)
+                THROW_FMT(AssertError, "test group name must be less than %zu characters", sizeof(testGroupData) - 1);
+
+            strcpy(testGroupData, testGroupTemp);
+        }
+
 #ifndef NO_LOG
         if (!testFirst)
         {

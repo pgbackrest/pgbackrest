@@ -25,6 +25,9 @@ sub libcAutoConstant
         CFGOPTVAL_REPO_TYPE_POSIX                                        => 'posix',
         CFGOPTVAL_REPO_TYPE_S3                                           => 's3',
 
+        CFGOPTVAL_SORT_ASC                                               => 'asc',
+        CFGOPTVAL_SORT_DESC                                              => 'desc',
+
         CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE                            => 'pause',
         CFGOPTVAL_RESTORE_TARGET_ACTION_PROMOTE                          => 'promote',
         CFGOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN                         => 'shutdown',
@@ -87,6 +90,8 @@ sub libcAutoExportTag
             'CFGOPTVAL_REPO_TYPE_CIFS',
             'CFGOPTVAL_REPO_TYPE_POSIX',
             'CFGOPTVAL_REPO_TYPE_S3',
+            'CFGOPTVAL_SORT_ASC',
+            'CFGOPTVAL_SORT_DESC',
             'CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE',
             'CFGOPTVAL_RESTORE_TARGET_ACTION_PROMOTE',
             'CFGOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN',
@@ -114,6 +119,7 @@ sub libcAutoExportTag
             'CFGCMD_HELP',
             'CFGCMD_INFO',
             'CFGCMD_LOCAL',
+            'CFGCMD_LS',
             'CFGCMD_REMOTE',
             'CFGCMD_RESTORE',
             'CFGCMD_STANZA_CREATE',
@@ -130,6 +136,7 @@ sub libcAutoExportTag
             'CFGOPT_ARCHIVE_TIMEOUT',
             'CFGOPT_BACKUP_STANDBY',
             'CFGOPT_BUFFER_SIZE',
+            'CFGOPT_C',
             'CFGOPT_CHECKSUM_PAGE',
             'CFGOPT_CMD_SSH',
             'CFGOPT_COMMAND',
@@ -143,6 +150,7 @@ sub libcAutoExportTag
             'CFGOPT_DB_TIMEOUT',
             'CFGOPT_DELTA',
             'CFGOPT_EXCLUDE',
+            'CFGOPT_FILTER',
             'CFGOPT_FORCE',
             'CFGOPT_HOST_ID',
             'CFGOPT_LINK_ALL',
@@ -267,10 +275,11 @@ sub libcAutoExportTag
             'CFGOPT_REPO_S3_KEY_SECRET',
             'CFGOPT_REPO_S3_REGION',
             'CFGOPT_REPO_S3_TOKEN',
-            'CFGOPT_REPO_S3_VERIFY_SSL',
+            'CFGOPT_REPO_S3_VERIFY_TLS',
             'CFGOPT_REPO_TYPE',
             'CFGOPT_RESUME',
             'CFGOPT_SET',
+            'CFGOPT_SORT',
             'CFGOPT_SPOOL_PATH',
             'CFGOPT_STANZA',
             'CFGOPT_START_FAST',
@@ -343,7 +352,7 @@ sub libcAutoExportTag
 
         storage =>
         [
-            'storageDriverPosixPathRemove',
+            'storagePosixPathRemove',
         ],
 
         test =>

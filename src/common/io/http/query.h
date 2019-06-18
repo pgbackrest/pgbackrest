@@ -9,6 +9,9 @@ Object to track HTTP queries and output them with proper escaping.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define HTTP_QUERY_TYPE                                             HttpQuery
+#define HTTP_QUERY_PREFIX                                           httpQuery
+
 typedef struct HttpQuery HttpQuery;
 
 #include "common/type/stringList.h"

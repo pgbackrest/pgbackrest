@@ -271,16 +271,19 @@ stackTracePop(void)
 #else
 
 void
-stackTracePop(const char *fileName, const char *functionName)
+stackTracePop(const char *fileName, const char *functionName, bool test)
 {
     ASSERT(stackSize > 0);
 
-    stackSize--;
+    if (!test || stackTraceTest())
+    {
+        stackSize--;
 
-    StackTraceData *data = &stackTrace[stackSize];
+        StackTraceData *data = &stackTrace[stackSize];
 
-    if (strcmp(data->fileName, fileName) != 0 || strcmp(data->functionName, functionName) != 0)
-        THROW_FMT(AssertError, "popping %s:%s but expected %s:%s", fileName, functionName, data->fileName, data->functionName);
+        if (strcmp(data->fileName, fileName) != 0 || strcmp(data->functionName, functionName) != 0)
+            THROW_FMT(AssertError, "popping %s:%s but expected %s:%s", fileName, functionName, data->fileName, data->functionName);
+    }
 }
 
 #endif

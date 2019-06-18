@@ -1,7 +1,10 @@
 /***********************************************************************************************************************************
 Test Backup Info Handler
 ***********************************************************************************************************************************/
+#include "storage/storage.intern.h"
+
 #include "common/harnessInfo.h"
+#include "command/backup/common.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -17,20 +20,21 @@ testRun(void)
     InfoBackup *infoBackup = NULL;
 
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupNew(), infoBackupDataTotal(), infoBackupCheckPg(), infoBackupFree()"))
+    if (testBegin("infoBackupNewLoad(), infoBackupDataTotal(), infoBackupCheckPg(), infoBackupFree()"))
     {
-        // File missing, ignoreMissing=false -- error
+        // File missing
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), FileMissingError,
+            infoBackupNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-            "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
-            "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?",
-            testPath(), testPath(), testPath(), testPath());
+            testPath(), testPath(),  strPtr(strNewFmt("%s/test.ini", testPath())),
+            strPtr(strNewFmt("%s/test.ini.copy", testPath())));
 
-        // File exists, ignoreMissing=false, no backup:current section
+        // File exists, no backup:current section
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
@@ -50,7 +54,7 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info to file");
 
-        TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "    new backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoBackup->backup, NULL, "    backupCurrent NULL");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "    infoBackupDataTotal returns 0");
@@ -86,12 +90,12 @@ testRun(void)
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(infoBackupFree(infoBackup), "infoBackupFree() - free backup info");
-        TEST_RESULT_VOID(infoBackupFree(NULL), "    NULL ptr");
     }
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupData(), infoBackupDataTotal(), infoBackupDataToLog()"))
+    if (testBegin(
+        "infoBackupData(), infoBackupDataTotal(), infoBackupDataToLog(), infoBackupDataLabelList(), infoBackupDataDelete()"))
     {
-        // File exists, ignoreMissing=false, backup:current section exists
+        // File exists, backup:current section exists
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
@@ -134,7 +138,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info current to file");
-        TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "    new backup info");
 
         // Save the file and verify it
         TEST_RESULT_VOID(infoBackupSave(infoBackup, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "save file");
@@ -192,6 +196,34 @@ testRun(void)
         TEST_RESULT_BOOL(backupData.optionCompress, true, "    option compress");
         TEST_RESULT_BOOL(backupData.optionHardlink, false, "    option hardlink");
         TEST_RESULT_BOOL(backupData.optionOnline, true, "    option online");
+
+        // infoBackupDataLabelList and infoBackupDataDelete
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList without expression");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(
+                infoBackup, backupRegExpP(.full=true, .differential=true, .incremental=true)), sortOrderAsc), ", ")),
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList with expression");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), ", ")),
+            "20161219-212741F", "  full=true");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.differential=true)), ", ")),
+            "20161219-212741F_20161219-212803D", "differential=true");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), ", ")),
+            "20161219-212741F_20161219-212918I", "incremental=true");
+
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212918I")), "delete a backup");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
+            "20161219-212741F, 20161219-212741F_20161219-212803D", "  backup deleted");
+
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212803D")), "delete all backups");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F")), "  deleted");
+        TEST_RESULT_UINT(strLstSize(infoBackupDataLabelList(infoBackup, NULL)), 0, "  no backups remain");
 
         // infoBackupDataToLog
         //--------------------------------------------------------------------------------------------------------------------------

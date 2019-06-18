@@ -18,6 +18,10 @@ new(class, mode, type, key, keySize, digest = NULL)
 CODE:
     RETVAL = NULL;
 
+    CHECK(type != NULL);
+    CHECK(key != NULL);
+    CHECK(keySize != 0);
+
     // Not much point to this but it keeps the var from being unused
     if (strcmp(class, PACKAGE_NAME_LIBC "::Cipher::Block") != 0)
         croak("unexpected class name '%s'", class);
@@ -25,10 +29,9 @@ CODE:
     MEM_CONTEXT_XS_NEW_BEGIN("cipherBlockXs")
     {
         RETVAL = memNew(sizeof(CipherBlockXs));
+        RETVAL->memContext = MEM_CONTEXT_XS();
 
-        RETVAL->memContext = MEM_COMTEXT_XS();
-
-        RETVAL->pxPayload = cipherBlockNewC(mode, type, key, keySize, digest);
+        RETVAL->pxPayload = cipherBlockNew(mode, cipherType(STR(type)), BUF(key, keySize), digest == NULL ? NULL : STR(digest));
     }
     MEM_CONTEXT_XS_NEW_END();
 OUTPUT:
@@ -47,10 +50,27 @@ CODE:
         STRLEN tSize;
         const unsigned char *sourcePtr = (const unsigned char *)SvPV(source, tSize);
 
-        RETVAL = NEWSV(0, cipherBlockProcessSizeC(self->pxPayload, tSize));
+        RETVAL = NEWSV(0, ioBufferSize());
         SvPOK_only(RETVAL);
 
-        SvCUR_set(RETVAL, cipherBlockProcessC(self->pxPayload, sourcePtr, tSize, (unsigned char *)SvPV_nolen(RETVAL)));
+        if (tSize > 0)
+        {
+            size_t outBufferUsed = 0;
+
+            do
+            {
+                SvGROW(RETVAL, outBufferUsed + ioBufferSize());
+                Buffer *outBuffer = bufNewUseC((unsigned char *)SvPV_nolen(RETVAL) + outBufferUsed, ioBufferSize());
+
+                ioFilterProcessInOut(self->pxPayload, BUF(sourcePtr, tSize), outBuffer);
+                outBufferUsed += bufUsed(outBuffer);
+            }
+            while (ioFilterInputSame(self->pxPayload));
+
+            SvCUR_set(RETVAL, outBufferUsed);
+        }
+        else
+            SvCUR_set(RETVAL, 0);
     }
     MEM_CONTEXT_XS_END();
 OUTPUT:
@@ -65,10 +85,22 @@ CODE:
 
     MEM_CONTEXT_XS_BEGIN(self->memContext)
     {
-        RETVAL = NEWSV(0, cipherBlockProcessSizeC(self->pxPayload, 0));
+        RETVAL = NEWSV(0, ioBufferSize());
         SvPOK_only(RETVAL);
 
-        SvCUR_set(RETVAL, cipherBlockFlushC(self->pxPayload, (unsigned char *)SvPV_nolen(RETVAL)));
+        size_t outBufferUsed = 0;
+
+        do
+        {
+            SvGROW(RETVAL, outBufferUsed + ioBufferSize());
+            Buffer *outBuffer = bufNewUseC((unsigned char *)SvPV_nolen(RETVAL) + outBufferUsed, ioBufferSize());
+
+            ioFilterProcessInOut(self->pxPayload, NULL, outBuffer);
+            outBufferUsed += bufUsed(outBuffer);
+        }
+        while (!ioFilterDone(self->pxPayload));
+
+        SvCUR_set(RETVAL, outBufferUsed);
     }
     MEM_CONTEXT_XS_END();
 OUTPUT:

@@ -8,7 +8,6 @@ Data for testing
 ***********************************************************************************************************************************/
 #define TEST_CIPHER                                                 "aes-256-cbc"
 #define TEST_PASS                                                   "areallybadpassphrase"
-#define TEST_PASS_SIZE                                              strlen(TEST_PASS)
 #define TEST_PLAINTEXT                                              "plaintext"
 #define TEST_BUFFER_SIZE                                            256
 
@@ -66,7 +65,7 @@ testRun(void)
         int nonZeroTotal = 0;
 
         for (unsigned int charIdx = 0; charIdx < bufferSize; charIdx++)
-            if (buffer[charIdx] != 0)                               // {uncovered - ok if there are no zeros}
+            if (buffer[charIdx] != 0)                               // {uncoverable_branch - ok if there are no zeros}
                 nonZeroTotal++;
 
         TEST_RESULT_INT_NE(nonZeroTotal, 0, "check that there are non-zero values in the buffer");
@@ -78,21 +77,21 @@ testRun(void)
         // Cipher and digest errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            cipherBlockNewC(
-                cipherModeEncrypt, BOGUS_STR, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL), AssertError,
-                "unable to load cipher 'BOGUS'");
+            cipherBlockNew(
+                cipherModeEncrypt, cipherTypeNone, BUFSTRZ(TEST_PASS), NULL), AssertError,
+                "unable to load cipher 'none'");
         TEST_ERROR(
             cipherBlockNew(
                 cipherModeEncrypt, cipherTypeAes256Cbc, testPass, strNew(BOGUS_STR)), AssertError, "unable to load digest 'BOGUS'");
 
         // Initialization of object
         // -------------------------------------------------------------------------------------------------------------------------
-        CipherBlock *cipherBlock = cipherBlockNewC(
-            cipherModeEncrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
-        TEST_RESULT_STR(memContextName(cipherBlock->memContext), "cipherBlock", "mem context name is valid");
+        CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(
+            cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ(TEST_PASS), NULL));
+        TEST_RESULT_STR(memContextName(cipherBlock->memContext), "CipherBlock", "mem context name is valid");
         TEST_RESULT_INT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
-        TEST_RESULT_INT(cipherBlock->passSize, TEST_PASS_SIZE, "passphrase size is valid");
-        TEST_RESULT_BOOL(memcmp(cipherBlock->pass, TEST_PASS, TEST_PASS_SIZE) == 0, true, "passphrase is valid");
+        TEST_RESULT_INT(cipherBlock->passSize, strlen(TEST_PASS), "passphrase size is valid");
+        TEST_RESULT_BOOL(memcmp(cipherBlock->pass, TEST_PASS, strlen(TEST_PASS)) == 0, true, "passphrase is valid");
         TEST_RESULT_BOOL(cipherBlock->saltDone, false, "salt done is false");
         TEST_RESULT_BOOL(cipherBlock->processDone, false, "process done is false");
         TEST_RESULT_INT(cipherBlock->headerSize, 0, "header size is 0");
@@ -100,18 +99,15 @@ testRun(void)
         TEST_RESULT_PTR_NE(cipherBlock->digest, NULL, "digest is set");
         TEST_RESULT_PTR(cipherBlock->cipherContext, NULL, "cipher context is not set");
 
-        TEST_RESULT_VOID(cipherBlockFree(cipherBlock), "free cipher block");
-        TEST_RESULT_VOID(cipherBlockFree(NULL), "free null cipher block");
-
         // Encrypt
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *encryptBuffer = bufNew(TEST_BUFFER_SIZE);
 
-        CipherBlock *blockEncrypt = cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, NULL);
-        IoFilter *blockEncryptFilter = cipherBlockFilter(blockEncrypt);
+        IoFilter *blockEncryptFilter = cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, NULL);
+        CipherBlock *blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
         TEST_RESULT_INT(
-            cipherBlockProcessSizeC(blockEncrypt, strlen(TEST_PLAINTEXT)),
+            cipherBlockProcessSize(blockEncrypt, strlen(TEST_PLAINTEXT)),
             strlen(TEST_PLAINTEXT) + EVP_MAX_BLOCK_LENGTH + CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN, "check process size");
 
         bufLimitSet(encryptBuffer, CIPHER_BLOCK_MAGIC_SIZE);
@@ -129,7 +125,7 @@ testRun(void)
         TEST_RESULT_INT(bufUsed(encryptBuffer), CIPHER_BLOCK_HEADER_SIZE, "cipher size is header len");
 
         TEST_RESULT_INT(
-            cipherBlockProcessSizeC(blockEncrypt, strlen(TEST_PLAINTEXT)),
+            cipherBlockProcessSize(blockEncrypt, strlen(TEST_PLAINTEXT)),
             strlen(TEST_PLAINTEXT) + EVP_MAX_BLOCK_LENGTH, "check process size");
 
         bufLimitSet(
@@ -151,17 +147,17 @@ testRun(void)
             "cipher size increases by one block on flush");
         TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), true,  "filter is done");
 
-        cipherBlockFree(blockEncrypt);
+        ioFilterFree(blockEncryptFilter);
 
         // Decrypt in one pass
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *decryptBuffer = bufNew(TEST_BUFFER_SIZE);
 
-        CipherBlock *blockDecrypt = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
-        IoFilter *blockDecryptFilter = cipherBlockFilter(blockDecrypt);
+        IoFilter *blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        CipherBlock *blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         TEST_RESULT_INT(
-            cipherBlockProcessSizeC(blockDecrypt, bufUsed(encryptBuffer)), bufUsed(encryptBuffer) + EVP_MAX_BLOCK_LENGTH,
+            cipherBlockProcessSize(blockDecrypt, bufUsed(encryptBuffer)), bufUsed(encryptBuffer) + EVP_MAX_BLOCK_LENGTH,
             "check process size");
 
         ioFilterProcessInOut(blockDecryptFilter, encryptBuffer, decryptBuffer);
@@ -172,16 +168,16 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(strNewBuf(decryptBuffer)), TEST_PLAINTEXT TEST_PLAINTEXT, "check final decrypt buffer");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // Decrypt in small chunks to test buffering
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
-        blockDecryptFilter = cipherBlockFilter(blockDecrypt);
+        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
 
-        ioFilterProcessInOut(blockDecryptFilter, bufNewC(CIPHER_BLOCK_MAGIC_SIZE, bufPtr(encryptBuffer)), decryptBuffer);
+        ioFilterProcessInOut(blockDecryptFilter, bufNewC(bufPtr(encryptBuffer), CIPHER_BLOCK_MAGIC_SIZE), decryptBuffer);
         TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "no decrypt since header read is not complete");
         TEST_RESULT_BOOL(blockDecrypt->saltDone, false, "salt done is false");
         TEST_RESULT_BOOL(blockDecrypt->processDone, false, "process done is false");
@@ -190,7 +186,7 @@ testRun(void)
             memcmp(blockDecrypt->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) == 0, true, "check header magic");
 
         ioFilterProcessInOut(
-            blockDecryptFilter, bufNewC(PKCS5_SALT_LEN, bufPtr(encryptBuffer) + CIPHER_BLOCK_MAGIC_SIZE), decryptBuffer);
+            blockDecryptFilter, bufNewC(bufPtr(encryptBuffer) + CIPHER_BLOCK_MAGIC_SIZE, PKCS5_SALT_LEN), decryptBuffer);
         TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "no decrypt since no data processed yet");
         TEST_RESULT_BOOL(blockDecrypt->saltDone, true, "salt done is true");
         TEST_RESULT_BOOL(blockDecrypt->processDone, false, "process done is false");
@@ -203,7 +199,7 @@ testRun(void)
 
         ioFilterProcessInOut(
             blockDecryptFilter,
-            bufNewC(bufUsed(encryptBuffer) - CIPHER_BLOCK_HEADER_SIZE, bufPtr(encryptBuffer) + CIPHER_BLOCK_HEADER_SIZE),
+            bufNewC(bufPtr(encryptBuffer) + CIPHER_BLOCK_HEADER_SIZE, bufUsed(encryptBuffer) - CIPHER_BLOCK_HEADER_SIZE),
             decryptBuffer);
         TEST_RESULT_INT(bufUsed(decryptBuffer), EVP_CIPHER_block_size(blockDecrypt->cipher), "decrypt size is one block");
 
@@ -212,22 +208,22 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(strNewBuf(decryptBuffer)), TEST_PLAINTEXT TEST_PLAINTEXT, "check final decrypt buffer");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // Encrypt zero byte file and decrypt it
         // -------------------------------------------------------------------------------------------------------------------------
-        blockEncrypt = cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, NULL);
-        blockEncryptFilter = cipherBlockFilter(blockEncrypt);
+        blockEncryptFilter = cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
         bufUsedZero(encryptBuffer);
 
         ioFilterProcessInOut(blockEncryptFilter, NULL, encryptBuffer);
         TEST_RESULT_INT(bufUsed(encryptBuffer), 32, "check remaining size");
 
-        cipherBlockFree(blockEncrypt);
+        ioFilterFree(blockEncryptFilter);
 
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
-        blockDecryptFilter = cipherBlockFilter(blockDecrypt);
+        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
 
@@ -236,23 +232,23 @@ testRun(void)
         ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer);
         TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "0 bytes on flush");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // Invalid cipher header
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
-        blockDecryptFilter = cipherBlockFilter(blockDecrypt);
+        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         TEST_ERROR(
             ioFilterProcessInOut(blockDecryptFilter, BUFSTRDEF("1234567890123456"), decryptBuffer), CryptoError,
             "cipher header invalid");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // Invalid encrypted data cannot be flushed
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
-        blockDecryptFilter = cipherBlockFilter(blockDecrypt);
+        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
 
@@ -261,72 +257,73 @@ testRun(void)
 
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "unable to flush");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // File with no header should not flush
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
-        blockDecryptFilter = cipherBlockFilter(blockDecrypt);
+        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
 
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "cipher header missing");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // File with header only should error
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
-        blockDecryptFilter = cipherBlockFilter(blockDecrypt);
+        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
 
         ioFilterProcessInOut(blockDecryptFilter, BUFSTRDEF(CIPHER_BLOCK_MAGIC "12345678"), decryptBuffer);
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "unable to flush");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
     }
 
     // *****************************************************************************************************************************
     if (testBegin("CryptoHash"))
     {
-        CryptoHash *hash = NULL;
-        IoFilter *hashFilter = NULL;
+        IoFilter *hash = NULL;
 
         TEST_ERROR(cryptoHashNew(strNew(BOGUS_STR)), AssertError, "unable to load hash 'BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
-        TEST_RESULT_VOID(cryptoHashFree(hash), "    free hash");
-        TEST_RESULT_VOID(cryptoHashFree(NULL), "    free null hash");
+        TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
-        TEST_RESULT_STR(strPtr(bufHex(cryptoHash(hash))), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "    check empty hash");
-        TEST_RESULT_STR(strPtr(bufHex(cryptoHash(hash))), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "    check empty hash again");
-        TEST_RESULT_VOID(cryptoHashFree(hash), "    free hash");
+        TEST_RESULT_STR(
+            strPtr(bufHex(cryptoHash((CryptoHash *)ioFilterDriver(hash)))), "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+            "    check empty hash");
+        TEST_RESULT_STR(
+            strPtr(bufHex(cryptoHash((CryptoHash *)ioFilterDriver(hash)))), "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+            "    check empty hash again");
+        TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
-        TEST_ASSIGN(hashFilter, cryptoHashFilter(hash), "create sha1 hash");
-        TEST_RESULT_VOID(cryptoHashProcessC(hash, (const unsigned char *)"1", 1), "    add 1");
-        TEST_RESULT_VOID(cryptoHashProcessStr(hash, strNew("2")), "    add 2");
-        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, BUFSTRDEF("3")), "    add 3");
-        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, BUFSTRDEF("4")), "    add 4");
-        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, BUFSTRDEF("5")), "    add 5");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "    add 1");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTR(strNew("2"))), "    add 2");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRDEF("3")), "    add 3");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRDEF("4")), "    add 4");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRDEF("5")), "    add 5");
 
         TEST_RESULT_STR(
-            strPtr(varStr(ioFilterResult(hashFilter))), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
-        TEST_RESULT_VOID(cryptoHashFree(hash), "    free hash");
+            strPtr(varStr(ioFilterResult(hash))), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
+        TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
-        TEST_RESULT_STR(strPtr(bufHex(cryptoHash(hash))), "d41d8cd98f00b204e9800998ecf8427e", "    check empty hash");
+        TEST_RESULT_STR(strPtr(varStr(ioFilterResult(hash))), "d41d8cd98f00b204e9800998ecf8427e", "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA256)), "create sha256 hash");
         TEST_RESULT_STR(
-            strPtr(bufHex(cryptoHash(hash))), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            strPtr(varStr(ioFilterResult(hash))), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -334,8 +331,8 @@ testRun(void)
             strPtr(bufHex(cryptoHashOne(strNew(HASH_TYPE_SHA1), BUFSTRDEF("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
             "    check small hash");
         TEST_RESULT_STR(
-            strPtr(bufHex(cryptoHashOneStr(strNew(HASH_TYPE_SHA1), strNew("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
-            "    check small hash");
+            strPtr(bufHex(cryptoHashOne(strNew(HASH_TYPE_SHA1), BUFSTRDEF("")))), "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+            "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(

@@ -20,6 +20,7 @@ Expose log internal data for unit testing/debugging
 extern LogLevel logLevelFile;
 extern int logHandleFile;
 extern bool logFileBanner;
+extern void logAnySet(void);
 
 /***********************************************************************************************************************************
 Default log level for testing
@@ -71,6 +72,7 @@ harnessLogInit(void)
 
     snprintf(logFile, sizeof(logFile), "%s/expect.log", testExpectPath());
     logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+    logAnySet();
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

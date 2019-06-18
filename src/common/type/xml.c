@@ -11,6 +11,7 @@ Xml Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/list.h"
 #include "common/type/xml.h"
 
@@ -36,6 +37,8 @@ struct XmlDocument
     xmlDocPtr xml;
     XmlNode *root;
 };
+
+OBJECT_DEFINE_FREE(XML_DOCUMENT);
 
 /***********************************************************************************************************************************
 Error handler
@@ -198,7 +201,7 @@ xmlNodeLstAdd(XmlNodeList *this, xmlNodePtr node)
 Get node attribute
 ***********************************************************************************************************************************/
 String *
-xmlNodeAttribute(XmlNode *this, const String *name)
+xmlNodeAttribute(const XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -224,7 +227,7 @@ xmlNodeAttribute(XmlNode *this, const String *name)
 Get node content
 ***********************************************************************************************************************************/
 String *
-xmlNodeContent(XmlNode *this)
+xmlNodeContent(const XmlNode *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -246,7 +249,7 @@ xmlNodeContent(XmlNode *this)
 Set node content
 ***********************************************************************************************************************************/
 void
-xmlNodeContentSet(XmlNode *this, String *content)
+xmlNodeContentSet(XmlNode *this, const String *content)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -265,7 +268,7 @@ xmlNodeContentSet(XmlNode *this, String *content)
 Get a list of child nodes
 ***********************************************************************************************************************************/
 XmlNodeList *
-xmlNodeChildList(XmlNode *this, const String *name)
+xmlNodeChildList(const XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -290,7 +293,7 @@ xmlNodeChildList(XmlNode *this, const String *name)
 Get a child node
 ***********************************************************************************************************************************/
 XmlNode *
-xmlNodeChildN(XmlNode *this, const String *name, unsigned int index, bool errorOnMissing)
+xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -325,7 +328,7 @@ xmlNodeChildN(XmlNode *this, const String *name, unsigned int index, bool errorO
 }
 
 XmlNode *
-xmlNodeChild(XmlNode *this, const String *name, bool errorOnMissing)
+xmlNodeChild(const XmlNode *this, const String *name, bool errorOnMissing)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -342,7 +345,7 @@ xmlNodeChild(XmlNode *this, const String *name, bool errorOnMissing)
 Get child total
 ***********************************************************************************************************************************/
 unsigned int
-xmlNodeChildTotal(XmlNode *this, const String *name)
+xmlNodeChildTotal(const XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE, this);
@@ -378,6 +381,15 @@ xmlNodeFree(XmlNode *this)
 }
 
 /***********************************************************************************************************************************
+Free document
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(XML_DOCUMENT, LOG, logLevelTrace)
+{
+    xmlFreeDoc(this->xml);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
+
+/***********************************************************************************************************************************
 Create a new document with the specified root node
 ***********************************************************************************************************************************/
 XmlDocument *
@@ -402,7 +414,7 @@ xmlDocumentNew(const String *rootName)
         this->xml = xmlNewDoc(BAD_CAST "1.0");
 
         // Set callback to ensure xml document is freed
-        memContextCallback(this->memContext, (MemContextCallback)xmlDocumentFree, this);
+        memContextCallbackSet(this->memContext, xmlDocumentFreeResource, this);
 
         this->root = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strPtr(rootName)));
         xmlDocSetRootElement(this->xml, this->root->node);
@@ -440,7 +452,7 @@ xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize)
             THROW_FMT(FormatError, "invalid xml");
 
         // Set callback to ensure xml document is freed
-        memContextCallback(this->memContext, (MemContextCallback)xmlDocumentFree, this);
+        memContextCallbackSet(this->memContext, xmlDocumentFreeResource, this);
 
         // Get the root node
         this->root = xmlNodeNew(xmlDocGetRootElement(this->xml));
@@ -498,7 +510,7 @@ xmlDocumentBuf(const XmlDocument *this)
     int xmlSize;
 
     xmlDocDumpMemoryEnc(this->xml, &xml, &xmlSize, XML_ENCODING_TYPE_UTF8);
-    Buffer *result = bufNewC((unsigned int)xmlSize, xml);
+    Buffer *result = bufNewC(xml, (size_t)xmlSize);
     xmlFree(xml);
 
     FUNCTION_TEST_RETURN(result);
@@ -517,25 +529,4 @@ xmlDocumentRoot(const XmlDocument *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->root);
-}
-
-/***********************************************************************************************************************************
-Free document
-***********************************************************************************************************************************/
-void
-xmlDocumentFree(XmlDocument *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_DOCUMENT, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        xmlFreeDoc(this->xml);
-
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }

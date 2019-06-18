@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Archive Info Handler
 ***********************************************************************************************************************************/
+#include "storage/storage.intern.h"
+
 #include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
@@ -16,18 +18,19 @@ testRun(void)
     InfoArchive *info = NULL;
 
     // *****************************************************************************************************************************
-    if (testBegin("infoArchiveNew() and infoArchiveFree()"))
+    if (testBegin("infoArchiveNewLoad() and infoArchiveFree()"))
     {
         TEST_ERROR_FMT(
-            infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), FileMissingError,
+            infoArchiveNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-            "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
-            "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            testPath(), testPath(), testPath(), testPath());
+            testPath(), testPath(), strPtr(strNewFmt("%s/test.ini", testPath())),
+            strPtr(strNewFmt("%s/test.ini.copy", testPath())));
 
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
@@ -45,7 +48,7 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put archive info to file");
 
-        TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), "    new archive info");
+        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "    new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher passphrase");
@@ -53,7 +56,6 @@ testRun(void)
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(infoArchiveFree(info), "infoArchiveFree() - free archive info");
-        TEST_RESULT_VOID(infoArchiveFree(NULL), "    NULL ptr");
     }
 
     // *****************************************************************************************************************************
@@ -75,7 +77,7 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put archive info to file");
 
-        TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), "new archive info");
+        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089)), "9.5-2", "  full match found");
 
         TEST_RESULT_STR(strPtr(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702)), "9.4-1", "  partial match found");

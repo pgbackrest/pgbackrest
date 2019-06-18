@@ -192,8 +192,10 @@ cfgLoadUpdateOption(void)
                             cfgOptionName(cfgOptRepoRetentionDiff + optionIdx));
                     }
                 }
-                else if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR))
+                else
                 {
+                    CHECK(strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR));
+
                     LOG_WARN("%s option '%s' is not set", strPtr(msgArchiveOff),
                         cfgOptionName(cfgOptRepoRetentionArchive + optionIdx));
                 }
@@ -218,7 +220,7 @@ cfgLoadUpdateOption(void)
     }
 
     // Error if an S3 bucket name contains dots
-    if (cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifySsl) &&
+    if (cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifyTls) &&
         strChr(cfgOptionStr(cfgOptRepoS3Bucket), '.') != -1)
     {
         THROW_FMT(

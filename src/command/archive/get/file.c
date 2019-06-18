@@ -50,8 +50,8 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
         PgControl controlInfo = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
         // Attempt to load the archive info file
-        InfoArchive *info = infoArchiveNew(
-            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType, cipherPass);
+        InfoArchive *info = infoArchiveNewLoad(
+            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType, cipherPass);
 
         // Loop through the pg history in case the WAL we need is not in the most recent archive id
         String *archiveId = NULL;
@@ -142,7 +142,7 @@ archiveGetFile(
 
         if (archiveGetCheckResult.archiveFileActual != NULL)
         {
-            StorageFileWrite *destination = storageNewWriteP(
+            StorageWrite *destination = storageNewWriteP(
                 storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable,
                 .noAtomic = !durable);
 
@@ -153,16 +153,14 @@ archiveGetFile(
             if (cipherType != cipherTypeNone)
             {
                 ioFilterGroupAdd(
-                    filterGroup,
-                    cipherBlockFilter(
-                        cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(archiveGetCheckResult.cipherPass), NULL)));
+                    filterGroup, cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(archiveGetCheckResult.cipherPass), NULL));
             }
 
             // If file is compressed then add the decompression filter
             if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZIP_EXT))
-                ioFilterGroupAdd(filterGroup, gzipDecompressFilter(gzipDecompressNew(false)));
+                ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
 
-            ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
+            ioWriteFilterGroupSet(storageWriteIo(destination), filterGroup);
 
             // Copy the file
             storageCopyNP(

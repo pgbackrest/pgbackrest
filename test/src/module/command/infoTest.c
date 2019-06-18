@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Info Command
 ***********************************************************************************************************************************/
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
@@ -95,13 +95,15 @@ testRun(void)
 
         TEST_ERROR_FMT(infoRender(), FileMissingError,
             "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
-            "FileMissingError: unable to open '%s/archive.info' for read: [2] No such file or directory\n"
-            "FileMissingError: unable to open '%s/archive.info.copy' for read: [2] No such file or directory\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path));
+            strPtr(archiveStanza1Path), strPtr(archiveStanza1Path),
+            strPtr(strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
+            strPtr(strNewFmt("%s/archive.info.copy", strPtr(archiveStanza1Path))));
 
         // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         // Only the current db information from the db:history will be processed.
@@ -740,11 +742,12 @@ testRun(void)
             "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
             "CryptoError: '%s/backup.info' cipher header invalid\n"
             "HINT: Is or was the repo encrypted?\n"
-            "FileMissingError: unable to open '%s/backup.info.copy' for read: [2] No such file or directory\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?\n"
-            "HINT: use option --stanza if encryption settings are different for the stanza than the global settings"
-            ,strPtr(backupStanza2Path), strPtr(backupStanza2Path), strPtr(backupStanza2Path), strPtr(backupStanza2Path));
+            "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+            strPtr(backupStanza2Path), strPtr(backupStanza2Path), strPtr(backupStanza2Path),
+            strPtr(strNewFmt("%s/backup.info.copy", strPtr(backupStanza2Path))));
     }
 
     //******************************************************************************************************************************
@@ -816,8 +819,7 @@ testRun(void)
         int stdoutSave = dup(STDOUT_FILENO);
         String *stdoutFile = strNewFmt("%s/stdout.info", testPath());
 
-        if (freopen(strPtr(stdoutFile), "w", stdout) == NULL)                                       // {uncoverable - does not fail}
-            THROW_SYS_ERROR(FileWriteError, "unable to reopen stdout");                             // {uncoverable+}
+        THROW_ON_SYS_ERROR(freopen(strPtr(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         // Not in a test wrapper to avoid writing to stdout
         cmdInfo();
@@ -825,8 +827,8 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storageDriverPosixInterface(
-            storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
+        Storage *storage = storagePosixNew(
+            strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
         TEST_RESULT_STR(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), "No stanzas exist in the repository.\n",
             "    check text");

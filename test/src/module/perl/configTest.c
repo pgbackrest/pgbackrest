@@ -67,7 +67,7 @@ testRun(void)
             "\"config\":{\"negate\":true,\"reset\":false,\"source\":\"param\",\"valid\":true},"
             "\"online\":{\"negate\":true,\"reset\":false,\"source\":\"param\",\"valid\":true,\"value\":false},"
             "\"pg1-host\":{\"negate\":false,\"reset\":true,\"source\":\"default\",\"valid\":true},"
-            "\"pg1-path\":{\"negate\":false,\"reset\":false,\"source\":\"config\",\"valid\":true,\"value\":\"\\/path\\/db\\/pg\"},"
+            "\"pg1-path\":{\"negate\":false,\"reset\":false,\"source\":\"config\",\"valid\":true,\"value\":\"/path/db/pg\"},"
             "\"protocol-timeout\":{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,\"value\":1.1},"
             "\"repo1-cipher-pass\":{\"negate\":false,\"reset\":false,\"source\":\"config\",\"valid\":true,"
                 "\"value\":\"part1\\npart2\"},"

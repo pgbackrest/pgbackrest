@@ -119,6 +119,13 @@ unit:
           common/debug: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: object
+        total: 1
+
+        coverage:
+          common/object: noCode
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
         total: 2
 
@@ -223,9 +230,10 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
-        total: 4
+        total: 5
 
         coverage:
+          common/io/http/cache: full
           common/io/http/client: full
           common/io/http/common: full
           common/io/http/header: full
@@ -364,7 +372,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
-        total: 2
+        total: 4
         perlReq: true
 
         coverage:
@@ -496,7 +504,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: helper-perl
-        total: 5
+        total: 4
 
         coverage:
           Storage/Helper: partial
@@ -506,34 +514,34 @@ unit:
         total: 1
 
         coverage:
-          storage/driver/cifs/storage: full
+          storage/cifs/storage: full
+          storage/posix/storage: full
           storage/helper: full
           storage/storage: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
-        total: 21
+        total: 20
 
         coverage:
-          storage/driver/posix/common: full
-          storage/driver/posix/fileRead: full
-          storage/driver/posix/fileWrite: full
-          storage/driver/posix/storage: full
-          storage/fileRead: full
-          storage/fileWrite: full
+          storage/posix/read: full
+          storage/posix/storage: full
+          storage/posix/write: full
           storage/helper: full
+          storage/read: full
           storage/storage: full
+          storage/write: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 5
+        total: 11
         perlReq: true
 
         coverage:
-          storage/driver/remote/fileRead: full
-          storage/driver/remote/fileWrite: full
-          storage/driver/remote/protocol: full
-          storage/driver/remote/storage: full
+          storage/remote/read: full
+          storage/remote/protocol: full
+          storage/remote/storage: full
+          storage/remote/write: full
           storage/helper: full
           storage/storage: full
 
@@ -542,9 +550,9 @@ unit:
         total: 3
 
         coverage:
-          storage/driver/s3/fileRead: full
-          storage/driver/s3/fileWrite: full
-          storage/driver/s3/storage: full
+          storage/s3/read: full
+          storage/s3/storage: full
+          storage/s3/write: full
           storage/helper: full
           storage/storage: full
 
@@ -672,10 +680,11 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup-common
-        total: 1
+        total: 2
 
         coverage:
           command/backup/common: full
+          command/backup/pageChecksum: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command
@@ -718,6 +727,21 @@ unit:
 
         coverage:
           command/remote/remote: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: restore
+        total: 1
+
+        coverage:
+          command/restore/file: full
+          command/restore/protocol: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: storage
+        total: 1
+
+        coverage:
+          command/storage/list: full
 
   # ********************************************************************************************************************************
   - name: backup

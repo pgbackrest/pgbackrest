@@ -87,14 +87,13 @@ my @stryCFile =
     'config/parse.c',
     'perl/config.c',
     'postgres/pageChecksum.c',
-    'storage/driver/posix/storage.c',
-    'storage/driver/posix/common.c',
-    'storage/driver/posix/fileRead.c',
-    'storage/driver/posix/fileWrite.c',
-    'storage/fileRead.c',
-    'storage/fileWrite.c',
+    'storage/posix/read.c',
+    'storage/posix/storage.c',
+    'storage/posix/write.c',
     'storage/helper.c',
+    'storage/read.c',
     'storage/storage.c',
+    'storage/write.c',
 );
 
 # Add ../src for files that are outside libc

@@ -67,7 +67,7 @@ lz4CompressNew(int level)
         lz4Error(LZ4F_createCompressionContext(&this->context, LZ4F_VERSION));
 
         // Set free callback to ensure lz4 context is freed
-        memContextCallback(this->memContext, (MemContextCallback)lz4CompressFree, this);
+        memContextCallbackSet(this->memContext, (MemContextCallback)lz4CompressFree, this);
 
         // Create filter interface
         this->filter = ioFilterNewP(

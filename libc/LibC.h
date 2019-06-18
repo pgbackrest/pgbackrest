@@ -123,7 +123,7 @@ Simplifies creation of the memory context in contructors and includes error hand
     }                                                                                                                              \
 }
 
-#define MEM_COMTEXT_XS()                                                                                                           \
+#define MEM_CONTEXT_XS()                                                                                                           \
     MEM_CONTEXT_XS_memContext
 
 /***********************************************************************************************************************************

@@ -21,7 +21,7 @@ Process config protocol requests
 bool
 configProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);

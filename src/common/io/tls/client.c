@@ -24,9 +24,15 @@ TLS Client
 #include "common/io/read.intern.h"
 #include "common/io/write.intern.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/time.h"
 #include "common/type/keyValue.h"
 #include "common/wait.h"
+
+/***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+static TlsClientStat tlsClientStatLocal;
 
 /***********************************************************************************************************************************
 Object type
@@ -46,6 +52,18 @@ struct TlsClient
     IoRead *read;                                                   // Read interface
     IoWrite *write;                                                 // Write interface
 };
+
+OBJECT_DEFINE_FREE(TLS_CLIENT);
+
+/***********************************************************************************************************************************
+Free connection
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_CLIENT, LOG, logLevelTrace)
+{
+    tlsClientClose(this);
+    SSL_CTX_free(this->context);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 New object
@@ -93,7 +111,7 @@ tlsClientNew(
         this->context = SSL_CTX_new(method);
         cryptoError(this->context == NULL, "unable to create TLS context");
 
-        memContextCallback(this->memContext, (MemContextCallback)tlsClientFree, this);
+        memContextCallbackSet(this->memContext, tlsClientFreeResource, this);
 
         // Exclude SSL versions to only allow TLS and also disable compression
         SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
@@ -113,6 +131,8 @@ tlsClientNew(
             else
                 cryptoError(SSL_CTX_set_default_verify_paths(this->context) != 1, "unable to set default CA certificate location");
         }
+
+        tlsClientStatLocal.object++;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -240,17 +260,13 @@ tlsClientHostVerify(const String *host, X509 *certificate)
         if (!altNameFound)
         {
             X509_NAME *subjectName = X509_get_subject_name(certificate);
+            CHECK(subjectName != NULL);
 
-            if (subjectName != NULL)                            // {uncovered - not sure how to create cert with null common name}
-            {
-                int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
+            int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
+            CHECK(commonNameIndex >= 0);
 
-                if (commonNameIndex >= 0)                       // {uncovered - it seems this must be >= 0 if CN is not null}
-                {
-                    result = tlsClientHostVerifyName(
-                        host, asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));
-                }
-            }
+            result = tlsClientHostVerifyName(
+                host, asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -259,9 +275,150 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
-Open connection if this is a new client or if the connection was closed by the server
+Read from the TLS session
+***********************************************************************************************************************************/
+size_t
+tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
+{
+    THIS(TlsClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->session != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(!bufFull(buffer));
+
+    ssize_t actualBytes = 0;
+
+    // If blocking read keep reading until buffer is full
+    do
+    {
+        // If no tls data pending then check the socket
+        if (!SSL_pending(this->session))
+        {
+            // Initialize the file descriptor set used for select
+            fd_set selectSet;
+            FD_ZERO(&selectSet);
+
+            // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
+            FD_SET((unsigned int)this->socket, &selectSet);
+
+            // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
+            struct timeval timeoutSelect;
+            timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
+            timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
+
+            // Determine if there is data to be read
+            int result = select(this->socket + 1, &selectSet, NULL, NULL, &timeoutSelect);
+            THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
+
+            // If no data read after time allotted then error
+            if (!result)
+            {
+                THROW_FMT(
+                    FileReadError, "unable to read data from '%s:%u' after %" PRIu64 "ms",
+                    strPtr(this->host), this->port, this->timeout);
+            }
+        }
+
+        // Read and handle errors
+        size_t expectedBytes = bufRemains(buffer);
+        actualBytes = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
+
+        cryptoError(actualBytes < 0, "unable to read from TLS");
+
+        // Update amount of buffer used
+        bufUsedInc(buffer, (size_t)actualBytes);
+
+        // If zero bytes were returned then the connection was closed
+        if (actualBytes == 0)
+        {
+            tlsClientClose(this);
+            break;
+        }
+    }
+    while (block && bufRemains(buffer) > 0);
+
+    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
+}
+
+/***********************************************************************************************************************************
+Write to the tls session
 ***********************************************************************************************************************************/
 void
+tlsClientWrite(THIS_VOID, const Buffer *buffer)
+{
+    THIS(TlsClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->session != NULL);
+    ASSERT(buffer != NULL);
+
+    cryptoError(SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer)) != (int)bufUsed(buffer), "unable to write");
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Close the connection
+***********************************************************************************************************************************/
+void
+tlsClientClose(TlsClient *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // Close the socket
+    if (this->socket != -1)
+    {
+        close(this->socket);
+        this->socket = -1;
+    }
+
+    // Free the TLS session
+    if (this->session != NULL)
+    {
+        SSL_free(this->session);
+        this->session = NULL;
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Has session been closed by the server?
+***********************************************************************************************************************************/
+bool
+tlsClientEof(THIS_VOID)
+{
+    THIS(TlsClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(BOOL, this->session == NULL);
+}
+
+/***********************************************************************************************************************************
+Open connection if this is a new client or if the connection was closed by the server
+***********************************************************************************************************************************/
+bool
 tlsClientOpen(TlsClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -269,6 +426,8 @@ tlsClientOpen(TlsClient *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+
+    bool result = false;
 
     if (this->session == NULL)
     {
@@ -372,6 +531,8 @@ tlsClientOpen(TlsClient *this)
                     {
                         LOG_DEBUG("retry %s: %s", errorTypeName(errorType()), errorMessage());
                         retry = true;
+
+                        tlsClientStatLocal.retry++;
                     }
 
                     tlsClientClose(this);
@@ -414,151 +575,40 @@ tlsClientOpen(TlsClient *this)
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             // Create read and write interfaces
-            this->write = ioWriteNewP(this, .write = (IoWriteInterfaceWrite)tlsClientWrite);
+            this->write = ioWriteNewP(this, .write = tlsClientWrite);
             ioWriteOpen(this->write);
-            this->read = ioReadNewP(
-                this, .block = true, .eof = (IoReadInterfaceEof)tlsClientEof, .read = (IoReadInterfaceRead)tlsClientRead);
+            this->read = ioReadNewP(this, .block = true, .eof = tlsClientEof, .read = tlsClientRead);
             ioReadOpen(this->read);
         }
         MEM_CONTEXT_END();
+
+        tlsClientStatLocal.session++;
+        result = true;
     }
 
-    FUNCTION_LOG_RETURN_VOID();
+    tlsClientStatLocal.request++;
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
-Read from the TLS session
+Format statistics to a string
 ***********************************************************************************************************************************/
-size_t
-tlsClientRead(TlsClient *this, Buffer *buffer, bool block)
+String *
+tlsClientStatStr(void)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM(BUFFER, buffer);
-        FUNCTION_LOG_PARAM(BOOL, block);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_VOID();
 
-    ASSERT(this != NULL);
-    ASSERT(this->session != NULL);
-    ASSERT(buffer != NULL);
-    ASSERT(!bufFull(buffer));
+    String *result = NULL;
 
-    ssize_t actualBytes = 0;
-
-    // If blocking read keep reading until buffer is full
-    do
+    if (tlsClientStatLocal.object > 0)
     {
-        // If no tls data pending then check the socket
-        if (!SSL_pending(this->session))
-        {
-            // Initialize the file descriptor set used for select
-            fd_set selectSet;
-            FD_ZERO(&selectSet);
-
-            // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
-            FD_SET((unsigned int)this->socket, &selectSet);
-
-            // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
-            struct timeval timeoutSelect;
-            timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-            timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
-
-            // Determine if there is data to be read
-            int result = select(this->socket + 1, &selectSet, NULL, NULL, &timeoutSelect);
-            THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
-
-            // If no data read after time allotted then error
-            if (!result)
-            {
-                THROW_FMT(
-                    FileReadError, "unable to read data from '%s:%u' after %" PRIu64 "ms",
-                    strPtr(this->host), this->port, this->timeout);
-            }
-        }
-
-        // Read and handle errors
-        size_t expectedBytes = bufRemains(buffer);
-        actualBytes = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
-
-        cryptoError(actualBytes < 0, "unable to read from TLS");
-
-        // Update amount of buffer used
-        bufUsedInc(buffer, (size_t)actualBytes);
-
-        // If zero bytes were returned then the connection was closed
-        if (actualBytes == 0)
-        {
-            tlsClientClose(this);
-            break;
-        }
-    }
-    while (block && bufRemains(buffer) > 0);
-
-    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
-}
-
-/***********************************************************************************************************************************
-Write to the tls session
-***********************************************************************************************************************************/
-void
-tlsClientWrite(TlsClient *this, const Buffer *buffer)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM(BUFFER, buffer);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->session != NULL);
-    ASSERT(buffer != NULL);
-
-    cryptoError(SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer)) != (int)bufUsed(buffer), "unable to write");
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Close the connection
-***********************************************************************************************************************************/
-void
-tlsClientClose(TlsClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Close the socket
-    if (this->socket != -1)
-    {
-        close(this->socket);
-        this->socket = -1;
+        result = strNewFmt(
+            "tls statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64,
+            tlsClientStatLocal.object, tlsClientStatLocal.session, tlsClientStatLocal.request, tlsClientStatLocal.retry);
     }
 
-    // Free the TLS session
-    if (this->session != NULL)
-    {
-        SSL_free(this->session);
-        this->session = NULL;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Has session been closed by the server?
-***********************************************************************************************************************************/
-bool
-tlsClientEof(const TlsClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_LOG_RETURN(BOOL, this->session == NULL);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -589,26 +639,4 @@ tlsClientIoWrite(const TlsClient *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->write);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-tlsClientFree(TlsClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TLS_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        tlsClientClose(this);
-        SSL_CTX_free(this->context);
-
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }

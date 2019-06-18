@@ -4,31 +4,35 @@ IO Read Interface Internal
 #ifndef COMMON_IO_READ_INTERN_H
 #define COMMON_IO_READ_INTERN_H
 
+/***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
 #include "common/io/read.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-typedef bool (*IoReadInterfaceEof)(void *driver);
-typedef void (*IoReadInterfaceClose)(void *driver);
-typedef bool (*IoReadInterfaceOpen)(void *driver);
-typedef int (*IoReadInterfaceHandle)(void *driver);
-typedef size_t (*IoReadInterfaceRead)(void *driver, Buffer *buffer, bool block);
-
 typedef struct IoReadInterface
 {
     bool block;                                               // Do reads block when buffer is larger than available bytes?
-    IoReadInterfaceEof eof;
-    IoReadInterfaceClose close;
-    IoReadInterfaceHandle handle;
-    IoReadInterfaceOpen open;
-    IoReadInterfaceRead read;
+
+    bool (*eof)(void *driver);
+    void (*close)(void *driver);
+    bool (*open)(void *driver);
+    int (*handle)(const void *driver);
+    size_t (*read)(void *driver, Buffer *buffer, bool block);
 } IoReadInterface;
 
 #define ioReadNewP(driver, ...)                                                                                                    \
     ioReadNew(driver, (IoReadInterface){__VA_ARGS__})
 
 IoRead *ioReadNew(void *driver, IoReadInterface interface);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+void *ioReadDriver(IoRead *this);
+const IoReadInterface *ioReadInterface(const IoRead *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

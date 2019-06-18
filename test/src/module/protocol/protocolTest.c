@@ -7,7 +7,7 @@ Test Protocol
 #include "common/io/bufferWrite.h"
 #include "common/regExp.h"
 #include "storage/storage.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 #include "version.h"
 
 #include "common/harnessConfig.h"
@@ -62,8 +62,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
     if (testBegin("repoIsLocal()"))
@@ -137,8 +137,8 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
-                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=0 --stanza=test1"
-                        " --type=backup remote")),
+                        "|pgbackrest --c --command=archive-get --log-level-file=off --log-level-stderr=error --process=0"
+                        " --stanza=test1 --type=backup remote")),
             "remote protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
-                        "|pgbackrest --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
+                        "|pgbackrest --c --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
                         " --config-path=/path/config --log-level-file=info --log-level-stderr=error --log-subprocess --process=1"
                         " --stanza=test1 --type=backup remote")),
             "remote protocol params with replacements");
@@ -182,8 +182,8 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
-                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=3 --stanza=test1"
-                        " --type=backup remote")),
+                        "|pgbackrest --c --command=archive-get --log-level-file=off --log-level-stderr=error --process=3"
+                        " --stanza=test1 --type=backup remote")),
             "remote protocol params for local");
     }
 
@@ -214,7 +214,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(protocolCommandFree(command), "free command");
-        TEST_RESULT_VOID(protocolCommandFree(NULL), "free null command");
     }
 
     // *****************************************************************************************************************************
@@ -224,9 +223,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 2000));
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 // Various bogus greetings
@@ -253,7 +252,7 @@ testRun(void)
 
                 // Throw errors
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with error text");
-                ioWriteStrLine(write, strNew("{\"err\":25,\"out\":\"sample error message\"}"));
+                ioWriteStrLine(write, strNew("{\"err\":25,\"out\":\"sample error message\",\"errStack\":\"stack data\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with no error text");
@@ -277,9 +276,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
+                IoRead *read = ioHandleReadNew(strNew("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                IoWrite *write = ioHandleWriteNew(strNew("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 // Various bogus greetings
@@ -322,8 +321,15 @@ testRun(void)
                 // Throw errors
                 TEST_ERROR(
                     protocolClientNoOp(client), AssertError,
-                    "raised from test client: sample error message\nno stack trace available");
-                TEST_ERROR(protocolClientNoOp(client), UnknownError, "raised from test client: no details available");
+                    "raised from test client: sample error message\nstack data");
+
+                harnessLogLevelSet(logLevelDebug);
+                TEST_ERROR(
+                    protocolClientNoOp(client), UnknownError,
+                    "raised from test client: no details available\nno stack trace available");
+                harnessLogLevelReset();
+
+                // No output expected
                 TEST_ERROR(protocolClientNoOp(client), AssertError, "no output required by command");
 
                 // Get command output
@@ -339,7 +345,6 @@ testRun(void)
 
                 // Free client
                 TEST_RESULT_VOID(protocolClientFree(client), "free client");
-                TEST_RESULT_VOID(protocolClientFree(NULL), "free null client");
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -353,9 +358,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000));
+                IoRead *read = ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 // Check greeting
@@ -405,9 +410,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 // Send greeting
@@ -432,7 +437,6 @@ testRun(void)
                 TEST_RESULT_VOID(protocolServerProcess(server), "run process loop");
 
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
-                TEST_RESULT_VOID(protocolServerFree(NULL), "free null server");
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -462,7 +466,6 @@ testRun(void)
 
         // Free job
         TEST_RESULT_VOID(protocolParallelJobFree(job), "free job");
-        TEST_RESULT_VOID(protocolParallelJobFree(NULL), "free null job");
 
         // -------------------------------------------------------------------------------------------------------------------------
         HARNESS_FORK_BEGIN()
@@ -470,9 +473,9 @@ testRun(void)
             // Local 1
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000));
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 // Greeting with noop
@@ -496,9 +499,9 @@ testRun(void)
             // Local 2
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000));
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 // Greeting with noop
@@ -538,11 +541,11 @@ testRun(void)
 
                 for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
                 {
-                    IoRead *read = ioHandleReadIo(
-                        ioHandleReadNew(strNewFmt("client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000));
+                    IoRead *read = ioHandleReadNew(
+                        strNewFmt("client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000);
                     ioReadOpen(read);
-                    IoWrite *write = ioHandleWriteIo(
-                        ioHandleWriteNew(strNewFmt("client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx)));
+                    IoWrite *write = ioHandleWriteNew(
+                        strNewFmt("client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx));
                     ioWriteOpen(write);
 
                     TEST_ASSIGN(
@@ -557,9 +560,9 @@ testRun(void)
                     "{\"name\":\"pgBackRest\",\"service\":\"error\",\"version\":\"" PROJECT_VERSION "\"}\n"
                     "{}\n");
 
-                IoRead *read = ioBufferReadIo(ioBufferReadNew(BUFSTR(protocolString)));
+                IoRead *read = ioBufferReadNew(BUFSTR(protocolString));
                 ioReadOpen(read);
-                IoWrite *write = ioBufferWriteIo(ioBufferWriteNew(bufNew(1024)));
+                IoWrite *write = ioBufferWriteNew(bufNew(1024));
                 ioWriteOpen(write);
 
                 ProtocolClient *clientError = protocolClientNew(strNew("error"), strNew("error"), read, write);
@@ -633,7 +636,6 @@ testRun(void)
 
                 // Free parallel
                 TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
-                TEST_RESULT_VOID(protocolParallelFree(NULL), "free null parallel");
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -685,7 +687,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
         strLstAddZ(argList, "--repo1-host=localhost");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        strLstAddZ(argList, "--process=4");
+        strLstAddZ(argList, "--process=999");
         strLstAddZ(argList, "--command=archive-get");
         strLstAddZ(argList, "--host-id=1");
         strLstAddZ(argList, "--type=db");
@@ -694,7 +696,7 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo), "get remote protocol");
-        TEST_RESULT_PTR(protocolHelper.clientRemote[4].client, client, "check position in cache");
+        TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");

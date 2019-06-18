@@ -119,7 +119,7 @@ eval
         processEnd();
 
         processBegin('release documentation doc');
-        executeTest("${strReleaseExe} --build", {bShowOutputAsync => true});
+        executeTest("${strReleaseExe} --build --no-gen", {bShowOutputAsync => true});
         processEnd();
     }
 

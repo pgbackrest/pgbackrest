@@ -8,49 +8,33 @@ Buffer IO Write
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct IoBufferWrite
+typedef struct IoBufferWrite
 {
     MemContext *memContext;                                         // Object memory context
-    IoWrite *io;                                                    // IoWrite interface
     Buffer *write;                                                  // Buffer to write into
-};
+} IoBufferWrite;
 
 /***********************************************************************************************************************************
-New object
+Macros for function logging
 ***********************************************************************************************************************************/
-IoBufferWrite *
-ioBufferWriteNew(Buffer *buffer)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BUFFER, buffer);
-    FUNCTION_LOG_END();
-
-    ASSERT(buffer != NULL);
-
-    IoBufferWrite *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoBufferWrite")
-    {
-        this = memNew(sizeof(IoBufferWrite));
-        this->memContext = memContextCurrent();
-        this->io = ioWriteNewP(this, .write = (IoWriteInterfaceWrite)ioBufferWrite);
-        this->write = buffer;
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(IO_BUFFER_WRITE, this);
-}
+#define FUNCTION_LOG_IO_BUFFER_WRITE_TYPE                                                                                          \
+    IoBufferWrite *
+#define FUNCTION_LOG_IO_BUFFER_WRITE_FORMAT(value, buffer, bufferSize)                                                             \
+    objToLog(value, "IoBufferWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Write to the buffer
 ***********************************************************************************************************************************/
-void
-ioBufferWrite(IoBufferWrite *this, Buffer *buffer)
+static void
+ioBufferWrite(THIS_VOID, const Buffer *buffer)
 {
+    THIS(IoBufferWrite);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_BUFFER_WRITE, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -65,51 +49,28 @@ ioBufferWrite(IoBufferWrite *this, Buffer *buffer)
 }
 
 /***********************************************************************************************************************************
-Move the object to a new context
-***********************************************************************************************************************************/
-IoBufferWrite *
-ioBufferWriteMove(IoBufferWrite *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_BUFFER_WRITE, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
-Get io interface
+New object
 ***********************************************************************************************************************************/
 IoWrite *
-ioBufferWriteIo(const IoBufferWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_BUFFER_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->io);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-ioBufferWriteFree(IoBufferWrite *this)
+ioBufferWriteNew(Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_BUFFER_WRITE, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
     FUNCTION_LOG_END();
 
-    if (this != NULL)
-        memContextFree(this->memContext);
+    ASSERT(buffer != NULL);
 
-    FUNCTION_LOG_RETURN_VOID();
+    IoWrite *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("IoBufferWrite")
+    {
+        IoBufferWrite *driver = memNew(sizeof(IoBufferWrite));
+        driver->memContext = memContextCurrent();
+        driver->write = buffer;
+
+        this = ioWriteNewP(driver, .write = ioBufferWrite);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(IO_WRITE, this);
 }

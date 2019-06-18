@@ -337,6 +337,12 @@ sub process
 
                 if (@stryNameAlt > 0)
                 {
+                    if (@stryNameAlt != 1)
+                    {
+                        confess &log(
+                            ERROR, "multiple alt names are not supported for option '${strOption}':  " . join(', ', @stryNameAlt));
+                    }
+
                     $oCommandOption->{&CONFIG_HELP_NAME_ALT} = \@stryNameAlt;
                 }
             }

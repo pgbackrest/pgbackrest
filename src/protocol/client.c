@@ -6,6 +6,7 @@ Protocol Client
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/time.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
@@ -39,6 +40,22 @@ struct ProtocolClient
     IoWrite *write;
     TimeMSec keepAliveTime;
 };
+
+OBJECT_DEFINE_FREE(PROTOCOL_CLIENT);
+
+/***********************************************************************************************************************************
+Close protocol connection
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(PROTOCOL_CLIENT, LOG, logLevelTrace)
+{
+    // Send an exit command but don't wait to see if it succeeds
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT_STR));
+    }
+    MEM_CONTEXT_TEMP_END();
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Create object
@@ -110,7 +127,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         protocolClientNoOp(this);
 
         // Set a callback to shutdown the protocol
-        memContextCallback(this->memContext, (MemContextCallback)protocolClientFree, this);
+        memContextCallbackSet(this->memContext, protocolClientFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -145,12 +162,21 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
         {
             const ErrorType *type = errorTypeFromCode(varIntForce(error));
             const String *message = varStr(kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR)));
-            const String *stack = varStr(kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
 
-            THROWP_FMT(
-                type, "%s: %s%s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message),
-                type == &AssertError || logWill(logLevelDebug) ?
-                    (stack == NULL ? "\nno stack trace available" : strPtr(strNewFmt("\n%s", strPtr(stack)))) : "");
+            // Required part of the message
+            String *throwMessage = strNewFmt(
+                "%s: %s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message));
+
+            // Add stack trace if the error is an assertion or debug-level logging is enabled
+            if (type == &AssertError || logAny(logLevelDebug))
+            {
+                const String *stack = varStr(kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
+
+                strCat(throwMessage, "\n");
+                strCat(throwMessage, stack == NULL ? "no stack trace available" : strPtr(stack));
+            }
+
+            THROWP(type, strPtr(throwMessage));
         }
 
         // Get output
@@ -294,31 +320,4 @@ String *
 protocolClientToLog(const ProtocolClient *this)
 {
     return strNewFmt("{name: %s}", strPtr(this->name));
-}
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-void
-protocolClientFree(ProtocolClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-    {
-        memContextCallbackClear(this->memContext);
-
-        // Send an exit command but don't wait to see if it succeeds
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT_STR));
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
 }

@@ -19,12 +19,26 @@ be called directly.  Instead use the read/write interfaces available from tlsCli
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define TLS_CLIENT_TYPE                                             TlsClient
+#define TLS_CLIENT_PREFIX                                           tlsClient
+
 typedef struct TlsClient TlsClient;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/time.h"
 #include "common/type/string.h"
+
+/***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+typedef struct TlsClientStat
+{
+    uint64_t object;                                                // Objects created
+    uint64_t session;                                               // Sessions created
+    uint64_t request;                                               // Requests (i.e. calls to tlsClientOpen())
+    uint64_t retry;                                                 // Connection retries
+} TlsClientStat;
 
 /***********************************************************************************************************************************
 Constructor
@@ -35,15 +49,13 @@ TlsClient *tlsClientNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void tlsClientOpen(TlsClient *this);
-size_t tlsClientRead(TlsClient *this, Buffer *buffer, bool block);
-void tlsClientWrite(TlsClient *this, const Buffer *buffer);
+bool tlsClientOpen(TlsClient *this);
 void tlsClientClose(TlsClient *this);
+String *tlsClientStatStr(void);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool tlsClientEof(const TlsClient *this);
 IoRead *tlsClientIoRead(const TlsClient *this);
 IoWrite *tlsClientIoWrite(const TlsClient *this);
 

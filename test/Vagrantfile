@@ -73,12 +73,6 @@ Vagrant.configure(2) do |config|
         sudo -i -u vagrant aws configure set aws_access_key_id accessKey1
         sudo -i -u vagrant aws configure set aws_secret_access_key verySecretKey1
 
-        # Create test alias for AWS CLI
-        echo '' >> /home/vagrant/.profile
-        echo '# Test alias for AWS CLI' >> /home/vagrant/.profile
-        echo 'alias s3-test="export PYTHONWARNINGS=ignore && aws s3 --endpoint-url=https://172.17.0.2 --no-verify-ssl"' \
-            >> /home/vagrant/.profile
-
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Devel::Cover' && date
         dpkg -i /backrest/test/package/u18-libdevel-cover-perl_1.29-2_amd64.deb

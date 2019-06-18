@@ -7,6 +7,8 @@ Common Command Routines
 #include <string.h>
 
 #include "common/debug.h"
+#include "common/io/http/client.h"
+#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/time.h"
@@ -44,7 +46,7 @@ cmdBegin(bool logOption)
     ASSERT(cfgCommand() != cfgCmdNone);
 
     // This is fairly expensive log message to generate so skip it if it won't be output
-    if (logWill(cfgLogLevelDefault()))
+    if (logAny(cfgLogLevelDefault()))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -175,10 +177,22 @@ cmdEnd(int code, const String *errorMessage)
     ASSERT(cfgCommand() != cfgCmdNone);
 
     // Skip this log message if it won't be output.  It's not too expensive but since we skipped cmdBegin(), may as well.
-    if (logWill(cfgLogLevelDefault()))
+    if (logAny(cfgLogLevelDefault()))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
+            // Log tls statistics
+            String *tlsClientStat = tlsClientStatStr();
+
+            if (tlsClientStat != NULL)
+                LOG_DETAIL(strPtr(tlsClientStat));
+
+            // Log http statistics
+            String *httpClientStat = httpClientStatStr();
+
+            if (httpClientStat != NULL)
+                LOG_INFO(strPtr(httpClientStat));
+
             // Basic info on command end
             String *info = strNewFmt("%s command end: ", cfgCommandName(cfgCommand()));
 

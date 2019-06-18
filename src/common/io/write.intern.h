@@ -9,21 +9,24 @@ IO Write Interface Internal
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-typedef void (*IoWriteInterfaceClose)(void *driver);
-typedef void (*IoWriteInterfaceOpen)(void *driver);
-typedef void (*IoWriteInterfaceWrite)(void *driver, const Buffer *buffer);
-
 typedef struct IoWriteInterface
 {
-    IoWriteInterfaceClose close;
-    IoWriteInterfaceOpen open;
-    IoWriteInterfaceWrite write;
+    void (*close)(void *driver);
+    int (*handle)(const void *driver);
+    void (*open)(void *driver);
+    void (*write)(void *driver, const Buffer *buffer);
 } IoWriteInterface;
 
 #define ioWriteNewP(driver, ...)                                                                                                   \
     ioWriteNew(driver, (IoWriteInterface){__VA_ARGS__})
 
 IoWrite *ioWriteNew(void *driver, IoWriteInterface interface);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+void *ioWriteDriver(IoWrite *this);
+const IoWriteInterface *ioWriteInterface(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

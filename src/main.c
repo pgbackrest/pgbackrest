@@ -14,6 +14,7 @@ Main
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/storage/list.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
@@ -155,7 +156,8 @@ main(int argListSize, const char *argList[])
                 case cfgCmdLocal:
                 {
                     if (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR))
+                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR)  ||
+                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_RESTORE_STR))
                     {
                         cmdLocal(STDIN_FILENO, STDOUT_FILENO);
                     }
@@ -169,11 +171,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRemote:
                 {
-                    if (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_INFO_STR))
+                    if (cfgOptionBool(cfgOptC))
                     {
                         cmdRemote(STDIN_FILENO, STDOUT_FILENO);
                     }
@@ -228,6 +226,14 @@ main(int argListSize, const char *argList[])
                 case cfgCmdStop:
                 {
                     perlExec();
+                    break;
+                }
+
+                // Storage list command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdLs:
+                {
+                    cmdStorageList();
                     break;
                 }
 

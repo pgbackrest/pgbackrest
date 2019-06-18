@@ -356,7 +356,7 @@ sub cfgCommandWrite
         my $bSecure = cfgDefOptionSecure($iOptionId);
 
         # Skip option if it is secure and should not be output in logs or the command line
-        next if ($bSecure && !$bDisplayOnly);
+        next if (($bSecure || $iOptionId == CFGOPT_REPO_CIPHER_TYPE) && !$bDisplayOnly);
 
         # Process any option id overrides first
         if (defined($oOptionOverride->{$iOptionId}))

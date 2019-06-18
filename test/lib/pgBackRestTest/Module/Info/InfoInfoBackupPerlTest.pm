@@ -223,7 +223,7 @@ sub run
         executeTest('sudo rm ' . $oBackupInfo->{strFileName} . '*');
 
         # Clear the storage repo settings and change the passphrase
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
 
         my $strCipherPass = 'x';
         $self->configTestClear();
@@ -246,7 +246,7 @@ sub run
         $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), $i93ControlVersion, $i93CatalogVersion, true);
 
         # Clear the storage repo settings and change the passphrase
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
         $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, BOGUS);
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());

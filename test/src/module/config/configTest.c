@@ -31,8 +31,8 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionId(BOGUS_STR), -1, "option id from invalid option name");
 
         TEST_ERROR(
-            cfgOptionIdFromDefId(cfgDefOptionTotal(), 6), AssertError,
-            "assertion 'optionDefId < cfgDefOptionTotal()' failed");
+            cfgOptionIdFromDefId(999999, 6), AssertError,
+            "assertion 'optionId != CFG_OPTION_TOTAL' failed");
         TEST_ERROR(
             cfgOptionIdFromDefId(0, 999999), AssertError,
             "assertion 'index < cfgDefOptionIndexTotal(optionDefId)' failed");
@@ -60,6 +60,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "command set to backup");
+        TEST_RESULT_INT(cfgCommandInternal(cfgCmdLocal), true, "local is internal");
+        TEST_RESULT_INT(cfgCommandInternal(cfgCmdBackup), false, "backup is external");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelInfo, "default log level is info");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
@@ -237,6 +239,8 @@ testRun(void)
         TEST_RESULT_VOID(cfgInit(), "config init");
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "backup command");
 
+        TEST_ERROR(
+            strPtr(varStr(cfgOptionDefaultValue(cfgOptDbInclude))), AssertError, "default value not available for option type 4");
         TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptType))), "incr", "backup type default");
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptCompress)), "true", "backup compress default");
         TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptProtocolTimeout)), 1830, "backup protocol-timeout default");

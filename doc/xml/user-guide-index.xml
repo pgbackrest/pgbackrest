@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "doc.dtd">
+<doc title="{[project]}" subtitle="User Guides" toc="n">
+    <description>List of available {[project]} user guides.</description>
+
+    <section id="index">
+        <title>Available User Guides</title>
+
+        <list>
+            <list-item><link url="user-guide.html">{[os-debian-title]} / PostgreSQL {[os-debian-pg-version]}</link></list-item>
+            <list-item><link url="user-guide-centos7.html">{[os-centos7-title]} / PostgreSQL {[os-centos7-pg-version]}</link></list-item>
+            <list-item><link url="user-guide-centos6.html">{[os-centos6-title]} / PostgreSQL {[os-centos6-pg-version]}</link></list-item>
+        </list>
+    </section>
+</doc>

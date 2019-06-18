@@ -57,7 +57,7 @@ These includes are from the src directory.  There is no Perl-specific code in th
 #include "config/parse.h"
 #include "perl/config.h"
 #include "postgres/pageChecksum.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Helper macros

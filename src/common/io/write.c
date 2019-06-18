@@ -10,13 +10,14 @@ IO Write Interface
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct IoWrite
 {
-    MemContext *memContext;                                         // Mem context of driver
+    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     IoWriteInterface interface;                                     // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
@@ -28,6 +29,8 @@ struct IoWrite
     bool closed;                                                    // Has the io been closed?
 #endif
 };
+
+OBJECT_DEFINE_FREE(IO_WRITE);
 
 /***********************************************************************************************************************************
 New object
@@ -76,7 +79,13 @@ ioWriteOpen(IoWrite *this)
 
     // If no filter group exists create one to do buffering
     if (this->filterGroup == NULL)
-        this->filterGroup = ioFilterGroupNew();
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->filterGroup = ioFilterGroupNew();
+        }
+        MEM_CONTEXT_END();
+    }
 
     ioFilterGroupOpen(this->filterGroup);
 
@@ -247,11 +256,26 @@ ioWriteClose(IoWrite *this)
 }
 
 /***********************************************************************************************************************************
+Interface for the write object
+***********************************************************************************************************************************/
+void *
+ioWriteDriver(IoWrite *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_WRITE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->driver);
+}
+
+/***********************************************************************************************************************************
 Get/set filters
 
 Filters must be set before open and cannot be reset.
 ***********************************************************************************************************************************/
-const IoFilterGroup *
+IoFilterGroup *
 ioWriteFilterGroup(const IoWrite *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -259,12 +283,11 @@ ioWriteFilterGroup(const IoWrite *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->opened && this->closed);
 
     FUNCTION_TEST_RETURN(this->filterGroup);
 }
 
-void
+IoWrite *
 ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -282,23 +305,39 @@ ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
     this->filterGroupSet = true;
 #endif
 
-    this->filterGroup = filterGroup;
+    this->filterGroup = ioFilterGroupMove(filterGroup, this->memContext);
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(IO_WRITE, this);
 }
 
 /***********************************************************************************************************************************
-Free the object
+Handle (file descriptor) for the write object
+
+No all write objects have a handle and -1 will be returned in that case.
 ***********************************************************************************************************************************/
-void
-ioWriteFree(IoWrite *this)
+int
+ioWriteHandle(const IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
     FUNCTION_LOG_END();
 
-    if (this != NULL)
-        memContextFree(this->memContext);
+    ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(INT, this->interface.handle == NULL ? -1 : this->interface.handle(this->driver));
+}
+
+/***********************************************************************************************************************************
+Interface for the write object
+***********************************************************************************************************************************/
+const IoWriteInterface *
+ioWriteInterface(const IoWrite *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_WRITE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(&this->interface);
 }

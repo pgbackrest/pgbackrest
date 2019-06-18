@@ -29,6 +29,8 @@ Command constants
     STRING_DECLARE(CFGCMD_INFO_STR);
 #define CFGCMD_LOCAL                                                "local"
     STRING_DECLARE(CFGCMD_LOCAL_STR);
+#define CFGCMD_LS                                                   "ls"
+    STRING_DECLARE(CFGCMD_LS_STR);
 #define CFGCMD_REMOTE                                               "remote"
     STRING_DECLARE(CFGCMD_REMOTE_STR);
 #define CFGCMD_RESTORE                                              "restore"
@@ -46,7 +48,7 @@ Command constants
 #define CFGCMD_VERSION                                              "version"
     STRING_DECLARE(CFGCMD_VERSION_STR);
 
-#define CFG_COMMAND_TOTAL                                           19
+#define CFG_COMMAND_TOTAL                                           20
 
 /***********************************************************************************************************************************
 Option constants
@@ -67,6 +69,8 @@ Option constants
     STRING_DECLARE(CFGOPT_BACKUP_STANDBY_STR);
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
     STRING_DECLARE(CFGOPT_BUFFER_SIZE_STR);
+#define CFGOPT_C                                                    "c"
+    STRING_DECLARE(CFGOPT_C_STR);
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
     STRING_DECLARE(CFGOPT_CHECKSUM_PAGE_STR);
 #define CFGOPT_CMD_SSH                                              "cmd-ssh"
@@ -93,6 +97,8 @@ Option constants
     STRING_DECLARE(CFGOPT_DELTA_STR);
 #define CFGOPT_EXCLUDE                                              "exclude"
     STRING_DECLARE(CFGOPT_EXCLUDE_STR);
+#define CFGOPT_FILTER                                               "filter"
+    STRING_DECLARE(CFGOPT_FILTER_STR);
 #define CFGOPT_FORCE                                                "force"
     STRING_DECLARE(CFGOPT_FORCE_STR);
 #define CFGOPT_HOST_ID                                              "host-id"
@@ -341,14 +347,16 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_S3_REGION_STR);
 #define CFGOPT_REPO1_S3_TOKEN                                       "repo1-s3-token"
     STRING_DECLARE(CFGOPT_REPO1_S3_TOKEN_STR);
-#define CFGOPT_REPO1_S3_VERIFY_SSL                                  "repo1-s3-verify-ssl"
-    STRING_DECLARE(CFGOPT_REPO1_S3_VERIFY_SSL_STR);
+#define CFGOPT_REPO1_S3_VERIFY_TLS                                  "repo1-s3-verify-tls"
+    STRING_DECLARE(CFGOPT_REPO1_S3_VERIFY_TLS_STR);
 #define CFGOPT_REPO1_TYPE                                           "repo1-type"
     STRING_DECLARE(CFGOPT_REPO1_TYPE_STR);
 #define CFGOPT_RESUME                                               "resume"
     STRING_DECLARE(CFGOPT_RESUME_STR);
 #define CFGOPT_SET                                                  "set"
     STRING_DECLARE(CFGOPT_SET_STR);
+#define CFGOPT_SORT                                                 "sort"
+    STRING_DECLARE(CFGOPT_SORT_STR);
 #define CFGOPT_SPOOL_PATH                                           "spool-path"
     STRING_DECLARE(CFGOPT_SPOOL_PATH_STR);
 #define CFGOPT_STANZA                                               "stanza"
@@ -378,7 +386,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            163
+#define CFG_OPTION_TOTAL                                            166
 
 /***********************************************************************************************************************************
 Command enum
@@ -395,6 +403,7 @@ typedef enum
     cfgCmdHelp,
     cfgCmdInfo,
     cfgCmdLocal,
+    cfgCmdLs,
     cfgCmdRemote,
     cfgCmdRestore,
     cfgCmdStanzaCreate,
@@ -419,6 +428,7 @@ typedef enum
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
+    cfgOptC,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
     cfgOptCommand,
@@ -432,6 +442,7 @@ typedef enum
     cfgOptDbTimeout,
     cfgOptDelta,
     cfgOptExclude,
+    cfgOptFilter,
     cfgOptForce,
     cfgOptHostId,
     cfgOptLinkAll,
@@ -556,10 +567,11 @@ typedef enum
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
-    cfgOptRepoS3VerifySsl,
+    cfgOptRepoS3VerifyTls,
     cfgOptRepoType,
     cfgOptResume,
     cfgOptSet,
+    cfgOptSort,
     cfgOptSpoolPath,
     cfgOptStanza,
     cfgOptStartFast,

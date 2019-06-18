@@ -21,7 +21,6 @@ testRun(void)
         TEST_RESULT_INT(lstSize(store->list), 0, "list empty");
 
         TEST_RESULT_VOID(kvFree(store), "free kv");
-        TEST_RESULT_VOID(kvFree(NULL), "free null kv");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------

@@ -10,6 +10,7 @@ Http Client
 #include "common/io/read.intern.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
+#include "common/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -18,7 +19,9 @@ Http constants
 #define HTTP_VERSION                                                "HTTP/1.1"
     STRING_STATIC(HTTP_VERSION_STR,                                 HTTP_VERSION);
 
+STRING_EXTERN(HTTP_VERB_DELETE_STR,                                 HTTP_VERB_DELETE);
 STRING_EXTERN(HTTP_VERB_GET_STR,                                    HTTP_VERB_GET);
+STRING_EXTERN(HTTP_VERB_HEAD_STR,                                   HTTP_VERB_HEAD);
 STRING_EXTERN(HTTP_VERB_POST_STR,                                   HTTP_VERB_POST);
 STRING_EXTERN(HTTP_VERB_PUT_STR,                                    HTTP_VERB_PUT);
 
@@ -37,6 +40,11 @@ STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_
 
 // 5xx errors that should always be retried
 #define HTTP_RESPONSE_CODE_RETRY_CLASS                              5
+
+/***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+static HttpClientStat httpClientStatLocal;
 
 /***********************************************************************************************************************************
 Object type
@@ -60,12 +68,16 @@ struct HttpClient
     bool contentEof;                                                // Has all content been read?
 };
 
+OBJECT_DEFINE_FREE(HTTP_CLIENT);
+
 /***********************************************************************************************************************************
 Read content
 ***********************************************************************************************************************************/
 static size_t
-httpClientRead(HttpClient *this, Buffer *buffer, bool block)
+httpClientRead(THIS_VOID, Buffer *buffer, bool block)
 {
+    THIS(HttpClient);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -107,6 +119,7 @@ httpClientRead(HttpClient *this, Buffer *buffer, bool block)
                 if (bufRemains(buffer) > this->contentRemaining)
                     bufLimitSet(buffer, bufSize(buffer) - (bufRemains(buffer) - (size_t)this->contentRemaining));
 
+                actualBytes = bufRemains(buffer);
                 this->contentRemaining -= ioRead(tlsClientIoRead(this->tls), buffer);
 
                 // Error if EOF but content read is not complete
@@ -145,8 +158,10 @@ httpClientRead(HttpClient *this, Buffer *buffer, bool block)
 Has all content been read?
 ***********************************************************************************************************************************/
 static bool
-httpClientEof(const HttpClient *this)
+httpClientEof(THIS_VOID)
 {
+    THIS(HttpClient);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
     FUNCTION_LOG_END();
@@ -184,6 +199,8 @@ httpClientNew(
 
         this->timeout = timeout;
         this->tls = tlsClientNew(host, port, timeout, verifyPeer, caFile, caPath);
+
+        httpClientStatLocal.object++;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -227,8 +244,7 @@ httpClientRequest(
             retry = false;
 
             // Free the read interface
-            ioReadFree(this->ioRead);
-            this->ioRead = NULL;
+            httpClientDone(this);
 
             // Free response status left over from the last request
             httpHeaderFree(this->responseHeader);
@@ -245,7 +261,8 @@ httpClientRequest(
 
             TRY_BEGIN()
             {
-                tlsClientOpen(this->tls);
+                if (tlsClientOpen(this->tls))
+                    httpClientStatLocal.session++;
 
                 // Write the request
                 String *queryStr = httpQueryRender(query);
@@ -353,7 +370,10 @@ httpClientRequest(
                     // If the server notified of a closed connection then close the client connection after reading content.  This
                     // prevents doing a retry on the next request when using the closed connection.
                     if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(headerValue, HTTP_VALUE_CONNECTION_CLOSE_STR))
+                    {
                         this->closeOnContentEof = true;
+                        httpClientStatLocal.close++;
+                    }
                 }
                 while (1);
 
@@ -365,14 +385,15 @@ httpClientRequest(
                         HTTP_HEADER_CONTENT_LENGTH);
                 }
 
-                // If content chunked or content length > 0 then there is content to read
-                if (this->contentChunked || this->contentSize > 0)
-                {
-                    this->contentEof = false;
+                // Was content returned in the response?
+                bool contentExists = this->contentChunked || (this->contentSize > 0 && !strEq(verb, HTTP_VERB_HEAD_STR));
+                this->contentEof = !contentExists;
 
-                    // If all content should be returned from this function then read the buffer.  Also read the reponse if there
-                    // has been an error.
-                    if (returnContent || httpClientResponseCode(this) != 200)
+                // If all content should be returned from this function then read the buffer.  Also read the reponse if there has
+                // been an error.
+                if (returnContent || !httpClientResponseCodeOk(this))
+                {
+                    if (contentExists)
                     {
                         result = bufNew(0);
 
@@ -383,23 +404,24 @@ httpClientRequest(
                         }
                         while (!httpClientEof(this));
                     }
-                    // Else create the read interface
-                    else
-                    {
-                        MEM_CONTEXT_BEGIN(this->memContext)
-                        {
-                            this->ioRead = ioReadNewP(
-                                this, .eof = (IoReadInterfaceEof)httpClientEof, .read = (IoReadInterfaceRead)httpClientRead);
-                            ioReadOpen(this->ioRead);
-                        }
-                        MEM_CONTEXT_END();
-                    }
                 }
-                // If the server notified that it would close the connection after sending content then close the client side
-                else if (this->closeOnContentEof)
+                // Else create an io object, even if there is no content.  This makes the logic for readers easier -- they can just
+                // check eof rather than also checking if the io object exists.
+                else
+                {
+                    MEM_CONTEXT_BEGIN(this->memContext)
+                    {
+                        this->ioRead = ioReadNewP(this, .eof = httpClientEof, .read = httpClientRead);
+                        ioReadOpen(this->ioRead);
+                    }
+                    MEM_CONTEXT_END();
+                }
+
+                // If the server notified that it would close the connection and there is no content then close the client side
+                if (this->closeOnContentEof && !contentExists)
                     tlsClientClose(this->tls);
 
-                // Retry when reponse code is 5xx.  These errors generally represent a server error for a request that looks valid.
+                // Retry when response code is 5xx.  These errors generally represent a server error for a request that looks valid.
                 // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick
                 // and choose errors in this class to retry.
                 if (httpClientResponseCode(this) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
@@ -415,6 +437,8 @@ httpClientRequest(
                 {
                     LOG_DEBUG("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
+
+                    httpClientStatLocal.retry++;
                 }
 
                 tlsClientClose(this->tls);
@@ -428,10 +452,73 @@ httpClientRequest(
 
         // Move the result buffer (if any) to the parent context
         bufMove(result, MEM_CONTEXT_OLD());
+
+        httpClientStatLocal.request++;
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BUFFER, result);
+}
+
+/***********************************************************************************************************************************
+Format statistics to a string
+***********************************************************************************************************************************/
+String *
+httpClientStatStr(void)
+{
+    FUNCTION_TEST_VOID();
+
+    String *result = NULL;
+
+    if (httpClientStatLocal.object > 0)
+    {
+        result = strNewFmt(
+            "http statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64
+                ", closes %" PRIu64,
+            httpClientStatLocal.object, httpClientStatLocal.session, httpClientStatLocal.request, httpClientStatLocal.retry,
+            httpClientStatLocal.close);
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Mark the client as done if read is complete
+***********************************************************************************************************************************/
+void
+httpClientDone(HttpClient *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    if (this->ioRead != NULL)
+    {
+        if (!this->contentEof)
+            tlsClientClose(this->tls);
+
+        ioReadFree(this->ioRead);
+        this->ioRead = NULL;
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Is the http object busy?
+***********************************************************************************************************************************/
+bool
+httpClientBusy(const HttpClient *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->ioRead);
 }
 
 /***********************************************************************************************************************************
@@ -465,6 +552,21 @@ httpClientResponseCode(const HttpClient *this)
 }
 
 /***********************************************************************************************************************************
+Is this response code OK, i.e. 2XX?
+***********************************************************************************************************************************/
+bool
+httpClientResponseCodeOk(const HttpClient *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->responseCode / 100 == 2);
+}
+
+/***********************************************************************************************************************************
 Get the response headers
 ***********************************************************************************************************************************/
 const HttpHeader *
@@ -492,20 +594,4 @@ httpClientResponseMessage(const HttpClient *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->responseMessage);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-httpClientFree(HttpClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Ini
 ***********************************************************************************************************************************/
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -11,8 +11,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
     if (testBegin("iniNew() and iniFree()"))
@@ -23,7 +23,6 @@ testRun(void)
         TEST_RESULT_PTR_NE(ini->memContext, NULL, "mem context is set");
         TEST_RESULT_PTR_NE(ini->store, NULL, "store is set");
         TEST_RESULT_VOID(iniFree(ini), "free ini");
-        TEST_RESULT_VOID(iniFree(NULL), "free null ini");
     }
 
     // *****************************************************************************************************************************
@@ -64,6 +63,7 @@ testRun(void)
         TEST_RESULT_VOID(iniSet(ini, strNew("section2"), strNew("key2"), strNew("7")), "set section2, key");
         TEST_RESULT_BOOL(iniSectionKeyIsList(ini, strNew("section2"), strNew("key2")), true, "section2, key2 is a list");
         TEST_RESULT_STR(strPtr(strLstJoin(iniGetList(ini, strNew("section2"), strNew("key2")), "|")), "2|7", "get list");
+        TEST_RESULT_STR(iniGetList(ini, strNew("section2"), strNew("key-missing")), NULL, "get missing list");
 
         TEST_RESULT_VOID(iniFree(ini), "free ini");
     }
@@ -109,8 +109,8 @@ testRun(void)
         iniSet(ini, strNew("section1"), strNew("key2"), strNew("value2"));
         iniSet(ini, strNew("section1"), strNew("key1"), strNew("value1"));
 
-        StorageFileWrite *write = storageNewWriteNP(storageTest, strNew("test.ini"));
-        TEST_RESULT_VOID(iniSave(ini, storageFileWriteIo(write)), "save ini");
+        StorageWrite *write = storageNewWriteNP(storageTest, strNew("test.ini"));
+        TEST_RESULT_VOID(iniSave(ini, storageWriteIo(write)), "save ini");
 
         TEST_RESULT_STR(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("test.ini"))))),

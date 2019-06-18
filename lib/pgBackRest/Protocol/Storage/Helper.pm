@@ -188,7 +188,7 @@ sub storageRepo
                 $oDriver = new pgBackRest::Storage::S3::Driver(
                     cfgOption(CFGOPT_REPO_S3_BUCKET), cfgOption(CFGOPT_REPO_S3_ENDPOINT), cfgOption(CFGOPT_REPO_S3_REGION),
                     cfgOption(CFGOPT_REPO_S3_KEY), cfgOption(CFGOPT_REPO_S3_KEY_SECRET),
-                    {strHost => cfgOption(CFGOPT_REPO_S3_HOST, false), bVerifySsl => cfgOption(CFGOPT_REPO_S3_VERIFY_SSL, false),
+                    {strHost => cfgOption(CFGOPT_REPO_S3_HOST, false), bVerifySsl => cfgOption(CFGOPT_REPO_S3_VERIFY_TLS, false),
                         strCaPath => cfgOption(CFGOPT_REPO_S3_CA_PATH, false),
                         strCaFile => cfgOption(CFGOPT_REPO_S3_CA_FILE, false), lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE),
                         strSecurityToken => cfgOption(CFGOPT_REPO_S3_TOKEN, false)});
@@ -240,28 +240,17 @@ sub storageRepo
 push @EXPORT, qw(storageRepo);
 
 ####################################################################################################################################
-# storageRepoCacheClear - FOR TESTING ONLY!
+# Clear the repo storage cache - FOR TESTING ONLY!
 ####################################################################################################################################
 sub storageRepoCacheClear
 {
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strStanza,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::storageRepoCacheClear', \@_,
-            {name => 'strStanza'},
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '::storageRepoCacheClear');
 
-    if (defined($hStorage->{&STORAGE_REPO}{$strStanza}))
-    {
-        delete($hStorage->{&STORAGE_REPO}{$strStanza});
-    }
+    delete($hStorage->{&STORAGE_REPO});
 
-    return;
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 push @EXPORT, qw(storageRepoCacheClear);

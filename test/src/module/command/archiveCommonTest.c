@@ -4,7 +4,7 @@ Test Archive Common
 #include <unistd.h>
 
 #include "storage/helper.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 
@@ -17,8 +17,8 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
     if (testBegin("archiveAsyncStatus()"))
@@ -224,6 +224,10 @@ testRun(void)
                 " 123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                 ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz"
                 "\nHINT: are multiple primaries archiving to this stanza?");
+
+        TEST_RESULT_STR(
+            walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678.partial")), NULL,
+            "did not find partial segment");
     }
 
     // *****************************************************************************************************************************

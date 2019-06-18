@@ -26,6 +26,7 @@ use pgBackRest::Version;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::CoverageTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::ListTest;
@@ -70,6 +71,7 @@ sub new
         $self->{iRetry},
         $self->{bValgrindUnit},
         $self->{bCoverageUnit},
+        $self->{bCoverageSummary},
         $self->{bOptimize},
         $self->{bBackTrace},
         $self->{bProfile},
@@ -99,6 +101,7 @@ sub new
             {name => 'iRetry'},
             {name => 'bValgrindUnit'},
             {name => 'bCoverageUnit'},
+            {name => 'bCoverageSummary'},
             {name => 'bOptimize'},
             {name => 'bBackTrace'},
             {name => 'bProfile'},
@@ -394,7 +397,7 @@ sub run
 
                 # Determine which warnings are available
                 my $strWarningFlags =
-                    '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2' .
+                    '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wconversion -Wformat=2' .
                     ' -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla' .
                     ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
                         ' -Wformat-signedness' : '') .
@@ -412,6 +415,7 @@ sub run
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
+                    (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
                     ($self->{bDebug} ? '' : ' -DNDEBUG') . ($self->{bDebugTestTrace} ? ' -DDEBUG_TEST_TRACE' : '');
 
                 # Flags used to buid harness files
@@ -579,13 +583,16 @@ sub end
                 "module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test');
 
             # Generate coverage reports for the modules
-            my $strLCovExe = "lcov --config-file=$self->{strGCovPath}/test/lcov.conf";
+            my $strLCovConf = $self->{strBackRestBase} . '/test/.vagrant/code/lcov.conf';
+            coverageLCovConfigGenerate($self->{oStorageTest}, $strLCovConf, $self->{bCoverageSummary});
+
+            my $strLCovExeBase = "lcov --config-file=${strLCovConf}";
             my $strLCovOut = $self->{strGCovPath} . '/test.lcov';
             my $strLCovOutTmp = $self->{strGCovPath} . '/test.tmp.lcov';
 
             executeTest(
                 'docker exec -i -u ' . TEST_USER . " ${strImage} " .
-                "${strLCovExe} --capture --directory=$self->{strGCovPath} --o=${strLCovOut}");
+                "${strLCovExeBase} --capture --directory=$self->{strGCovPath} --o=${strLCovOut}");
 
             # Generate coverage report for each module
             foreach my $strModule (@stryCoveredModule)
@@ -598,6 +605,14 @@ sub end
                 {
                     $strModuleOutName =~ s/^module/test/mg;
                     $bTest = true;
+                }
+
+                # Disable branch coverage for test files
+                my $strLCovExe = $strLCovExeBase;
+
+                if ($bTest)
+                {
+                    $strLCovExe .= ' --rc lcov_branch_coverage=0';
                 }
 
                 # Generate lcov reports

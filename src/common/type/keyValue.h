@@ -7,6 +7,9 @@ Key Value Handler
 /***********************************************************************************************************************************
 KeyValue object
 ***********************************************************************************************************************************/
+#define KEY_VALUE_TYPE                                              KeyValue
+#define KEY_VALUE_PREFIX                                            kv
+
 typedef struct KeyValue KeyValue;
 
 #include "common/type/variantList.h"

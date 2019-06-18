@@ -12,6 +12,7 @@ IO Filter Group
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/list.h"
 
 /***********************************************************************************************************************************
@@ -21,7 +22,7 @@ Contains the filter object and inout/output buffers.
 ***********************************************************************************************************************************/
 typedef struct IoFilterData
 {
-    const Buffer *input;                                            // Input buffer for filter
+    const Buffer **input;                                           // Input buffer for filter
     Buffer *inputLocal;                                             // Non-null if a locally created buffer that can be cleared
     IoFilter *filter;                                               // Filter to apply
     Buffer *output;                                                 // Output buffer for filter
@@ -40,7 +41,7 @@ struct IoFilterGroup
 {
     MemContext *memContext;                                         // Mem context
     List *filterList;                                               // List of filters to apply
-    unsigned int firstOutputFilter;                                 // Index of the first output filter
+    const Buffer *input;                                            // Input buffer passed in for processing
     KeyValue *filterResult;                                         // Filter results (if any)
     bool inputSame;                                                 // Same input required again?
     bool done;                                                      // Is processing done?
@@ -51,6 +52,8 @@ struct IoFilterGroup
     bool closed;                                                    // Has the filter set been closed?
 #endif
 };
+
+OBJECT_DEFINE_FREE(IO_FILTER_GROUP);
 
 /***********************************************************************************************************************************
 New Object
@@ -66,7 +69,7 @@ ioFilterGroupNew(void)
     {
         this = memNew(sizeof(IoFilterGroup));
         this->memContext = memContextCurrent();
-        this->done = true;
+        this->done = false;
         this->filterList = lstNew(sizeof(IoFilterData));
     }
     MEM_CONTEXT_NEW_END();
@@ -134,37 +137,36 @@ ioFilterGroupOpen(IoFilterGroup *this)
         // If the last filter is not an output filter then add a filter to buffer/copy data.  Input filters won't copy to an output
         // buffer so we need some way to get the data to the output buffer.
         if (lstSize(this->filterList) == 0 || !ioFilterOutput((ioFilterGroupGet(this, lstSize(this->filterList) - 1))->filter))
-            ioFilterGroupAdd(this, ioBufferFilter(ioBufferNew()));
+            ioFilterGroupAdd(this, ioBufferNew());
 
         // Create filter input/output buffers.  Input filters do not get an output buffer since they don't produce output.
-        Buffer *lastOutputBuffer = NULL;
+        Buffer **lastOutputBuffer = NULL;
 
         for (unsigned int filterIdx = 0; filterIdx < lstSize(this->filterList); filterIdx++)
         {
             IoFilterData *filterData = ioFilterGroupGet(this, filterIdx);
 
-            // Assign the last output buffer to the input.  At first there won't be an input filter because it will be passed into
-            // the process function as an input.
-            if (lastOutputBuffer != NULL)
+            // If there is no last output buffer yet, then use the input buffer that will be provided by the caller
+            if (lastOutputBuffer == NULL)
             {
-                filterData->input = lastOutputBuffer;
-                filterData->inputLocal = lastOutputBuffer;
+                filterData->input = &this->input;
+            }
+            // Else assign the last output buffer to the input
+            else
+            {
+                // This cast is required because the compiler can't guarantee the const-ness of this object, i.e. it could be
+                // modified in other parts of the code.  This is actually expected and the only reason we need this const is to
+                // match the const-ness of the input buffer provided by the caller.
+                filterData->input = (const Buffer **)lastOutputBuffer;
+                filterData->inputLocal = *lastOutputBuffer;
             }
 
-            // Is this an output filter?
-            if (ioFilterOutput(filterData->filter))
+            // If this is not the last output filter then create a new output buffer for it.  The output buffer for the last filter
+            // will be provided to the process function.
+            if (ioFilterOutput(filterData->filter) && filterIdx < lstSize(this->filterList) - 1)
             {
-                // If this is the first output buffer found, store the index so it can be easily found during processing
-                if (lastOutputBuffer == NULL)
-                    this->firstOutputFilter = filterIdx;
-
-                // If this is not the last output filter then create a new output buffer for it.  The output buffer for the last
-                // filter will be provided to the process function.
-                if (filterIdx < lstSize(this->filterList) - 1)
-                {
-                    lastOutputBuffer = bufNew(ioBufferSize());
-                    filterData->output = lastOutputBuffer;
-                }
+                filterData->output = bufNew(ioBufferSize());
+                lastOutputBuffer = &filterData->output;
             }
         }
     }
@@ -192,6 +194,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 
     ASSERT(this != NULL);
     ASSERT(this->opened && !this->closed);
+    ASSERT(input == NULL || bufUsed(input) > 0);
     ASSERT(!this->flushing || input == NULL);
     ASSERT(output != NULL);
     ASSERT(bufRemains(output) > 0);
@@ -202,14 +205,8 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
         this->flushing = true;
 #endif
 
-    // Assign the input buffer up to the first output filter.  After this point the input buffers were locally created during open.
-    if (!this->inputSame)
-    {
-        for (unsigned int filterIdx = 0; filterIdx <= this->firstOutputFilter; filterIdx++)
-            (ioFilterGroupGet(this, filterIdx))->input = input;
-    }
-
-    // Assign the output buffer
+    // Assign input and output buffers
+    this->input = input;
     (ioFilterGroupGet(this, lstSize(this->filterList) - 1))->output = output;
 
     //
@@ -235,7 +232,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                     break;
                 }
             }
-            while (filterIdx != this->firstOutputFilter);
+            while (filterIdx != 0);
 
             // If no filter is found that needs the same input that means we are done with the current input.  So end the loop and
             // get some more input.
@@ -249,27 +246,13 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
         {
             IoFilterData *filterData = ioFilterGroupGet(this, filterIdx);
 
-            // If the filter produces output
-            if (ioFilterOutput(filterData->filter))
+            // Process the filter if it is not done
+            if (!ioFilterDone(filterData->filter))
             {
-                // Keep processing while the filter is not done or there is input
-                if (!ioFilterDone(filterData->filter) || filterData->input != NULL)
+                // If the filter produces output
+                if (ioFilterOutput(filterData->filter))
                 {
-                    // If we are flushing and the prior filter is done and is not producing any more output then this filter should
-                    // be flushing as well.  Set filterData->input = NULL so it knows there is no more input coming.
-                    //
-                    // If the filter is already done then there is no need to set input to NULL because it has already flushed and
-                    // the filter shouldn't need to hand NULL input if it doesn't need it to know when to flush.
-                    //
-                    // Checking filterIdx - 1 is safe because the first filter's filterData->input is always set to NULL when input
-                    // is NULL.
-                    if (input == NULL && filterData->input != NULL && !ioFilterDone(filterData->filter) &&
-                        bufUsed(filterData->input) == 0)
-                    {
-                        filterData->input = NULL;
-                    }
-
-                    ioFilterProcessInOut(filterData->filter, filterData->input, filterData->output);
+                    ioFilterProcessInOut(filterData->filter, *filterData->input, filterData->output);
 
                     // If inputSame is set then the output buffer for this filter is full and it will need to be re-processed with
                     // the same input once the output buffer is cleared
@@ -284,14 +267,17 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 
                     // If the output buffer is not full and the filter is not done then more data is required
                     if (!bufFull(filterData->output) && !ioFilterDone(filterData->filter))
-                    {
                         break;
-                    }
                 }
+                // Else the filter does not produce output
+                else
+                    ioFilterProcessIn(filterData->filter, *filterData->input);
             }
-            // Else the filter does not produce output.  No need to flush these filters because they don't buffer data.
-            else if (filterData->input != NULL)
-                ioFilterProcessIn(filterData->filter, filterData->input);
+
+            // If the filter is done and has no more output then null the output buffer.  Downstream filters have a pointer to this
+            // buffer so their inputs will also change to null and they'll flush.
+            if (filterData->output != NULL && ioFilterDone(filterData->filter) && bufUsed(filterData->output) == 0)
+                filterData->output = NULL;
         }
     }
     while (!bufFull(output) && this->inputSame);
@@ -365,6 +351,25 @@ ioFilterGroupClose(IoFilterGroup *this)
 }
 
 /***********************************************************************************************************************************
+Move the object to a new context
+***********************************************************************************************************************************/
+IoFilterGroup *
+ioFilterGroupMove(IoFilterGroup *this, MemContext *parentNew)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
+    FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
+
+    if (this != NULL)
+        memContextMove(this->memContext, parentNew);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
 Is the filter group done processing?
 ***********************************************************************************************************************************/
 bool
@@ -431,20 +436,4 @@ String *
 ioFilterGroupToLog(const IoFilterGroup *this)
 {
     return strNewFmt("{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
-}
-
-/***********************************************************************************************************************************
-Free the filter group
-***********************************************************************************************************************************/
-void
-ioFilterGroupFree(IoFilterGroup *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

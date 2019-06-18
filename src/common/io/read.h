@@ -12,6 +12,9 @@ example of an IoRead object is IoBufferRead.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define IO_READ_TYPE                                                IoRead
+#define IO_READ_PREFIX                                              ioRead
+
 typedef struct IoRead IoRead;
 
 #include "common/io/filter/group.h"
@@ -30,8 +33,8 @@ Getters/Setters
 ***********************************************************************************************************************************/
 bool ioReadBlock(const IoRead *this);
 bool ioReadEof(const IoRead *this);
-const IoFilterGroup *ioReadFilterGroup(const IoRead *this);
-void ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup);
+IoFilterGroup *ioReadFilterGroup(const IoRead *this);
+IoRead *ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup);
 int ioReadHandle(const IoRead *this);
 
 /***********************************************************************************************************************************

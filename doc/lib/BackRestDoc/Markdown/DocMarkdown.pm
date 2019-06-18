@@ -55,18 +55,6 @@ sub new
             {name => 'bExe'}
         );
 
-    # Remove the current html path if it exists
-    if (-e $self->{strMarkdownPath})
-    {
-        executeTest("rm -rf $self->{strMarkdownPath}/*");
-    }
-    # Else create the html path
-    else
-    {
-        mkdir($self->{strMarkdownPath})
-            or confess &log(ERROR, "unable to create path $self->{strMarkdownPath}");
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (

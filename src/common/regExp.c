@@ -8,6 +8,7 @@ Regular Expression Handler
 
 #include "common/debug.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/regExp.h"
 
 /***********************************************************************************************************************************
@@ -19,6 +20,17 @@ struct RegExp
     regex_t regExp;
 };
 
+OBJECT_DEFINE_FREE(REGEXP);
+
+/***********************************************************************************************************************************
+Free regular expression
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(REGEXP, TEST, )
+{
+    regfree(&this->regExp);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(TEST);
+
 /***********************************************************************************************************************************
 Handle errors
 ***********************************************************************************************************************************/
@@ -29,9 +41,12 @@ regExpError(int error)
         FUNCTION_TEST_PARAM(INT, error);
     FUNCTION_TEST_END();
 
-    char buffer[4096];
-    regerror(error, NULL, buffer, sizeof(buffer));
-    THROW(FormatError, buffer);
+    if (error != 0 && error != REG_NOMATCH)
+    {
+        char buffer[4096];
+        regerror(error, NULL, buffer, sizeof(buffer));
+        THROW(FormatError, buffer);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -65,7 +80,7 @@ regExpNew(const String *expression)
         }
 
         // Set free callback to ensure cipher context is freed
-        memContextCallback(this->memContext, (MemContextCallback)regExpFree, this);
+        memContextCallbackSet(this->memContext, regExpFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -90,31 +105,9 @@ regExpMatch(RegExp *this, const String *string)
     int result = regexec(&this->regExp, strPtr(string), 0, NULL, 0);
 
     // Check for an error
-    if (result != 0 && result != REG_NOMATCH)                                   // {uncoverable - no error condition known}
-        regExpError(result);                                                    // {+uncoverable}
+    regExpError(result);
 
     FUNCTION_TEST_RETURN(result == 0);
-}
-
-/***********************************************************************************************************************************
-Free regular expression
-***********************************************************************************************************************************/
-void
-regExpFree(RegExp *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        regfree(&this->regExp);
-
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

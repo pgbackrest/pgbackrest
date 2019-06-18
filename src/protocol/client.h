@@ -7,6 +7,9 @@ Protocol Client
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define PROTOCOL_CLIENT_TYPE                                        ProtocolClient
+#define PROTOCOL_CLIENT_PREFIX                                      protocolClient
+
 typedef struct ProtocolClient ProtocolClient;
 
 #include "common/io/read.h"

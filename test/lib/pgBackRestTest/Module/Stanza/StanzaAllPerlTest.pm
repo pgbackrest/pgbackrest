@@ -284,7 +284,7 @@ sub run
         executeTest('sudo chmod 644 ' . $strArchivedFile);
 
         # Clear the cached repo settings and change repo settings to encrypted
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
         $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
         $self->configTestLoad(CFGCMD_STANZA_CREATE);
@@ -402,7 +402,7 @@ sub run
         # Change repo encryption settings to unencrypted - stanza create is not allowed even with force
         #---------------------------------------------------------------------------------------------------------------------------
         # Clear the cached repo settings and change repo settings to unencrypted
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
         $self->optionTestClear(CFGOPT_REPO_CIPHER_TYPE);
         $self->optionTestClear(CFGOPT_REPO_CIPHER_PASS);
         $self->configTestLoad(CFGCMD_STANZA_CREATE);
@@ -520,7 +520,7 @@ sub run
         # Attempt to change the encryption settings
         #---------------------------------------------------------------------------------------------------------------------------
         # Clear the cached repo settings and change repo settings to encrypted
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
         $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
         $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
@@ -543,7 +543,7 @@ sub run
         $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), '937', '201306121', true);
 
          # Attempt to upgrade with a different passphrase
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
         $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'y');
         $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
@@ -552,7 +552,7 @@ sub run
             "unable to parse '" . $self->{strArchivePath} . "/archive.info'" .
             "\nHINT: Is or was the repo encrypted?");
 
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
         $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
         $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
@@ -592,7 +592,7 @@ sub run
             '    encrypted archive and backup info files upgraded');
 
         # Clear configuration
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
         $self->optionTestClear(CFGOPT_REPO_CIPHER_TYPE);
         $self->optionTestClear(CFGOPT_REPO_CIPHER_PASS);
     }
@@ -770,7 +770,7 @@ sub run
 
         # Clear the cached repo settings and change repo settings to encrypted
         #---------------------------------------------------------------------------------------------------------------------------
-        storageRepoCacheClear($self->stanza());
+        storageRepoCacheClear();
         $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
         $self->configTestLoad(CFGCMD_STANZA_CREATE);

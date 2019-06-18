@@ -8,7 +8,7 @@ Test Archive Get Command
 #include "common/io/bufferWrite.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessInfo.h"
 
@@ -20,16 +20,16 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // Start a protocol server to test the protocol directly
     Buffer *serverWrite = bufNew(8192);
-    IoWrite *serverWriteIo = ioBufferWriteIo(ioBufferWriteNew(serverWrite));
+    IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
     ioWriteOpen(serverWriteIo);
 
     ProtocolServer *server = protocolServerNew(
-        strNew("test"), strNew("test"), ioBufferReadIo(ioBufferReadNew(bufNew(0))), serverWriteIo);
+        strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
 
     bufUsedSet(serverWrite, 0);
 
@@ -184,13 +184,12 @@ testRun(void)
 
         // Create a compressed WAL segment to copy
         // -------------------------------------------------------------------------------------------------------------------------
-        StorageFileWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info"));
+        StorageWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info"));
 
         ioWriteFilterGroupSet(
-            storageFileWriteIo(infoWrite),
+            storageWriteIo(infoWrite),
             ioFilterGroupAdd(
-                ioFilterGroupNew(),
-                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL))));
+                ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL)));
 
         storagePutNP(
             infoWrite,
@@ -204,18 +203,16 @@ testRun(void)
                 "[db:history]\n"
                 "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
 
-        StorageFileWrite *destination = storageNewWriteNP(
+        StorageWrite *destination = storageNewWriteNP(
             storageTest,
             strNew(
                 "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
 
         IoFilterGroup *filterGroup = ioFilterGroupNew();
-        ioFilterGroupAdd(filterGroup, gzipCompressFilter(gzipCompressNew(3, false)));
+        ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(
-            filterGroup,
-            cipherBlockFilter(
-                cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL)));
-        ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
+            filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL));
+        ioWriteFilterGroupSet(storageWriteIo(destination), filterGroup);
         storagePutNP(destination, buffer);
 
         TEST_RESULT_INT(
@@ -272,7 +269,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
-            PathOpenError, "unable to open path '%s/spool/archive/test1/in' for read: [2] No such file or directory", testPath());
+            PathMissingError, "unable to list files for missing path '%s/spool/archive/test1/in'", testPath());
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
@@ -547,16 +544,16 @@ testRun(void)
                 TEST_ERROR_FMT(
                     cmdArchiveGet(), FileMissingError,
                     "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
-                    "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
-                    "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
-                        " directory\n"
+                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
                     "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
                     "HINT: is archive_command configured correctly in postgresql.conf?\n"
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
-                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
+                    strPtr(strNewFmt("%s/archive/test1/archive.info", strPtr(cfgOptionStr(cfgOptRepoPath)))),
+                    strPtr(strNewFmt("%s/archive/test1/archive.info.copy", strPtr(cfgOptionStr(cfgOptRepoPath)))));
             }
             HARNESS_FORK_CHILD_END();
         }
@@ -578,16 +575,16 @@ testRun(void)
                 TEST_ERROR_FMT(
                     cmdArchiveGet(), FileMissingError,
                     "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
-                    "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
-                    "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
-                        " directory\n"
+                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
                     "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
                     "HINT: is archive_command configured correctly in postgresql.conf?\n"
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
-                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
+                    strPtr(strNewFmt("%s/archive/test1/archive.info", strPtr(cfgOptionStr(cfgOptRepoPath)))),
+                    strPtr(strNewFmt("%s/archive/test1/archive.info.copy", strPtr(cfgOptionStr(cfgOptRepoPath)))));
             }
             HARNESS_FORK_CHILD_END();
         }

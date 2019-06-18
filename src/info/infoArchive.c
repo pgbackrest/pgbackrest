@@ -10,8 +10,9 @@ Archive Info Handler
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/ini.h"
+#include "common/memContext.h"
+#include "common/object.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -27,16 +28,17 @@ struct InfoArchive
     String *archiveId;                                              // Archive id for the current PG version
 };
 
+OBJECT_DEFINE_FREE(INFO_ARCHIVE);
+
 /***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
+infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
@@ -181,20 +183,4 @@ infoArchivePg(const InfoArchive *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->infoPg);
-}
-
-/***********************************************************************************************************************************
-Free the info
-***********************************************************************************************************************************/
-void
-infoArchiveFree(InfoArchive *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

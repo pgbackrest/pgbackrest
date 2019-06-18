@@ -7,6 +7,7 @@ Http Query
 #include "common/io/http/common.h"
 #include "common/io/http/query.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/keyValue.h"
 
 /***********************************************************************************************************************************
@@ -17,6 +18,8 @@ struct HttpQuery
     MemContext *memContext;                                         // Mem context
     KeyValue *kv;                                                   // KeyValue store
 };
+
+OBJECT_DEFINE_FREE(HTTP_QUERY);
 
 /***********************************************************************************************************************************
 New object
@@ -202,20 +205,4 @@ httpQueryToLog(const HttpQuery *this)
     strCat(result, "}");
 
     return result;
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-httpQueryFree(HttpQuery *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_QUERY, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

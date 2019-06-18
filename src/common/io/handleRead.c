@@ -11,56 +11,36 @@ Handle IO Read
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct IoHandleRead
+typedef struct IoHandleRead
 {
     MemContext *memContext;                                         // Object memory context
-    IoRead *io;                                                     // IoRead interface
     const String *name;                                             // Handle name for error messages
     int handle;                                                     // Handle to read data from
     TimeMSec timeout;                                               // Timeout for read operation
     bool eof;                                                       // Has the end of the stream been reached?
-};
+} IoHandleRead;
 
 /***********************************************************************************************************************************
-New object
+Macros for function logging
 ***********************************************************************************************************************************/
-IoHandleRead *
-ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, handle);
-    FUNCTION_LOG_END();
-
-    ASSERT(handle != -1);
-
-    IoHandleRead *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoHandleRead")
-    {
-        this = memNew(sizeof(IoHandleRead));
-        this->memContext = memContextCurrent();
-        this->io = ioReadNewP(
-            this, .block = true, .eof = (IoReadInterfaceEof)ioHandleReadEof, .handle = (IoReadInterfaceHandle)ioHandleReadHandle,
-            .read = (IoReadInterfaceRead)ioHandleRead);
-        this->name = strDup(name);
-        this->handle = handle;
-        this->timeout = timeout;
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(IO_HANDLE_READ, this);
-}
+#define FUNCTION_LOG_IO_HANDLE_READ_TYPE                                                                                           \
+    IoHandleRead *
+#define FUNCTION_LOG_IO_HANDLE_READ_FORMAT(value, buffer, bufferSize)                                                              \
+    objToLog(value, "IoHandleRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Read data from the handle
 ***********************************************************************************************************************************/
-size_t
-ioHandleRead(IoHandleRead *this, Buffer *buffer, bool block)
+static size_t
+ioHandleRead(THIS_VOID, Buffer *buffer, bool block)
 {
+    THIS(IoHandleRead);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_HANDLE_READ, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -117,30 +97,13 @@ ioHandleRead(IoHandleRead *this, Buffer *buffer, bool block)
 }
 
 /***********************************************************************************************************************************
-Move the object to a new context
-***********************************************************************************************************************************/
-IoHandleRead *
-ioHandleReadMove(IoHandleRead *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_HANDLE_READ, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
 Have all bytes been read from the buffer?
 ***********************************************************************************************************************************/
-bool
-ioHandleReadEof(const IoHandleRead *this)
+static bool
+ioHandleReadEof(THIS_VOID)
 {
+    THIS(IoHandleRead);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_HANDLE_READ, this);
     FUNCTION_LOG_END();
@@ -153,9 +116,11 @@ ioHandleReadEof(const IoHandleRead *this)
 /***********************************************************************************************************************************
 Get handle (file descriptor)
 ***********************************************************************************************************************************/
-int
-ioHandleReadHandle(const IoHandleRead *this)
+static int
+ioHandleReadHandle(const THIS_VOID)
 {
+    THIS(const IoHandleRead);
+
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_HANDLE_READ, this);
     FUNCTION_TEST_END();
@@ -166,32 +131,30 @@ ioHandleReadHandle(const IoHandleRead *this)
 }
 
 /***********************************************************************************************************************************
-Get io interface
+New object
 ***********************************************************************************************************************************/
 IoRead *
-ioHandleReadIo(const IoHandleRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_HANDLE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->io);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-ioHandleReadFree(IoHandleRead *this)
+ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_HANDLE_READ, this);
+        FUNCTION_LOG_PARAM(INT, handle);
     FUNCTION_LOG_END();
 
-    if (this != NULL)
-        memContextFree(this->memContext);
+    ASSERT(handle != -1);
 
-    FUNCTION_LOG_RETURN_VOID();
+    IoRead *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("IoHandleRead")
+    {
+        IoHandleRead *driver = memNew(sizeof(IoHandleRead));
+        driver->memContext = memContextCurrent();
+        driver->name = strDup(name);
+        driver->handle = handle;
+        driver->timeout = timeout;
+
+        this = ioReadNewP(driver, .block = true, .eof = ioHandleReadEof, .handle = ioHandleReadHandle, .read = ioHandleRead);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(IO_READ, this);
 }

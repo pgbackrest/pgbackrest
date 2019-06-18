@@ -129,13 +129,14 @@
 
 <!ELEMENT block-define (
     ((p|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|
-      option-description|code-block|block)+|
+      option-description|code-block|block|admonition)+|
     ((p|list)*, section+)|(p|list)*))>
     <!ATTLIST block-define id CDATA #REQUIRED>
     <!ATTLIST block-define if CDATA "">
 
-<!ELEMENT block (block-variable-replace+)>
+<!ELEMENT block (block-variable-replace*)>
     <!ATTLIST block id CDATA #REQUIRED>
+    <!ATTLIST block if CDATA "">
 <!ELEMENT block-variable-replace (#PCDATA)>
     <!ATTLIST block-variable-replace key CDATA #REQUIRED>
 
@@ -168,7 +169,7 @@
 <!ELEMENT release-improvement-list (release-item+)>
 <!ELEMENT release-development-list (release-item+)>
 
-<!ELEMENT release-item (release-item-contributor-list?, p)*>
+<!ELEMENT release-item (commit*, release-item-contributor-list?, p+)>
 
 <!ELEMENT release-item-contributor-list (release-item-ideator*, release-item-contributor*, release-item-reviewer*)>
 
@@ -178,6 +179,11 @@
     <!ATTLIST release-item-contributor id CDATA #REQUIRED>
 <!ELEMENT release-item-reviewer (#PCDATA)>
     <!ATTLIST release-item-reviewer id CDATA #REQUIRED>
+
+<!ELEMENT commit EMPTY>
+    <!ATTLIST commit type CDATA "">
+    <!ATTLIST commit id CDATA "">
+    <!ATTLIST commit subject CDATA #REQUIRED>
 
 <!ELEMENT contribute (text)>
     <!ATTLIST contribute title CDATA #REQUIRED>
@@ -195,6 +201,7 @@
     <!ATTLIST host-define from CDATA #REQUIRED>
 
 <!ELEMENT host-add (execute*)>
+    <!ATTLIST host-add if CDATA "">
     <!ATTLIST host-add id CDATA "">
     <!ATTLIST host-add name CDATA #REQUIRED>
     <!ATTLIST host-add user CDATA #REQUIRED>

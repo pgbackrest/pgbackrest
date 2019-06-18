@@ -22,8 +22,7 @@ testLogOpen(const char *logFile, int flags, int mode)
 
     int result = open(logFile, flags, mode);
 
-    if (result == -1)                                                                           // {uncovered - no errors in test}
-        THROW_SYS_ERROR_FMT(FileOpenError, "unable to open log file '%s'", logFile);            // {+uncovered}
+    THROW_ON_SYS_ERROR_FMT(result == -1, FileOpenError, "unable to open log file '%s'", logFile);
 
     FUNCTION_HARNESS_RESULT(INT, result);
 }
@@ -52,17 +51,15 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
 
     do
     {
-        actualBytes = read(handle, buffer, bufferSize - totalBytes);
-
-        if (actualBytes == -1)                                                                  // {uncovered - no errors in test}
-            THROW_SYS_ERROR_FMT(FileOpenError, "unable to read log file '%s'", logFile);        // {+uncovered}
+        THROW_ON_SYS_ERROR_FMT(
+            (actualBytes = read(handle, buffer, bufferSize - totalBytes)) == -1, FileOpenError, "unable to read log file '%s'",
+            logFile);
 
         totalBytes += (size_t)actualBytes;
     }
     while (actualBytes != 0);
 
-    if (close(handle) == -1)                                                                    // {uncovered - no errors in test}
-        THROW_SYS_ERROR_FMT(FileOpenError, "unable to close log file '%s'", logFile);           // {+uncovered}
+    THROW_ON_SYS_ERROR_FMT(close(handle) == -1, FileOpenError, "unable to close log file '%s'", logFile);
 
     // Remove final linefeed
     buffer[totalBytes - 1] = 0;
@@ -87,7 +84,7 @@ testLogResult(const char *logFile, const char *expected)
     char actual[32768];
     testLogLoad(logFile, actual, sizeof(actual));
 
-    if (strcmp(actual, expected) != 0)                                                          // {uncovered - no errors in test}
+    if (strcmp(actual, expected) != 0)                                                          // {uncoverable_branch}
         THROW_FMT(                                                                              // {+uncovered}
             AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, actual);
 
@@ -134,34 +131,26 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("logWill*()"))
+    if (testBegin("logAny*()"))
     {
         logLevelStdOut = logLevelOff;
         logLevelStdErr = logLevelOff;
         logLevelFile = logLevelOff;
         logHandleFile = -1;
-        TEST_RESULT_BOOL(logWill(logLevelError), false, "will not log");
-        TEST_RESULT_BOOL(logWillFile(logLevelError), false, "will not log file");
-        TEST_RESULT_BOOL(logWillStdErr(logLevelError), false, "will not log stderr");
-        TEST_RESULT_BOOL(logWillStdOut(logLevelError), false, "will not log stdout");
+        TEST_RESULT_VOID(logAnySet(), "set log any");
+        TEST_RESULT_BOOL(logAny(logLevelError), false, "will not log");
 
-        logLevelStdOut = logLevelError;
-        TEST_RESULT_BOOL(logWill(logLevelError), true, "will log");
-        TEST_RESULT_BOOL(logWillStdOut(logLevelError), true, "will log stdout");
-
-        logLevelStdOut = logLevelOff;
         logLevelStdErr = logLevelError;
-        TEST_RESULT_BOOL(logWill(logLevelError), true, "will log");
-        TEST_RESULT_BOOL(logWillStdErr(logLevelError), true, "will log stderr");
+        TEST_RESULT_VOID(logAnySet(), "set log any");
+        TEST_RESULT_BOOL(logAny(logLevelError), true, "will log");
 
-        logLevelStdErr = logLevelOff;
-        logLevelFile = logLevelError;
-        TEST_RESULT_BOOL(logWill(logLevelError), false, "will not log");
-        TEST_RESULT_BOOL(logWillFile(logLevelError), false, "will not log file");
+        logLevelFile = logLevelWarn;
+        TEST_RESULT_VOID(logAnySet(), "set log any");
+        TEST_RESULT_BOOL(logAny(logLevelWarn), false, "will not log");
 
         logHandleFile = 1;
-        TEST_RESULT_BOOL(logWill(logLevelError), true, "will log");
-        TEST_RESULT_BOOL(logWillFile(logLevelError), true, "will log file");
+        TEST_RESULT_VOID(logAnySet(), "set log any");
+        TEST_RESULT_BOOL(logAny(logLevelWarn), true, "will log");
         logHandleFile = -1;
     }
 

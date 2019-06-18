@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Info Handler
 ***********************************************************************************************************************************/
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -10,8 +10,8 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
     if (testBegin("infoNewLoad(), infoFileName(), infoIni()"))
@@ -41,14 +41,13 @@ testRun(void)
 
         // Info files missing and at least one is required
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL), FileMissingError,
-            strPtr(
-                strNewFmt(
-                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-                    "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
-                    "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory",
-                testPath(), testPath(), testPath(), testPath())));
+            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING,
+            testPath(), testPath(), strPtr(strNewFmt("%s/test.ini", testPath())),
+            strPtr(strNewFmt("%s/test.ini.copy", testPath())));
 
         // Only copy exists and one is required
         //--------------------------------------------------------------------------------------------------------------------------
@@ -61,13 +60,12 @@ testRun(void)
 
         // Remove the copy and store only the main info file and encrypt it. One is required.
         //--------------------------------------------------------------------------------------------------------------------------
-        StorageFileWrite *infoWrite = storageNewWriteNP(storageLocalWrite(), fileName);
+        StorageWrite *infoWrite = storageNewWriteNP(storageLocalWrite(), fileName);
 
         ioWriteFilterGroupSet(
-            storageFileWriteIo(infoWrite),
+            storageWriteIo(infoWrite),
             ioFilterGroupAdd(
-                ioFilterGroupNew(),
-                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL))));
+                ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL)));
 
         storageRemoveNP(storageLocalWrite(), fileNameCopy);
         storagePutNP(
@@ -123,14 +121,12 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put invalid br format to file");
 
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL), FormatError,
-            strPtr(
-                strNewFmt(
-                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-                    "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
-                    "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory",
-                testPath(), testPath(), testPath(), testPath())));
+            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+            "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING,
+            testPath(), testPath(), testPath(), strPtr(strNewFmt("%s/test.ini.copy", testPath())));
 
         content = strNew
         (
@@ -227,22 +223,19 @@ testRun(void)
         // Encryption error
         //--------------------------------------------------------------------------------------------------------------------------
         storageRemoveNP(storageLocalWrite(), fileName);
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), NULL), CryptoError,
-            strPtr(
-                strNewFmt(
-                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-                    "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
-                    "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
-                    "HINT: Is or was the repo encrypted?",
-                testPath(), testPath(), testPath(), testPath())));
+            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+                "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+                "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
+                "HINT: Is or was the repo encrypted?",
+            testPath(), testPath(), strPtr(strNewFmt("%s/test.ini", testPath())), testPath());
 
         storageRemoveNP(storageLocalWrite(), fileNameCopy);
 
         // infoFree()
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(infoFree(info), "infoFree() - free info memory context");
-        TEST_RESULT_VOID(infoFree(NULL), "    NULL ptr");
     }
 
     // *****************************************************************************************************************************
@@ -266,10 +259,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ini = iniNew();
         iniSet(ini, strNew("section1"), strNew("key1"), strNew("value4"));
-        TEST_RESULT_VOID(infoSave(infoNew(), ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
+        Info *info = infoNew();
+        info->cipherPass = strNew("/badpass");
+        TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
 
         ini = NULL;
         TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, &ini), "    reload info");
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value4", "    check ini");
+        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"/badpass\"", "    check cipher-pass");
     }
 }

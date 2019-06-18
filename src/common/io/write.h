@@ -3,7 +3,7 @@ IO Write Interface
 
 Objects that write to some IO destination (file, socket, etc.) are implemented using this interface.  All objects are required to
 implement IoWriteProcess and can optionally implement IoWriteOpen or IoWriteClose.  IoWriteOpen and IoWriteClose can be used to
-allocate/open or deallocate/free resources.  An example of an IoWrite object is IoBufferRead.
+allocate/open or deallocate/free resources.  An example of an IoWrite object is IoBufferWrite.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_WRITE_H
 #define COMMON_IO_WRITE_H
@@ -11,6 +11,9 @@ allocate/open or deallocate/free resources.  An example of an IoWrite object is 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define IO_WRITE_TYPE                                               IoWrite
+#define IO_WRITE_PREFIX                                             ioWrite
+
 typedef struct IoWrite IoWrite;
 
 #include "common/io/filter/group.h"
@@ -30,8 +33,9 @@ void ioWriteClose(IoWrite *this);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-const IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
-void ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup);
+IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
+IoWrite *ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup);
+int ioWriteHandle(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Destructor

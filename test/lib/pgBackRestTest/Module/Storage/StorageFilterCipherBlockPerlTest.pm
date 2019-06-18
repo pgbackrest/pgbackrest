@@ -59,7 +59,7 @@ sub run
         $self->testException(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
                 $oDriver->openRead($strFile), BOGUS, $tCipherPass)},
-                ERROR_ASSERT, "unable to load cipher '" . BOGUS . "'");
+                ERROR_ASSERT, "invalid cipher name '" . BOGUS . "'");
 
         $self->testException(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
@@ -69,7 +69,7 @@ sub run
         $self->testException(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
                 $oDriver->openWrite($strFile), BOGUS, $tCipherPass)},
-            ERROR_ASSERT, "unable to load cipher '" . BOGUS . "'");
+            ERROR_ASSERT, "invalid cipher name '" . BOGUS . "'");
     }
 
     ################################################################################################################################

@@ -7,6 +7,9 @@ Regular Expression Handler
 /***********************************************************************************************************************************
 RegExp object
 ***********************************************************************************************************************************/
+#define REGEXP_TYPE                                                 RegExp
+#define REGEXP_PREFIX                                               regExp
+
 typedef struct RegExp RegExp;
 
 #include "common/type/string.h"

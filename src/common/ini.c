@@ -11,15 +11,18 @@ Ini Handler
 #include "common/memContext.h"
 #include "common/ini.h"
 #include "common/type/keyValue.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
-Contains information about the ini
+Object type
 ***********************************************************************************************************************************/
 struct Ini
 {
     MemContext *memContext;                                         // Context that contains the ini
     KeyValue *store;                                                // Key value store that contains the ini data
 };
+
+OBJECT_DEFINE_FREE(INI);
 
 /***********************************************************************************************************************************
 Create a new Ini object
@@ -141,7 +144,7 @@ iniGetList(const Ini *this, const String *section, const String *key)
     // Get the value
     const Variant *result = iniGetInternal(this, section, key, false);
 
-    FUNCTION_TEST_RETURN(result == NULL ? false : strLstNewVarLst(varVarLst(result)));
+    FUNCTION_TEST_RETURN(result == NULL ? NULL : strLstNewVarLst(varVarLst(result)));
 }
 
 /***********************************************************************************************************************************
@@ -406,20 +409,4 @@ iniMove(Ini *this, MemContext *parentNew)
         memContextMove(this->memContext, parentNew);
 
     FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
-Free the ini
-***********************************************************************************************************************************/
-void
-iniFree(Ini *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

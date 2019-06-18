@@ -9,15 +9,31 @@ Storage Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define STORAGE_TYPE                                                Storage
+#define STORAGE_PREFIX                                              storage
+
 typedef struct Storage Storage;
 
 #include "common/type/buffer.h"
 #include "common/type/stringList.h"
 #include "common/io/filter/group.h"
 #include "common/time.h"
-#include "storage/fileRead.h"
-#include "storage/fileWrite.h"
 #include "storage/info.h"
+#include "storage/read.h"
+#include "storage/write.h"
+
+/***********************************************************************************************************************************
+Storage feature
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Does the storage support paths/directories as something that needs to be created and deleted?  Object stores (e.g. S3) often
+    // do not have paths/directories -- they are only inferred by the object name.  Therefore it doesn't make sense to create or
+    // remove directories since this implies something is happening on the storage and in the case of objects stores it would be a
+    // noop.  We'll error on any path operation (e.g. pathExists(), pathCreate(), non-recursive removes, error on missing paths,
+    // etc.) for storage that does not support paths.
+    storageFeaturePath,
+} StorageFeature;
 
 /***********************************************************************************************************************************
 storageCopy
@@ -25,7 +41,7 @@ storageCopy
 #define storageCopyNP(source, destination)                                                                                         \
     storageCopy(source, destination)
 
-bool storageCopy(StorageFileRead *source, StorageFileWrite *destination);
+bool storageCopy(StorageRead *source, StorageWrite *destination);
 
 /***********************************************************************************************************************************
 storageExists
@@ -43,6 +59,14 @@ typedef struct StorageExistsParam
 bool storageExists(const Storage *this, const String *pathExp, StorageExistsParam param);
 
 /***********************************************************************************************************************************
+storageFeature
+***********************************************************************************************************************************/
+#define storageFeatureNP(this, feature)                                                                                            \
+    storageFeature(this, feature)
+
+bool storageFeature(const Storage *this, StorageFeature feature);
+
+/***********************************************************************************************************************************
 storageGet
 ***********************************************************************************************************************************/
 typedef struct StorageGetParam
@@ -55,7 +79,7 @@ typedef struct StorageGetParam
 #define storageGetNP(file)                                                                                                         \
     storageGet(file, (StorageGetParam){0})
 
-Buffer *storageGet(StorageFileRead *file, StorageGetParam param);
+Buffer *storageGet(StorageRead *file, StorageGetParam param);
 
 /***********************************************************************************************************************************
 storageInfo
@@ -63,6 +87,7 @@ storageInfo
 typedef struct StorageInfoParam
 {
     bool ignoreMissing;
+    bool followLink;
 } StorageInfoParam;
 
 #define storageInfoP(this, fileExp, ...)                                                                                           \
@@ -96,6 +121,7 @@ storageList
 typedef struct StorageListParam
 {
     bool errorOnMissing;
+    bool nullOnMissing;
     const String *expression;
 } StorageListParam;
 
@@ -112,7 +138,7 @@ storageMove
 #define storageMoveNP(this, source, destination)                                                                                   \
     storageMove(this, source, destination)
 
-void storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *destination);
+void storageMove(const Storage *this, StorageRead *source, StorageWrite *destination);
 
 /***********************************************************************************************************************************
 storageNewRead
@@ -128,7 +154,7 @@ typedef struct StorageNewReadParam
 #define storageNewReadNP(this, pathExp)                                                                                            \
     storageNewRead(this, pathExp, (StorageNewReadParam){0})
 
-StorageFileRead *storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param);
+StorageRead *storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param);
 
 /***********************************************************************************************************************************
 storageNewWrite
@@ -137,6 +163,9 @@ typedef struct StorageNewWriteParam
 {
     mode_t modeFile;
     mode_t modePath;
+    const String *user;
+    const String *group;
+    time_t timeModified;
     bool noCreatePath;
     bool noSyncFile;
     bool noSyncPath;
@@ -149,7 +178,7 @@ typedef struct StorageNewWriteParam
 #define storageNewWriteNP(this, pathExp)                                                                                           \
     storageNewWrite(this, pathExp, (StorageNewWriteParam){0})
 
-StorageFileWrite *storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param);
+StorageWrite *storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param);
 
 /***********************************************************************************************************************************
 storagePath
@@ -177,6 +206,14 @@ typedef struct StoragePathCreateParam
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 
 /***********************************************************************************************************************************
+storagePathExists
+***********************************************************************************************************************************/
+#define storagePathExistsNP(this, pathExp)                                                                                         \
+    storagePathExists(this, pathExp)
+
+bool storagePathExists(const Storage *this, const String *pathExp);
+
+/***********************************************************************************************************************************
 storagePathRemove
 ***********************************************************************************************************************************/
 typedef struct StoragePathRemoveParam
@@ -195,17 +232,10 @@ void storagePathRemove(const Storage *this, const String *pathExp, StoragePathRe
 /***********************************************************************************************************************************
 storagePathSync
 ***********************************************************************************************************************************/
-typedef struct StoragePathSync
-{
-    bool ignoreMissing;
-} StoragePathSyncParam;
-
-#define storagePathSyncP(this, pathExp, ...)                                                                                       \
-    storagePathSync(this, pathExp, (StoragePathSyncParam){__VA_ARGS__})
 #define storagePathSyncNP(this, pathExp)                                                                                           \
-    storagePathSync(this, pathExp, (StoragePathSyncParam){0})
+    storagePathSync(this, pathExp)
 
-void storagePathSync(const Storage *this, const String *pathExp, StoragePathSyncParam param);
+void storagePathSync(const Storage *this, const String *pathExp);
 
 /***********************************************************************************************************************************
 storagePut
@@ -213,7 +243,7 @@ storagePut
 #define storagePutNP(file, buffer)                                                                                                 \
     storagePut(file, buffer)
 
-void storagePut(StorageFileWrite *file, const Buffer *buffer);
+void storagePut(StorageWrite *file, const Buffer *buffer);
 
 /***********************************************************************************************************************************
 storageRemove
@@ -229,6 +259,11 @@ typedef struct StorageRemoveParam
     storageRemove(this, fileExp, (StorageRemoveParam){0})
 
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+const String *storageType(const Storage *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

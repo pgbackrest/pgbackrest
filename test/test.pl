@@ -31,8 +31,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Storage::Posix::Driver;
-use pgBackRest::Storage::Local;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build;
@@ -55,6 +53,8 @@ use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::JobTest;
 use pgBackRestTest::Common::ListTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::Storage;
+use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
@@ -98,6 +98,9 @@ test.pl [options]
    --profile            generate profile info
    --no-debug           don't generate a debug build
    --debug-test-trace   test stack trace for low-level functions (slow, esp w/valgrind, may cause timeouts)
+
+ Report Options:
+   --coverage-summary   generate a coverage summary report for the documentation
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -146,6 +149,7 @@ my $bNoLint = false;
 my $bBuildOnly = false;
 my $iBuildMax = 4;
 my $bCoverageOnly = false;
+my $bCoverageSummary = false;
 my $bNoCoverage = false;
 my $bCOnly = false;
 my $bGenOnly = false;
@@ -164,6 +168,8 @@ my $bNoOptimize = false;
 my $bNoDebug = false;
 my $bDebugTestTrace = false;
 my $iRetry = 0;
+
+my @cmdOptions = @ARGV;
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
@@ -192,6 +198,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-package' => \$bNoPackage,
             'no-ci-config' => \$bNoCiConfig,
             'coverage-only' => \$bCoverageOnly,
+            'coverage-summary' => \$bCoverageSummary,
             'no-coverage' => \$bNoCoverage,
             'c-only' => \$bCOnly,
             'gen-only' => \$bGenOnly,
@@ -236,6 +243,15 @@ eval
     {
         syswrite(*STDOUT, "invalid parameter\n\n");
         pod2usage();
+    }
+
+    ################################################################################################################################
+    # Update options for --coverage-summary
+    ################################################################################################################################
+    if ($bCoverageSummary)
+    {
+        $bCoverageOnly = true;
+        $bCOnly = true;
     }
 
     ################################################################################################################################
@@ -312,8 +328,8 @@ eval
         $strTestPath = cwd() . '/test';
     }
 
-    my $oStorageTest = new pgBackRest::Storage::Local(
-        $strTestPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorageTest = new pgBackRestTest::Common::Storage(
+        $strTestPath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     if ($bCoverageOnly)
     {
@@ -341,8 +357,8 @@ eval
     # Get the base backrest path
     my $strBackRestBase = dirname(dirname(abs_path($0)));
 
-    my $oStorageBackRest = new pgBackRest::Storage::Local(
-        $strBackRestBase, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorageBackRest = new pgBackRestTest::Common::Storage(
+        $strBackRestBase, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     ################################################################################################################################
     # Build Docker containers
@@ -837,11 +853,10 @@ eval
                         ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
                     my $strLdFlags = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
                     my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
+                    my $strBuildFlags = "CFLAGS=${strCFlags}\nLDFLAGS=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
+                    my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
 
-                    my $bBuildOptionsDiffer = buildPutDiffers(
-                        $oStorageBackRest, "${strBinPath}/${strBuildVM}/build.flags",
-                        "CFLAGS=${strCFlags}\nLDFLAGS=${strLdFlags}\nCONFIGURE=${strConfigOptions}");
-
+                    my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
                     $bBuildOptionsDiffer |= grep(/^src\/configure|src\/Makefile.in|src\/build\.auto\.h$/, @stryModifiedList);
 
                     # Rebuild if the modification time of the smart file does equal the last changes in source paths
@@ -876,6 +891,7 @@ eval
                             "rsync -rt" . (!$bSmart || $bBuildOptionsDiffer ? " --delete-excluded" : '') .
                             " --include=" . join('/*** --include=', @stryBinSrcPath) . '/*** --exclude=*' .
                             " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
+                        buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
 
                         if (vmLintC($strVm) && !$bNoLint)
                         {
@@ -1311,8 +1327,8 @@ eval
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
                         $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync,
-                        $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bBackTrace, $bProfile, !$bNoDebug,
-                        $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
+                        $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bBackTrace,
+                        $bProfile, !$bNoDebug, $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -1496,7 +1512,7 @@ eval
                 if ($oStorageBackRest->exists($strLCovFile))
                 {
                     executeTest(
-                        "genhtml ${strLCovFile} --config-file=${strBackRestBase}/test/src/lcov.conf" .
+                        "genhtml ${strLCovFile} --config-file=${strBackRestBase}/test/.vagrant/code/lcov.conf" .
                             " --prefix=${strBackRestBase}/test/.vagrant/code" .
                             " --output-directory=${strBackRestBase}/test/coverage/c");
 
@@ -1553,9 +1569,19 @@ eval
                         }
                     }
 
-                $oStorageBackRest->remove("${strBackRestBase}/test/.vagrant/code/all.lcov", {bIgnoreMissing => true});
-                coverageGenerate(
-                    $oStorageBackRest, "${strBackRestBase}/test/.vagrant/code", "${strBackRestBase}/test/coverage/c-coverage.html");
+                    $oStorageBackRest->remove("${strBackRestBase}/test/.vagrant/code/all.lcov", {bIgnoreMissing => true});
+                    coverageGenerate(
+                        $oStorageBackRest, "${strBackRestBase}/test/.vagrant/code",
+                        "${strBackRestBase}/test/coverage/c-coverage.html");
+
+                    if ($bCoverageSummary)
+                    {
+                        &log(INFO, 'writing C coverage summary report');
+
+                        coverageDocSummaryGenerate(
+                            $oStorageBackRest, "${strBackRestBase}/test/.vagrant/code",
+                            "${strBackRestBase}/doc/xml/auto/metric-coverage-report.auto.xml");
+                    }
                 }
                 else
                 {
@@ -1572,7 +1598,7 @@ eval
             " WITH ${iTestFail} FAILURE(S)") . ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
                 ' (' . (time() - $lStartTime) . 's)');
 
-        exit 1 if ($iTestFail > 0 || $iUncoveredCodeModuleTotal > 0);
+        exit 1 if ($iTestFail > 0 || ($iUncoveredCodeModuleTotal > 0 && !$bCoverageSummary));
 
         exit 0;
     }

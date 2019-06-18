@@ -14,6 +14,9 @@ Only the HTTPS protocol is currently supported.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define HTTP_CLIENT_TYPE                                            HttpClient
+#define HTTP_CLIENT_PREFIX                                          httpClient
+
 typedef struct HttpClient HttpClient;
 
 #include "common/io/http/header.h"
@@ -25,8 +28,12 @@ typedef struct HttpClient HttpClient;
 /***********************************************************************************************************************************
 HTTP Constants
 ***********************************************************************************************************************************/
+#define HTTP_VERB_DELETE                                            "DELETE"
+    STRING_DECLARE(HTTP_VERB_DELETE_STR);
 #define HTTP_VERB_GET                                               "GET"
     STRING_DECLARE(HTTP_VERB_GET_STR);
+#define HTTP_VERB_HEAD                                              "HEAD"
+    STRING_DECLARE(HTTP_VERB_HEAD_STR);
 #define HTTP_VERB_POST                                              "POST"
     STRING_DECLARE(HTTP_VERB_POST_STR);
 #define HTTP_VERB_PUT                                               "PUT"
@@ -39,9 +46,20 @@ HTTP Constants
 #define HTTP_HEADER_ETAG                                            "etag"
     STRING_DECLARE(HTTP_HEADER_ETAG_STR);
 
-#define HTTP_RESPONSE_CODE_OK                                       200
 #define HTTP_RESPONSE_CODE_FORBIDDEN                                403
 #define HTTP_RESPONSE_CODE_NOT_FOUND                                404
+
+/***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+typedef struct HttpClientStat
+{
+    uint64_t object;                                                // Objects created
+    uint64_t session;                                               // TLS sessions created
+    uint64_t request;                                               // Requests (i.e. calls to httpClientRequest())
+    uint64_t retry;                                                 // Request retries
+    uint64_t close;                                                 // Closes forced by server
+} HttpClientStat;
 
 /***********************************************************************************************************************************
 Constructor
@@ -52,17 +70,21 @@ HttpClient *httpClientNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+void httpClientDone(HttpClient *this);
 Buffer *httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
     const Buffer *body, bool returnContent);
+String *httpClientStatStr(void);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+bool httpClientBusy(const HttpClient *this);
 IoRead *httpClientIoRead(const HttpClient *this);
 unsigned int httpClientResponseCode(const HttpClient *this);
 const HttpHeader *httpClientReponseHeader(const HttpClient *this);
 const String *httpClientResponseMessage(const HttpClient *this);
+bool httpClientResponseCodeOk(const HttpClient *this);
 
 /***********************************************************************************************************************************
 Destructor

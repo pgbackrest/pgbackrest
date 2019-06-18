@@ -34,7 +34,7 @@ testRun(void)
                 exitInit();
                 raise(SIGTERM);
             }
-            HARNESS_FORK_CHILD_END();
+            HARNESS_FORK_CHILD_END();                               // {uncoverable - signal is raised in block}
         }
         HARNESS_FORK_END();
     }

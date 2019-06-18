@@ -124,8 +124,6 @@ sub setup
         $oHostGroup->hostAdd($oHostS3, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
 
         # Wait for server to start
-        executeTest('docker logs -f ' . $oHostS3->container() . " | grep -m 1 \"server started\"");
-
         $oHostS3->executeS3('mb s3://' . HOST_S3_BUCKET);
     }
 
@@ -183,7 +181,7 @@ sub setup
         $self->optionTestSet(CFGOPT_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
         $self->optionTestSet(CFGOPT_REPO_S3_REGION, HOST_S3_REGION);
         $self->optionTestSet(CFGOPT_REPO_S3_HOST, $oHostS3->ipGet());
-        $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_SSL, false);
+        $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_TLS, false);
     }
 
     $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);

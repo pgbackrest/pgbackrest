@@ -9,6 +9,7 @@ Protocol Parallel Executor
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
@@ -30,6 +31,8 @@ struct ProtocolParallel
 
     ProtocolParallelJobState state;                                 // Overall state of job processing
 };
+
+OBJECT_DEFINE_FREE(PROTOCOL_PARALLEL);
 
 /***********************************************************************************************************************************
 Create object
@@ -144,9 +147,8 @@ protocolParallelProcess(ProtocolParallel *this)
             int handle = ioReadHandle(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx)));
             FD_SET((unsigned int)handle, &selectSet);
 
-            // Set the max handle
-            if (handle > handleMax)                                         // {+uncovered - handles are often in ascending order}
-                handleMax = handle;
+            // Find the max file handle needed for select()
+            MAX_ASSIGN(handleMax, handle);
 
             clientRunningTotal++;
         }
@@ -285,20 +287,4 @@ protocolParallelToLog(const ProtocolParallel *this)
     return strNewFmt(
         "{state: %s, clientTotal: %u, jobTotal: %u}", protocolParallelJobToConstZ(this->state), lstSize(this->clientList),
         lstSize(this->jobList));
-}
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-void
-protocolParallelFree(ProtocolParallel *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }
