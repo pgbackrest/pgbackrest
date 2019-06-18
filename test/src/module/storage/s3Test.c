@@ -767,6 +767,7 @@ testRun(void)
         StorageInfo info;
         TEST_ASSIGN(info, storageInfoNP(s3, strNew("subdir/file1.txt")), "file exists");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
         TEST_RESULT_UINT(info.size, 9999, "    check exists");
 
         // InfoList()
