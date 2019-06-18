@@ -90,6 +90,70 @@ sub run
     }
 
     ################################################################################################################################
+    if ($self->begin('hashSize()'))
+    {
+        my $tBuffer;
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$self->storageLocal()->put($strFile, $strFileContent)}, 8, 'put');
+
+        $self->testResult(
+            sub {$self->storageLocal()->hashSize($strFile)},
+            qw{(} . cryptoHashOne('sha1', $strFileContent) . ', ' . $iFileSize . qw{)}, '    check hash/size');
+        $self->testResult(
+            sub {$self->storageLocal()->hashSize(BOGUS, {bIgnoreMissing => true})}, "([undef], [undef])",
+            '    check missing hash/size');
+    }
+
+    ################################################################################################################################
+    if ($self->begin('copy()'))
+    {
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testException(
+            sub {$self->storageLocal()->copy($self->storageLocal()->openRead($strFile), $strFileCopy)}, ERROR_FILE_MISSING,
+            "unable to open missing file '${strFile}' for read");
+        $self->testResult(
+            sub {$self->storageLocal()->exists($strFileCopy)}, false, '   destination does not exist');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$self->storageLocal()->copy(
+                $self->storageLocal()->openRead($strFile, {bIgnoreMissing => true}),
+                $self->storageLocal()->openWrite($strFileCopy))},
+            false, 'missing source io');
+        $self->testResult(
+            sub {$self->storageLocal()->exists($strFileCopy)}, false, '   destination does not exist');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testException(
+            sub {$self->storageLocal()->copy($self->storageLocal()->openRead($strFile), $strFileCopy)}, ERROR_FILE_MISSING,
+            "unable to open missing file '${strFile}' for read");
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->storageLocal()->put($strFile, $strFileContent);
+
+        $self->testResult(sub {$self->storageLocal()->copy($strFile, $strFileCopy)}, true, 'copy filename->filename');
+        $self->testResult(sub {${$self->storageLocal()->get($strFileCopy)}}, $strFileContent, '    check copy');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->storageLocal()->remove($strFileCopy);
+
+        $self->testResult(
+            sub {$self->storageLocal()->copy($self->storageLocal()->openRead($strFile), $strFileCopy)}, true, 'copy io->filename');
+        $self->testResult(sub {${$self->storageLocal()->get($strFileCopy)}}, $strFileContent, '    check copy');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->storageLocal()->remove($strFileCopy);
+
+        $self->testResult(
+            sub {$self->storageLocal()->copy(
+                $self->storageLocal()->openRead($strFile), $self->storageLocal()->openWrite($strFileCopy))},
+            true, 'copy io->io');
+        $self->testResult(sub {${$self->storageLocal()->get($strFileCopy)}}, $strFileContent, '    check copy');
+    }
+
+    ################################################################################################################################
     if ($self->begin('exists()'))
     {
         $self->storageLocal()->put($self->testPath() . "/test.file");
@@ -233,6 +297,21 @@ sub run
         executeTest("sudo chown :root ${strFile}");
         $self->testResult(
             sub {$self->storageLocal()->owner($strFile, undef, TEST_GROUP)}, undef, "change group back from root");
+    }
+
+    ################################################################################################################################
+    if ($self->begin('pathCreate()'))
+    {
+        my $strTestPath = $self->testPath() . "/" . BOGUS;
+
+        $self->testResult(sub {$self->storageLocal()->pathCreate($strTestPath)}, "[undef]",
+            "test creation of path " . $strTestPath);
+
+        $self->testException(sub {$self->storageLocal()->pathCreate($strTestPath)}, ERROR_PATH_CREATE,
+            "unable to create path '". $strTestPath. "'");
+
+        $self->testResult(sub {$self->storageLocal()->pathCreate($strTestPath, {bIgnoreExists => true})}, "[undef]",
+            "ignore path exists");
     }
 
     ################################################################################################################################
