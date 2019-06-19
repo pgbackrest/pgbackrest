@@ -838,6 +838,193 @@ testRun(void)
 
         harnessLogLevelReset();
     }
+    // *****************************************************************************************************************************
+    if (testBegin("info files mismatch"))
+    {
+        // Load Parameters
+        StringList *argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=2");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // archive.info has only current db with different db history id as backup.info
+        //--------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName),
+            harnessInfoChecksumZ(
+                "[backup:current]\n"
+                "20181119-152138F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152900F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "\n"
+                "[db]\n"
+                "db-catalog-version=201707211\n"
+                "db-control-version=1002\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702,"
+                    "\"db-version\":\"10\"}\n"
+                "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                    "\"db-version\":\"10\"}\n"));
+
+        storagePutNP(
+            storageNewWriteNP(storageTest, archiveInfoFileName),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=1\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
+
+        // Create 10-1 and 10-2 although 10-2 is not realistic since the archive.info knows nothing about it - it is just to
+        // confirm that nothing from disk is removed and it will also be used for the next test.
+        archiveGenerate(storageTest, archiveStanzaPath, 1, 7, "10-1", "0000000100000000");
+        archiveGenerate(storageTest, archiveStanzaPath, 1, 7, "10-2", "0000000100000000");
+
+        TEST_ERROR(cmdExpire(), FormatError, "archive expiration cannot continue - archive and backup history lists do not match");
+        harnessLogResult("P00   INFO: expire full backup 20181119-152138F");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(1, 7, "0000000100000000")),
+            "  none removed from 10-1/0000000100000000");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(1, 7, "0000000100000000")),
+            "  none removed from 10-2/0000000100000000");
+
+        // archive.info old history db system id not the same as backup.info
+        //--------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(
+            storageNewWriteNP(storageTest, archiveInfoFileName),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":6626363367545671234,\"db-version\":\"10\"}\n"
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
+
+        TEST_ERROR(cmdExpire(), FormatError, "archive expiration cannot continue - archive and backup history lists do not match");
+
+        // archive.info old history db version not the same as backup.info
+        //--------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(
+            storageNewWriteNP(storageTest, archiveInfoFileName),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
+
+        TEST_ERROR(cmdExpire(), FormatError, "archive expiration cannot continue - archive and backup history lists do not match");
+
+        // archive.info has only current db with same db history id as backup.info
+        //--------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName),
+            harnessInfoChecksumZ(
+                "[backup:current]\n"
+                "20181119-152138F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152900F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "\n"
+                "[db]\n"
+                "db-catalog-version=201707211\n"
+                "db-control-version=1002\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702,"
+                    "\"db-version\":\"10\"}\n"
+                "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                    "\"db-version\":\"10\"}\n"));
+
+        storagePutNP(
+            storageNewWriteNP(storageTest, archiveInfoFileName),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=1");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Here, although backup 20181119-152138F of 10-1 will be expired, the WAL in 10-1 will not since the archive.info
+        // does not know about that dir. Again, not really realistic since if it is on disk and reconstructed it would have. So
+        // here we are testing that things on disk that we are not aware of are not touched.
+        TEST_RESULT_VOID(cmdExpire(), "Expire archive that archive.info is aware of");
+
+        harnessLogResult("P00   INFO: expire full backup 20181119-152138F\nP00   INFO: expire full backup 20181119-152800F");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(1, 7, "0000000100000000")),
+            "  none removed from 10-1/0000000100000000");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(6, 7, "0000000100000000")),
+            "  all prior to 000000010000000000000006 removed from 10-2/0000000100000000");
+    }
 
     // *****************************************************************************************************************************
     if (testBegin("sortArchiveId()"))
