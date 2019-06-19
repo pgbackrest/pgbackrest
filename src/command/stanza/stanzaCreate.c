@@ -72,8 +72,10 @@ cmdStanzaCreate(void)
         {
             InfoArchive *infoArchive = infoArchiveCreate(// pgControl, cipher etc here);
 
+            Info *this = NULL;
+
         // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent files
-        if (cipherType != cipherTypeNone)
+        if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
         {
 //In Perl:
 //my $strCipherPass = encodeToStr(ENCODE_TYPE_BASE64, cryptoRandomBytes($iKeySizeInBytes));  iKeySizeInBytes is 48 and no one ever calls w/o default
