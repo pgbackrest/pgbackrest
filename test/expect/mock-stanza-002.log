@@ -428,7 +428,7 @@ db-version="9.4"
 1={"db-id":1000000000000000093,"db-version":"9.3"}
 2={"db-id":1000000000000000094,"db-version":"9.4"}
 
-stanza-upgrade db - successfully upgrade with XX.Y-Z (backup host)
+stanza-upgrade db - successfully upgrade - no info file mismatch (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
@@ -470,15 +470,14 @@ backrest-version="[VERSION-1]"
 cipher-pass=[CIPHER-PASS-2]
 
 [db]
-db-id=4
+db-id=3
 db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
 1={"db-id":1000000000000000093,"db-version":"9.3"}
 2={"db-id":1000000000000000094,"db-version":"9.4"}
-3={"db-id":1000000000000000094,"db-version":"10.0"}
-4={"db-id":1000000000000000095,"db-version":"9.5"}
+3={"db-id":1000000000000000095,"db-version":"9.5"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -579,7 +578,7 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
                 "database" : {
                     "id" : 3
                 },
-                "id" : "9.5-4",
+                "id" : "9.5-3",
                 "max" : "000000010000000100000001",
                 "min" : "000000010000000100000001"
             }
