@@ -67,6 +67,14 @@
 
                         <p>Add backup management functions to <code>InfoBackup</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Throw an error when attempting to expire archives if there is a history mismatch between the archive and backup info files.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
