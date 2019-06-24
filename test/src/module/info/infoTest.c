@@ -62,10 +62,9 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         StorageWrite *infoWrite = storageNewWriteNP(storageLocalWrite(), fileName);
 
-        ioWriteFilterGroupSet(
-            storageWriteIo(infoWrite),
-            ioFilterGroupAdd(
-                ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL)));
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(infoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("12345678"), NULL));
 
         storageRemoveNP(storageLocalWrite(), fileNameCopy);
         storagePutNP(

@@ -14,6 +14,8 @@ typedef struct StorageReadInterface
 {
     const String * type;
     const String * name;
+    bool compressible;                                              // Is this file compressible?
+    unsigned int compressLevel;                                     // Level to use for compression
     bool ignoreMissing;
     IoReadInterface ioInterface;
 } StorageReadInterface;

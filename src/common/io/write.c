@@ -24,7 +24,7 @@ struct IoWrite
     Buffer *output;                                                 // Output buffer
 
 #ifdef DEBUG
-    bool filterGroupSet;                                            // Was an IoFilterGroup set?
+    bool filterGroupSet;                                            // Were filters set?
     bool opened;                                                    // Has the io been opened?
     bool closed;                                                    // Has the io been closed?
 #endif
@@ -54,6 +54,7 @@ ioWriteNew(void *driver, IoWriteInterface interface)
         this->memContext = memContextCurrent();
         this->driver = driver;
         this->interface = interface;
+        this->filterGroup = ioFilterGroupNew();
         this->output = bufNew(ioBufferSize());
     }
     MEM_CONTEXT_NEW_END();
@@ -77,16 +78,12 @@ ioWriteOpen(IoWrite *this)
     if (this->interface.open != NULL)
         this->interface.open(this->driver);
 
-    // If no filter group exists create one to do buffering
-    if (this->filterGroup == NULL)
-    {
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            this->filterGroup = ioFilterGroupNew();
-        }
-        MEM_CONTEXT_END();
-    }
+    // Track whether filters were added to prevent flush() from being called later since flush() won't work with most filters
+#ifdef DEBUG
+    this->filterGroupSet = ioFilterGroupSize(this->filterGroup) > 0;
+#endif
 
+    // Open the filter group
     ioFilterGroupOpen(this->filterGroup);
 
 #ifdef DEBUG
@@ -285,29 +282,6 @@ ioWriteFilterGroup(const IoWrite *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->filterGroup);
-}
-
-IoWrite *
-ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_WRITE, this);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(filterGroup != NULL);
-    ASSERT(this->filterGroup == NULL);
-    ASSERT(!this->opened && !this->closed);
-
-    // Track whether a filter group was set to prevent flush() from being called later
-#ifdef DEBUG
-    this->filterGroupSet = true;
-#endif
-
-    this->filterGroup = ioFilterGroupMove(filterGroup, this->memContext);
-
-    FUNCTION_LOG_RETURN(IO_WRITE, this);
 }
 
 /***********************************************************************************************************************************

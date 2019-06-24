@@ -437,7 +437,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 
         // Create filter interface
         this = ioFilterNewP(
-            CIPHER_BLOCK_FILTER_TYPE_STR, driver, .done = cipherBlockDone, .inOut = cipherBlockProcess,
+            CIPHER_BLOCK_FILTER_TYPE_STR, driver, NULL, .done = cipherBlockDone, .inOut = cipherBlockProcess,
             .inputSame = cipherBlockInputSame);
     }
     MEM_CONTEXT_NEW_END();

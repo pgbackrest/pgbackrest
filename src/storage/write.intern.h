@@ -23,6 +23,8 @@ typedef struct StorageWriteInterface
 
     bool atomic;
     bool createPath;
+    bool compressible;                                              // Is this file compressible?
+    unsigned int compressLevel;                                     // Level to use for compression
     const String *group;                                            // Group that owns the file
     mode_t modeFile;
     mode_t modePath;

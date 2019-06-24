@@ -604,11 +604,6 @@ testRun(void)
         TEST_RESULT_INT(
             ioReadHandle(storageReadIo(file)), ((StorageReadPosix *)file->driver)->handle, "check read handle");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "    close file");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        IoFilterGroup *filterGroup = ioFilterGroupNew();
-        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName, .filterGroup = filterGroup), "new read file with filters");
-        TEST_RESULT_PTR(ioReadFilterGroup(storageReadIo(file)), filterGroup, "    check filter group is set");
     }
 
     // *****************************************************************************************************************************
@@ -670,13 +665,6 @@ testRun(void)
         TEST_RESULT_VOID(storageWritePosixClose(storageWriteDriver(file)), "   close file again");
         TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0600, "    check file mode");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        IoFilterGroup *filterGroup = ioFilterGroupNew();
-        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .filterGroup = filterGroup), "new write file with filters");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
-        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
-        TEST_RESULT_PTR(ioWriteFilterGroup(storageWriteIo(file)), filterGroup, "    check filter group is set");
     }
 
     // *****************************************************************************************************************************

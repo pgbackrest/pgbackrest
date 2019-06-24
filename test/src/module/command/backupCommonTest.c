@@ -139,9 +139,8 @@ testRun(void)
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
-        IoWrite *write = ioWriteFilterGroupSet(
-            ioBufferWriteNew(bufferOut),
-            ioFilterGroupAdd(ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0)));
+        IoWrite *write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -161,10 +160,9 @@ testRun(void)
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.walid = 0xF0F0F0F0;
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.xrecoff = 0xF0F0F0F0;
 
-        write = ioWriteFilterGroupSet(
-            ioBufferWriteNew(bufferOut),
-            ioFilterGroupAdd(
-                ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
+        write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -209,10 +207,9 @@ testRun(void)
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)))->pd_upper = 0x01;
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)))->pd_lsn.xrecoff = 0x7;
 
-        write = ioWriteFilterGroupSet(
-            ioBufferWriteNew(bufferOut),
-            ioFilterGroupAdd(
-                ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
+        write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -227,10 +224,9 @@ testRun(void)
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
-        write = ioWriteFilterGroupSet(
-            ioBufferWriteNew(bufferOut),
-            ioFilterGroupAdd(
-                ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
+        write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -245,10 +241,9 @@ testRun(void)
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
-        write = ioWriteFilterGroupSet(
-            ioBufferWriteNew(bufferOut),
-            ioFilterGroupAdd(
-                ioFilterGroupNew(), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)));
+        write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");

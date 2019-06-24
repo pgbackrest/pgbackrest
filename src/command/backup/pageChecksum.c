@@ -229,7 +229,7 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, size_t pa
         driver->valid = true;
         driver->align = true;
 
-        this = ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE_STR, driver, .in = pageChecksumProcess, .result = pageChecksumResult);
+        this = ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE_STR, driver, NULL, .in = pageChecksumProcess, .result = pageChecksumResult);
     }
     MEM_CONTEXT_NEW_END();
 

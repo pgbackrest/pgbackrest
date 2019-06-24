@@ -534,6 +534,8 @@ unit:
           storage/remote/storage: full
           storage/remote/write: full
           storage/helper: full
+          storage/read: full
+          storage/write: full
           storage/storage: full
 
       # ----------------------------------------------------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Remote Storage
 ***********************************************************************************************************************************/
+#include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 
@@ -139,6 +140,9 @@ testRun(void)
 
         storagePutNP(storageNewWriteNP(storageTest, strNew("repo/test.txt")), contentBuf);
 
+        // Disable protocol compression in the storage object to test no compression
+        ((StorageRemote *)storageRemote->driver)->compressLevel = 0;
+
         StorageRead *fileRead = NULL;
 
         ioBufferSizeSet(8193);
@@ -150,8 +154,20 @@ testRun(void)
             storageReadRemote(storageRead(fileRead), bufNew(32), false), 0,
             "nothing more to read");
 
+        TEST_ASSIGN(fileRead, storageNewReadNP(storageRemote, strNew("test.txt")), "get file");
+        TEST_RESULT_BOOL(bufEq(storageGetNP(fileRead), contentBuf), true, "    check contents");
+        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, bufSize(contentBuf), "    check read size");
+
+        // Enable protocol compression in the storage object
+        ((StorageRemote *)storageRemote->driver)->compressLevel = 3;
+
+        TEST_ASSIGN(
+            fileRead, storageNewReadP(storageRemote, strNew("test.txt"), .compressible = true), "get file (protocol compress)");
+        TEST_RESULT_BOOL(bufEq(storageGetNP(fileRead), contentBuf), true, "    check contents");
+        // We don't know how much protocol compression there will be exactly, but make sure this is some
         TEST_RESULT_BOOL(
-            bufEq(storageGetNP(storageNewReadNP(storageRemote, strNew("test.txt"))), contentBuf), true, "get file again");
+            ((StorageReadRemote *)fileRead->driver)->protocolReadBytes < bufSize(contentBuf), true,
+            "    check compressed read size");
 
         TEST_ERROR(
             storageRemoteProtocolBlockSize(strNew("bogus")), ProtocolError, "'bogus' is not a valid block size message");
@@ -161,6 +177,7 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("missing.txt")));
         varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, varNewKv(kvNew()));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true,
@@ -178,6 +195,12 @@ testRun(void)
         varLstAdd(paramList, varNewStr(strNew("test.txt")));
         varLstAdd(paramList, varNewBool(false));
 
+        // Create filters to test filter logic
+        IoFilterGroup *filterGroup = ioFilterGroupNew();
+        ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
+        ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
+        varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
+
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read");
         TEST_RESULT_STR(
@@ -190,6 +213,21 @@ testRun(void)
 
         bufUsedSet(serverWrite, 0);
         ioBufferSizeSet(8192);
+
+        // Check for error on a bogus filter
+        // -------------------------------------------------------------------------------------------------------------------------
+        paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(strNew("test.txt")));
+        varLstAdd(paramList, varNewBool(false));
+
+        // Create filters to test filter logic
+        filterGroup = ioFilterGroupNew();
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("X"), NULL));
+        varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
+
+        TEST_ERROR(
+            storageRemoteProtocol(
+                PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), AssertError, "unable to add filter 'cipherBlock'");
     }
 
     // *****************************************************************************************************************************
@@ -213,6 +251,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(9999);
 
+        // Disable protocol compression in the storage object to test no compression
+        ((StorageRemote *)storageRemote->driver)->compressLevel = 0;
+
         StorageWrite *write = NULL;
         TEST_ASSIGN(write, storageNewWriteNP(storageRemote, strNew("test.txt")), "new write file");
 
@@ -225,12 +266,16 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
         TEST_RESULT_VOID(storagePutNP(write, contentBuf), "write file");
+        TEST_RESULT_UINT(((StorageWriteRemote *)write->driver)->protocolWriteBytes, bufSize(contentBuf), "    check write size");
         TEST_RESULT_VOID(storageWriteRemoteClose((StorageWriteRemote *)storageWriteDriver(write)), "close file again");
         TEST_RESULT_VOID(storageWriteFree(write), "free file");
 
         // Make sure the file was written correctly
         TEST_RESULT_BOOL(
             bufEq(storageGetNP(storageNewReadNP(storageRemote, strNew("test.txt"))), contentBuf), true, "check file");
+
+        // Enable protocol compression in the storage object
+        ((StorageRemote *)storageRemote->driver)->compressLevel = 3;
 
         // Write the file again, but this time free it before close and make sure the .tmp file is left
         // -------------------------------------------------------------------------------------------------------------------------
@@ -243,6 +288,14 @@ testRun(void)
 
         TEST_RESULT_UINT(
             storageInfoNP(storageTest, strNew("repo/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");
+
+        // Write the file again with protocol compression
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(write, storageNewWriteP(storageRemote, strNew("test2.txt"), .compressible = true), "new write file (compress)");
+        TEST_RESULT_VOID(storagePutNP(write, contentBuf), "write file");
+        TEST_RESULT_BOOL(
+            ((StorageWriteRemote *)write->driver)->protocolWriteBytes < bufSize(contentBuf), true,
+            "    check compressed write size");
 
         // Check protocol function directly (complete write)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -259,6 +312,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, varNewKv(kvNew()));
 
         // Generate input (includes the input for the test below -- need a way to reset this for better testing)
         bufCat(
@@ -299,6 +353,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, varNewKv(kvNew()));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");

@@ -407,7 +407,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, param.filterGroup);
+        FUNCTION_LOG_PARAM(BOOL, param.compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -416,12 +416,9 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = this->interface.newRead(this->driver, storagePathNP(this, fileExp), param.ignoreMissing);
-
-        if (param.filterGroup != NULL)
-            ioReadFilterGroupSet(storageReadIo(result), param.filterGroup);
-
-        storageReadMove(result, MEM_CONTEXT_OLD());
+        result = storageReadMove(
+            this->interface.newRead(this->driver, storagePathNP(this, fileExp), param.ignoreMissing, param.compressible),
+            MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -446,7 +443,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
         FUNCTION_LOG_PARAM(BOOL, param.noSyncFile);
         FUNCTION_LOG_PARAM(BOOL, param.noSyncPath);
         FUNCTION_LOG_PARAM(BOOL, param.noAtomic);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, param.filterGroup);
+        FUNCTION_LOG_PARAM(BOOL, param.compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -456,15 +453,12 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = this->interface.newWrite(
-            this->driver, storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
-            param.modePath != 0 ? param.modePath : this->modePath, param.user, param.group, param.timeModified, !param.noCreatePath,
-            !param.noSyncFile, !param.noSyncPath, !param.noAtomic);
-
-        if (param.filterGroup != NULL)
-            ioWriteFilterGroupSet(storageWriteIo(result), param.filterGroup);
-
-        storageWriteMove(result, MEM_CONTEXT_OLD());
+        result = storageWriteMove(
+            this->interface.newWrite(
+                this->driver, storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
+                param.modePath != 0 ? param.modePath : this->modePath, param.user, param.group, param.timeModified,
+                !param.noCreatePath, !param.noSyncFile, !param.noSyncPath, !param.noAtomic, param.compressible),
+            MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 

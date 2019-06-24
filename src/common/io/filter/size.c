@@ -94,7 +94,7 @@ ioSizeNew(void)
         IoSize *driver = memNew(sizeof(IoSize));
         driver->memContext = memContextCurrent();
 
-        this = ioFilterNewP(SIZE_FILTER_TYPE_STR, driver, .in = ioSizeProcess, .result = ioSizeResult);
+        this = ioFilterNewP(SIZE_FILTER_TYPE_STR, driver, NULL, .in = ioSizeProcess, .result = ioSizeResult);
     }
     MEM_CONTEXT_NEW_END();
 

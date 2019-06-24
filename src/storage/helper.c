@@ -278,7 +278,7 @@ storageRepoGet(const String *type, bool write)
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo));
+            protocolRemoteGet(protocolStorageTypeRepo), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use CIFS storage
     else if (strEqZ(type, STORAGE_TYPE_CIFS))

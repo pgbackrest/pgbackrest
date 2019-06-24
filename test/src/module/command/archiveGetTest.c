@@ -186,10 +186,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StorageWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info"));
 
-        ioWriteFilterGroupSet(
-            storageWriteIo(infoWrite),
-            ioFilterGroupAdd(
-                ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL)));
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(infoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("12345678"), NULL));
 
         storagePutNP(
             infoWrite,
@@ -208,11 +207,10 @@ testRun(void)
             strNew(
                 "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
 
-        IoFilterGroup *filterGroup = ioFilterGroupNew();
+        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
         ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(
             filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL));
-        ioWriteFilterGroupSet(storageWriteIo(destination), filterGroup);
         storagePutNP(destination, buffer);
 
         TEST_RESULT_INT(

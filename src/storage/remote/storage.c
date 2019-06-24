@@ -24,6 +24,7 @@ struct StorageRemote
 {
     MemContext *memContext;
     ProtocolClient *client;                                         // Protocol client
+    unsigned int compressLevel;                                     // Protocol compression level
 };
 
 /***********************************************************************************************************************************
@@ -113,7 +114,7 @@ storageRemoteList(THIS_VOID, const String *path, const String *expression)
 New file read object
 ***********************************************************************************************************************************/
 static StorageRead *
-storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing)
+storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, bool compressible)
 {
     THIS(StorageRemote);
 
@@ -121,11 +122,15 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing)
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(BOOL, compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadRemoteNew(this, this->client, file, ignoreMissing));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ,
+        storageReadRemoteNew(
+            this, this->client, file, ignoreMissing, this->compressLevel > 0 ? compressible : false, this->compressLevel));
 }
 
 /***********************************************************************************************************************************
@@ -134,7 +139,7 @@ New file write object
 static StorageWrite *
 storageRemoteNewWrite(
     THIS_VOID, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group, time_t timeModified,
-    bool createPath, bool syncFile, bool syncPath, bool atomic)
+    bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible)
 {
     THIS(StorageRemote);
 
@@ -150,6 +155,7 @@ storageRemoteNewWrite(
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
+        FUNCTION_LOG_PARAM(BOOL, compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -158,7 +164,8 @@ storageRemoteNewWrite(
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE,
         storageWriteRemoteNew(
-            this, this->client, file, modeFile, modePath, user, group, timeModified, createPath, syncFile, syncPath, atomic));
+            this, this->client, file, modeFile, modePath, user, group, timeModified, createPath, syncFile, syncPath, atomic,
+            this->compressLevel > 0 ? compressible : false, this->compressLevel));
 }
 
 /***********************************************************************************************************************************
@@ -319,7 +326,8 @@ New object
 ***********************************************************************************************************************************/
 Storage *
 storageRemoteNew(
-    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client)
+    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
+    unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MODE, modeFile);
@@ -327,6 +335,7 @@ storageRemoteNew(
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
+        FUNCTION_LOG_PARAM(UINT, compressLevel);
     FUNCTION_LOG_END();
 
     ASSERT(modeFile != 0);
@@ -340,6 +349,7 @@ storageRemoteNew(
         StorageRemote *driver = memNew(sizeof(StorageRemote));
         driver->memContext = MEM_CONTEXT_NEW();
         driver->client = client;
+        driver->compressLevel = compressLevel;
 
         uint64_t feature = 0;
 

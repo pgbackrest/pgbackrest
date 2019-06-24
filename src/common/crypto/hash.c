@@ -164,7 +164,7 @@ cryptoHashNew(const String *type)
         cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");
 
         // Create filter interface
-        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, .in = cryptoHashProcess, .result = cryptoHashResult);
+        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, NULL, .in = cryptoHashProcess, .result = cryptoHashResult);
     }
     MEM_CONTEXT_NEW_END();
 
