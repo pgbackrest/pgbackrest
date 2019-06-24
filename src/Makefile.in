@@ -34,10 +34,11 @@ LDLIBRARY = @LIBS@
 LDMAKE = $(LDLIBRARY)
 
 ####################################################################################################################################
-# Install options
+# Directory options
 ####################################################################################################################################
-# Modify destination install directory
-DESTDIR = /usr/bin
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
 
 ####################################################################################################################################
 # List of required source files.  main.c should always be listed last and the rest in alpha order.
@@ -171,14 +172,14 @@ pgbackrest: $(OBJS)
 # Installation.  DESTDIR can be used to modify the install location.
 ####################################################################################################################################
 install: pgbackrest
-	install -d $(DESTDIR)
-	install -m 755 pgbackrest $(DESTDIR)
+	install -d $(DESTDIR)$(bindir)
+	install -m 755 pgbackrest $(DESTDIR)$(bindir)
 
 ####################################################################################################################################
 # Uninstallation.  DESTDIR should be set to the same value as when installed.
 ####################################################################################################################################
 uninstall:
-	rm -f $(DESTDIR)/pgbackrest
+	rm -f $(DESTDIR)$(bindir)/pgbackrest
 
 ####################################################################################################################################
 # Clean object files and executable created by make

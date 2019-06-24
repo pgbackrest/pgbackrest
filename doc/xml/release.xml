@@ -48,6 +48,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="daniel.westermann"/>
+                        </release-item-contributor-list>
+
+                        <p>Honor <proper>configure</proper> <setting>--prefix</setting> option.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Rename <br-option>repo-s3-verify-ssl</br-option> option to <br-option>repo-s3-verify-tls</br-option>.</p>
 
                         <p>The new name is preferred because pgBackRest does not support any SSL protocol versions (they are all considered to be insecure).  The old name will continue to be accepted.</p>
@@ -7158,6 +7166,11 @@
         <contributor id="dan.farrell">
             <contributor-name-display>Dan Farrell</contributor-name-display>
             <contributor-id type="github">farrellit</contributor-id>
+        </contributor>
+
+        <contributor id="daniel.westermann">
+            <contributor-name-display>Daniel Westermann</contributor-name-display>
+            <contributor-id type="github">danielwestermann</contributor-id>
         </contributor>
 
         <contributor id="david.youatt">
