@@ -330,8 +330,27 @@ removeExpiredArchive(InfoBackup *infoBackup)
                     strLstAdd(globalBackupArchiveRetentionList, strLstGet(globalBackupRetentionList, idx));
                 }
 
+                // From newest to oldest, confirm the pgVersion and pgSystemId from the archive.info history id match that of the
+                // same history id of the backup.info and if not, there is a mismatch between the info files so do not continue.
+                // NOTE: If the archive.info file was reconstructed and contains history 4: version 10, sys-id 456 and history 3:
+                // version 9.6, sys-id 123, but backup.info contains history 4 and 3 (identical to archive.info) but also 2 and 1
+                // then an error will not be thrown since only archive 4 and 3 would have existed and the others expired so
+                // nothing really to do.
+                for (unsigned int infoPgIdx = 0; infoPgIdx < infoPgDataTotal(infoArchivePgData); infoPgIdx++)
+                {
+                    InfoPgData archiveInfoPgHistory = infoPgData(infoArchivePgData, infoPgIdx);
+                    InfoPgData backupInfoPgHistory = infoPgData(infoBackupPg(infoBackup), infoPgIdx);
+
+                    if (archiveInfoPgHistory.id != backupInfoPgHistory.id ||
+                        archiveInfoPgHistory.systemId != backupInfoPgHistory.systemId ||
+                        archiveInfoPgHistory.version != backupInfoPgHistory.version)
+                    {
+                        THROW(FormatError, "archive expiration cannot continue - archive and backup history lists do not match");
+                    }
+                }
+
                 // Loop through the archive.info history from oldest to newest and if there is a corresponding directory on disk
-                // then remove WAL that are not part of retention
+                // then remove WAL that are not part of retention as long as the db:history id verion/system-id matches backup.info
                 for (unsigned int pgIdx = infoPgDataTotal(infoArchivePgData) - 1; (int)pgIdx >= 0; pgIdx--)
                 {
                     String *archiveId = infoPgArchiveId(infoArchivePgData, pgIdx);
@@ -342,7 +361,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                     for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(listArchiveDisk); archiveIdx++)
                     {
-                        // Is there an archive directory for this archvieId?
+                        // Is there an archive directory for this archvieId? If not, move on to the next.
                         if (strCmp(archiveId, strLstGet(listArchiveDisk, archiveIdx)) != 0)
                             continue;
 
