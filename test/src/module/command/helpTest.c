@@ -183,8 +183,9 @@ testRun(void)
             "Repository Options:\n"
             "\n"
             "  --repo-cipher-pass               repository cipher passphrase\n"
+            "                                   [current=<redacted>]\n"
             "  --repo-cipher-type               cipher used to encrypt the repository\n"
-            "                                   [default=none]\n"
+            "                                   [current=aes-256-cbc, default=none]\n"
             "  --repo-host                      repository host when operating remotely via\n"
             "                                   SSH [current=backup.example.net]\n"
             "  --repo-host-cmd                  pgBackRest exe path on the repository host\n"
@@ -224,12 +225,15 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "restore");
         strLstAddZ(argList, "--buffer-size=32768");
+        strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
+        setenv("PGBACKREST_REPO1_CIPHER_PASS", "supersecret", true);
         strLstAddZ(argList, "--repo1-host=backup.example.net");
         strLstAddZ(argList, "--link-map=/link1=/dest1");
         strLstAddZ(argList, "--link-map=/link2=/dest2");
         strLstAddZ(argList, "--db-include=db1");
         strLstAddZ(argList, "--db-include=db2");
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "help for restore command");
+        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
         TEST_RESULT_STR(strPtr(helpRender()), commandHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -307,6 +311,29 @@ testRun(void)
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR(
             strPtr(helpRender()), strPtr(strNewFmt("%s\ncurrent: s3-host\n", optionHelp)), "    check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        optionHelp = strPtr(strNewFmt(
+            "%s - 'archive-push' command - 'repo-cipher-pass' option help\n"
+            "\n"
+            "Repository cipher passphrase.\n"
+            "\n"
+            "Passphrase used to encrypt/decrypt files of the repository.\n"
+            "\n"
+            "current: <redacted>\n",
+            helpVersion));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
+        setenv("PGBACKREST_REPO1_CIPHER_PASS", "supersecret", true);
+        strLstAddZ(argList, "archive-push");
+        strLstAddZ(argList, "repo-cipher-pass");
+        TEST_RESULT_VOID(
+            configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, repo1-s3-host option");
+        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
+        TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strPtr(strNewFmt(
