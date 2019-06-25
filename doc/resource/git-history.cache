@@ -1,5 +1,446 @@
 [
     {
+        "commit": "51fcaee43edf022aea0f94b76d254f2de8b6e1d1",
+        "date": "2019-06-25 07:58:38 -0400",
+        "subject": "Add host-repo-path variable internal replacement.",
+        "body": "This variable needs to be replaced right before being used without being added to the cache since the host repo path will vary from system to system.\n\nThis is frankly a bit of a hack to get the documentation to build in the Debian packages for the upcoming release.  We'll need to come up with something more flexible going forward."
+    },
+    {
+        "commit": "5cbe2dee855577ccd14051cad35f30376db21d50",
+        "date": "2019-06-25 07:36:16 -0400",
+        "subject": "Add compress-level-network option to ls command.",
+        "body": "039e515a added a dependency on compress-level-network but the ls command did not get updated."
+    },
+    {
+        "commit": "d7f12f268a370e388c6a6375666831ecd8fad72c",
+        "date": "2019-06-24 19:27:13 -0400",
+        "subject": "Redact secure options in the help command.",
+        "body": "Secure options could show up in the help as \"current\".  While the user must have permissions to see the source of the options (e.g. environment, config file) it's still not a good idea to display them in an unexpected context.\n\nInstead show secure options as <redacted> in the help command."
+    },
+    {
+        "commit": "c22e10e4a938b444ac7912efc3b751829401360f",
+        "date": "2019-06-24 15:42:33 -0400",
+        "subject": "Honor configure --prefix option.",
+        "body": "The --prefix option was entirely ignored and DESTDIR was a combination of DESTDIR and bindir.\n\nBring both in line with recommendations for autoconf and make as specified in https://www.gnu.org/software/make/manual/html_node/Directory-Variables.html and https://www.gnu.org/prep/standards/html_node/DESTDIR.html.\n\nSuggested by Daniel Westermann."
+    },
+    {
+        "commit": "b498188f01f8d2ccd4d0ce2cce3af2e5069d9ac3",
+        "date": "2019-06-24 11:59:44 -0400",
+        "subject": "Error on db history mismatch when expiring.",
+        "body": "Amend commit 434cd832 to error when the db history in archive.info and backup.info do not match.\n\nThe Perl code would attempt to reconcile the history by matching on system id and version but we are not planning to migrate that code to C.  It's possible that there are users with mismatches but if so they should have been getting errors from info for the last six months.  It's easy enough to manually fix these files if there are any mismatches in the field.\n\nContributed by Cynthia Shang."
+    },
+    {
+        "commit": "039e515a319216035187c89efccf97143d4cac03",
+        "date": "2019-06-24 10:20:47 -0400",
+        "subject": "Allow protocol compression when read/writing remote files.",
+        "body": "If the file is compressible (i.e. not encrypted or already compressed) it can be marked as such in storageNewRead()/storageNewWrite().  If the file is being read from/written to a remote it will be compressed in transit using gzip.\n\nSimplify filter group handling by having the IoRead/IoWrite objects create the filter group automatically.  This removes the need for a lot of NULL checking and has a negligible effect on performance since a filter group needs to be created eventually unless the source file is missing.\n\nAllow filters to be created using a VariantList so filter parameters can be passed to the remote."
+    },
+    {
+        "commit": "62715ebf2d8b0585c35cd2ee14d6aabf9cc0f1f8",
+        "date": "2019-06-19 17:49:38 -0400",
+        "subject": "Fix archive retention expiring too aggressively.",
+        "body": "The problem expressed when repo1-archive-retention-type was set to diff.  In this case repo1-archive-retention ended up being effectively equal to one, which meant PITR recovery was only possible from the last backup.  WAL required for consistency was still preserved for all backups.\n\nThis issue is not present in the C migration committed at 434cd832, which was written before this bug was reported.  Even so, we wanted to note this issue in the release notes in case any other users have been affected.\n\nFixed by Cynthia Shang.\nReported by Mohamad El-Rifai."
+    },
+    {
+        "commit": "a7d64bab7abe56132ad1c83eb6bfcca1166e0000",
+        "date": "2019-06-18 19:02:09 -0400",
+        "subject": "Add FAQ on where to find old Debian/Ubuntu packages."
+    },
+    {
+        "commit": "e2d791394a3577aac53a21e3141e4e337ac8edf0",
+        "date": "2019-06-18 18:42:47 -0400",
+        "subject": "Add FAQ to the documentation.",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "434cd832855e4e189403962753fd8771e29880a4",
+        "date": "2019-06-18 15:19:20 -0400",
+        "subject": "The expire command is implemented entirely in C.",
+        "body": "This implementation duplicates the functionality of the Perl code but does so with different logic and includes full unit tests.\n\nAlong the way at least one bug was fixed, see issue #748.\n\nContributed by Cynthia Shang."
+    },
+    {
+        "commit": "f88bee7b3321a2c79f0317913ba1e83a56d19c7d",
+        "date": "2019-06-18 10:13:28 -0400",
+        "subject": "TLS/HTTP statistics log replacements.",
+        "body": "These statistics can change with any code update so they cause a lot of churn in the expect logs."
+    },
+    {
+        "commit": "0efdf2576f02b1768fb8805b27571e403ac3cb52",
+        "date": "2019-06-18 07:35:34 -0400",
+        "subject": "Remove hard-coded PostgreSQL user so $PGUSER works.",
+        "body": "The PostgreSQL user was hard-coded to the OS user which libpq will automatically use if $PGUSER is not set, so this code was redundant and prevented $PGUSER from working when set.\n\nSuggested by Julian Zhang, Janis Puris."
+    },
+    {
+        "commit": "593446718a8997bfd674cf5e54230290cb5bcdea",
+        "date": "2019-06-18 06:45:47 -0400",
+        "subject": "Add S3 info type missed in 7f2f5354.",
+        "body": "File is the only type possible in S3."
+    },
+    {
+        "commit": "0a96a2895d7a1e4c5eec402d3742f1d1e25cc126",
+        "date": "2019-06-17 09:16:44 -0400",
+        "subject": "Add storage layer for tests and documentation.",
+        "body": "The tests and documentation have been using the core storage layer but soon that will depend entirely on the C library, creating a bootstrap problem (i.e. the storage layer will be needed to build the C library).\n\nCreate a simplified Posix storage layer to be used by documentation and the parts of the test code that build and execute the actual tests.  The actual tests will still use the core storage driver so they can interact with any type of storage."
+    },
+    {
+        "commit": "ceafd8e19d416106f50c4ff440bf1cf7fcb5553f",
+        "date": "2019-06-17 07:52:03 -0400",
+        "subject": "Migrate page checksum filter to C.",
+        "body": "This filter exactly mimics the behavior of the Perl filter so is a drop-in replacement.\n\nThe filter is not integrated yet since it requires the Perl-to-C storage layer interface coming in a future commit."
+    },
+    {
+        "commit": "892f35a7283462fae0bc3077aeb23c9624a50dea",
+        "date": "2019-06-17 07:42:12 -0400",
+        "subject": "Add new types to JSON render.",
+        "body": "Still not a complete list, but we are getting there."
+    },
+    {
+        "commit": "c64c9c05905d435cd650195ed9470355a4d2be2f",
+        "date": "2019-06-17 06:59:06 -0400",
+        "subject": "Add backup management functions to InfoBackup.",
+        "body": "Allow current backups to be listed and deleted.\n\nAlso expose some constants required by expire and stanza-* commands.\n\nContributed by Cynthia Shang."
+    },
+    {
+        "commit": "44bafc127d9d4e38478aa44d0adc0f34695c6640",
+        "date": "2019-06-17 06:47:15 -0400",
+        "subject": "Rename info*New() functions to info*NewLoad().",
+        "body": "These names more accurately reflect what the functions do and follow the convention started in Info and InfoPg.\n\nAlso remove the ignoreMissing parameter since it was never used.\n\nContributed by Cynthia Shang."
+    },
+    {
+        "commit": "f05fbc54a8f00a56937439fb88eafe8e239781e8",
+        "date": "2019-06-14 08:04:28 -0400",
+        "subject": "Fix filters not processing when there is no input.",
+        "body": "Some filters (e.g. encryption and compression) produce output even if there is no input.  Since the filter group was marked as \"done\" initially, processing would not run when there was zero input and that resulted in zero output.\n\nAll filters start not done so start the filter group the same way."
+    },
+    {
+        "commit": "9ba95e993ba3dbf73f8967a875608980e6380633",
+        "date": "2019-06-13 17:58:33 -0400",
+        "subject": "Use retries to wait for test S3 server to start.",
+        "body": "The prior method of tailing the docker log no longer seems reliable.  Instead, keep retrying the make bucket command until it works and show the error if it times out."
+    },
+    {
+        "commit": "b9233f7412e44c8daf41db05bd9699fa088ece5d",
+        "date": "2019-06-13 12:44:40 -0400",
+        "subject": "Create filter group in read/write object's memory context.",
+        "body": "The filter group was being created in the parent context so it would go away if the parent context was freed."
+    },
+    {
+        "commit": "20be5c9bf39d606b8586ffcf575a7443c6375479",
+        "date": "2019-06-13 12:35:13 -0400",
+        "subject": "Remove extra spaces."
+    },
+    {
+        "commit": "fdd375b63d3962845efbb38a7020d852143b97fd",
+        "date": "2019-06-11 16:26:32 -0400",
+        "subject": "Integrate S3 storage driver with HTTP client cache.",
+        "body": "This allows copying from one S3 object to another.  We generally try to avoid doing this but there are a few cases where it is needed and the tests do it quite a bit.\n\nOne thing to look out for here is that reads require the http client to be explicitly released by calling httpClientDone().  This means than clients could grow if they are not released properly.  The http statistics will hopefully alert us if this is happening."
+    },
+    {
+        "commit": "ced42d6511e9b5735a2281dd0e1faec41870fd37",
+        "date": "2019-06-11 10:48:22 -0400",
+        "subject": "Add HTTP client cache.",
+        "body": "This cache manages multiple http clients and returns one to the caller that is not busy.  It is the responsibility of the caller to indicate when they are done with a client. If returnContent is set then the client will automatically be marked done.\n\nAlso add special handing for HEAD requests to recognize that content-length is informational only and no content is expected."
+    },
+    {
+        "commit": "6e809e578fbd24269205de25cc6e9c84cefc5647",
+        "date": "2019-06-11 10:34:42 -0400",
+        "subject": "Add tag to specify minio version to use for documentation build.",
+        "body": "The new minio major release broke the build.  We'll need to figure that out but for now use the last major version, which is known to work."
+    },
+    {
+        "commit": "7f2f535460e3499c1811b5beca9130f84b78c982",
+        "date": "2019-06-10 16:09:38 -0400",
+        "subject": "Add info() and infoList() to S3 driver.",
+        "body": "These should be the last functions required to complete the implementation of the S3 driver."
+    },
+    {
+        "commit": "9d1b03781f9fe88b868cdfaf4808d84ad1f072fb",
+        "date": "2019-06-10 15:52:51 -0400",
+        "subject": "Revert removal of aws cli in 3e1b06ac.",
+        "body": "This is required for integration tests to create buckets."
+    },
+    {
+        "commit": "456391f67c220647e130fdc7a7fc805b075cfd87",
+        "date": "2019-06-10 12:23:04 -0400",
+        "subject": "Create general-purpose S3 list function.",
+        "body": "There are already two functions which need file lists and more on the way, so create a general-purpose function to reduce code duplication."
+    },
+    {
+        "commit": "fb8bd095ca93e2bf77eaec0f7573f961f691c3ab",
+        "date": "2019-06-10 10:37:20 -0400",
+        "subject": "Add missing const qualifiers."
+    },
+    {
+        "commit": "78b333790c69aca991f740a9ea6b1982fb70c3d6",
+        "date": "2019-06-07 10:35:44 -0400",
+        "subject": "Return IoRead/IoWrite from io*FilterGroupSet()",
+        "body": "This makes is possible to chain functions more effectively."
+    },
+    {
+        "commit": "e701e8fd846539ec20f2a9be90b0590ceb6a7be6",
+        "date": "2019-06-05 11:50:49 -0400",
+        "subject": "Expose storage type.",
+        "body": "Code calling the storage should be driver agnostic but knowing the storage type can be useful for debugging and error reporting."
+    },
+    {
+        "commit": "6ff3325c7744a8f6f0e1e965fa673040a2f40a71",
+        "date": "2019-06-05 11:43:17 -0400",
+        "subject": "Enforce requiring repo-cipher-pass at config parse time.",
+        "body": "This was not enforced at parse time because repo1-cipher-type could be passed on the command-line even in cases where encryption was not needed by the subprocess.\n\nFilter repo-cipher-type so it is never passed on the command line.  If the subprocess does not have access to the passphrase then knowing the encryption type is useless anyway."
+    },
+    {
+        "commit": "d7bd0c58cdd9a434aa5893db16e6bcf8425e26b9",
+        "date": "2019-06-05 07:27:24 -0400",
+        "subject": "Use wal_level=replica in the documentation for PostgreSQL >= 9.6.",
+        "body": "The documentation was using wal_level=hot_standby which is a deprecated setting.\n\nAlso remove the reference to wal_level=archive since it is no longer supported and is not recommended for older versions.\n\nSuggested by Patrick McLaughlin."
+    },
+    {
+        "commit": "aca11b2fa19337f934fc095e33f014d5e6df71f3",
+        "date": "2019-06-04 17:40:27 -0400",
+        "subject": "Add String to types supported by JSON list render.",
+        "body": "All types should be supported eventually but for now this answers the need."
+    },
+    {
+        "commit": "0ab6f3bb87005d5a5d102156730b1e3099894189",
+        "date": "2019-06-04 13:38:05 -0400",
+        "subject": "Fix incorrect error type on missing path."
+    },
+    {
+        "commit": "4b91259de8d7feec6d33d154032169aa32c879e3",
+        "date": "2019-06-04 12:56:04 -0400",
+        "subject": "Make working with filter groups less restrictive.",
+        "body": "Filter groups could not be manipulated once they had been assigned to an IO object.  Now they can be freely manipulated up to the time the IO object is opened.\n\nAlso, move the filter group into the IO object's context so they don't need to be tracked separately."
+    },
+    {
+        "commit": "92e04ea9f4e0eb3f6cd88a72497a026cbd348280",
+        "date": "2019-06-04 10:34:19 -0400",
+        "subject": "Remove per-stanza repo cache clear during testing.",
+        "body": "This was not being used and is not supported by the equivalent C code."
+    },
+    {
+        "commit": "44eb21ea935fdaa4e96d4637c7b62cb5a73d3e77",
+        "date": "2019-06-04 10:05:27 -0400",
+        "subject": "Use HEAD to check if a file exists on S3.",
+        "body": "The previous implementation searched for the file in a list which worked but was not optimal.  For arbitrary bucket structures it would also produce a false negative if a match was not found in the first 1000 entries.  This was not an issue for our repo structure since the max hits on exists calls is two but it seems worth fixing to avoid future complications."
+    },
+    {
+        "commit": "15b8e3b6af7327179d8bdd2e0c6833ed28005b0b",
+        "date": "2019-06-04 09:39:08 -0400",
+        "subject": "Make C S3 requests use the same host logic as Perl.",
+        "body": "The C code was passing the host (if specified) with the request which could force the server into path-style URLs, which are not supported.\n\nInstead, use the Perl logic of always passing bucket.endpoint in the request no matter what host is used for the HTTPS connection.\n\nIt's an open question whether we should support path-style URLs but since we don't it's useless to tell the server otherwise.  Note that Amazon S3 has deprecated path-style URLs and they are no longer supported on newly created buckets."
+    },
+    {
+        "commit": "5f92c36b30072edb71b12f79163c37c67d9806bc",
+        "date": "2019-06-04 08:04:33 -0400",
+        "subject": "Fix erroneous parameter name.",
+        "body": "The exists() function only checks for files so the parameter name should reflect that."
+    },
+    {
+        "commit": "0945d9666b5af1a5893ba0b4537e9cd1f72be478",
+        "date": "2019-06-01 11:09:01 -0400",
+        "subject": "Bring back PATH_PAX for platforms that don't define it.",
+        "body": "This define was replaced in 8c712d89 with limits.h but that caused an issue with the hurd-i386 build for Debian which apparently does not define this value."
+    },
+    {
+        "commit": "a207af79215d05539825c484dbfa9aa2a26cf7d0",
+        "date": "2019-06-01 09:44:40 -0400",
+        "subject": "Fix mismatched log/test macros."
+    },
+    {
+        "commit": "12bca3c43eb2ee0df80ef5e10850657b52fb680b",
+        "date": "2019-06-01 09:28:31 -0400",
+        "subject": "Add CPPFLAGS to compile rules.",
+        "body": "This should silence the last of the Debian package warnings."
+    },
+    {
+        "commit": "388ba0458c37ab4e8b82df0c0fa2b6a4d7462ecb",
+        "date": "2019-05-31 18:37:31 -0400",
+        "subject": "Fix build.flags being removed on each build.",
+        "body": "This was being removed by rsync which forced a full build even when a partial should have been fine.  Rewrite the file after the rsync so it is preserved."
+    },
+    {
+        "commit": "6cba50c3f23a7a7822ae0fd03ff3b5a3f6d8a32a",
+        "date": "2019-05-31 18:32:40 -0400",
+        "subject": "Remove Debian package patch merged to upstream."
+    },
+    {
+        "commit": "3a5fd7b28a79c1564ddd2b5bad36d4d4be358453",
+        "date": "2019-05-30 11:19:59 -0400",
+        "subject": "Fix typo in macro name."
+    },
+    {
+        "commit": "a2ec1253e97805e2a3b990d8bc23c98ab8013d09",
+        "date": "2019-05-30 10:44:35 -0400",
+        "subject": "Add code classification exclusion missed in 3e1b06ac."
+    },
+    {
+        "commit": "64260b2e9878944116dc78812a3a21633c5f3d15",
+        "date": "2019-05-29 08:38:45 -0400",
+        "subject": "Build all docs with S3 using --var=s3-all=y",
+        "body": "Force repo-type=s3 for all tests.  This is not currently the default for any OS builds."
+    },
+    {
+        "commit": "404284b90ff0f67fe29fa5a7b2831ebf51d459aa",
+        "date": "2019-05-28 12:18:05 -0400",
+        "subject": "Add internal flag for commands.",
+        "body": "Allow commands to be skipped by default in the command help but still work if help is requested for the command directly.  There may be other uses for the flag in the future.\n\nUpdate help for ls now that it is exposed."
+    },
+    {
+        "commit": "20e5b92f366848ec1464e2272c6af2c29ac7b36d",
+        "date": "2019-05-28 10:03:48 -0400",
+        "subject": "Add ls command.",
+        "body": "Allows listing repo paths/files from the command-line, to be used primarily for testing and debugging.\n\nThis command is internal-only so the interface may change at any time without notice."
+    },
+    {
+        "commit": "3b3327eae6dd14f67f1002f094bd33ab7785f765",
+        "date": "2019-05-28 09:50:59 -0400",
+        "subject": "Move tls/http statistics output to command/command.",
+        "body": "This module already has the filtering required to keep these messages from being displayed by default for commands that output to stdout (e.g. info)."
+    },
+    {
+        "commit": "3e1b06acaa84399abcfaa8c684f437b63aa38de5",
+        "date": "2019-05-27 07:37:20 -0400",
+        "subject": "Use minio as local S3 emulator in documentation.",
+        "body": "The documentation was relying on a ScalityS3 container built for testing which wasn't very transparent.  Instead, use the stock minio container and configure it in the documentation.\n\nAlso, install certificates and CA so that TLS verification can be enabled."
+    },
+    {
+        "commit": "a474ba54c5c9c7bdba6ffa3e92671bb9565889f6",
+        "date": "2019-05-26 12:41:15 -0400",
+        "subject": "Refactoring path support in the storage module.",
+        "body": "Not all storage types support paths as a physical thing that must be created/destroyed.  Add a feature to determine which drivers use paths and simplify the driver API as much as possible given that knowledge and by implementing as much path logic as possible in the Storage object.\n\nRemove the ignoreMissing parameter from pathSync() since it is not used and makes little sense.\n\nCreate a standard list of error messages for the drivers to use and apply them where the code was modified -- there is plenty of work still to be done here."
+    },
+    {
+        "commit": "38f28bd52081405321939fec66046bd9ada35c23",
+        "date": "2019-05-26 12:32:49 -0400",
+        "subject": "Log TLS and HTTP statistics on exit.",
+        "body": "These stats measure how efficiently TLS and HTTP are reusing connections (i.e. pipelining)."
+    },
+    {
+        "commit": "819eda0818669ea9cc45bcd65c57e3b4c7d29129",
+        "date": "2019-05-26 12:29:29 -0400",
+        "subject": "Set log level of protocol processing functions to debug.",
+        "body": "Setting these to trace effectively made debug level useless in local/remote processes since all debug messages were demoted to trace when called from these functions."
+    },
+    {
+        "commit": "d12d94c53c466eb808459b98669a877c19b5716b",
+        "date": "2019-05-24 18:09:16 -0400",
+        "subject": "Make info(), pathCreate() and pathSync() optional for storage drivers.",
+        "body": "These functions are not required for repository storage so make them optional and error if they are not implemented for non-repository storage, .e.g. pg or spool.\n\nThe goal is to simplify the drivers (e.g. S3) that are intended only for repository storage."
+    },
+    {
+        "commit": "39645fc1a99540063399a7a3b86177a330bd743c",
+        "date": "2019-05-24 14:33:47 -0400",
+        "subject": "Add pathRemove() and remove() to S3 storage.",
+        "body": "These functions will be needed for the expire command."
+    },
+    {
+        "commit": "6c385dfa7a7f489159c06c5a31fd3cd7c77c39a8",
+        "date": "2019-05-24 13:56:38 -0400",
+        "subject": "Add function to determine if HTTP response code is OK.",
+        "body": "OK responses are a range rather than a single value, so simplify the check with a function."
+    },
+    {
+        "commit": "96770c529be4df408b9d1fc39fc5157e90555375",
+        "date": "2019-05-24 13:12:56 -0400",
+        "subject": "storageList() returns an empty list by default for missing paths.",
+        "body": "The prior behavior was to return NULL so the caller would know the path was missing, but this is rarely useful, complicates the calling code, and increases the chance of segfaults.\n\nThe .nullOnMissing param has been added to enable the prior behavior."
+    },
+    {
+        "commit": "707e4a29f04a733cff868f37b90f8bf83a02394c",
+        "date": "2019-05-24 11:09:43 -0400",
+        "subject": "Notify compiler that cryptoErrorCode() does not return."
+    },
+    {
+        "commit": "01f3024b5c0a83819d58ee6ccc2edb5109277aaa",
+        "date": "2019-05-24 11:06:11 -0400",
+        "subject": "Add missing const qualifier."
+    },
+    {
+        "commit": "39cb6248314e21530924886e6e669ac395daeeb1",
+        "date": "2019-05-24 07:45:03 -0400",
+        "subject": "Add missing menus to the new user guides.",
+        "body": "Since the CentOS 6/7 user guides were generated as a single page they did not get menus.  Generate the entire site for each user guide so menus are included."
+    },
+    {
+        "commit": "04f8b4ea52f89d1542b25d2fb0ba28a43ddaba6d",
+        "date": "2019-05-24 07:41:55 -0400",
+        "subject": "Use git url for website clone."
+    },
+    {
+        "commit": "ec9622cde883c649c1346cbc0b9057e7f3fcb787",
+        "date": "2019-05-22 18:54:49 -0400",
+        "subject": "Use the git log to ease release note management.",
+        "body": "The release notes are generally a direct reflection of the git log.  So, ease the burden of maintaining the release notes by using the git log to determine what needs to be added.\n\nCurrently only non-dev items are required to be matched to a git commit but the goal is to account for all commits.\n\nThe git history cache is generated from the git log but can be modified to correct typos and match the release notes as they evolve.  The commit hash is used to identify commits that have already been added to the cache.\n\nThere's plenty more to do here.  For instance, links to the commits for each release item should be added to the release notes."
+    },
+    {
+        "commit": "86482c7db943375d48fcee0e243ca96bdf50d35c",
+        "date": "2019-05-22 18:23:44 -0400",
+        "subject": "Reduce log level for all expect tests to detail.",
+        "body": "The C code is designed to be efficient rather than deterministic at the debug log level.  As we move more testing from integration to unit tests it makes less sense to try and maintain the expect logs at this log level.\n\nMost of the expect logs have already been moved to detail level but mock/all still had tests at debug level.  Change the logging defaults in the config file and remove as many references to log-level-console as possible."
+    },
+    {
+        "commit": "e4cc008b982d47ac526962e310c18626e2aefbc2",
+        "date": "2019-05-22 11:31:38 -0400",
+        "subject": "Remove duplicated hint.",
+        "body": "At some point this hint got added to the underlying code so it is no longer needed here."
+    },
+    {
+        "commit": "ff9c1bed5de380a6e7df1cbc6870b972d93b3dc4",
+        "date": "2019-05-22 11:24:18 -0400",
+        "subject": "Save cipher-pass key/value missed in f492f057.",
+        "body": "This value is required when encryption is enabled.\n\nIn passing simplify the expression used to skip the checksum when calculating the checksum."
+    },
+    {
+        "commit": "3da60f4b5ee8ed663fc5e8d8968709dbaadee1f6",
+        "date": "2019-05-22 11:10:43 -0400",
+        "subject": "Don't escape / when rendering JSON.",
+        "body": "/ is escaped in the spec but the Perl renderer we use does not escape it which leads to checksum mismatches between the two sets of code.\n\nThis particular escape seems to be a more recent addition to the spec and is targeted toward embedding JSON in JavaScript.\n\n\\/ is still allowed when parsing JSON."
+    },
+    {
+        "commit": "664054fea94186374dcae84e31e0cd7329c279d0",
+        "date": "2019-05-22 06:55:31 -0400",
+        "subject": "Remove RHEL package patch merged to upstream."
+    },
+    {
+        "commit": "e1cce9c6147446c026f528cc4afe518de0bcb87f",
+        "date": "2019-05-21 14:07:35 -0400",
+        "subject": "Remove extraneous parens."
+    },
+    {
+        "commit": "936b8a289c4884dd22f7ff0d3d624d6e70980512",
+        "date": "2019-05-21 10:37:30 -0400",
+        "subject": "Allow separate paragraphs in release items.",
+        "body": "The first paragraph should match the first line of the commit message as closely as possible.  The following paragraphs add more information.\n\nRelease items have been updated back to 2.01."
+    },
+    {
+        "commit": "e3fe3434b4428398ffbee5359f0e0cdec8e55bcb",
+        "date": "2019-05-21 10:14:41 -0400",
+        "subject": "Rename repo-s3-verify-ssl option to repo-s3-verify-tls.",
+        "body": "The new name is preferred because pgBackRest does not support any SSL protocol versions (they are all considered to be insecure).\n\nThe old name will continue to be accepted."
+    },
+    {
+        "commit": "1bc84c647490d6cf78975b5dde5b1937016d24c6",
+        "date": "2019-05-20 17:07:37 -0400",
+        "subject": "The local command for restore is implemented entirely in C.",
+        "body": "This is just the part of restore run by the local helper processes, not the entire command.\n\nEven so, various optimizations in the code (like pipelining and optimizations for zero-length files) should make the restore command faster on object stores."
+    },
+    {
+        "commit": "a839830333490555800377ea095d756765f476e4",
+        "date": "2019-05-20 16:19:14 -0400",
+        "subject": "Add most unimplemented functions to the remote storage driver.",
+        "body": "Add pathCreate(), pathRemove(), pathSync(), and remove() to the driver.\n\nContributed by Cynthia Shang."
+    },
+    {
+        "commit": "bbf2e0d5b0876d3663cc69d10925c6e0d08cd729",
+        "date": "2019-05-20 12:24:43 -0400",
+        "subject": "Remove extra linefeed."
+    },
+    {
+        "commit": "a9f589b87a09bd37ad903b5c37bcd3000d47840d",
+        "date": "2019-05-20 12:23:40 -0400",
+        "subject": "Begin v2.15 development."
+    },
+    {
         "commit": "0f685a33a02adde45792711b957a75391fc5f34e",
         "date": "2019-05-20 11:51:58 -0400",
         "subject": "v2.14: Bug Fix and Improvements"

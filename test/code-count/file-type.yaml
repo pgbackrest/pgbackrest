@@ -135,6 +135,10 @@ doc/xml/dtd/manifest.dtd:
   class: doc/source
   type: dtd
 
+doc/xml/faq.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/index.xml:
   class: doc/source
   type: xml
@@ -272,10 +276,6 @@ lib/pgBackRest/Db.pm:
   type: perl
 
 lib/pgBackRest/DbVersion.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Expire.pm:
   class: core
   type: perl
 
@@ -571,6 +571,14 @@ src/command/backup/common.h:
   class: core
   type: c/h
 
+src/command/backup/pageChecksum.c:
+  class: core
+  type: c
+
+src/command/backup/pageChecksum.h:
+  class: core
+  type: c/h
+
 src/command/command.c:
   class: core
   type: c
@@ -584,6 +592,14 @@ src/command/control/control.c:
   type: c
 
 src/command/control/control.h:
+  class: core
+  type: c/h
+
+src/command/expire/expire.c:
+  class: core
+  type: c
+
+src/command/expire/expire.h:
   class: core
   type: c/h
 
@@ -616,6 +632,30 @@ src/command/remote/remote.c:
   type: c
 
 src/command/remote/remote.h:
+  class: core
+  type: c/h
+
+src/command/restore/file.c:
+  class: core
+  type: c
+
+src/command/restore/file.h:
+  class: core
+  type: c/h
+
+src/command/restore/protocol.c:
+  class: core
+  type: c
+
+src/command/restore/protocol.h:
+  class: core
+  type: c/h
+
+src/command/storage/list.c:
+  class: core
+  type: c
+
+src/command/storage/list.h:
   class: core
   type: c/h
 
@@ -808,6 +848,14 @@ src/common/io/handleWrite.c:
   type: c
 
 src/common/io/handleWrite.h:
+  class: core
+  type: c/h
+
+src/common/io/http/cache.c:
+  class: core
+  type: c
+
+src/common/io/http/cache.h:
   class: core
   type: c/h
 
@@ -1319,14 +1367,6 @@ src/storage/info.h:
   class: core
   type: c/h
 
-src/storage/posix/common.c:
-  class: core
-  type: c
-
-src/storage/posix/common.h:
-  class: core
-  type: c/h
-
 src/storage/posix/read.c:
   class: core
   type: c
@@ -1520,6 +1560,22 @@ test/lib/pgBackRestTest/Common/LogTest.pm:
   type: perl
 
 test/lib/pgBackRestTest/Common/RunTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/Storage.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/StoragePosix.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/StoragePosixRead.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/StoragePosixWrite.pm:
   class: test/harness
   type: perl
 
@@ -1779,6 +1835,10 @@ test/src/module/command/controlTest.c:
   class: test/module
   type: c
 
+test/src/module/command/expireTest.c:
+  class: test/module
+  type: c
+
 test/src/module/command/helpTest.c:
   class: test/module
   type: c
@@ -1792,6 +1852,14 @@ test/src/module/command/localTest.c:
   type: c
 
 test/src/module/command/remoteTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/restoreTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/storageTest.c:
   class: test/module
   type: c
 
