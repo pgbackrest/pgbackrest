@@ -1,5 +1,10 @@
 [
     {
+        "commit": "6650d8144cba46f93ad75c11ad98d87c57d2ea7f",
+        "date": "2019-06-25 08:29:06 -0400",
+        "subject": "v2.15: C Implementation of Expire"
+    },
+    {
         "commit": "51fcaee43edf022aea0f94b76d254f2de8b6e1d1",
         "date": "2019-06-25 07:58:38 -0400",
         "subject": "Add host-repo-path variable internal replacement.",

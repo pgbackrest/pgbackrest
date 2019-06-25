@@ -128,10 +128,16 @@ use constant PROJECT_VERSION                                        => '2.14';
 to:
 ```
 use constant PROJECT_VERSION                                        => '2.15dev';
-
-Build to generate files:
 ```
-test/test.pl --no-lint --vm=u18 --no-package --build-only
+
+Run deploy to generate git history (ctrl-c as soon as the file is generated):
+```
+doc/release.pl --deploy
+```
+
+Build to generate files and test documentation:
+```
+test/test.pl --no-lint --vm=u18 --build-only
 ```
 
 Commit and push to integration:
