@@ -1036,6 +1036,7 @@ sub processText
     {
         $strBuffer =~ s/\&mdash\;/--/g;
         $strBuffer =~ s/\&lt\;/\</g;
+        $strBuffer =~ s/\&ge\;/\>\=/g;
     }
 
     $strBuffer = $self->variableReplace($strBuffer);

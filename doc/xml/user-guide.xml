@@ -45,13 +45,6 @@
         <variable key="user-guide-os" if="{[os-type-is-centos6]}">RHEL/CentOS 6</variable>
         <variable key="user-guide-os" if="{[os-type-is-centos7]}">RHEL/CentOS 7</variable>
 
-        <variable key="pgbackrest-host-repo-path" eval="y">
-            use File::Basename qw(dirname);
-            use Cwd qw(abs_path);
-
-            dirname(dirname(abs_path($0)));
-        </variable>
-
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
         <!-- Path where CA certificates are installed -->
@@ -60,7 +53,7 @@
 
         <!-- Path where fake certificates are located -->
         <variable key="fake-cert-path-relative">resource/fake-cert</variable>
-        <variable key="fake-cert-path">{[pgbackrest-host-repo-path]}/doc/{[fake-cert-path-relative]}</variable>
+        <variable key="fake-cert-path">{[host-repo-path]}/doc/{[fake-cert-path-relative]}</variable>
 
         <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
         <variable key="pg-version" if="{[os-type-is-centos6]}">{[os-centos6-pg-version]}</variable>
@@ -156,7 +149,7 @@
         <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /tmp/$(mktemp -d):/run</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
-        <variable key="host-mount">{[pgbackrest-host-repo-path]}:{[pgbackrest-repo-path]}</variable>
+        <variable key="host-mount">{[host-repo-path]}:{[pgbackrest-repo-path]}</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
         <variable key="host-s3-id">s3</variable>
