@@ -192,8 +192,8 @@ infoPgSave(
         iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_SYSTEM_ID_VAR), jsonFromUInt64(pgData.systemId));
         iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_VERSION_VAR), jsonFromStr(pgVersionToStr(pgData.version)));
 
-        // Set the db history section
-        for (unsigned int pgDataIdx = 0; pgDataIdx < infoPgDataTotal(this); pgDataIdx++)
+        // Set the db history section in reverse so oldest history is first instead of last to be consistent with load
+        for (unsigned int pgDataIdx = infoPgDataTotal(this) - 1; (int)pgDataIdx >= 0; pgDataIdx--)
         {
             InfoPgData pgData = infoPgData(this, pgDataIdx);
 
