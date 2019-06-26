@@ -22,6 +22,14 @@
 
                         <p>Add Perl interface to C storage layer.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Reverse loop in infoPgSave for consistency and readability with infoPgNewLoad.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>

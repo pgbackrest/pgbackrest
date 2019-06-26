@@ -10,7 +10,7 @@ void
 testRun(void)
 {
     // *****************************************************************************************************************************
-    if (testBegin("infoPgNewLoad(), infoPgFree(), infoPgDataCurrent(), infoPgDataToLog(), infoPgAdd(), infoPgIni()"))
+    if (testBegin("infoPgNewLoad(), infoPgFree(), infoPgDataCurrent(), infoPgDataToLog(), infoPgAdd(), infoPgIni(), inforPgSave()"))
     {
         String *content = NULL;
         String *fileName = strNewFmt("%s/test.ini", testPath());
@@ -108,12 +108,12 @@ testRun(void)
 
         // Save the file and verify it
         ini = iniNew();
-        TEST_RESULT_VOID(infoPgSave(infoPg, ini, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "save file");
+        TEST_RESULT_VOID(infoPgSave(infoPg, ini, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "infoPgSave");
         TEST_RESULT_BOOL(
             bufEq(
                 storageGetNP(storageNewReadNP(storageLocal(), fileName)),
                 storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
-            true, "files are equal");
+            true, "    saved files are equal");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 2, "history record added");
 
