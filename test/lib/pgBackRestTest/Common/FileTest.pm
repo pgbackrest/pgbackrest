@@ -27,8 +27,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
-use pgBackRest::Storage::Local;
-use pgBackRest::Storage::S3::Driver;
+use pgBackRest::Storage::Base;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -168,7 +167,7 @@ sub forceStorageMode
         );
 
     # Mode commands are ignored on S3
-    if ($oStorage->driver()->className() ne STORAGE_S3_DRIVER)
+    if ($oStorage->type() ne STORAGE_S3)
     {
         executeTest('sudo chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
     }
@@ -203,7 +202,7 @@ sub forceStorageMove
         );
 
     # If S3 then use storage commands to remove
-    if ($oStorage->driver()->className() eq STORAGE_S3_DRIVER)
+    if ($oStorage->type() eq STORAGE_S3)
     {
         hostGroupGet()->hostGet(HOST_S3)->executeS3(
             'mv' . ($bRecurse ? ' --recursive' : '') . ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strSourcePathExp) .
@@ -244,8 +243,8 @@ sub forceStorageOwner
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    # Mode commands are ignored on S3
-    if ($oStorage->driver()->className() ne STORAGE_S3_DRIVER)
+    # Owner commands are ignored on S3
+    if ($oStorage->type() ne STORAGE_S3)
     {
         executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
     }
@@ -278,11 +277,19 @@ sub forceStorageRemove
         );
 
     # If S3 then use storage commands to remove
-    if ($oStorage->driver()->className() eq STORAGE_S3_DRIVER)
+    if ($oStorage->type() eq STORAGE_S3)
     {
-        $oStorage->remove($strPathExp, {bRecurse => $bRecurse});
+        my $oInfo = $oStorage->info($strPathExp, {bIgnoreMissing => true});
+
+        if (defined($oInfo) && $oInfo->{type} eq 'f')
+        {
+            $oStorage->remove($strPathExp);
+        }
+        else
+        {
+            $oStorage->pathRemove($strPathExp, {bRecurse => true});
+        }
     }
-    # Else remove using filesystem commands
     else
     {
         executeTest('sudo rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));

@@ -994,8 +994,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [055]: unable to stat '[TEST_PATH]/db-master/db/base_tbs': No such file or directory
-P00   INFO: backup command end: aborted with exception [055]
+P00  ERROR: [073]: unable to list file info for missing path '[TEST_PATH]/db-master/db/base_tbs'
+P00   INFO: backup command end: aborted with exception [073]
 
 incr backup - invalid tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup

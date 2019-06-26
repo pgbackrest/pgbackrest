@@ -878,7 +878,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, '$PGDATA is a substring of valid tblspc excluding / (file missing err expected)',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_MISSING});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_MISSING});
 
             testFileRemove("${strTblSpcPath}/99999");
         }

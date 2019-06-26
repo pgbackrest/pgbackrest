@@ -90,7 +90,8 @@ restoreFile(
                             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
 
                             Buffer *buffer = bufNew(ioBufferSize());
-                            ioReadOpen(read);
+
+                            CHECK(ioReadOpen(read));
 
                             do
                             {

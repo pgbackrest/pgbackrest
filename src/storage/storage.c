@@ -28,7 +28,7 @@ struct Storage
     mode_t modeFile;
     mode_t modePath;
     bool write;
-    bool pathResolve;
+    bool pathEnforce;
     StoragePathExpressionCallback pathExpressionFunction;
 };
 
@@ -73,6 +73,7 @@ storageNew(
     this->path = strDup(path);
     this->modeFile = modeFile;
     this->modePath = modePath;
+    this->pathEnforce = true;
     this->write = write;
     this->pathExpressionFunction = pathExpressionFunction;
 
@@ -493,8 +494,8 @@ storagePath(const Storage *this, const String *pathExp)
             // Make sure the base storage path is contained within the path expression
             if (this->path != NULL && !strEqZ(this->path, "/"))
             {
-                if (!strBeginsWith(pathExp, this->path) ||
-                    !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/'))
+                if (this->pathEnforce && (!strBeginsWith(pathExp, this->path) ||
+                    !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/')))
                 {
                     THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(this->path));
                 }
@@ -585,10 +586,6 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
     ASSERT(this != NULL);
     ASSERT(this->interface.pathCreate != NULL && storageFeature(this, storageFeaturePath));
     ASSERT(this->write);
-
-    // It doesn't make sense to combine these parameters because if we are creating missing parent paths why error when they exist?
-    // If this somehow wasn't caught in testing, the worst case is that the path would not be created and an error would be thrown.
-    ASSERT(!(param.noParentCreate && param.errorOnExists));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -779,6 +776,22 @@ storageInterface(const Storage *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->interface);
+}
+
+/***********************************************************************************************************************************
+Set whether absolute paths are required to be in the base path
+***********************************************************************************************************************************/
+void
+storagePathEnforceSet(Storage *this, bool enforce)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE, this);
+        FUNCTION_TEST_PARAM(BOOL, enforce);
+    FUNCTION_TEST_END();
+
+    this->pathEnforce = enforce;
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

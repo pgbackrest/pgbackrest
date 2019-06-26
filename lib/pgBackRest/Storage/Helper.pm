@@ -13,15 +13,9 @@ use File::Basename qw(basename);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Storage::Posix::Driver;
-use pgBackRest::Storage::Local;
+use pgBackRest::Storage::Base;
+use pgBackRest::Storage::Storage;
 use pgBackRest::Version;
-
-####################################################################################################################################
-# Storage constants
-####################################################################################################################################
-use constant STORAGE_LOCAL                                          => '<LOCAL>';
-    push @EXPORT, qw(STORAGE_LOCAL);
 
 ####################################################################################################################################
 # Compression extension
@@ -36,11 +30,6 @@ use constant STORAGE_TEMP_EXT                                       => PROJECT_E
     push @EXPORT, qw(STORAGE_TEMP_EXT);
 
 ####################################################################################################################################
-# Cache storage so it can be retrieved quickly
-####################################################################################################################################
-my $hStorage;
-
-####################################################################################################################################
 # storageLocal - get local storage
 #
 # Local storage is generally read-only (except for locking) and can never reference a remote path.  Used for adhoc activities like
@@ -49,32 +38,13 @@ my $hStorage;
 sub storageLocal
 {
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPath,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::storageLocal', \@_,
-            {name => 'strPath', default => '/', trace => true},
-        );
-
-    # Create storage if not defined
-    if (!defined($hStorage->{&STORAGE_LOCAL}{$strPath}))
-    {
-        # Create local storage
-        $hStorage->{&STORAGE_LOCAL}{$strPath} = new pgBackRest::Storage::Local(
-            $strPath, new pgBackRest::Storage::Posix::Driver(),
-            {strTempExtension => STORAGE_TEMP_EXT,
-                lBufferMax => cfgOptionValid(CFGOPT_BUFFER_SIZE, false) ? cfgOption(CFGOPT_BUFFER_SIZE, false) : undef});
-    }
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '::storageLocal');
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oStorageLocal', value => $hStorage->{&STORAGE_LOCAL}{$strPath}, trace => true},
+        {name => 'oStorageLocal', value => new pgBackRest::Storage::Storage(STORAGE_LOCAL), trace => true},
     );
 }
 

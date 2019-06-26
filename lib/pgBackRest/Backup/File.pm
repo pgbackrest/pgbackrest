@@ -12,17 +12,15 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Backup::Filter::PageChecksum;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Handle;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
-use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -143,7 +141,7 @@ sub backupFile
 
                 if ($bCompress)
                 {
-                    push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
+                    push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]});
                 }
 
                 # Get the checksum
@@ -163,8 +161,8 @@ sub backupFile
     # Copy the file
     if ($bCopy)
     {
-        # Add sha filter
-        my $rhyFilter = [{strClass => STORAGE_FILTER_SHA}];
+        # Add size and sha filters
+        my $rhyFilter = [{strClass => COMMON_IO_HANDLE}, {strClass => STORAGE_FILTER_SHA}];
 
         # Add page checksum filter
         if ($bChecksumPage)
@@ -174,29 +172,44 @@ sub backupFile
 
             push(
                 @{$rhyFilter},
-                {strClass => BACKUP_FILTER_PAGECHECKSUM,
+                {strClass => "pgBackRest::Backup::Filter::PageChecksum",
                     rxyParam => [$iSegmentNo, $hExtraParam->{iWalId}, $hExtraParam->{iWalOffset}]});
         };
 
         # Add compression
         if ($bCompress)
         {
-            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{iLevel => $iCompressLevel}]});
+            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, $iCompressLevel]});
+        }
+        # Else add protocol compression if the destination is not compressed and there is no encryption
+        elsif (!defined($strCipherPass))
+        {
+            push(
+                @{$rhyFilter},
+                {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, true, cfgOption(CFGOPT_COMPRESS_LEVEL)]});
         }
 
-        # Open the file
+        # Open the source file
         my $oSourceFileIo = storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => $bIgnoreMissing});
 
-        # If source file exists
-        if (defined($oSourceFileIo))
+        # Open the destination file
+        $rhyFilter = undef;
+
+        # Add protocol decompression if the destination is not compressed and there is no encryption
+        if (!$bCompress && !defined($strCipherPass))
         {
-            my $oDestinationFileIo = $oStorageRepo->openWrite(
-                STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass});
+            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, true]});
+        }
 
-            # Copy the file
-            $oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo);
+        my $oDestinationFileIo = $oStorageRepo->openWrite(
+            STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
+            {bPathCreate => true, rhyFilter => $rhyFilter, strCipherPass => $strCipherPass});
 
+        $oDestinationFileIo->{oStorageCWrite}->filterAdd(COMMON_IO_HANDLE, undef);
+
+        # Copy the file
+        if ($oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo))
+        {
             # Get sha checksum and size
             $strCopyChecksum = $oSourceFileIo->result(STORAGE_FILTER_SHA);
             $lCopySize = $oSourceFileIo->result(COMMON_IO_HANDLE);
@@ -208,7 +221,17 @@ sub backupFile
             }
 
             # Get results of page checksum validation
-            $rExtra = $bChecksumPage ? $oSourceFileIo->result(BACKUP_FILTER_PAGECHECKSUM) : undef;
+            if ($bChecksumPage)
+            {
+                my $rExtraRaw = $oSourceFileIo->result("pgBackRest::Backup::Filter::PageChecksum");
+
+                $rExtra =
+                {
+                    bValid => $rExtraRaw->{valid} ? true : false,
+                    bAlign => $rExtraRaw->{align} ? true : false,
+                    iyPageError => $rExtraRaw->{error},
+                };
+            }
         }
         # Else if source file is missing the database removed it
         else
@@ -223,21 +246,21 @@ sub backupFile
     #
     # If the file was checksummed then get the size in all cases since we don't already have it.
     if ((($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY) &&
-            $oStorageRepo->driver()->capability(STORAGE_CAPABILITY_SIZE_DIFF)) ||
+            $oStorageRepo->capability(STORAGE_CAPABILITY_SIZE_DIFF)) ||
         $iCopyResult == BACKUP_FILE_CHECKSUM)
     {
-        $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}"))->size();
+        $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}"))->{size};
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iCopyResult', value => $iCopyResult, trace => true},
-        {name => 'lCopySize', value => $lCopySize, trace => true},
-        {name => 'lRepoSize', value => $lRepoSize, trace => true},
-        {name => 'strCopyChecksum', value => $strCopyChecksum, trace => true},
-        {name => 'rExtra', value => $rExtra, trace => true},
+        {name => 'iCopyResult', value => $iCopyResult},
+        {name => 'lCopySize', value => $lCopySize},
+        {name => 'lRepoSize', value => $lRepoSize},
+        {name => 'strCopyChecksum', value => $strCopyChecksum},
+        {name => 'rExtra', value => $rExtra},
     );
 }
 

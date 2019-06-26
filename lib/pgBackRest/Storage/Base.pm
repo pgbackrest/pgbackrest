@@ -17,6 +17,17 @@ use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 
 ####################################################################################################################################
+# Storage constants
+####################################################################################################################################
+use constant STORAGE_LOCAL                                          => '<LOCAL>';
+    push @EXPORT, qw(STORAGE_LOCAL);
+
+use constant STORAGE_S3                                             => 's3';
+    push @EXPORT, qw(STORAGE_S3);
+use constant STORAGE_POSIX                                          => 'posix';
+    push @EXPORT, qw(STORAGE_POSIX);
+
+####################################################################################################################################
 # Compress constants
 ####################################################################################################################################
 use constant STORAGE_COMPRESS                                       => 'compress';
@@ -33,6 +44,16 @@ use constant STORAGE_DECRYPT                                        => 'decrypt'
     push @EXPORT, qw(STORAGE_DECRYPT);
 use constant CIPHER_MAGIC                                           => 'Salted__';
     push @EXPORT, qw(CIPHER_MAGIC);
+
+####################################################################################################################################
+# Filter constants
+####################################################################################################################################
+use constant STORAGE_FILTER_CIPHER_BLOCK                            => 'pgBackRest::Storage::Filter::CipherBlock';
+    push @EXPORT, qw(STORAGE_FILTER_CIPHER_BLOCK);
+use constant STORAGE_FILTER_GZIP                                    => 'pgBackRest::Storage::Filter::Gzip';
+    push @EXPORT, qw(STORAGE_FILTER_GZIP);
+use constant STORAGE_FILTER_SHA                                     => 'pgBackRest::Storage::Filter::Sha';
+    push @EXPORT, qw(STORAGE_FILTER_SHA);
 
 ####################################################################################################################################
 # Capability constants
@@ -78,9 +99,10 @@ sub new
     );
 }
 
+
 ####################################################################################################################################
-# copy - copy a file. If special encryption settings are required, then the file objects from openRead/openWrite must be passed
-# instead of file names.
+# Copy a file. If special encryption settings are required, then the file objects from openRead/openWrite must be passed instead of
+# file names.
 ####################################################################################################################################
 sub copy
 {
@@ -92,47 +114,62 @@ sub copy
         $strOperation,
         $xSourceFile,
         $xDestinationFile,
+        $bSourceOpen,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->copy', \@_,
             {name => 'xSourceFile', required => false},
-            {name => 'xDestinationFile', required => false},
+            {name => 'xDestinationFile'},
+            {name => 'bSourceOpen', optional => true, default => false},
         );
 
-    # Was the file copied?
+    # Is source/destination an IO object or a file expression?
+    my $oSourceFileIo = defined($xSourceFile) ? (ref($xSourceFile) ? $xSourceFile : $self->openRead($xSourceFile)) : undef;
+
+    # Does the source file exist?
     my $bResult = false;
 
-    # Is source an IO object or a file expression?
-    my $oSourceFileIo =
-        defined($xSourceFile) ?
-        (ref($xSourceFile) ? $xSourceFile : $self->openRead($self->pathGet($xSourceFile))) : undef;
-
-    # Proceed if source file exists
+    # Copy if the source file exists
     if (defined($oSourceFileIo))
     {
-        # Is destination an IO object or a file expression?
-        my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($self->pathGet($xDestinationFile));
+        my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($xDestinationFile);
 
-        # Copy the data
-        my $lSizeRead;
-
-        do
+        # Use C copy if source and destination are C objects
+        if (defined($oSourceFileIo->{oStorageCRead}) && defined($oDestinationFileIo->{oStorageCWrite}))
         {
-            # Read data
-            my $tBuffer = '';
-
-            $lSizeRead = $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
-            $oDestinationFileIo->write(\$tBuffer);
+            $bResult = $self->{oStorageC}->copy(
+                $oSourceFileIo->{oStorageCRead}, $oDestinationFileIo->{oStorageCWrite}) ? true : false;
         }
-        while ($lSizeRead != 0);
+        else
+        {
+            # Open the source file if it is a C object
+            $bResult = defined($oSourceFileIo->{oStorageCRead}) ? ($bSourceOpen || $oSourceFileIo->open()) : true;
 
-        # Close files
-        $oSourceFileIo->close();
-        $oDestinationFileIo->close();
+            if ($bResult)
+            {
+                # Open the destination file if it is a C object
+                if (defined($oDestinationFileIo->{oStorageCWrite}))
+                {
+                    $oDestinationFileIo->open();
+                }
 
-        # File was copied
-        $bResult = true;
+                # Copy the data
+                do
+                {
+                    # Read data
+                    my $tBuffer = '';
+
+                    $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
+                    $oDestinationFileIo->write(\$tBuffer);
+                }
+                while (!$oSourceFileIo->eof());
+
+                # Close files
+                $oSourceFileIo->close();
+                $oDestinationFileIo->close();
+            }
+        }
     }
 
     return logDebugReturn

@@ -297,42 +297,6 @@ sub run
         $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CRYPTO,
             "unable to parse '$strTestFile'" .
             "\nHINT: Is or was the repo encrypted?");
-
-        # Encryption
-        #---------------------------------------------------------------------------------------------------------------------------
-        executeTest("rm -rf ${strTestFile}*");
-
-        my $strCipherPass = 'x';
-        my $strCipherPassSub = 'y';
-
-        # Unencrypted storage but a passphrase passed
-        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile, {bLoad => false,
-            strCipherPass => $strCipherPass})}, ERROR_ASSERT,
-            "a user passphrase and sub passphrase are both required when encrypting");
-
-        # Unencrypted storage but a sub passphrase passed
-        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile, {bLoad => false,
-            strCipherPassSub => $strCipherPassSub})}, ERROR_ASSERT,
-            "a user passphrase and sub passphrase are both required when encrypting");
-
-        # Create Encrypted storage
-        my $oStorage = new pgBackRest::Storage::Local($self->testPath(), new pgBackRest::Storage::Posix::Driver(),
-            {strCipherType => CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC, strCipherPassUser => $strCipherPass});
-
-        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile, {oStorage => $oStorage})}, ERROR_CRYPTO,
-            "passphrase is required when storage is encrypted");
-
-        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile, {bLoad => false, oStorage => $oStorage,
-            strCipherPass => $strCipherPass})}, ERROR_ASSERT,
-            "a user passphrase and sub passphrase are both required when encrypting");
-
-        $oIni = $self->testResult(sub {
-            new pgBackRest::Common::Ini(
-                $strTestFile,
-                {bLoad => false, oStorage => $oStorage, strCipherPass => $strCipherPass, strCipherPassSub => $strCipherPassSub})},
-            '[object]', 'create new ini with encryption passphrases');
-        $self->testResult(sub {($oIni->cipherPassSub() eq $strCipherPassSub) &&
-            ($oIni->cipherPass() eq $strCipherPass)}, true, '    new ini has encryption passphrases');
     }
 
     ################################################################################################################################

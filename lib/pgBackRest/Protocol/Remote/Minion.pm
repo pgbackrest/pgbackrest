@@ -91,11 +91,12 @@ sub init
             my $oSourceFileIo = $oStorage->openRead(@{shift()});
 
             # If the source file exists
-            if (defined($oSourceFileIo))
+            if (defined($oSourceFileIo) && (!defined($oSourceFileIo->{oStorageCRead}) || $oSourceFileIo->open()))
             {
                 $self->outputWrite(true);
 
-                $oStorage->copy($oSourceFileIo, new pgBackRest::Protocol::Storage::File($self, $oSourceFileIo));
+                $oStorage->copy(
+                    $oSourceFileIo, new pgBackRest::Protocol::Storage::File($self, $oSourceFileIo), {bSourceOpen => true});
 
                 return true;
             }

@@ -82,10 +82,14 @@ Storage *storageNew(
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 void *storageDriver(const Storage *this);
 StorageInterface storageInterface(const Storage *this);
+
+// The option is intended to be used only with the Perl interface since Perl is not tidy about where it reads.  It should be
+// removed when the Perl interface is removed.
+void storagePathEnforceSet(Storage *this, bool enforce);
 
 /***********************************************************************************************************************************
 Macros for function logging
