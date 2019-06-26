@@ -122,9 +122,6 @@ sub setup
     if (defined($oHostS3))
     {
         $oHostGroup->hostAdd($oHostS3, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
-
-        # Wait for server to start
-        $oHostS3->executeS3('mb s3://' . HOST_S3_BUCKET);
     }
 
     # Create db master config
@@ -185,6 +182,12 @@ sub setup
     }
 
     $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
+
+    # Create S3 bucket
+    if (defined($oHostS3))
+    {
+        storageRepo()->{oStorageC}->bucketCreate();
+    }
 
     return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3;
 }

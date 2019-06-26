@@ -12,6 +12,7 @@ Storage XS Header
 #include "common/type/json.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
+#include "storage/s3/storage.intern.h"
 #include "storage/storage.intern.h"
 
 typedef Storage *pgBackRest__LibC__Storage;

@@ -48,6 +48,23 @@ CLEANUP:
     MEM_CONTEXT_XS_TEMP_END();
 
 ####################################################################################################################################
+void
+bucketCreate(self)
+PREINIT:
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+INPUT:
+    pgBackRest::LibC::Storage self
+CODE:
+    if (strEq(storageType(self), STORAGE_S3_TYPE_STR))
+        storageS3Request((StorageS3 *)storageDriver(self), HTTP_VERB_PUT_STR, FSLASH_STR, NULL, NULL, true, false);
+    else
+        THROW_FMT(AssertError, "unable to create bucket on '%s' storage", strPtr(storageType(self)));
+CLEANUP:
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
 bool
 copy(self, source, destination)
 PREINIT:

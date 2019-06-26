@@ -893,6 +893,37 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
 }
 
 
+XS_EUPXS(XS_pgBackRest__LibC__Storage_bucketCreate); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_bucketCreate)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__Storage	self;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Storage,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Storage::bucketCreate",
+			"self", "pgBackRest::LibC::Storage")
+;
+    if (strEq(storageType(self), STORAGE_S3_TYPE_STR))
+        storageS3Request((StorageS3 *)storageDriver(self), HTTP_VERB_PUT_STR, FSLASH_STR, NULL, NULL, true, false);
+    else
+        THROW_FMT(AssertError, "unable to create bucket on '%s' storage", strPtr(storageType(self)));
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
 XS_EUPXS(XS_pgBackRest__LibC__Storage_copy); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__Storage_copy)
 {
@@ -2091,6 +2122,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::StorageRead::resultAll", XS_pgBackRest__LibC__StorageRead_resultAll);
         newXS_deffile("pgBackRest::LibC::StorageRead::DESTROY", XS_pgBackRest__LibC__StorageRead_DESTROY);
         newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
+        newXS_deffile("pgBackRest::LibC::Storage::bucketCreate", XS_pgBackRest__LibC__Storage_bucketCreate);
         newXS_deffile("pgBackRest::LibC::Storage::copy", XS_pgBackRest__LibC__Storage_copy);
         newXS_deffile("pgBackRest::LibC::Storage::exists", XS_pgBackRest__LibC__Storage_exists);
         newXS_deffile("pgBackRest::LibC::Storage::get", XS_pgBackRest__LibC__Storage_get);
