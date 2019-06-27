@@ -29,8 +29,12 @@ Constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Info *infoNew(void);
+Info *infoNew(const String *cipherPassSub);
 Info *infoNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass, Ini **ini);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
 void infoSave(
     Info *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 

@@ -10,6 +10,8 @@ Stanza Create Command
 
 #include "command/stanza/stanzaCreate.h"
 #include "common/debug.h"
+#include "common/encode.h"
+#include "common/encode/base64.h"
 #include "common/io/handleWrite.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -70,35 +72,35 @@ cmdStanzaCreate(void)
             !storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE)) &&
             !storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT)))
         {
-            InfoArchive *infoArchive = infoArchiveCreate(// pgControl, cipher etc here);
+            char cipherPassSub[64];  // CSHANG Is 64 here correct?
 
-            Info *this = NULL;
+            // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent files
+            if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
+            {
+                size_t bufferSize = 48;  // CSHANG In perl: $strCipherPass = encodeToStr(ENCODE_TYPE_BASE64, cryptoRandomBytes($iKeySizeInBytes));  iKeySizeInBytes is 48 and no one ever calls w/o default  -- so is using 48 here correct? and if so, maybe there should be a constant?
+                unsigned char *buffer = memNew(bufferSize);
+                cryptoRandomBytes(buffer, bufferSize);
+                encodeToStr(encodeBase64, buffer, bufferSize, cipherPassSub);
+            }
 
-        // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent files
-        if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
-        {
-//In Perl:
-//my $strCipherPass = encodeToStr(ENCODE_TYPE_BASE64, cryptoRandomBytes($iKeySizeInBytes));  iKeySizeInBytes is 48 and no one ever calls w/o default
-// In c:
-// cryptoRandomBytes(unsigned char *buffer, size_t size)
-            size_t bufferSize = 48;
-            unsigned char *buffer = memNew(bufferSize);
-            cryptoRandomBytes(buffer, bufferSize);
-            char cipherSubPass[64];
-            encodeToStr(encodeBase64, buffer, bufferSize, cipherSubPass);
-            Info *this = infoNew(cipherSubPass);
-        }
-                Info *this = infoNew(NULL);
+            InfoArchive *infoArchive = infoArchiveSet(
+                infoArchiveNew(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                STR(cipherPassSub));
+
+            infoArchiveSave(infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
+                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+            // infoBackupSave(infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+            //     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
         // CSHANG Now we need to create the file - which we haven't done in c before. No other command should be creating the info files (expire updates backup.info). For infoArchiveSave - but that then needs to change to not store the catalog/control and replace db-system-id with db-id? - OR are we somehow going to rewrite the file on an upgrade to now have the same format? And what about the backup:current section db-id? I think we should just use db-id since it's used more than db-system-id
         }
-        // Else if both info files exist (in some form), then if valid, just return
-        else if ((storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE)) ||
-            storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT))) &&
-            (storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE)) ||
-            storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT))))
-        {
-        }
+        // // Else if both info files exist (in some form), then if valid, just return
+        // else if ((storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE)) ||
+        //     storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT))) &&
+        //     (storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE)) ||
+        //     storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT))))
+        // {
+        // }
     }
     MEM_CONTEXT_TEMP_END();
 

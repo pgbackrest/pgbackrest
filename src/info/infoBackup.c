@@ -276,7 +276,7 @@ infoBackupSave(
             iniSet(ini, STRDEF(INFO_BACKUP_SECTION_BACKUP_CURRENT), backupData.backupLabel, jsonFromKv(backupDataKv, 0));
         }
 
-        infoPgSave(infoBackupPg(this), ini, storage, fileName, cipherType, cipherPass);
+        infoPgSave(infoBackupPg(this), ini, storage, fileName, infoPgBackup, cipherType, cipherPass);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -108,7 +108,7 @@ testRun(void)
 
         // Save the file and verify it
         ini = iniNew();
-        TEST_RESULT_VOID(infoPgSave(infoPg, ini, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "infoPgSave");
+        TEST_RESULT_VOID(infoPgSave(infoPg, ini, storageLocalWrite(), fileName2, infoPgBackup, cipherTypeNone, NULL), "infoPgSave");
         TEST_RESULT_BOOL(
             bufEq(
                 storageGetNP(storageNewReadNP(storageLocal(), fileName)),
