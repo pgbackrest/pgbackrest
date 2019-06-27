@@ -99,7 +99,7 @@ v2.14: Bug Fix and Improvements
 - Add user guides for CentOS/RHEL 6/7.
 ```
 
-The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from master.
+The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from master. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in master!**
 
 ## Push web documentation to master and deploy
 ```
