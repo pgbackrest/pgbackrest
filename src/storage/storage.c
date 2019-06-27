@@ -28,7 +28,7 @@ struct Storage
     mode_t modeFile;
     mode_t modePath;
     bool write;
-    bool pathResolve;
+    bool pathEnforce;
     StoragePathExpressionCallback pathExpressionFunction;
 };
 
@@ -73,6 +73,7 @@ storageNew(
     this->path = strDup(path);
     this->modeFile = modeFile;
     this->modePath = modePath;
+    this->pathEnforce = true;
     this->write = write;
     this->pathExpressionFunction = pathExpressionFunction;
 
@@ -407,7 +408,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, param.filterGroup);
+        FUNCTION_LOG_PARAM(BOOL, param.compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -416,12 +417,9 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = this->interface.newRead(this->driver, storagePathNP(this, fileExp), param.ignoreMissing);
-
-        if (param.filterGroup != NULL)
-            ioReadFilterGroupSet(storageReadIo(result), param.filterGroup);
-
-        storageReadMove(result, MEM_CONTEXT_OLD());
+        result = storageReadMove(
+            this->interface.newRead(this->driver, storagePathNP(this, fileExp), param.ignoreMissing, param.compressible),
+            MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -446,7 +444,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
         FUNCTION_LOG_PARAM(BOOL, param.noSyncFile);
         FUNCTION_LOG_PARAM(BOOL, param.noSyncPath);
         FUNCTION_LOG_PARAM(BOOL, param.noAtomic);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, param.filterGroup);
+        FUNCTION_LOG_PARAM(BOOL, param.compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -456,15 +454,12 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = this->interface.newWrite(
-            this->driver, storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
-            param.modePath != 0 ? param.modePath : this->modePath, param.user, param.group, param.timeModified, !param.noCreatePath,
-            !param.noSyncFile, !param.noSyncPath, !param.noAtomic);
-
-        if (param.filterGroup != NULL)
-            ioWriteFilterGroupSet(storageWriteIo(result), param.filterGroup);
-
-        storageWriteMove(result, MEM_CONTEXT_OLD());
+        result = storageWriteMove(
+            this->interface.newWrite(
+                this->driver, storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
+                param.modePath != 0 ? param.modePath : this->modePath, param.user, param.group, param.timeModified,
+                !param.noCreatePath, !param.noSyncFile, !param.noSyncPath, !param.noAtomic, param.compressible),
+            MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -499,8 +494,8 @@ storagePath(const Storage *this, const String *pathExp)
             // Make sure the base storage path is contained within the path expression
             if (this->path != NULL && !strEqZ(this->path, "/"))
             {
-                if (!strBeginsWith(pathExp, this->path) ||
-                    !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/'))
+                if (this->pathEnforce && (!strBeginsWith(pathExp, this->path) ||
+                    !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/')))
                 {
                     THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(this->path));
                 }
@@ -591,10 +586,6 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
     ASSERT(this != NULL);
     ASSERT(this->interface.pathCreate != NULL && storageFeature(this, storageFeaturePath));
     ASSERT(this->write);
-
-    // It doesn't make sense to combine these parameters because if we are creating missing parent paths why error when they exist?
-    // If this somehow wasn't caught in testing, the worst case is that the path would not be created and an error would be thrown.
-    ASSERT(!(param.noParentCreate && param.errorOnExists));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -785,6 +776,22 @@ storageInterface(const Storage *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->interface);
+}
+
+/***********************************************************************************************************************************
+Set whether absolute paths are required to be in the base path
+***********************************************************************************************************************************/
+void
+storagePathEnforceSet(Storage *this, bool enforce)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE, this);
+        FUNCTION_TEST_PARAM(BOOL, enforce);
+    FUNCTION_TEST_END();
+
+    this->pathEnforce = enforce;
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

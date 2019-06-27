@@ -146,7 +146,7 @@ storageNewRead
 typedef struct StorageNewReadParam
 {
     bool ignoreMissing;
-    IoFilterGroup *filterGroup;
+    bool compressible;
 } StorageNewReadParam;
 
 #define storageNewReadP(this, pathExp, ...)                                                                                        \
@@ -170,7 +170,7 @@ typedef struct StorageNewWriteParam
     bool noSyncFile;
     bool noSyncPath;
     bool noAtomic;
-    IoFilterGroup *filterGroup;
+    bool compressible;
 } StorageNewWriteParam;
 
 #define storageNewWriteP(this, pathExp, ...)                                                                                       \

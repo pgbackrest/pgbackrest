@@ -257,7 +257,7 @@ full backup - resume (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
+P00   WARN: backup [BACKUP-FULL-1] missing manifest removed from backup.info
 P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
 P00   WARN: aborted backup [BACKUP-FULL-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
@@ -743,7 +743,7 @@ incr backup - resume and add tablespace 2 (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: backup [BACKUP-INCR-1] missing in repository removed from backup.info
+P00   WARN: backup [BACKUP-INCR-1] missing manifest removed from backup.info
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
@@ -3350,9 +3350,11 @@ P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -3557,9 +3559,11 @@ P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
+P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

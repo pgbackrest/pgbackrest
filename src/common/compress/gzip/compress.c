@@ -17,8 +17,7 @@ Gzip Compress
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define GZIP_COMPRESS_FILTER_TYPE                                   "gzipCompress"
-    STRING_STATIC(GZIP_COMPRESS_FILTER_TYPE_STR,                    GZIP_COMPRESS_FILTER_TYPE);
+STRING_EXTERN(GZIP_COMPRESS_FILTER_TYPE_STR,                        GZIP_COMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -185,12 +184,23 @@ gzipCompressNew(int level, bool raw)
         // Set free callback to ensure gzip context is freed
         memContextCallbackSet(driver->memContext, gzipCompressFreeResource, driver);
 
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewInt(level));
+        varLstAdd(paramList, varNewBool(raw));
+
         // Create filter interface
         this = ioFilterNewP(
-            GZIP_COMPRESS_FILTER_TYPE_STR, driver, .done = gzipCompressDone, .inOut = gzipCompressProcess,
+            GZIP_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = gzipCompressDone, .inOut = gzipCompressProcess,
             .inputSame = gzipCompressInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+gzipCompressNewVar(const VariantList *paramList)
+{
+    return gzipCompressNew(varIntForce(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)));
 }

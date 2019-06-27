@@ -476,6 +476,7 @@ P00   INFO: remove expired backup [BACKUP-FULL-1]
 P00 DETAIL: archive retention on backup [BACKUP-FULL-2], archiveId = 9.2-1, start = 00000001000000000000000C
 P00 DETAIL: remove archive: archiveId = 9.2-1, start = 000000010000000000000000, stop = 00000001000000000000000B
 P00 DETAIL: archive retention on backup [BACKUP-FULL-3], archiveId = 9.3-2, start = 000000010000000000000000
+P00 DETAIL: no archive to remove, archiveId = 9.3-2
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -1147,6 +1148,7 @@ P00   INFO: remove archive path: [TEST_PATH]/db-master/repo/archive/db/9.2-1
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
 P00 DETAIL: remove archive: archiveId = 9.3-2, start = 000000010000000000000000, stop = 0000000100000000000000FE
 P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 10-3, start = 000000010000000000000000
+P00 DETAIL: no archive to remove, archiveId = 10-3
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info

@@ -528,6 +528,7 @@ storageS3Info(THIS_VOID, const String *file, bool followLink)
     if (httpClientResponseCodeOk(httpResult.httpClient))
     {
         result.exists = true;
+        result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
     }
 
@@ -656,7 +657,7 @@ storageS3List(THIS_VOID, const String *path, const String *expression)
 New file read object
 ***********************************************************************************************************************************/
 static StorageRead *
-storageS3NewRead(THIS_VOID, const String *file, bool ignoreMissing)
+storageS3NewRead(THIS_VOID, const String *file, bool ignoreMissing, bool compressible)
 {
     THIS(StorageS3);
 
@@ -664,6 +665,7 @@ storageS3NewRead(THIS_VOID, const String *file, bool ignoreMissing)
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        (void)compressible;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -678,7 +680,7 @@ New file write object
 static StorageWrite *
 storageS3NewWrite(
     THIS_VOID, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group, time_t timeModified,
-    bool createPath, bool syncFile, bool syncPath, bool atomic)
+    bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible)
 {
     THIS(StorageS3);
 
@@ -694,6 +696,7 @@ storageS3NewWrite(
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
+        (void)compressible;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);

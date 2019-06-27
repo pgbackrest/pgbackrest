@@ -30,8 +30,6 @@ use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Common::Io::Handle;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
-use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
@@ -229,7 +227,7 @@ sub resumeClean
         if ($cType eq 'd')
         {
             logDebugMisc($strOperation, "remove path ${strName}");
-            $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strName}", {bRecurse => true});
+            $oStorageRepo->pathRemove(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strName}", {bRecurse => true});
         }
         # Else add the file/link to be deleted later
         else
@@ -323,7 +321,7 @@ sub processManifest
             storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strPath}", {bIgnoreExists => true});
         }
 
-        if (storageRepo()->driver()->capability(STORAGE_CAPABILITY_LINK))
+        if (storageRepo()->capability(STORAGE_CAPABILITY_LINK))
         {
             for my $strTarget ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
             {
@@ -745,7 +743,7 @@ sub process
                 &log(WARN, "aborted backup ${strAbortedBackup} cannot be resumed: ${strReason}");
                 &log(TEST, TEST_BACKUP_NORESUME);
 
-                $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strAbortedBackup}", {bRecurse => true});
+                $oStorageRepo->pathRemove(STORAGE_REPO_BACKUP . "/${strAbortedBackup}", {bRecurse => true});
                 undef($oAbortedManifest);
             }
 
@@ -979,7 +977,9 @@ sub process
                 # Add compression filter
                 if ($bCompress)
                 {
-                    push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP});
+                    push(
+                        @{$rhyFilter},
+                        {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, cfgOption(CFGOPT_COMPRESS_LEVEL)]});
                 }
 
                 # If the backups are encrypted, then the passphrase for the backup set from the manifest file is required to access
@@ -1064,7 +1064,7 @@ sub process
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
 
     # Sync backup path if supported
-    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    if ($oStorageRepo->capability(STORAGE_CAPABILITY_PATH_SYNC))
     {
         # Sync all paths in the backup
         $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
@@ -1096,12 +1096,12 @@ sub process
             {'strCipherPass' => $strCipherPassManifest}),
         $oStorageRepo->openWrite(
             "${strHistoryPath}/${strBackupLabel}.manifest." . COMPRESS_EXT,
-            {rhyFilter => [{strClass => STORAGE_FILTER_GZIP}],
+            {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, 9]}],
                 bPathCreate => true, bAtomic => true,
                 strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef}));
 
     # Sync history path if supported
-    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    if ($oStorageRepo->capability(STORAGE_CAPABILITY_PATH_SYNC))
     {
         $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY);
         $oStorageRepo->pathSync($strHistoryPath);
@@ -1110,7 +1110,7 @@ sub process
     # Create a link to the most recent backup
     $oStorageRepo->remove(STORAGE_REPO_BACKUP . qw(/) . LINK_LATEST);
 
-    if (storageRepo()->driver()->capability(STORAGE_CAPABILITY_LINK))
+    if (storageRepo()->capability(STORAGE_CAPABILITY_LINK))
     {
         $oStorageRepo->linkCreate(
             STORAGE_REPO_BACKUP . "/${strBackupLabel}", STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST, {bRelative => true});
@@ -1120,7 +1120,7 @@ sub process
     $oBackupInfo->add($oBackupManifest);
 
     # Sync backup root path if supported
-    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    if ($oStorageRepo->capability(STORAGE_CAPABILITY_PATH_SYNC))
     {
         $oStorageRepo->pathSync(STORAGE_REPO_BACKUP);
     }

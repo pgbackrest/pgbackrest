@@ -17,6 +17,7 @@ Storage type
 Constructor
 ***********************************************************************************************************************************/
 Storage *storageRemoteNew(
-    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client);
+    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
+    unsigned int compressLevel);
 
 #endif

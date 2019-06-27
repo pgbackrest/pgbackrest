@@ -65,10 +65,9 @@ testRun(void)
         // Create a compressed encrypted repo file
         StorageWrite *ceRepoFile = storageNewWriteNP(
             storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strPtr(repoFileReferenceFull), strPtr(repoFile1)));
-        IoFilterGroup *filterGroup = ioFilterGroupNew();
+        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(ceRepoFile));
         ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpass"), NULL));
-        ioWriteFilterGroupSet(storageWriteIo(ceRepoFile), filterGroup);
 
         storagePutNP(ceRepoFile, BUFSTRDEF("acefile"));
 

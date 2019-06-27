@@ -19,6 +19,7 @@ Each filter has a type that allows it to be identified in the filter list.
 #define COMMON_IO_FILTER_FILTER_INTERN_H
 
 #include "common/io/filter/filter.h"
+#include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
 Constructor
@@ -48,10 +49,10 @@ typedef struct IoFilterInterface
     Variant *(*result)(void *driver);
 } IoFilterInterface;
 
-#define ioFilterNewP(type, driver, ...)                                                                                            \
-    ioFilterNew(type, driver, (IoFilterInterface){__VA_ARGS__})
+#define ioFilterNewP(type, driver, paramList, ...)                                                                                 \
+    ioFilterNew(type, driver, paramList, (IoFilterInterface){__VA_ARGS__})
 
-IoFilter *ioFilterNew(const String *type, void *driver, IoFilterInterface);
+IoFilter *ioFilterNew(const String *type, void *driver, VariantList *paramList, IoFilterInterface);
 
 /***********************************************************************************************************************************
 Functions
@@ -68,6 +69,7 @@ void *ioFilterDriver(IoFilter *this);
 bool ioFilterInputSame(const IoFilter *this);
 const IoFilterInterface *ioFilterInterface(const IoFilter *this);
 bool ioFilterOutput(const IoFilter *this);
+const VariantList *ioFilterParamList(const IoFilter *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

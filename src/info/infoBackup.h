@@ -13,6 +13,7 @@ Object type
 typedef struct InfoBackup InfoBackup;
 
 #include "common/type/string.h"
+#include "common/type/stringList.h"
 #include "info/infoPg.h"
 #include "storage/storage.h"
 
@@ -62,6 +63,15 @@ Functions
 ***********************************************************************************************************************************/
 unsigned int infoBackupCheckPg(
     const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgCatalogVersion, uint32_t pgControlVersion);
+// Remove a backup from the current section
+void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
+void infoBackupSave(
+    InfoBackup *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+
+/***********************************************************************************************************************************
+infoBackupDataLabelList - get a list of current backup labels
+***********************************************************************************************************************************/
+StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
 
 /***********************************************************************************************************************************
 Getters

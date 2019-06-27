@@ -3,6 +3,8 @@ Remote Storage Protocol Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "common/compress/gzip/compress.h"
+#include "common/compress/gzip/decompress.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -39,6 +41,38 @@ static struct
     MemContext *memContext;                                         // Mem context
     RegExp *blockRegExp;                                            // Regular expression to check block messages
 } storageRemoteProtocolLocal;
+
+/***********************************************************************************************************************************
+Set filter group based on passed filters
+***********************************************************************************************************************************/
+static void
+storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_FILTER_GROUP, filterGroup);
+        FUNCTION_TEST_PARAM(VARIANT, filterList);
+    FUNCTION_TEST_END();
+
+    ASSERT(filterGroup != NULL);
+    ASSERT(filterList != NULL);
+
+    const VariantList *filterKeyList = kvKeyList(varKv(filterList));
+
+    for (unsigned int filterIdx = 0; filterIdx < varLstSize(filterKeyList); filterIdx++)
+    {
+        const String *filterKey = varStr(varLstGet(filterKeyList, filterIdx));
+        const VariantList *filterParam = varVarLst(kvGet(varKv(filterList), varLstGet(filterKeyList, filterIdx)));
+
+        if (strEq(filterKey, GZIP_COMPRESS_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, gzipCompressNewVar(filterParam));
+        else if (strEq(filterKey, GZIP_DECOMPRESS_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, gzipDecompressNewVar(filterParam));
+        else
+            THROW_FMT(AssertError, "unable to add filter '%s'", strPtr(filterKey));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Process storage protocol requests
@@ -87,7 +121,10 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             // Create the read object
             IoRead *fileRead = storageReadIo(
                 interface.newRead(
-                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1))));
+                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)), false));
+
+            // Set filter group based on passed filters
+            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 2));
 
             // Check if the file exists
             bool exists = ioReadOpen(fileRead);
@@ -127,7 +164,10 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                     driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varUIntForce(varLstGet(paramList, 1)),
                     varUIntForce(varLstGet(paramList, 2)), varStr(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
                     (time_t)varIntForce(varLstGet(paramList, 5)), varBool(varLstGet(paramList, 6)),
-                    varBool(varLstGet(paramList, 7)), varBool(varLstGet(paramList, 8)), varBool(varLstGet(paramList, 9))));
+                    varBool(varLstGet(paramList, 7)), varBool(varLstGet(paramList, 8)), varBool(varLstGet(paramList, 9)), false));
+
+            // Set filter group based on passed filters
+            storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), varLstGet(paramList, 10));
 
             // Open file
             ioWriteOpen(fileWrite);

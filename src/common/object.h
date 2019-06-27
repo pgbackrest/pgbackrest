@@ -73,7 +73,7 @@ static void objectFree(Object *this)
 Note that this function is externed as there no need for a static free function since the context will be cleaned up automatically
 by the parent context.
 ***********************************************************************************************************************************/
-#define OBJECT_DEFINE_FREE(objectMacro)                                                                                                   \
+#define OBJECT_DEFINE_FREE(objectMacro)                                                                                            \
     void                                                                                                                           \
     GLUE(objectMacro##_PREFIX, Free)(objectMacro##_TYPE *this)                                                                     \
     {                                                                                                                              \

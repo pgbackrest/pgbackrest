@@ -13,11 +13,13 @@ $SIG{__DIE__} = sub {Carp::confess @_};
 
 use File::Basename qw(dirname);
 
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
@@ -245,11 +247,7 @@ sub main
                     # --------------------------------------------------------------------------------------------------------------
                     elsif (cfgCommandTest(CFGCMD_EXPIRE))
                     {
-                        # Load module dynamically
-                        require pgBackRest::Expire;
-                        pgBackRest::Expire->import();
-
-                        new pgBackRest::Expire()->process();
+                        new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
                     }
                 }
             }

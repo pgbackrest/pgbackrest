@@ -15,7 +15,6 @@ use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::File;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
 
 ####################################################################################################################################
 # new
@@ -195,28 +194,9 @@ sub openRead
             {name => 'rhParam', required => false},
         );
 
-    # Determine whether protocol compress will be used
-    my $bProtocolCompress = protocolCompress($rhParam);
-
-    # Compress on the remote side
-    if ($bProtocolCompress)
-    {
-        push(
-            @{$rhParam->{rhyFilter}},
-            {strClass => STORAGE_FILTER_GZIP,
-                rxyParam => [{iLevel => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK), bWantGzip => false}]});
-    }
-
     my $oSourceFileIo =
         $self->{oProtocol}->cmdExecute(OP_STORAGE_OPEN_READ, [$strFileExp, $rhParam]) ?
             new pgBackRest::Protocol::Storage::File($self->{oProtocol}) : undef;
-
-    # Decompress on the local side
-    if ($bProtocolCompress)
-    {
-        $oSourceFileIo = new pgBackRest::Storage::Filter::Gzip(
-            $oSourceFileIo, {strCompressType => STORAGE_DECOMPRESS, bWantGzip => false});
-    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -247,27 +227,9 @@ sub openWrite
             {name => 'rhParam', required => false},
         );
 
-    # Determine whether protocol compress will be used
-    my $bProtocolCompress = protocolCompress($rhParam);
-
-    # Decompress on the remote side
-    if ($bProtocolCompress)
-    {
-        push(
-            @{$rhParam->{rhyFilter}},
-            {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS, bWantGzip => false}]});
-    }
-
     # Open the remote file
     $self->{oProtocol}->cmdWrite(OP_STORAGE_OPEN_WRITE, [$strFileExp, $rhParam]);
     my $oDestinationFileIo = new pgBackRest::Protocol::Storage::File($self->{oProtocol});
-
-    # Compress on local side
-    if ($bProtocolCompress)
-    {
-        $oDestinationFileIo = new pgBackRest::Storage::Filter::Gzip(
-            $oDestinationFileIo, {iLevel => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK), bWantGzip => false});
-    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -365,24 +327,6 @@ sub cipherPassUser
         $strOperation,
         {name => 'strCipherPassUser', value => $strCipherPassUser, redact => true}
     );
-}
-
-####################################################################################################################################
-# Used internally to determine if protocol compression should be enabled
-####################################################################################################################################
-sub protocolCompress
-{
-    my $rhParam = shift;
-
-    my $bProtocolCompress = false;
-
-    if (defined($rhParam->{bProtocolCompress}))
-    {
-        $bProtocolCompress = $rhParam->{bProtocolCompress} && cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK) > 0 ? true : false;
-        delete($rhParam->{bProtocolCompress});
-    }
-
-    return $bProtocolCompress;
 }
 
 ####################################################################################################################################

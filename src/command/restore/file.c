@@ -55,7 +55,8 @@ restoreFile(
     // Was the file copied?
     bool result = true;
 
-    // Create destination file.  We may not use this but it makes sense to only create it in one place if we do.
+    // Is the file compressible during the copy?
+    bool compressible = true;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -81,16 +82,16 @@ restoreFile(
                     if (info.size == pgFileSize)
                     {
                         // Generate checksum for the file if size is not zero
-                        IoFilterGroup *filterGroup = ioFilterGroupNew();
+                        IoRead *read = NULL;
 
                         if (info.size != 0)
                         {
-                            IoRead *read = storageReadIo(storageNewReadNP(storagePgWrite(), pgFile));
-                            ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
-                            ioReadFilterGroupSet(read, filterGroup);
+                            read = storageReadIo(storageNewReadNP(storagePgWrite(), pgFile));
+                            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
 
                             Buffer *buffer = bufNew(ioBufferSize());
-                            ioReadOpen(read);
+
+                            CHECK(ioReadOpen(read));
 
                             do
                             {
@@ -104,7 +105,8 @@ restoreFile(
 
                         // If size and checksum are equal then no need to copy the file
                         if (pgFileSize == 0 ||
-                            strEq(pgFileChecksum, varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))))
+                            strEq(
+                                pgFileChecksum, varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR))))
                         {
                             // Even if hash/size are the same set the time back to backup time.  This helps with unit testing, but
                             // also presents a pristine version of the database after restore.
@@ -153,15 +155,21 @@ restoreFile(
             // Else perform the copy
             else
             {
-                IoFilterGroup *filterGroup = ioFilterGroupNew();
+                IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
 
                 // Add decryption filter
                 if (cipherPass != NULL)
+                {
                     ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
+                    compressible = false;
+                }
 
                 // Add decompression filter
                 if (repoFileCompressed)
+                {
                     ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
+                    compressible = false;
+                }
 
                 // Add sha1 filter
                 ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
@@ -169,15 +177,14 @@ restoreFile(
                 // Add size filter
                 ioFilterGroupAdd(filterGroup, ioSizeNew());
 
-                ioWriteFilterGroupSet(storageWriteIo(pgFileWrite), filterGroup);
-
                 // Copy file
                 storageCopyNP(
-                    storageNewReadNP(
+                    storageNewReadP(
                         storageRepo(),
                         strNewFmt(
                             STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(repoFileReference), strPtr(repoFile),
-                            repoFileCompressed ? "." GZIP_EXT : "")),
+                            repoFileCompressed ? "." GZIP_EXT : ""),
+                        .compressible = compressible),
                     pgFileWrite);
 
                 // Validate checksum

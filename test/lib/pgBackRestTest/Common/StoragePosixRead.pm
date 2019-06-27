@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # Posix File Read
 ####################################################################################################################################
-package pgBackRest::Storage::Posix::FileRead;
+package pgBackRestTest::Common::StoragePosixRead;
 use parent 'pgBackRest::Common::Io::Handle';
 
 use strict;

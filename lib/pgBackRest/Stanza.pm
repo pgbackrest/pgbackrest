@@ -294,7 +294,7 @@ sub stanzaDelete
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaDelete');
 
     my $strStanza = cfgOption(CFGOPT_STANZA);
-    my $oStorageRepo = storageRepo({strStanza => $strStanza});
+    my $oStorageRepo = storageRepo();
 
     # If at least an archive or backup directory exists for the stanza, then continue, else nothing to do
     if ($oStorageRepo->pathExists(STORAGE_REPO_ARCHIVE) || $oStorageRepo->pathExists(STORAGE_REPO_BACKUP))
@@ -342,8 +342,8 @@ sub stanzaDelete
         }
 
         # Recursively remove the stanza archive and backup directories
-        $oStorageRepo->remove(STORAGE_REPO_ARCHIVE, {bRecurse => true, bIgnoreMissing => true});
-        $oStorageRepo->remove(STORAGE_REPO_BACKUP, {bRecurse => true, bIgnoreMissing => true});
+        $oStorageRepo->pathRemove(STORAGE_REPO_ARCHIVE, {bRecurse => true, bIgnoreMissing => true});
+        $oStorageRepo->pathRemove(STORAGE_REPO_BACKUP, {bRecurse => true, bIgnoreMissing => true});
 
         # Remove the stop file so processes can run.
         lockStart();

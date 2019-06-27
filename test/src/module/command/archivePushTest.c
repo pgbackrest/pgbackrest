@@ -373,10 +373,9 @@ testRun(void)
 
         StorageWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info"));
 
-        ioWriteFilterGroupSet(
-            storageWriteIo(infoWrite),
-            ioFilterGroupAdd(
-                ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpassphrase"), NULL)));
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(infoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("badpassphrase"), NULL));
 
         storagePutNP(
             infoWrite,

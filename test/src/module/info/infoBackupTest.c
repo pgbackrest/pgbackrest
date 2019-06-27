@@ -4,6 +4,7 @@ Test Backup Info Handler
 #include "storage/storage.intern.h"
 
 #include "common/harnessInfo.h"
+#include "command/backup/common.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -91,7 +92,8 @@ testRun(void)
         TEST_RESULT_VOID(infoBackupFree(infoBackup), "infoBackupFree() - free backup info");
     }
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupData(), infoBackupDataTotal(), infoBackupDataToLog()"))
+    if (testBegin(
+        "infoBackupData(), infoBackupDataTotal(), infoBackupDataToLog(), infoBackupDataLabelList(), infoBackupDataDelete()"))
     {
         // File exists, backup:current section exists
         //--------------------------------------------------------------------------------------------------------------------------
@@ -194,6 +196,34 @@ testRun(void)
         TEST_RESULT_BOOL(backupData.optionCompress, true, "    option compress");
         TEST_RESULT_BOOL(backupData.optionHardlink, false, "    option hardlink");
         TEST_RESULT_BOOL(backupData.optionOnline, true, "    option online");
+
+        // infoBackupDataLabelList and infoBackupDataDelete
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList without expression");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(
+                infoBackup, backupRegExpP(.full=true, .differential=true, .incremental=true)), sortOrderAsc), ", ")),
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList with expression");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), ", ")),
+            "20161219-212741F", "  full=true");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.differential=true)), ", ")),
+            "20161219-212741F_20161219-212803D", "differential=true");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), ", ")),
+            "20161219-212741F_20161219-212918I", "incremental=true");
+
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212918I")), "delete a backup");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
+            "20161219-212741F, 20161219-212741F_20161219-212803D", "  backup deleted");
+
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212803D")), "delete all backups");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F")), "  deleted");
+        TEST_RESULT_UINT(strLstSize(infoBackupDataLabelList(infoBackup, NULL)), 0, "  no backups remain");
 
         // infoBackupDataToLog
         //--------------------------------------------------------------------------------------------------------------------------

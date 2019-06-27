@@ -42,7 +42,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pageChecksumTest()"))
+    if (testBegin("pageChecksumTest() and pageLsn()"))
     {
         // Zero the pages
         memset(testPage(0), 0, TEST_PAGE_TOTAL * TEST_PAGE_SIZE);
@@ -51,8 +51,15 @@ testRun(void)
         TEST_RESULT_BOOL(pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0, 0), true, "pd_upper is 0, block 0");
         TEST_RESULT_BOOL(pageChecksumTest(testPage(1), 999, TEST_PAGE_SIZE, 0, 0), true, "pd_upper is 0, block 999");
 
+        // Partial pages are always invalid
+        ((PageHeader)testPage(0))->pd_upper = 0x00FF;
+        ((PageHeader)testPage(0))->pd_checksum = pageChecksum(testPage(0), 0, TEST_PAGE_SIZE);
+        TEST_RESULT_BOOL(pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 1, 1), true, "valid page");
+        TEST_RESULT_BOOL(pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE / 2, 1, 1), false, "invalid partial page");
+
         // Update pd_upper and check for failure no matter the block no
         ((PageHeader)testPage(0))->pd_upper = 0x00FF;
+        ((PageHeader)testPage(0))->pd_checksum = 0;
         TEST_RESULT_BOOL(pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0xFFFF, 0xFFFF), false, "badchecksum, page 0");
         TEST_RESULT_BOOL(
             pageChecksumTest(testPage(0), 9999, TEST_PAGE_SIZE, 0xFFFF, 0xFFFF), false, "badchecksum, page 9999");
@@ -60,6 +67,8 @@ testRun(void)
         // Update LSNs and check that page checksums past the ignore limits are successful
         ((PageHeader)testPage(0))->pd_lsn.walid = 0x8888;
         ((PageHeader)testPage(0))->pd_lsn.xrecoff = 0x8888;
+
+        TEST_RESULT_UINT(pageLsn(testPage(0)), 0x0000888800008888, "check page lsn");
 
         TEST_RESULT_BOOL(
             pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0x8888, 0x8888), true, "bad checksum past ignore limit");

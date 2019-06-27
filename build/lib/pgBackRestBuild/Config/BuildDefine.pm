@@ -350,8 +350,8 @@ sub buildConfigDefine
 
     my $strDocPath = abs_path(dirname($0) . '/../doc');
 
-    my $oStorageDoc = new pgBackRest::Storage::Local(
-        $strDocPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+    my $oStorageDoc = new pgBackRestTest::Common::Storage(
+        $strDocPath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     my @stryEmpty = [];
     my $oManifest = new BackRestDoc::Common::DocManifest(

@@ -394,7 +394,7 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination)
 New file read object
 ***********************************************************************************************************************************/
 static StorageRead *
-storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing)
+storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing, bool compressible)
 {
     THIS(StoragePosix);
 
@@ -402,6 +402,7 @@ storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing)
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        (void)compressible;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -416,7 +417,7 @@ New file write object
 static StorageWrite *
 storagePosixNewWrite(
     THIS_VOID, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group, time_t timeModified,
-    bool createPath, bool syncFile, bool syncPath, bool atomic)
+    bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible)
 {
     THIS(StoragePosix);
 
@@ -432,6 +433,7 @@ storagePosixNewWrite(
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
+        (void)compressible;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);

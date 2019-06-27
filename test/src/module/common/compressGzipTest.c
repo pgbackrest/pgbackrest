@@ -16,10 +16,8 @@ testCompress(IoFilter *compress, Buffer *decompressed, size_t inputSize, size_t 
     size_t inputTotal = 0;
     ioBufferSizeSet(outputSize);
 
-    IoFilterGroup *filterGroup = ioFilterGroupNew();
-    ioFilterGroupAdd(filterGroup, compress);
     IoWrite *write = ioBufferWriteNew(compressed);
-    ioWriteFilterGroupSet(write, filterGroup);
+    ioFilterGroupAdd(ioWriteFilterGroup(write), compress);
     ioWriteOpen(write);
 
     // Compress input data
@@ -52,10 +50,8 @@ testDecompress(IoFilter *decompress, Buffer *compressed, size_t inputSize, size_
     Buffer *output = bufNew(outputSize);
     ioBufferSizeSet(inputSize);
 
-    IoFilterGroup *filterGroup = ioFilterGroupNew();
-    ioFilterGroupAdd(filterGroup, decompress);
     IoRead *read = ioBufferReadNew(compressed);
-    ioReadFilterGroupSet(read, filterGroup);
+    ioFilterGroupAdd(ioReadFilterGroup(read), decompress);
     ioReadOpen(read);
 
     while (!ioReadEof(read))
@@ -110,8 +106,15 @@ testRun(void)
         Buffer *compressed = NULL;
         Buffer *decompressed = bufNewC(simpleData, strlen(simpleData));
 
+        VariantList *compressParamList = varLstNew();
+        varLstAdd(compressParamList, varNewUInt(3));
+        varLstAdd(compressParamList, varNewBool(false));
+
+        VariantList *decompressParamList = varLstNew();
+        varLstAdd(decompressParamList, varNewBool(false));
+
         TEST_ASSIGN(
-            compressed, testCompress(gzipCompressNew(3, false), decompressed, 1024, 1024),
+            compressed, testCompress(gzipCompressNewVar(compressParamList), decompressed, 1024, 1024),
             "simple data - compress large in/large out buffer");
 
         TEST_RESULT_BOOL(
@@ -127,7 +130,7 @@ testRun(void)
             "simple data - compress small in/small out buffer");
 
         TEST_RESULT_BOOL(
-            bufEq(decompressed, testDecompress(gzipDecompressNew(false), compressed, 1024, 1024)), true,
+            bufEq(decompressed, testDecompress(gzipDecompressNewVar(decompressParamList), compressed, 1024, 1024)), true,
             "simple data - decompress large in/large out buffer");
 
         TEST_RESULT_BOOL(

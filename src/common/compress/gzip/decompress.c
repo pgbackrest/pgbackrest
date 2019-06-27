@@ -17,8 +17,7 @@ Gzip Decompress
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define GZIP_DECOMPRESS_FILTER_TYPE                                 "gzipDecompress"
-    STRING_STATIC(GZIP_DECOMPRESS_FILTER_TYPE_STR,                  GZIP_DECOMPRESS_FILTER_TYPE);
+STRING_EXTERN(GZIP_DECOMPRESS_FILTER_TYPE_STR,                      GZIP_DECOMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -162,12 +161,22 @@ gzipDecompressNew(bool raw)
         // Set free callback to ensure gzip context is freed
         memContextCallbackSet(driver->memContext, gzipDecompressFreeResource, driver);
 
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewBool(raw));
+
         // Create filter interface
         this = ioFilterNewP(
-            GZIP_DECOMPRESS_FILTER_TYPE_STR, driver, .done = gzipDecompressDone, .inOut = gzipDecompressProcess,
+            GZIP_DECOMPRESS_FILTER_TYPE_STR, driver, paramList, .done = gzipDecompressDone, .inOut = gzipDecompressProcess,
             .inputSame = gzipDecompressInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+gzipDecompressNewVar(const VariantList *paramList)
+{
+    return gzipDecompressNew(varBool(varLstGet(paramList, 0)));
 }

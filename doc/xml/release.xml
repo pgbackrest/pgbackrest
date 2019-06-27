@@ -12,11 +12,61 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.15dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.16dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add Perl interface to C storage layer.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2019-06-25" version="2.15" title="C Implementation of Expire">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="mohamad.el.rifai"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix archive retention expiring too aggressively.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>The <cmd>expire</cmd> command is implemented entirely in C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>The <cmd>local</cmd> command for restore is implemented entirely in C.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="julian.zhang"/>
+                            <release-item-ideator id="janis.puris"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove hard-coded <postgres/> user so <id>$PGUSER</id> works.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="daniel.westermann"/>
+                        </release-item-contributor-list>
+
+                        <p>Honor <proper>configure</proper> <setting>--prefix</setting> option.</p>
                     </release-item>
 
                     <release-item>
@@ -34,11 +84,35 @@
 
                         <p>Add most unimplemented functions to the remote storage driver.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Rename <code>info*New()</code> functions to <code>info*NewLoad()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add backup management functions to <code>InfoBackup</code>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
             <release-doc-list>
                 <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add FAQ to the documentation.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="patrick.mclaughlin"/>
@@ -7108,6 +7182,11 @@
             <contributor-id type="github">farrellit</contributor-id>
         </contributor>
 
+        <contributor id="daniel.westermann">
+            <contributor-name-display>Daniel Westermann</contributor-name-display>
+            <contributor-id type="github">danielwestermann</contributor-id>
+        </contributor>
+
         <contributor id="david.youatt">
             <contributor-name-display>David Youatt</contributor-name-display>
             <contributor-id type="github">youattd</contributor-id>
@@ -7192,6 +7271,11 @@
             <contributor-id type="github">jpabt</contributor-id>
         </contributor>
 
+        <contributor id="janis.puris">
+            <contributor-name-display>Janis Puris</contributor-name-display>
+            <contributor-id type="github">mashuma</contributor-id>
+        </contributor>
+
         <contributor id="jason.odonnell">
             <contributor-name-display>Jason O'Donnell</contributor-name-display>
             <contributor-id type="github">Dwaligon</contributor-id>
@@ -7224,6 +7308,11 @@
         <contributor id="john.harvey">
             <contributor-name-display>John Harvey</contributor-name-display>
             <contributor-id type="github">crunchyjohn</contributor-id>
+        </contributor>
+
+        <contributor id="julian.zhang">
+            <contributor-name-display>Julian Zhang</contributor-name-display>
+            <contributor-id type="github">julianzhang98</contributor-id>
         </contributor>
 
         <contributor id="jungle-boogie">
@@ -7299,6 +7388,11 @@
         <contributor id="mihail.shvein">
             <contributor-name-display>Mihail Shvein</contributor-name-display>
             <contributor-id type="github">M1hacka</contributor-id>
+        </contributor>
+
+        <contributor id="mohamad.el.rifai">
+            <contributor-name-display>Mohamad El-Rifai</contributor-name-display>
+            <contributor-id type="github">melrifa1</contributor-id>
         </contributor>
 
         <contributor id="navid.golpayegani">

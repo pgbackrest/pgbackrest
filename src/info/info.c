@@ -143,13 +143,13 @@ infoLoad(Info *this, const Storage *storage, const String *fileName, bool copyFi
         const String *fileNameExt = copyFile ? strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName)) : fileName;
 
         // Attempt to load the file
-        StorageRead *infoRead = storageNewReadNP(storage, fileNameExt);
+        StorageRead *infoRead = storageNewReadP(storage, fileNameExt, .compressible = cipherType == cipherTypeNone);
 
         if (cipherType != cipherTypeNone)
         {
-            ioReadFilterGroupSet(
-                storageReadIo(infoRead),
-                ioFilterGroupAdd(ioFilterGroupNew(), cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL)));
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(infoRead)),
+                cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
         }
 
         // Load and parse the info file
@@ -338,13 +338,12 @@ infoSave(
         iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR, jsonFromStr(infoHash(ini)));
 
         // Save info file
-        IoWrite *infoWrite = storageWriteIo(storageNewWriteNP(storage, fileName));
+        IoWrite *infoWrite = storageWriteIo(storageNewWriteP(storage, fileName, .compressible = cipherType == cipherTypeNone));
 
         if (cipherType != cipherTypeNone)
         {
-            ioWriteFilterGroupSet(
-                infoWrite,
-                ioFilterGroupAdd(ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL)));
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(infoWrite), cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
         }
 
         iniSave(ini, infoWrite);

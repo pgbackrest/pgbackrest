@@ -57,15 +57,16 @@ typedef struct StorageInterface
     // Features implemented by the storage driver
     uint64_t feature;
 
+    bool (*copy)(StorageRead *source, StorageWrite *destination);
     bool (*exists)(void *driver, const String *file);
     StorageInfo (*info)(void *driver, const String *path, bool followLink);
     bool (*infoList)(void *driver, const String *file, StorageInfoListCallback callback, void *callbackData);
     StringList *(*list)(void *driver, const String *path, const String *expression);
     bool (*move)(void *driver, StorageRead *source, StorageWrite *destination);
-    StorageRead *(*newRead)(void *driver, const String *file, bool ignoreMissing);
+    StorageRead *(*newRead)(void *driver, const String *file, bool ignoreMissing, bool compressible);
     StorageWrite *(*newWrite)(
         void *driver, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-        time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
+        time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible);
     void (*pathCreate)(void *driver, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
     bool (*pathExists)(void *driver, const String *path);
     bool (*pathRemove)(void *driver, const String *path, bool recurse);
@@ -81,10 +82,14 @@ Storage *storageNew(
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 void *storageDriver(const Storage *this);
 StorageInterface storageInterface(const Storage *this);
+
+// The option is intended to be used only with the Perl interface since Perl is not tidy about where it reads.  It should be
+// removed when the Perl interface is removed.
+void storagePathEnforceSet(Storage *this, bool enforce);
 
 /***********************************************************************************************************************************
 Macros for function logging

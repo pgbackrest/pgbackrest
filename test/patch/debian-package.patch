@@ -1,0 +1,20 @@
+--- rules
++++ rules
+@@ -13,7 +13,7 @@
+ 
+ override_dh_auto_configure:
+ 	# src contains a seperate configure script.
+-	cd $(CURDIR)/src && ./configure
++	cd $(CURDIR)/src && ./configure --prefix=/usr
+ 	dh_auto_configure
+ 
+ override_dh_auto_build:
+@@ -36,7 +36,7 @@
+ 	dh_auto_clean
+ 
+ override_dh_auto_install:
+-	make -C src install DESTDIR=$(CURDIR)/debian/pgbackrest/usr/bin
++	make -C src install DESTDIR=$(CURDIR)/debian/pgbackrest
+ 	dh_auto_install
+ 
+ .PHONY: build

@@ -21,9 +21,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
-use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################

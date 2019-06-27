@@ -45,13 +45,6 @@
         <variable key="user-guide-os" if="{[os-type-is-centos6]}">RHEL/CentOS 6</variable>
         <variable key="user-guide-os" if="{[os-type-is-centos7]}">RHEL/CentOS 7</variable>
 
-        <variable key="pgbackrest-host-repo-path" eval="y">
-            use File::Basename qw(dirname);
-            use Cwd qw(abs_path);
-
-            dirname(dirname(abs_path($0)));
-        </variable>
-
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
         <!-- Path where CA certificates are installed -->
@@ -60,7 +53,7 @@
 
         <!-- Path where fake certificates are located -->
         <variable key="fake-cert-path-relative">resource/fake-cert</variable>
-        <variable key="fake-cert-path">{[pgbackrest-host-repo-path]}/doc/{[fake-cert-path-relative]}</variable>
+        <variable key="fake-cert-path">{[host-repo-path]}/doc/{[fake-cert-path-relative]}</variable>
 
         <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
         <variable key="pg-version" if="{[os-type-is-centos6]}">{[os-centos6-pg-version]}</variable>
@@ -156,7 +149,7 @@
         <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /tmp/$(mktemp -d):/run</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
-        <variable key="host-mount">{[pgbackrest-host-repo-path]}:{[pgbackrest-repo-path]}</variable>
+        <variable key="host-mount">{[host-repo-path]}:{[pgbackrest-repo-path]}</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
         <variable key="host-s3-id">s3</variable>
@@ -591,20 +584,6 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="s3-setup">
-        <execute-list host="{[s3-setup-host]}">
-            <title>Install packages required for S3-compatible object store support</title>
-
-            <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-             <execute if="{[os-type-is-centos]}" user="root" pre="y">
-                 <exe-cmd>yum install perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
-                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-             </execute>
-        </execute-list>
-
         <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
 
         <execute-list if="'{[s3-local]}' eq 'y'" host="{[s3-setup-host]}" show="n">
@@ -634,7 +613,6 @@
             <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-ca-file" if="{[os-type-is-centos]}">/etc/pki/tls/certs/ca-bundle.crt</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>

@@ -15,6 +15,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl ':mode';
 use File::Basename qw(dirname);
+use File::stat qw{lstat};
 use Storable qw(dclone);
 
 use pgBackRest::Archive::Info;
@@ -27,9 +28,8 @@ use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Storage::Posix::Driver;
-use pgBackRest::Storage::S3::Driver;
 use pgBackRest::Version;
+use pgBackRest::Storage::Base;
 
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostS3Test;
@@ -262,64 +262,67 @@ sub backupEnd
     }
 
     # Make sure tablespace links are correct
-    if (($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink()) && $self->hasLink())
+    if ($self->hasLink())
     {
-        my $hTablespaceManifest = storageRepo()->manifest(
-            STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
-
-        # Remove . and ..
-        delete($hTablespaceManifest->{'.'});
-        delete($hTablespaceManifest->{'..'});
-
-        # Iterate file links
-        for my $strFile (sort(keys(%{$hTablespaceManifest})))
+        if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink())
         {
-            # Make sure the link is in the expected manifest
-            my $hManifestTarget =
-                $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
+            my $hTablespaceManifest = storageRepo()->manifest(
+                STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
 
-            if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
-                $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
+            # Remove . and ..
+            delete($hTablespaceManifest->{'.'});
+            delete($hTablespaceManifest->{'..'});
+
+            # Iterate file links
+            for my $strFile (sort(keys(%{$hTablespaceManifest})))
             {
-                confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
+                # Make sure the link is in the expected manifest
+                my $hManifestTarget =
+                    $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
+
+                if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
+                    $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
+                {
+                    confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
+                }
+
+                # Make sure the link really is a link
+                if ($hTablespaceManifest->{$strFile}{type} ne 'l')
+                {
+                    confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
+                }
+
+                # Make sure the link destination is correct
+                my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
+
+                if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
+                {
+                    confess &log(ERROR,
+                        "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
+                        "'$hTablespaceManifest->{$strFile}{link_destination}'");
+                }
             }
 
-            # Make sure the link really is a link
-            if ($hTablespaceManifest->{$strFile}{type} ne 'l')
+            # Iterate manifest targets
+            for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
             {
-                confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
-            }
+                my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
+                my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
 
-            # Make sure the link destination is correct
-            my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
-
-            if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
-            {
-                confess &log(ERROR,
-                    "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
-                    "'$hTablespaceManifest->{$strFile}{link_destination}'");
+                # Make sure the target exists as a link on disk
+                if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
+                    !defined($hTablespaceManifest->{$strTablespaceId}))
+                {
+                    confess &log(ERROR,
+                        "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
+                }
             }
         }
-
-        # Iterate manifest targets
-        for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
+        # Else there should not be a tablespace directory at all
+        elsif (storageRepo()->pathExists(STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
         {
-            my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
-            my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
-
-            # Make sure the target exists as a link on disk
-            if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
-                !defined($hTablespaceManifest->{$strTablespaceId}))
-            {
-                confess &log(ERROR,
-                    "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
-            }
+            confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
         }
-    }
-    # Else there should not be a tablespace directory at all
-    elsif (storageRepo()->pathExists(STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
-    {
-        confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
     }
 
     # Check that latest link exists unless repo links are disabled
@@ -495,7 +498,8 @@ sub backupCompare
             my $lRepoSize =
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
-                    (storageRepo()->info(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->size;
+                    (storageRepo()->info(STORAGE_REPO_BACKUP .
+                        "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->{size};
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
@@ -1882,7 +1886,7 @@ sub restoreCompare
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
-            my $oStat = storageTest()->info($oActualManifest->dbPathGet($strSectionPath, $strName));
+            my $oStat = lstat($oActualManifest->dbPathGet($strSectionPath, $strName));
 
             # When performing a selective restore, the files for the database(s) that are not restored are still copied but as empty
             # sparse files (blocks == 0). If the file is not a sparse file or is a link, then get the actual checksum for comparison
@@ -2049,8 +2053,8 @@ sub backupDestination {return shift->{strBackupDestination}}
 sub backrestExe {return testRunGet()->backrestExe()}
 sub bogusHost {return shift->{bBogusHost}}
 sub hardLink {return shift->{bHardLink}}
-sub hasLink {storageRepo()->driver()->className() eq STORAGE_POSIX_DRIVER}
-sub isFS {storageRepo()->driver()->className() ne STORAGE_S3_DRIVER}
+sub hasLink {storageRepo()->capability(STORAGE_CAPABILITY_LINK)}
+sub isFS {storageRepo()->type() ne STORAGE_S3}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
 sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}

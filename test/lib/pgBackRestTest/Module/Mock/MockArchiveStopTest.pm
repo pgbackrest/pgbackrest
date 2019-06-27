@@ -73,14 +73,12 @@ sub run
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true, bS3 => $bS3,
             bRepoEncrypt => $bEncrypt});
 
-        my $oStorage = storageRepo();
-
         # Create compression extension
         my $strCompressExt = $bCompress ? qw{.} . COMPRESS_EXT : '';
 
         # Create the wal path
         my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        $oStorage->pathCreate($strWalPath, {bCreateParent => true});
+        storageTest()->pathCreate($strWalPath, {bCreateParent => true});
 
         # Create the test path for pg_control and generate pg_control for stanza-create
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
@@ -97,7 +95,7 @@ sub run
         if ($iError == 0)
         {
             $oHostBackup->infoMunge(
-                $oStorage->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
+                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
                 {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'},
                  &INFO_ARCHIVE_SECTION_DB_HISTORY => {1 => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}}});
         }
@@ -121,12 +119,12 @@ sub run
         # Fix the database version
         if ($iError == 0)
         {
-            $oHostBackup->infoRestore($oStorage->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
+            $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {$oStorage->list(
+            sub {storageRepo()->list(
                 STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001')},
             "000000010000000100000001-${strWalHash}${strCompressExt}",
             'segment 2-4 not pushed', {iWaitSeconds => 5});
@@ -135,7 +133,7 @@ sub run
         $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 5);
 
         $self->testResult(
-            sub {$oStorage->list(
+            sub {storageRepo()->list(
                 STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001')},
             "(000000010000000100000001-${strWalHash}${strCompressExt}, " .
                 "000000010000000100000005-${strWalHash}${strCompressExt})",

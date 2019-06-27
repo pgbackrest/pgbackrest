@@ -9,8 +9,10 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
+use File::Basename qw(dirname);
 use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
@@ -1080,12 +1082,30 @@ sub sectionChildProcess
                     $strImage = $strPreImage;
                 }
 
+                my $strHostRepoPath = dirname(dirname(abs_path($0)));
+
+                # Replace host repo path in mounts with if present
+                my $strMount = undef;
+
+                if (defined($oChild->paramGet('mount', false)))
+                {
+                    $strMount = $self->{oManifest}->variableReplace($oChild->paramGet('mount'));
+                    $strMount =~ s/\{\[host\-repo\-path\]\}/${strHostRepoPath}/g;
+                }
+
+                # Replace host repo mount in params if present
+                my $strOption = $$hCacheKey{option};
+
+                if (defined($strOption))
+                {
+                    $strOption =~ s/\{\[host\-repo\-path\]\}/${strHostRepoPath}/g;
+                }
+
                 my $oHost = new pgBackRestTest::Common::HostTest(
                     $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage,
                     $self->{oManifest}->variableReplace($oChild->paramGet('user')), $$hCacheKey{os},
-                    defined($oChild->paramGet('mount', false)) ?
-                        [$self->{oManifest}->variableReplace($oChild->paramGet('mount'))] : undef,
-                    $$hCacheKey{option}, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
+                    defined($strMount) ? [$strMount] : undef,
+                    $strOption, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet('host-' . $hCacheKey->{id} . '-ip', $oHost->{strIP}, true);

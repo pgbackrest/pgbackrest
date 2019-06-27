@@ -22,7 +22,6 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::Expire;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 
@@ -261,7 +260,6 @@ sub run
             $self->configTestLoad(CFGCMD_EXPIRE);
 
             $strDescription = 'Expiration cannot occur due to info file db mismatch';
-            my $oExpire = new pgBackRest::Expire();
 
             # Mismatched version
             $oHostBackup->infoMunge(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
@@ -273,11 +271,6 @@ sub run
                         {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93,
                             &INFO_ARCHIVE_KEY_DB_ID => $self->dbSysId(PG_VERSION_95)}}});
 
-            $self->testException(sub {$oExpire->process()},
-                ERROR_FILE_INVALID,
-                "archive and backup database versions do not match\n" .
-                "HINT: has a stanza-upgrade been performed?");
-
             # Restore the info file
             $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
 
@@ -288,11 +281,6 @@ sub run
                  &INFO_ARCHIVE_SECTION_DB_HISTORY =>
                     {'3' =>
                         {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_95, &INFO_ARCHIVE_KEY_DB_ID => 6999999999999999999}}});
-
-            $self->testException(sub {$oExpire->process()},
-                ERROR_FILE_INVALID,
-                "archive and backup database versions do not match\n" .
-                "HINT: has a stanza-upgrade been performed?");
 
             # Restore the info file
             $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));

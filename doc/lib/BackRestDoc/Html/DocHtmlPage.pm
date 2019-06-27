@@ -91,7 +91,7 @@ sub process
 
     my $oHtmlBuilder = new BackRestDoc::Html::DocHtmlBuilder(
         $self->{oManifest}->variableReplace('{[project]}' . (defined($self->{oManifest}->variableGet('project-tagline')) ?
-            $self->{oManifest}->variableGet('project-tagline') : '')),
+            ' - ' . $self->{oManifest}->variableGet('project-tagline') : '')),
         $self->{oManifest}->variableReplace($strTitle . (defined($strSubTitle) ? " - ${strSubTitle}" : '')),
         $self->{oManifest}->variableGet('project-favicon'),
         $self->{oManifest}->variableGet('project-logo'),

@@ -3,7 +3,7 @@
 #
 # Implements storage functions for Posix-compliant file systems.
 ####################################################################################################################################
-package pgBackRest::Storage::Posix::Driver;
+package pgBackRestTest::Common::StoragePosix;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -19,8 +19,8 @@ use File::stat qw{lstat};
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Posix::FileRead;
-use pgBackRest::Storage::Posix::FileWrite;
+use pgBackRestTest::Common::StoragePosixRead;
+use pgBackRestTest::Common::StoragePosixWrite;
 
 ####################################################################################################################################
 # Package name constant
@@ -612,7 +612,7 @@ sub openRead
         {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
     );
 
-    my $oFileIO = new pgBackRest::Storage::Posix::FileRead($self, $strFile, {bIgnoreMissing => $bIgnoreMissing});
+    my $oFileIO = new pgBackRestTest::Common::StoragePosixRead($self, $strFile, {bIgnoreMissing => $bIgnoreMissing});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -653,7 +653,7 @@ sub openWrite
         {name => 'bAtomic', optional => true, trace => true},
     );
 
-    my $oFileIO = new pgBackRest::Storage::Posix::FileWrite(
+    my $oFileIO = new pgBackRestTest::Common::StoragePosixWrite(
         $self, $strFile,
         {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lTimestamp, bPathCreate => $bPathCreate,
             bAtomic => $bAtomic, bSync => $self->{bFileSync}});
@@ -901,14 +901,14 @@ sub remove
     my
     (
         $strOperation,
-        $strPathFile,
+        $xstryPathFile,
         $bIgnoreMissing,
         $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->remove', \@_,
-            {name => 'strPathFile', trace => true},
+            {name => 'xstryPathFile', trace => true},
             {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
             {name => 'bRecurse', optional => true, default => false, trace => true},
         );
@@ -919,16 +919,36 @@ sub remove
     # Remove a tree
     if ($bRecurse)
     {
-        # Dynamically load the driver
-        require pgBackRest::LibC;
-        pgBackRest::LibC->import(qw(:storage));
+        my $oManifest = $self->manifest($xstryPathFile, {bIgnoreMissing => true});
 
-        storagePosixPathRemove($strPathFile, !$bIgnoreMissing, $bRecurse)
+        # Iterate all files in the manifest
+        foreach my $strFile (sort({$b cmp $a} keys(%{$oManifest})))
+        {
+            # remove directory
+            if ($oManifest->{$strFile}{type} eq 'd')
+            {
+                my $xstryPathFileRemove = $strFile eq '.' ? $xstryPathFile : "${xstryPathFile}/${strFile}";
+
+                if (!rmdir($xstryPathFileRemove))
+                {
+                    # Throw error if this is not an ignored missing path
+                    if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
+                    {
+                        logErrorResult(ERROR_PATH_REMOVE, "unable to remove path '${strFile}'", $OS_ERROR);
+                    }
+                }
+            }
+            # Remove file
+            else
+            {
+                $self->remove("${xstryPathFile}/${strFile}", {bIgnoreMissing => true});
+            }
+        }
     }
     # Only remove the specified file
     else
     {
-        foreach my $strFile (ref($strPathFile) ? @{$strPathFile} : ($strPathFile))
+        foreach my $strFile (ref($xstryPathFile) ? @{$xstryPathFile} : ($xstryPathFile))
         {
             if (unlink($strFile) != 1)
             {
@@ -955,7 +975,6 @@ sub remove
 ####################################################################################################################################
 # Getters/Setters
 ####################################################################################################################################
-sub capability {true}
 sub className {STORAGE_POSIX_DRIVER}
 sub tempExtension {shift->{strTempExtension}}
 sub tempExtensionSet {my $self = shift; $self->{strTempExtension} = shift}

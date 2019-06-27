@@ -56,6 +56,7 @@ ioReadNew(void *driver, IoReadInterface interface)
         this->memContext = memContextCurrent();
         this->driver = driver;
         this->interface = interface;
+        this->filterGroup = ioFilterGroupNew();
         this->input = bufNew(ioBufferSize());
     }
     MEM_CONTEXT_NEW_END();
@@ -75,19 +76,14 @@ ioReadOpen(IoRead *this)
 
     ASSERT(this != NULL);
     ASSERT(!this->opened && !this->closed);
+    ASSERT(ioFilterGroupSize(this->filterGroup) == 0 || !ioReadBlock(this));
 
     // Open if the driver has an open function
     bool result = this->interface.open != NULL ? this->interface.open(this->driver) : true;
 
     // Only open the filter group if the read was opened
     if (result)
-    {
-        // If no filter group exists create one to do buffering
-        if (this->filterGroup == NULL)
-            this->filterGroup = ioFilterGroupNew();
-
         ioFilterGroupOpen(this->filterGroup);
-    }
 
 #ifdef DEBUG
     this->opened = result;
@@ -359,9 +355,7 @@ ioReadEof(const IoRead *this)
 }
 
 /***********************************************************************************************************************************
-Get/set filters
-
-Filters must be set before open and cannot be reset.
+Get filter group if filters need to be added
 ***********************************************************************************************************************************/
 IoFilterGroup *
 ioReadFilterGroup(const IoRead *this)
@@ -373,25 +367,6 @@ ioReadFilterGroup(const IoRead *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->filterGroup);
-}
-
-IoRead *
-ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_READ, this);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(filterGroup != NULL);
-    ASSERT(this->filterGroup == NULL);
-    ASSERT(!this->opened && !this->closed);
-    ASSERT(!ioReadBlock(this));
-
-    this->filterGroup = ioFilterGroupMove(filterGroup, this->memContext);
-
-    FUNCTION_LOG_RETURN(IO_READ, this);
 }
 
 /***********************************************************************************************************************************

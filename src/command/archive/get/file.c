@@ -132,6 +132,9 @@ archiveGetFile(
     // By default result indicates WAL segment not found
     int result = 1;
 
+    // Is the file compressible during the copy?
+    bool compressible = true;
+
     // Test for stop file
     lockStopTest();
 
@@ -146,26 +149,27 @@ archiveGetFile(
                 storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable,
                 .noAtomic = !durable);
 
-            // Add filters
-            IoFilterGroup *filterGroup = ioFilterGroupNew();
-
             // If there is a cipher then add the decrypt filter
             if (cipherType != cipherTypeNone)
             {
                 ioFilterGroupAdd(
-                    filterGroup, cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(archiveGetCheckResult.cipherPass), NULL));
+                    ioWriteFilterGroup(storageWriteIo(destination)), cipherBlockNew(cipherModeDecrypt, cipherType,
+                        BUFSTR(archiveGetCheckResult.cipherPass), NULL));
+                compressible = false;
             }
 
             // If file is compressed then add the decompression filter
             if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZIP_EXT))
-                ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
-
-            ioWriteFilterGroupSet(storageWriteIo(destination), filterGroup);
+            {
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), gzipDecompressNew(false));
+                compressible = false;
+            }
 
             // Copy the file
             storageCopyNP(
-                storageNewReadNP(
-                    storageRepo(), strNewFmt("%s/%s", STORAGE_REPO_ARCHIVE, strPtr(archiveGetCheckResult.archiveFileActual))),
+                storageNewReadP(
+                    storageRepo(), strNewFmt("%s/%s", STORAGE_REPO_ARCHIVE, strPtr(archiveGetCheckResult.archiveFileActual)),
+                    .compressible = compressible),
                 destination);
 
             // The WAL file was found

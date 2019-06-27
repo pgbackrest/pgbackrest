@@ -27,7 +27,6 @@ use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;
-use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -409,9 +408,6 @@ sub reconstruct
         # Get the db-system-id from the WAL file depending on the version of postgres
         my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
 
-        # Read first 8k of WAL segment
-        my $tBlock;
-
         # Error if the file encryption setting is not valid for the repo
         if (!storageRepo()->encryptionValid(storageRepo()->encrypted($strArchiveFilePath)))
         {
@@ -423,10 +419,12 @@ sub reconstruct
         my $oFileIo = storageRepo()->openRead(
             $strArchiveFilePath,
             {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
-                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef,
+                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]}] : undef,
             strCipherPass => $self->cipherPassSub()});
+        $oFileIo->open();
 
-        $oFileIo->read(\$tBlock, 512, true);
+        my $tBlock;
+        $oFileIo->read(\$tBlock, 512);
         $oFileIo->close();
 
         # Get the required data from the file that was pulled into scalar $tBlock

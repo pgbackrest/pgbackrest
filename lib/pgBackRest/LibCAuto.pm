@@ -74,8 +74,6 @@ sub libcAutoExportTag
         checksum =>
         [
             'pageChecksum',
-            'pageChecksumBufferTest',
-            'pageChecksumTest',
         ],
 
         config =>
@@ -352,7 +350,7 @@ sub libcAutoExportTag
 
         storage =>
         [
-            'storagePosixPathRemove',
+            'storageRepoFree',
         ],
 
         test =>

@@ -34,14 +34,15 @@ void ioFilterGroupOpen(IoFilterGroup *this);
 void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output);
 void ioFilterGroupClose(IoFilterGroup *this);
 
-IoFilterGroup *ioFilterGroupMove(IoFilterGroup *this, MemContext *parentNew);
-
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
 bool ioFilterGroupDone(const IoFilterGroup *this);
 bool ioFilterGroupInputSame(const IoFilterGroup *this);
+Variant *ioFilterGroupParamAll(const IoFilterGroup *this);
 const Variant *ioFilterGroupResult(const IoFilterGroup *this, const String *filterType);
+const Variant *ioFilterGroupResultAll(const IoFilterGroup *this);
+unsigned int ioFilterGroupSize(const IoFilterGroup *this);
 
 /***********************************************************************************************************************************
 Destructor
