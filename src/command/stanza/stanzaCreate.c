@@ -72,20 +72,22 @@ cmdStanzaCreate(void)
             !storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE)) &&
             !storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT)))
         {
-            char cipherPassSub[64];  // CSHANG Is 64 here correct?
+            String *cipherPassSub = NULL;
 
             // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent files
-            if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)
+            if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) != cipherTypeNone)
             {
                 size_t bufferSize = 48;  // CSHANG In perl: $strCipherPass = encodeToStr(ENCODE_TYPE_BASE64, cryptoRandomBytes($iKeySizeInBytes));  iKeySizeInBytes is 48 and no one ever calls w/o default  -- so is using 48 here correct? and if so, maybe there should be a constant?
                 unsigned char *buffer = memNew(bufferSize);
                 cryptoRandomBytes(buffer, bufferSize);
-                encodeToStr(encodeBase64, buffer, bufferSize, cipherPassSub);
+                char cipherPassSubChar[64];  // CSHANG Is 64 here correct?
+                encodeToStr(encodeBase64, buffer, bufferSize, cipherPassSubChar);
+                cipherPassSub = strNew(cipherPassSubChar);
             }
 
             InfoArchive *infoArchive = infoArchiveSet(
                 infoArchiveNew(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                STR(cipherPassSub));
+                cipherPassSub);
 
             infoArchiveSave(infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));

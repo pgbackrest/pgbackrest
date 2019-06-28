@@ -308,7 +308,7 @@ Save to file
 void
 infoSave(
     Info *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
-{
+{ // CSHANG Why is cipherType not a const?
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO, this);
         FUNCTION_LOG_PARAM(INI, ini);

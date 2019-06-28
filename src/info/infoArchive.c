@@ -103,7 +103,7 @@ Set the InfoArchive object data based on values passed.
 ***********************************************************************************************************************************/
 InfoArchive *
 infoArchiveSet(
-    InfoArchive *this, const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub)
+    InfoArchive *this, const unsigned int pgVersion, const uint64_t pgSystemId, const CipherType cipherType, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
@@ -114,11 +114,12 @@ infoArchiveSet(
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(cipherType == cipherTypeNone || (cipherPassSub != NULL));
+    ASSERT ((cipherType == cipherTypeNone || cipherPassSub != NULL) && (cipherType != cipherTypeNone || cipherPassSub == NULL));
+    // CSHANG (cipherType == cipherTypeNone || cipherPassSub != NULL) will not error if CT=NONE, CP!=NULL then 1 || 1 = 1 !1 so we need to be sure we're not setting cipherPassSub
 
     MEM_CONTEXT_BEGIN(this->memContext)  // CSHANG Is this right?
     {
-        this->infoPg = infoPgSet(infoPgNew(), infoPgArchive, pgVersion, pgSystemId, 0, 0, cipherPassSub);
+        this->infoPg = infoPgSet(infoPgNew(), infoPgArchive, pgVersion, pgSystemId, 0, 0, cipherType, cipherPassSub);
         // Store the archiveId for the current PG db-version db-id
         this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
     }

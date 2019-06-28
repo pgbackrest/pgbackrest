@@ -189,7 +189,7 @@ Set the InfoPg object data based on values passed.
 InfoPg *
 infoPgSet(
     InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const uint32_t pgControlVersion,
-    const uint32_t pgCatalogVersion, const String *cipherPassSub)
+    const uint32_t pgCatalogVersion, const CipherType cipherType, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
@@ -198,12 +198,16 @@ infoPgSet(
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
         FUNCTION_TEST_PARAM(UINT32, pgCatalogVersion);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(type == infoPgArchive || (pgControlVersion != 0 && pgCatalogVersion != 0));
+    ASSERT(type == infoPgArchive || (pgControlVersion != 0 && pgCatalogVersion != 0));  // CSHANG Confirm this works as expected
+    ASSERT((cipherType == cipherTypeNone || cipherPassSub != NULL) && (cipherType != cipherTypeNone || cipherPassSub == NULL));
 
+    // Initialize info if there is no data yet. If cipherType is None then cipherPassSub must be NULL (the ASSERT ensures
+    // cipherPassSub is NULL only if cipherType is None)
     if (infoPgDataTotal(this) == 0)
         this->info = infoNew(cipherPassSub);
 
