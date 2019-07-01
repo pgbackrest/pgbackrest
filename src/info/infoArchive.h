@@ -26,7 +26,8 @@ Archive info filename
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-InfoArchive *infoArchiveNew(void);
+InfoArchive *infoArchiveNew(
+    const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub);
 InfoArchive *infoArchiveNewLoad(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 

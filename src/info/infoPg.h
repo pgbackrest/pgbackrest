@@ -50,7 +50,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-InfoPg *infoPgNew(void);
+InfoPg *infoPgNew(CipherType cipherType, const String *cipherPass);
 InfoPg *infoPgNewLoad(
     const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass, Ini **ini);
 
@@ -60,7 +60,7 @@ Functions
 void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
 InfoPg *infoPgSet(
     InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const uint32_t pgControlVersion,
-    const uint32_t pgCatalogVersion, const CipherType cipherType, const String *cipherPassSub);
+    const uint32_t pgCatalogVersion);
 void infoPgSave(
     InfoPg *this, Ini *ini, const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType,
     const String *cipherPass);

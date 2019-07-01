@@ -30,11 +30,12 @@ struct InfoArchive
 
 OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 
+
 /***********************************************************************************************************************************
-Create new object
+Internal constructor
 ***********************************************************************************************************************************/
-InfoArchive *
-infoArchiveNew(void)
+static InfoArchive *
+infoArchiveNewInternal(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
@@ -47,6 +48,28 @@ infoArchiveNew(void)
         this->memContext = MEM_CONTEXT_NEW();
     }
     MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
+}
+
+/***********************************************************************************************************************************
+Create new object
+***********************************************************************************************************************************/
+InfoArchive *
+infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_LOG_PARAM(STRING, cipherPassSub);
+    FUNCTION_LOG_END();
+
+    InfoArchive *this = infoArchiveNewInternal();
+
+    // Initialize the pg data and set the archiveId for the current PG db-version and db-id
+    this->infoPg = infoPgSet(infoPgNew(cipherType, cipherPassSub), infoPgArchive, pgVersion, pgSystemId, 0, 0);
+    this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
@@ -68,7 +91,7 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    InfoArchive *this = infoArchiveNew();
+    InfoArchive *this = infoArchiveNewInternal();
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -90,36 +113,6 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
         }
         TRY_END();
 
-        // Store the archiveId for the current PG db-version db-id
-        this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
-}
-
-/***********************************************************************************************************************************
-Set the InfoArchive object data based on values passed.
-***********************************************************************************************************************************/
-InfoArchive *
-infoArchiveSet(
-    InfoArchive *this, const unsigned int pgVersion, const uint64_t pgSystemId, const CipherType cipherType, const String *cipherPassSub)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
-        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT ((cipherType == cipherTypeNone || cipherPassSub != NULL) && (cipherType != cipherTypeNone || cipherPassSub == NULL));
-    // CSHANG (cipherType == cipherTypeNone || cipherPassSub != NULL) will not error if CT=NONE, CP!=NULL then 1 || 1 = 1 !1 so we need to be sure we're not setting cipherPassSub
-
-    MEM_CONTEXT_BEGIN(this->memContext)  // CSHANG Is this right?
-    {
-        this->infoPg = infoPgSet(infoPgNew(), infoPgArchive, pgVersion, pgSystemId, 0, 0, cipherType, cipherPassSub);
         // Store the archiveId for the current PG db-version db-id
         this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
     }

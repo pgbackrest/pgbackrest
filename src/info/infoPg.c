@@ -47,10 +47,10 @@ struct InfoPg
 OBJECT_DEFINE_FREE(INFO_PG);
 
 /***********************************************************************************************************************************
-Create new object
+Internal constructor
 ***********************************************************************************************************************************/
-InfoPg *
-infoPgNew(void)
+static InfoPg *
+infoPgNewInternal(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
@@ -62,15 +62,30 @@ infoPgNew(void)
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->info = NULL;
-
         // Get the pg history list
         this->history = lstNew(sizeof(InfoPgData));
-
-// CSHANG Don't really like this because 0 is index to first history which here is empty. Might be nicer to have -1 and then can alway increment...
+// CSHANG I feel like we should set this to the max for an unsigned int so that we'll know it is not valid
         this->historyCurrent = 0;
     }
     MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(INFO_PG, this);
+}
+
+/***********************************************************************************************************************************
+Create new object
+***********************************************************************************************************************************/
+InfoPg *
+infoPgNew(CipherType cipherType, const String *cipherPassSub)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+    FUNCTION_LOG_END();
+
+    InfoPg *this = infoPgNewInternal();
+
+    this->info = infoNew(cipherType, cipherPassSub);
 
     FUNCTION_LOG_RETURN(INFO_PG, this);
 }
@@ -95,7 +110,7 @@ infoPgNewLoad(
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    InfoPg *this = infoPgNew();
+    InfoPg *this = infoPgNewInternal();
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -177,7 +192,6 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
     ASSERT(infoPgData != NULL);
 
     lstInsert(this->history, 0, infoPgData);
-// CSHANG If adding to the list, we need to update the historyCurrent, which means adding it here needs to update the infoPg tests
     this->historyCurrent = 0;
 
     FUNCTION_LOG_RETURN_VOID();
@@ -189,7 +203,7 @@ Set the InfoPg object data based on values passed.
 InfoPg *
 infoPgSet(
     InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const uint32_t pgControlVersion,
-    const uint32_t pgCatalogVersion, const CipherType cipherType, const String *cipherPassSub)
+    const uint32_t pgCatalogVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
@@ -198,24 +212,16 @@ infoPgSet(
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
         FUNCTION_TEST_PARAM(UINT32, pgCatalogVersion);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(type == infoPgArchive || (pgControlVersion != 0 && pgCatalogVersion != 0));  // CSHANG Confirm this works as expected
-    ASSERT((cipherType == cipherTypeNone || cipherPassSub != NULL) && (cipherType != cipherTypeNone || cipherPassSub == NULL));
-
-    // Initialize info if there is no data yet. If cipherType is None then cipherPassSub must be NULL (the ASSERT ensures
-    // cipherPassSub is NULL only if cipherType is None)
-    if (infoPgDataTotal(this) == 0)
-        this->info = infoNew(cipherPassSub);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         unsigned int pgDataId = 1;
 
-        // If there is some history, then get the historyId of the most current
+        // If there is some history, then get the historyId of the most current and increment it
         if (infoPgDataTotal(this) > 0)
             pgDataId = infoPgCurrentDataId(this) + 1;
 
@@ -237,6 +243,7 @@ infoPgSet(
         else if (type != infoPgArchive)
             THROW_FMT(AssertError, "invalid InfoPg type %u", type);
 
+        // Add the pg data to the history list
         infoPgAdd(this, &infoPgData);
     }
     MEM_CONTEXT_TEMP_END();

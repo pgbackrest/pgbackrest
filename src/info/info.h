@@ -29,7 +29,7 @@ Constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Info *infoNew(const String *cipherPassSub);
+Info *infoNew(CipherType cipherType, const String *cipherPassSub);
 Info *infoNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass, Ini **ini);
 
 /***********************************************************************************************************************************

@@ -14,6 +14,36 @@ testRun(void)
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
+    if (testBegin("infoNew()"))
+    {
+        Info *info = NULL;
+        String *cipherPass = strNew("123xyz");
+
+        // cipherTypeNone, cipherTypeAes256Cbc
+
+        TEST_ASSIGN(info, infoNew(cipherTypeAes256Cbc, cipherPass), "infoNew(cipher)");
+        TEST_RESULT_PTR(infoCipherPass(info), cipherPass, "    cipherPass is set");
+
+        TEST_ASSIGN(info, infoNew(cipherTypeNone, NULL), "infoNew(NULL)");
+        TEST_RESULT_PTR(infoCipherPass(info), NULL, "    cipherPass is NULL");
+
+        TEST_ERROR(
+            infoNew(cipherTypeNone, strNew("")), AssertError,
+            "assertion '!((cipherType == cipherTypeNone && cipherPassSub != NULL) || (cipherType != cipherTypeNone && "
+            "(cipherPassSub == NULL || strSize(cipherPassSub) == 0)))' failed");
+
+        TEST_ERROR(
+            infoNew(cipherTypeAes256Cbc, strNew("")), AssertError,
+            "assertion '!((cipherType == cipherTypeNone && cipherPassSub != NULL) || (cipherType != cipherTypeNone && "
+            "(cipherPassSub == NULL || strSize(cipherPassSub) == 0)))' failed");
+
+        TEST_ERROR(
+            infoNew(cipherTypeAes256Cbc, NULL), AssertError,
+            "assertion '!((cipherType == cipherTypeNone && cipherPassSub != NULL) || (cipherType != cipherTypeNone && "
+            "(cipherPassSub == NULL || strSize(cipherPassSub) == 0)))' failed");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("infoNewLoad(), infoFileName(), infoIni()"))
     {
         // Initialize test variables
@@ -245,7 +275,7 @@ testRun(void)
 
         Ini *ini = iniNew();
         iniSet(ini, strNew("section1"), strNew("key1"), strNew("value1"));
-        TEST_RESULT_VOID(infoSave(infoNew(), ini, storageTest, fileName, cipherTypeNone, NULL), "save info");
+        TEST_RESULT_VOID(infoSave(infoNew(cipherTypeNone, NULL), ini, storageTest, fileName, cipherTypeNone, NULL), "save info");
 
         ini = NULL;
         TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeNone, NULL, &ini), "    reload info");
@@ -258,8 +288,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ini = iniNew();
         iniSet(ini, strNew("section1"), strNew("key1"), strNew("value4"));
-        Info *info = infoNew();
-        info->cipherPass = strNew("/badpass");
+        Info *info = infoNew(cipherTypeAes256Cbc, strNew("/badpass"));
         TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
 
         ini = NULL;

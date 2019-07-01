@@ -44,6 +44,51 @@ struct Info
 OBJECT_DEFINE_FREE(INFO);
 
 /***********************************************************************************************************************************
+Internal constructor
+***********************************************************************************************************************************/
+static Info *
+infoNewInternal(void)
+{
+    FUNCTION_LOG_VOID(logLevelTrace);
+
+    Info *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("Info")
+    {
+        // Create object
+        this = memNew(sizeof(Info));
+        this->memContext = MEM_CONTEXT_NEW();
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(INFO, this);
+}
+
+/***********************************************************************************************************************************
+Create new object
+***********************************************************************************************************************************/
+Info *
+infoNew(CipherType cipherType, const String *cipherPassSub)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPassSub);                 // Use FUNCTION_TEST so cipher is not logged
+    FUNCTION_LOG_END();
+
+    // Ensure cipherPassSub is set and not an empty string when cipherType is not NONE and is not set when cipherType is NONE
+    ASSERT(!((cipherType == cipherTypeNone && cipherPassSub != NULL) ||
+        (cipherType != cipherTypeNone && (cipherPassSub == NULL || strSize(cipherPassSub) == 0))));
+
+    Info *this = infoNewInternal();
+
+    // Cipher used to encrypt/descrypt subsequent dependent files. Value may be NULL.
+    if (cipherPassSub != NULL)
+        this->cipherPass = cipherPassSub;
+
+    FUNCTION_LOG_RETURN(INFO, this);
+}
+
+/***********************************************************************************************************************************
 Generate hash for the contents of an ini file
 ***********************************************************************************************************************************/
 String *
@@ -208,30 +253,6 @@ infoLoad(Info *this, const Storage *storage, const String *fileName, bool copyFi
 }
 
 /***********************************************************************************************************************************
-Create new object
-***********************************************************************************************************************************/
-Info *
-infoNew(const String *cipherPassSub)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, cipherPassSub);      // Cipher used to encrypt/descrypt dependent files. Value may be NULL.
-    FUNCTION_LOG_END();
-
-    Info *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("Info")
-    {
-        // Create object
-        this = memNew(sizeof(Info));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->cipherPass = cipherPassSub;
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(INFO, this);
-}
-
-/***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 Info *
@@ -249,7 +270,7 @@ infoNewLoad(const Storage *storage, const String *fileName, CipherType cipherTyp
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    Info *this = infoNew(NULL);
+    Info *this = infoNewInternal();
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -289,10 +310,10 @@ infoNewLoad(const Storage *storage, const String *fileName, CipherType cipherTyp
         TRY_END();
 
         // Load the cipher passphrase if it exists
-        const String *cipherPass = iniGetDefault(iniLocal, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL);
+        const String *cipherPassSub = iniGetDefault(iniLocal, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL);
 
-        if (cipherPass != NULL)
-            this->cipherPass = jsonToStr(cipherPass);
+        if (cipherPassSub != NULL)
+            this->cipherPass = jsonToStr(cipherPassSub);
 
         if (ini != NULL)
             *ini = iniMove(iniLocal, MEM_CONTEXT_OLD());
