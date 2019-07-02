@@ -10,7 +10,7 @@ void
 testRun(void)
 {
     // *****************************************************************************************************************************
-    if (testBegin("infoPgNew(), infoPgSet()"))
+    if (testBegin("infoPgNew(), infoPgNewInternal(), infoPgSet()"))
     {
         InfoPg *infoPg = NULL;
 
@@ -79,6 +79,10 @@ testRun(void)
         TEST_RESULT_INT(pgData.version, PG_VERSION_95, "  version set");
         TEST_RESULT_INT(pgData.catalogVersion, 950, "  catalog-version set");
         TEST_RESULT_INT(pgData.controlVersion, 201510051, "  control-version set");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(infoPg, infoPgNewInternal(), "infoPgNewInternal()");
+        TEST_RESULT_PTR(infoPgInfo(infoPg), NULL, "  info not set");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(

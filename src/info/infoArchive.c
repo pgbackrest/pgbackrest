@@ -16,6 +16,7 @@ Archive Info Handler
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -53,17 +54,19 @@ infoArchiveNewInternal(void)
 }
 
 /***********************************************************************************************************************************
-Create new object
+Create new object without loading it from a file
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub)
+infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_LOG_PARAM(STRING, cipherPassSub);
+        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
+
+    ASSERT(pgVersion > 0 && pgSystemId > 0); // CSHANG Is there a better way to verify the version/systemid? Maybe a validate function? A: maybe do version to string as a CHECK
 
     InfoArchive *this = infoArchiveNewInternal();
 

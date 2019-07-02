@@ -64,7 +64,7 @@ infoPgNewInternal(void)
 
         // Get the pg history list
         this->history = lstNew(sizeof(InfoPgData));
-// CSHANG I feel like we should set this to the max for an unsigned int so that we'll know it is not valid
+
         this->historyCurrent = 0;
     }
     MEM_CONTEXT_NEW_END();

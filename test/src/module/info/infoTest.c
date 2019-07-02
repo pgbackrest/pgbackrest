@@ -271,29 +271,37 @@ testRun(void)
     if (testBegin("infoSave()"))
     {
         const String *fileName = strNew("test.info");
-        const String *cipherPass = strNew("12345");
+        const String *cipherPass = strNew("123xyz");
 
         Ini *ini = iniNew();
         iniSet(ini, strNew("section1"), strNew("key1"), strNew("value1"));
-        TEST_RESULT_VOID(infoSave(infoNew(cipherTypeNone, NULL), ini, storageTest, fileName, cipherTypeNone, NULL), "save info");
+        Info *info = infoNew(cipherTypeNone, NULL);
+        TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeNone, NULL), "save info");
 
         ini = NULL;
         TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeNone, NULL, &ini), "    reload info");
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value1", "    check ini");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, fileName), true, "check main exists");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))), true, "check main exists");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))), true, "check copy exists");
+
+        TEST_ERROR(
+            infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), CryptoError,
+            "cipher sub not valid with cipher type");
 
         // Add encryption
         // -------------------------------------------------------------------------------------------------------------------------
         ini = iniNew();
         iniSet(ini, strNew("section1"), strNew("key1"), strNew("value4"));
-        Info *info = infoNew(cipherTypeAes256Cbc, strNew("/badpass"));
+        info = infoNew(cipherTypeAes256Cbc, strNew("/badpass"));   // CSHANG why is this a "badpass"? joke
         TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
 
         ini = NULL;
         TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, &ini), "    reload info");
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value4", "    check ini");
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"/badpass\"", "    check cipher-pass");
+
+        TEST_ERROR(
+            infoSave(info, ini, storageTest, fileName, cipherTypeNone, NULL), CryptoError, "cipher sub not valid with cipher type");
     }
 }
