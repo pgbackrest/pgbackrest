@@ -343,17 +343,9 @@ infoSave(
     ASSERT(ini != NULL);
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
-    // ASSERT(cipherType == cipherTypeNone || cipherPass != NULL); // CHSNAG - should put this back and remove below assert since this is checked via param load
-    // Ensure cipherPass is set and not an empty string when cipherType is not NONE and is not set when cipherType is NONE
-    ASSERT(!((cipherType == cipherTypeNone && cipherPass != NULL) ||
-        (cipherType != cipherTypeNone && (cipherPass == NULL || strSize(cipherPass) == 0))));
-
-// CSHANG Make this THROW an ASSERT
-    if ((cipherType != cipherTypeNone && this->cipherPass == NULL) ||
-        (cipherType == cipherTypeNone && this->cipherPass != NULL))
-    {
-        THROW(CryptoError, "cipher sub not valid with cipher type");
-    }
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT(!((cipherType != cipherTypeNone && this->cipherPass == NULL) ||
+        (cipherType == cipherTypeNone && this->cipherPass != NULL)));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

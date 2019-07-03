@@ -17,6 +17,7 @@ testRun(void)
     String *fileName = strNewFmt("%s/test.ini", testPath());
     String *fileName2 = strNewFmt("%s/test2.ini", testPath());
     InfoArchive *info = NULL;
+    String *cipherPass = strNew("123xyz");
 
     // *****************************************************************************************************************************
     if (testBegin(
@@ -84,10 +85,6 @@ testRun(void)
                 storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
             true, "    saved files are equal");
 
-        TEST_ERROR(
-            infoArchiveSave(info, storageLocalWrite(), fileName2, cipherTypeAes256Cbc, strNew("123xyz")), CryptoError,
-            "cipher sub not valid with cipher type");
-
         // Remove both files and recreate from scratch with cipher
         //--------------------------------------------------------------------------------------------------------------------------
         storageRemoveP(storageLocalWrite(), fileName, .errorOnMissing = true);
@@ -101,7 +98,7 @@ testRun(void)
             "db-version=\"10\"\n"
             "\n"
             "[cipher]\n"
-            "cipher-pass=\"123xyz\"\n"
+            "cipher-pass=\"zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6569239123849665999,\"db-version\":\"10\"}\n"
@@ -113,19 +110,20 @@ testRun(void)
                 "put archive info to file with cipher sub");
 
         TEST_ASSIGN(
-            info, infoArchiveNew(PG_VERSION_10, 6569239123849665999, cipherTypeAes256Cbc, strNew("123xyz")),
+            info, infoArchiveNew(PG_VERSION_10, 6569239123849665999, cipherTypeAes256Cbc,
+                strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoArchiveNew() - cipher sub");
+        TEST_RESULT_VOID(
+            infoArchiveSave(info, storageLocalWrite(), fileName, cipherTypeAes256Cbc, cipherPass), "    save new encrypted");
+
+        info = NULL;
+        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, cipherPass),
+            "    load encryperd archive info");
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "10-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
-        TEST_RESULT_STR(strPtr(infoArchiveCipherPass(info)), "123xyz", "    cipher sub set");
+        TEST_RESULT_STR(strPtr(infoArchiveCipherPass(info)),
+            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "    cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 1, "    history set");
-        TEST_RESULT_VOID(
-            infoArchiveSave(info, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "    save new");
-        TEST_RESULT_BOOL(
-            bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
-                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
-            true, "    saved files are equal");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(info, infoArchiveNewInternal(), "infoArchiveNewInternal()");

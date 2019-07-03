@@ -13,14 +13,13 @@ testRun(void)
     Storage *storageTest = storagePosixNew(
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
+    String *cipherPass = strNew("123xyz");
+    String *fileName = strNewFmt("%s/test.ini", testPath());
+    Info *info = NULL;
+
     // *****************************************************************************************************************************
     if (testBegin("infoNew()"))
     {
-        Info *info = NULL;
-        String *cipherPass = strNew("123xyz");
-
-        // cipherTypeNone, cipherTypeAes256Cbc
-
         TEST_ASSIGN(info, infoNew(cipherTypeAes256Cbc, cipherPass), "infoNew(cipher)");
         TEST_RESULT_PTR(infoCipherPass(info), cipherPass, "    cipherPass is set");
 
@@ -31,12 +30,10 @@ testRun(void)
             infoNew(cipherTypeNone, strNew("")), AssertError,
             "assertion '!((cipherType == cipherTypeNone && cipherPassSub != NULL) || (cipherType != cipherTypeNone && "
             "(cipherPassSub == NULL || strSize(cipherPassSub) == 0)))' failed");
-
         TEST_ERROR(
             infoNew(cipherTypeAes256Cbc, strNew("")), AssertError,
             "assertion '!((cipherType == cipherTypeNone && cipherPassSub != NULL) || (cipherType != cipherTypeNone && "
             "(cipherPassSub == NULL || strSize(cipherPassSub) == 0)))' failed");
-
         TEST_ERROR(
             infoNew(cipherTypeAes256Cbc, NULL), AssertError,
             "assertion '!((cipherType == cipherTypeNone && cipherPassSub != NULL) || (cipherType != cipherTypeNone && "
@@ -49,9 +46,7 @@ testRun(void)
         // Initialize test variables
         //--------------------------------------------------------------------------------------------------------------------------
         String *content = NULL;
-        String *fileName = strNewFmt("%s/test.ini", testPath());
         String *fileNameCopy = strNewFmt("%s/test.ini.copy", testPath());
-        Info *info = NULL;
 
         content = strNew
         (
@@ -270,9 +265,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoSave()"))
     {
-        const String *fileName = strNew("test.info");
-        const String *cipherPass = strNew("123xyz");
-
         Ini *ini = iniNew();
         iniSet(ini, strNew("section1"), strNew("key1"), strNew("value1"));
         Info *info = infoNew(cipherTypeNone, NULL);
@@ -286,22 +278,25 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))), true, "check copy exists");
 
         TEST_ERROR(
-            infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), CryptoError,
-            "cipher sub not valid with cipher type");
+            infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), AssertError,
+            "assertion '!((cipherType != cipherTypeNone && this->cipherPass == NULL) || "
+            "(cipherType == cipherTypeNone && this->cipherPass != NULL))' failed");
 
         // Add encryption
         // -------------------------------------------------------------------------------------------------------------------------
         ini = iniNew();
         iniSet(ini, strNew("section1"), strNew("key1"), strNew("value4"));
-        info = infoNew(cipherTypeAes256Cbc, strNew("/badpass"));   // CSHANG why is this a "badpass"? joke
+        info = infoNew(cipherTypeAes256Cbc, strNew("/hall-pass"));
         TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
 
         ini = NULL;
         TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, &ini), "    reload info");
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value4", "    check ini");
-        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"/badpass\"", "    check cipher-pass");
+        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"/hall-pass\"", "    check cipher-pass");
 
         TEST_ERROR(
-            infoSave(info, ini, storageTest, fileName, cipherTypeNone, NULL), CryptoError, "cipher sub not valid with cipher type");
+            infoSave(info, ini, storageTest, fileName, cipherTypeNone, NULL), AssertError,
+            "assertion '!((cipherType != cipherTypeNone && this->cipherPass == NULL) || "
+            "(cipherType == cipherTypeNone && this->cipherPass != NULL))' failed");
     }
 }
