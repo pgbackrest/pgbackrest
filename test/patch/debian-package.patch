@@ -1,0 +1,23 @@
+--- control
++++ control
+@@ -4,11 +4,9 @@
+ Maintainer: Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>
+ Uploaders: Adrian Vondendriesch <adrian.vondendriesch@credativ.de>
+ Build-Depends: debhelper (>= 9),
+-               libio-socket-ssl-perl,
+                libperl-dev,
+                libssl-dev,
+                libxml-checker-perl,
+-               libxml-libxml-perl,
+ 	       libxml2-dev,
+                txt2man,
+ 	       zlib1g-dev
+@@ -24,7 +22,7 @@
+          ${misc:Depends},
+          ${perl:Depends},
+          ${shlibs:Depends}
+-Suggests: libio-socket-ssl-perl, libxml-libxml-perl, pgbackrest-doc
++Suggests: pgbackrest-doc
+ Description: Reliable PostgreSQL Backup & Restore
+  pgBackRest is a simple, reliable backup and restore system for PostgreSQL
+  that can seamlessly scale up to the largest databases and workloads.

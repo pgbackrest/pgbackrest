@@ -702,12 +702,14 @@ P00  ERROR: [055]: stop file does not exist for stanza 'db'
 P00   INFO: stanza-delete command end: aborted with exception [055]
 
 db must not exist for successful delete
-> ls //backup/
+> list backup
 ------------------------------------------------------------------------------------------------------------------------------------
+db
 
 db must not exist for successful delete
-> ls //archive/
+> list archive
 ------------------------------------------------------------------------------------------------------------------------------------
+db
 
 stop db stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stop
@@ -724,9 +726,9 @@ P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-delete command end: completed successfully
 
 db must not exist for successful delete
-> ls //backup/
+> list backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 db must not exist for successful delete
-> ls //archive/
+> list archive
 ------------------------------------------------------------------------------------------------------------------------------------

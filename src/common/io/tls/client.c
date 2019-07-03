@@ -387,7 +387,7 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
         if (result <= 0)
         {
             // Break if the error indicates that we should not continue trying
-            if (!tlsError(this, SSL_get_error(this->session, (int)result)))                 // {uncovered - covered in next commit}
+            if (!tlsError(this, SSL_get_error(this->session, (int)result)))
                 break;
         }
         // Update amount of buffer used

@@ -913,11 +913,11 @@ sub stanzaDelete
     if (defined($self->{oLogTest}) && $self->synthetic())
     {
         $self->{oLogTest}->logAdd(
-            'ls ' . $self->repoPath() . '/backup/', $self->stanza() . ' must not exist for successful delete',
-            join("\n", storageRepo()->list('backup/')));
+            'list backup', $self->stanza() . ' must not exist for successful delete',
+            join("\n", storageRepo()->list('backup')));
         $self->{oLogTest}->logAdd(
-            'ls ' . $self->repoPath() . '/archive/', $self->stanza() . ' must not exist for successful delete',
-            join("\n", storageRepo()->list('archive/')));
+            'list archive', $self->stanza() . ' must not exist for successful delete',
+            join("\n", storageRepo()->list('archive')));
     }
 
     # Return from function and log return values if any

@@ -381,7 +381,7 @@ sub run
 
         # Create file with special characters
         $oHostDbMaster->manifestFileCreate(
-            \%oManifest, MANIFEST_TARGET_PGDATA, 'special-@!#$^&*()-_+~`{}[]\|:;"<>\',.?%', undef, undef, $lTime, undef, true);
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'special-!_.*\'()&!@;:+,?', undef, undef, $lTime, undef, true);
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
 
