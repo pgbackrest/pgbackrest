@@ -20,7 +20,8 @@ testRun(void)
     InfoBackup *infoBackup = NULL;
 
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupNewLoad(), infoBackupDataTotal(), infoBackupCheckPg(), infoBackupFree()"))
+    if (testBegin("infoBackupNew(), infoBackupNewLoad(), infoBackupDataTotal(), infoBackupCheckPg(), infoBackupPg(), "
+        "infoBackupCipherPass(), infoBackupFree()"))
     {
         // File missing
         //--------------------------------------------------------------------------------------------------------------------------
@@ -54,8 +55,20 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info to file");
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "    new backup info");
+        TEST_ASSIGN(
+            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, 942, 201409291, cipherTypeNone, NULL),
+            "infoBackupNew() - no cipher sub");
+        TEST_RESULT_VOID(
+            infoBackupSave(infoBackup, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "    save backup info from new");
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
+            true, "    files are equal");
+
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName2, cipherTypeNone, NULL), "load backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
+        TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "    cipher sub not set");
         TEST_RESULT_PTR(infoBackup->backup, NULL, "    backupCurrent NULL");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "    infoBackupDataTotal returns 0");
 
@@ -86,6 +99,31 @@ testRun(void)
             "database control-version = 942, catalog-version 201509291"
             " does not match backup control-version = 942, catalog-version = 201409291\n"
             "HINT: this may be a symptom of database or repository corruption!");
+
+        // Remove both files and recreate from scratch with cipher
+        //--------------------------------------------------------------------------------------------------------------------------
+        storageRemoveP(storageLocalWrite(), fileName, .errorOnMissing = true);
+        storageRemoveP(storageLocalWrite(), fileName2, .errorOnMissing = true);
+
+        TEST_ASSIGN(
+            infoBackup, infoBackupNew(PG_VERSION_10, 6569239123849665999, 1002, 201707211, cipherTypeAes256Cbc,
+                strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+            "infoBackupNew() - cipher sub");
+        TEST_RESULT_VOID(
+            infoBackupSave(infoBackup, storageLocalWrite(), fileName, cipherTypeAes256Cbc, strNew("123xyz")), "    save new encrypted");
+
+        infoBackup = NULL;
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("123xyz")),
+            "    load encrypted backup info");
+        TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
+        TEST_RESULT_STR(strPtr(infoBackupCipherPass(infoBackup)),
+            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "    cipher sub set");
+        TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 1, "    history set");
+
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(infoBackup, infoBackupNewInternal(), "infoBackupNewInternal()");
+        TEST_RESULT_PTR(infoBackupPg(infoBackup), NULL, "    infoPg not set");
 
         // Free
         //--------------------------------------------------------------------------------------------------------------------------

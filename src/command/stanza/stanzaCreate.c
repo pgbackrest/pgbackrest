@@ -21,6 +21,7 @@ Stanza Create Command
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -66,7 +67,7 @@ cmdStanzaCreate(void)
         // CSHANG Does this mean we can only run the c version of stanza-create where the db is local (i.e. repo and db on same machine)? But can do a "get" and then could read pgControl from buffer - WAIT that's exactly what pgControlFromFile does...
         PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
-        // If neither archive info or backup info files exist then create the stanza
+        // If neither archive info nor backup info files exist then create the stanza
         if (!storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE)) &&
             !storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT)) &&
             !storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE)) &&
@@ -84,17 +85,20 @@ cmdStanzaCreate(void)
                 cipherPassSub = strNew(cipherPassSubChar);
             }
 
+            // Create and save archive info
             InfoArchive *infoArchive = infoArchiveNew(
                 pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
-
             infoArchiveSave(infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-            // infoBackupSave(infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
-            //     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
-        // CSHANG Now we need to create the file - which we haven't done in c before. No other command should be creating the info files (expire updates backup.info). For infoArchiveSave - but that then needs to change to not store the catalog/control and replace db-system-id with db-id? - OR are we somehow going to rewrite the file on an upgrade to now have the same format? And what about the backup:current section db-id? I think we should just use db-id since it's used more than db-system-id
+            // Create and save backup info
+            InfoBackup *infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.controlVersion,
+                pgControl.catalogVersion, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
+            infoBackupSave(infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+
         }
-        // // Else if both info files exist (in some form), then if valid, just return
+        // // Else if both info files exist (in some form), then if valid (check PG? checksum?), just return
         // else if ((storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE)) ||
         //     storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT))) &&
         //     (storageExistsNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE)) ||

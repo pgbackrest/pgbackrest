@@ -54,7 +54,9 @@ typedef struct InfoBackupData
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-InfoBackup *infoBackupNew(void);
+InfoBackup *infoBackupNew(
+    unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgControlVersion, const uint32_t pgCatalogVersion,
+    CipherType cipherType, const String *cipherPassSub);
 InfoBackup *infoBackupNewLoad(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
@@ -79,6 +81,7 @@ Getters
 InfoPg *infoBackupPg(const InfoBackup *this);
 InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 unsigned int infoBackupDataTotal(const InfoBackup *this);
+const String *infoBackupCipherPass(const InfoBackup *this);
 
 /***********************************************************************************************************************************
 Destructor

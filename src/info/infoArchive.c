@@ -31,7 +31,6 @@ struct InfoArchive
 
 OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 
-
 /***********************************************************************************************************************************
 Internal constructor
 ***********************************************************************************************************************************/
@@ -66,7 +65,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, CipherType cipherTyp
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
-    ASSERT(pgVersion > 0 && pgSystemId > 0); // CSHANG Is there a better way to verify the version/systemid? Maybe a validate function? A: maybe do version to string as a CHECK
+    ASSERT(pgVersion > 0 && pgSystemId > 0);
 
     InfoArchive *this = infoArchiveNewInternal();
 

@@ -22,6 +22,7 @@ Backup Info Handler
 #include "info/infoManifest.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -52,8 +53,8 @@ OBJECT_DEFINE_FREE(INFO_BACKUP);
 /***********************************************************************************************************************************
 Create new object
 ***********************************************************************************************************************************/
-InfoBackup *
-infoBackupNew(void)
+static InfoBackup *
+infoBackupNewInternal(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
@@ -66,6 +67,33 @@ infoBackupNew(void)
         this->memContext = MEM_CONTEXT_NEW();
     }
     MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
+}
+
+/***********************************************************************************************************************************
+Create new object without loading it from a file
+***********************************************************************************************************************************/
+InfoBackup *
+infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgControlVersion, const uint32_t pgCatalogVersion,
+    CipherType cipherType, const String *cipherPassSub)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
+        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
+    FUNCTION_LOG_END();
+
+    ASSERT(pgVersion > 0 && pgSystemId > 0 && pgControlVersion > 0 && pgCatalogVersion > 0);
+
+    InfoBackup *this = infoBackupNewInternal();
+
+    // Initialize the pg data
+    this->infoPg = infoPgSet(
+        infoPgNew(cipherType, cipherPassSub), infoPgBackup, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
@@ -87,7 +115,7 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    InfoBackup *this = infoBackupNew();
+    InfoBackup *this = infoBackupNewInternal();
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -185,7 +213,7 @@ infoBackupCheckPg(
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
-        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
+        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);  // CSHANG Need to change the order of catalog and control here to be consistent with other functions OR remove if this function will not be used.
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -388,6 +416,21 @@ infoBackupDataLabelList(const InfoBackup *this, const String *expression)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
+}
+
+/***********************************************************************************************************************************
+Return the cipher passphrase
+***********************************************************************************************************************************/
+const String *
+infoBackupCipherPass(const InfoBackup *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
 }
 
 /***********************************************************************************************************************************

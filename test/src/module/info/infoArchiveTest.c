@@ -90,25 +90,6 @@ testRun(void)
         storageRemoveP(storageLocalWrite(), fileName, .errorOnMissing = true);
         storageRemoveP(storageLocalWrite(), fileName2, .errorOnMissing = true);
 
-        content = strNew
-        (
-            "[db]\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"10\"\n"
-            "\n"
-            "[cipher]\n"
-            "cipher-pass=\"zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-id\":6569239123849665999,\"db-version\":\"10\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)),
-                "put archive info to file with cipher sub");
-
         TEST_ASSIGN(
             info, infoArchiveNew(PG_VERSION_10, 6569239123849665999, cipherTypeAes256Cbc,
                 strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
@@ -118,7 +99,7 @@ testRun(void)
 
         info = NULL;
         TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, cipherPass),
-            "    load encryperd archive info");
+            "    load encrypted archive info");
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "10-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
         TEST_RESULT_STR(strPtr(infoArchiveCipherPass(info)),
