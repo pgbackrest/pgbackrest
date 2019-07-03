@@ -66,6 +66,57 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_CLIENT, LOG, logLevelTrace)
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
+Report TLS errors.  Returns true if the command should continue and false if it should exit.
+***********************************************************************************************************************************/
+static bool
+tlsError(TlsClient *this, int code)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM(INT, code);
+    FUNCTION_LOG_END();
+
+    bool result = false;
+
+    switch (code)
+    {
+        // The connection was closed
+        case SSL_ERROR_ZERO_RETURN:
+        {
+            tlsClientClose(this);
+            break;
+        }
+
+        // Try the read/write again
+        case SSL_ERROR_WANT_READ:
+        case SSL_ERROR_WANT_WRITE:
+        {
+            result = true;
+            break;
+        }
+
+        // A syscall failed (this usually indicates eof)
+        case SSL_ERROR_SYSCALL:
+        {
+            // Get the error before closing so it is not cleared
+            int errNo = errno;
+            tlsClientClose(this);
+
+            // Throw the sys error if there is one
+            THROW_ON_SYS_ERROR(errNo, KernelError, "tls failed syscall");
+
+            break;
+        }
+
+        // Some other tls error that cannot be handled
+        default:
+            THROW_FMT(ServiceError, "tls error [%d]", code);
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
 TlsClient *
@@ -115,6 +166,9 @@ tlsClientNew(
 
         // Exclude SSL versions to only allow TLS and also disable compression
         SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
+
+        // Disable auto-retry to prevent SSL_read() from hanging
+        SSL_CTX_clear_mode(this->context, SSL_MODE_AUTO_RETRY);
 
         // Set location of CA certificates if the server certificate will be verified
         // -------------------------------------------------------------------------------------------------------------------------
@@ -293,7 +347,7 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
     ASSERT(buffer != NULL);
     ASSERT(!bufFull(buffer));
 
-    ssize_t actualBytes = 0;
+    ssize_t result = 0;
 
     // If blocking read keep reading until buffer is full
     do
@@ -328,23 +382,21 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
 
         // Read and handle errors
         size_t expectedBytes = bufRemains(buffer);
-        actualBytes = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
+        result = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
 
-        cryptoError(actualBytes < 0, "unable to read from TLS");
-
-        // Update amount of buffer used
-        bufUsedInc(buffer, (size_t)actualBytes);
-
-        // If zero bytes were returned then the connection was closed
-        if (actualBytes == 0)
+        if (result <= 0)
         {
-            tlsClientClose(this);
-            break;
+            // Break if the error indicates that we should not continue trying
+            if (!tlsError(this, SSL_get_error(this->session, (int)result)))                 // {uncovered - covered in next commit}
+                break;
         }
+        // Update amount of buffer used
+        else
+            bufUsedInc(buffer, (size_t)result);
     }
     while (block && bufRemains(buffer) > 0);
 
-    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
+    FUNCTION_LOG_RETURN(SIZE, (size_t)result);
 }
 
 /***********************************************************************************************************************************
