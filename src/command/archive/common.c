@@ -32,6 +32,8 @@ Global error file constant
 #define STATUS_FILE_GLOBAL                                          "global"
     STRING_STATIC(STATUS_FILE_GLOBAL_STR,                           STATUS_FILE_GLOBAL);
 
+STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL STATUS_EXT_ERROR);
+
 /***********************************************************************************************************************************
 Get the correct spool queue based on the archive mode
 ***********************************************************************************************************************************/
@@ -79,7 +81,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
             // If that doesn't exist then check for a global error
             if (!errorFileExists)
             {
-                errorFile = STRDEF(STATUS_FILE_GLOBAL STATUS_EXT_ERROR);
+                errorFile = STATUS_FILE_GLOBAL_ERROR_STR;
                 errorFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
             }
         }

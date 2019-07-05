@@ -196,15 +196,15 @@ storageFilterXsResultAll(const IoFilterGroup *filterGroup)
 
         if (strEq(filter, CRYPTO_HASH_FILTER_TYPE_STR))
         {
-            filterPerl = STRDEF("pgBackRest::Storage::Filter::Sha");
+            filterPerl = strNew("pgBackRest::Storage::Filter::Sha");
         }
         else if (strEq(filter, SIZE_FILTER_TYPE_STR))
         {
-            filterPerl = STRDEF("pgBackRest::Common::Io::Handle");
+            filterPerl = strNew("pgBackRest::Common::Io::Handle");
         }
         else if (strEq(filter, PAGE_CHECKSUM_FILTER_TYPE_STR))
         {
-            filterPerl = STRDEF("pgBackRest::Backup::Filter::PageChecksum");
+            filterPerl = strNew("pgBackRest::Backup::Filter::PageChecksum");
         }
 
         if (filterPerl != NULL)

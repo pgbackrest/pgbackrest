@@ -42,19 +42,19 @@ perlOptionJson(void)
             {
                 case cfgSourceParam:
                 {
-                    source = VARSTRDEF("param");
+                    source = varNewStrZ("param");
                     break;
                 }
 
                 case cfgSourceConfig:
                 {
-                    source = VARSTRDEF("config");
+                    source = varNewStrZ("config");
                     break;
                 }
 
                 case cfgSourceDefault:
                 {
-                    source = VARSTRDEF("default");
+                    source = varNewStrZ("default");
                     break;
                 }
             }
