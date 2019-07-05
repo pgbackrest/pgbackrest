@@ -77,7 +77,6 @@ test.pl [options]
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --pg-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
-   --no-lint            disable static source code analysis
    --build-only         compile the test library / packages and run tests only
    --build-max          max processes to use for builds (default 4)
    --coverage-only      only run coverage tests (as a subset of selected tests)
@@ -88,9 +87,9 @@ test.pl [options]
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
-   --dev                --no-lint --smart --no-package --no-optimize
-   --dev-test           --no-lint --no-package
-   --expect             --no-lint --no-package --vm=co7 --db=9.6 --log-force
+   --dev                --smart --no-package --no-optimize
+   --dev-test           --no-package
+   --expect             --no-package --vm=co7 --db=9.6 --log-force
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-optimize        don't do compile optimization for C (saves compile time)
@@ -145,7 +144,6 @@ my $strVm;
 my $strVmHost = VM_HOST_DEFAULT;
 my $bVmBuild = false;
 my $bVmForce = false;
-my $bNoLint = false;
 my $bBuildOnly = false;
 my $iBuildMax = 4;
 my $bCoverageOnly = false;
@@ -192,7 +190,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-cleanup' => \$bNoCleanup,
             'pg-version=s' => \$strPgVersion,
             'log-force' => \$bLogForce,
-            'no-lint' => \$bNoLint,
             'build-only' => \$bBuildOnly,
             'build-max=s' => \$iBuildMax,
             'no-package' => \$bNoPackage,
@@ -264,7 +261,6 @@ eval
 
     if ($bDev)
     {
-        $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
         $bNoOptimize = true;
@@ -273,7 +269,6 @@ eval
     if ($bDevTest)
     {
         $bNoPackage = true;
-        $bNoLint = true;
     }
 
     ################################################################################################################################
@@ -290,7 +285,6 @@ eval
     ################################################################################################################################
     if ($bExpect)
     {
-        $bNoLint = true;
         $bNoPackage = true;
         $strVm = VM_EXPECT;
         $strPgVersion = '9.6';
@@ -845,9 +839,9 @@ eval
                     # Build configure/compile options and see if they have changed from the previous build
                     my $strCFlags =
                         "-Wfatal-errors -g -fPIC -D_FILE_OFFSET_BITS=64" .
-                        (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
+                        (vmWithBackTrace($strBuildVM) && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
                         ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
-                    my $strLdFlags = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
+                    my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace  ? '-lbacktrace' : '';
                     my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
                     my $strBuildFlags = "CFLAGS=${strCFlags}\nLDFLAGS=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
                     my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
@@ -889,11 +883,6 @@ eval
                             " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
                         buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
 
-                        if (vmLintC($strVm) && !$bNoLint)
-                        {
-                            &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
-                        }
-
                         if ($bBuildOptionsDiffer || !$oStorageBackRest->exists("${strBuildPath}/Makefile"))
                         {
                             executeTest(
@@ -903,7 +892,6 @@ eval
 
                         executeTest(
                             'docker exec -i test-build' .
-                            (vmLintC($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
                             " make -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
                                 " --directory ${strBuildPath} CFLAGS='${strCFlags}' LDFLAGS='${strLdFlags}'",
                             {bShowOutputAsync => $bLogDetail});

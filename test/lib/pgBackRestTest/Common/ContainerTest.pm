@@ -420,11 +420,6 @@ sub containerBuild
             {
                 $strScript .= ' libjson-pp-perl liblz4-dev';
             }
-
-            if (vmLintC($strOS))
-            {
-                $strScript .= ' clang-6.0 clang-tools-6.0';
-            }
         }
 
         #---------------------------------------------------------------------------------------------------------------------------

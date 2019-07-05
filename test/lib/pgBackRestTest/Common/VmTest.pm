@@ -35,8 +35,6 @@ use constant VM_DEPRECATED                                          => 'deprecat
     push @EXPORT, qw(VM_DEPRECATED);
 use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
-# Will static code analysis be run for C?
-use constant VMDEF_LINT_C                                           => 'lint-c';
 use constant VM_OS                                                  => 'os';
     push @EXPORT, qw(VM_OS);
 use constant VM_OS_BASE                                             => 'os-base';
@@ -340,7 +338,6 @@ my $oyVm =
         &VM_IMAGE => 'ubuntu:18.04',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
-        &VMDEF_LINT_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.26.1',
 
@@ -451,18 +448,6 @@ sub vmCoverageC
 }
 
 push @EXPORT, qw(vmCoverageC);
-
-####################################################################################################################################
-# vmLintC
-####################################################################################################################################
-sub vmLintC
-{
-    my $strVm = shift;
-
-    return $oyVm->{$strVm}{&VMDEF_LINT_C} ? true : false;
-}
-
-push @EXPORT, qw(vmLintC);
 
 ####################################################################################################################################
 # Get vm architecture bits
