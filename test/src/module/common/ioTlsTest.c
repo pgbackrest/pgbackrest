@@ -113,6 +113,19 @@ testRun(void)
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("a.bogus.host.com"), strNew("*.host.com")), false, "invalid host");
     }
 
+    // Additional coverage not provided by other tests
+    // *****************************************************************************************************************************
+    if (testBegin("tlsError()"))
+    {
+        TlsClient *client = NULL;
+
+        TEST_ASSIGN(client, tlsClientNew(strNew("99.99.99.99.99"), 9443, 0, true, NULL, NULL), "new client");
+
+        TEST_RESULT_BOOL(tlsError(client, SSL_ERROR_WANT_READ), true, "continue after want read");
+        TEST_RESULT_BOOL(tlsError(client, SSL_ERROR_ZERO_RETURN), false, "check connection closed error");
+        TEST_ERROR(tlsError(client, SSL_ERROR_WANT_X509_LOOKUP), ServiceError, "tls error [4]");
+    }
+
     // *****************************************************************************************************************************
     if (testBegin("TlsClient verification"))
     {

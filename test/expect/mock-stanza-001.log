@@ -858,12 +858,12 @@ P00  ERROR: [055]: stop file does not exist for stanza 'db'
 P00   INFO: stanza-delete command end: aborted with exception [055]
 
 db must not exist for successful delete
-> ls [TEST_PATH]/db-master/repo/backup/
+> list backup
 ------------------------------------------------------------------------------------------------------------------------------------
 db
 
 db must not exist for successful delete
-> ls [TEST_PATH]/db-master/repo/archive/
+> list archive
 ------------------------------------------------------------------------------------------------------------------------------------
 db
 
@@ -880,9 +880,9 @@ P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --compress-level=3 -
 P00   INFO: stanza-delete command end: completed successfully
 
 db must not exist for successful delete
-> ls [TEST_PATH]/db-master/repo/backup/
+> list backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 db must not exist for successful delete
-> ls [TEST_PATH]/db-master/repo/archive/
+> list archive
 ------------------------------------------------------------------------------------------------------------------------------------

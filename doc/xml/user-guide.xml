@@ -536,13 +536,18 @@
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos]}" user="root" show="n">
+            <execute if="{[os-type-is-centos]} &amp;&amp; '{[package]}' ne 'yum'" user="root" show="n">
                 <exe-cmd>yum -y install {[pgbackrest-repo-path]}/{[package]}</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos]}" user="root" skip="y">
+            <execute if="{[os-type-is-centos]} &amp;&amp; '{[package]}' ne 'yum'" user="root" skip="y">
                 <exe-cmd>yum install pgbackrest</exe-cmd>
+            </execute>
+
+            <execute if="{[os-type-is-centos]} &amp;&amp; '{[package]}' eq 'yum'" user="root">
+                <exe-cmd>yum install pgbackrest</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>
 
