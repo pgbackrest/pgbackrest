@@ -322,7 +322,8 @@ sub new
             confess &log(ASSERT, 'strDbVersion and iDbCatalogVersion must be provided with bLoad = false');
         }
 
-        $self->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
+        # Force the version to a string since newer versions of JSON::PP lose track of the fact that it is one
+        $self->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion . '');
         $self->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
     }
 

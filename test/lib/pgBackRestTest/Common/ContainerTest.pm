@@ -418,7 +418,7 @@ sub containerBuild
             }
             else
             {
-                $strScript .= ' liblz4-dev';
+                $strScript .= ' libjson-pp-perl liblz4-dev';
             }
 
             if (vmLintC($strOS))
