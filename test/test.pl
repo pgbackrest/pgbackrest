@@ -342,10 +342,6 @@ eval
         {
             confess &log(ERROR, "select a single Debian-based VM for coverage testing");
         }
-        elsif (!vmCoveragePerl($strVm))
-        {
-            confess &log(ERROR, "only Debian-based VMs can be used for coverage testing");
-        }
     }
 
     # If VM is not defined then set it to all
@@ -540,7 +536,7 @@ eval
             # Auto-generate Perl code
             #-----------------------------------------------------------------------------------------------------------------------
             use lib dirname(dirname($0)) . '/libc/build/lib';
-            use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
+            use pgBackRestLibC::Build;
 
             if (!$bSmart || grep(/^(build|libc\/build)\//, @stryModifiedList))
             {
@@ -737,7 +733,7 @@ eval
             $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
             # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
-            executeTest("rm -rf ${strBackRestBase}/test/coverage/c/* ${strBackRestBase}/test/coverage/perl/*");
+            executeTest("rm -rf ${strBackRestBase}/test/coverage/c/*");
 
             # Overwrite the C coverage report so it will load but not show old coverage
             $oStorageTest->pathCreate("${strBackRestBase}/test/coverage", {strMode => '0770', bIgnoreExists => true});
@@ -1229,21 +1225,6 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDryRun)
         {
-            # Run Perl critic
-            if (!$bNoLint && !$bBuildOnly)
-            {
-                my $strBasePath = dirname(dirname(abs_path($0)));
-
-                &log(INFO, "Performing static code analysis using perlcritic");
-
-                executeTest('perlcritic --quiet --verbose=8 --brutal --top=10' .
-                            ' --verbose "[%p] %f: %m at line %l, column %c.  %e.  (Severity: %s)\n"' .
-                            " \"--profile=${strBasePath}/test/lint/perlcritic.policy\"" .
-                            " ${strBasePath}/lib/*" .
-                            " ${strBasePath}/test/test.pl ${strBasePath}/test/lib/*" .
-                            " ${strBasePath}/doc/doc.pl ${strBasePath}/doc/lib/*");
-            }
-
             logFileSet($oStorageTest, cwd() . "/test");
         }
 
@@ -1346,7 +1327,7 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
-        if ((vmCoverageC($strVm) || vmCoveragePerl($strVm)) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
+        if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
         {
             # Determine which modules were covered (only check coverage if all tests were successful)
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1401,104 +1382,6 @@ eval
             if (keys(%{$hCoverageActual}) == 0)
             {
                 &log(INFO, 'no code modules had all tests run required for coverage');
-            }
-
-            # Generate Perl coverage report
-            #-----------------------------------------------------------------------------------------------------------------------
-            if (vmCoveragePerl($strVm))
-            {
-                &log(INFO, 'writing Perl coverage report');
-
-                executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-                executeTest(
-                    "cd ${strCoveragePath}_temp && " .
-                    LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
-                    {bSuppressStdErr => true});
-                executeTest("sudo rm -rf ${strCoveragePath}_temp");
-                executeTest("sudo cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-                executeTest(
-                    "cd ${strCoveragePath}_temp && " .
-                    LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
-                    {bSuppressStdErr => true});
-                executeTest("sudo rm -rf ${strCoveragePath}_temp");
-
-                # Load the results of coverage testing from JSON
-                my $oJSON = JSON::PP->new()->allow_nonref();
-                my $hCoverageResult = $oJSON->decode(${$oStorageBackRest->get('test/coverage/perl/cover.json')});
-
-                foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
-                {
-                    # If the first char of the module is lower case then it's a c module
-                    if (substr($strCodeModule, 0, 1) eq lc(substr($strCodeModule, 0, 1)))
-                    {
-                        next;
-                    }
-
-                    # Create code module path -- where the file is located on disk
-                    my $strCodeModulePath = "${strBackRestBase}/lib/" . PROJECT_NAME . "/${strCodeModule}.pm";
-
-                    # Get summary results
-                    my $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
-
-                    # Try an extra / if the module is not found
-                    if (!defined($hCoverageResultAll))
-                    {
-                        $strCodeModulePath = "/${strCodeModulePath}";
-                        $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
-                    }
-
-                    # If module is marked as having no code
-                    if ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_NOCODE)
-                    {
-                        # Error if it really does have coverage
-                        if ($hCoverageResultAll)
-                        {
-                            confess &log(ERROR, "perl module ${strCodeModule} is marked 'no code' but has code");
-                        }
-
-                        # Skip to next module
-                        next;
-                    }
-
-                    if (!defined($hCoverageResultAll))
-                    {
-                        confess &log(ERROR, "unable to find coverage results for ${strCodeModule}");
-                    }
-
-                    # Check that all code has been covered
-                    my $iCoverageTotal = $hCoverageResultAll->{total};
-                    my $iCoverageUncoverable = coalesce($hCoverageResultAll->{uncoverable}, 0);
-                    my $iCoverageCovered = coalesce($hCoverageResultAll->{covered}, 0);
-
-                    if ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_FULL)
-                    {
-                        my $iUncoveredLines = $iCoverageTotal - $iCoverageCovered - $iCoverageUncoverable;
-
-                        if ($iUncoveredLines != 0)
-                        {
-                            &log(ERROR, "perl module ${strCodeModule} is not fully covered");
-                            $iUncoveredCodeModuleTotal++;
-
-                            &log(ERROR, ('-' x 80));
-                            executeTest(
-                                "/usr/bin/cover -report text ${strCoveragePath} --select ${strBackRestBase}/lib/" .
-                                PROJECT_NAME . "/${strCodeModule}.pm",
-                                {bShowOutputAsync => true});
-                            &log(ERROR, ('-' x 80));
-                        }
-                    }
-                    # Else test how much partial coverage there was
-                    elsif ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_PARTIAL)
-                    {
-                        my $iCoveragePercent = int(($iCoverageCovered + $iCoverageUncoverable) * 100 / $iCoverageTotal);
-
-                        if ($iCoveragePercent == 100)
-                        {
-                            &log(ERROR, "perl module ${strCodeModule} has 100% coverage but is not marked fully covered");
-                            $iUncoveredCodeModuleTotal++;
-                        }
-                    }
-                }
             }
 
             # Generate C coverage report

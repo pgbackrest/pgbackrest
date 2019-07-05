@@ -564,7 +564,6 @@ sub containerBuild
         $strCopy = undef;
 
         my $strPkgDevelCover = packageDevelCover($oVm->{$strOS}{&VM_ARCH});
-        my $bPkgDevelCoverBuild = vmCoveragePerl($strOS) && !$oStorageDocker->exists("test/package/${strOS}-${strPkgDevelCover}");
 
         $strScript = sectionHeader() .
             "# Create test user\n" .
@@ -577,18 +576,6 @@ sub containerBuild
             $strScript .=  sectionHeader() .
                 "# Install pgBackRest package source\n" .
                 "    git clone https://salsa.debian.org/postgresql/pgbackrest.git /root/package-src";
-
-            # Build only when a new version has been specified
-            if ($bPkgDevelCoverBuild)
-            {
-                $strScript .=  sectionHeader() .
-                    "# Install Devel::Cover package source & build\n" .
-                    "    git clone https://salsa.debian.org/perl-team/modules/packages/libdevel-cover-perl.git" .
-                        " /root/libdevel-cover-perl && \\\n" .
-                    "    cd /root/libdevel-cover-perl && \\\n" .
-                    "    git checkout debian/" . LIB_COVER_VERSION . " && \\\n" .
-                    "    debuild -i -us -uc -b";
-            }
         }
         else
         {
@@ -607,23 +594,6 @@ sub containerBuild
 
         containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
 
-        # Copy Devel::Cover to host so it can be installed in other containers (if it doesn't already exist)
-        if ($bPkgDevelCoverBuild)
-        {
-            executeTest('docker rm -f test-build', {bSuppressError => true});
-            executeTest(
-                "docker run -itd -h test-build --name=test-build" .
-                " -v ${strTempPath}:${strTempPath} " . containerRepo() . ":${strOS}-build",
-                {bSuppressStdErr => true});
-            executeTest(
-                "docker exec -i test-build " .
-                "bash -c 'cp /root/${strPkgDevelCover} ${strTempPath}/${strOS}-${strPkgDevelCover}'");
-            executeTest('docker rm -f test-build');
-
-            $oStorageDocker->move(
-                "test/.vagrant/docker/${strOS}-${strPkgDevelCover}", "test/package/${strOS}-${strPkgDevelCover}");
-        }
-
         # Test image
         ########################################################################################################################
         if (!$bDeprecated)
@@ -631,28 +601,8 @@ sub containerBuild
             $strImageParent = containerRepo() . ":${strOS}-base";
             $strImage = "${strOS}-test";
 
-            if (vmCoveragePerl($strOS))
-            {
-                $oStorageDocker->copy(
-                    "test/package/${strOS}-${strPkgDevelCover}", "test/.vagrant/docker/${strOS}-${strPkgDevelCover}");
-
-                $strCopy =
-                    "# Copy Devel::Cover\n" .
-                    "COPY ${strOS}-${strPkgDevelCover} /tmp/${strPkgDevelCover}";
-
-                $strScript = sectionHeader() .
-                    "# Install packages\n" .
-                    "    apt-get install -y libjson-maybexs-perl";
-
-                $strScript .= sectionHeader() .
-                    "# Install Devel::Cover\n" .
-                    "    dpkg -i /tmp/${strPkgDevelCover}";
-            }
-            else
-            {
-                $strCopy = undef;
-                $strScript = '';
-            }
+            $strCopy = undef;
+            $strScript = '';
 
             #---------------------------------------------------------------------------------------------------------------------------
             $strScript .= sectionHeader() .

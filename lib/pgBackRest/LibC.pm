@@ -16,8 +16,7 @@ my $rhConstant = pgBackRest::LibCAuto::libcAutoConstant();
 
 foreach my $strConstant (keys(%{$rhConstant}))
 {
-    eval                    ## no critic (BuiltinFunctions::ProhibitStringyEval, ErrorHandling::RequireCheckingReturnValueOfEval)
-        "use constant ${strConstant} => '" . $rhConstant->{$strConstant} . "'";
+    eval "use constant ${strConstant} => '" . $rhConstant->{$strConstant} . "'";
 }
 
 # Export functions and constants
@@ -48,8 +47,7 @@ foreach my $strSection (keys(%EXPORT_TAGS))
 
             if ($strPrefix eq 'CFGCMD' || $strPrefix eq 'CFGOPT')
             {
-                eval        ## no critic (BuiltinFunctions::ProhibitStringyEval, ErrorHandling::RequireCheckingReturnValueOfEval)
-                    "use constant ${strConstant} => ${iConstantIdx}";
+                eval "use constant ${strConstant} => ${iConstantIdx}";
             }
 
             $strPrefixLast = $strPrefix;
