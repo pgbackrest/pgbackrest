@@ -24,11 +24,6 @@ Stanza Create Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
-Callback function for StorageInfoList
-***********************************************************************************************************************************/
-
-
-/***********************************************************************************************************************************
 Process stanza-create
 ***********************************************************************************************************************************/
 void
@@ -47,7 +42,6 @@ cmdStanzaCreate(void)
         InfoBackup *infoBackup = NULL;
 
 // CSHANG TODO:
-// * storageInfoList
 // * how to handle --force - especially if something exists and what if encryption reset?
 // * is it possible to reconstruct (only if not encrypted)- maybe only if backup.info exists - which means it would have to be the truthsayer
 // From the old code: # If something other than the info files exist in the repo (maybe a backup is in progress) and the user is attempting to
@@ -59,23 +53,22 @@ cmdStanzaCreate(void)
         bool backupInfoFileCopyExists = storageExistsNP(
             storageRepoStanzaRead, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
 
-
         // If neither archive info nor backup info files exist and nothing else exists in the stanza directory
         // then create the stanza
         if (!archiveInfoFileExists && !archiveInfoFileCopyExists && !backupInfoFileExists && !backupInfoFileCopyExists)
         {
-            // CSHANG Need to call storageInfoList because need to know if anything is in the directory at all - but if just passing a path and is S3 but the path is missing, it seems to throw a [111] Connection refused when running test:
-            // TEST_RESULT_VOID(
-            //     storageInfoListNP(s3, strNew("/cshang"), testStorageInfoListCallback, (void *)memContextCurrent()), "info cshang list files");
-            // Maybe it is where I was running the test which was after the /path/to "info list files" test. If I replace
-            //         TEST_RESULT_VOID(
-            //             storageInfoListNP(s3, strNew("/path/to"), testStorageInfoListCallback, (void *)memContextCurrent()), "info list files");
-            // with
-            //         TEST_RESULT_VOID(
-            //             storageInfoListNP(s3, strNew("/cshang"), testStorageInfoListCallback, (void *)memContextCurrent()), "info list files");
-            // then it just hangs for a long time until the timeout which then returns ASSERT: [025]: timeout after 540 seconds waiting for process to complete
+            bool archiveNotEmpty = strLstSize(
+                storageListNP(storageRepoStanzaRead, STRDEF(STORAGE_REPO_ARCHIVE))) > 0 ? true : false;
+            bool backupNotEmpty = strLstSize(
+                storageListNP(storageRepoStanzaRead, STRDEF(STORAGE_REPO_BACKUP))) > 0 ? true : false;
 
-            String *cipherPassSub = NULL;
+            // If something exists in the backup or archive directories for this stanza, then error
+            if (archiveNotEmpty || backupNotEmpty)
+            {
+                THROW_FMT(
+                    PathNotEmptyError, "%s%s%snot empty", (backupNotEmpty ? "backup directory " : ""),
+                    (backupNotEmpty && archiveNotEmpty ? "and/or " : ""), (archiveNotEmpty ? "archive directory " : ""));
+            }
 
             // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent files
             if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) != cipherTypeNone)
@@ -100,7 +93,7 @@ cmdStanzaCreate(void)
             infoBackupSave(
                 infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
-        // Else if both info files exist, then if valid just return
+        // Else if both info files exist and both are valid, resave
         else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
         {
             infoArchive = infoArchiveNewLoad(
@@ -108,7 +101,23 @@ cmdStanzaCreate(void)
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
-            if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
+            infoBackup = infoBackupNewLoad(
+                storageRepoStanzaRead, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+            InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+
+// CSHANG In the mock tests, the database  version is checked during a backup - so we need to make sure that it is also performed there
+            // If the versions or system ids don't match in either file, then an upgrade may be necessary
+            if ((pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId) &&
+                (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId))
+            {
+                THROW(FileInvalidError, "backup info file or archive info file invalid\n"
+                    "HINT: use stanza-upgrade if the database has been upgraded");
+// CSHANG This used to read "or use --force"
+// confess &log(ERROR, "backup info file or archive info file invalid\n" .
+//     'HINT: use stanza-upgrade if the database has been upgraded or use --force', ERROR_FILE_INVALID);
+            }
+            else if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
             {
                 THROW_FMT(ArchiveMismatchError,
                     "database version = %s, system-id %" PRIu64 " does not match archive version = %s, system-id = %" PRIu64 "\n"
@@ -116,13 +125,7 @@ cmdStanzaCreate(void)
                     strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId, strPtr(pgVersionToStr(archiveInfo.version)),
                     archiveInfo.systemId);
             }
-
-            infoBackup = infoBackupNewLoad(
-                storageRepoStanzaRead, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
-                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-            InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
-
-            if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
+            else if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
             {
                 THROW_FMT(BackupMismatchError,
                     "database version = %s, system-id %" PRIu64 " does not match backup version = %s, system-id = %" PRIu64 "\n"
@@ -130,6 +133,7 @@ cmdStanzaCreate(void)
                     strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId, strPtr(pgVersionToStr(backupInfo.version)), backupInfo.systemId);
             }
 
+            // If the versions and system ids match but the control or catalog doesn't then there may be corruption
             if (pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion)
             {
                 THROW_FMT(BackupMismatchError,
@@ -138,16 +142,31 @@ cmdStanzaCreate(void)
                     "HINT: this may be a symptom of database or repository corruption!",
                     pgControl.controlVersion, pgControl.catalogVersion, backupInfo.controlVersion, backupInfo.catalogVersion);
             }
+// CSHANG I added this because I feel we should also check the db-ids before saving since we don't want them to get out of whack
+            // At this point, everything should match so make sure the ids do as well
+            if (backupInfo.id != archiveInfo.id)
+            {
+                THROW(FileInvalidError, "backup info file or archive info file invalid\n"
+                    "HINT: this may be a symptom of database or repository corruption!\n"
+                    "HINT: delete the stanza and run stanza-create again");
+            }
+            else
+            {
+                // If the existing files are valid, resave to ensure there are two files (info and a copy)
+                infoArchiveSave(
+                    infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                infoBackupSave(
+                    infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
-            // If the existing files are valid, resave to ensure there are two files (info and a copy)
-            infoArchiveSave(
-                infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-            infoBackupSave(
-                infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                LOG_INFO("stanza-create was already performed");
+            }
         }
+        // Else if one file is missing, then error
         else
         {
-            THROW_FMT(FileMissingError, "%s - the repository is corrupted\n"
+// CSHANG We need to figure out if we want to error or try to create one info file from the other
+            THROW_FMT(FileMissingError, "%s\n"
+                "HINT: this may be a symptom of database or repository corruption!\n"
                 "HINT: delete the stanza and run stanza-create again",
                 ((archiveInfoFileExists || archiveInfoFileCopyExists) ? "archive.info exists but backup.info is missing"
                 : "backup.info exists but archive.info is missing"));

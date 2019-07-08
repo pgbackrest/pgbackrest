@@ -43,7 +43,6 @@ cmdStanzaUpgrade(void)
         bool infoArchiveUpgrade = false;
         bool infoBackupUpgrade = false;
 // CSHANG TODO:
-// * storageInfoList
 // * how to handle --force
 // * is it possible to reconstruct (only if not encrypted)- maybe only if backup.info exists - which means it would have to be the truthsayer
 // * should we be comparing the db-id of the info files (e.g. archiveInfo.id != backupInfo.id then error that repo is corrupted)?
@@ -62,19 +61,48 @@ cmdStanzaUpgrade(void)
         // Update archive
         if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
         {
-            infoArchiveSave(
-                infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+            infoArchiveSet(
+                infoArchive, pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
             infoArchiveUpgrade = true;
         }
 
         // Update backup
-        if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId ||
-            pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion)
+        if ((pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId) &&
+            (pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion)
         {
-            infoBackupSave(
-                infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+            infoBackupSet(
+                infoBackup,  pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             infoBackupUpgrade = true;
+        }
+
+// CSHANG I added this to check the ids before saving the file because they better match at this point
+        // Get the backup and archive info pg data and ensure the ids match
+        backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+        archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
+        if (backupInfo.id != archiveInfo.id)
+        {
+            THROW(FileInvalidError, "backup info file or archive info file invalid\n"
+                "HINT: this may be a symptom of database or repository corruption!\n"
+                "HINT: delete the stanza and run stanza-create again");
+        }
+        else
+        {
+            // Save archive info
+            if (infoArchiveUpgrade)
+            {
+                infoArchiveSave(
+                    infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+            }
+
+            // Save backup info
+            if (infoBackupUpgrade)
+            {
+                infoBackupSave(
+                    infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+            }
         }
 
         if (!(infoArchiveUpgrade || infoBackupUpgrade))

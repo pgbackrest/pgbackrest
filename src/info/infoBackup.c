@@ -239,6 +239,28 @@ infoBackupCheckPg(
 }
 
 /***********************************************************************************************************************************
+Update and set the backup info
+***********************************************************************************************************************************/
+InfoBackup *
+infoBackupSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion,
+    uint32_t pgCatalogVersion, CipherType cipherType, const String *cipherPassSub)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
+        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+    FUNCTION_LOG_END();
+
+    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
+
+    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
+}
+
+/***********************************************************************************************************************************
 Save to file
 ***********************************************************************************************************************************/
 void

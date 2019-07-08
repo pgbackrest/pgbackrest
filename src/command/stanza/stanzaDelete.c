@@ -45,7 +45,7 @@ cmdStanzaDelete(void)
         // Check for a stop file for this or all stanzas
         TRY_BEGIN()
         {
-            lockStopTest();  // CSHANG this uses storageLocal so does it work remotely? Does it need to?
+            lockStopTest();  // CSHANG In a separate commit, modify lockStopTest to return a boolean and accept a parameter whether stanza is required - rather than doing a TRY/CATCH here
         }
         CATCH(StopError)
         {
@@ -90,7 +90,9 @@ cmdStanzaDelete(void)
         storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE));
         storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
 
-// CSHANG Need to call storageInfoList
+//CSHANG if a file that matches the regex, but not a directory then error? Remove should fail if not a file -- add test for this and leave as a test if it errors
+
+// CSHANG Use storageList with a backupregex like in expire to delete the manifest files
 
     }
     MEM_CONTEXT_TEMP_END();
