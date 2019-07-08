@@ -9,9 +9,9 @@ Stanza Create Command
 
 #include "command/stanza/stanzaCreate.h"
 #include "common/debug.h"
-#include "common/encode.h"
-#include "common/encode/base64.h"
-#include "common/io/handleWrite.h"
+#include "common/encode.h" // CSHANG Is this necessary?
+#include "common/encode/base64.h" // CSHANG Is this necessary?
+#include "common/io/handleWrite.h"  // CSHANG Is this necessary?
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -19,37 +19,14 @@ Stanza Create Command
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
-#include "postgres/interface.h"
-#include "postgres/version.h"
+#include "postgres/interface.h"  // CSHANG Is this necessary?
+#include "postgres/version.h"  // CSHANG Is this necessary?
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Callback function for StorageInfoList
 ***********************************************************************************************************************************/
 
-
-/***********************************************************************************************************************************
-Render the information for the stanza based on the command parameters.
-***********************************************************************************************************************************/
-// static String *
-// infoRender(void)
-// {
-//     FUNCTION_LOG_VOID(logLevelDebug);
-//
-//     String *result = NULL;
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//
-//
-//         memContextSwitch(MEM_CONTEXT_OLD());
-//         result = strDup(resultStr);
-//         memContextSwitch(MEM_CONTEXT_TEMP());
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_LOG_RETURN(STRING, result);
-// }
 
 /***********************************************************************************************************************************
 Process stanza-create
@@ -71,8 +48,10 @@ cmdStanzaCreate(void)
 
 // CSHANG TODO:
 // * storageInfoList
-// * how to handle --force
-// * is it possible to reconstruct - maybe only if backup.info exists - which means it would have to be the truthsayer
+// * how to handle --force - especially if something exists and what if encryption reset?
+// * is it possible to reconstruct (only if not encrypted)- maybe only if backup.info exists - which means it would have to be the truthsayer
+// From the old code: # If something other than the info files exist in the repo (maybe a backup is in progress) and the user is attempting to
+// # change the repo encryption in anyway, then error
         bool archiveInfoFileExists = storageExistsNP(storageRepoStanzaRead, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE));
         bool archiveInfoFileCopyExists = storageExistsNP(
             storageRepoStanzaRead, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT));
@@ -121,7 +100,7 @@ cmdStanzaCreate(void)
             infoBackupSave(
                 infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
-        // Else if both info files exist (in some form), then if valid just return
+        // Else if both info files exist, then if valid just return
         else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
         {
             infoArchive = infoArchiveNewLoad(

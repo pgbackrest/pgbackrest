@@ -41,9 +41,6 @@ testRun(void)
         StringList *argList = strLstDup(argListBase);
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        // uint32_t pgControlVersion = 960;
-        // uint32_t pgCatalogVersion = 201608131;
-
         storagePutNP(
             storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
