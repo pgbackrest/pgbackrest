@@ -272,7 +272,7 @@ sub evaluateIf
         my $strIf = $self->variableReplace($oNode->paramGet('if'));
 
         # In this case we really do want to evaluate the contents and not treat it as a literal
-        $bIf = eval($strIf);                                        ## no critic (BuiltinFunctions::ProhibitStringyEval)
+        $bIf = eval($strIf);
 
         # Error if the eval failed
         if ($@)
@@ -319,7 +319,7 @@ sub variableListParse
                 if ($oVariable->paramTest('eval', 'y'))
                 {
                     # In this case we really do want to evaluate the contents of strValue and not treat it as a literal.
-                    $strValue = eval($strValue);                    ## no critic (BuiltinFunctions::ProhibitStringyEval)
+                    $strValue = eval($strValue);
 
                     if ($@)
                     {

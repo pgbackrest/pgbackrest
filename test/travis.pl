@@ -134,23 +134,13 @@ eval
             confess &log(ERROR, '--vm is required');
         }
 
-        # Only lint on U18
-        my $strParam = undef;
-
-        if ($strVm ne VM_U18)
-        {
-            $strParam .= '--no-lint';
-        }
-
         processBegin("${strVm} build");
         executeTest("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true});
         processEnd();
 
-        processBegin("${strVm} test" . (defined($strParam) ? ": ${strParam}" : ''));
+        processBegin("${strVm} test");
         executeTest(
-            "${strTestExe} --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" .
-                (defined($strParam) ? " ${strParam}" : ''),
-            {bShowOutputAsync => true});
+            "${strTestExe} --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}", {bShowOutputAsync => true});
         processEnd();
     }
 

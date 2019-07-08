@@ -100,10 +100,8 @@ sub process
     $strConfig .=
         "\n" .
         "before_install:\n" .
-        "  - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl" .
-            " libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man" .
-            " devscripts libjson-perl libio-socket-ssl-perl libxml-libxml-perl libyaml-libyaml-perl python-pip lcov" .
-            " libjson-maybexs-perl libperl-dev\n" .
+        "  - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip" .
+            " lcov libperl-dev\n" .
         "  - |\n" .
         "    # Install & Configure AWS CLI\n" .
         "    pip install --upgrade --user awscli\n" .
@@ -112,11 +110,6 @@ sub process
         "    aws configure set aws_secret_access_key verySecretKey1\n" .
         "    aws help --version\n" .
         "    aws configure list\n" .
-        "  - |\n" .
-        "    # Install Devel::Cover\n" .
-        "    sudo dpkg -i \${TRAVIS_BUILD_DIR?}/test/package/u14-" . packageDevelCover(VM_ARCH_AMD64) . "\n" .
-        "    sudo apt-get -f install\n" .
-        '    ' . LIB_COVER_EXE . " -v\n" .
         "\n" .
         "install:\n" .
         "  - |\n" .

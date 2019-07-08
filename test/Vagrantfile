@@ -55,8 +55,7 @@ Vagrant.configure(2) do |config|
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Perl Modules' && date
-        apt-get install -y libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl libxml-checker-perl libperl-critic-perl \
-            libdevel-nytprof-perl libyaml-libyaml-perl
+        apt-get install -y libdbd-pg-perl libxml-checker-perl libyaml-libyaml-perl
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Build Tools' && date
@@ -72,10 +71,6 @@ Vagrant.configure(2) do |config|
         sudo -i -u vagrant aws configure set region us-east-1
         sudo -i -u vagrant aws configure set aws_access_key_id accessKey1
         sudo -i -u vagrant aws configure set aws_secret_access_key verySecretKey1
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install Devel::Cover' && date
-        dpkg -i /backrest/test/package/u18-libdevel-cover-perl_1.29-2_amd64.deb
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Docker' && date

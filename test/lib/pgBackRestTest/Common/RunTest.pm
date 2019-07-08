@@ -159,9 +159,7 @@ sub process
     $oStorage = new pgBackRest::Storage::Storage(STORAGE_LOCAL, {strPath => $self->testPath()});
 
     # Generate backrest exe
-    $self->{strBackRestExe} = testRunExe(
-        $self->coverage(), $self->{strBackRestExeC}, $self->{strBackRestExeHelper}, dirname($self->testPath()), $self->basePath(),
-        $self->module(), $self->moduleTest(), true);
+    $self->{strBackRestExe} = defined($self->{strBackRestExeC}) ? $self->{strBackRestExeC} : $self->{strBackRestExeHelper};
 
     projectBinSet($self->{strBackRestExe});
 
@@ -508,8 +506,7 @@ sub testRun
         'pgBackRestTest::Module::' . testRunName($strModule) . '::' . testRunName($strModule) . testRunName($strModuleTest) .
         'Test';
 
-    $oTestRun = eval(                                                ## no critic (BuiltinFunctions::ProhibitStringyEval)
-        "require ${strModuleName}; ${strModuleName}->import(); return new ${strModuleName}();")
+    $oTestRun = eval("require ${strModuleName}; ${strModuleName}->import(); return new ${strModuleName}();")
         or do {confess $EVAL_ERROR};
 
     # Return from function and log return values if any
@@ -533,64 +530,6 @@ sub testRunGet
 push @EXPORT, qw(testRunGet);
 
 ####################################################################################################################################
-# Generate test executable
-####################################################################################################################################
-sub testRunExe
-{
-    my $bCoverage = shift;
-    my $strExeC = shift;
-    my $strExeHelper = shift;
-    my $strCoveragePath = shift;
-    my $strBackRestBasePath = shift;
-    my $strModule = shift;
-    my $strTest = shift;
-    my $bLog = shift;
-
-    my $strExe = defined($strExeC) ? $strExeC : undef;
-    my $strPerlModule;
-
-    if ($bCoverage)
-    {
-        # Limit Perl modules tested to what is defined in the test coverage (if it exists)
-        my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
-        my $strPerlModuleLog;
-
-        if (defined($hTestCoverage))
-        {
-            foreach my $strCoverageModule (sort(keys(%{$hTestCoverage})))
-            {
-                $strPerlModule .= ',.*/' . $strCoverageModule . '\.p.$';
-                $strPerlModuleLog .= (defined($strPerlModuleLog) ? ', ' : '') . $strCoverageModule;
-            }
-        }
-
-        # Build the exe
-        if (defined($strPerlModule))
-        {
-            $strExe .=
-                (defined($strExeC) ? ' --perl-option=' :  'perl ') .
-                "-MDevel::Cover=-silent,1,-dir,${strCoveragePath},-select${strPerlModule},+inc" .
-                ",${strBackRestBasePath},-coverage,statement,branch,condition,path,subroutine" .
-                (defined($strExeC) ? '' :  " ${strExeHelper}");
-
-            if (defined($bLog) && $bLog)
-            {
-                &log(INFO, "          coverage: ${strPerlModuleLog}");
-            }
-        }
-    }
-
-    if (!defined($strExeC) && !defined($strPerlModule))
-    {
-        $strExe = $strExeHelper;
-    }
-
-    return $strExe;
-}
-
-push(@EXPORT, qw(testRunExe));
-
-####################################################################################################################################
 # storageTest - get the storage for the current test
 ####################################################################################################################################
 sub storageTest
@@ -607,7 +546,6 @@ sub archBits {return vmArchBits(shift->{strVm})}
 sub backrestExe {return shift->{strBackRestExe}}
 sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
-sub coverage {vmCoveragePerl(shift->{strVm})}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
 sub doExpect {return shift->{bExpect}}

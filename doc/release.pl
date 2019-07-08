@@ -211,7 +211,7 @@ eval
             # Generate coverage summmary
             &log(INFO, "Generate Coverage Summary");
             executeTest(
-                "${strTestExe} --no-lint --no-package --no-valgrind --no-optimize --vm-max=3 --coverage-summary",
+                "${strTestExe} --no-package --no-valgrind --no-optimize --vm-max=3 --coverage-summary",
                 {bShowOutputAsync => true});
         }
 

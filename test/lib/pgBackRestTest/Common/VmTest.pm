@@ -31,14 +31,10 @@ use constant VM_CONTROL_MASTER                                      => 'control-
     push @EXPORT, qw(VM_CONTROL_MASTER);
 # Will coverage testing be run for C?
 use constant VMDEF_COVERAGE_C                                       => 'coverage-c';
-# Will coverage testing be run for Perl?
-use constant VMDEF_COVERAGE_PERL                                    => 'coverage-perl';
 use constant VM_DEPRECATED                                          => 'deprecated';
     push @EXPORT, qw(VM_DEPRECATED);
 use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
-# Will static code analysis be run for C?
-use constant VMDEF_LINT_C                                           => 'lint-c';
 use constant VM_OS                                                  => 'os';
     push @EXPORT, qw(VM_OS);
 use constant VM_OS_BASE                                             => 'os-base';
@@ -342,8 +338,6 @@ my $oyVm =
         &VM_IMAGE => 'ubuntu:18.04',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
-        &VMDEF_COVERAGE_PERL => true,
-        &VMDEF_LINT_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.26.1',
 
@@ -384,7 +378,6 @@ foreach my $strVm (sort(keys(%{$oyVm})))
 foreach my $strPgVersion (versionSupport())
 {
     my $strVmPgVersionRun;
-    my $bVmCoveragePerl = false;
     my $bVmCoverageC = false;
 
     foreach my $strVm (VM_LIST)
@@ -392,11 +385,6 @@ foreach my $strPgVersion (versionSupport())
         if (vmCoverageC($strVm))
         {
             $bVmCoverageC = true;
-        }
-
-        if (vmCoveragePerl($strVm))
-        {
-            $bVmCoveragePerl = true;
         }
 
         foreach my $strVmPgVersion (@{$oyVm->{$strVm}{&VM_DB_TEST}})
@@ -418,11 +406,6 @@ foreach my $strPgVersion (versionSupport())
     if (!$bVmCoverageC)
     {
         confess &log(ASSERT, "C coverage ${strErrorSuffix}");
-    }
-
-    if (!$bVmCoveragePerl)
-    {
-        confess &log(ASSERT, "Perl coverage ${strErrorSuffix}");
     }
 
     if (!defined($strVmPgVersionRun))
@@ -465,30 +448,6 @@ sub vmCoverageC
 }
 
 push @EXPORT, qw(vmCoverageC);
-
-####################################################################################################################################
-# vmCoveragePerl
-####################################################################################################################################
-sub vmCoveragePerl
-{
-    my $strVm = shift;
-
-    return $oyVm->{$strVm}{&VMDEF_COVERAGE_PERL} ? true : false;
-}
-
-push @EXPORT, qw(vmCoveragePerl);
-
-####################################################################################################################################
-# vmLintC
-####################################################################################################################################
-sub vmLintC
-{
-    my $strVm = shift;
-
-    return $oyVm->{$strVm}{&VMDEF_LINT_C} ? true : false;
-}
-
-push @EXPORT, qw(vmLintC);
 
 ####################################################################################################################################
 # Get vm architecture bits

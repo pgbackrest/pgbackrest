@@ -40,6 +40,12 @@ Standard config include path name
 #define PGBACKREST_CONFIG_INCLUDE_PATH                              "conf.d"
 
 /***********************************************************************************************************************************
+Option value constants
+***********************************************************************************************************************************/
+VARIANT_STRDEF_STATIC(OPTION_VALUE_0,                               "0");
+VARIANT_STRDEF_STATIC(OPTION_VALUE_1,                               "1");
+
+/***********************************************************************************************************************************
 Parse option flags
 ***********************************************************************************************************************************/
 // Offset the option values so they don't conflict with getopt_long return codes
@@ -899,9 +905,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (dependOptionDefType == cfgDefOptTypeBoolean)
                         {
                             if (cfgOptionBool(dependOptionId))
-                                dependValue = VARSTRDEF("1");
+                                dependValue = OPTION_VALUE_1;
                             else
-                                dependValue = VARSTRDEF("0");
+                                dependValue = OPTION_VALUE_0;
                         }
                     }
 

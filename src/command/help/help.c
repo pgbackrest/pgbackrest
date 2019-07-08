@@ -188,7 +188,7 @@ helpRender(void)
             }
 
             // Construct message for more help
-            more = STRDEF("[command]");
+            more = strNew("[command]");
         }
         else
         {
@@ -224,13 +224,13 @@ helpRender(void)
                         const String *section = NULL;
 
                         if (cfgDefOptionHelpSection(optionDefId) != NULL)
-                            section = STR(cfgDefOptionHelpSection(optionDefId));
+                            section = strNew(cfgDefOptionHelpSection(optionDefId));
 
                         if (section == NULL ||
                             (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
                              !strEqZ(section, "stanza")))
                         {
-                            section = STRDEF("command");
+                            section = strNew("command");
                         }
 
                         kvAdd(optionKv, VARSTR(section), VARINT((int)optionDefId));

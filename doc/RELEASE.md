@@ -137,7 +137,7 @@ doc/release.pl --deploy
 
 Build to generate files and test documentation:
 ```
-test/test.pl --no-lint --vm=u18 --build-only
+test/test.pl --vm=u18 --build-only
 ```
 
 Commit and push to integration:

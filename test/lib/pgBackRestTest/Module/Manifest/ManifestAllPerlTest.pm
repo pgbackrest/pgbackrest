@@ -565,7 +565,7 @@ sub run
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_91, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_91)});
-        $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_91);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_91 . '');
         $oManifestExpectedUnskip->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
             $self->dbCatalogVersion(PG_VERSION_91));
 
@@ -650,7 +650,7 @@ sub run
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_84, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_84)});
-        $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84 . '');
         $oManifestExpectedUnskip->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
             $self->dbCatalogVersion(PG_VERSION_84));
 
@@ -971,7 +971,7 @@ sub run
             {bLoad => false, strDbVersion => PG_VERSION_84, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_84)});
 
         # Catalog not stored in < 9.0
-        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84);
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84 . '');
         $oManifestExpected->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
             $self->dbCatalogVersion(PG_VERSION_84));
 

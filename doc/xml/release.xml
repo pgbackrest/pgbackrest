@@ -14,6 +14,17 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.16dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="chrlange"/>
+                            <release-item-ideator id="ned.t.crigler"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix scoping violations exposed by optimizations in <proper>gcc 9</proper>.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -7162,6 +7173,11 @@
             <contributor-id type="github">Xof</contributor-id>
         </contributor>
 
+        <contributor id="chrlange">
+            <contributor-name-display>chrlange</contributor-name-display>
+            <contributor-id type="github">chrlange</contributor-id>
+        </contributor>
+
         <contributor id="clinton.adams">
             <contributor-name-display>Clinton Adams</contributor-name-display>
             <contributor-id type="github">clad</contributor-id>
@@ -7398,6 +7414,11 @@
         <contributor id="navid.golpayegani">
             <contributor-name-display>Navid Golpayegani</contributor-name-display>
             <contributor-id type="github">golpa</contributor-id>
+        </contributor>
+
+        <contributor id="ned.t.crigler">
+            <contributor-name-display>Ned T. Crigler</contributor-name-display>
+            <contributor-id type="github">crigler</contributor-id>
         </contributor>
 
         <contributor id="nick.floersch">

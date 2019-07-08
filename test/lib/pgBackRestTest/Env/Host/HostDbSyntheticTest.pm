@@ -245,7 +245,7 @@ sub manifestFileCreate
 
         if (!$bChecksumPage && $strChecksumPageError ne '0')
         {
-            my @iyChecksumPageError = eval($strChecksumPageError);  ## no critic (BuiltinFunctions::ProhibitStringyEval)
+            my @iyChecksumPageError = eval($strChecksumPageError);
 
             $oManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR} =
                 \@iyChecksumPageError;
