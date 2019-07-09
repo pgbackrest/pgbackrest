@@ -27,10 +27,10 @@ lockStopFileName(const String *stanza)
 Test for the existence of a stop file
 ***********************************************************************************************************************************/
 bool
-lockStopTest(bool stanzaStopRequired)
+lockStopTest(bool stanzaStopExpected)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BOOL, stanzaStopRequired);
+        FUNCTION_LOG_PARAM(BOOL, stanzaStopExpected);
     FUNCTION_LOG_END();
 
     bool result = false;
@@ -42,13 +42,13 @@ lockStopTest(bool stanzaStopRequired)
         {
             result = storageExistsNP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza)));
 
-            // If the stop file exists and is not required then error
-            if (result && !stanzaStopRequired)
+            // If the stop file exists and is not expected then error
+            if (result && !stanzaStopExpected)
                 THROW_FMT(StopError, "stop file exists for stanza %s", strPtr(cfgOptionStr(cfgOptStanza)));
         }
 
         // If not looking for a specific stanza stop file, then check all stanzas
-        if (!stanzaStopRequired && storageExistsNP(storageLocal(), lockStopFileName(NULL)))
+        if (!stanzaStopExpected && storageExistsNP(storageLocal(), lockStopFileName(NULL)))
             THROW(StopError, "stop file exists for all stanzas");
     }
     MEM_CONTEXT_TEMP_END();

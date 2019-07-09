@@ -33,6 +33,14 @@
 
                         <p>Add Perl interface to C storage layer.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Updated lockStopTest() in C to accept a parameter to determine if a stop file exists for a stanza.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>

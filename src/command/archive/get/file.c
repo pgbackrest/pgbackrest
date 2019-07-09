@@ -136,7 +136,7 @@ archiveGetFile(
     bool compressible = true;
 
     // Test for stop file
-    lockStopTest();
+    lockStopTest(false);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

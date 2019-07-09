@@ -10,6 +10,6 @@ Command Control
 Functions
 ***********************************************************************************************************************************/
 String *lockStopFileName(const String *stanza);
-void lockStopTest(void);
+bool lockStopTest(bool stanzaStopExpected);
 
 #endif
