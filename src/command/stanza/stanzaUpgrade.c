@@ -37,11 +37,15 @@ cmdStanzaUpgrade(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const Storage *storageRepoReadStanza = storageRepo();
+        const Storage *storageRepoWriteStanza = storageRepoWrite();
+        bool infoArchiveUpgrade = false;
+        bool infoBackupUpgrade = false;
+
         // ??? Temporary until can communicate with PG: Get control info from the pgControlFile
         // CSHANG pgControlFromFile does not reach out to a remote db. May need to do get first but would still need to know the path to the control file - but we should be able to get that from the pg1-path - but that's where the dbObjectGet would come into play.
         PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
-        bool infoArchiveUpgrade = false;
-        bool infoBackupUpgrade = false;
+
 // CSHANG TODO:
 // * how to handle --force
 // * is it possible to reconstruct (only if not encrypted)- maybe only if backup.info exists - which means it would have to be the truthsayer
@@ -49,31 +53,28 @@ cmdStanzaUpgrade(void)
 
         // Load the info files (errors if missing)
         InfoArchive *infoArchive = infoArchiveNewLoad(
-            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
+            storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
         InfoBackup *infoBackup = infoBackupNewLoad(
-            storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+            storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
         // Update archive
         if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
         {
-            infoArchivePgSet(
-                infoArchive, pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
+            infoArchivePgSet(infoArchive, pgControl.version, pgControl.systemId);
             infoArchiveUpgrade = true;
         }
 
         // Update backup
         if ((pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId) &&
-            (pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion)
+            (pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion))
         {
             infoBackupPgSet(
-                infoBackup,  pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion,
-                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                infoBackup, pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion);
             infoBackupUpgrade = true;
         }
 
@@ -93,14 +94,14 @@ cmdStanzaUpgrade(void)
             if (infoArchiveUpgrade)
             {
                 infoArchiveSave(
-                    infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    infoArchive, storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             }
 
             // Save backup info
             if (infoBackupUpgrade)
             {
                 infoBackupSave(
-                    infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+                    infoBackup, storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             }
         }

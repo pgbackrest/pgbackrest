@@ -33,13 +33,14 @@ cmdStanzaCreate(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const Storage *storageRepoReadStanza = storageRepo();
+        const Storage *storageRepoWriteStanza = storageRepoWrite();
+        InfoArchive *infoArchive = NULL;
+        InfoBackup *infoBackup = NULL;
+
         // ??? Temporary until can communicate with PG: Get control info from the pgControlFile
         // CSHANG pgControlFromFile does not reach out to a remote db. May need to do get first but would still need to know the path to the control file - but we should be able to get that from the pg1-path - but that's where the dbObjectGet would come into play.
         PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
-
-        const Storage *storageRepoReadStanza = storageRepo();
-        InfoArchive *infoArchive = NULL;
-        InfoBackup *infoBackup = NULL;
 
 // CSHANG TODO:
 // * how to handle --force - especially if something exists and what if encryption reset?
@@ -71,6 +72,7 @@ cmdStanzaCreate(void)
             }
 
             // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent files
+            String *cipherPassSub = NULL;
             if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) != cipherTypeNone)
             {
                 unsigned char buffer[48]; // 48 is the amount of entropy needed to get a 64 base key
@@ -84,14 +86,14 @@ cmdStanzaCreate(void)
             infoArchive = infoArchiveNew(
                 pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
             infoArchiveSave(
-                infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                infoArchive, storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
             // Create and save backup info
             infoBackup = infoBackupNew(
                 pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
             infoBackupSave(
-                infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                infoBackup, storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
         // Else if both info files exist and both are valid, resave
         else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
@@ -154,9 +156,9 @@ cmdStanzaCreate(void)
             {
                 // If the existing files are valid, resave to ensure there are two files (info and a copy)
                 infoArchiveSave(
-                    infoArchive, storageRepoWrite(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    infoArchive, storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
                 infoBackupSave(
-                    infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    infoBackup, storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
                 LOG_INFO("stanza-create was already performed");
             }

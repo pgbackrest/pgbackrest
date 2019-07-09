@@ -127,14 +127,12 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
 Set the infoPg data
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub)
+infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
     this->infoPg = infoPgSet(this->infoPg, infoPgArchive, pgVersion, pgSystemId, 0, 0);

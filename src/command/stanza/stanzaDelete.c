@@ -9,6 +9,7 @@ Stanza Delete Command
 
 #include "command/control/control.h"
 #include "command/stanza/stanzaDelete.h"
+#include "command/backup/common.h"
 #include "common/debug.h"
 #include "common/encode.h" // CSHANG Is this necessary?
 #include "common/encode/base64.h" // CSHANG Is this necessary?
@@ -19,6 +20,7 @@ Stanza Delete Command
 #include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
+#include "info/infoManifest.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h" // CSHANG Is this necessary?
 #include "postgres/version.h" // CSHANG Is this necessary?
@@ -38,19 +40,21 @@ cmdStanzaDelete(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        bool lockStopExists = false;
-        Storage *storageRepoWriteStanza = storageRepoWrite();
-        Storage *storageRepoReadStanza = storageRepo();
+        const Storage *storageRepoReadStanza = storageRepo();
+        const Storage *storageRepoWriteStanza = storageRepoWrite();
+
 // CSHANG In the old code we use pathExists to determine if there is anything to do, but I see that "not all drivers implement" it meaning s3. Since the deletes are not autonomous, we could end up in a state where there might be something left. I don't undestand why storageList can return paths but storagePathExists cannot.
         if (strLstSize(storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP))) > 0 ||
             strLstSize(storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE))) > 0)
         {
+            bool lockStopExists = false;
 
     // CSHANG Maybe bypass this check if --force used?
             // Check for a stop file for this or all stanzas
             TRY_BEGIN()
             {
-                lockStopTest();  // CSHANG In a separate commit, modify lockStopTest to return a boolean and accept a parameter whether stanza is required - rather than doing a TRY/CATCH here
+// CSHANG In a separate commit, modify lockStopTest to return a boolean and accept a parameter whether stanza is required - rather than doing a TRY/CATCH here
+                lockStopTest();
             }
             CATCH(StopError)
             {
@@ -63,8 +67,8 @@ cmdStanzaDelete(void)
             {
     // CSHANG Maybe add HINT to use force?
                 THROW_FMT(
-                    FileMissingError, "stop file does not exist for stanza '%s'" .
-                    "\nHINT: has the pgbackrest stop command been run on this server?", strPtr(cfgOptionStr(cfgOptStanza)));
+                    FileMissingError, "stop file does not exist for stanza '%s'\n"
+                    "HINT: has the pgbackrest stop command been run on this server?", strPtr(cfgOptionStr(cfgOptStanza)));
             }
 
         // if (!cfgOptionTest(cfgOptForce))
@@ -100,15 +104,21 @@ cmdStanzaDelete(void)
     // CSHANG What about sort order? Sorting from newest to oldest with sortOrderDesc - old code used "reverse" which I believe was newest to oldest
             StringList *backupList = strLstSort(storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderDesc);
 
+            // Delete all manifest files
             for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
             {
-                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_MANIFEST_FILE));
-                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_MANIFEST_FILE INFO_COPY_EXT));
+                storageRemoveNP(
+                    storageRepoWriteStanza,
+                    strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
+                storageRemoveNP(
+                    storageRepoWriteStanza,
+                    strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
             }
         }
         else
         {
             LOG_INFO("stanza %s already deleted", strPtr(cfgOptionStr(cfgOptStanza)));
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
