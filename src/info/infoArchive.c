@@ -124,10 +124,10 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
 }
 
 /***********************************************************************************************************************************
-Update and set the archive info
+Set the infoPg data
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub)
+infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);

@@ -61,7 +61,7 @@ cmdStanzaUpgrade(void)
         // Update archive
         if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
         {
-            infoArchiveSet(
+            infoArchivePgSet(
                 infoArchive, pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
             infoArchiveUpgrade = true;
@@ -71,13 +71,13 @@ cmdStanzaUpgrade(void)
         if ((pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId) &&
             (pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion)
         {
-            infoBackupSet(
+            infoBackupPgSet(
                 infoBackup,  pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             infoBackupUpgrade = true;
         }
 
-// CSHANG I added this to check the ids before saving the file because they better match at this point
+// CSHANG I added this to check the ids before saving the file because they need to match at this point
         // Get the backup and archive info pg data and ensure the ids match
         backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
         archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));

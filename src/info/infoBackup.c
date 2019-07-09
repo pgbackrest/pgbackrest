@@ -239,10 +239,10 @@ infoBackupCheckPg(
 }
 
 /***********************************************************************************************************************************
-Update and set the backup info
+Set the infoPg data
 ***********************************************************************************************************************************/
 InfoBackup *
-infoBackupSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion,
+infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion,
     uint32_t pgCatalogVersion, CipherType cipherType, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

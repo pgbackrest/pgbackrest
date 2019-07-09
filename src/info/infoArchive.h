@@ -36,7 +36,7 @@ Functions
 ***********************************************************************************************************************************/
 const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
-InfoArchive *infoArchiveSet(
+InfoArchive *infoArchivePgSet(
     InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub);
 void infoArchiveSave(
     InfoArchive *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);

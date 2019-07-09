@@ -40,27 +40,32 @@ cmdStanzaDelete(void)
     {
         bool lockStopExists = false;
         Storage *storageRepoWriteStanza = storageRepoWrite();
+        Storage *storageRepoReadStanza = storageRepo();
+// CSHANG In the old code we use pathExists to determine if there is anything to do, but I see that "not all drivers implement" it meaning s3. Since the deletes are not autonomous, we could end up in a state where there might be something left. I don't undestand why storageList can return paths but storagePathExists cannot.
+        if (strLstSize(storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP))) > 0 ||
+            strLstSize(storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE))) > 0)
+        {
 
-// CSHANG Maybe bypass this check if --force used?
-        // Check for a stop file for this or all stanzas
-        TRY_BEGIN()
-        {
-            lockStopTest();  // CSHANG In a separate commit, modify lockStopTest to return a boolean and accept a parameter whether stanza is required - rather than doing a TRY/CATCH here
-        }
-        CATCH(StopError)
-        {
-            lockStopExists = true;
-        }
-        TRY_END();
+    // CSHANG Maybe bypass this check if --force used?
+            // Check for a stop file for this or all stanzas
+            TRY_BEGIN()
+            {
+                lockStopTest();  // CSHANG In a separate commit, modify lockStopTest to return a boolean and accept a parameter whether stanza is required - rather than doing a TRY/CATCH here
+            }
+            CATCH(StopError)
+            {
+                lockStopExists = true;
+            }
+            TRY_END();
 
-        // If the stop file does not exist, then error
-        if (!lockStopExists)
-        {
-// CSHANG Maybe add HINT to use force?
-            THROW_FMT(
-                FileMissingError, "stop file does not exist for stanza '%s'" .
-                "\nHINT: has the pgbackrest stop command been run on this server?", strPtr(cfgOptionStr(cfgOptStanza)));
-        }
+            // If the stop file does not exist, then error
+            if (!lockStopExists)
+            {
+    // CSHANG Maybe add HINT to use force?
+                THROW_FMT(
+                    FileMissingError, "stop file does not exist for stanza '%s'" .
+                    "\nHINT: has the pgbackrest stop command been run on this server?", strPtr(cfgOptionStr(cfgOptStanza)));
+            }
 
         // if (!cfgOptionTest(cfgOptForce))
 
@@ -82,18 +87,28 @@ cmdStanzaDelete(void)
         //     }
         // }
 
-        // Delete the archive info files
-        storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE));
-        storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT));
+            // Delete the archive info files
+            storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE));
+            storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT));
 
-        // Delete the backup info files
-        storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE));
-        storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
+            // Delete the backup info files
+            storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE));
+            storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
 
-//CSHANG if a file that matches the regex, but not a directory then error? Remove should fail if not a file -- add test for this and leave as a test if it errors
+    //CSHANG if a file that matches the regex, but not a directory then error? Remove should fail if not a file -- add test for this and leave as a test if it errors
 
-// CSHANG Use storageList with a backupregex like in expire to delete the manifest files
+    // CSHANG What about sort order? Sorting from newest to oldest with sortOrderDesc - old code used "reverse" which I believe was newest to oldest
+            StringList *backupList = strLstSort(storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderDesc);
 
+            for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
+            {
+                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_MANIFEST_FILE));
+                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_MANIFEST_FILE INFO_COPY_EXT));
+            }
+        }
+        else
+        {
+            LOG_INFO("stanza %s already deleted", strPtr(cfgOptionStr(cfgOptStanza)));
     }
     MEM_CONTEXT_TEMP_END();
 

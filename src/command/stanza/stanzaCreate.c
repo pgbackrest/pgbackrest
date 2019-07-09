@@ -37,7 +37,7 @@ cmdStanzaCreate(void)
         // CSHANG pgControlFromFile does not reach out to a remote db. May need to do get first but would still need to know the path to the control file - but we should be able to get that from the pg1-path - but that's where the dbObjectGet would come into play.
         PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
-        const Storage *storageRepoStanzaRead = storageRepo();
+        const Storage *storageRepoReadStanza = storageRepo();
         InfoArchive *infoArchive = NULL;
         InfoBackup *infoBackup = NULL;
 
@@ -46,21 +46,21 @@ cmdStanzaCreate(void)
 // * is it possible to reconstruct (only if not encrypted)- maybe only if backup.info exists - which means it would have to be the truthsayer
 // From the old code: # If something other than the info files exist in the repo (maybe a backup is in progress) and the user is attempting to
 // # change the repo encryption in anyway, then error
-        bool archiveInfoFileExists = storageExistsNP(storageRepoStanzaRead, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE));
+        bool archiveInfoFileExists = storageExistsNP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE));
         bool archiveInfoFileCopyExists = storageExistsNP(
-            storageRepoStanzaRead, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT));
-        bool backupInfoFileExists = storageExistsNP(storageRepoStanzaRead, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE));
+            storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT));
+        bool backupInfoFileExists = storageExistsNP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE));
         bool backupInfoFileCopyExists = storageExistsNP(
-            storageRepoStanzaRead, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
+            storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
 
         // If neither archive info nor backup info files exist and nothing else exists in the stanza directory
         // then create the stanza
         if (!archiveInfoFileExists && !archiveInfoFileCopyExists && !backupInfoFileExists && !backupInfoFileCopyExists)
         {
             bool archiveNotEmpty = strLstSize(
-                storageListNP(storageRepoStanzaRead, STRDEF(STORAGE_REPO_ARCHIVE))) > 0 ? true : false;
+                storageListNP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE))) > 0 ? true : false;
             bool backupNotEmpty = strLstSize(
-                storageListNP(storageRepoStanzaRead, STRDEF(STORAGE_REPO_BACKUP))) > 0 ? true : false;
+                storageListNP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP))) > 0 ? true : false;
 
             // If something exists in the backup or archive directories for this stanza, then error
             if (archiveNotEmpty || backupNotEmpty)
@@ -97,12 +97,12 @@ cmdStanzaCreate(void)
         else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
         {
             infoArchive = infoArchiveNewLoad(
-                storageRepoStanzaRead, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
+                storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
             infoBackup = infoBackupNewLoad(
-                storageRepoStanzaRead, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+                storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 

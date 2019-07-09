@@ -67,7 +67,7 @@ unsigned int infoBackupCheckPg(
     const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgCatalogVersion, uint32_t pgControlVersion);
 // Remove a backup from the current section
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
-InfoBackup *infoBackupSet(
+InfoBackup *infoBackupPgSet(
     InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion,
     CipherType cipherType, const String *cipherPassSub);
 void infoBackupSave(
