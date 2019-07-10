@@ -269,7 +269,7 @@ Macros to return function results (or void)
 Function Test Macros
 
 In debug builds these macros will update the stack trace with function names and parameters but not log.  In production builds all
-test macros are compiled out.
+test macros are compiled out (except for return statements).
 ***********************************************************************************************************************************/
 #ifdef DEBUG_TEST_TRACE
     #define FUNCTION_TEST_BEGIN()                                                                                                  \
