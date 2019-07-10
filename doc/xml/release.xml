@@ -33,14 +33,6 @@
 
                         <p>Add Perl interface to C storage layer.</p>
                     </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
-                        </release-item-contributor-list>
-
-                        <p>Update <code>lockStopTest()</code> to optionally return a result rather than error.</p>
-                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>

@@ -40,7 +40,7 @@ testRun(void)
         strLstAddZ(argList, "start");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(lockStopTest(false), "no stop files without stanza");
+        TEST_RESULT_VOID(lockStopTest(), "no stop files without stanza");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -50,16 +50,13 @@ testRun(void)
         strLstAddZ(argList, "start");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(lockStopTest(false), "no stop files with stanza");
-        TEST_RESULT_BOOL(lockStopTest(true), false, "no stop file and is expected for the stanza");
+        TEST_RESULT_VOID(lockStopTest(), "no stop files with stanza");
 
         storagePutNP(storageNewWriteNP(storageTest, strNew("all.stop")), NULL);
-        TEST_ERROR(lockStopTest(false), StopError, "stop file exists for all stanzas");
-        TEST_RESULT_BOOL(lockStopTest(true), false, "stop file exists for all stanzas but not the stanza");
+        TEST_ERROR(lockStopTest(), StopError, "stop file exists for all stanzas");
 
         storagePutNP(storageNewWriteNP(storageTest, strNew("db.stop")), NULL);
-        TEST_ERROR(lockStopTest(false), StopError, "stop file exists for stanza db");
-        TEST_RESULT_BOOL(lockStopTest(true), true, "stop file exists and is expected for the stanza");
+        TEST_ERROR(lockStopTest(), StopError, "stop file exists for stanza db");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

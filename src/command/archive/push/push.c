@@ -266,7 +266,7 @@ cmdArchivePush(void)
             THROW(ParamRequiredError, "WAL segment to push required");
 
         // Test for stop file
-        lockStopTest(false);
+        lockStopTest();
 
         // Get the segment name
         String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStr(cfgOptPgPath), STR(cfgCommandName(cfgCommand())));
@@ -404,7 +404,7 @@ cmdArchivePushAsync(void)
         TRY_BEGIN()
         {
             // Test for stop file
-            lockStopTest(false);
+            lockStopTest();
 
             // Get a list of WAL files that are ready for processing
             StringList *walFileList = archivePushProcessList(walPath);
