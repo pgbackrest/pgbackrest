@@ -99,23 +99,38 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist and both are valid");
-        harnessLogResult("P00   INFO: stanza-create was already performed");
+        harnessLogResult("P00   INFO: stanza already exists and is valid");
 
         // Remove backup.info
         TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
         TEST_RESULT_VOID(cmdStanzaCreate(), "    stanza create - success with archive.info files and only backup.info.copy");
-        harnessLogResult("P00   INFO: stanza-create was already performed");
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
+                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))),
+            true, "backup.info recreated from backup.info.copy");
 
         // Remove archive.info
         TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
         TEST_RESULT_VOID(cmdStanzaCreate(), "    stanza create - success with backup.info files and only archive.info.copy");
-        harnessLogResult("P00   INFO: stanza-create was already performed");
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
+                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName))))),
+            true, "archive.info recreated from archive.info.copy");
 
         // Remove info files
         TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
         TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - success with copy files only");
-        harnessLogResult("P00   INFO: stanza-create was already performed");
+        TEST_RESULT_BOOL(
+            (bufEq(
+                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
+                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
+            bufEq(
+                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
+                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))))),
+            true, "info files recreated from copy files");
 
         // Remove copy files
         TEST_RESULT_VOID(
@@ -125,21 +140,45 @@ testRun(void)
             storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)), .errorOnMissing = true),
             "backup.info.copy removed");
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - success with info files only");
-        harnessLogResult("P00   INFO: stanza-create was already performed");
+        TEST_RESULT_BOOL(
+            (bufEq(
+                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
+                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
+            bufEq(
+                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
+                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))))),
+            true, "info files recreated from copy files");
 
         // Errors
         //--------------------------------------------------------------------------------------------------------------------------
-        // Remove archive info files
+        // Archive files removed - backup.info and backup.info.copy exist
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)), .errorOnMissing = true),
             "archive.info.copy removed");
         TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
         TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
             "backup.info exists but archive.info is missing\n"
-            "HINT: this may be a symptom of database or repository corruption!\n"
-            "HINT: delete the stanza and run stanza-create again");
+            "HINT: this may be a symptom of repository corruption!");
 
-        // Add back an archive.info file and remove backup files
+        // Archive files removed - backup.info.copy exists
+        TEST_RESULT_VOID(
+            storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)), .errorOnMissing = true),
+            "backup.info.copy removed");
+        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
+            "backup.info exists but archive.info is missing\n"
+            "HINT: this may be a symptom of repository corruption!");
+
+        // Archive files removed - backup.info exists
+        TEST_RESULT_VOID(
+            storageMoveNP(storageTest,
+                storageNewReadNP(storageTest, backupInfoFileName),
+                storageNewWriteNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)))),
+            "backup.info moved to backup.info.copy");
+        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
+            "backup.info exists but archive.info is missing\n"
+            "HINT: this may be a symptom of repository corruption!");
+
+        // Backup files removed - archive.info file exists
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
@@ -147,11 +186,28 @@ testRun(void)
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)), .errorOnMissing = true),
             "backup.info.copy removed");
-        TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
         TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
             "archive.info exists but backup.info is missing\n"
-            "HINT: this may be a symptom of database or repository corruption!\n"
-            "HINT: delete the stanza and run stanza-create again");
+            "HINT: this may be a symptom of repository corruption!");
+
+        // Backup files removed - archive.info.copy file exists
+        TEST_RESULT_VOID(
+            storageMoveNP(storageTest,
+                storageNewReadNP(storageTest, archiveInfoFileName),
+                storageNewWriteNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))),
+                "archive.info moved to archive.info.copy");
+        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
+            "archive.info exists but backup.info is missing\n"
+            "HINT: this may be a symptom of repository corruption!");
+
+        // Backup files removed - archive.info and archive.info.copy exist
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+                "put archive info to file");
+        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
+            "archive.info exists but backup.info is missing\n"
+            "HINT: this may be a symptom of repository corruption!");
 
         // Create a corrupted backup file - system id
         contentBackup = strNew
@@ -172,9 +228,11 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad system-id");
-        TEST_ERROR_FMT(cmdStanzaCreate(), BackupMismatchError,
-            "database version = 9.6, system-id 6569239123849665679 does not match backup version = 9.6, "
-            "system-id = 6569239123849665999\nHINT: is this the correct stanza?");
+        TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
+            "backup info file and archive info file do not match\n"
+            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
+            "HINT: this may be a symptom of repository corruption!");
 
         // Create a corrupted backup file - system id and version
         contentBackup = strNew
@@ -195,9 +253,11 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad system-id and version");
-        TEST_ERROR_FMT(cmdStanzaCreate(), BackupMismatchError,
-            "database version = 9.6, system-id 6569239123849665679 does not match backup version = 9.5, "
-            "system-id = 6569239123849665999\nHINT: is this the correct stanza?");
+        TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
+            "backup info file and archive info file do not match\n"
+            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "backup : id = 1, version = 9.5, system-id = 6569239123849665999\n"
+            "HINT: this may be a symptom of repository corruption!");
 
         // Create a corrupted backup file - version
         contentBackup = strNew
@@ -218,13 +278,18 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad version");
-        TEST_ERROR_FMT(cmdStanzaCreate(), BackupMismatchError,
-            "database version = 9.6, system-id 6569239123849665679 does not match backup version = 9.5, "
-            "system-id = 6569239123849665679\nHINT: is this the correct stanza?");
+        TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
+            "backup info file and archive info file do not match\n"
+            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
+            "HINT: this may be a symptom of repository corruption!");
 
         // Remove the info files and add sub directory to backup
         TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
         TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
+        // Copy files may or may not exist - remove
+        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
+        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))),
             "create directory in backup");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "backup directory not empty");

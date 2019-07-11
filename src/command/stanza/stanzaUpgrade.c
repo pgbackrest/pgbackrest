@@ -9,23 +9,15 @@ Stanza Update Command
 
 #include "command/stanza/stanzaUpgrade.h"
 #include "common/debug.h"
-#include "common/encode.h" // CSHANG Is this necessary?
-#include "common/encode/base64.h" // CSHANG Is this necessary?
-#include "common/io/handleWrite.h" // CSHANG Is this necessary?
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
-#include "postgres/interface.h" // CSHANG Is this necessary?
-#include "postgres/version.h" // CSHANG Is this necessary?
+#include "postgres/interface.h"
+#include "postgres/version.h"
 #include "storage/helper.h"
-
-/***********************************************************************************************************************************
-Callback function for StorageInfoList
-***********************************************************************************************************************************/
 
 /***********************************************************************************************************************************
 Process stanza-upgrade

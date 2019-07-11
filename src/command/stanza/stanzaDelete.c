@@ -3,32 +3,17 @@ Stanza Delete Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <inttypes.h>
-
 #include "command/control/control.h"
 #include "command/stanza/stanzaDelete.h"
 #include "command/backup/common.h"
 #include "common/debug.h"
-#include "common/encode.h" // CSHANG Is this necessary?
-#include "common/encode/base64.h" // CSHANG Is this necessary?
-#include "common/io/handleWrite.h" // CSHANG Is this necessary?
-#include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoManifest.h"
 #include "info/infoPg.h"
-#include "postgres/interface.h" // CSHANG Is this necessary?
-#include "postgres/version.h" // CSHANG Is this necessary?
 #include "storage/helper.h"
-
-/***********************************************************************************************************************************
-Callback function for StorageInfoList
-***********************************************************************************************************************************/
 
 /***********************************************************************************************************************************
 Process stanza-delete
@@ -111,7 +96,8 @@ cmdStanzaDelete(void)
             storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE), .recurse = true);
             storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP), .recurse = true);
 
-// CSHANG We need a lockStart to remove the file or just remove it ourselves
+            // Remove the stop file
+            storageRemoveNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza)));
         }
     }
     MEM_CONTEXT_TEMP_END();

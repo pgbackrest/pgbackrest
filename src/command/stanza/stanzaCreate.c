@@ -9,18 +9,15 @@ Stanza Create Command
 
 #include "command/stanza/stanzaCreate.h"
 #include "common/debug.h"
-#include "common/encode.h" // CSHANG Is this necessary?
-#include "common/encode/base64.h" // CSHANG Is this necessary?
-#include "common/io/handleWrite.h"  // CSHANG Is this necessary?
+#include "common/encode.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
-#include "postgres/interface.h"  // CSHANG Is this necessary?
-#include "postgres/version.h"  // CSHANG Is this necessary?
+#include "postgres/interface.h"
+#include "postgres/version.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -113,8 +110,8 @@ cmdStanzaCreate(void)
             {
                 THROW_FMT(
                     FileInvalidError, "backup info file and archive info file do not match\n"
-                    "archive: id=%u, version=%s, system-id=%" PRIu64 "\n"
-                    "backup: id=%u, version=%s, system-id=%" PRIu64 "\n"
+                    "archive: id = %u, version = %s, system-id = %" PRIu64 "\n"
+                    "backup : id = %u, version = %s, system-id = %" PRIu64 "\n"
                     "HINT: this may be a symptom of repository corruption!",
                     archiveInfo.id, strPtr(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId, backupInfo.id,
                     strPtr(pgVersionToStr(backupInfo.version)), backupInfo.systemId);
@@ -129,8 +126,8 @@ cmdStanzaCreate(void)
             // Else the files are valid
             else
             {
-                String *sourceFile = NULL;
-                String *destinationFile = NULL;
+                const String *sourceFile = NULL;
+                const String *destinationFile = NULL;
 
                 // If the existing files are valid, then, if a file is missing, copy the existing one to the missing one to ensure
                 // there is both a .info and .info.copy
@@ -152,7 +149,7 @@ cmdStanzaCreate(void)
                         storageNewWriteNP(storageRepoWriteStanza, destinationFile));
                 }
 
-                // If no files, copied, then the stanza was already valid
+                // If no files copied, then the stanza was already valid
                 if (sourceFile == NULL && destinationFile == NULL)
                     LOG_INFO("stanza already exists and is valid");
             }
