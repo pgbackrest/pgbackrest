@@ -43,81 +43,75 @@ cmdStanzaDelete(void)
         const Storage *storageRepoReadStanza = storageRepo();
         const Storage *storageRepoWriteStanza = storageRepoWrite();
 
-// CSHANG In the old code we use pathExists to determine if there is anything to do, but I see that "not all drivers implement" it meaning s3. Since the deletes are not autonomous, we could end up in a state where there might be something left. I don't undestand why storageList can return paths but storagePathExists cannot.
-        if (strLstSize(storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP))) > 0 ||
-            strLstSize(storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE))) > 0)
+        // For most drivers, NULL indicates the directory does not exist at all. For those that do not support paths (e.g. S3) an
+        // empty StringList will be returned which will result in the attempt to delete the stanza even though it may not exist.
+        StringList *archiveList = storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE), .nullOnMissing = true);
+        StringList *backupList = storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP), .nullOnMissing = true);
+        if (archiveList != NULL || backupList != NULL)
         {
-            bool lockStopExists = false;
-
-    // CSHANG Maybe bypass this check if --force used?
-            // Check for a stop file for this or all stanzas
-            TRY_BEGIN()
+            // If anything exists in the stanza repo, then ensure the pgbackrest stop command was issued for the stanza before
+            // attempting the delete.
+            if (strLstSize(archiveList) > 0 || strLstSize(backupList) > 0)
             {
-// CSHANG In a separate commit, modify lockStopTest to return a boolean and accept a parameter whether stanza is required - rather than doing a TRY/CATCH here
-                lockStopTest();
-            }
-            CATCH(StopError)
-            {
-                lockStopExists = true;
-            }
-            TRY_END();
+                // If the stop file does not exist, then error. This check is required even when --force is issued.
+                if (!storageExistsNP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))))
+                {
+                    THROW_FMT(
+                        FileMissingError, "stop file does not exist for stanza '%s'\n"
+                        "HINT: has the pgbackrest stop command been run on this server?", strPtr(cfgOptionStr(cfgOptStanza)));
+                }
 
-            // If the stop file does not exist, then error
-            if (!lockStopExists)
-            {
-    // CSHANG Maybe add HINT to use force?
-                THROW_FMT(
-                    FileMissingError, "stop file does not exist for stanza '%s'\n"
-                    "HINT: has the pgbackrest stop command been run on this server?", strPtr(cfgOptionStr(cfgOptStanza)));
-            }
+                // if (!cfgOptionTest(cfgOptForce))
 
-        // if (!cfgOptionTest(cfgOptForce))
+                // # If a force has not been issued, then check the database
+                // if (!cfgOption(CFGOPT_FORCE))
+                // {
+                //     # Get the master database object and index
+                //     my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
+                //
+                //     # Initialize the master file object and path
+                //     my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
+                //
+                //     # Check if Postgres is running and if so only continue when forced
+                //     if ($oStorageDbMaster->exists(DB_FILE_POSTMASTERPID))
+                //     {
+                        // confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
+                        //     "To delete stanza '${strStanza}', shutdown the postmaster for stanza '${strStanza}' and try again, " .
+                        //     "or use --force.", ERROR_POSTMASTER_RUNNING);
+                //     }
+                // }
 
-        // # If a force has not been issued, then check the database
-        // if (!cfgOption(CFGOPT_FORCE))
-        // {
-        //     # Get the master database object and index
-        //     my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
-        //
-        //     # Initialize the master file object and path
-        //     my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
-        //
-        //     # Check if Postgres is running and if so only continue when forced
-        //     if ($oStorageDbMaster->exists(DB_FILE_POSTMASTERPID))
-        //     {
-        //         confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
-        //             "To delete stanza '${strStanza}', shutdown the postmaster for stanza '${strStanza}' and try again, " .
-        //             "or use --force.", ERROR_POSTMASTER_RUNNING);
-        //     }
-        // }
+                // Delete the archive info files
+                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE));
+                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT));
 
-            // Delete the archive info files
-            storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE));
-            storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT));
-
-            // Delete the backup info files
-            storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE));
-            storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
+                // Delete the backup info files
+                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE));
+                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
 
     //CSHANG if a file that matches the regex, but not a directory then error? Remove should fail if not a file -- add test for this and leave as a test if it errors
 
-    // CSHANG What about sort order? Sorting from newest to oldest with sortOrderDesc - old code used "reverse" which I believe was newest to oldest
-            StringList *backupList = strLstSort(storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderDesc);
+                // Get the list of backup directories from newest to oldest since don't want to invalidate a backup before
+                // invalidating any backups that depend on it.
+                StringList *backupList = strLstSort(storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
+                .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderDesc);
 
-            // Delete all manifest files
-            for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
-            {
-                storageRemoveNP(
-                    storageRepoWriteStanza,
-                    strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
-                storageRemoveNP(
-                    storageRepoWriteStanza,
-                    strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
+                // Delete all manifest files
+                for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
+                {
+                    storageRemoveNP(
+                        storageRepoWriteStanza,
+                        strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
+                    storageRemoveNP(
+                        storageRepoWriteStanza,
+                        strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
+                }
             }
-        }
-        else
-        {
-            LOG_INFO("stanza %s already deleted", strPtr(cfgOptionStr(cfgOptStanza)));
+            // Recusively remove the entire staza repo
+            storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE), .recurse = true);
+            storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP), .recurse = true);
+
+// CSHANG We need a lockStart to remove the file or just remove it ourselves
         }
     }
     MEM_CONTEXT_TEMP_END();

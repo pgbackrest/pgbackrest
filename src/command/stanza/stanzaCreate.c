@@ -35,6 +35,10 @@ cmdStanzaCreate(void)
     {
         const Storage *storageRepoReadStanza = storageRepo();
         const Storage *storageRepoWriteStanza = storageRepoWrite();
+        const String *archiveInfoFile = STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE);
+        const String *archiveInfoFileCopy = STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT);
+        const String *backupInfoFile = STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE);
+        const String *backupInfoFileCopy = STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT);
         InfoArchive *infoArchive = NULL;
         InfoBackup *infoBackup = NULL;
 
@@ -42,17 +46,10 @@ cmdStanzaCreate(void)
         // CSHANG pgControlFromFile does not reach out to a remote db. May need to do get first but would still need to know the path to the control file - but we should be able to get that from the pg1-path - but that's where the dbObjectGet would come into play.
         PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
-// CSHANG TODO:
-// * how to handle --force - especially if something exists and what if encryption reset?
-// * is it possible to reconstruct (only if not encrypted)- maybe only if backup.info exists - which means it would have to be the truthsayer
-// From the old code: # If something other than the info files exist in the repo (maybe a backup is in progress) and the user is attempting to
-// # change the repo encryption in anyway, then error
-        bool archiveInfoFileExists = storageExistsNP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE));
-        bool archiveInfoFileCopyExists = storageExistsNP(
-            storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT));
-        bool backupInfoFileExists = storageExistsNP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE));
-        bool backupInfoFileCopyExists = storageExistsNP(
-            storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
+        bool archiveInfoFileExists = storageExistsNP(storageRepoReadStanza, archiveInfoFile);
+        bool archiveInfoFileCopyExists = storageExistsNP(storageRepoReadStanza, archiveInfoFileCopy);
+        bool backupInfoFileExists = storageExistsNP(storageRepoReadStanza, backupInfoFile);
+        bool backupInfoFileCopyExists = storageExistsNP(storageRepoReadStanza, backupInfoFileCopy);
 
         // If neither archive info nor backup info files exist and nothing else exists in the stanza directory
         // then create the stanza
@@ -86,90 +83,85 @@ cmdStanzaCreate(void)
             infoArchive = infoArchiveNew(
                 pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
             infoArchiveSave(
-                infoArchive, storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                infoArchive, storageRepoWriteStanza, archiveInfoFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
 
             // Create and save backup info
             infoBackup = infoBackupNew(
                 pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
             infoBackupSave(
-                infoBackup, storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                infoBackup, storageRepoWriteStanza, backupInfoFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
         }
-        // Else if both info files exist and both are valid, resave
+        // Else if at least one archive and one backup info file exists and then ensure both are valid
         else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
         {
             infoArchive = infoArchiveNewLoad(
-                storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
+                storageRepoReadStanza, archiveInfoFile,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
             infoBackup = infoBackupNewLoad(
-                storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+                storageRepoReadStanza, backupInfoFile,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
-// CSHANG In the mock tests, the database  version is checked during a backup - so we need to make sure that it is also performed there
-            // If the versions or system ids don't match in either file, then an upgrade may be necessary
-            if ((pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId) &&
-                (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId))
+            // Error if there is a mismatch between the archive and backup info files
+            if (archiveInfo.id != backupInfo.id || archiveInfo.systemId != backupInfo.systemId ||
+                archiveInfo.version != backupInfo.version)
             {
-                THROW(FileInvalidError, "backup info file or archive info file invalid\n"
-                    "HINT: use stanza-upgrade if the database has been upgraded");
-// CSHANG This used to read "or use --force"
-// confess &log(ERROR, "backup info file or archive info file invalid\n" .
-//     'HINT: use stanza-upgrade if the database has been upgraded or use --force', ERROR_FILE_INVALID);
+                THROW_FMT(
+                    FileInvalidError, "backup info file and archive info file do not match\n"
+                    "archive: id=%u, version=%s, system-id=%" PRIu64 "\n"
+                    "backup: id=%u, version=%s, system-id=%" PRIu64 "\n"
+                    "HINT: this may be a symptom of repository corruption!",
+                    archiveInfo.id, strPtr(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId, backupInfo.id,
+                    strPtr(pgVersionToStr(backupInfo.version)), backupInfo.systemId);
             }
+            // If the versions or system ids don't match the database, then an upgrade may be necessary
             else if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
             {
-                THROW_FMT(ArchiveMismatchError,
-                    "database version = %s, system-id %" PRIu64 " does not match archive version = %s, system-id = %" PRIu64 "\n"
-                    "HINT: is this the correct stanza?",
-                    strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId, strPtr(pgVersionToStr(archiveInfo.version)),
-                    archiveInfo.systemId);
+                THROW(FileInvalidError, "backup and archive info files already exist but do not match the database\n"
+                    "HINT: is this the correct stanza?\n"
+                    "HINT: did an error occur during stanza-upgrade?");
             }
-            else if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
-            {
-                THROW_FMT(BackupMismatchError,
-                    "database version = %s, system-id %" PRIu64 " does not match backup version = %s, system-id = %" PRIu64 "\n"
-                    "HINT: is this the correct stanza?",
-                    strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId, strPtr(pgVersionToStr(backupInfo.version)), backupInfo.systemId);
-            }
-
-            // If the versions and system ids match but the control or catalog doesn't then there may be corruption
-            if (pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion)
-            {
-                THROW_FMT(BackupMismatchError,
-                    "database control-version = %" PRIu32 ", catalog-version %" PRIu32
-                    " does not match backup control-version = %" PRIu32 ", catalog-version = %" PRIu32 "\n"
-                    "HINT: this may be a symptom of database or repository corruption!",
-                    pgControl.controlVersion, pgControl.catalogVersion, backupInfo.controlVersion, backupInfo.catalogVersion);
-            }
-// CSHANG I added this because I feel we should also check the db-ids before saving since we don't want them to get out of whack
-            // At this point, everything should match so make sure the ids do as well
-            if (backupInfo.id != archiveInfo.id)
-            {
-                THROW(FileInvalidError, "backup info file or archive info file invalid\n"
-                    "HINT: this may be a symptom of database or repository corruption!\n"
-                    "HINT: delete the stanza and run stanza-create again");
-            }
+            // Else the files are valid
             else
             {
-                // If the existing files are valid, resave to ensure there are two files (info and a copy)
-                infoArchiveSave(
-                    infoArchive, storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-                infoBackupSave(
-                    infoBackup, storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                String *sourceFile = NULL;
+                String *destinationFile = NULL;
 
-                LOG_INFO("stanza-create was already performed");
+                // If the existing files are valid, then, if a file is missing, copy the existing one to the missing one to ensure
+                // there is both a .info and .info.copy
+                if ((archiveInfoFileExists && !archiveInfoFileCopyExists) || (!archiveInfoFileExists && archiveInfoFileCopyExists))
+                {
+                    sourceFile = archiveInfoFileExists ? archiveInfoFile : archiveInfoFileCopy;
+                    destinationFile = !archiveInfoFileExists ? archiveInfoFile : archiveInfoFileCopy;
+                    storageCopyNP(
+                        storageNewReadNP(storageRepoReadStanza, sourceFile),
+                        storageNewWriteNP(storageRepoWriteStanza, destinationFile));
+                }
+
+                if ((backupInfoFileExists && !backupInfoFileCopyExists) || (!backupInfoFileExists && backupInfoFileCopyExists))
+                {
+                    sourceFile = backupInfoFileExists ? backupInfoFile : backupInfoFileCopy;
+                    destinationFile = !backupInfoFileExists ? backupInfoFile : backupInfoFileCopy;
+                    storageCopyNP(
+                        storageNewReadNP(storageRepoReadStanza, sourceFile),
+                        storageNewWriteNP(storageRepoWriteStanza, destinationFile));
+                }
+
+                // If no files, copied, then the stanza was already valid
+                if (sourceFile == NULL && destinationFile == NULL)
+                    LOG_INFO("stanza already exists and is valid");
             }
         }
-        // Else if one file is missing, then error
+        // Else if both .info and corresponding .copy file are missing for one but not the other, then error
         else
         {
-// CSHANG We need to figure out if we want to error or try to create one info file from the other
             THROW_FMT(FileMissingError, "%s\n"
-                "HINT: this may be a symptom of database or repository corruption!\n"
-                "HINT: delete the stanza and run stanza-create again",
+                "HINT: this may be a symptom of repository corruption!",
                 ((archiveInfoFileExists || archiveInfoFileCopyExists) ? "archive.info exists but backup.info is missing"
                 : "backup.info exists but archive.info is missing"));
         }

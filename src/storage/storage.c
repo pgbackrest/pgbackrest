@@ -585,7 +585,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.pathCreate != NULL && storageFeature(this, storageFeaturePath)); // CSHANG Shouldn't this be a CHECK? Our unit tests won't catch this and the protocol uses CHECK so why wait?
+    ASSERT(this->interface.pathCreate != NULL && storageFeature(this, storageFeaturePath));
     ASSERT(this->write);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -614,7 +614,7 @@ storagePathExists(const Storage *this, const String *pathExp)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.pathExists != NULL);  // CSHANG Shouldn't this be a CHECK? Our unit tests won't catch this and the protocol uses CHECK so why wait?
+    ASSERT(this->interface.pathExists != NULL);
 
     bool result = false;
 
