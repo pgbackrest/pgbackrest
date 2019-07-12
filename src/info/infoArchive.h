@@ -23,6 +23,11 @@ Archive info filename
 #define INFO_ARCHIVE_FILE                                           "archive.info"
 #define REGEX_ARCHIVE_DIR_DB_VERSION                                "^[0-9]+(\\.[0-9]+)*-[0-9]+$"
 
+#define INFO_ARCHIVE_PATH_FILE                                      STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE
+    STRING_DECLARE(INFO_ARCHIVE_PATH_FILE_STR);
+#define INFO_ARCHIVE_PATH_FILE_COPY                                 INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT
+    STRING_DECLARE(INFO_ARCHIVE_PATH_FILE_COPY_STR);
+
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
