@@ -68,6 +68,33 @@ lstAdd(List *this, const void *item)
 }
 
 /***********************************************************************************************************************************
+Clear items from a list
+***********************************************************************************************************************************/
+List *
+lstClear(List *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (this->list != NULL)
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            memFree(this->list);
+        }
+        MEM_CONTEXT_END();
+
+        this->listSize = 0;
+        this->listSizeMax = 0;
+    }
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
 Get an item from the list
 ***********************************************************************************************************************************/
 void *

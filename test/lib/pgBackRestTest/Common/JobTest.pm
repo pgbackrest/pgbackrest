@@ -214,7 +214,9 @@ sub run
                     {
                         executeTest(
                             'rsync -rt --delete --exclude=*.o --exclude=test.c --exclude=test.gcno --exclude=LibC.h --exclude=xs' .
-                                " --exclude=test --exclude=buildflags --exclude=testflags --exclude=harnessflags" .
+                                ' --exclude=test --exclude=buildflags --exclude=testflags --exclude=harnessflags' .
+                                ' --exclude=build.auto.h --exclude=build.auto.h.in --exclude=Makefile --exclude=Makefile.in' .
+                                ' --exclude=configure --exclude=configure.ac' .
                                 " $self->{strBackRestBase}/src/ $self->{strGCovPath} && " .
                             "rsync -t $self->{strBackRestBase}/libc/LibC.h $self->{strGCovPath} && " .
                             "rsync -rt --delete $self->{strBackRestBase}/libc/xs/ $self->{strGCovPath}/xs && " .
@@ -492,7 +494,7 @@ sub run
                             " -c $strCFile -o " . substr($strCFile, 0, length($strCFile) - 2) . ".o\n";
                 }
 
-                $self->{oStorageTest}->put($self->{strGCovPath} . "/Makefile", $strMakefile);
+                buildPutDiffers($self->{oStorageTest}, $self->{strGCovPath} . "/Makefile", $strMakefile);
             }
 
             my $oExec = new pgBackRestTest::Common::ExecuteTest(

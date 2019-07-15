@@ -17,7 +17,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="chrlange"/>
+                            <release-item-ideator id="christian.lange"/>
                             <release-item-ideator id="ned.t.crigler"/>
                         </release-item-contributor-list>
 
@@ -7158,6 +7158,11 @@
             <contributor-id type="github">the1forte</contributor-id>
         </contributor>
 
+        <contributor id="christian.lange">
+            <contributor-name-display>Christian Lange</contributor-name-display>
+            <contributor-id type="github">chrlange</contributor-id>
+        </contributor>
+
         <contributor id="christoph.berg">
             <contributor-name-display>Christoph Berg</contributor-name-display>
             <contributor-id type="github">ChristophBerg</contributor-id>
@@ -7171,11 +7176,6 @@
         <contributor id="christophe.pettus">
             <contributor-name-display>Christophe Pettus</contributor-name-display>
             <contributor-id type="github">Xof</contributor-id>
-        </contributor>
-
-        <contributor id="chrlange">
-            <contributor-name-display>chrlange</contributor-name-display>
-            <contributor-id type="github">chrlange</contributor-id>
         </contributor>
 
         <contributor id="clinton.adams">

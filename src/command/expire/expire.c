@@ -308,8 +308,8 @@ removeExpiredArchive(InfoBackup *infoBackup)
             {
                 // Attempt to load the archive info file
                 InfoArchive *infoArchive = infoArchiveNewLoad(
-                    storageRepo(), INFO_ARCHIVE_PATH_FILE_STR,
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                    cfgOptionStr(cfgOptRepoCipherPass));
 
                 InfoPg *infoArchivePgData = infoArchivePg(infoArchive);
 
@@ -678,8 +678,9 @@ cmdExpire(void)
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
 
-        infoBackupSave(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR,
-            cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+        infoBackupSave(
+            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            cfgOptionStr(cfgOptRepoCipherPass));
 
         removeExpiredBackup(infoBackup);
         removeExpiredArchive(infoBackup);

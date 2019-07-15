@@ -37,11 +37,14 @@ testRun(void)
         TEST_RESULT_INT(list->listSize, 0, "list size");
         TEST_RESULT_INT(list->listSizeMax, 0, "list size max");
         TEST_RESULT_PTR(lstMemContext(list), list->memContext, "list mem context");
+        TEST_RESULT_VOID(lstClear(list), "clear list");
 
         void *ptr = NULL;
         TEST_RESULT_PTR(lstAdd(list, &ptr), list, "add item");
-
         TEST_RESULT_STR(strPtr(lstToLog(list)), "{size: 1}", "check log");
+
+        TEST_RESULT_VOID(lstClear(list), "clear list");
+        TEST_RESULT_STR(strPtr(lstToLog(list)), "{size: 0}", "check log after clear");
 
         TEST_RESULT_VOID(lstFree(list), "free list");
         TEST_RESULT_VOID(lstFree(lstNew(1)), "free empty list");

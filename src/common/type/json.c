@@ -966,7 +966,11 @@ jsonFromVar(const Variant *var, unsigned int indent)
 
                     Variant *varSub = varLstGet(vl, vlIdx);
 
-                    if (varType(varSub) == varTypeKeyValue)
+                    if (varSub == NULL)
+                    {
+                        strCat(jsonStr, "null");
+                    }
+                    else if (varType(varSub) == varTypeKeyValue)
                     {
                         // Update the depth before processing the contents of the list element
                         strCat(indentDepth, strPtr(indentSpace));

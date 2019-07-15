@@ -339,8 +339,8 @@ sub processManifest
     # Build the lsn start parameter to pass to the extra function
     my $hStartLsnParam =
     {
-        iWalId => defined($strLsnStart) ? hex((split('/', $strLsnStart))[0]) : 0xFFFF,
-        iWalOffset => defined($strLsnStart) ? hex((split('/', $strLsnStart))[1]) : 0xFFFF,
+        iWalId => defined($strLsnStart) ? hex((split('/', $strLsnStart))[0]) : 0xFFFFFFFF,
+        iWalOffset => defined($strLsnStart) ? hex((split('/', $strLsnStart))[1]) : 0xFFFFFFFF,
     };
 
     # Iterate all files in the manifest

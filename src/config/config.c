@@ -393,8 +393,6 @@ Get the remote lock type required for the command
 LockType
 cfgLockRemoteType(ConfigCommand commandId)
 {
-    FUNCTION_TEST_VOID();
-
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, commandId);
     FUNCTION_TEST_END();
