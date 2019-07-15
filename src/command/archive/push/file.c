@@ -72,21 +72,11 @@ archivePushFile(
 
         if (isSegment)
         {
-            // Generate a sha1 checksum for the wal segment.  ??? Probably need a function in storage for this.
+            // Generate a sha1 checksum for the wal segment
             IoRead *read = storageReadIo(storageNewReadNP(storageLocal(), walSource));
             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+            ioReadDrain(read);
 
-            Buffer *buffer = bufNew(ioBufferSize());
-            ioReadOpen(read);
-
-            do
-            {
-                ioRead(read, buffer);
-                bufUsedZero(buffer);
-            }
-            while (!ioReadEof(read));
-
-            ioReadClose(read);
             const String *walSegmentChecksum = varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
 
             // If the wal segment already exists in the repo then compare checksums

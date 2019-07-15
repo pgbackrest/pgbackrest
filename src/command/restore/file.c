@@ -88,19 +88,7 @@ restoreFile(
                         {
                             read = storageReadIo(storageNewReadNP(storagePgWrite(), pgFile));
                             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
-
-                            Buffer *buffer = bufNew(ioBufferSize());
-
-                            CHECK(ioReadOpen(read));
-
-                            do
-                            {
-                                ioRead(read, buffer);
-                                bufUsedZero(buffer);
-                            }
-                            while (!ioReadEof(read));
-
-                            ioReadClose(read);
+                            ioReadDrain(read);
                         }
 
                         // If size and checksum are equal then no need to copy the file

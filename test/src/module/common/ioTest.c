@@ -424,6 +424,20 @@ testRun(void)
         ioReadOpen(bufferRead);
 
         TEST_RESULT_STR(strPtr(strNewBuf(ioReadBuf(bufferRead))), "a test string", "read into buffer");
+
+        // Drain read IO
+        // -------------------------------------------------------------------------------------------------------------------------
+        bufferRead = ioBufferReadNew(BUFSTRDEF("a better test string"));
+        ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioSizeNew());
+
+        TEST_RESULT_BOOL(ioReadDrain(bufferRead), true, "drain read io");
+        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(ioReadFilterGroup(bufferRead), SIZE_FILTER_TYPE_STR)), 20, "check length");
+
+        // Cannot open file
+        TEST_ASSIGN(
+            read, ioReadNewP((void *)998, .close = testIoReadClose, .open = testIoReadOpen, .read = testIoRead),
+            "create io read object");
+        TEST_RESULT_BOOL(ioReadDrain(read), false, "cannot open");
     }
 
     // *****************************************************************************************************************************

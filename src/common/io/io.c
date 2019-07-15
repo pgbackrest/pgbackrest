@@ -74,3 +74,39 @@ ioReadBuf(IoRead *read)
 
     FUNCTION_TEST_RETURN(result);
 }
+
+/***********************************************************************************************************************************
+Read all IO but don't store it.  Useful for calculating checksums, size, etc.
+***********************************************************************************************************************************/
+bool
+ioReadDrain(IoRead *read)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, read);
+    FUNCTION_TEST_END();
+
+    ASSERT(read != NULL);
+
+    bool result = ioReadOpen(read);
+
+    if (result)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Read IO into the buffer
+            Buffer *buffer = bufNew(ioBufferSize());
+
+            do
+            {
+                ioRead(read, buffer);
+                bufUsedZero(buffer);
+            }
+            while (!ioReadEof(read));
+
+            ioReadClose(read);
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
