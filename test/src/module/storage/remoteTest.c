@@ -1,9 +1,11 @@
 /***********************************************************************************************************************************
 Test Remote Storage
 ***********************************************************************************************************************************/
+#include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "postgres/interface.h"
 
 #include "common/harnessConfig.h"
 
@@ -177,7 +179,7 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("missing.txt")));
         varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, varNewKv(kvNew()));
+        varLstAdd(paramList, varNewVarLst(varLstNew()));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true,
@@ -197,6 +199,11 @@ testRun(void)
 
         // Create filters to test filter logic
         IoFilterGroup *filterGroup = ioFilterGroupNew();
+        ioFilterGroupAdd(filterGroup, ioSizeNew());
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
@@ -208,7 +215,10 @@ testRun(void)
             "{\"out\":true}\n"
                 "BRBLOCK4\n"
                 "TESTBRBLOCK4\n"
-                "DATABRBLOCK0\n",
+                "DATABRBLOCK0\n"
+                "{\"out\":{\"buffer\":null,\"cipherBlock\":null,\"gzipCompress\":null,\"gzipDecompress\":null"
+                    ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"pageChecksum\":{\"align\":false,\"valid\":false}"
+                    ",\"size\":8}}\n",
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -219,15 +229,11 @@ testRun(void)
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("test.txt")));
         varLstAdd(paramList, varNewBool(false));
-
-        // Create filters to test filter logic
-        filterGroup = ioFilterGroupNew();
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("X"), NULL));
-        varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
+        varLstAdd(paramList, varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvAdd(kvNew(), varNewStrZ("bogus"), NULL)))));
 
         TEST_ERROR(
             storageRemoteProtocol(
-                PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), AssertError, "unable to add filter 'cipherBlock'");
+                PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), AssertError, "unable to add filter 'bogus'");
     }
 
     // *****************************************************************************************************************************
@@ -312,7 +318,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, varNewKv(kvNew()));
+        varLstAdd(paramList, ioFilterGroupParamAll(ioFilterGroupAdd(ioFilterGroupNew(), ioSizeNew())));
 
         // Generate input (includes the input for the test below -- need a way to reset this for better testing)
         bufCat(
@@ -329,7 +335,7 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(strNewBuf(serverWrite)),
             "{}\n"
-                "{}\n",
+                "{\"out\":{\"buffer\":null,\"size\":18}}\n",
             "check result");
 
         TEST_RESULT_STR(
@@ -353,7 +359,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, varNewKv(kvNew()));
+        varLstAdd(paramList, varNewVarLst(varLstNew()));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");

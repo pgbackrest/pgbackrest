@@ -30,6 +30,8 @@ IoFilterGroup *ioFilterGroupNew(void);
 Functions
 ***********************************************************************************************************************************/
 IoFilterGroup *ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter);
+IoFilterGroup *ioFilterGroupInsert(IoFilterGroup *this, unsigned int listIdx, IoFilter *filter);
+IoFilterGroup *ioFilterGroupClear(IoFilterGroup *this);
 void ioFilterGroupOpen(IoFilterGroup *this);
 void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output);
 void ioFilterGroupClose(IoFilterGroup *this);
@@ -42,6 +44,7 @@ bool ioFilterGroupInputSame(const IoFilterGroup *this);
 Variant *ioFilterGroupParamAll(const IoFilterGroup *this);
 const Variant *ioFilterGroupResult(const IoFilterGroup *this, const String *filterType);
 const Variant *ioFilterGroupResultAll(const IoFilterGroup *this);
+void ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult);
 unsigned int ioFilterGroupSize(const IoFilterGroup *this);
 
 /***********************************************************************************************************************************

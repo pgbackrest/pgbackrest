@@ -163,12 +163,22 @@ cryptoHashNew(const String *type)
         // Initialize context
         cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");
 
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(type));
+
         // Create filter interface
-        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, NULL, .in = cryptoHashProcess, .result = cryptoHashResult);
+        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, paramList, .in = cryptoHashProcess, .result = cryptoHashResult);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+cryptoHashNewVar(const VariantList *paramList)
+{
+    return cryptoHashNew(varStr(varLstGet(paramList, 0)));
 }
 
 /***********************************************************************************************************************************

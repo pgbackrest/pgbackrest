@@ -161,8 +161,13 @@ testRun(void)
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.xrecoff = 0xF0F0F0F0;
 
         write = ioBufferWriteNew(bufferOut);
+
         ioFilterGroupAdd(
-            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000));
+            ioWriteFilterGroup(write),
+            pageChecksumNewVar(
+                varVarLst(
+                    jsonToVar(
+                        strNewFmt("[0,%u,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);

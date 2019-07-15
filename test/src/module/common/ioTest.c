@@ -292,11 +292,17 @@ testRun(void)
         bufferOriginal = bufNewC("123", 3);
 
         TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create buffer read object");
+
+        TEST_RESULT_VOID(ioFilterGroupClear(ioReadFilterGroup(bufferRead)), "    clear does nothing when no filters");
+        TEST_RESULT_VOID(ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioSizeNew()), "    add filter to be cleared");
+        TEST_RESULT_VOID(ioFilterGroupClear(ioReadFilterGroup(bufferRead)), "    clear size filter");
+
         IoFilter *sizeFilter = ioSizeNew();
-        TEST_RESULT_PTR(
-            ioFilterGroupAdd(ioReadFilterGroup(bufferRead), sizeFilter), bufferRead->filterGroup, "    add filter to filter group");
         TEST_RESULT_VOID(
             ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioTestFilterMultiplyNew("double", 2, 3, 'X')),
+            "    add filter to filter group");
+        TEST_RESULT_PTR(
+            ioFilterGroupInsert(ioReadFilterGroup(bufferRead), 0, sizeFilter), bufferRead->filterGroup,
             "    add filter to filter group");
         TEST_RESULT_VOID(ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioSizeNew()), "    add filter to filter group");
         IoFilter *bufferFilter = ioBufferNew();
@@ -304,7 +310,7 @@ testRun(void)
         TEST_RESULT_PTR(ioFilterMove(NULL, memContextTop()), NULL, "    move NULL filter to top context");
         TEST_RESULT_STR(
             strPtr(jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(bufferRead)), 0)),
-            "{\"buffer\":null,\"double\":[\"double\",2,3],\"size\":null}", "    check filter params");
+            "[{\"size\":null},{\"double\":[\"double\",2,3]},{\"size\":null},{\"buffer\":null}]", "    check filter params");
 
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
         TEST_RESULT_INT(ioReadHandle(bufferRead), -1, "    handle invalid");
@@ -350,6 +356,15 @@ testRun(void)
 
         TEST_RESULT_VOID(ioFilterFree(bufferFilter), "    free buffer filter");
         TEST_RESULT_VOID(ioFilterGroupFree(ioReadFilterGroup(bufferRead)), "    free filter group object");
+
+        // Set filter group results
+        // -------------------------------------------------------------------------------------------------------------------------
+        IoFilterGroup *filterGroup = ioFilterGroupNew();
+        filterGroup->opened = true;
+        TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, NULL), "null result");
+        TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, jsonToVar(strNew("{\"test\":777}"))), "add result");
+        filterGroup->closed = true;
+        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, strNew("test"))), 777, "    check filter result");
 
         // Read a zero-size buffer to ensure filters are still processed even when there is no input.  Some filters (e.g. encryption
         // and compression) will produce output even if there is no input.

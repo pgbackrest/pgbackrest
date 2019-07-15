@@ -1,7 +1,9 @@
 /***********************************************************************************************************************************
 Test Block Cipher
 ***********************************************************************************************************************************/
+#include "common/io/filter/filter.intern.h"
 #include "common/io/io.h"
+#include "common/type/json.h"
 
 /***********************************************************************************************************************************
 Data for testing
@@ -104,6 +106,7 @@ testRun(void)
         Buffer *encryptBuffer = bufNew(TEST_BUFFER_SIZE);
 
         IoFilter *blockEncryptFilter = cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockEncryptFilter = cipherBlockNewVar(ioFilterParamList(blockEncryptFilter));
         CipherBlock *blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
         TEST_RESULT_INT(
@@ -153,7 +156,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *decryptBuffer = bufNew(TEST_BUFFER_SIZE);
 
-        IoFilter *blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        IoFilter *blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, HASH_TYPE_SHA1_STR);
+        blockDecryptFilter = cipherBlockNewVar(ioFilterParamList(blockDecryptFilter));
         CipherBlock *blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         TEST_RESULT_INT(
@@ -295,7 +299,7 @@ testRun(void)
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
+        TEST_ASSIGN(hash, cryptoHashNewVar(varVarLst(jsonToVar(strNewFmt("[\"%s\"]", HASH_TYPE_SHA1)))), "create sha1 hash");
         TEST_RESULT_STR(
             strPtr(bufHex(cryptoHash((CryptoHash *)ioFilterDriver(hash)))), "da39a3ee5e6b4b0d3255bfef95601890afd80709",
             "    check empty hash");

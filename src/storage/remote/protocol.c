@@ -3,9 +3,13 @@ Remote Storage Protocol Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/backup/pageChecksum.h"
 #include "common/compress/gzip/compress.h"
 #include "common/compress/gzip/decompress.h"
+#include "common/crypto/cipherBlock.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/filter/size.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -56,17 +60,24 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
     ASSERT(filterGroup != NULL);
     ASSERT(filterList != NULL);
 
-    const VariantList *filterKeyList = kvKeyList(varKv(filterList));
-
-    for (unsigned int filterIdx = 0; filterIdx < varLstSize(filterKeyList); filterIdx++)
+    for (unsigned int filterIdx = 0; filterIdx < varLstSize(varVarLst(filterList)); filterIdx++)
     {
-        const String *filterKey = varStr(varLstGet(filterKeyList, filterIdx));
-        const VariantList *filterParam = varVarLst(kvGet(varKv(filterList), varLstGet(filterKeyList, filterIdx)));
+        const KeyValue *filterKv = varKv(varLstGet(varVarLst(filterList), filterIdx));
+        const String *filterKey = varStr(varLstGet(kvKeyList(filterKv), 0));
+        const VariantList *filterParam = varVarLst(kvGet(filterKv, VARSTR(filterKey)));
 
         if (strEq(filterKey, GZIP_COMPRESS_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, gzipCompressNewVar(filterParam));
         else if (strEq(filterKey, GZIP_DECOMPRESS_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, gzipDecompressNewVar(filterParam));
+        else if (strEq(filterKey, CIPHER_BLOCK_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, cipherBlockNewVar(filterParam));
+        else if (strEq(filterKey, CRYPTO_HASH_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, cryptoHashNewVar(filterParam));
+        else if (strEq(filterKey, PAGE_CHECKSUM_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, pageChecksumNewVar(filterParam));
+        else if (strEq(filterKey, SIZE_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, ioSizeNew());
         else
             THROW_FMT(AssertError, "unable to add filter '%s'", strPtr(filterKey));
     }
@@ -151,9 +162,14 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 }
                 while (!ioReadEof(fileRead));
 
+                ioReadClose(fileRead);
+
                 // Write a zero block to show file is complete
                 ioWriteLine(protocolServerIoWrite(server), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
                 ioWriteFlush(protocolServerIoWrite(server));
+
+                // Push filter results
+                protocolServerResponse(server, ioFilterGroupResultAll(ioReadFilterGroup(fileRead)));
             }
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR))
@@ -204,14 +220,19 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 else if (remaining == 0)
                 {
                     ioWriteClose(fileWrite);
+
+                    // Push filter results
+                    protocolServerResponse(server, ioFilterGroupResultAll(ioWriteFilterGroup(fileWrite)));
                 }
                 // Write was aborted so free the file
                 else
+                {
                     ioWriteFree(fileWrite);
+                    protocolServerResponse(server, NULL);
+                }
             }
             while (remaining > 0);
 
-            protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR))
         {

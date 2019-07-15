@@ -19,8 +19,7 @@ Block Cipher
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define CIPHER_BLOCK_FILTER_TYPE                                   "cipherBlock"
-    STRING_STATIC(CIPHER_BLOCK_FILTER_TYPE_STR,                    CIPHER_BLOCK_FILTER_TYPE);
+STRING_EXTERN(CIPHER_BLOCK_FILTER_TYPE_STR,                         CIPHER_BLOCK_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Header constants and sizes
@@ -435,12 +434,29 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
         driver->pass = memNewRaw(driver->passSize);
         memcpy(driver->pass, bufPtr(pass), driver->passSize);
 
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewUInt(mode));
+        varLstAdd(paramList, varNewUInt(cipherType));
+        // ??? Using a string here is not correct since the passphrase is being passed as a buffer so may contain null characters.
+        // However, since strings are used to hold the passphrase in the rest of the code this is currently valid.
+        varLstAdd(paramList, varNewStr(strNewBuf(pass)));
+        varLstAdd(paramList, digestName ? varNewStr(digestName) : NULL);
+
         // Create filter interface
         this = ioFilterNewP(
-            CIPHER_BLOCK_FILTER_TYPE_STR, driver, NULL, .done = cipherBlockDone, .inOut = cipherBlockProcess,
+            CIPHER_BLOCK_FILTER_TYPE_STR, driver, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
             .inputSame = cipherBlockInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+cipherBlockNewVar(const VariantList *paramList)
+{
+    return cipherBlockNew(
+        (CipherMode)varUIntForce(varLstGet(paramList, 0)), (CipherType)varUIntForce(varLstGet(paramList, 1)),
+        BUFSTR(varStr(varLstGet(paramList, 2))), varLstGet(paramList, 3) == NULL ? NULL : varStr(varLstGet(paramList, 3)));
 }
