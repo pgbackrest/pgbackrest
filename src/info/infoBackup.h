@@ -22,6 +22,11 @@ Constants
 ***********************************************************************************************************************************/
 #define INFO_BACKUP_FILE                                            "backup.info"
 
+#define INFO_BACKUP_PATH_FILE                                       STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE
+    STRING_DECLARE(INFO_BACKUP_PATH_FILE_STR);
+#define INFO_BACKUP_PATH_FILE_COPY                                  INFO_BACKUP_PATH_FILE INFO_COPY_EXT
+    STRING_DECLARE(INFO_BACKUP_PATH_FILE_COPY_STR);
+
 /***********************************************************************************************************************************
 Information about an existing backup
 ***********************************************************************************************************************************/

@@ -25,7 +25,7 @@ Backup Info Handler
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
-Internal constants
+Constants
 ??? INFO_BACKUP_SECTION should be in a separate include since it will also be used when reading the manifest
 ***********************************************************************************************************************************/
 #define INFO_BACKUP_SECTION                                         "backup"
@@ -36,6 +36,9 @@ VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR, "backup-i
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR,            "backup-info-size");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR,      "backup-info-size-delta");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR,            "backup-reference");
+
+STRING_EXTERN(INFO_BACKUP_PATH_FILE_STR,                            INFO_BACKUP_PATH_FILE);
+STRING_EXTERN(INFO_BACKUP_PATH_FILE_COPY_STR,                       INFO_BACKUP_PATH_FILE_COPY);
 
 /***********************************************************************************************************************************
 Object type
