@@ -20,32 +20,32 @@ testRun(void)
 
     String *stanza = strNew("db");
     String *fileName = strNew("test.info");
-    // String *fileName2 = strNew("test2.info");
-    //
     String *backupStanzaPath = strNewFmt("repo/backup/%s", strPtr(stanza));
     String *backupInfoFileName = strNewFmt("%s/backup.info", strPtr(backupStanzaPath));
     String *archiveStanzaPath = strNewFmt("repo/archive/%s", strPtr(stanza));
     String *archiveInfoFileName = strNewFmt("%s/archive.info", strPtr(archiveStanzaPath));
 
-    StringList *argListBase = strLstNew();
-    strLstAddZ(argListBase, "pgbackrest");
-    strLstAdd(argListBase,  strNewFmt("--stanza=%s", strPtr(stanza)));
-    strLstAdd(argListBase, strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
-    strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
-    strLstAddZ(argListBase, "stanza-create");
+    StringList *argList = strLstNew();
+    strLstAddZ(argList, "pgbackrest");
+    strLstAdd(argList,  strNewFmt("--stanza=%s", strPtr(stanza)));
+    strLstAdd(argList, strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
+    strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+    strLstAddZ(argList, "stanza-create");
+
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdStanzaCreate()"))
+    if (testBegin("cmdStanzaCreate(), infoValidate()"))
     {
         // Load Parameters
-        StringList *argList = strLstDup(argListBase);
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
+        // Create pg_control
         storagePutNP(
             storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - no files exist");
+
         String *contentArchive = strNew
         (
             "[db]\n"
@@ -56,11 +56,11 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
         );
-
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to test file");
+
         TEST_RESULT_BOOL(
             (bufEq(
                 storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
@@ -83,11 +83,11 @@ testRun(void)
             "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.6\"}\n"
         );
-
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to test file");
+
         TEST_RESULT_BOOL(
             (bufEq(
                 storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
@@ -147,7 +147,7 @@ testRun(void)
             bufEq(
                 storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
                 storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))))),
-            true, "info files recreated from copy files");
+            true, "info files recreated from info files");
 
         // Errors
         //--------------------------------------------------------------------------------------------------------------------------
@@ -209,6 +209,33 @@ testRun(void)
             "archive.info exists but backup.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
+        // infoValidate()
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Create a corrupted backup file - db id
+        contentBackup = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
+            "db-id=2\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.6\"}\n"
+        );
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+                "put back info to file - bad db-id");
+
+        TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
+            "backup info file and archive info file do not match\n"
+            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
+            "HINT: this may be a symptom of repository corruption!");
+
         // Create a corrupted backup file - system id
         contentBackup = strNew
         (
@@ -223,11 +250,11 @@ testRun(void)
             "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
                 "\"db-version\":\"9.6\"}\n"
         );
-
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad system-id");
+
         TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
             "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
@@ -248,11 +275,11 @@ testRun(void)
             "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
                 "\"db-version\":\"9.5\"}\n"
         );
-
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad system-id and version");
+
         TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
             "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
@@ -273,23 +300,86 @@ testRun(void)
             "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.5\"}\n"
         );
-
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad version");
+
         TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
             "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // Remove the info files and add sub directory to backup
-        TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
-        TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
+        //--------------------------------------------------------------------------------------------------------------------------
         // Copy files may or may not exist - remove
         storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
         storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
+
+        // Create an archive.info file that matches the backup.info file but does not match the current database version
+        contentArchive = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
+        );
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+                "put archive info file");
+
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileInvalidError, "backup and archive info files already exist but do not match the database\n"
+            "HINT: is this the correct stanza?\n"
+            "HINT: did an error occur during stanza-upgrade?");
+
+        // Create archive.info and backup.info files that match but do not match the current database system-id
+        contentArchive = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665999\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
+        );
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+                "put archive info to file");
+
+        contentBackup = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665999\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
+                "\"db-version\":\"9.6\"}\n"
+        );
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+                "put back info to file");
+
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileInvalidError, "backup and archive info files already exist but do not match the database\n"
+            "HINT: is this the correct stanza?\n"
+            "HINT: did an error occur during stanza-upgrade?");
+
+        // Remove the info files and add sub directory to backup
+        TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
+
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))),
             "create directory in backup");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "backup directory not empty");
@@ -303,8 +393,35 @@ testRun(void)
 
         // File in archive, backup empty
         TEST_RESULT_VOID(
-            storagePathRemoveP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))), "remove directory inbackup");
+            storagePathRemoveP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))), "remove backup subdir");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cmdStanzaCreate() - encryption"))
+    {
+        strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
+        setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Create pg_control
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");
+
+        InfoArchive *infoArchive = NULL;
+        TEST_ASSIGN(
+            infoArchive, infoArchiveNewLoad(storageTest, archiveInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
+            "  load archive info");
+        TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
+
+        InfoBackup *infoBackup = NULL;
+        TEST_ASSIGN(
+            infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
+            "  load backup info");
+        TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

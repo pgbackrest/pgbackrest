@@ -7,6 +7,7 @@ Stanza Update Command
 #include <string.h>
 #include <inttypes.h>
 
+#include "command/stanza/common.h"
 #include "command/stanza/stanzaUpgrade.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -40,13 +41,13 @@ cmdStanzaUpgrade(void)
 
         // Load the info files (errors if missing)
         InfoArchive *infoArchive = infoArchiveNewLoad(
-            storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
-            cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+            storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
         InfoBackup *infoBackup = infoBackupNewLoad(
-            storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
-            cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+            storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
         // Since the file save of archive.info and backup.info are not atomic, then check and update each as separately.
@@ -56,46 +57,35 @@ cmdStanzaUpgrade(void)
             infoArchivePgSet(infoArchive, pgControl.version, pgControl.systemId);
             infoArchiveUpgrade = true;
         }
-
+// CSHANG Removed (pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion)) Are we sure they will no longer be used?
         // Update backup
-        if ((pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId) &&
-            (pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion))
+        if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
         {
             infoBackupPgSet(
                 infoBackup, pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion);
             infoBackupUpgrade = true;
         }
 
-        // Get the backup and archive info pg data and ensure the ids match before saving (even if only one needed to be updated)
+        // Get the backup and archive info pg data and throw an error if the ids do not match before saving (even if only one
+        // needed to be updated)
         backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
         archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
-        if (backupInfo.id != archiveInfo.id)
-        {
-            THROW_FMT(
-                FileInvalidError, "backup info file and archive info file do not match\n"
-                "archive: id=%u, version=%s, system-id=%" PRIu64 "\n"
-                "backup: id=%u, version=%s, system-id=%" PRIu64 "\n"
-                "HINT: this may be a symptom of repository corruption!",
-                archiveInfo.id, strPtr(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId, backupInfo.id,
-                strPtr(pgVersionToStr(backupInfo.version)), backupInfo.systemId);
-        }
-        else
-        {
-            // Save archive info
-            if (infoArchiveUpgrade)
-            {
-                infoArchiveSave(
-                    infoArchive, storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE),
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-            }
+        infoValidate(&archiveInfo, &backupInfo);
 
-            // Save backup info
-            if (infoBackupUpgrade)
-            {
-                infoBackupSave(
-                    infoBackup, storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-            }
+        // Save archive info
+        if (infoArchiveUpgrade)
+        {
+            infoArchiveSave(
+                infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
+        }
+
+        // Save backup info
+        if (infoBackupUpgrade)
+        {
+            infoBackupSave(
+                infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
         }
 
         if (!(infoArchiveUpgrade || infoBackupUpgrade))

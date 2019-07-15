@@ -67,19 +67,20 @@ cmdStanzaDelete(void)
                 // }
 
                 // Delete the archive info files
-                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE));
-                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE INFO_COPY_EXT));
+                storageRemoveNP(storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR);
+                storageRemoveNP(storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);
 
                 // Delete the backup info files
-                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE));
-                storageRemoveNP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE INFO_COPY_EXT));
+                storageRemoveNP(storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR);
+                storageRemoveNP(storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_COPY_STR);
 
     //CSHANG if a file that matches the regex, but not a directory then error? Remove should fail if not a file -- add test for this and leave as a test if it errors
 
                 // Get the list of backup directories from newest to oldest since don't want to invalidate a backup before
                 // invalidating any backups that depend on it.
-                StringList *backupList = strLstSort(storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
-                .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderDesc);
+                StringList *backupList = strLstSort(
+                    storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true,
+                        .differential = true, .incremental = true)), sortOrderDesc);
 
                 // Delete all manifest files
                 for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
@@ -92,6 +93,7 @@ cmdStanzaDelete(void)
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
                 }
             }
+
             // Recusively remove the entire staza repo
             storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE), .recurse = true);
             storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP), .recurse = true);
