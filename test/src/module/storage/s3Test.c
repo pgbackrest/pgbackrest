@@ -502,6 +502,8 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(((StorageS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
         TEST_RESULT_PTR(((StorageS3 *)storage->driver)->securityToken, NULL, "    check security token");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
 
         // Add default options
         // -------------------------------------------------------------------------------------------------------------------------
