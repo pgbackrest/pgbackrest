@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Stanza Create Command
+Test Stanza Upgrade Command
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
@@ -54,11 +54,11 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - files already exist and both are valid");
-        harnessLogResult("P00   INFO: stanza db is already up to date");
+        harnessLogResult("P00   INFO: stanza 'db' is already up to date");
 
         // Remove the copy files
-        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
-        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
+        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)), .errorOnMissing = true);
+        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)), .errorOnMissing = true);
 
         //--------------------------------------------------------------------------------------------------------------------------
         // backup info up to date but archive info db-id mismatch

@@ -667,7 +667,7 @@ my $rhCommandDefine =
     &CFGCMD_RESTORE =>
     {
     },
-
+#  CSHANG Is the lock-type something the user can issue? I'm not clear on what lock_required really means...
     &CFGCMD_STANZA_CREATE =>
     {
         &CFGDEF_LOCK_REQUIRED => true,
@@ -778,7 +778,7 @@ my %hConfigDefine =
             {
                 &CFGDEF_DEFAULT => false,
             },
-
+# CSHANG Well be ignoring this in stanza-create and stanza-upgrade so should we remove? That might affect automated systems. If the stanza already exists and is valid, then we don't do anything except issue an INFO message and if they use force they'll only get an error if something is actually wrong.
             &CFGCMD_STANZA_CREATE =>
             {
                 &CFGDEF_DEFAULT => false,

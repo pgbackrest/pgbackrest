@@ -99,7 +99,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist and both are valid");
-        harnessLogResult("P00   INFO: stanza db already exists and is valid");
+        harnessLogResult("P00   INFO: stanza 'db' already exists and is valid");
 
         // Remove backup.info
         TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
@@ -313,8 +313,8 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         // Copy files may or may not exist - remove
-        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
-        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
+        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
+        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
 
         // Create an archive.info file that matches the backup.info file but does not match the current database version
         contentArchive = strNew
@@ -393,7 +393,7 @@ testRun(void)
 
         // File in archive, backup empty
         TEST_RESULT_VOID(
-            storagePathRemoveP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))), "remove backup subdir");
+            storagePathRemoveNP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))), "remove backup subdir");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
     }
 
