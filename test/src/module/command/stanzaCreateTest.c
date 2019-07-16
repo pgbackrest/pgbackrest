@@ -99,7 +99,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist and both are valid");
-        harnessLogResult("P00   INFO: stanza already exists and is valid");
+        harnessLogResult("P00   INFO: stanza db already exists and is valid");
 
         // Remove backup.info
         TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");

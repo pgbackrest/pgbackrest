@@ -54,7 +54,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - files already exist and both are valid");
-        harnessLogResult("P00   INFO: stanza is already up to date");
+        harnessLogResult("P00   INFO: stanza db is already up to date");
 
         // Remove the copy files
         storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
