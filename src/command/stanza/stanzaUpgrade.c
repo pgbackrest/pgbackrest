@@ -89,9 +89,7 @@ cmdStanzaUpgrade(void)
         }
 
         if (!(infoArchiveUpgrade || infoBackupUpgrade))
-        {
             LOG_INFO("stanza %s is already up to date", strPtr(cfgOptionStr(cfgOptStanza)));
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
