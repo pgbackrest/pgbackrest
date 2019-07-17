@@ -385,7 +385,7 @@ httpClientRequest(
                         HTTP_HEADER_CONTENT_LENGTH);
                 }
 
-                // Was content returned in the response?
+                // Was content returned in the response?  HEAD will report content but not actually return any.
                 bool contentExists = this->contentChunked || (this->contentSize > 0 && !strEq(verb, HTTP_VERB_HEAD_STR));
                 this->contentEof = !contentExists;
 

@@ -142,7 +142,7 @@ testHttpServer(void)
             "Connection:ack\r\n"
             "\r\n");
 
-        // Head request with no content-length but no content
+        // Head request with content-length but no content
         harnessTlsServerExpect(
             "HEAD / HTTP/1.1\r\n"
             "\r\n");
@@ -463,7 +463,7 @@ testRun(void)
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'ack', key1: '0', key2: 'value2'}",
             "    check response headers");
 
-        // Head request with no content-length but no content
+        // Head request with content-length but no content
         TEST_RESULT_VOID(
             httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
             "head request with content-length");
