@@ -152,6 +152,16 @@ testHttpServer(void)
             "content-length:380\r\n"
             "\r\n");
 
+        // Head request with transfer encoding but no content
+        harnessTlsServerExpect(
+            "HEAD / HTTP/1.1\r\n"
+            "\r\n");
+
+        harnessTlsServerReply(
+            "HTTP/1.1 200 OK\r\n"
+            "Transfer-Encoding: chunked\r\n"
+            "\r\n");
+
         // Error with content length 0 (with a few slow down errors)
         harnessTlsServerExpect(
             "GET / HTTP/1.1\r\n"
@@ -473,6 +483,18 @@ testRun(void)
         TEST_RESULT_BOOL(httpClientBusy(client), false, "    client is not busy");
         TEST_RESULT_STR(
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{content-length: '380'}", "    check response headers");
+
+        // Head request with transfer encoding but no content
+        TEST_RESULT_VOID(
+            httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
+            "head request with transfer encoding");
+        TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
+        TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
+        TEST_RESULT_BOOL(httpClientEof(client), true, "    io is eof");
+        TEST_RESULT_BOOL(httpClientBusy(client), false, "    client is not busy");
+        TEST_RESULT_STR(
+            strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{transfer-encoding: 'chunked'}",
+            "    check response headers");
 
         // Error with content length 0
         TEST_RESULT_VOID(

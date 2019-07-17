@@ -386,7 +386,7 @@ httpClientRequest(
                 }
 
                 // Was content returned in the response?  HEAD will report content but not actually return any.
-                bool contentExists = this->contentChunked || (this->contentSize > 0 && !strEq(verb, HTTP_VERB_HEAD_STR));
+                bool contentExists = (this->contentChunked || this->contentSize > 0) && !strEq(verb, HTTP_VERB_HEAD_STR);
                 this->contentEof = !contentExists;
 
                 // If all content should be returned from this function then read the buffer.  Also read the reponse if there has

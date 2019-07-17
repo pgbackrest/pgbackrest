@@ -17,6 +17,14 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="pavel.suderevsky"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect handling of <id>transfer-encoding</id> response to <id>HEAD</id> request.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="christian.lange"/>
                             <release-item-ideator id="ned.t.crigler"/>
                         </release-item-contributor-list>
@@ -7439,6 +7447,11 @@
         <contributor id="patrick.mclaughlin">
             <contributor-name-display>Patrick McLaughlin</contributor-name-display>
             <contributor-id type="github">hitech73</contributor-id>
+        </contributor>
+
+        <contributor id="pavel.suderevsky">
+            <contributor-name-display>Pavel Suderevsky</contributor-name-display>
+            <contributor-id type="github">psuderevsky</contributor-id>
         </contributor>
 
         <contributor id="pritam.barhate">
