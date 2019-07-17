@@ -585,7 +585,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(path));
-        varLstAdd(paramList, varNewBool(false));    // ignoreMissing
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), true,
