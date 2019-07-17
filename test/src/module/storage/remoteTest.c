@@ -32,6 +32,16 @@ testRun(void)
     strLstAddZ(argList, "info");
     harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
+    // Set type since we'll be running local and remote tests here
+    cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("backup"));
+    cfgOptionValidSet(cfgOptType, true);
+
+    // Set pg settings so we can run both db and backup remotes
+    cfgOptionSet(cfgOptPgHost, cfgSourceParam, VARSTRDEF("localhost"));
+    cfgOptionValidSet(cfgOptPgHost, true);
+    cfgOptionSet(cfgOptPgPath, cfgSourceParam, VARSTR(strNewFmt("%s/pg", testPath())));
+    cfgOptionValidSet(cfgOptPgPath, true);
+
     // Start a protocol server to test the remote protocol
     Buffer *serverRead = bufNew(8192);
     Buffer *serverWrite = bufNew(8192);
@@ -68,12 +78,13 @@ testRun(void)
         TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), varLstNew(), server), false, "invalid function");
     }
 
+    // Do these tests against a db remote for coverage
     // *****************************************************************************************************************************
     if (testBegin("storageExists()"))
     {
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
-        storagePathCreateNP(storageTest, strNew("repo"));
+        TEST_ASSIGN(storageRemote, storagePgGet(false), "get remote pg storage");
+        storagePathCreateNP(storageTest, strNew("pg"));
 
         TEST_RESULT_BOOL(storageExistsNP(storageRemote, strNew("test.txt")), false, "file does not exist");
 
@@ -82,6 +93,9 @@ testRun(void)
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
+        cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("db"));
+        cfgOptionValidSet(cfgOptType, true);
+
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("test.txt")));
 
@@ -90,6 +104,9 @@ testRun(void)
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
+
+        cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("db"));
+        cfgOptionValidSet(cfgOptType, true);
     }
 
     // *****************************************************************************************************************************

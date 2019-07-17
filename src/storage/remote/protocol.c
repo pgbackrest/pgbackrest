@@ -14,6 +14,7 @@ Remote Storage Protocol Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "config/config.h"
 #include "storage/remote/protocol.h"
 #include "storage/helper.h"
 #include "storage/storage.intern.h"
@@ -99,8 +100,8 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
 
     ASSERT(command != NULL);
 
-    // Determine which storage should be used (??? for now this is only repo)
-    const Storage *storage = storageRepo();
+    // Determine which storage should be used
+    const Storage *storage = strEqZ(cfgOptionStr(cfgOptType), "backup") ? storageRepo() : storagePg();
     StorageInterface interface = storageInterface(storage);
     void *driver = storageDriver(storage);
 

@@ -138,6 +138,34 @@ storageLocalWrite(void)
 
     FUNCTION_TEST_RETURN(storageHelper.storageLocalWrite);
 }
+/***********************************************************************************************************************************
+Get the pg storage
+***********************************************************************************************************************************/
+static Storage *
+storagePgGet(bool write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, write);
+    FUNCTION_TEST_END();
+
+    Storage *result = NULL;
+
+    // Use remote storage
+    if (!pgIsLocal())
+    {
+        result = storageRemoteNew(
+            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL,
+            protocolRemoteGet(protocolStorageTypePg), cfgOptionUInt(cfgOptCompressLevelNetwork));
+    }
+    // Use Posix storage
+    else
+    {
+        result = storagePosixNew(
+            cfgOptionStr(cfgOptPgPath + protocolHostId() - 1), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL);
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
 
 /***********************************************************************************************************************************
 Get ready-only PostgreSQL storage
@@ -153,8 +181,7 @@ storagePg(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storagePg = storagePosixNew(
-                cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
+            storageHelper.storagePg = storagePgGet(false);
         }
         MEM_CONTEXT_END();
     }
@@ -176,8 +203,7 @@ storagePgWrite(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storagePgWrite = storagePosixNew(
-                cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+            storageHelper.storagePgWrite = storagePgGet(true);
         }
         MEM_CONTEXT_END();
     }
