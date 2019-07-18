@@ -38,235 +38,6 @@ use constant BACKUP_FILE_NOOP                                       => 4;
     push @EXPORT, qw(BACKUP_FILE_NOOP);
 
 ####################################################################################################################################
-# backupFile
-####################################################################################################################################
-sub backupFile
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strDbFile,                                 # Database file to backup
-        $strRepoFile,                               # Location in the repository to copy to
-        $lSizeFile,                                 # File size
-        $strChecksum,                               # File checksum to be checked
-        $bChecksumPage,                             # Should page checksums be calculated?
-        $strBackupLabel,                            # Label of current backup
-        $bCompress,                                 # Compress destination file
-        $iCompressLevel,                            # Compress level
-        $lModificationTime,                         # File modification time
-        $bIgnoreMissing,                            # Is it OK if the file is missing?
-        $hExtraParam,                               # Parameter to pass to the extra function
-        $bDelta,                                    # Is the delta option on?
-        $bHasReference,                             # Does the file exist in the repo in a prior backup in the set?
-        $strCipherPass,                             # Passphrase to access the repo file (undefined if repo not encrypted). This
-                                                    # parameter must always be last in the parameter list to this function.
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::backupFile', \@_,
-            {name => 'strDbFile', trace => true},
-            {name => 'strRepoFile', trace => true},
-            {name => 'lSizeFile', trace => true},
-            {name => 'strChecksum', required => false, trace => true},
-            {name => 'bChecksumPage', trace => true},
-            {name => 'strBackupLabel', trace => true},
-            {name => 'bCompress', trace => true},
-            {name => 'iCompressLevel', trace => true},
-            {name => 'lModificationTime', trace => true},
-            {name => 'bIgnoreMissing', default => true, trace => true},
-            {name => 'hExtraParam', required => false, trace => true},
-            {name => 'bDelta', trace => true},
-            {name => 'bHasReference', trace => true},
-            {name => 'strCipherPass', required => false, trace => true},
-        );
-
-    my $oStorageRepo = storageRepo();               # Repo storage
-    my $iCopyResult = BACKUP_FILE_COPY;             # Copy result
-    my $strCopyChecksum;                            # Copy checksum
-    my $rExtra;                                     # Page checksum result
-    my $lCopySize;                                  # Copy Size
-    my $lRepoSize;                                  # Repo size
-
-    # Add compression suffix if needed
-    my $strFileOp = $strRepoFile . ($bCompress ? '.' . COMPRESS_EXT : '');
-
-    my $bCopy = true;
-
-    # If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else just
-    # check the repo.
-    if (defined($strChecksum))
-    {
-        # If delta, then check the DB checksum and possibly the repo. If the checksum does not match in either case then recopy.
-        if ($bDelta)
-        {
-            ($strCopyChecksum, $lCopySize) = storageDb()->hashSize($strDbFile, {bIgnoreMissing => $bIgnoreMissing});
-
-            # If the DB file exists, then check the checksum
-            if (defined($strCopyChecksum))
-            {
-                $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
-
-                # If the database file checksum and size are same and the file is in a prior backup, then no need to copy. If the
-                # checksum/size do not match, that is OK, just leave the copy result as COPY so the file will be copied to this
-                # backup.
-                if (!$bCopy && $bHasReference)
-                {
-                    $iCopyResult = BACKUP_FILE_NOOP;
-                }
-            }
-            # Else the source file is missing from the database so skip this file
-            else
-            {
-                $iCopyResult = BACKUP_FILE_SKIP;
-                $bCopy = false;
-            }
-        }
-
-        # If this is not a delta backup or it is and the file exists and the checksum from the DB matches, then also test the
-        # checksum of the file in the repo (unless it is in a prior backup) and if the checksum doesn't match, then there may be
-        # corruption in the repo, so recopy
-        if (!$bDelta || !$bHasReference)
-        {
-            # If this is a delta backup and the file is missing from the DB, then remove it from the repo (backupManifestUpdate will
-            # remove it from the manifest)
-            if ($iCopyResult == BACKUP_FILE_SKIP)
-            {
-                $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}");
-            }
-            elsif (!$bDelta || !$bCopy)
-            {
-                # Add decompression
-                my $rhyFilter;
-
-                if ($bCompress)
-                {
-                    push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]});
-                }
-
-                # Get the checksum
-                ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
-                    $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                    {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
-
-                # Determine if the file needs to be recopied
-                $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
-
-                # Set copy result
-                $iCopyResult = $bCopy ? BACKUP_FILE_RECOPY : BACKUP_FILE_CHECKSUM;
-            }
-        }
-    }
-
-    # Copy the file
-    if ($bCopy)
-    {
-        # Add size and sha filters
-        my $rhyFilter = [{strClass => COMMON_IO_HANDLE}, {strClass => STORAGE_FILTER_SHA}];
-
-        # Add page checksum filter
-        if ($bChecksumPage)
-        {
-            # Determine which segment no this is by checking for a numeric extension.  No extension means segment 0.
-            my $iSegmentNo = ($strDbFile =~ /\.[0-9]+$/) ? substr(($strDbFile =~ m/\.[0-9]+$/g)[0], 1) + 0 : 0;
-
-            push(
-                @{$rhyFilter},
-                {strClass => "pgBackRest::Backup::Filter::PageChecksum",
-                    rxyParam => [$iSegmentNo, $hExtraParam->{iWalId}, $hExtraParam->{iWalOffset}]});
-        };
-
-        # Add compression
-        if ($bCompress)
-        {
-            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, $iCompressLevel]});
-        }
-        # Else add protocol compression if the destination is not compressed and there is no encryption
-        elsif (!defined($strCipherPass))
-        {
-            push(
-                @{$rhyFilter},
-                {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, true, cfgOption(CFGOPT_COMPRESS_LEVEL)]});
-        }
-
-        # Open the source file
-        my $oSourceFileIo = storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => $bIgnoreMissing});
-
-        # Open the destination file
-        $rhyFilter = undef;
-
-        # Add protocol decompression if the destination is not compressed and there is no encryption
-        if (!$bCompress && !defined($strCipherPass))
-        {
-            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, true]});
-        }
-
-        my $oDestinationFileIo = $oStorageRepo->openWrite(
-            STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-            {bPathCreate => true, rhyFilter => $rhyFilter, strCipherPass => $strCipherPass});
-
-        $oDestinationFileIo->{oStorageCWrite}->filterAdd(COMMON_IO_HANDLE, undef);
-
-        # Copy the file
-        if ($oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo))
-        {
-            # Get sha checksum and size
-            $strCopyChecksum = $oSourceFileIo->result(STORAGE_FILTER_SHA);
-            $lCopySize = $oSourceFileIo->result(COMMON_IO_HANDLE);
-            $lRepoSize = $oDestinationFileIo->result(COMMON_IO_HANDLE);
-
-            if (!defined($lRepoSize))
-            {
-                confess &log(ERROR, "REPO_SIZE IS NOT SET");
-            }
-
-            # Get results of page checksum validation
-            if ($bChecksumPage)
-            {
-                my $rExtraRaw = $oSourceFileIo->result("pgBackRest::Backup::Filter::PageChecksum");
-
-                $rExtra =
-                {
-                    bValid => $rExtraRaw->{valid} ? true : false,
-                    bAlign => $rExtraRaw->{align} ? true : false,
-                    iyPageError => $rExtraRaw->{error},
-                };
-            }
-        }
-        # Else if source file is missing the database removed it
-        else
-        {
-            $iCopyResult = BACKUP_FILE_SKIP;
-        }
-    }
-
-    # If the file was copied get the repo size only if the storage can store the files with a different size than what was written.
-    # This has to be checked after the file is at rest because filesystem compression may affect the actual repo size and this
-    # cannot be calculated in stream.
-    #
-    # If the file was checksummed then get the size in all cases since we don't already have it.
-    if ((($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY) &&
-            $oStorageRepo->capability(STORAGE_CAPABILITY_SIZE_DIFF)) ||
-        $iCopyResult == BACKUP_FILE_CHECKSUM)
-    {
-        $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}"))->{size};
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'iCopyResult', value => $iCopyResult},
-        {name => 'lCopySize', value => $lCopySize},
-        {name => 'lRepoSize', value => $lRepoSize},
-        {name => 'strCopyChecksum', value => $strCopyChecksum},
-        {name => 'rExtra', value => $rExtra},
-    );
-}
-
-push @EXPORT, qw(backupFile);
-
-####################################################################################################################################
 # backupManifestUpdate
 ####################################################################################################################################
 sub backupManifestUpdate
@@ -384,21 +155,22 @@ sub backupManifestUpdate
             if ($bChecksumPage)
             {
                 # The valid flag should be set
-                if (defined($rExtra->{bValid}))
+                if (defined($rExtra->{valid}))
                 {
                     # Store the valid flag
-                    $oManifest->boolSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, $rExtra->{bValid});
+                    $oManifest->boolSet(
+                        MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, $rExtra->{valid});
 
                     # If the page was not valid
-                    if (!$rExtra->{bValid})
+                    if (!$rExtra->{valid})
                     {
                         # Check for a page misalignment
                         if ($lSizeCopy % PG_PAGE_SIZE != 0)
                         {
                             # Make sure the align flag was set, otherwise there is a bug
-                            if (!defined($rExtra->{bAlign}) || $rExtra->{bAlign})
+                            if (!defined($rExtra->{align}) || $rExtra->{align})
                             {
-                                confess &log(ASSERT, 'bAlign flag should have been set for misaligned page');
+                                confess &log(ASSERT, 'align flag should have been set for misaligned page');
                             }
 
                             # Emit a warning so the user knows something is amiss
@@ -411,13 +183,13 @@ sub backupManifestUpdate
                         {
                             $oManifest->set(
                                 MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
-                                dclone($rExtra->{iyPageError}));
+                                dclone($rExtra->{error}));
 
                             # Build a pretty list of the page errors
                             my $strPageError;
                             my $iPageErrorTotal = 0;
 
-                            foreach my $iyPage (@{$rExtra->{iyPageError}})
+                            foreach my $iyPage (@{$rExtra->{error}})
                             {
                                 $strPageError .= (defined($strPageError) ? ', ' : '');
 
