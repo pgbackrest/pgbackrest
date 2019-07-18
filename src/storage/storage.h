@@ -33,6 +33,10 @@ typedef enum
     // noop.  We'll error on any path operation (e.g. pathExists(), pathCreate(), non-recursive removes, error on missing paths,
     // etc.) for storage that does not support paths.
     storageFeaturePath,
+
+    // Is the storage able to do compression and therefore store the file more efficiently than what was written?  If so, the size
+    // will need to checked after write to see if it is different.
+    storageFeatureCompress,
 } StorageFeature;
 
 /***********************************************************************************************************************************

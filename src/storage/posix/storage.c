@@ -686,11 +686,11 @@ storagePosixNewInternal(
 
         driver->interface = (StorageInterface)
         {
-            .feature = (1 << storageFeaturePath), .exists = storagePosixExists, .info = storagePosixInfo,
-            .infoList = storagePosixInfoList, .list = storagePosixList, .move = storagePosixMove, .newRead = storagePosixNewRead,
-            .newWrite = storagePosixNewWrite, .pathCreate = storagePosixPathCreate, .pathExists = storagePosixPathExists,
-            .pathRemove = storagePosixPathRemove, .pathSync = pathSync ? storagePosixPathSync : NULL,
-            .remove = storagePosixRemove
+            .feature = (1 << storageFeaturePath | 1 << storageFeatureCompress), .exists = storagePosixExists,
+            .info = storagePosixInfo, .infoList = storagePosixInfoList, .list = storagePosixList, .move = storagePosixMove,
+            .newRead = storagePosixNewRead, .newWrite = storagePosixNewWrite, .pathCreate = storagePosixPathCreate,
+            .pathExists = storagePosixPathExists, .pathRemove = storagePosixPathRemove,
+            .pathSync = pathSync ? storagePosixPathSync : NULL, .remove = storagePosixRemove
         };
 
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);

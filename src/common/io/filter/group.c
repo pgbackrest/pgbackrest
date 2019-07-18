@@ -103,6 +103,31 @@ ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter)
 }
 
 /***********************************************************************************************************************************
+Insert a filter before an index
+***********************************************************************************************************************************/
+IoFilterGroup *
+ioFilterGroupInsert(IoFilterGroup *this, unsigned int listIdx, IoFilter *filter)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_LOG_PARAM(IO_FILTER, filter);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(!this->opened && !this->closed);
+    ASSERT(filter != NULL);
+
+    // Move the filter to this object's mem context
+    ioFilterMove(filter, this->memContext);
+
+    // Add the filter
+    IoFilterData filterData = {.filter = filter};
+    lstInsert(this->filterList, listIdx, &filterData);
+
+    FUNCTION_LOG_RETURN(IO_FILTER_GROUP, this);
+}
+
+/***********************************************************************************************************************************
 Get a filter
 ***********************************************************************************************************************************/
 static IoFilterData *
@@ -116,6 +141,27 @@ ioFilterGroupGet(const IoFilterGroup *this, unsigned int filterIdx)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN((IoFilterData *)lstGet(this->filterList, filterIdx));
+}
+
+/***********************************************************************************************************************************
+Clear filters
+***********************************************************************************************************************************/
+IoFilterGroup *
+ioFilterGroupClear(IoFilterGroup *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(!this->opened);
+
+    for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
+        ioFilterFree(ioFilterGroupGet(this, filterIdx)->filter);
+
+    lstClear(this->filterList);
+
+    FUNCTION_LOG_RETURN(IO_FILTER_GROUP, this);
 }
 
 /***********************************************************************************************************************************
@@ -401,21 +447,20 @@ ioFilterGroupParamAll(const IoFilterGroup *this)
     ASSERT(!this->opened);
     ASSERT(this->filterList != NULL);
 
-    KeyValue *result = kvNew();
+    VariantList *result = varLstNew();
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
     {
-        for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
-        {
-            IoFilter *filter = ioFilterGroupGet(this, filterIdx)->filter;
-            const VariantList *paramList = ioFilterParamList(filter);
+        IoFilter *filter = ioFilterGroupGet(this, filterIdx)->filter;
+        const VariantList *paramList = ioFilterParamList(filter);
 
-            kvAdd(result, VARSTR(ioFilterType(filter)), paramList ? varNewVarLst(paramList) : NULL);
-        }
+        KeyValue *filterParam = kvNew();
+        kvAdd(filterParam, VARSTR(ioFilterType(filter)), paramList ? varNewVarLst(paramList) : NULL);
+
+        varLstAdd(result, varNewKv(filterParam));
     }
-    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(VARIANT, varNewKv(result));
+    FUNCTION_LOG_RETURN(VARIANT, varNewVarLst(result));
 }
 
 /***********************************************************************************************************************************
@@ -429,8 +474,7 @@ ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
         FUNCTION_LOG_PARAM(STRING, filterType);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
-    ASSERT(this->opened && this->closed);
+    ASSERT(this->opened);
     ASSERT(filterType != NULL);
 
     const Variant *result = NULL;
@@ -458,6 +502,30 @@ ioFilterGroupResultAll(const IoFilterGroup *this)
     ASSERT(this->closed);
 
     FUNCTION_LOG_RETURN_CONST(VARIANT, varNewKv(this->filterResult));
+}
+
+/***********************************************************************************************************************************
+Set all filter results
+***********************************************************************************************************************************/
+void
+ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    if (filterResult != NULL)
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->filterResult = kvDup(varKv(filterResult));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

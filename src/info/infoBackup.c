@@ -9,10 +9,9 @@ Backup Info Handler
 #include <inttypes.h>
 
 #include "common/debug.h"
-#include "common/ini.h" // CSHANG Dup
+#include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/ini.h"
 #include "common/object.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
@@ -200,67 +199,6 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
 }
 
 /***********************************************************************************************************************************
-Checks the backup info file's DB section against the PG version, system id, catolog and constrol version passed in and returns
-the history id of the current PG database.
-***********************************************************************************************************************************/
-unsigned int
-infoBackupCheckPg(
-    const InfoBackup *this,
-    unsigned int pgVersion,
-    uint64_t pgSystemId,
-    uint32_t pgCatalogVersion,
-    uint32_t pgControlVersion)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
-        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
-        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);  // CSHANG Need to change the order of catalog and control here to be consistent with other functions OR remove if this function will not be used.
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    InfoPgData backupPg = infoPgDataCurrent(this->infoPg);
-
-    if (backupPg.version != pgVersion || backupPg.systemId != pgSystemId)
-        THROW(BackupMismatchError, strPtr(strNewFmt(
-            "database version = %s, system-id %" PRIu64 " does not match backup version = %s, system-id = %" PRIu64 "\n"
-            "HINT: is this the correct stanza?",
-            strPtr(pgVersionToStr(pgVersion)), pgSystemId, strPtr(pgVersionToStr(backupPg.version)), backupPg.systemId)));
-
-    if (backupPg.catalogVersion != pgCatalogVersion || backupPg.controlVersion != pgControlVersion)
-    {
-        THROW(BackupMismatchError, strPtr(strNewFmt(
-            "database control-version = %" PRIu32 ", catalog-version %" PRIu32
-            " does not match backup control-version = %" PRIu32 ", catalog-version = %" PRIu32 "\n"
-            "HINT: this may be a symptom of database or repository corruption!",
-            pgControlVersion, pgCatalogVersion, backupPg.controlVersion, backupPg.catalogVersion)));
-    }
-
-    FUNCTION_LOG_RETURN(UINT, backupPg.id);
-}
-
-/***********************************************************************************************************************************
-Set the infoPg data
-***********************************************************************************************************************************/
-InfoBackup *
-infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
-        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
-        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
-    FUNCTION_LOG_END();
-
-    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
-
-    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
-}
-
-/***********************************************************************************************************************************
 Save to file
 ***********************************************************************************************************************************/
 void
@@ -346,6 +284,25 @@ infoBackupPg(const InfoBackup *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->infoPg);
+}
+
+/***********************************************************************************************************************************
+Set the infoPg data
+***********************************************************************************************************************************/
+InfoBackup *
+infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
+        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
+    FUNCTION_LOG_END();
+
+    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
+
+    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
 
 /***********************************************************************************************************************************

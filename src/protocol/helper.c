@@ -69,6 +69,26 @@ repoIsLocal(void)
 }
 
 /***********************************************************************************************************************************
+Is pg local?
+***********************************************************************************************************************************/
+bool
+pgIsLocal(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(!cfgOptionTest(cfgOptPgHost + (cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) - 1 : 0)));
+}
+
+/***********************************************************************************************************************************
+Get host id if host-id option is set, otherwise return default id 1
+***********************************************************************************************************************************/
+unsigned int
+protocolHostId(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1);
+}
+
+/***********************************************************************************************************************************
 Get the command line required for local protocol execution
 ***********************************************************************************************************************************/
 static StringList *
@@ -78,8 +98,6 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
-
-    ASSERT(protocolStorageType == protocolStorageTypeRepo);         // ??? Hard-coded until the function supports pg remotes
 
     StringList *result = NULL;
 
@@ -180,7 +198,11 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
 
-    ASSERT(protocolStorageType == protocolStorageTypeRepo);         // ??? Hard-coded until the function supports pg remotes
+    // Is this a repo remote?
+    bool isRepo = protocolStorageType == protocolStorageTypeRepo;
+
+    // Get the host index.  Default to 0 if host-id is not set.
+    unsigned int hostIdx = isRepo ? 0 : protocolHostId() - 1;
 
     // Fixed parameters for ssh command
     StringList *result = strLstNew();
@@ -192,30 +214,62 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     strLstAddZ(result, "PasswordAuthentication=no");
 
     // Append port if specified
-    if (cfgOptionTest(cfgOptRepoHostPort))
+    ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort + hostIdx;
+
+    if (cfgOptionTest(optHostPort))
     {
         strLstAddZ(result, "-p");
-        strLstAdd(result, strNewFmt("%u", cfgOptionUInt(cfgOptRepoHostPort)));
+        strLstAdd(result, strNewFmt("%u", cfgOptionUInt(optHostPort)));
     }
 
     // Append user/host
-    strLstAdd(result, strNewFmt("%s@%s", strPtr(cfgOptionStr(cfgOptRepoHostUser)), strPtr(cfgOptionStr(cfgOptRepoHost))));
+    strLstAdd(
+        result,
+        strNewFmt(
+            "%s@%s", strPtr(cfgOptionStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser + hostIdx)),
+            strPtr(cfgOptionStr(isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx))));
 
     // Option replacements
     KeyValue *optionReplace = kvNew();
 
     // Replace config options with the host versions
-    if (cfgOptionSource(cfgOptRepoHostConfig) != cfgSourceDefault)
-        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_STR), cfgOption(cfgOptRepoHostConfig));
+    unsigned int optConfig = isRepo ? cfgOptRepoHostConfig : cfgOptPgHostConfig + hostIdx;
 
-    if (cfgOptionSource(cfgOptRepoHostConfigIncludePath) != cfgSourceDefault)
-        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_INCLUDE_PATH_STR), cfgOption(cfgOptRepoHostConfigIncludePath));
+    if (cfgOptionSource(optConfig) != cfgSourceDefault)
+        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_STR), cfgOption(optConfig));
 
-    if (cfgOptionSource(cfgOptRepoHostConfigPath) != cfgSourceDefault)
-        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR), cfgOption(cfgOptRepoHostConfigPath));
+    unsigned int optConfigIncludePath = isRepo ? cfgOptRepoHostConfigIncludePath : cfgOptPgHostConfigIncludePath + hostIdx;
+
+    if (cfgOptionSource(optConfigIncludePath) != cfgSourceDefault)
+        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_INCLUDE_PATH_STR), cfgOption(optConfigIncludePath));
+
+    unsigned int optConfigPath = isRepo ? cfgOptRepoHostConfigPath : cfgOptPgHostConfigPath + hostIdx;
+
+    if (cfgOptionSource(optConfigPath) != cfgSourceDefault)
+        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR), cfgOption(optConfigPath));
 
     // Use a C remote
     kvPut(optionReplace, VARSTR(CFGOPT_C_STR), VARBOOL(true));
+
+    // Copy pg options to index 0 since that's what the remote will be expecting
+    if (hostIdx != 0)
+    {
+        kvPut(optionReplace, VARSTR(CFGOPT_PG1_PATH_STR), cfgOption(cfgOptPgPath + hostIdx));
+
+        if (cfgOptionSource(cfgOptPgSocketPath + hostIdx) != cfgSourceDefault)
+            kvPut(optionReplace, VARSTR(CFGOPT_PG1_SOCKET_PATH_STR), cfgOption(cfgOptPgSocketPath + hostIdx));
+
+        if (cfgOptionSource(cfgOptPgPort + hostIdx) != cfgSourceDefault)
+            kvPut(optionReplace, VARSTR(CFGOPT_PG1_PORT_STR), cfgOption(cfgOptPgPort + hostIdx));
+    }
+
+    // Remove pg options that are not needed on the remote.  This is to reduce clustter and make debugging options easier.
+    for (unsigned int pgIdx = 1; pgIdx < cfgOptionIndexTotal(cfgOptPgPath); pgIdx++)
+    {
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgPath + pgIdx)), NULL);
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgSocketPath + pgIdx)), NULL);
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgPort + pgIdx)), NULL);
+    }
 
     // Add the command option (or use the current command option if it is valid)
     if (!cfgOptionTest(cfgOptCommand))
@@ -238,10 +292,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
     // Add the type
-    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTRDEF("backup"));
+    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), isRepo ? VARSTRDEF("backup") : VARSTRDEF("db"));
 
     StringList *commandExec = cfgExecParam(cfgCmdRemote, optionReplace);
-    strLstInsert(commandExec, 0, cfgOptionStr(cfgOptRepoHostCmd));
+    strLstInsert(commandExec, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
     strLstAdd(result, strLstJoin(commandExec, " "));
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
@@ -257,6 +311,12 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
     FUNCTION_LOG_END();
 
+    // Is this a repo remote?
+    bool isRepo = protocolStorageType == protocolStorageTypeRepo;
+
+    // Get the host index.  Default to 0 if host-id is not set.
+    unsigned int hostIdx = isRepo ? 0 : protocolHostId() - 1;
+
     protocolHelperInit();
 
     // Allocate the client cache
@@ -264,7 +324,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            // The number of remotes allowed is the greater of allowed repo or db configs + 1 (0 is reserved for connections from
+            // The number of remotes allowed is the greater of allowed repo or pg configs + 1 (0 is reserved for connections from
             // the main process).  Since these are static and only one will be true it presents a problem for coverage.  We think
             // that pg remotes will always be greater but we'll protect that assumption with an assertion.
             ASSERT(cfgDefOptionIndexTotal(cfgDefOptPgPath) >= cfgDefOptionIndexTotal(cfgDefOptRepoPath));
@@ -294,20 +354,22 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
+            unsigned int optHost = isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx;
+
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
                 cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, protocolId),
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strPtr(cfgOptionStr(cfgOptRepoHost))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strPtr(cfgOptionStr(optHost))),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);
 
             // Create protocol object
             protocolHelperClient->client = protocolClientNew(
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", protocolId, strPtr(cfgOptionStr(cfgOptRepoHost))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", protocolId, strPtr(cfgOptionStr(optHost))),
                 PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
 
             // Get cipher options from the remote if none are locally configured
-            if (strEq(cfgOptionStr(cfgOptRepoCipherType), CIPHER_TYPE_NONE_STR))
+            if (isRepo && strEq(cfgOptionStr(cfgOptRepoCipherType), CIPHER_TYPE_NONE_STR))
             {
                 // Options to query
                 VariantList *param = varLstNew();

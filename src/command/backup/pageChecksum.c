@@ -229,9 +229,25 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, size_t pa
         driver->valid = true;
         driver->align = true;
 
-        this = ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE_STR, driver, NULL, .in = pageChecksumProcess, .result = pageChecksumResult);
+        // Create param list
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewUInt(segmentNo));
+        varLstAdd(paramList, varNewUInt(segmentPageTotal));
+        varLstAdd(paramList, varNewUInt64(pageSize));
+        varLstAdd(paramList, varNewUInt64(lsnLimit));
+
+        this = ioFilterNewP(
+            PAGE_CHECKSUM_FILTER_TYPE_STR, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+IoFilter *
+pageChecksumNewVar(const VariantList *paramList)
+{
+    return pageChecksumNew(
+        varUIntForce(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUIntForce(varLstGet(paramList, 2)),
+        varUInt64(varLstGet(paramList, 3)));
 }

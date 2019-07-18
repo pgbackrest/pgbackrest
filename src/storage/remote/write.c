@@ -68,11 +68,9 @@ storageWriteRemoteOpen(THIS_VOID)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        IoFilterGroup *filterGroup = ioFilterGroupNew();
-
         // If the file is compressible add decompression filter on the remote
         if (this->interface.compressible)
-            ioFilterGroupAdd(filterGroup, gzipDecompressNew(true));
+            ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, gzipDecompressNew(true));
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
@@ -85,16 +83,19 @@ storageWriteRemoteOpen(THIS_VOID)
         protocolCommandParamAdd(command, VARBOOL(this->interface.syncFile));
         protocolCommandParamAdd(command, VARBOOL(this->interface.syncPath));
         protocolCommandParamAdd(command, VARBOOL(this->interface.atomic));
-        protocolCommandParamAdd(command, ioFilterGroupParamAll(filterGroup));
+        protocolCommandParamAdd(command, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
 
-        // If the file is compressible add compression filter locally
+        protocolClientExecute(this->client, command, false);
+
+        // Clear filters since they will be run on the remote side
+        ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
+
+        // If the file is compressible add cecompression filter locally
         if (this->interface.compressible)
         {
             ioFilterGroupAdd(
                 ioWriteFilterGroup(storageWriteIo(this->write)), gzipCompressNew((int)this->interface.compressLevel, true));
         }
-
-        protocolClientExecute(this->client, command, false);
 
         // Set free callback to ensure remote file is freed
         memContextCallbackSet(this->memContext, storageWriteRemoteFreeResource, this);
@@ -150,7 +151,7 @@ storageWriteRemoteClose(THIS_VOID)
     {
         ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
         ioWriteFlush(protocolClientIoWrite(this->client));
-        protocolClientReadOutput(this->client, false);
+        ioFilterGroupResultAllSet(ioWriteFilterGroup(storageWriteIo(this->write)), protocolClientReadOutput(this->client, true));
         this->client = NULL;
 
         memContextCallbackClear(this->memContext);

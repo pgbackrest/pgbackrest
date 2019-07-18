@@ -20,8 +20,8 @@ testRun(void)
     InfoBackup *infoBackup = NULL;
 
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupNew(), infoBackupNewLoad(), infoBackupDataTotal(), infoBackupCheckPg(), infoBackupPg(), "
-        "infoBackupCipherPass(), infoBackupFree()"))
+    if (testBegin("infoBackupNew(), infoBackupNewLoad(), infoBackupDataTotal(), infoBackupPg(), infoBackupCipherPass(), "
+        "infoBackupFree()"))
     {
         // File missing
         //--------------------------------------------------------------------------------------------------------------------------
@@ -72,33 +72,6 @@ testRun(void)
         TEST_RESULT_PTR(infoBackup->backup, NULL, "    backupCurrent NULL");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "    infoBackupDataTotal returns 0");
 
-        // infoBackupCheckPg
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(infoBackupCheckPg(infoBackup, 90400, 6569239123849665679, 201409291, 942), 1, "check PG data");
-
-        TEST_ERROR_FMT(
-            infoBackupCheckPg(infoBackup, 90500, 6569239123849665679, 201409291, 942), BackupMismatchError,
-            "database version = 9.5, system-id 6569239123849665679 does not match "
-            "backup version = 9.4, system-id = 6569239123849665679\n"
-            "HINT: is this the correct stanza?");
-
-        TEST_ERROR_FMT(
-            infoBackupCheckPg(infoBackup, 90400, 6569239123849665999, 201409291, 942), BackupMismatchError,
-            "database version = 9.4, system-id 6569239123849665999 does not match "
-            "backup version = 9.4, system-id = 6569239123849665679\n"
-            "HINT: is this the correct stanza?");
-
-        TEST_ERROR_FMT(
-            infoBackupCheckPg(infoBackup, 90400, 6569239123849665679, 201409291, 941), BackupMismatchError,
-            "database control-version = 941, catalog-version 201409291"
-            " does not match backup control-version = 942, catalog-version = 201409291\n"
-            "HINT: this may be a symptom of database or repository corruption!");
-
-        TEST_ERROR_FMT(
-            infoBackupCheckPg(infoBackup, 90400, 6569239123849665679, 201509291, 942), BackupMismatchError,
-            "database control-version = 942, catalog-version 201509291"
-            " does not match backup control-version = 942, catalog-version = 201409291\n"
-            "HINT: this may be a symptom of database or repository corruption!");
 
         // Remove both files and recreate from scratch with cipher
         //--------------------------------------------------------------------------------------------------------------------------

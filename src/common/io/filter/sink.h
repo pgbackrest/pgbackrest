@@ -1,22 +1,23 @@
 /***********************************************************************************************************************************
-Block Cipher Header
+IO Sink Filter
+
+Consume all bytes sent to the filter without passing any on.  This filter is useful when running size/hash filters on a remote when
+no data should be returned.
 ***********************************************************************************************************************************/
-#ifndef COMMON_CRYPTO_CIPHERBLOCK_H
-#define COMMON_CRYPTO_CIPHERBLOCK_H
+#ifndef COMMON_IO_FILTER_SINK_H
+#define COMMON_IO_FILTER_SINK_H
 
 #include "common/io/filter/filter.h"
-#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define CIPHER_BLOCK_FILTER_TYPE                                   "cipherBlock"
-    STRING_DECLARE(CIPHER_BLOCK_FILTER_TYPE_STR);
+#define SINK_FILTER_TYPE                                     "sink"
+    STRING_DECLARE(SINK_FILTER_TYPE_STR);
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName);
-IoFilter *cipherBlockNewVar(const VariantList *paramList);
+IoFilter *ioSinkNew(void);
 
 #endif

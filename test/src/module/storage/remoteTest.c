@@ -1,9 +1,11 @@
 /***********************************************************************************************************************************
 Test Remote Storage
 ***********************************************************************************************************************************/
+#include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "postgres/interface.h"
 
 #include "common/harnessConfig.h"
 
@@ -30,6 +32,16 @@ testRun(void)
     strLstAddZ(argList, "info");
     harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
+    // Set type since we'll be running local and remote tests here
+    cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("backup"));
+    cfgOptionValidSet(cfgOptType, true);
+
+    // Set pg settings so we can run both db and backup remotes
+    cfgOptionSet(cfgOptPgHost, cfgSourceParam, VARSTRDEF("localhost"));
+    cfgOptionValidSet(cfgOptPgHost, true);
+    cfgOptionSet(cfgOptPgPath, cfgSourceParam, VARSTR(strNewFmt("%s/pg", testPath())));
+    cfgOptionValidSet(cfgOptPgPath, true);
+
     // Start a protocol server to test the remote protocol
     Buffer *serverRead = bufNew(8192);
     Buffer *serverWrite = bufNew(8192);
@@ -48,6 +60,8 @@ testRun(void)
         Storage *storageRemote = NULL;
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
         TEST_RESULT_UINT(storageInterface(storageRemote).feature, storageInterface(storageTest).feature, "    check features");
+        TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeaturePath), true, "    check path feature");
+        TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeatureCompress), true, "    check compress feature");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
@@ -64,12 +78,13 @@ testRun(void)
         TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), varLstNew(), server), false, "invalid function");
     }
 
+    // Do these tests against a db remote for coverage
     // *****************************************************************************************************************************
     if (testBegin("storageExists()"))
     {
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
-        storagePathCreateNP(storageTest, strNew("repo"));
+        TEST_ASSIGN(storageRemote, storagePgGet(false), "get remote pg storage");
+        storagePathCreateNP(storageTest, strNew("pg"));
 
         TEST_RESULT_BOOL(storageExistsNP(storageRemote, strNew("test.txt")), false, "file does not exist");
 
@@ -78,6 +93,9 @@ testRun(void)
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
+        cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("db"));
+        cfgOptionValidSet(cfgOptType, true);
+
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("test.txt")));
 
@@ -86,6 +104,9 @@ testRun(void)
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
+
+        cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("db"));
+        cfgOptionValidSet(cfgOptType, true);
     }
 
     // *****************************************************************************************************************************
@@ -177,7 +198,7 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("missing.txt")));
         varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, varNewKv(kvNew()));
+        varLstAdd(paramList, varNewVarLst(varLstNew()));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true,
@@ -197,6 +218,11 @@ testRun(void)
 
         // Create filters to test filter logic
         IoFilterGroup *filterGroup = ioFilterGroupNew();
+        ioFilterGroupAdd(filterGroup, ioSizeNew());
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
@@ -208,13 +234,16 @@ testRun(void)
             "{\"out\":true}\n"
                 "BRBLOCK4\n"
                 "TESTBRBLOCK4\n"
-                "DATABRBLOCK0\n",
+                "DATABRBLOCK0\n"
+                "{\"out\":{\"buffer\":null,\"cipherBlock\":null,\"gzipCompress\":null,\"gzipDecompress\":null"
+                    ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"pageChecksum\":{\"align\":false,\"valid\":false}"
+                    ",\"size\":8}}\n",
             "check result");
 
         bufUsedSet(serverWrite, 0);
         ioBufferSizeSet(8192);
 
-        // Check for error on a bogus filter
+        // Check protocol function directly (file exists but all data goes to sink)
         // -------------------------------------------------------------------------------------------------------------------------
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("test.txt")));
@@ -222,12 +251,32 @@ testRun(void)
 
         // Create filters to test filter logic
         filterGroup = ioFilterGroupNew();
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("X"), NULL));
+        ioFilterGroupAdd(filterGroup, ioSizeNew());
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioFilterGroupAdd(filterGroup, ioSinkNew());
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read (sink)");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(serverWrite)),
+            "{\"out\":true}\n"
+                "BRBLOCK0\n"
+                "{\"out\":{\"buffer\":null,\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"sink\":null,\"size\":8}}\n",
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // Check for error on a bogus filter
+        // -------------------------------------------------------------------------------------------------------------------------
+        paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(strNew("test.txt")));
+        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvAdd(kvNew(), varNewStrZ("bogus"), NULL)))));
 
         TEST_ERROR(
             storageRemoteProtocol(
-                PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), AssertError, "unable to add filter 'cipherBlock'");
+                PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), AssertError, "unable to add filter 'bogus'");
     }
 
     // *****************************************************************************************************************************
@@ -312,7 +361,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, varNewKv(kvNew()));
+        varLstAdd(paramList, ioFilterGroupParamAll(ioFilterGroupAdd(ioFilterGroupNew(), ioSizeNew())));
 
         // Generate input (includes the input for the test below -- need a way to reset this for better testing)
         bufCat(
@@ -329,7 +378,7 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(strNewBuf(serverWrite)),
             "{}\n"
-                "{}\n",
+                "{\"out\":{\"buffer\":null,\"size\":18}}\n",
             "check result");
 
         TEST_RESULT_STR(
@@ -353,7 +402,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, varNewKv(kvNew()));
+        varLstAdd(paramList, varNewVarLst(varLstNew()));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
@@ -560,7 +609,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(path));
-        varLstAdd(paramList, varNewBool(false));    // ignoreMissing
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), true,

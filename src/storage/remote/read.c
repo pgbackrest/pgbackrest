@@ -63,27 +63,26 @@ storageReadRemoteOpen(THIS_VOID)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        IoFilterGroup *filterGroup = ioFilterGroupNew();
-
         // If the file is compressible add compression filter on the remote
         if (this->interface.compressible)
-            ioFilterGroupAdd(filterGroup, gzipCompressNew((int)this->interface.compressLevel, true));
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(this->read)), gzipCompressNew((int)this->interface.compressLevel, true));
+        }
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
         protocolCommandParamAdd(command, VARBOOL(this->interface.ignoreMissing));
-        protocolCommandParamAdd(command, ioFilterGroupParamAll(filterGroup));
+        protocolCommandParamAdd(command, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
+
+        result = varBool(protocolClientExecute(this->client, command, true));
+
+        // Clear filters since they will be run on the remote side
+        ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
 
         // If the file is compressible add decompression filter locally
         if (this->interface.compressible)
-        {
-            // Since we can't insert filters yet we'll just error if there are already filters in the list
-            CHECK(ioFilterGroupSize(ioReadFilterGroup(storageReadIo(this->read))) == 0);
-
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), gzipDecompressNew(true));
-        }
-
-        result = varBool(protocolClientExecute(this->client, command, true));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -122,7 +121,11 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     this->remaining = (size_t)storageRemoteProtocolBlockSize(ioReadLine(protocolClientIoRead(this->client)));
 
                     if (this->remaining == 0)
+                    {
+                        ioFilterGroupResultAllSet(
+                            ioReadFilterGroup(storageReadIo(this->read)), protocolClientReadOutput(this->client, true));
                         this->eof = true;
+                    }
 
 #ifdef DEBUG
                     this->protocolReadBytes += this->remaining;
