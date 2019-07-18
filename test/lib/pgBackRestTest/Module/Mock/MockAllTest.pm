@@ -1119,23 +1119,15 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
-        # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force. If backup.info is
-        # encrypted is cannot be deleted, so copy it to old instead.
+        # Delete the backup.info and make sure the backup fails.
         my $strBackupInfoFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO;
         my $strBackupInfoCopyFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT;
         my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
         my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
 
-        if ($bEncrypt)
-        {
+        # Save the backup.info and copy files so they can be restored later
             forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
-        }
-        else
-        {
-            forceStorageRemove(storageRepo(), $strBackupInfoFile);
-            forceStorageRemove(storageRepo(), $strBackupInfoCopyFile);
-        }
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT', '9a53d532e27785e681766c98516a5e93f096a501',
@@ -1152,17 +1144,9 @@ sub run
                 {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
         }
 
-        # Use force to create the stanza (this is expected to fail for encrypted repos)
-        $oHostBackup->stanzaCreate('create required data for stanza',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
-                iExpectedExitStatus => $bEncrypt ? ERROR_FILE_MISSING : undef});
-
-        # Copy encrypted backup info files back so testing can proceed
-        if ($bEncrypt)
-        {
-            forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
-            forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
-        }
+        # Copy backup info files back so testing can proceed
+        forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
+        forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
 
         # Perform the backup
         $strBackup =$oHostBackup->backup($strType, 'update files', {oExpectedManifest => \%oManifest});

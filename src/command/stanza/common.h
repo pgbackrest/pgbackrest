@@ -8,6 +8,7 @@ Stanza Commands Handler
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+String *cipherPassGen(CipherType cipherType);
 void infoValidate(const InfoPgData *archiveInfo, const InfoPgData *backupInfo);
 
 #endif

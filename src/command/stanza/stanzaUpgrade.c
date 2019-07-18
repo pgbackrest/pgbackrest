@@ -35,8 +35,23 @@ cmdStanzaUpgrade(void)
         bool infoArchiveUpgrade = false;
         bool infoBackupUpgrade = false;
 
-        // ??? Temporary until can communicate with PG: Get control info from the pgControlFile
-        // CSHANG pgControlFromFile does not reach out to a remote db. May need to do get first but would still need to know the path to the control file - but we should be able to get that from the pg1-path - but that's where the dbObjectGet would come into play.
+        // !!! Perl code that still needs to be incorporated
+        //
+        // ($self->{oDb}) = dbObjectGet();
+        //
+        // # Validate the database configuration. Do not require the database to be online before creating a stanza because the
+        // # archive_command will attempt to push an achive before the archive.info file exists which will result in an error in the
+        // # postgres logs.
+        // if (cfgOption(CFGOPT_ONLINE))
+        // {
+        //     # If the pg-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
+        //     $self->{oDb}->configValidate();
+        // }
+        //
+        // ($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
+        //     = $self->{oDb}->info();
+
+        // !!! Temporary until can communicate with PG: Get control info from the pgControlFile
         PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
         // Load the info files (errors if missing)
@@ -57,7 +72,7 @@ cmdStanzaUpgrade(void)
             infoArchivePgSet(infoArchive, pgControl.version, pgControl.systemId);
             infoArchiveUpgrade = true;
         }
-// CSHANG Removed (pgControl.controlVersion != backupInfo.controlVersion || pgControl.catalogVersion != backupInfo.catalogVersion)) Are we sure they will no longer be used?
+
         // Update backup
         if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
         {

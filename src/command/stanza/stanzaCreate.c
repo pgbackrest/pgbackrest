@@ -10,7 +10,6 @@ Stanza Create Command
 #include "command/stanza/common.h"
 #include "command/stanza/stanzaCreate.h"
 #include "common/debug.h"
-#include "common/encode.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -36,8 +35,23 @@ cmdStanzaCreate(void)
         InfoArchive *infoArchive = NULL;
         InfoBackup *infoBackup = NULL;
 
-        // ??? Temporary until can communicate with PG: Get control info from the pgControlFile
-        // CSHANG pgControlFromFile does not reach out to a remote db. May need to do get first but would still need to know the path to the control file - but we should be able to get that from the pg1-path - but that's where the dbObjectGet would come into play.
+        // !!! Perl code that still needs to be incorporated
+        //
+        // ($self->{oDb}) = dbObjectGet();
+        //
+        // # Validate the database configuration. Do not require the database to be online before creating a stanza because the
+        // # archive_command will attempt to push an achive before the archive.info file exists which will result in an error in the
+        // # postgres logs.
+        // if (cfgOption(CFGOPT_ONLINE))
+        // {
+        //     # If the pg-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
+        //     $self->{oDb}->configValidate();
+        // }
+        //
+        // ($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
+        //     = $self->{oDb}->info();
+
+        // !!! Temporary until can communicate with PG: Get control info from the pgControlFile
         PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
         bool archiveInfoFileExists = storageExistsNP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR);
@@ -62,16 +76,8 @@ cmdStanzaCreate(void)
                     (backupNotEmpty && archiveNotEmpty ? "and/or " : ""), (archiveNotEmpty ? "archive directory " : ""));
             }
 
-            // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent files
-            String *cipherPassSub = NULL;
-            if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) != cipherTypeNone)
-            {
-                unsigned char buffer[48]; // 48 is the amount of entropy needed to get a 64 base key
-                cryptoRandomBytes(buffer, sizeof(buffer));
-                char cipherPassSubChar[64];
-                encodeToStr(encodeBase64, buffer, sizeof(buffer), cipherPassSubChar);
-                cipherPassSub = strNew(cipherPassSubChar);
-            }
+            // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
+            String *cipherPassSub = cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType)));
 
             // Create and save archive info
             infoArchive = infoArchiveNew(
@@ -79,6 +85,9 @@ cmdStanzaCreate(void)
             infoArchiveSave(
                 infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
+
+            // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent backup files
+            cipherPassSub = cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType)));
 
             // Create and save backup info
             infoBackup = infoBackupNew(

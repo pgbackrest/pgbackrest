@@ -422,6 +422,9 @@ testRun(void)
             infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
             "  load backup info");
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
+
+        TEST_RESULT_BOOL(strEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
+            "  cipher sub different for archive and backup");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

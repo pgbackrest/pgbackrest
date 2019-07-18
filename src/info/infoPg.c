@@ -215,7 +215,6 @@ infoPgSet(
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(type == infoPgArchive || (pgControlVersion != 0 && pgCatalogVersion != 0));  // CSHANG Confirm this works as expected
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
