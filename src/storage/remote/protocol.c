@@ -9,6 +9,7 @@ Remote Storage Protocol Handler
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/filter/sink.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -77,6 +78,8 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
             ioFilterGroupAdd(filterGroup, cryptoHashNewVar(filterParam));
         else if (strEq(filterKey, PAGE_CHECKSUM_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, pageChecksumNewVar(filterParam));
+        else if (strEq(filterKey, SINK_FILTER_TYPE_STR))
+            ioFilterGroupAdd(filterGroup, ioSinkNew());
         else if (strEq(filterKey, SIZE_FILTER_TYPE_STR))
             ioFilterGroupAdd(filterGroup, ioSizeNew());
         else

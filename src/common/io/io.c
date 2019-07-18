@@ -4,6 +4,7 @@ IO Functions
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/io/filter/sink.h"
 #include "common/io/io.h"
 #include "common/log.h"
 
@@ -87,22 +88,21 @@ ioReadDrain(IoRead *read)
 
     ASSERT(read != NULL);
 
+    // Add a sink filter so we only need one read
+    ioFilterGroupAdd(ioReadFilterGroup(read), ioSinkNew());
+
+    // Check if the IO can be opened
     bool result = ioReadOpen(read);
 
     if (result)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Read IO into the buffer
-            Buffer *buffer = bufNew(ioBufferSize());
+            // A single read that returns zero bytes
+            ioRead(read, bufNew(1));
+            ASSERT(ioReadEof(read));
 
-            do
-            {
-                ioRead(read, buffer);
-                bufUsedZero(buffer);
-            }
-            while (!ioReadEof(read));
-
+            // Close the IO
             ioReadClose(read);
         }
         MEM_CONTEXT_TEMP_END();

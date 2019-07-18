@@ -48,8 +48,6 @@ ioFilterNew(const String *type, void *driver, VariantList *paramList, IoFilterIn
     ASSERT(!(interface.in != NULL && interface.inOut != NULL));
     // If the filter does not produce output then it should produce a result
     ASSERT(interface.in == NULL || (interface.result != NULL && interface.done == NULL && interface.inputSame == NULL));
-    // Filters that produce output will not always be able to dump all their output and will need to get the same input again
-    ASSERT(interface.inOut == NULL || interface.inputSame != NULL);
 
     IoFilter *this = memNew(sizeof(IoFilter));
     this->memContext = memContextCurrent();

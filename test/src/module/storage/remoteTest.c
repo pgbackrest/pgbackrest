@@ -243,6 +243,30 @@ testRun(void)
         bufUsedSet(serverWrite, 0);
         ioBufferSizeSet(8192);
 
+        // Check protocol function directly (file exists but all data goes to sink)
+        // -------------------------------------------------------------------------------------------------------------------------
+        paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(strNew("test.txt")));
+        varLstAdd(paramList, varNewBool(false));
+
+        // Create filters to test filter logic
+        filterGroup = ioFilterGroupNew();
+        ioFilterGroupAdd(filterGroup, ioSizeNew());
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioFilterGroupAdd(filterGroup, ioSinkNew());
+        varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read (sink)");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(serverWrite)),
+            "{\"out\":true}\n"
+                "BRBLOCK0\n"
+                "{\"out\":{\"buffer\":null,\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"sink\":null,\"size\":8}}\n",
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+
         // Check for error on a bogus filter
         // -------------------------------------------------------------------------------------------------------------------------
         paramList = varLstNew();

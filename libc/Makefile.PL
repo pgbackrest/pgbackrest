@@ -60,6 +60,7 @@ my @stryCFile =
     'common/io/filter/buffer.c',
     'common/io/filter/filter.c',
     'common/io/filter/group.c',
+    'common/io/filter/sink.c',
     'common/io/filter/size.c',
     'common/io/handleWrite.c',
     'common/io/http/cache.c',
