@@ -131,6 +131,17 @@ sub main
             $oLocal->process();
         }
 
+        # Process check command
+        # --------------------------------------------------------------------------------------------------------------------------
+        elsif (cfgCommandTest(CFGCMD_CHECK))
+        {
+            # Load module dynamically
+            require pgBackRest::Check::Check;
+            pgBackRest::Check::Check->import();
+
+            $iResult = new pgBackRest::Check::Check()->process();
+        }
+
         # Process start/stop commands
         # --------------------------------------------------------------------------------------------------------------------------
         elsif (cfgCommandTest(CFGCMD_START))
