@@ -23,6 +23,7 @@ PgClient *pgClientNew(const String *host, const unsigned int port, const String 
 Functions
 ***********************************************************************************************************************************/
 PgClient *pgClientOpen(PgClient *this);
+void pgClientClose(PgClient *this);
 
 /***********************************************************************************************************************************
 Destructor
