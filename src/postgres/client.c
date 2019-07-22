@@ -11,6 +11,7 @@ Postgres Client
 #include "common/memContext.h"
 #include "common/object.h"
 #include "common/type/string.h"
+#include "common/type/variantList.h"
 #include "postgres/client.h"
 
 /***********************************************************************************************************************************
@@ -103,6 +104,50 @@ pgClientOpen(PgClient *this)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(PG_CLIENT, this);
+}
+
+/***********************************************************************************************************************************
+Execute a query and return results
+***********************************************************************************************************************************/
+VariantList *
+pgClientQuery(PgClient *this, const String *query)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PG_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    CHECK(this->connection != NULL);
+
+    VariantList *result = NULL;
+
+    // MEM_CONTEXT_TEMP_BEGIN()
+    // {
+        PGresult *pgResult = PQexec(this->connection, strPtr(query));
+
+        if (PQresultStatus(pgResult) != PGRES_TUPLES_OK)
+        {
+            String *error = strTrim(strNew(PQresultErrorMessage(pgResult)));
+            PQclear(pgResult);
+
+            THROW_FMT(DbQueryError, "unable to execute query '%s': %s", strPtr(query), strPtr(error));
+        }
+
+
+        result = varLstNew();
+
+        for (int tupleIdx = 0; tupleIdx < PQntuples(pgResult); tupleIdx++)
+        {
+            varLstAdd(result, varNewVarLst(varLstNew()));
+        }
+
+        PQclear(pgResult);
+
+        // varLstMove(result, MEM_CONTEXT_OLD());
+    // }
+    // MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
