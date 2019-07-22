@@ -3,6 +3,8 @@ Postgres Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include </usr/include/postgresql/libpq-fe.h>
+
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -20,6 +22,8 @@ struct PgClient
     unsigned int port;
     const String *database;
     const String *user;
+
+    PGconn *connection;
 };
 
 OBJECT_DEFINE_FREE(PG_CLIENT);
@@ -71,6 +75,21 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
        memContextCallbackSet(this->memContext, pgClientFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(PG_CLIENT, this);
+}
+
+/***********************************************************************************************************************************
+Open connection to PostgreSQL
+***********************************************************************************************************************************/
+PgClient *
+pgClientOpen(PgClient *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PG_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(PG_CLIENT, this);
 }
