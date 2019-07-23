@@ -3,7 +3,7 @@ Postgres Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include </usr/include/postgresql/libpq-fe.h>
+#include <libpq-fe.h>
 
 #include "common/debug.h"
 #include "common/log.h"
@@ -78,6 +78,16 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
 }
 
 /***********************************************************************************************************************************
+Just ignore notices and warnings
+***********************************************************************************************************************************/
+static void
+pgClientNoticeProcessor(void *arg, const char *message)
+{
+    (void)arg;
+    (void)message;
+}
+
+/***********************************************************************************************************************************
 Open connection to PostgreSQL
 ***********************************************************************************************************************************/
 PgClient *
@@ -92,9 +102,10 @@ pgClientOpen(PgClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // sleep(2);
         String *connInfo = strNewFmt("postgresql:///%s?port=%u", strPtr(this->database), this->port);
-        // postgresql:///mydb?host=localhost&port=5433
+
+        if (this->host != NULL)
+            strCatFmt(connInfo, "&host=%s", strPtr(this->host));
 
         // Make the connection
         this->connection = PQconnectdb(strPtr(connInfo));
@@ -109,6 +120,9 @@ pgClientOpen(PgClient *this)
                 DbConnectError, "unable to connect to '%s': %s", strPtr(connInfo),
                 strPtr(strTrim(strNew(PQerrorMessage(this->connection)))));
         }
+
+        // Set notice and warning processor
+        PQsetNoticeProcessor(this->connection, pgClientNoticeProcessor, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -164,70 +178,75 @@ pgClientQuery(PgClient *this, const String *query)
             if (busy)
                 THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strPtr(query), this->queryTimeout);
 
-            if (PQresultStatus(pgResult) != PGRES_TUPLES_OK)
+            // If this was a command that returned no results then we are done
+            if (PQresultStatus(pgResult) != PGRES_COMMAND_OK)
             {
-                THROW_FMT(
-                    DbQueryError, "unable to execute query '%s': %s", strPtr(query),
-                    strPtr(strTrim(strNew(PQresultErrorMessage(pgResult)))));
-            }
-
-            result = varLstNew();
-
-            MEM_CONTEXT_BEGIN(lstMemContext((List *)result))
-            {
-                for (int rowIdx = 0; rowIdx < PQntuples(pgResult); rowIdx++)
+                if (PQresultStatus(pgResult) != PGRES_TUPLES_OK)
                 {
-                    VariantList *resultRow = varLstNew();
+                    THROW_FMT(
+                        DbQueryError, "unable to execute query '%s': %s", strPtr(query),
+                        strPtr(strTrim(strNew(PQresultErrorMessage(pgResult)))));
+                }
 
-                    for (int columnIdx = 0; columnIdx < PQnfields(pgResult); columnIdx++)
+                result = varLstNew();
+
+                MEM_CONTEXT_BEGIN(lstMemContext((List *)result))
+                {
+                    for (int rowIdx = 0; rowIdx < PQntuples(pgResult); rowIdx++)
                     {
-                        if (PQgetisnull(pgResult, rowIdx, columnIdx))
-                            varLstAdd(resultRow, NULL);
-                        else
+                        VariantList *resultRow = varLstNew();
+
+                        for (int columnIdx = 0; columnIdx < PQnfields(pgResult); columnIdx++)
                         {
-                            switch (PQftype(pgResult, columnIdx))
+                            if (PQgetisnull(pgResult, rowIdx, columnIdx))
+                                varLstAdd(resultRow, NULL);
+                            else
                             {
-                                // Boolean type
-                                case 16:                            // bool
+                                switch (PQftype(pgResult, columnIdx))
                                 {
-                                    varLstAdd(
-                                        resultRow, varNewBool(varBoolForce(varNewStrZ(PQgetvalue(pgResult, rowIdx, columnIdx)))));
-                                    break;
-                                }
+                                    // Boolean type
+                                    case 16:                            // bool
+                                    {
+                                        varLstAdd(
+                                            resultRow,
+                                            varNewBool(varBoolForce(varNewStrZ(PQgetvalue(pgResult, rowIdx, columnIdx)))));
+                                        break;
+                                    }
 
-                                // Text/char types
-                                case 18:                            // char
-                                case 19:                            // name
-                                case 25:                            // text
-                                {
-                                    varLstAdd(resultRow, varNewStrZ(PQgetvalue(pgResult, rowIdx, columnIdx)));
-                                    break;
-                                }
+                                    // Text/char types
+                                    case 18:                            // char
+                                    case 19:                            // name
+                                    case 25:                            // text
+                                    {
+                                        varLstAdd(resultRow, varNewStrZ(PQgetvalue(pgResult, rowIdx, columnIdx)));
+                                        break;
+                                    }
 
-                                // Integer types
-                                case 20:                            // int8
-                                case 21:                            // int2
-                                case 24:                            // int4
-                                case 26:                            // oid
-                                {
-                                    varLstAdd(resultRow, varNewInt64(cvtZToInt64(PQgetvalue(pgResult, rowIdx, columnIdx))));
-                                    break;
-                                }
+                                    // Integer types
+                                    case 20:                            // int8
+                                    case 21:                            // int2
+                                    case 24:                            // int4
+                                    case 26:                            // oid
+                                    {
+                                        varLstAdd(resultRow, varNewInt64(cvtZToInt64(PQgetvalue(pgResult, rowIdx, columnIdx))));
+                                        break;
+                                    }
 
-                                default:
-                                {
-                                    THROW_FMT(
-                                        FormatError, "unable to parse type %u in column %d for query '%s'",
-                                        PQftype(pgResult, columnIdx), columnIdx, strPtr(query));
+                                    default:
+                                    {
+                                        THROW_FMT(
+                                            FormatError, "unable to parse type %u in column %d for query '%s'",
+                                            PQftype(pgResult, columnIdx), columnIdx, strPtr(query));
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    varLstAdd(result, varNewVarLst(resultRow));
+                        varLstAdd(result, varNewVarLst(resultRow));
+                    }
                 }
+                MEM_CONTEXT_END();
             }
-            MEM_CONTEXT_END();
         }
         FINALLY()
         {

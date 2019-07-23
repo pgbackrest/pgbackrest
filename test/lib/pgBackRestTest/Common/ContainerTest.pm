@@ -483,7 +483,7 @@ sub containerBuild
                         "        http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm \\\n" .
                         "        http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm \\\n" .
                         "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-6-x86_64/" .
-                            "pgdg-redhat-repo-latest.noarch.rpm";
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
                 elsif ($strOS eq VM_CO7)
                 {
@@ -491,8 +491,10 @@ sub containerBuild
                         "    rpm -ivh \\\n" .
                         "        http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-3.noarch.rpm \\\n" .
                         "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/" .
-                            "pgdg-redhat-repo-latest.noarch.rpm";
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
+
+                $strScript .= "    yum -y install postgresql-devel";
             }
             else
             {
