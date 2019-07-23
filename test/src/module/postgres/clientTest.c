@@ -28,12 +28,14 @@ testRun(void)
         TEST_RESULT_VOID(pgClientFree(client), "free client");
 
         TEST_ASSIGN(client, pgClientOpen(pgClientNew(NULL, 5432, strNew("postgres"), NULL)), "new client");
+
+        String *query = strNew(
+            "select oid, null, relname, relname = 'pg_class' from pg_class where relname in ('pg_class', 'pg_proc')"
+                " order by relname");
+
         TEST_RESULT_STR(
-            strPtr(
-                jsonFromVar(
-                    varNewVarLst(
-                        pgClientQuery(client, strNew("select relname, reltype from pg_class where relname = 'pg_class'"))), 0)),
-            "[]", "simple query");
+            strPtr(jsonFromVar(varNewVarLst(pgClientQuery(client, query)), 0)),
+            "[[1259,null,\"pg_class\",true],[1255,null,\"pg_proc\",false]]", "simple query");
         TEST_RESULT_VOID(pgClientClose(client), "close client");
     }
 

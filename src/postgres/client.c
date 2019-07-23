@@ -10,6 +10,7 @@ Postgres Client
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
+#include "common/type/list.h"
 #include "common/type/string.h"
 #include "common/type/variantList.h"
 #include "postgres/client.h"
@@ -121,31 +122,86 @@ pgClientQuery(PgClient *this, const String *query)
 
     VariantList *result = NULL;
 
-    // MEM_CONTEXT_TEMP_BEGIN()
-    // {
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
         PGresult *pgResult = PQexec(this->connection, strPtr(query));
 
-        if (PQresultStatus(pgResult) != PGRES_TUPLES_OK)
+        TRY_BEGIN()
         {
-            String *error = strTrim(strNew(PQresultErrorMessage(pgResult)));
+            if (PQresultStatus(pgResult) != PGRES_TUPLES_OK)
+            {
+                THROW_FMT(
+                    DbQueryError, "unable to execute query '%s': %s", strPtr(query),
+                    strPtr(strTrim(strNew(PQresultErrorMessage(pgResult)))));
+            }
+
+            result = varLstNew();
+
+            MEM_CONTEXT_BEGIN(lstMemContext((List *)result))
+            {
+                for (int rowIdx = 0; rowIdx < PQntuples(pgResult); rowIdx++)
+                {
+                    VariantList *resultRow = varLstNew();
+
+                    for (int columnIdx = 0; columnIdx < PQnfields(pgResult); columnIdx++)
+                    {
+                        if (PQgetisnull(pgResult, rowIdx, columnIdx))
+                            varLstAdd(resultRow, NULL);
+                        else
+                        {
+                            switch (PQftype(pgResult, columnIdx))
+                            {
+                                // Boolean type
+                                case 16:                            // bool
+                                {
+                                    varLstAdd(
+                                        resultRow, varNewBool(varBoolForce(varNewStrZ(PQgetvalue(pgResult, rowIdx, columnIdx)))));
+                                    break;
+                                }
+
+                                // Text/char types
+                                case 18:                            // char
+                                case 19:                            // name
+                                case 25:                            // text
+                                {
+                                    varLstAdd(resultRow, varNewStrZ(PQgetvalue(pgResult, rowIdx, columnIdx)));
+                                    break;
+                                }
+
+                                // Integer types
+                                case 20:                            // int8
+                                case 21:                            // int2
+                                case 24:                            // int4
+                                case 26:                            // oid
+                                {
+                                    varLstAdd(resultRow, varNewInt64(cvtZToInt64(PQgetvalue(pgResult, rowIdx, columnIdx))));
+                                    break;
+                                }
+
+                                default:
+                                {
+                                    THROW_FMT(
+                                        FormatError, "unable to parse type %u in column %d for query '%s'",
+                                        PQftype(pgResult, columnIdx), columnIdx, strPtr(query));
+                                }
+                            }
+                        }
+                    }
+
+                    varLstAdd(result, varNewVarLst(resultRow));
+                }
+            }
+            MEM_CONTEXT_END();
+        }
+        FINALLY()
+        {
             PQclear(pgResult);
-
-            THROW_FMT(DbQueryError, "unable to execute query '%s': %s", strPtr(query), strPtr(error));
         }
+        TRY_END();
 
-
-        result = varLstNew();
-
-        for (int tupleIdx = 0; tupleIdx < PQntuples(pgResult); tupleIdx++)
-        {
-            varLstAdd(result, varNewVarLst(varLstNew()));
-        }
-
-        PQclear(pgResult);
-
-        // varLstMove(result, MEM_CONTEXT_OLD());
-    // }
-    // MEM_CONTEXT_TEMP_END();
+        varLstMove(result, MEM_CONTEXT_OLD());
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(VARIANT_LIST, result);
 }
