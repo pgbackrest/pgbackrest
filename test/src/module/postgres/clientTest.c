@@ -49,7 +49,8 @@ testRun(void)
 
         // Connect and test queries
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(client, pgClientOpen(pgClientNew(NULL, 5432, strNew("postgres"), NULL, 500)), "new client");
+        TEST_ASSIGN(
+            client, pgClientOpen(pgClientNew(strNew("/var/run/postgresql"), 5432, strNew("postgres"), NULL, 500)), "new client");
 
         // Invalid query
         query = strNew("select bogus from pg_class");
@@ -64,6 +65,11 @@ testRun(void)
         query = strNew("select pg_sleep(30)");
 
         TEST_ERROR(pgClientQuery(client, query), DbQueryError, "query 'select pg_sleep(30)' timed out after 500ms");
+
+        // Execute do block and raise notice
+        query = strNew("do $$ begin raise notice 'mememe'; end $$");
+
+        TEST_RESULT_PTR(pgClientQuery(client, query), NULL, "excecute do block");
 
         // Unsupported type
         query = strNew("select clock_timestamp()");
