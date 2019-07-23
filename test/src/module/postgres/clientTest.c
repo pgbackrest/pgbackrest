@@ -50,7 +50,8 @@ testRun(void)
         // Connect and test queries
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            client, pgClientOpen(pgClientNew(strNew("/var/run/postgresql"), 5432, strNew("postgres"), NULL, 500)), "new client");
+            client, pgClientOpen(pgClientNew(strNew("/var/run/postgresql"), 5432, strNew("postgres"), strNew(testUser()), 500)),
+            "new client");
 
         // Invalid query
         query = strNew("select bogus from pg_class");

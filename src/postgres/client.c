@@ -104,6 +104,9 @@ pgClientOpen(PgClient *this)
     {
         String *connInfo = strNewFmt("postgresql:///%s?port=%u", strPtr(this->database), this->port);
 
+        if (this->user != NULL)
+            strCatFmt(connInfo, "&user=%s", strPtr(this->user));
+
         if (this->host != NULL)
             strCatFmt(connInfo, "&host=%s", strPtr(this->host));
 
