@@ -389,7 +389,7 @@ sub containerBuild
             $strScript .=
                 "    yum -y update && \\\n" .
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
-                "        perl perl-Digest-SHA perl-YAML-LibYAML openssl \\\n" .
+                "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        zlib-devel libxml2-devel lz4-devel lcov";
 
@@ -408,7 +408,7 @@ sub containerBuild
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
                 "    apt-get -y install openssh-server wget sudo gcc make valgrind git \\\n" .
-                "        libhtml-parser-perl libssl-dev libperl-dev \\\n" .
+                "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev lcov";
 

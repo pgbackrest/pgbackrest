@@ -11,7 +11,6 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use DBI;
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
