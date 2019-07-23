@@ -6,6 +6,7 @@ package pgBackRest::Db;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT =  qw();
@@ -172,19 +173,41 @@ sub connect
                 cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_SOCKET_PATH, $self->{iRemoteIdx}), false),
                 cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PORT, $self->{iRemoteIdx})), 'postgres',
                 cfgOption(CFGOPT_DB_TIMEOUT) * 1000);
-            $self->{oDb}->open();
 
-            my ($fDbVersion) = $self->versionGet();
-
-            if ($fDbVersion >= PG_VERSION_APPLICATION_NAME)
+            if ($bWarnOnError)
             {
-                # Set application name for monitoring and debugging
-                $self->{oDb}->query(
-                    "set application_name = '" . PROJECT_NAME . ' [' .
-                    (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'");
+                eval
+                {
+                    $self->{oDb}->open();
+                    return true;
+                }
+                or do
+                {
+                    &log(WARN, exceptionMessage($EVAL_ERROR));
+                    $bResult = false;
 
-                # Clear search path to prevent possible function overrides
-                $self->{oDb}->query("set search_path = 'pg_catalog'");
+                    undef($self->{oDb});
+                }
+            }
+            else
+            {
+                $self->{oDb}->open();
+            }
+
+            if (defined($self->{oDb}))
+            {
+                my ($fDbVersion) = $self->versionGet();
+
+                if ($fDbVersion >= PG_VERSION_APPLICATION_NAME)
+                {
+                    # Set application name for monitoring and debugging
+                    $self->{oDb}->query(
+                        "set application_name = '" . PROJECT_NAME . ' [' .
+                        (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'");
+
+                    # Clear search path to prevent possible function overrides
+                    $self->{oDb}->query("set search_path = 'pg_catalog'");
+                }
             }
         }
     }
