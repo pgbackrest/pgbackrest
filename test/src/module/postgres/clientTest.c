@@ -20,7 +20,7 @@ testRun(void)
         if (system("sudo pg_ctlcluster 11 test start") != 0)
             THROW(AssertError, "unable to start cluster");
 
-        if (system("sudo -u postgres psql -c 'create user vagrant superuser'") != 0)
+        if (system(strPtr(strNewFmt("sudo -u postgres psql -c 'create user %s superuser'", testUser()))) != 0)
             THROW(AssertError, "unable to create superuser");
 
         // Test connection error
