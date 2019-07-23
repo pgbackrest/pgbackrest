@@ -137,6 +137,7 @@ pgClientQuery(PgClient *this, const String *query)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, this);
+        FUNCTION_LOG_PARAM(STRING, query);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);

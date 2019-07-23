@@ -233,7 +233,12 @@ sub executeSql
     else
     {
         $self->connect();
-        @stryResult = @{JSON::PP->new()->allow_nonref()->decode($self->{oDb}->query($strSql))};
+        my $strResult = $self->{oDb}->query($strSql);
+
+        if (defined($strResult))
+        {
+            @stryResult = @{JSON::PP->new()->allow_nonref()->decode($strResult)};
+        }
     }
 
     # Return from function and log return values if any
@@ -898,7 +903,7 @@ sub replayWait
 
     if ($self->{strDbVersion} >= PG_VERSION_96)
     {
-        $strCheckpointLSN = $self->executeSqlOne('select checkpoint_' . $self->lsnId() .' from pg_control_checkpoint()');
+        $strCheckpointLSN = $self->executeSqlOne('select checkpoint_' . $self->lsnId() .'::text from pg_control_checkpoint()');
 
         if (lsnNormalize($strCheckpointLSN) le lsnNormalize($strTargetLSN))
         {
