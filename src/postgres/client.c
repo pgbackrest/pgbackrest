@@ -226,7 +226,7 @@ pgClientQuery(PgClient *this, const String *query)
                                     // Integer types
                                     case 20:                            // int8
                                     case 21:                            // int2
-                                    case 24:                            // int4
+                                    case 23:                            // int4
                                     case 26:                            // oid
                                     {
                                         varLstAdd(resultRow, varNewInt64(cvtZToInt64(PQgetvalue(pgResult, rowIdx, columnIdx))));
