@@ -205,9 +205,25 @@ pgClientQuery(PgClient *this, const String *query)
 
         // If the query is still busy after the timeout attempt to cancel
         if (busy)
-            PQrequestCancel(this->connection);
+        {
+            PGcancel *cancel = PQgetCancel(this->connection);
+            CHECK(cancel != NULL);
 
-        // Get the result even if we cancelled
+            TRY_BEGIN()
+            {
+                char error[256];
+
+                if (!PQcancel(cancel, error, sizeof(error)))
+                    THROW_FMT(DbQueryError, "unable to cancel query '%s': %s", strPtr(query), strPtr(strTrim(strNew(error))));
+            }
+            FINALLY()
+            {
+                PQfreeCancel(cancel);
+            }
+            TRY_END();
+        }
+
+        // Get the result (even if query was cancelled -- to prevent the connection being left in a bad state)
         PGresult *pgResult = PQgetResult(this->connection);
 
         TRY_BEGIN()
@@ -219,6 +235,7 @@ pgClientQuery(PgClient *this, const String *query)
             // If this was a command that returned no results then we are done
             if (PQresultStatus(pgResult) != PGRES_COMMAND_OK)
             {
+                // Expect some rows to be returned
                 if (PQresultStatus(pgResult) != PGRES_TUPLES_OK)
                 {
                     THROW_FMT(
@@ -226,6 +243,7 @@ pgClientQuery(PgClient *this, const String *query)
                         strPtr(strTrim(strNew(PQresultErrorMessage(pgResult)))));
                 }
 
+                // Fetch row and column values
                 result = varLstNew();
 
                 MEM_CONTEXT_BEGIN(lstMemContext((List *)result))
@@ -240,6 +258,7 @@ pgClientQuery(PgClient *this, const String *query)
                                 varLstAdd(resultRow, NULL);
                             else
                             {
+                                // Convert column type
                                 switch (PQftype(pgResult, columnIdx))
                                 {
                                     // Boolean type
@@ -330,6 +349,6 @@ String *
 pgClientToLog(const PgClient *this)
 {
     return strNewFmt(
-        "{host: %s, port: %u, database: %s, user: %s}", strPtr(strToLog(this->host)), this->port, strPtr(strToLog(this->database)),
-        strPtr(strToLog(this->user)));
+        "{host: %s, port: %u, database: %s, user: %s, queryTimeout %" PRIu64 "}", strPtr(strToLog(this->host)), this->port,
+        strPtr(strToLog(this->database)), strPtr(strToLog(this->user)), this->queryTimeout);
 }

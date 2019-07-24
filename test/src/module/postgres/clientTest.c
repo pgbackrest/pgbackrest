@@ -63,9 +63,9 @@ testRun(void)
                 "               ^");
 
         // Timeout query
-        query = strNew("select pg_sleep(30)");
+        query = strNew("select pg_sleep(3000)");
 
-        TEST_ERROR(pgClientQuery(client, query), DbQueryError, "query 'select pg_sleep(30)' timed out after 500ms");
+        TEST_ERROR(pgClientQuery(client, query), DbQueryError, "query 'select pg_sleep(3000)' timed out after 500ms");
 
         // Execute do block and raise notice
         query = strNew("do $$ begin raise notice 'mememe'; end $$");
