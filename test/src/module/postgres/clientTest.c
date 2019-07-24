@@ -26,10 +26,10 @@ testRun(void)
         // Test connection error
         // -------------------------------------------------------------------------------------------------------------------------
         PgClient *client = NULL;
-        TEST_ASSIGN(client, pgClientNew(NULL, 5433, strNew("postgres"), NULL, 3000), "new client");
+        TEST_ASSIGN(client, pgClientNew(NULL, 5433, strNew("postg '\\res"), NULL, 3000), "new client");
         TEST_ERROR(
             pgClientOpen(client), DbConnectError,
-            "unable to connect to 'postgresql:///postgres?port=5433': could not connect to server: No such file or directory\n"
+            "unable to connect to 'dbname='postg \\'\\\\res' port=5433': could not connect to server: No such file or directory\n"
                 "\tIs the server running locally and accepting\n"
                 "\tconnections on Unix domain socket \"/var/run/postgresql/.s.PGSQL.5433\"?");
         TEST_RESULT_VOID(pgClientFree(client), "free client");

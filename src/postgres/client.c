@@ -88,6 +88,37 @@ pgClientNoticeProcessor(void *arg, const char *message)
 }
 
 /***********************************************************************************************************************************
+Encode string to escape ' and \
+***********************************************************************************************************************************/
+static String *
+pgClientEscape(const String *string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, string);
+    FUNCTION_TEST_END();
+
+    ASSERT(string != NULL);
+
+    String *result = strNew("'");
+
+    // Iterate all characters in the string
+    for (unsigned stringIdx = 0; stringIdx < strSize(string); stringIdx++)
+    {
+        char stringChar = strPtr(string)[stringIdx];
+
+        // These characters are escaped
+        if (stringChar == '\'' || stringChar == '\\')
+            strCatChr(result, '\\');
+
+        strCatChr(result, stringChar);
+    }
+
+    strCatChr(result, '\'');
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Open connection to PostgreSQL
 ***********************************************************************************************************************************/
 PgClient *
@@ -102,13 +133,16 @@ pgClientOpen(PgClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *connInfo = strNewFmt("postgresql:///%s?port=%u", strPtr(this->database), this->port);
+        // Base connection string
+        String *connInfo = strNewFmt("dbname=%s port=%u", strPtr(pgClientEscape(this->database)), this->port);
 
+        // Add user if specified
         if (this->user != NULL)
-            strCatFmt(connInfo, "&user=%s", strPtr(this->user));
+            strCatFmt(connInfo, " user=%s", strPtr(pgClientEscape(this->user)));
 
+        // Add host if specified
         if (this->host != NULL)
-            strCatFmt(connInfo, "&host=%s", strPtr(this->host));
+            strCatFmt(connInfo, " host=%s", strPtr(pgClientEscape(this->host)));
 
         // Make the connection
         this->connection = PQconnectdb(strPtr(connInfo));
