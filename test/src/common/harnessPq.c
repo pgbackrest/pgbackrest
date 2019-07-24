@@ -120,9 +120,10 @@ PQnoticeProcessor
 PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 {
     (void)conn;
-    (void)proc;
-    (void)arg;
-    return (PQnoticeProcessor)1;
+
+    // Just call the processor that was passed so we have coverage
+    proc(arg, "test notice");
+    return NULL;
 }
 
 /***********************************************************************************************************************************

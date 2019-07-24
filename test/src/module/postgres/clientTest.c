@@ -85,7 +85,8 @@ testRun(void)
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432 user='vagrant' host='/var/run/postgresql'\"]"},
+            {.function = HRNPQ_CONNECTDB, .param = strPtr(
+                strNewFmt("[\"dbname='postgres' port=5432 user='%s' host='/var/run/postgresql'\"]", testUser()))},
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
             {.function = NULL}
         });
@@ -148,6 +149,27 @@ testRun(void)
 
         TEST_ERROR(pgClientQuery(client, query), DbQueryError, "query 'select pg_sleep(3000)' timed out after 500ms");
 
+        // Cancel error (can only be run with the scripted tests
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifndef HARNESS_PQ_REAL
+        harnessPqScriptSet((HarnessPq [])
+        {
+            {.function = HRNPQ_SENDQUERY, .param = "[\"select pg_sleep(3000)\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT, .sleep = 600},
+            {.function = HRNPQ_ISBUSY, .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY, .resultInt = 1},
+            {.function = HRNPQ_GETCANCEL},
+            {.function = HRNPQ_CANCEL, .resultInt = 0, .resultZ = "test error"},
+            {.function = HRNPQ_FREECANCEL},
+            {.function = NULL}
+        });
+
+        query = strNew("select pg_sleep(3000)");
+
+        TEST_ERROR(pgClientQuery(client, query), DbQueryError, "unable to cancel query 'select pg_sleep(3000)': test error");
+#endif
+
         // Execute do block and raise notice
         // -------------------------------------------------------------------------------------------------------------------------
 #ifndef HARNESS_PQ_REAL
@@ -166,7 +188,7 @@ testRun(void)
 
         query = strNew("do $$ begin raise notice 'mememe'; end $$");
 
-        TEST_RESULT_PTR(pgClientQuery(client, query), NULL, "excecute do block");
+        TEST_RESULT_PTR(pgClientQuery(client, query), NULL, "execute do block");
 
         // Unsupported type
         // -------------------------------------------------------------------------------------------------------------------------
