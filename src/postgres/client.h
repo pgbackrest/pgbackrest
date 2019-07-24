@@ -37,9 +37,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *pgClientToLog(const PgClient *this);
 
-#define FUNCTION_LOG_PG_CLIENT_TYPE                                                                                          \
+#define FUNCTION_LOG_PG_CLIENT_TYPE                                                                                                \
     PgClient *
-#define FUNCTION_LOG_PG_CLIENT_FORMAT(value, buffer, bufferSize)                                                             \
+#define FUNCTION_LOG_PG_CLIENT_FORMAT(value, buffer, bufferSize)                                                                   \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pgClientToLog, buffer, bufferSize)
 
 #endif
