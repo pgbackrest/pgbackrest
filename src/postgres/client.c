@@ -248,11 +248,14 @@ pgClientQuery(PgClient *this, const String *query)
 
                 MEM_CONTEXT_BEGIN(lstMemContext((List *)result))
                 {
-                    for (int rowIdx = 0; rowIdx < PQntuples(pgResult); rowIdx++)
+                    int rowTotal = PQntuples(pgResult);
+                    int columnTotal = PQnfields(pgResult);
+
+                    for (int rowIdx = 0; rowIdx < rowTotal; rowIdx++)
                     {
                         VariantList *resultRow = varLstNew();
 
-                        for (int columnIdx = 0; columnIdx < PQnfields(pgResult); columnIdx++)
+                        for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
                         {
                             if (PQgetisnull(pgResult, rowIdx, columnIdx))
                                 varLstAdd(resultRow, NULL);
