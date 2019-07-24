@@ -1,25 +1,100 @@
 /***********************************************************************************************************************************
 Pq Test Harness
 ***********************************************************************************************************************************/
+#ifndef HARNESS_PQ_REAL
+
+#include <string.h>
+
 #include <libpq-fe.h>
+
+#include "common/type/json.h"
+#include "common/type/string.h"
+#include "common/type/variantList.h"
 
 #include "common/harnessPq.h"
 
 /***********************************************************************************************************************************
-Structure that we'll pass off as PGConn so we can track scripted connections
+Script that defines how shim functions operate
 ***********************************************************************************************************************************/
-typedef struct HarnessPq
+HarnessPq *harnessPqScript;
+unsigned int harnessPqScriptIdx;
+bool harnessPqScriptFail;
+
+/***********************************************************************************************************************************
+Set pq script
+***********************************************************************************************************************************/
+void
+harnessPqScriptSet(HarnessPq *harnessPqScriptParam)
 {
-    unsigned int id;
-} HarnessPq;
+    if (harnessPqScript != NULL)
+        THROW(AssertError, "previous pq script has not yet completed");
+
+    if (harnessPqScriptParam[0].function == NULL)
+        THROW(AssertError, "pq script must have entries");
+
+    harnessPqScript = harnessPqScriptParam;
+    harnessPqScriptIdx = 0;
+}
+
+/***********************************************************************************************************************************
+Run pq script
+***********************************************************************************************************************************/
+static HarnessPq *
+harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *parent)
+{
+    // Convert params to json for comparison and reporting
+    String *paramStr = param ? jsonFromVar(varNewVarLst(param), 0) : strNew("");
+
+    // Ensure script has not ended
+    if (harnessPqScript == NULL)
+    {
+        harnessPqScriptFail = true;
+        THROW_FMT(AssertError, "pq script ended before %s (%s)", function, strPtr(paramStr));
+    }
+
+    // Get current script item
+    HarnessPq *result = &harnessPqScript[harnessPqScriptIdx];
+
+    // Check that expected function was called
+    if (strcmp(result->function, function) != 0)
+    {
+        harnessPqScriptFail = true;
+
+        THROW_FMT(
+            AssertError, "pq script [%u] expected function '%s' but got '%s'", harnessPqScriptIdx, result->function, function);
+    }
+
+    // Check that parameters match
+    if ((param != NULL && result->param == NULL) || (param == NULL && result->param != NULL) ||
+        (param != NULL && result->param != NULL && !strEqZ(paramStr, result->param)))
+    {
+        harnessPqScriptFail = true;
+
+        THROW_FMT(
+            AssertError, "pq script [%u] function '%s', expects param '%s' but got '%s'", harnessPqScriptIdx, result->function,
+            result->param ? result->param : "NULL", param ? strPtr(paramStr) : "NULL");
+    }
+
+    // Sleep if requested
+    if (result->sleep > 0)
+        sleepMSec(result->sleep);
+
+    (void)parent; // ??? Need to do something with this
+
+    harnessPqScriptIdx++;
+
+    if (harnessPqScript[harnessPqScriptIdx].function == NULL)
+        harnessPqScript = NULL;
+
+    return result;
+}
 
 /***********************************************************************************************************************************
 Shim for PQconnectdb()
 ***********************************************************************************************************************************/
 PGconn *PQconnectdb(const char *conninfo)
 {
-    (void)conninfo;
-    return (PGconn *)1;
+    return (PGconn *)harnessPqScriptRun(HRNPQ_CONNECTDB, varLstAdd(varLstNew(), varNewStrZ(conninfo)), NULL);
 }
 
 /***********************************************************************************************************************************
@@ -27,8 +102,7 @@ Shim for PQstatus()
 ***********************************************************************************************************************************/
 ConnStatusType PQstatus(const PGconn *conn)
 {
-    (void)conn;
-    return CONNECTION_OK;
+    return (ConnStatusType)harnessPqScriptRun(HRNPQ_STATUS, NULL, (HarnessPq *)conn)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -36,8 +110,7 @@ Shim for PQerrorMessage()
 ***********************************************************************************************************************************/
 char *PQerrorMessage(const PGconn *conn)
 {
-    (void)conn;
-    return (char *)"error message";
+    return (char *)harnessPqScriptRun(HRNPQ_ERRORMESSAGE, NULL, (HarnessPq *)conn)->resultZ;
 }
 
 /***********************************************************************************************************************************
@@ -58,9 +131,7 @@ Shim for PQsendQuery()
 int
 PQsendQuery(PGconn *conn, const char *query)
 {
-    (void)conn;
-    (void)query;
-    return 1;
+    return harnessPqScriptRun(HRNPQ_SENDQUERY, varLstAdd(varLstNew(), varNewStrZ(query)), (HarnessPq *)conn)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -69,8 +140,7 @@ Shim for PQconsumeInput()
 int
 PQconsumeInput(PGconn *conn)
 {
-    (void)conn;
-    return 1;
+    return harnessPqScriptRun(HRNPQ_CONSUMEINPUT, NULL, (HarnessPq *)conn)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -79,8 +149,7 @@ Shim for PQisBusy()
 int
 PQisBusy(PGconn *conn)
 {
-    (void)conn;
-    return 0;
+    return harnessPqScriptRun(HRNPQ_ISBUSY, NULL, (HarnessPq *)conn)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -89,8 +158,7 @@ Shim for PQgetCancel()
 PGcancel *
 PQgetCancel(PGconn *conn)
 {
-    (void)conn;
-    return (PGcancel *)1;
+    return (PGcancel *)harnessPqScriptRun(HRNPQ_GETCANCEL, NULL, (HarnessPq *)conn);
 }
 
 /***********************************************************************************************************************************
@@ -99,10 +167,15 @@ Shim for PQcancel()
 int
 PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
 {
-    (void)cancel;
-    (void)errbuf;
-    (void)errbufsize;
-    return 1;
+    HarnessPq *harnessPq = harnessPqScriptRun(HRNPQ_CANCEL, NULL, (HarnessPq *)cancel);
+
+    if (!harnessPq->resultInt)
+    {
+        strncpy(errbuf, harnessPq->resultZ, (size_t)errbufsize);
+        errbuf[errbufsize - 1] = '\0';
+    }
+
+    return harnessPq->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -111,7 +184,7 @@ Shim for PQfreeCancel()
 void
 PQfreeCancel(PGcancel *cancel)
 {
-    (void)cancel;
+    harnessPqScriptRun(HRNPQ_FREECANCEL, NULL, (HarnessPq *)cancel);
 }
 
 /***********************************************************************************************************************************
@@ -120,8 +193,13 @@ Shim for PQgetResult()
 PGresult *
 PQgetResult(PGconn *conn)
 {
-    (void)conn;
-    return (PGresult *)1;
+    if (!harnessPqScriptFail)
+    {
+        HarnessPq *harnessPq = harnessPqScriptRun(HRNPQ_GETRESULT, NULL, (HarnessPq *)conn);
+        return harnessPq->resultNull ? NULL : (PGresult *)harnessPq;
+    }
+
+    return NULL;
 }
 
 /***********************************************************************************************************************************
@@ -130,8 +208,7 @@ Shim for PQresultStatus()
 ExecStatusType
 PQresultStatus(const PGresult *res)
 {
-    (void)res;
-    return PGRES_COMMAND_OK;
+    return (ExecStatusType)harnessPqScriptRun(HRNPQ_RESULTSTATUS, NULL, (HarnessPq *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -140,8 +217,7 @@ Shim for PQresultErrorMessage()
 char *
 PQresultErrorMessage(const PGresult *res)
 {
-    (void)res;
-    return (char *)"dude";
+    return (char *)harnessPqScriptRun(HRNPQ_RESULTERRORMESSAGE, NULL, (HarnessPq *)res)->resultZ;
 }
 
 /***********************************************************************************************************************************
@@ -150,8 +226,7 @@ Shim for PQntuples()
 int
 PQntuples(const PGresult *res)
 {
-    (void)res;
-    return 1;
+    return harnessPqScriptRun(HRNPQ_NTUPLES, NULL, (HarnessPq *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -160,8 +235,7 @@ Shim for PQnfields()
 int
 PQnfields(const PGresult *res)
 {
-    (void)res;
-    return 1;
+    return harnessPqScriptRun(HRNPQ_NFIELDS, NULL, (HarnessPq *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -170,10 +244,8 @@ Shim for PQgetisnull()
 int
 PQgetisnull(const PGresult *res, int tup_num, int field_num)
 {
-    (void)res;
-    (void)tup_num;
-    (void)field_num;
-    return 1;
+    return harnessPqScriptRun(
+        HRNPQ_GETISNULL, varLstAdd(varLstAdd(varLstNew(), varNewInt(tup_num)), varNewInt(field_num)), (HarnessPq *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -182,9 +254,7 @@ Shim for PQftype()
 Oid
 PQftype(const PGresult *res, int field_num)
 {
-    (void)res;
-    (void)field_num;
-    return 18;
+    return (Oid)harnessPqScriptRun(HRNPQ_FTYPE, varLstAdd(varLstNew(), varNewInt(field_num)), (HarnessPq *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -193,10 +263,8 @@ Shim for PQgetvalue()
 char *
 PQgetvalue(const PGresult *res, int tup_num, int field_num)
 {
-    (void)res;
-    (void)tup_num;
-    (void)field_num;
-    return (char *)"dude";
+    return (char *)harnessPqScriptRun(
+        HRNPQ_GETVALUE, varLstAdd(varLstAdd(varLstNew(), varNewInt(tup_num)), varNewInt(field_num)), (HarnessPq *)res)->resultZ;
 }
 
 /***********************************************************************************************************************************
@@ -205,7 +273,8 @@ Shim for PQclear()
 void
 PQclear(PGresult *res)
 {
-    (void)res;
+    if (!harnessPqScriptFail)
+        harnessPqScriptRun(HRNPQ_CLEAR, NULL, (HarnessPq *)res);
 }
 
 /***********************************************************************************************************************************
@@ -213,5 +282,8 @@ Shim for PQfinish()
 ***********************************************************************************************************************************/
 void PQfinish(PGconn *conn)
 {
-    (void)conn;
+    if (!harnessPqScriptFail)
+        harnessPqScriptRun(HRNPQ_FINISH, NULL, (HarnessPq *)conn);
 }
+
+#endif // HARNESS_PQ_REAL

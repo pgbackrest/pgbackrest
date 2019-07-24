@@ -984,6 +984,10 @@ jsonFromVar(const Variant *var, unsigned int indent)
                     {
                         strCat(jsonStr, strPtr(jsonFromVar(varSub, indent)));
                     }
+                    else if (varType(varSub) == varTypeInt)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromInt(varInt(varSub))));
+                    }
                     else if (varType(varSub) == varTypeInt64)
                     {
                         strCat(jsonStr, strPtr(jsonFromInt64(varInt64(varSub))));
