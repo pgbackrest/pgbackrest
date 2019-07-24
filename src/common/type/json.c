@@ -970,11 +970,23 @@ jsonFromVar(const Variant *var, unsigned int indent)
                     {
                         strCat(jsonStr, "null");
                     }
+                    else if (varType(varSub) == varTypeBool)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromBool(varBool(varSub))));
+                    }
                     else if (varType(varSub) == varTypeKeyValue)
                     {
                         // Update the depth before processing the contents of the list element
                         strCat(indentDepth, strPtr(indentSpace));
                         strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varSub), indentSpace, indentDepth)));
+                    }
+                    else if (varType(varSub) == varTypeVariantList)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromVar(varSub, indent)));
+                    }
+                    else if (varType(varSub) == varTypeInt64)
+                    {
+                        strCat(jsonStr, strPtr(jsonFromInt64(varInt64(varSub))));
                     }
                     else if (varType(varSub) == varTypeUInt)
                     {
