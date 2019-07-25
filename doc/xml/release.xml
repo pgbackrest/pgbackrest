@@ -33,6 +33,12 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <p>Add <br-option>repo-s3-port</br-option> option for setting a non-standard <proper>S3</proper> service port.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>

@@ -8226,6 +8226,7 @@ static const EmbeddedModule embeddedModule[] =
             "'CFGOPT_REPO_S3_HOST',\n"
             "'CFGOPT_REPO_S3_KEY',\n"
             "'CFGOPT_REPO_S3_KEY_SECRET',\n"
+            "'CFGOPT_REPO_S3_PORT',\n"
             "'CFGOPT_REPO_S3_REGION',\n"
             "'CFGOPT_REPO_S3_TOKEN',\n"
             "'CFGOPT_REPO_S3_VERIFY_TLS',\n"

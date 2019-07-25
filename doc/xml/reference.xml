@@ -437,6 +437,15 @@
                         <example>127.0.0.1</example>
                     </config-key>
 
+                    <!-- CONFIG - REPO SECTION - REPO-S3-PORT KEY -->
+                    <config-key id="repo-s3-port" name="S3 Repository Port">
+                        <summary>S3 repository port.</summary>
+
+                        <text>Port to use when connecting to the endpoint (or host if specified).</text>
+
+                        <example>9000</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-REGION KEY -->
                     <config-key id="repo-s3-region" name="S3 Repository Region">
                         <summary>S3 repository region.</summary>
