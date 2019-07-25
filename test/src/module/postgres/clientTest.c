@@ -230,8 +230,9 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             {.function = HRNPQ_SENDQUERY, .param =
-                "[\"select oid, null::text, relname, relname = 'pg_class' from pg_class where relname in ('pg_class', 'pg_proc') "
-                    "order by relname\"]",
+                "[\"select oid, case when relname = 'pg_class' then null::text else '' end, relname, relname = 'pg_class'"
+                    "  from pg_class where relname in ('pg_class', 'pg_proc')"
+                    " order by relname\"]",
                 .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
@@ -253,7 +254,7 @@ testRun(void)
 
             {.function = HRNPQ_GETVALUE, .param = "[1,0]", .resultZ = "1255"},
             {.function = HRNPQ_GETVALUE, .param = "[1,1]", .resultZ = ""},
-            {.function = HRNPQ_GETISNULL, .param = "[1,1]", .resultInt = 1},
+            {.function = HRNPQ_GETISNULL, .param = "[1,1]", .resultInt = 0},
             {.function = HRNPQ_GETVALUE, .param = "[1,2]", .resultZ = "pg_proc"},
             {.function = HRNPQ_GETVALUE, .param = "[1,3]", .resultZ = "f"},
 
@@ -264,12 +265,13 @@ testRun(void)
 #endif
 
         query = strNew(
-            "select oid, null::text, relname, relname = 'pg_class' from pg_class where relname in ('pg_class', 'pg_proc')"
-                " order by relname");
+            "select oid, case when relname = 'pg_class' then null::text else '' end, relname, relname = 'pg_class'"
+            "  from pg_class where relname in ('pg_class', 'pg_proc')"
+            " order by relname");
 
         TEST_RESULT_STR(
             strPtr(jsonFromVar(varNewVarLst(pgClientQuery(client, query)), 0)),
-            "[[1259,null,\"pg_class\",true],[1255,null,\"pg_proc\",false]]", "simple query");
+            "[[1259,null,\"pg_class\",true],[1255,\"\",\"pg_proc\",false]]", "simple query");
 
         // Close connection
         // -------------------------------------------------------------------------------------------------------------------------
