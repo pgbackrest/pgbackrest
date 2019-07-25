@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Storage XS Header
 ***********************************************************************************************************************************/
-#include "command/backup/pageChecksum.h"
 #include "common/assert.h"
 #include "common/compress/gzip/compress.h"
 #include "common/compress/gzip/decompress.h"
@@ -127,14 +126,6 @@ storageFilterXsAdd(IoFilterGroup *filterGroup, const String *filter, const Strin
     {
         ioFilterGroupAdd(filterGroup, ioSizeNew());
     }
-    else if (strEqZ(filter, "pgBackRest::Backup::Filter::PageChecksum"))
-    {
-        ioFilterGroupAdd(
-            filterGroup,
-            pageChecksumNew(
-                varUInt64Force(varLstGet(paramList, 0)), PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT,
-                (uint64_t)varUIntForce(varLstGet(paramList, 1)) << 32 | varUIntForce(varLstGet(paramList, 2))));
-    }
     else if (strEqZ(filter, "pgBackRest::Storage::Filter::Gzip"))
     {
         if (strEqZ(varStr(varLstGet(paramList, 0)), "compress"))
@@ -167,10 +158,6 @@ storageFilterXsResult(const IoFilterGroup *filterGroup, const String *filter)
     {
         result = ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR);
     }
-    else if (strEqZ(filter, "pgBackRest::Backup::Filter::PageChecksum"))
-    {
-        result = ioFilterGroupResult(filterGroup, PAGE_CHECKSUM_FILTER_TYPE_STR);
-    }
     else
         THROW_FMT(AssertError, "unable to get result for invalid filter '%s'", strPtr(filter));
 
@@ -201,10 +188,6 @@ storageFilterXsResultAll(const IoFilterGroup *filterGroup)
         else if (strEq(filter, SIZE_FILTER_TYPE_STR))
         {
             filterPerl = strNew("pgBackRest::Common::Io::Handle");
-        }
-        else if (strEq(filter, PAGE_CHECKSUM_FILTER_TYPE_STR))
-        {
-            filterPerl = strNew("pgBackRest::Backup::Filter::PageChecksum");
         }
 
         if (filterPerl != NULL)

@@ -42,7 +42,6 @@ my @stryCFile =
 (
     'LibC.c',
 
-    'command/backup/pageChecksum.c',
     'command/command.c',
     'common/compress/gzip/common.c',
     'common/compress/gzip/compress.c',

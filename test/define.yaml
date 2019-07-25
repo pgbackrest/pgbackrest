@@ -574,6 +574,15 @@ unit:
           command/backup/pageChecksum: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: backup
+        total: 3
+
+        coverage:
+          command/backup/file: full
+          command/backup/protocol: full
+          storage/storage: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: command
         total: 1
 
