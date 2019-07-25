@@ -758,14 +758,16 @@
             </execute>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install build-essential libssl-dev libxml2-dev libperl-dev zlib1g-dev</exe-cmd>
+                <exe-cmd>
+                    apt-get install build-essential libssl-dev libxml2-dev libperl-dev zlib1g-dev
+                            libpq-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-centos6]}" user="root" pre="y">
                 <exe-cmd>
                     yum install build-essential gcc openssl-devel libxml2-devel
-                        perl-ExtUtils-Embed
+                        postgresql-devel perl-ExtUtils-Embed
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -773,7 +775,7 @@
             <execute if="{[os-type-is-centos7]}" user="root" pre="y">
                 <exe-cmd>
                     yum install build-essential gcc make openssl-devel libxml2-devel
-                        perl-ExtUtils-Embed
+                        postgresql-devel perl-ExtUtils-Embed
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
