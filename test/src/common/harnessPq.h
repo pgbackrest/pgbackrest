@@ -1,7 +1,8 @@
 /***********************************************************************************************************************************
 Pq Test Harness
 
-Scripted testing for PostgreSQL pqlib so exact results can be returned for unit testing.
+Scripted testing for PostgreSQL pqlib so exact results can be returned for unit testing.  See PostgreSQL client unit tests for
+usage examples.
 ***********************************************************************************************************************************/
 #ifndef TEST_COMMON_HARNESS_PQ_H
 #define TEST_COMMON_HARNESS_PQ_H

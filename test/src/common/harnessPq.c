@@ -18,6 +18,9 @@ Script that defines how shim functions operate
 ***********************************************************************************************************************************/
 HarnessPq *harnessPqScript;
 unsigned int harnessPqScriptIdx;
+
+// If there is a script failure change the behavior of cleanup functions to return immediately so the real error will be reported
+// rather than a bogus scripting error during cleanup
 bool harnessPqScriptFail;
 
 /***********************************************************************************************************************************
@@ -75,11 +78,17 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
             result->param ? result->param : "NULL", param ? strPtr(paramStr) : "NULL");
     }
 
+    // Make sure the session matches with the parent as a sanity check
+    if (parent != NULL && result->session != parent->session)
+    {
+        THROW_FMT(
+            AssertError, "pq script [%u] function '%s', expects session '%u' but got '%u'", harnessPqScriptIdx, result->function,
+            result->session, parent->session);
+    }
+
     // Sleep if requested
     if (result->sleep > 0)
         sleepMSec(result->sleep);
-
-    (void)parent; // ??? Need to do something with this
 
     harnessPqScriptIdx++;
 
@@ -121,7 +130,7 @@ PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 {
     (void)conn;
 
-    // Just call the processor that was passed so we have coverage
+    // Call the processor that was passed so we have coverage
     proc(arg, "test notice");
     return NULL;
 }

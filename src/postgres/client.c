@@ -233,10 +233,12 @@ pgClientQuery(PgClient *this, const String *query)
                 THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strPtr(query), this->queryTimeout);
 
             // If this was a command that returned no results then we are done
-            if (PQresultStatus(pgResult) != PGRES_COMMAND_OK)
+            int resultStatus = PQresultStatus(pgResult);
+
+            if (resultStatus != PGRES_COMMAND_OK)
             {
                 // Expect some rows to be returned
-                if (PQresultStatus(pgResult) != PGRES_TUPLES_OK)
+                if (resultStatus != PGRES_TUPLES_OK)
                 {
                     THROW_FMT(
                         DbQueryError, "unable to execute query '%s': %s", strPtr(query),
@@ -251,25 +253,36 @@ pgClientQuery(PgClient *this, const String *query)
                     int rowTotal = PQntuples(pgResult);
                     int columnTotal = PQnfields(pgResult);
 
+                    // Get column types
+                    Oid *columnType = memNew(sizeof(int) * (size_t)columnTotal);
+
+                    for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+                        columnType[columnIdx] = PQftype(pgResult, columnIdx);
+
+                    // Get values
                     for (int rowIdx = 0; rowIdx < rowTotal; rowIdx++)
                     {
                         VariantList *resultRow = varLstNew();
 
                         for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
                         {
-                            if (PQgetisnull(pgResult, rowIdx, columnIdx))
+                            char *value = PQgetvalue(pgResult, rowIdx, columnIdx);
+
+                            // If value is zero-length then check if it is null
+                            if (value[0] == '\0' && PQgetisnull(pgResult, rowIdx, columnIdx))
+                            {
                                 varLstAdd(resultRow, NULL);
+                            }
+                            // Else convert the value to a variant
                             else
                             {
-                                // Convert column type
-                                switch (PQftype(pgResult, columnIdx))
+                                // Convert column type.  Not all PostgreSQL types are supported but these should suffice.
+                                switch (columnType[columnIdx])
                                 {
                                     // Boolean type
                                     case 16:                            // bool
                                     {
-                                        varLstAdd(
-                                            resultRow,
-                                            varNewBool(varBoolForce(varNewStrZ(PQgetvalue(pgResult, rowIdx, columnIdx)))));
+                                        varLstAdd(resultRow, varNewBool(varBoolForce(varNewStrZ(value))));
                                         break;
                                     }
 
@@ -278,7 +291,7 @@ pgClientQuery(PgClient *this, const String *query)
                                     case 19:                            // name
                                     case 25:                            // text
                                     {
-                                        varLstAdd(resultRow, varNewStrZ(PQgetvalue(pgResult, rowIdx, columnIdx)));
+                                        varLstAdd(resultRow, varNewStrZ(value));
                                         break;
                                     }
 
@@ -288,7 +301,7 @@ pgClientQuery(PgClient *this, const String *query)
                                     case 23:                            // int4
                                     case 26:                            // oid
                                     {
-                                        varLstAdd(resultRow, varNewInt64(cvtZToInt64(PQgetvalue(pgResult, rowIdx, columnIdx))));
+                                        varLstAdd(resultRow, varNewInt64(cvtZToInt64(value)));
                                         break;
                                     }
 
@@ -296,7 +309,7 @@ pgClientQuery(PgClient *this, const String *query)
                                     {
                                         THROW_FMT(
                                             FormatError, "unable to parse type %u in column %d for query '%s'",
-                                            PQftype(pgResult, columnIdx), columnIdx, strPtr(query));
+                                            columnType[columnIdx], columnIdx, strPtr(query));
                                     }
                                 }
                             }

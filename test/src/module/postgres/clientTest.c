@@ -6,7 +6,7 @@ This test can be run two ways:
 1) The default uses a pqlib shim to simulate a PostgreSQL connection.  This will work with all VM types.
 
 2) Optionally use a real cluster for testing (only works with debian/pg11).  The test Makefile must be manually updated with the
--DHARNESS_PQ_REAL and -lpq must be added to the libs list.  This method does not have 100% coverage but is very close.
+-DHARNESS_PQ_REAL flag and -lpq must be added to the libs list.  This method does not have 100% coverage but is very close.
 ***********************************************************************************************************************************/
 #include "common/type/json.h"
 
@@ -115,7 +115,6 @@ testRun(void)
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
             {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_FATAL_ERROR},
-            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_FATAL_ERROR},
             {.function = HRNPQ_RESULTERRORMESSAGE, .resultZ =
                 "ERROR:  column \"bogus\" does not exist\n"
                     "LINE 1: select bogus from pg_class\n"
@@ -209,12 +208,10 @@ testRun(void)
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
             {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
-            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
             {.function = HRNPQ_NTUPLES, .resultInt = 1},
             {.function = HRNPQ_NFIELDS, .resultInt = 1},
-            {.function = HRNPQ_GETISNULL, .param = "[0,0]", .resultInt = 0},
             {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = 1184},
-            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = 1184},
+            {.function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "2019-07-25 12:06:09.000282+00"},
             {.function = HRNPQ_CLEAR},
             {.function = HRNPQ_GETRESULT, .resultNull = true},
             {.function = NULL}
@@ -233,38 +230,32 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             {.function = HRNPQ_SENDQUERY, .param =
-                "[\"select oid, null, relname, relname = 'pg_class' from pg_class where relname in ('pg_class', 'pg_proc') "
-                    "order by relname\"]",
+                "[\"select oid, case when relname = 'pg_class' then null::text else '' end, relname, relname = 'pg_class'"
+                    "  from pg_class where relname in ('pg_class', 'pg_proc')"
+                    " order by relname\"]",
                 .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
             {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
-            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
 
             {.function = HRNPQ_NTUPLES, .resultInt = 2},
             {.function = HRNPQ_NFIELDS, .resultInt = 4},
-
-            {.function = HRNPQ_GETISNULL, .param = "[0,0]", .resultInt = 0},
             {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
-            {.function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "1259"},
-            {.function = HRNPQ_GETISNULL, .param = "[0,1]", .resultInt = 1},
-            {.function = HRNPQ_GETISNULL, .param = "[0,2]", .resultInt = 0},
+            {.function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
             {.function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = "pg_class"},
-            {.function = HRNPQ_GETISNULL, .param = "[0,3]", .resultInt = 0},
             {.function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_BOOL},
+
+            {.function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "1259"},
+            {.function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = ""},
+            {.function = HRNPQ_GETISNULL, .param = "[0,1]", .resultInt = 1},
+            {.function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = "pg_class"},
             {.function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = "t"},
 
-            {.function = HRNPQ_GETISNULL, .param = "[1,0]", .resultInt = 0},
-            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
             {.function = HRNPQ_GETVALUE, .param = "[1,0]", .resultZ = "1255"},
-            {.function = HRNPQ_GETISNULL, .param = "[1,1]", .resultInt = 1},
-            {.function = HRNPQ_GETISNULL, .param = "[1,2]", .resultInt = 0},
-            {.function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.function = HRNPQ_GETVALUE, .param = "[1,1]", .resultZ = ""},
+            {.function = HRNPQ_GETISNULL, .param = "[1,1]", .resultInt = 0},
             {.function = HRNPQ_GETVALUE, .param = "[1,2]", .resultZ = "pg_proc"},
-            {.function = HRNPQ_GETISNULL, .param = "[1,3]", .resultInt = 0},
-            {.function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_BOOL},
             {.function = HRNPQ_GETVALUE, .param = "[1,3]", .resultZ = "f"},
 
             {.function = HRNPQ_CLEAR},
@@ -274,12 +265,13 @@ testRun(void)
 #endif
 
         query = strNew(
-            "select oid, null, relname, relname = 'pg_class' from pg_class where relname in ('pg_class', 'pg_proc')"
-                " order by relname");
+            "select oid, case when relname = 'pg_class' then null::text else '' end, relname, relname = 'pg_class'"
+            "  from pg_class where relname in ('pg_class', 'pg_proc')"
+            " order by relname");
 
         TEST_RESULT_STR(
             strPtr(jsonFromVar(varNewVarLst(pgClientQuery(client, query)), 0)),
-            "[[1259,null,\"pg_class\",true],[1255,null,\"pg_proc\",false]]", "simple query");
+            "[[1259,null,\"pg_class\",true],[1255,\"\",\"pg_proc\",false]]", "simple query");
 
         // Close connection
         // -------------------------------------------------------------------------------------------------------------------------
