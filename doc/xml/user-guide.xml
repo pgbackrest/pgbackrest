@@ -458,24 +458,24 @@
         </execute-list>
 
         <!-- Perl installation -->
-        <p><backrest/> contains embedded Perl which requires some additional modules.</p>
+        <p><backrest/> contains embedded Perl which requires some additional packages.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Install required Perl packages</title>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install libdbd-pg-perl</exe-cmd>
+                <exe-cmd>apt-get install perl</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-centos6]}" user="root" pre="y">
                 <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
-                    perl-Digest-SHA perl-DBD-Pg</exe-cmd>
+                    perl-Digest-SHA</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-centos7]}" user="root" pre="y">
-                <exe-cmd>yum install perl perl-Time-HiRes perl-Digest-SHA perl-DBD-Pg perl-JSON-PP</exe-cmd>
+                <exe-cmd>yum install perl perl-Time-HiRes perl-Digest-SHA perl-JSON-PP</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>

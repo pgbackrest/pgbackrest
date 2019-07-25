@@ -13,7 +13,13 @@
  	       libxml2-dev,
                 txt2man,
  	       zlib1g-dev
-@@ -24,7 +22,7 @@
+@@ -19,12 +18,12 @@
+ 
+ Package: pgbackrest
+ Architecture: any
+-Depends: libdbd-pg-perl,
++Depends: perl,
+          postgresql-common,
           ${misc:Depends},
           ${perl:Depends},
           ${shlibs:Depends}

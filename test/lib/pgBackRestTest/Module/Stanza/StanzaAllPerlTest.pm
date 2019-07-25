@@ -98,8 +98,7 @@ sub run
         $self->optionTestSetBool(CFGOPT_ONLINE, true);
         $self->configTestLoad(CFGCMD_STANZA_CREATE);
 
-        $self->testException(sub {(new pgBackRest::Stanza())}, ERROR_DB_CONNECT,
-            "could not connect to server: No such file or directory\n");
+        $self->testException(sub {(new pgBackRest::Stanza())}, ERROR_DB_CONNECT, "unable to connect to.*");
 
         $self->optionTestSetBool(CFGOPT_ONLINE, false);
     }
