@@ -1,11 +1,12 @@
 --- control
 +++ control
-@@ -4,11 +4,9 @@
+@@ -4,11 +4,10 @@
  Maintainer: Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>
  Uploaders: Adrian Vondendriesch <adrian.vondendriesch@credativ.de>
  Build-Depends: debhelper (>= 9),
 -               libio-socket-ssl-perl,
                 libperl-dev,
++               libpq-dev,
                 libssl-dev,
                 libxml-checker-perl,
 -               libxml-libxml-perl,

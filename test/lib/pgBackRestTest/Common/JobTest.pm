@@ -411,6 +411,7 @@ sub run
                     '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200112L' .
                         ' `perl -MExtUtils::Embed -e ccopts`' .
                         ' `xml2-config --cflags`' . ($self->{bProfile} ? " -pg" : '') .
+                        ' -I`pg_config --includedir`' .
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .

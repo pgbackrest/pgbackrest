@@ -39,6 +39,10 @@ AC_CHECK_LIB([perl], [perl_parse], [], [AC_MSG_ERROR([library 'perl' is required
 LIBS="$LIBS_BEFORE_PERL `perl -MExtUtils::Embed -e ldopts`"
 AC_SUBST(CLIBRARY, "`perl -MExtUtils::Embed -e ccopts`")
 
+# Check required pq library
+AC_CHECK_LIB([pq], [PQconnectdb], [], [AC_MSG_ERROR([library 'pq' is required])])
+AC_SUBST(CINCLUDE, "$CINCLUDE -I`pg_config --includedir`")
+
 # Check required openssl libraries
 AC_CHECK_LIB([crypto], [EVP_get_digestbyname], [], [AC_MSG_ERROR([library 'crypto' is required])])
 AC_CHECK_LIB([ssl], [SSL_new], [], [AC_MSG_ERROR([library 'ssl' is required])])
