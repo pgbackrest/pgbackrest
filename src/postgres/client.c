@@ -179,6 +179,7 @@ pgClientQuery(PgClient *this, const String *query)
 
     ASSERT(this != NULL);
     CHECK(this->connection != NULL);
+    ASSERT(query != NULL);
 
     VariantList *result = NULL;
 

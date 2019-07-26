@@ -322,11 +322,15 @@ storageRepoGet(const String *type, bool write)
     else if (strEqZ(type, STORAGE_TYPE_S3))
     {
         // Set the default port
-        unsigned int port = STORAGE_S3_PORT_DEFAULT;
+        unsigned int port = cfgOptionUInt(cfgOptRepoS3Port);
 
         // Extract port from the endpoint and host if it is present
         const String *endPoint = cfgOptionHostPort(cfgOptRepoS3Endpoint, &port);
         const String *host = cfgOptionHostPort(cfgOptRepoS3Host, &port);
+
+        // If the port option was set explicitly then use it in preference to appended ports
+        if (cfgOptionSource(cfgOptRepoS3Port) != cfgSourceDefault)
+            port = cfgOptionUInt(cfgOptRepoS3Port);
 
         result = storageS3New(
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,

@@ -21,6 +21,8 @@
 # Some options are unique to tests:
 #     * total - total runs in the test
 #     * vm - VMs that the test will be run on
+#     * include - modules to include directly into test.c (all files in coverage are automatically included)
+#           This is useful when a module's internal data needs to be manipulated for testing but no coverage is added by the test.
 # **********************************************************************************************************************************
 
 # **********************************************************************************************************************************
@@ -427,7 +429,9 @@ unit:
           storage/cifs/storage: full
           storage/posix/storage: full
           storage/helper: full
-          storage/storage: full
+
+        include:
+          - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
@@ -453,9 +457,11 @@ unit:
           storage/remote/storage: full
           storage/remote/write: full
           storage/helper: full
-          storage/read: full
-          storage/write: full
           storage/storage: full
+
+        include:
+          - storage/read
+          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: s3
@@ -579,6 +585,17 @@ unit:
         coverage:
           command/backup/common: full
           command/backup/pageChecksum: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: backup
+        total: 3
+
+        coverage:
+          command/backup/file: full
+          command/backup/protocol: full
+
+        include:
+          - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command

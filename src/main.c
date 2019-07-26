@@ -160,15 +160,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdLocal:
                 {
-                    if (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR)  ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_RESTORE_STR))
-                    {
-                        cmdLocal(STDIN_FILENO, STDOUT_FILENO);
-                    }
-                    else
-                        perlExec();
-
+                    cmdLocal(STDIN_FILENO, STDOUT_FILENO);
                     break;
                 }
 

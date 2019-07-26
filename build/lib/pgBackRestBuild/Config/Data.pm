@@ -287,6 +287,8 @@ use constant CFGOPT_REPO_S3_ENDPOINT                                => CFGDEF_RE
     push @EXPORT, qw(CFGOPT_REPO_S3_ENDPOINT);
 use constant CFGOPT_REPO_S3_HOST                                    => CFGDEF_REPO_S3 . '-host';
     push @EXPORT, qw(CFGOPT_REPO_S3_HOST);
+use constant CFGOPT_REPO_S3_PORT                                    => CFGDEF_REPO_S3 . '-port';
+    push @EXPORT, qw(CFGOPT_REPO_S3_PORT);
 use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_REPO_S3 . '-region';
     push @EXPORT, qw(CFGOPT_REPO_S3_REGION);
 use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
@@ -1859,6 +1861,18 @@ my %hConfigDefine =
         {
             'repo-s3-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_S3_PORT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => 443,
+        &CFGDEF_ALLOW_RANGE => [1, 65535],
+        &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 

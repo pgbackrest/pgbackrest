@@ -53,6 +53,8 @@ use constant TESTDEF_DEFINE_TEST                                    => 'define-t
     push @EXPORT, qw(TESTDEF_DEFINE_TEST);
 use constant TESTDEF_DEBUG_UNIT_SUPPRESS                            => 'debugUnitSuppress';
     push @EXPORT, qw(TESTDEF_DEBUG_UNIT_SUPPRESS);
+use constant TESTDEF_INCLUDE                                        => 'include';
+    push @EXPORT, qw(TESTDEF_INCLUDE);
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
 use constant TESTDEF_TOTAL                                          => 'total';
@@ -180,6 +182,9 @@ sub testDefLoad
                         push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
                     }
                 }
+
+                # Set include list
+                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INCLUDE} = $hModuleTest->{&TESTDEF_INCLUDE};
             }
 
             $hModuleTest->{$strModule} = \@stryModuleTest;

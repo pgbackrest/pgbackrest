@@ -271,6 +271,7 @@ sub libcAutoExportTag
             'CFGOPT_REPO_S3_HOST',
             'CFGOPT_REPO_S3_KEY',
             'CFGOPT_REPO_S3_KEY_SECRET',
+            'CFGOPT_REPO_S3_PORT',
             'CFGOPT_REPO_S3_REGION',
             'CFGOPT_REPO_S3_TOKEN',
             'CFGOPT_REPO_S3_VERIFY_TLS',
