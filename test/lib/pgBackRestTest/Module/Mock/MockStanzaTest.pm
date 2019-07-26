@@ -74,7 +74,6 @@ sub run
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin("remote ${bRemote}, s3 ${bS3}, enc ${bEncrypt}")) {next}
 
-        next if ($bRemote); # !!! cshang    next if bRemote -- do this for each mock and real tests
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt});

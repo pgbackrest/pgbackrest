@@ -151,15 +151,28 @@ sub run
             # In this section the same comment can be used multiple times so make it a variable that can be set once and reused
             my $strComment = undef;
 
-            # Remove the files in the archive directory
-            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE, {bRecurse => true});
+            # Archive and backup info file names
+            my $strArchiveInfoFile = STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE;
+            my $strArchiveInfoCopyFile = STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT;
+            my $strArchiveInfoOldFile = "${strArchiveInfoFile}.old";
+            my $strArchiveInfoCopyOldFile = "${strArchiveInfoCopyFile}.old";
+
+            my $strBackupInfoFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO;
+            my $strBackupInfoCopyFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT;
+            my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
+            my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
+
+            # Move the archive.info files to simulate missing file
+            forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
 
             $oHostDbMaster->check(
                 'fail on missing archive.info file',
                 {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
 
-            # Backup.info was created earlier so force stanza-create to create archive info file
-            $oHostBackup->stanzaCreate('force create stanza info files', {strOptionalParam => ' --' . cfgOptionName(CFGOPT_FORCE)});
+            # Backup.info was created earlier so restore archive info files
+            forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoCopyFile, {bRecurse => false});
 
             # Check ERROR_ARCHIVE_DISABLED error
             $strComment = 'fail on archive_mode=off';
@@ -292,27 +305,28 @@ sub run
 
             # Stanza Create
             #-----------------------------------------------------------------------------------------------------------------------
-            # With data existing in the archive and backup directory, remove info files and confirm failure
-            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
-            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
-            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
-
-            if (!$bS3)
-            {
-                $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
-                    {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
-            }
-
-            if (!$bRepoEncrypt)
-            {
-                # Force the backup.info file to be recreated
-                $oHostBackup->stanzaCreate('verify success with force', {strOptionalParam => ' --' . cfgOptionName(CFGOPT_FORCE)});
-
-                # Remove the backup info file
-                forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-                forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
-            }
+#  CSHANG These tests are in the stanza-create unit tests - do we really need them here?
+            # # With data existing in the archive and backup directory, move info files and confirm failure
+            # forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
+            # forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
+            # forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
+            # forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
+            #
+            # if (!$bS3)
+            # {
+            #     $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
+            #         {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
+            # }
+            #
+            # if (!$bRepoEncrypt)
+            # {
+            #     # Force the backup.info file to be recreated
+            #     $oHostBackup->stanzaCreate('verify success with force', {strOptionalParam => ' --' . cfgOptionName(CFGOPT_FORCE)});
+            #
+            #     # Remove the backup info file
+            #     forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+            #     forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+            # }
 
             # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
             storageDb()->pathCreate(
@@ -320,24 +334,21 @@ sub run
                 {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
             $self->controlGenerate(
                 $oHostDbMaster->dbPath() . '/testbase', $self->pgVersion() eq PG_VERSION_94 ? PG_VERSION_95 : PG_VERSION_94);
-
-            if (!$bRepoEncrypt)
-            {
-                # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
-                $oHostBackup->stanzaCreate('fail on database mismatch with directory',
-                    {strOptionalParam => ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
-                    '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
-            }
-            # If encrypted, need to clean out repo and recreate
-            else
-            {
-                forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP, {bRecurse => true});
-                forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE, {bRecurse => true});
-            }
+# CSHANG commenting out until configValidate() available in stanza-create -- and why is this only tested if repo not encrypted?
+            # if (!$bRepoEncrypt)
+            # {
+            #     # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
+            #     $oHostBackup->stanzaCreate('fail on database mismatch with directory',
+            #         {strOptionalParam => ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
+            #         '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
+            # }
+# CSHANG since no longer have --force, remove the directories to be able to create the stanza
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP, {bRecurse => true});
+            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE, {bRecurse => true});
 
             # Stanza Upgrade - tests configValidate code - all other tests in synthetic integration tests
             #-----------------------------------------------------------------------------------------------------------------------
-            # Run stanza-create offline with --force to create files needing to be upgraded (using new pg-path)
+            # Run stanza-create offline to create files needing to be upgraded (using new pg-path)
             $oHostBackup->stanzaCreate('successfully create stanza files to be upgraded',
                 {strOptionalParam =>
                     ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
