@@ -54,10 +54,10 @@ testRun(void)
         // stanza already deleted
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - success on stanza does not exist");
-        TEST_RESULT_BOOL(stanzaDelete(storageTest, NULL, NULL), true, "    archiveList=NULL, backupList=NULL");
-        TEST_RESULT_BOOL(stanzaDelete(storageTest, strLstNew(), NULL), true, "    archiveList=0, backupList=NULL");
-        TEST_RESULT_BOOL(stanzaDelete(storageTest, NULL, strLstNew()), true, "    archiveList=NULL, backupList=0");
-        TEST_RESULT_BOOL(stanzaDelete(storageTest, strLstNew(), strLstNew()), true, "    archiveList=0, backupList=0");
+        TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), NULL, NULL), true, "    archiveList=NULL, backupList=NULL");
+        TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), strLstNew(), NULL), true, "    archiveList=0, backupList=NULL");
+        TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), NULL, strLstNew()), true, "    archiveList=NULL, backupList=0");
+        TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), strLstNew(), strLstNew()), true, "    archiveList=0, backupList=0");
 
         // create and delete a stanza
         //--------------------------------------------------------------------------------------------------------------------------
@@ -93,14 +93,14 @@ testRun(void)
         // Create stanza with directories only
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("repo/archive/%s/9.6-1/1234567812345678", strPtr(stanza))),
-            "create archive directory");
+            "create archive sub directory");
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))),
-            "create backup directory");
+            "create backup sub directory");
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
-        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - directories only");
+        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - sub directories only");
         TEST_RESULT_BOOL(
             storagePathExistsNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), false, "    stanza archive deleted");
         TEST_RESULT_BOOL(
@@ -146,7 +146,8 @@ testRun(void)
         TEST_ERROR_FMT(cmdStanzaDelete(), FileRemoveError,
             "unable to remove '%s/repo/backup/%s/20190708-154306F/backup.manifest': [20] Not a directory", testPath(),
             strPtr(stanza));
-        storageRemoveNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza)));
+        TEST_RESULT_VOID(
+            storageRemoveNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))), "remove backup directory");
 
         // Create backup manifest
         //--------------------------------------------------------------------------------------------------------------------------
@@ -175,6 +176,15 @@ testRun(void)
             strPtr(stanza))) &&
             storageExistsNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191800D/backup.manifest.copy",
             strPtr(stanza)))), false, "    all manifests deleted");
+
+        // Create only stanza paths
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete");
+        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))),
+            "create empty stanza archive path");
+        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))),
+            "create empty stanza backup path");
+        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - empty directories");
 
         // Ensure other stanza never deleted
         //--------------------------------------------------------------------------------------------------------------------------

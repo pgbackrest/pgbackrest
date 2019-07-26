@@ -61,13 +61,13 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
     bool result = false;
 
     // For most drivers, NULL indicates the directory does not exist at all. For those that do not support paths (e.g. S3) an
-    // empty StringList will be returned which will result in the attempt to delete the stanza even though it may not exist.
+    // empty StringList will be returned; in such a case, the directory will attempt to be deleted (this is OK).
     if (archiveList != NULL || backupList != NULL)
     {
         bool archiveNotEmpty = (archiveList != NULL && strLstSize(archiveList) > 0) ? true : false;
         bool backupNotEmpty = (backupList != NULL && strLstSize(backupList) > 0) ? true : false;
-        // If anything exists in the stanza repo, then ensure the pgbackrest stop command was issued for the stanza before
-        // attempting the delete.
+
+        // If something exists in either directory, then remove
         if (archiveNotEmpty || backupNotEmpty)
         {
 // CSHANG issue #765 requests that the stop file be ignored when --force is used. But if --force is local, then it should be best practice to run the pgbackrest --stanza=XXX stop - the stop can be issued even when there is nothing configured, right?
@@ -79,7 +79,6 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                     "HINT: has the pgbackrest stop command been run on this server for this stanza?",
                     strPtr(cfgOptionStr(cfgOptStanza)));
             }
-
             // if (!cfgOptionTest(cfgOptForce))
 
             // # If a force has not been issued, then check the database
@@ -116,13 +115,17 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
 
             // Remove manifest files
             manifestDelete(storageRepoWriteStanza);
-
-            // Recusively remove the entire stanza repo
-            storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE), .recurse = true);
-            storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP), .recurse = true);
         }
 
-        // Remove the stop file
+        // Recusively remove the entire stanza repo if exists. S3 will attempt to remove even if not.
+        if (archiveList != NULL)
+            storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE), .recurse = true);
+
+        if (backupList != NULL)
+            storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP), .recurse = true);
+
+        // Remove the stop file - this will not error if the stop file does not exist. If the stanza directories existed but nothing
+        // was in them, then no pgbackrest commands can be in progress without the info files so a stop is technically not necessary
         storageRemoveNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza)));
 
         result = true;
@@ -144,9 +147,6 @@ cmdStanzaDelete(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const Storage *storageRepoReadStanza = storageRepo();
-
-        // StringList *archiveList = storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE), .nullOnMissing = true);
-        // StringList *backupList = storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP), .nullOnMissing = true);
 
         stanzaDelete(
             storageRepoWrite(),

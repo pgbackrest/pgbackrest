@@ -65,7 +65,7 @@ cmdStanzaUpgrade(void)
             cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
-        // Since the file save of archive.info and backup.info are not atomic, then check and update each as separately.
+        // Since the file save of archive.info and backup.info are not atomic, then check and update each separately.
         // Update archive
         if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
         {

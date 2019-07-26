@@ -131,7 +131,7 @@ sub run
             ' --stanza=db archive-push';
         $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
 
-        # With data existing in the archive dir, remove the info files and confirm failure
+        # With data existing in the archive dir, move the info files and confirm failure
         forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
         forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
 
@@ -140,90 +140,6 @@ sub run
             $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
                 {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
         }
-        # !!! All of these tests are for testing reconstruction so it should be removed
-        # # Stanza Create fails using force - failure to unzip compressed file
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # # S3 doesn't support filesystem-style permissions so skip these tests
-        # if (!$bS3)
-        # {
-        #     # Change the permissions of the archive file so it cannot be read
-        #     forceStorageMode(
-        #         storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_93 . '-1/' . substr($strArchiveFile, 0, 16) . '/*.' .
-        #             COMPRESS_EXT,
-        #         '220');
-        #
-        #     # Force creation of the info file but fail on gunzip
-        #     $oHostBackup->stanzaCreate('gunzip fail on forced stanza-create',
-        #         {iExpectedExitStatus => ERROR_FILE_OPEN, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' .
-        #         cfgOptionName(CFGOPT_FORCE)});
-        #
-        #     # Change permissions back
-        #     forceStorageMode(
-        #         storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_93 . '-1/' . substr($strArchiveFile, 0, 16) . '/*.' .
-        #             COMPRESS_EXT,
-        #         '640');
-        # }
-        #
-        # # Stanza Create succeeds when using force - recreates archive.info from compressed archive file
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # # Force creation of archive info from the gz file
-        # $oHostBackup->stanzaCreate('force create archive.info from gz file',
-        #     {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
-        #         iExpectedExitStatus => $bEncrypt ? ERROR_FILE_MISSING : undef});
-        #
-        # if (!$bEncrypt)
-        # {
-        #     $self->testResult(sub {storageRepo()->exists($strArchiveInfoFile)}, true, "    archive.info file was created");
-        # }
-        #
-        # # Stanza Create succeeds when using force - recreates archive.info from uncompressed archive file
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # # Unzip the archive file and recreate the archive.info file from it
-        # my $strArchiveTest = PG_VERSION_93 . "-1/${strArchiveFile}-" . $self->walGenerateContentChecksum(PG_VERSION_93);
-        #
-        # if (!$bEncrypt)
-        # {
-        #     forceStorageMode(
-        #         storageRepo(), dirname(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz")), 'g+w',
-        #         {bRecursive => true});
-        #
-        #     storageRepo()->copy(
-        #         storageRepo()->openRead(
-        #             STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz",
-        #             {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_DECOMPRESS, false]}]}),
-        #         STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
-        #
-        #     $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',
-        #         {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
-        # }
-        #
-        # # Stanza Create succeeds when using force - missing archive file
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # # Remove the uncompressed WAL archive file and archive.info
-        # if (!$bEncrypt)
-        # {
-        #     forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
-        #     forceStorageRemove(storageRepo(), $strArchiveInfoFile);
-        #     forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
-        #
-        #     $oHostBackup->stanzaCreate('force with missing WAL archive file',
-        #         {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
-        # }
-        #
-        # # Stanza Create succeeds when using force - missing archive directory
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # # Remove the WAL archive directory
-        # if (!$bEncrypt)
-        # {
-        #     forceStorageRemove(
-        #         storageRepo(),
-        #         STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_93 . '-1/' . substr($strArchiveFile, 0, 16), {bRecurse => true});
-        #     forceStorageRemove(storageRepo(), $strArchiveInfoFile);
-        #     forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
-        #
-        #     $oHostBackup->stanzaCreate('force with missing WAL archive directory',
-        #         {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
-        # }
 
         # Restore info files from copy
         forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
@@ -275,104 +191,22 @@ sub run
             sub {storageRepo()->list(STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-2/0000000100000001')},
             '000000010000000100000001-' . $self->walGenerateContentChecksum(PG_VERSION_94) . '.' . COMPRESS_EXT,
             'check that WAL is in the archive at -2');
-#  !!! Remove these
-        # # Create a DB history mismatch between the info files
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # # Remove the archive info file and force reconstruction
-        # if (!$bEncrypt)
-        # {
-        #     forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
-        #     forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
-        #     forceStorageRemove(storageRepo(), $strArchiveInfoFile);
-        #     forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
-        #
-        #     $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched info history but same current db-id',
-        #         {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
-        # }
-        #
-        # # Create a DB-ID mismatch between the info files
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # if (!$bEncrypt)
-        # {
-        #     forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
-        #     forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
-        #     forceStorageRemove(storageRepo(), $strBackupInfoFile);
-        #     forceStorageRemove(storageRepo(), $strBackupInfoCopyFile);
-        #
-        #     $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched db-id',
-        #         {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
-        # }
 
-        # Confirm successful backup at db-1 although archive at db-2 and format error thrown by expire (if not encrypted) since
-        # archive.info history and backup.info history are mismatched
-        #--------------------------------------------------------------------------------------------------------------------------
         # Create the tablespace directory and perform a backup
-        # storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
-        # $oHostBackup->backup(
-        #     'full', 'create first full backup ',
-        #     {iExpectedExitStatus => $bEncrypt ? undef : ERROR_FORMAT,
-        #     strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE)}, false);
-        #
-        # # Stanza Create fails when not using force - no backup.info but backup exists
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # if ($bEncrypt)
-        # {
-        #     forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
-        #     forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
-        # }
-        # else
-        # {
-        #     forceStorageRemove(storageRepo(), $strBackupInfoFile);
-        #     forceStorageRemove(storageRepo(), $strBackupInfoCopyFile);
-        # }
-        #
-        # $oHostBackup->stanzaCreate('fail no force to recreate the stanza from backups',
-        #     {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
-        #
-        # # Stanza Create succeeds using force - reconstruct backup.info from backup
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # $oHostBackup->stanzaCreate('use force to recreate the stanza from backups',
-        #     {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
-        #         iExpectedExitStatus => $bEncrypt ? ERROR_FILE_MISSING : undef});
-        #
-        # # Copy old backup.info files back to avoid history mismatch
-        # forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
-        # forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
+        #--------------------------------------------------------------------------------------------------------------------------
+        storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
+        $oHostBackup->backup(
+            'full', 'create first full backup ',
+            {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE)}, false);
 
+        # Upgrade the stanza
+        #--------------------------------------------------------------------------------------------------------------------------
         # Copy pg_control for 9.5
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_95);
         forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
-        # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value.
-        # Not testing with encryption since unnecessary and copying files around in this case is burdensome.
-        #--------------------------------------------------------------------------------------------------------------------------
-        if (!$bEncrypt)
-        {
-            # Create the 10-3 directory and copy a WAL file to it (with a different system id than what it will be upgraded to)
-            forceStorageMode(storageRepo(), STORAGE_REPO_ARCHIVE, '770');
-            storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . '/10-3/0000000100000001', {bCreateParent => true});
-            storageRepo()->put(
-                storageRepo()->openWrite(
-                    STORAGE_REPO_ARCHIVE . '/10-3/0000000100000001/000000010000000100000001',
-                    {strCipherPass => $oHostBackup->cipherPassArchive()}),
-                $self->walGenerateContent(PG_VERSION_10));
-            forceStorageOwner(storageRepo(), STORAGE_REPO_ARCHIVE . '/10-3', $oHostBackup->userGet(), {bRecurse => true});
-
-            # Make sure the archive.info has the history in the db-id order such that 10 is before 9.5.
-            $oHostBackup->stanzaUpgrade(
-                'successfully upgrade with XX.Y-Z',
-                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
-
-            # Remove the 10-3 directory and copy old archive.info file back. Recreate so archive.info and backup.info files match.
-            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . '/10-3', {bRecurse => true});
-            forceStorageRemove(storageRepo(), $strArchiveInfoFile);
-            forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
-            forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
-            forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoCopyFile, {bRecurse => false});
-        }
-
         $oHostBackup->stanzaUpgrade(
-            'successfully upgrade - no info file mismatch',
+            'successfully upgrade',
             {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Push a WAL and create a backup in the new DB to confirm diff changed to full and info command displays the JSON correctly
