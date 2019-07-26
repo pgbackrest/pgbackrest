@@ -235,18 +235,19 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Replace config options with the host versions
     unsigned int optConfig = isRepo ? cfgOptRepoHostConfig : cfgOptPgHostConfig + hostIdx;
 
-    if (cfgOptionSource(optConfig) != cfgSourceDefault)
-        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_STR), cfgOption(optConfig));
+    kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_STR), cfgOptionSource(optConfig) != cfgSourceDefault  ? cfgOption(optConfig) : NULL);
 
     unsigned int optConfigIncludePath = isRepo ? cfgOptRepoHostConfigIncludePath : cfgOptPgHostConfigIncludePath + hostIdx;
 
-    if (cfgOptionSource(optConfigIncludePath) != cfgSourceDefault)
-        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_INCLUDE_PATH_STR), cfgOption(optConfigIncludePath));
+    kvPut(
+        optionReplace, VARSTR(CFGOPT_CONFIG_INCLUDE_PATH_STR),
+        cfgOptionSource(optConfigIncludePath) != cfgSourceDefault ? cfgOption(optConfigIncludePath) : NULL);
 
     unsigned int optConfigPath = isRepo ? cfgOptRepoHostConfigPath : cfgOptPgHostConfigPath + hostIdx;
 
-    if (cfgOptionSource(optConfigPath) != cfgSourceDefault)
-        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR), cfgOption(optConfigPath));
+    kvPut(
+        optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
+        cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
     // Use a C remote
     kvPut(optionReplace, VARSTR(CFGOPT_C_STR), VARBOOL(true));

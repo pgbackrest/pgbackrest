@@ -150,11 +150,17 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolRemoteParam()"))
     {
+        storagePutNP(storageNewWriteNP(storageTest, strNew("pgbackrest.conf")), bufNew(0));
+
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, "--repo1-host-user=repo-host-user");
+        // Local config settings should never be passed to the remote
+        strLstAdd(argList, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
+        strLstAdd(argList, strNewFmt("--config-include-path=%s", testPath()));
+        strLstAdd(argList, strNewFmt("--config-path=%s", testPath()));
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
