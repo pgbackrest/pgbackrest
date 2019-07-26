@@ -244,7 +244,7 @@ protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool
 }
 
 /***********************************************************************************************************************************
-Move the file object to a new context
+Move the protocol client object to a new context
 ***********************************************************************************************************************************/
 ProtocolClient *
 protocolClientMove(ProtocolClient *this, MemContext *parentNew)
