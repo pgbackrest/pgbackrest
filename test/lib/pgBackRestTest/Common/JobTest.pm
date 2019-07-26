@@ -291,6 +291,8 @@ sub run
 
                 foreach my $strFile (sort(keys(%{$self->{oStorageTest}->manifest($self->{strGCovPath})})))
                 {
+                    my $strFileNoExt = substr($strFile, 0, length($strFile) - 2);
+
                     # Skip all files except .c files (including .auto.c)
                     next if $strFile !~ /(?<!\.auto)\.c$/;
 
@@ -300,7 +302,7 @@ sub run
                     # Skip test.c -- it will be added manually at the end
                     next if $strFile =~ /test\.c$/;
 
-                    if (!defined($hTestCoverage->{substr($strFile, 0, length($strFile) - 2)}) &&
+                    if (!defined($hTestCoverage->{$strFileNoExt}) && !grep(/^$strFileNoExt$/, @{$hTest->{&TESTDEF_INCLUDE}}) &&
                         $strFile !~ /^test\/module\/[^\/]*\/.*Test\.c$/)
                     {
                         push(@stryCFile, "${strFile}");
@@ -313,7 +315,7 @@ sub run
                     "test/module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test.c';
                 my $strCInclude;
 
-                foreach my $strFile (sort(keys(%{$hTestCoverage})))
+                foreach my $strFile (sort(keys(%{$hTestCoverage}), @{$hTest->{&TESTDEF_INCLUDE}}))
                 {
                     # Don't include the test file as it is already included below
                     next if $strFile =~ /Test$/;
