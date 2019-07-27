@@ -11,10 +11,20 @@ Functions
 ***********************************************************************************************************************************/
 typedef struct DbGetResult
 {
-    unsigned int primaryPgIdx;
-    unsigned int standbyPgIdx;
+    unsigned int primaryId;
+    Db *primary;
+    unsigned int standbyId;
+    Db *standby;
 } DbGetResult;
 
 DbGetResult dbGet(bool primaryOnly);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_DB_GET_RESULT_TYPE                                                                                            \
+    DbGetResult
+#define FUNCTION_LOG_DB_GET_RESULT_FORMAT(value, buffer, bufferSize)                                                               \
+    objToLog(&value, "DbGetResult", buffer, bufferSize)
 
 #endif

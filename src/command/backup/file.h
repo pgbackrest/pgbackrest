@@ -44,5 +44,4 @@ Macros for function logging
 #define FUNCTION_LOG_BACKUP_FILE_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
     objToLog(&value, "BackupFileResult", buffer, bufferSize)
 
-
 #endif
