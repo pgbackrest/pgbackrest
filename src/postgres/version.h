@@ -27,6 +27,12 @@ PostgreSQL version constants
 #define PG_VERSION_MAX                                              PG_VERSION_11
 
 /***********************************************************************************************************************************
+Version where various PostgreSQL capabilities were introduced
+***********************************************************************************************************************************/
+// application_name can be set to show the application name in pg_stat_activity
+#define PG_VERSION_APPLICATION_NAME                                 PG_VERSION_90
+
+/***********************************************************************************************************************************
 PostgreSQL version string constants for use in error messages
 ***********************************************************************************************************************************/
 #define PG_VERSION_83_STR                                            "8.3"

@@ -13,7 +13,25 @@ Database Helper
 #include "db/helper.h"
 
 /***********************************************************************************************************************************
-Init local mem context and data structure
+Get specified cluster
+***********************************************************************************************************************************/
+Db *
+dbGetId(unsigned int pgId)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgId);
+    FUNCTION_LOG_END();
+
+    Db *result = dbNew(
+        pgClientNew(
+            cfgOptionStr(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), strNew("postgres"), NULL,
+            (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)));
+
+    FUNCTION_LOG_RETURN(DB, result);
+}
+
+/***********************************************************************************************************************************
+Get primary cluster or primary and standby cluster.
 ***********************************************************************************************************************************/
 DbGetResult dbGet(bool primaryOnly)
 {
@@ -30,24 +48,20 @@ DbGetResult dbGet(bool primaryOnly)
         {
             if (cfgOptionTest(cfgOptPgHost + pgIdx) || cfgOptionTest(cfgOptPgPath + pgIdx))
             {
-                PgClient *client = pgClientNew(
-                    cfgOptionStr(cfgOptPgSocketPath + pgIdx), cfgOptionUInt(cfgOptPgPort + pgIdx), strNew("postgres"), NULL,
-                    (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC));
-                Db *db = NULL;
+                Db *db = dbGetId(pgIdx + 1);
 
                 bool success = false;
                 bool standby = false;
 
                 TRY_BEGIN()
                 {
-                    pgClientOpen(client);
-                    db = dbNew(client);
+                    dbOpen(db);
                     standby = dbIsStandby(db);
                     success = true;
                 }
                 CATCH_ANY()
                 {
-                    pgClientClose(client);
+                    dbClose(db);
                     LOG_WARN("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
                 }
                 TRY_END();
@@ -66,7 +80,7 @@ DbGetResult dbGet(bool primaryOnly)
                         }
                         // Else close the connection since we don't need it
                         else
-                            dbFree(db);
+                            dbClose(db);
                     }
                     // Else is a primary
                     else
