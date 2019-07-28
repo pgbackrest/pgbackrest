@@ -49,25 +49,36 @@ DbGetResult dbGet(bool primaryOnly)
             if (cfgOptionTest(cfgOptPgHost + pgIdx) || cfgOptionTest(cfgOptPgPath + pgIdx))
             {
                 Db *db = dbGetId(pgIdx + 1);
-
-                bool success = false;
                 bool standby = false;
 
                 TRY_BEGIN()
                 {
                     dbOpen(db);
-                    standby = dbIsStandby(db);
-                    success = true;
+
+                    !!! NEED TO FIX THIS
+                    // TRY_BEGIN()
+                    // {
+                    //     dbOpen(db);
+                    //     standby = dbIsStandby(db);
+                    // }
+                    // CATCH_ANY()
+                    // {
+                    //     dbClose(db);
+                    //     db = NULL;
+                    //
+                    //     LOG_WARN("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
+                    // }
+                    // TRY_END();
                 }
                 CATCH_ANY()
                 {
-                    dbClose(db);
-                    LOG_WARN("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
+                    db = NULL;
+                    LOG_WARN("unable to open pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
                 }
                 TRY_END();
 
                 // Was the connection successful
-                if (success)
+                if (db != NULL)
                 {
                     // Is this cluster a standby
                     if (standby)

@@ -172,7 +172,14 @@ dbIsStandby(Db *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(BOOL, varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()"))));
+    bool result = false;
+
+    if (this->pgVersion >= PG_VERSION_HOT_STANDBY)
+    {
+        result = varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()")));
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************

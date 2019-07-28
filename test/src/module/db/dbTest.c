@@ -71,8 +71,17 @@ testRun(void)
             {.function = HRNPQ_NFIELDS, .resultInt = 2},
             {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
             {.function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "80417"},
+            {.function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "90123"},
             {.function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
+            {.function = HRNPQ_CLEAR},
+            {.function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-1 set application_name
+            {.function = HRNPQ_SENDQUERY, .param = "[\"set application_name = 'dude'\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY},
+            {.function = HRNPQ_GETRESULT},
+            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
             {.function = HRNPQ_CLEAR},
             {.function = HRNPQ_GETRESULT, .resultNull = true},
 
@@ -104,16 +113,30 @@ testRun(void)
             {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
 
-            // pg-1 standby query
-            {.function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_is_in_recovery()\"]", .resultInt = 1},
+            // pg-1 set search_path
+            {.function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY},
+            {.function = HRNPQ_GETRESULT},
+            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.function = HRNPQ_CLEAR},
+            {.function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-1 validate query
+            {.function = HRNPQ_SENDQUERY, .param =
+                "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"
+                    " (select setting from pg_settings where name = 'data_directory')::text\"]",
+                .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
             {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
             {.function = HRNPQ_NTUPLES, .resultInt = 1},
-            {.function = HRNPQ_NFIELDS, .resultInt = 1},
-            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_BOOL},
-            {.function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "f"},
+            {.function = HRNPQ_NFIELDS, .resultInt = 2},
+            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "80417"},
+            {.function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
             {.function = HRNPQ_CLEAR},
             {.function = HRNPQ_GETRESULT, .resultNull = true},
 
@@ -150,16 +173,30 @@ testRun(void)
             {.session = 1, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
             {.session = 1, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
 
-            // pg-1 standby query
-            {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_is_in_recovery()\"]", .resultInt = 1},
+            // pg-1 set search_path
+            {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},
+            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 1, .function = HRNPQ_ISBUSY},
+            {.session = 1, .function = HRNPQ_GETRESULT},
+            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 1, .function = HRNPQ_CLEAR},
+            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-1 validate query
+            {.session = 1, .function = HRNPQ_SENDQUERY, .param =
+                "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"
+                    " (select setting from pg_settings where name = 'data_directory')::text\"]",
+                .resultInt = 1},
             {.session = 1, .function = HRNPQ_CONSUMEINPUT},
             {.session = 1, .function = HRNPQ_ISBUSY},
             {.session = 1, .function = HRNPQ_GETRESULT},
             {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
             {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
-            {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 1},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_BOOL},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "f"},
+            {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 2},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "80417"},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
             {.session = 1, .function = HRNPQ_CLEAR},
             {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
 
@@ -167,16 +204,30 @@ testRun(void)
             {.session = 8, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
             {.session = 8, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
 
-            // pg-8 standby query
-            {.session = 8, .function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_is_in_recovery()\"]", .resultInt = 1},
+            // pg-8 set search_path
+            {.session = 8, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},
+            {.session = 8, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 8, .function = HRNPQ_ISBUSY},
+            {.session = 8, .function = HRNPQ_GETRESULT},
+            {.session = 8, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 8, .function = HRNPQ_CLEAR},
+            {.session = 8, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-8 validate query
+            {.session = 8, .function = HRNPQ_SENDQUERY, .param =
+                "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"
+                    " (select setting from pg_settings where name = 'data_directory')::text\"]",
+                .resultInt = 1},
             {.session = 8, .function = HRNPQ_CONSUMEINPUT},
             {.session = 8, .function = HRNPQ_ISBUSY},
             {.session = 8, .function = HRNPQ_GETRESULT},
             {.session = 8, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
             {.session = 8, .function = HRNPQ_NTUPLES, .resultInt = 1},
-            {.session = 8, .function = HRNPQ_NFIELDS, .resultInt = 1},
-            {.session = 8, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_BOOL},
-            {.session = 8, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "f"},
+            {.session = 8, .function = HRNPQ_NFIELDS, .resultInt = 2},
+            {.session = 8, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 8, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 8, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "80417"},
+            {.session = 8, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
             {.session = 8, .function = HRNPQ_CLEAR},
             {.session = 8, .function = HRNPQ_GETRESULT, .resultNull = true},
 
@@ -199,6 +250,42 @@ testRun(void)
             {.session = 1, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
             {.session = 1, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
 
+            // pg-1 set search_path
+            {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},
+            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 1, .function = HRNPQ_ISBUSY},
+            {.session = 1, .function = HRNPQ_GETRESULT},
+            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 1, .function = HRNPQ_CLEAR},
+            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-1 validate query
+            {.session = 1, .function = HRNPQ_SENDQUERY, .param =
+                "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"
+                    " (select setting from pg_settings where name = 'data_directory')::text\"]",
+                .resultInt = 1},
+            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 1, .function = HRNPQ_ISBUSY},
+            {.session = 1, .function = HRNPQ_GETRESULT},
+            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+            {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
+            {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 2},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "90417"},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
+            {.session = 1, .function = HRNPQ_CLEAR},
+            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-1 set application_name
+            {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"set application_name = 'dude'\"]", .resultInt = 1},
+            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 1, .function = HRNPQ_ISBUSY},
+            {.session = 1, .function = HRNPQ_GETRESULT},
+            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 1, .function = HRNPQ_CLEAR},
+            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
             // pg-1 standby query
             {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_is_in_recovery()\"]", .resultInt = 1},
             {.session = 1, .function = HRNPQ_CONSUMEINPUT},
@@ -215,6 +302,42 @@ testRun(void)
             // pg-8 connect
             {.session = 8, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
             {.session = 8, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
+
+            // pg-8 set search_path
+            {.session = 8, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},
+            {.session = 8, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 8, .function = HRNPQ_ISBUSY},
+            {.session = 8, .function = HRNPQ_GETRESULT},
+            {.session = 8, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 8, .function = HRNPQ_CLEAR},
+            {.session = 8, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-8 validate query
+            {.session = 8, .function = HRNPQ_SENDQUERY, .param =
+                "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"
+                    " (select setting from pg_settings where name = 'data_directory')::text\"]",
+                .resultInt = 1},
+            {.session = 8, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 8, .function = HRNPQ_ISBUSY},
+            {.session = 8, .function = HRNPQ_GETRESULT},
+            {.session = 8, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+            {.session = 8, .function = HRNPQ_NTUPLES, .resultInt = 1},
+            {.session = 8, .function = HRNPQ_NFIELDS, .resultInt = 2},
+            {.session = 8, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 8, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 8, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "90417"},
+            {.session = 8, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
+            {.session = 8, .function = HRNPQ_CLEAR},
+            {.session = 8, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-8 set application_name
+            {.session = 8, .function = HRNPQ_SENDQUERY, .param = "[\"set application_name = 'dude'\"]", .resultInt = 1},
+            {.session = 8, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 8, .function = HRNPQ_ISBUSY},
+            {.session = 8, .function = HRNPQ_GETRESULT},
+            {.session = 8, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 8, .function = HRNPQ_CLEAR},
+            {.session = 8, .function = HRNPQ_GETRESULT, .resultNull = true},
 
             // pg-8 standby query
             {.session = 8, .function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_is_in_recovery()\"]", .resultInt = 1},
@@ -261,6 +384,42 @@ testRun(void)
             {.session = 1, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
             {.session = 1, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
 
+            // pg-1 set search_path
+            {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},
+            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 1, .function = HRNPQ_ISBUSY},
+            {.session = 1, .function = HRNPQ_GETRESULT},
+            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 1, .function = HRNPQ_CLEAR},
+            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-1 validate query
+            {.session = 1, .function = HRNPQ_SENDQUERY, .param =
+                "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"
+                    " (select setting from pg_settings where name = 'data_directory')::text\"]",
+                .resultInt = 1},
+            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 1, .function = HRNPQ_ISBUSY},
+            {.session = 1, .function = HRNPQ_GETRESULT},
+            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+            {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
+            {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 2},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "90417"},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
+            {.session = 1, .function = HRNPQ_CLEAR},
+            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-1 set application_name
+            {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"set application_name = 'dude'\"]", .resultInt = 1},
+            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 1, .function = HRNPQ_ISBUSY},
+            {.session = 1, .function = HRNPQ_GETRESULT},
+            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 1, .function = HRNPQ_CLEAR},
+            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
             // pg-1 standby query
             {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_is_in_recovery()\"]", .resultInt = 1},
             {.session = 1, .function = HRNPQ_CONSUMEINPUT},
@@ -275,14 +434,50 @@ testRun(void)
             {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
 
             // pg-4 error
-            {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
-            {.function = HRNPQ_STATUS, .resultInt = CONNECTION_BAD},
-            {.function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
-            {.function = HRNPQ_FINISH},
+            {.session = 4, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
+            {.session = 4, .function = HRNPQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.session = 4, .function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
+            {.session = 4, .function = HRNPQ_FINISH},
 
             // pg-8 connect
-            {.session = 8, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5434\"]"},
+            {.session = 8, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
             {.session = 8, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
+
+            // pg-8 set search_path
+            {.session = 8, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},
+            {.session = 8, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 8, .function = HRNPQ_ISBUSY},
+            {.session = 8, .function = HRNPQ_GETRESULT},
+            {.session = 8, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 8, .function = HRNPQ_CLEAR},
+            {.session = 8, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-8 validate query
+            {.session = 8, .function = HRNPQ_SENDQUERY, .param =
+                "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"
+                    " (select setting from pg_settings where name = 'data_directory')::text\"]",
+                .resultInt = 1},
+            {.session = 8, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 8, .function = HRNPQ_ISBUSY},
+            {.session = 8, .function = HRNPQ_GETRESULT},
+            {.session = 8, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+            {.session = 8, .function = HRNPQ_NTUPLES, .resultInt = 1},
+            {.session = 8, .function = HRNPQ_NFIELDS, .resultInt = 2},
+            {.session = 8, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 8, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 8, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "90417"},
+            {.session = 8, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
+            {.session = 8, .function = HRNPQ_CLEAR},
+            {.session = 8, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+            // pg-8 set application_name
+            {.session = 8, .function = HRNPQ_SENDQUERY, .param = "[\"set application_name = 'dude'\"]", .resultInt = 1},
+            {.session = 8, .function = HRNPQ_CONSUMEINPUT},
+            {.session = 8, .function = HRNPQ_ISBUSY},
+            {.session = 8, .function = HRNPQ_GETRESULT},
+            {.session = 8, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.session = 8, .function = HRNPQ_CLEAR},
+            {.session = 8, .function = HRNPQ_GETRESULT, .resultNull = true},
 
             // pg-8 standby query
             {.session = 8, .function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_is_in_recovery()\"]", .resultInt = 1},
@@ -296,9 +491,6 @@ testRun(void)
             {.session = 8, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "f"},
             {.session = 8, .function = HRNPQ_CLEAR},
             {.session = 8, .function = HRNPQ_GETRESULT, .resultNull = true},
-
-            // pg-4 disconnect
-            // {.session = 4, .function = HRNPQ_FINISH},
 
             // pg-8 disconnect
             {.session = 8, .function = HRNPQ_FINISH},

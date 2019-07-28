@@ -32,6 +32,9 @@ Version where various PostgreSQL capabilities were introduced
 // application_name can be set to show the application name in pg_stat_activity
 #define PG_VERSION_APPLICATION_NAME                                 PG_VERSION_90
 
+// Is pg_is_in_recovery() supported?
+#define PG_VERSION_HOT_STANDBY                                      PG_VERSION_91
+
 /***********************************************************************************************************************************
 PostgreSQL version string constants for use in error messages
 ***********************************************************************************************************************************/
