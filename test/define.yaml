@@ -631,25 +631,13 @@ unit:
           command/restore/protocol: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: stanza-create
-        total: 2
+      - name: stanza
+        total: 4
 
         coverage:
-          command/stanza/stanzaCreate: full
           command/stanza/common: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: stanza-upgrade
-        total: 1
-
-        coverage:
+          command/stanza/stanzaCreate: full
           command/stanza/stanzaUpgrade: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: stanza-delete
-        total: 1
-
-        coverage:
           command/stanza/stanzaDelete: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
