@@ -106,8 +106,9 @@ sub run
         # Change the database version by copying a new pg_control file
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
 
-        $oHostBackup->stanzaCreate('fail on database mismatch without force option',
-            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        $oHostBackup->stanzaCreate('fail on database mismatch and warn force option deprecated',
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) .
+            ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Restore pg_control
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_93);
@@ -164,6 +165,9 @@ sub run
 
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
         #--------------------------------------------------------------------------------------------------------------------------
+        #  Save a pre-upgrade copy of archive info fo testing db-id mismatch
+        forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
+
         $oHostBackup->stanzaUpgrade('successful upgrade creates additional history', {strOptionalParam => '--no-' .
             cfgOptionName(CFGOPT_ONLINE)});
 
@@ -204,9 +208,28 @@ sub run
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_95);
         forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
+
+        $oHostBackup->stanzaUpgrade('successfully upgrade', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+
+        # Copy archive.info and restore really old version
+        forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
+        forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile, {bRecurse => false});
+        forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoFile, {bRecurse => false});
+
+        #  Confirm versions
+        my $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
+        my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
+        $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+            PG_VERSION_93)}, true, 'archive at old pg version');
+        $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
+            PG_VERSION_95)}, true, 'backup at new pg version');
+
         $oHostBackup->stanzaUpgrade(
-            'successfully upgrade',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+            'upgrade fails with mismatched db-ids',
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+
+        # Restore archive.info
+        forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
 
         # Push a WAL and create a backup in the new DB to confirm diff changed to full and info command displays the JSON correctly
         #--------------------------------------------------------------------------------------------------------------------------

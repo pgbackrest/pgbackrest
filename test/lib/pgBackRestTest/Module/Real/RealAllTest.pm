@@ -305,27 +305,16 @@ sub run
 
             # Stanza Create
             #-----------------------------------------------------------------------------------------------------------------------
-#  CSHANG These tests are in the stanza-create unit tests - do we really need them here?
-            # # With data existing in the archive and backup directory, move info files and confirm failure
-            # forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
-            # forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
-            # forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
-            # forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
-            #
+            # With data existing in the archive and backup directory, move info files and confirm failure
+            forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
+# CSHANG S3 should behave the same way so we should not be exluding it here
             # if (!$bS3)
             # {
-            #     $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
-            #         {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
-            # }
-            #
-            # if (!$bRepoEncrypt)
-            # {
-            #     # Force the backup.info file to be recreated
-            #     $oHostBackup->stanzaCreate('verify success with force', {strOptionalParam => ' --' . cfgOptionName(CFGOPT_FORCE)});
-            #
-            #     # Remove the backup info file
-            #     forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-            #     forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+                $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
+                    {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
             # }
 
             # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
@@ -342,7 +331,8 @@ sub run
             #         {strOptionalParam => ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
             #         '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
             # }
-# CSHANG since no longer have --force, remove the directories to be able to create the stanza
+
+            # Remove the directories to be able to create the stanza
             forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP, {bRecurse => true});
             forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE, {bRecurse => true});
 

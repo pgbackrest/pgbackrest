@@ -35,6 +35,9 @@ cmdStanzaCreate(void)
         InfoArchive *infoArchive = NULL;
         InfoBackup *infoBackup = NULL;
 
+        if (cfgOptionBool(cfgOptForce))
+            LOG_WARN("Option --force is deprecated and no longer supported");
+
         // !!! Perl code that still needs to be incorporated
         //
         // ($self->{oDb}) = dbObjectGet();

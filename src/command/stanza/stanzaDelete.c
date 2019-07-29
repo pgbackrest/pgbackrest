@@ -79,7 +79,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                     "HINT: has the pgbackrest stop command been run on this server for this stanza?",
                     strPtr(cfgOptionStr(cfgOptStanza)));
             }
-            // if (!cfgOptionTest(cfgOptForce))
+            // if (!cfgOptionBool(cfgOptForce))
 
             // # If a force has not been issued, then check the database
             // if (!cfgOption(CFGOPT_FORCE))
