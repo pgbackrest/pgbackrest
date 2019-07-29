@@ -440,7 +440,7 @@ testRun(void)
             {.session = 4, .function = HRNPQ_FINISH},
 
             // pg-8 connect
-            {.session = 8, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
+            {.session = 8, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5434\"]"},
             {.session = 8, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
 
             // pg-8 set search_path

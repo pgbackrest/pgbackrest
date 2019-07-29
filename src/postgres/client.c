@@ -347,11 +347,13 @@ pgClientClose(PgClient *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    CHECK(this->connection != NULL);
 
-    memContextCallbackClear(this->memContext);
-    PQfinish(this->connection);
-    this->connection = NULL;
+    if (this->connection != NULL)
+    {
+        memContextCallbackClear(this->memContext);
+        PQfinish(this->connection);
+        this->connection = NULL;
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }

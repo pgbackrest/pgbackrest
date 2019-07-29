@@ -54,26 +54,14 @@ DbGetResult dbGet(bool primaryOnly)
                 TRY_BEGIN()
                 {
                     dbOpen(db);
-
-                    !!! NEED TO FIX THIS
-                    // TRY_BEGIN()
-                    // {
-                    //     dbOpen(db);
-                    //     standby = dbIsStandby(db);
-                    // }
-                    // CATCH_ANY()
-                    // {
-                    //     dbClose(db);
-                    //     db = NULL;
-                    //
-                    //     LOG_WARN("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
-                    // }
-                    // TRY_END();
+                    standby = dbIsStandby(db);
                 }
                 CATCH_ANY()
                 {
+                    dbClose(db);
                     db = NULL;
-                    LOG_WARN("unable to open pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
+
+                    LOG_WARN("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
                 }
                 TRY_END();
 
