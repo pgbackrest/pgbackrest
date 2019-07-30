@@ -11,6 +11,7 @@ Remote Command
 #include "common/log.h"
 #include "config/config.h"
 #include "config/protocol.h"
+#include "db/protocol.h"
 #include "protocol/helper.h"
 #include "protocol/server.h"
 #include "storage/remote/protocol.h"
@@ -33,6 +34,7 @@ cmdRemote(int handleRead, int handleWrite)
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);
         protocolServerHandlerAdd(server, storageRemoteProtocol);
+        protocolServerHandlerAdd(server, dbProtocol);
         protocolServerHandlerAdd(server, configProtocol);
 
         // Acquire a lock if this command needs one.  We'll use the noop that is always sent from the client right after the
