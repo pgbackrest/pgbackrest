@@ -2,8 +2,12 @@
 Test Database
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
+#include "common/harnessFork.h"
 #include "common/harnessLog.h"
 #include "common/harnessPq.h"
+
+#include "common/io/handleRead.h"
+#include "common/io/handleWrite.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -12,6 +16,143 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // *****************************************************************************************************************************
+    if (testBegin("Db and dbProtocol()"))
+    {
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                IoRead *read = ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE());
+                ioWriteOpen(write);
+
+                // Set options
+                StringList *argList = strLstNew();
+                strLstAddZ(argList, "pgbackrest");
+                strLstAddZ(argList, "--stanza=test1");
+                strLstAddZ(argList, "--pg1-path=/path/to/pg");
+                strLstAddZ(argList, "--command=backup");
+                strLstAddZ(argList, "--type=db");
+                strLstAddZ(argList, "--process=0");
+                strLstAddZ(argList, "remote");
+                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+                // Set script
+                harnessPqScriptSet((HarnessPq [])
+                {
+                    // pg-1 connect
+                    {.session = 1, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
+                    {.session = 1, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
+
+                    // pg-1 set search_path
+                    {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},
+                    {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+                    {.session = 1, .function = HRNPQ_ISBUSY},
+                    {.session = 1, .function = HRNPQ_GETRESULT},
+                    {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+                    {.session = 1, .function = HRNPQ_CLEAR},
+                    {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+                    // pg-1 validate query
+                    {.session = 1, .function = HRNPQ_SENDQUERY, .param =
+                        "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"
+                            " (select setting from pg_settings where name = 'data_directory')::text\"]",
+                        .resultInt = 1},
+                    {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+                    {.session = 1, .function = HRNPQ_ISBUSY},
+                    {.session = 1, .function = HRNPQ_GETRESULT},
+                    {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+                    {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
+                    {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 2},
+                    {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+                    {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+                    {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "80417"},
+                    {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
+                    {.session = 1, .function = HRNPQ_CLEAR},
+                    {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+                    // pg-1 disconnect
+                    {.session = 1, .function = HRNPQ_FINISH},
+
+                    // pg-1 connect
+                    {.session = 1, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
+                    {.session = 1, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
+
+                    // pg-1 set search_path
+                    {.session = 1, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},
+                    {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+                    {.session = 1, .function = HRNPQ_ISBUSY},
+                    {.session = 1, .function = HRNPQ_GETRESULT},
+                    {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+                    {.session = 1, .function = HRNPQ_CLEAR},
+                    {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+                    // pg-1 validate query
+                    {.session = 1, .function = HRNPQ_SENDQUERY, .param =
+                        "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"
+                            " (select setting from pg_settings where name = 'data_directory')::text\"]",
+                        .resultInt = 1},
+                    {.session = 1, .function = HRNPQ_CONSUMEINPUT},
+                    {.session = 1, .function = HRNPQ_ISBUSY},
+                    {.session = 1, .function = HRNPQ_GETRESULT},
+                    {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+                    {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
+                    {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 2},
+                    {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+                    {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
+                    {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "80417"},
+                    {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "/pgdata"},
+                    {.session = 1, .function = HRNPQ_CLEAR},
+                    {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+
+                    // pg-1 disconnect
+                    {.session = 1, .function = HRNPQ_FINISH},
+
+                    {.function = NULL}
+                });
+
+                // Create server
+                ProtocolServer *server = NULL;
+
+                TEST_ASSIGN(server, protocolServerNew(strNew("db test server"), strNew("test"), read, write), "create server");
+                TEST_RESULT_VOID(protocolServerHandlerAdd(server, dbProtocol), "add handler");
+                TEST_RESULT_VOID(protocolServerProcess(server), "run process loop");
+                TEST_RESULT_VOID(protocolServerFree(server), "free server");
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                ioWriteOpen(write);
+
+                // Create client
+                ProtocolClient *client = NULL;
+                Db *db = NULL;
+
+                TEST_ASSIGN(client, protocolClientNew(strNew("db test client"), strNew("test"), read, write), "create client");
+
+                // Open and free database
+                TEST_ASSIGN(db, dbNew(NULL, client), "create db");
+                TEST_RESULT_VOID(dbOpen(db), "open db");
+                TEST_RESULT_VOID(dbFree(db), "free db");
+
+                // Open the database, but don't free it so the server is force to do it on shutdown
+                TEST_ASSIGN(db, dbNew(NULL, client), "create db");
+                TEST_RESULT_VOID(dbOpen(db), "open db");
+                TEST_RESULT_VOID(memContextCallbackClear(db->memContext), "clear context so close is not called");
+
+                TEST_RESULT_VOID(protocolClientFree(client), "free client");
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
+    }
 
     // *****************************************************************************************************************************
     if (testBegin("dbGet()"))

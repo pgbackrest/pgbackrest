@@ -85,6 +85,11 @@ dbQuery(Db *this, const String *query)
 
     if (this->remoteClient != NULL)
     {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY_STR);
+        protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
+        protocolCommandParamAdd(command, VARSTR(query));
+
+        result = varVarLst(protocolClientExecute(this->remoteClient, command, true));
     }
     else
         result = pgClientQuery(this->client, query);

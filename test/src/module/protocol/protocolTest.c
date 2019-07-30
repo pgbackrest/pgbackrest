@@ -95,7 +95,7 @@ testRun(void)
         strLstAddZ(argList, "backup");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_BOOL(pgIsLocal(), true, "pg is local");
+        TEST_RESULT_BOOL(pgIsLocal(1), true, "pg is local");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -110,7 +110,7 @@ testRun(void)
         strLstAddZ(argList, "local");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_BOOL(pgIsLocal(), false, "pg is remote");
+        TEST_RESULT_BOOL(pgIsLocal(7), false, "pg is remote");
     }
 
     // *****************************************************************************************************************************
@@ -165,7 +165,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 0), "|")),
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 0, 0), "|")),
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
@@ -188,7 +188,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1), "|")),
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1, 0), "|")),
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
@@ -210,7 +210,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 66), "|")),
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 66, 0), "|")),
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
@@ -229,7 +229,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1), "|")),
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 0), "|")),
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg1-host"
@@ -252,7 +252,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1), "|")),
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 1), "|")),
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg2-host"
@@ -277,7 +277,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1), "|")),
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 2), "|")),
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg3-host"
@@ -763,8 +763,8 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolFree(), "free protocol objects before anything has been created");
 
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo), "get remote protocol");
-        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo), client, "get remote cached protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
+        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 1), client, "get remote cached protocol");
         TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
         TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
@@ -794,7 +794,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo), "get remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
         TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass after");
 
@@ -820,7 +820,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_PTR(cfgOptionStr(cfgOptRepoCipherPass), NULL, "check cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo), "get remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "dcba", "check cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
@@ -838,7 +838,7 @@ testRun(void)
         strLstAddZ(argList, "backup");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg), "get remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 1), "get remote protocol");
 
         // Start local protocol
         // -------------------------------------------------------------------------------------------------------------------------
