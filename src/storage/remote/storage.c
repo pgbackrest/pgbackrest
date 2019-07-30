@@ -264,7 +264,7 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse)
 }
 
 /***********************************************************************************************************************************
-Sync a path.  There's no need for this on S3 so just return success.
+Sync a path
 ***********************************************************************************************************************************/
 static void
 storageRemotePathSync(THIS_VOID, const String *path)
