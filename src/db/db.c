@@ -8,6 +8,7 @@ Database Client
 #include "common/memContext.h"
 #include "common/object.h"
 #include "db/db.h"
+#include "db/protocol.h"
 #include "postgres/version.h"
 
 /***********************************************************************************************************************************
@@ -16,7 +17,9 @@ Object type
 struct Db
 {
     MemContext *memContext;
-    PgClient *client;
+    PgClient *client;                                               // Local PostgreSQL client
+    ProtocolClient *remoteClient;                                   // Protocol client for remote db queries
+    unsigned int remoteIdx;                                         // Index provided by the remote on open for subsequent calls
 
     unsigned int pgVersion;                                         // Version as reported by the database
     const String *pgDataPath;                                       // Data directory reported by the database
@@ -25,16 +28,29 @@ struct Db
 OBJECT_DEFINE_FREE(DB);
 
 /***********************************************************************************************************************************
+Close protocol connection
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(DB, LOG, logLevelTrace)
+{
+    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE_STR);
+    protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
+
+    protocolClientExecute(this->remoteClient, command, false);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
+
+/***********************************************************************************************************************************
 Create object
 ***********************************************************************************************************************************/
 Db *
-dbNew(PgClient *client)
+dbNew(PgClient *client, ProtocolClient *remoteClient)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, client);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, remoteClient);
     FUNCTION_LOG_END();
 
-    ASSERT(client != NULL);
+    ASSERT((client != NULL && remoteClient == NULL) || (client == NULL && remoteClient != NULL));
 
     Db *this = NULL;
 
@@ -44,10 +60,36 @@ dbNew(PgClient *client)
         this->memContext = memContextCurrent();
 
         this->client = pgClientMove(client, this->memContext);
+        this->remoteClient = remoteClient;
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(DB, this);
+}
+
+/***********************************************************************************************************************************
+Execute a query
+***********************************************************************************************************************************/
+static VariantList *
+dbQuery(Db *this, const String *query)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(STRING, query);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(query != NULL);
+
+    VariantList *result = NULL;
+
+    if (this->remoteClient != NULL)
+    {
+    }
+    else
+        result = pgClientQuery(this->client, query);
+
+    FUNCTION_LOG_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -64,7 +106,7 @@ dbExec(Db *this, const String *command)
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    CHECK(pgClientQuery(this->client, command) == NULL);
+    CHECK(dbQuery(this, command) == NULL);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -83,7 +125,7 @@ dbQueryColumn(Db *this, const String *query)
     ASSERT(this != NULL);
     ASSERT(query != NULL);
 
-    VariantList *result = pgClientQuery(this->client, query);
+    VariantList *result = dbQuery(this, query);
 
     CHECK(varLstSize(result) == 1);
     CHECK(varLstSize(varVarLst(varLstGet(result, 0))) == 1);
@@ -105,7 +147,7 @@ dbQueryRow(Db *this, const String *query)
     ASSERT(this != NULL);
     ASSERT(query != NULL);
 
-    VariantList *result = pgClientQuery(this->client, query);
+    VariantList *result = dbQuery(this, query);
 
     CHECK(varLstSize(result) == 1);
 
@@ -127,7 +169,16 @@ dbOpen(Db *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Open the connection
-        pgClientOpen(this->client);
+        if (this->remoteClient != NULL)
+        {
+            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_OPEN_STR);
+            this->remoteIdx = varUIntForce(protocolClientExecute(this->remoteClient, command, true));
+
+            // Set a callback to notify the remote when a connection is closed
+            memContextCallbackSet(this->memContext, dbFreeResource, this);
+        }
+        else
+            pgClientOpen(this->client);
 
         // Set search_path to prevent overrides of the functions we expect to call.  All queries should also be schema-qualified, but
         // this is an extra protection.
@@ -183,23 +234,6 @@ dbIsStandby(Db *this)
 }
 
 /***********************************************************************************************************************************
-Close the db connection
-***********************************************************************************************************************************/
-void
-dbClose(Db *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(DB, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    pgClientClose(this->client);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Move the db object to a new context
 ***********************************************************************************************************************************/
 Db *
@@ -224,5 +258,7 @@ Render as string for logging
 String *
 dbToLog(const Db *this)
 {
-    return strNewFmt("{client: %s}", strPtr(pgClientToLog(this->client)));
+    return strNewFmt(
+        "{client: %s, remoteClient: %s}", this->client == NULL ? NULL_Z : strPtr(pgClientToLog(this->client)),
+        this->remoteClient == NULL ? NULL_Z : strPtr(protocolClientToLog(this->remoteClient)));
 }

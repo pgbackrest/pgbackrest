@@ -7,6 +7,7 @@ Database Helper
 // #include "common/memContext.h"
 #include "config/config.h"
 #include "db/helper.h"
+#include "protocol/helper.h"
 
 /***********************************************************************************************************************************
 Get specified cluster
@@ -18,10 +19,18 @@ dbGetId(unsigned int pgId)
         FUNCTION_LOG_PARAM(UINT, pgId);
     FUNCTION_LOG_END();
 
-    Db *result = dbNew(
-        pgClientNew(
-            cfgOptionStr(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), strNew("postgres"), NULL,
-            (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)));
+    Db *result = NULL;
+
+    if (pgIsLocal(pgId))
+    {
+        result = dbNew(
+            pgClientNew(
+                cfgOptionStr(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), strNew("postgres"), NULL,
+                (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
+            NULL);
+    }
+    else
+        result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgId));
 
     FUNCTION_LOG_RETURN(DB, result);
 }
@@ -44,17 +53,18 @@ DbGetResult dbGet(bool primaryOnly)
         {
             if (cfgOptionTest(cfgOptPgHost + pgIdx) || cfgOptionTest(cfgOptPgPath + pgIdx))
             {
-                Db *db = dbGetId(pgIdx + 1);
+                Db *db = NULL;
                 bool standby = false;
 
                 TRY_BEGIN()
                 {
+                    db = dbGetId(pgIdx + 1);
                     dbOpen(db);
                     standby = dbIsStandby(db);
                 }
                 CATCH_ANY()
                 {
-                    dbClose(db);
+                    dbFree(db);
                     db = NULL;
 
                     LOG_WARN("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
@@ -75,7 +85,7 @@ DbGetResult dbGet(bool primaryOnly)
                         }
                         // Else close the connection since we don't need it
                         else
-                            dbClose(db);
+                            dbFree(db);
                     }
                     // Else is a primary
                     else

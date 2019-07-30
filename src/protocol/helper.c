@@ -72,20 +72,13 @@ repoIsLocal(void)
 Is pg local?
 ***********************************************************************************************************************************/
 bool
-pgIsLocal(void)
+pgIsLocal(unsigned int hostId)
 {
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(!cfgOptionTest(cfgOptPgHost + (cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) - 1 : 0)));
-}
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, hostId);
+    FUNCTION_LOG_END();
 
-/***********************************************************************************************************************************
-Get host id if host-id option is set, otherwise return default id 1
-***********************************************************************************************************************************/
-unsigned int
-protocolHostId(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1);
+    FUNCTION_LOG_RETURN(BOOL, !cfgOptionTest(cfgOptPgHost + hostId - 1));
 }
 
 /***********************************************************************************************************************************
@@ -191,18 +184,16 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolI
 Get the command line required for remote protocol execution
 ***********************************************************************************************************************************/
 static StringList *
-protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protocolId)
+protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protocolId, unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, protocolId);
+        FUNCTION_LOG_PARAM(UINT, hostIdx);
     FUNCTION_LOG_END();
 
     // Is this a repo remote?
     bool isRepo = protocolStorageType == protocolStorageTypeRepo;
-
-    // Get the host index.  Default to 0 if host-id is not set.
-    unsigned int hostIdx = isRepo ? 0 : protocolHostId() - 1;
 
     // Fixed parameters for ssh command
     StringList *result = strLstNew();
@@ -306,17 +297,15 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 Get the remote protocol client
 ***********************************************************************************************************************************/
 ProtocolClient *
-protocolRemoteGet(ProtocolStorageType protocolStorageType)
+protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
+        FUNCTION_LOG_PARAM(UINT, hostId);
     FUNCTION_LOG_END();
 
     // Is this a repo remote?
     bool isRepo = protocolStorageType == protocolStorageTypeRepo;
-
-    // Get the host index.  Default to 0 if host-id is not set.
-    unsigned int hostIdx = isRepo ? 0 : protocolHostId() - 1;
 
     protocolHelperInit();
 
@@ -355,11 +344,11 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            unsigned int optHost = isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx;
+            unsigned int optHost = isRepo ? cfgOptRepoHost : cfgOptPgHost + hostId - 1;
 
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
-                cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, protocolId),
+                cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, protocolId, hostId - 1),
                 strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strPtr(cfgOptionStr(optHost))),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);

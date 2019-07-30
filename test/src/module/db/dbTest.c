@@ -160,7 +160,6 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--pg1-host=pg1-host");
         strLstAddZ(argList, "--pg1-path=/path/to/pg1");
         strLstAddZ(argList, "--pg8-path=/path/to/pg2");
         strLstAddZ(argList, "--pg8-port=5433");
@@ -369,11 +368,13 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--pg1-host=pg1-host");
         strLstAddZ(argList, "--pg1-path=/path/to/pg1");
-        strLstAddZ(argList, "--pg4-path=/path/to/pg2");
+        strLstAddZ(argList, "--pg4-path=/path/to/pg4");
         strLstAddZ(argList, "--pg4-port=5433");
-        strLstAddZ(argList, "--pg8-path=/path/to/pg2");
+        strLstAddZ(argList, "--pg5-host=localhost");
+        strLstAdd(argList, strNewFmt("--pg5-host-user=%s", testUser()));
+        strLstAddZ(argList, "--pg5-path=/path/to/pg5");
+        strLstAddZ(argList, "--pg8-path=/path/to/pg8");
         strLstAddZ(argList, "--pg8-port=5434");
         strLstAddZ(argList, "backup");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
@@ -502,8 +503,10 @@ testRun(void)
         });
 
         TEST_ASSIGN(result, dbGet(false), "get primary and standy");
-        harnessLogResult(
-            "P00   WARN: unable to check pg-4: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error");
+        harnessLogResultRegExp(
+            "P00   WARN: unable to check pg-4: \\[DbConnectError\\] unable to connect to 'dbname='postgres' port=5433': error\n"
+            "P00   WARN: unable to check pg-5: \\[DbConnectError\\] raised from remote-0 protocol on 'localhost':"
+                " unable to connect to 'dbname='postgres' port=5432': could not connect to server: No such file or directory.*");
 
         TEST_RESULT_INT(result.primaryId, 8, "    check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");

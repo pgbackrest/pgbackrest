@@ -117,6 +117,8 @@ By convention all string constant identifiers are appended with _STR.
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
+#define NULL_Z                                                     "NULL"
+
 STRING_DECLARE(BRACKETL_STR);
 STRING_DECLARE(BRACKETR_STR);
 STRING_DECLARE(CR_STR);
