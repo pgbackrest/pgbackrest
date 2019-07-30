@@ -158,25 +158,25 @@ sub process
                 $strResultMessage = exceptionMessage($EVAL_ERROR);
             };
         }
-
-        # If able to get the archive id then force archiving and check the arrival of the archived WAL file with the time specified
-        if ($iResult == 0 && !$oDb->isStandby())
-        {
-            $strWalSegment = $oDb->walSwitch();
-
-            eval
-            {
-                $strArchiveFile = walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment, $iArchiveTimeout);
-                return true;
-            }
-            # If this is a backrest error then capture the code and message else confess
-            or do
-            {
-                # Capture error information
-                $iResult = exceptionCode($EVAL_ERROR);
-                $strResultMessage = exceptionMessage($EVAL_ERROR);
-            };
-        }
+        #
+        # # If able to get the archive id then force archiving and check the arrival of the archived WAL file with the time specified
+        # if ($iResult == 0 && !$oDb->isStandby())
+        # {
+        #     $strWalSegment = $oDb->walSwitch();
+        #
+        #     eval
+        #     {
+        #         $strArchiveFile = walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment, $iArchiveTimeout);
+        #         return true;
+        #     }
+        #     # If this is a backrest error then capture the code and message else confess
+        #     or do
+        #     {
+        #         # Capture error information
+        #         $iResult = exceptionCode($EVAL_ERROR);
+        #         $strResultMessage = exceptionMessage($EVAL_ERROR);
+        #     };
+        # }
 
         # Reset the console logging
         logLevelSet(undef, cfgOption(CFGOPT_LOG_LEVEL_CONSOLE));
@@ -186,16 +186,16 @@ sub process
     # Else, log the error.
     if ($iResult == 0)
     {
-        if (!$oDb->isStandby())
-        {
-            &log(INFO,
-            "WAL segment ${strWalSegment} successfully stored in the archive at '" .
-            storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/$strArchiveId/${strArchiveFile}") . "'");
-        }
-        else
-        {
-            &log(INFO, 'switch ' . $oDb->walId() . ' cannot be performed on the standby, all other checks passed successfully');
-        }
+        # if (!$oDb->isStandby())
+        # {
+        #     &log(INFO,
+        #     "WAL segment ${strWalSegment} successfully stored in the archive at '" .
+        #     storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/$strArchiveId/${strArchiveFile}") . "'");
+        # }
+        # else
+        # {
+        #     &log(INFO, 'switch ' . $oDb->walId() . ' cannot be performed on the standby, all other checks passed successfully');
+        # }
     }
     else
     {

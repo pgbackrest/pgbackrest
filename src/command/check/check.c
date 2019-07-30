@@ -8,6 +8,7 @@ Check Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "db/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -20,6 +21,10 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        DbGetResult dbGroup = dbGet(!cfgOptionBool(cfgOptBackupStandby));
+
+        if (cfgOptionBool(cfgOptBackupStandby))
+            dbFree(dbGroup.standby);
     }
     MEM_CONTEXT_TEMP_END();
 

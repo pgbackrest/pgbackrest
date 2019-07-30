@@ -11,6 +11,7 @@ usage examples.
 
 #include <libpq-fe.h>
 
+#include "common/macro.h"
 #include "common/time.h"
 
 /***********************************************************************************************************************************
@@ -35,6 +36,84 @@ Function constants
 #define HRNPQ_RESULTSTATUS                                          "PQresultStatus"
 #define HRNPQ_SENDQUERY                                             "PQsendQuery"
 #define HRNPQ_STATUS                                                "PQstatus"
+
+/***********************************************************************************************************************************
+Macros for defining repetive function groups
+***********************************************************************************************************************************/
+#define HRNPQ_MACRO_OPEN(sessionParam, connectParam)                                                                               \
+    {.session = sessionParam, .function = HRNPQ_CONNECTDB, .param = "[\"" connectParam "\"]"},                                     \
+    {.session = sessionParam, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK}
+
+#define HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam)                                                                                  \
+    {.session = sessionParam, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},       \
+    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
+    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
+    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},                                      \
+    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+
+#define HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, versionParam, pgPathParam)                                                        \
+    {.session = sessionParam, .function = HRNPQ_SENDQUERY, .param =                                                                \
+        "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"                                     \
+            " (select setting from pg_settings where name = 'data_directory')::text\"]",                                           \
+        .resultInt = 1},                                                                                                           \
+    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
+    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
+    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
+    {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
+    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 2},                                                          \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},                               \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},                              \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = STRINGIFY(versionParam)},                   \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = pgPathParam},                               \
+    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+
+#define HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam, applicationNameParam)                                                       \
+    {.session = sessionParam, .function = HRNPQ_SENDQUERY, .param = "[\"set application_name = '" applicationNameParam "'\"]",     \
+        .resultInt = 1},                                                                                                           \
+    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
+    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
+    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},                                      \
+    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+
+#define HRNPQ_MACRO_IS_STANDBY_QUERY(sessionParam, standbyParam)                                                                   \
+    {.session = sessionParam, .function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_is_in_recovery()\"]", .resultInt = 1},\
+    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
+    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
+    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
+    {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
+    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 1},                                                          \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_BOOL},                              \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = STRINGIFY(standbyParam)},                   \
+    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+
+#define HRNPQ_MACRO_CLOSE(sessionParam)                                                                                            \
+    {.session = sessionParam, .function = HRNPQ_FINISH}
+
+#define HRNPQ_MACRO_DONE()                                                                                                         \
+    {.function = NULL}
+
+/***********************************************************************************************************************************
+Macros to simplify dbOpen() for specific database versions
+***********************************************************************************************************************************/
+#define HRNPQ_MACRO_OPEN_84(sessionParam, connectParam, pgPathParam)                                                               \
+    HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
+    HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
+    HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, PG_VERSION_84, pgPathParam)
+
+#define HRNPQ_MACRO_OPEN_92(sessionParam, connectParam, pgPathParam, applicationNameParam, standbyParam)                           \
+    HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
+    HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
+    HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, PG_VERSION_92, pgPathParam),                                                          \
+    HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam, applicationNameParam),                                                          \
+    HRNPQ_MACRO_IS_STANDBY_QUERY(sessionParam, standbyParam)
 
 /***********************************************************************************************************************************
 Data type constants
