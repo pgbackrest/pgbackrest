@@ -25,6 +25,7 @@ Functions
 ***********************************************************************************************************************************/
 void dbOpen(Db *this);
 bool dbIsStandby(Db *this);
+String *dbWalSwitch(Db *this);
 void dbClose(Db *this);
 
 Db *dbMove(Db *this, MemContext *parentNew);

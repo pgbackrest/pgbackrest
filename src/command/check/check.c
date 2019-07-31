@@ -26,6 +26,9 @@ cmdCheck(void)
 
         // Free the standby connection immediately since we don't need it for anything
         dbFree(dbGroup.standby);
+
+        // Perform a WAL switch and make sure the WAL is archived
+        dbWalSwitch(dbGroup.primary);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -15,6 +15,12 @@ PostgreSQL Interface
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+Defines for various Postgres paths and files
+***********************************************************************************************************************************/
+STRING_EXTERN(PG_NAME_WAL_STR,                                      PG_NAME_WAL);
+STRING_EXTERN(PG_NAME_XLOG_STR,                                     PG_NAME_XLOG);
+
+/***********************************************************************************************************************************
 Define default wal segment size
 
 Before PostgreSQL 11 WAL segment size could only be changed at compile time and is not known to be well-tested, so only the default
@@ -411,6 +417,34 @@ pgWalFromFile(const String *walFile)
 
     FUNCTION_LOG_RETURN(PG_WAL, result);
 }
+
+/***********************************************************************************************************************************
+Get WAL name (wal/xlog) for a PostgreSQL version
+***********************************************************************************************************************************/
+PgWal
+pgWalName(unsigned int pgVersion)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_END();
+
+    ASSERT(walFile != NULL);
+
+    PgWal result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Read WAL segment header
+        Buffer *walBuffer = storageGetP(storageNewReadNP(storageLocal(), walFile), .exactSize = PG_WAL_HEADER_SIZE);
+
+        result = pgWalFromBuffer(walBuffer);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PG_WAL, result);
+}
+
+const String *walName(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
 Create pg_control for testing
