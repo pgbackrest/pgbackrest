@@ -21,10 +21,11 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Get the primary/standby connections (standby is only required if backup from standby is enabled)
         DbGetResult dbGroup = dbGet(!cfgOptionBool(cfgOptBackupStandby));
 
-        if (cfgOptionBool(cfgOptBackupStandby))
-            dbFree(dbGroup.standby);
+        // Free the standby connection immediately since we don't need it for anything
+        dbFree(dbGroup.standby);
     }
     MEM_CONTEXT_TEMP_END();
 
