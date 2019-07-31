@@ -51,6 +51,7 @@ testRun(void)
                     HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
                     HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, "/pgdata"),
+                    HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
                     HRNPQ_MACRO_CLOSE(1),
 
                     HRNPQ_MACRO_DONE()
@@ -87,6 +88,7 @@ testRun(void)
                 // Open the database, but don't free it so the server is force to do it on shutdown
                 TEST_ASSIGN(db, dbNew(NULL, client, strNew("test")), "create db");
                 TEST_RESULT_VOID(dbOpen(db), "open db");
+                TEST_RESULT_STR(strPtr(dbWalSwitch(db)), "000000030000000200000003", "    wal switch");
                 TEST_RESULT_VOID(memContextCallbackClear(db->memContext), "clear context so close is not called");
 
                 TEST_RESULT_VOID(protocolClientFree(client), "free client");
@@ -197,6 +199,28 @@ testRun(void)
 
         TEST_ERROR(dbGet(false, true), DbConnectError, "unable to find primary cluster - cannot proceed");
 
+        // Two standbys and primary not required
+        // -------------------------------------------------------------------------------------------------------------------------
+        harnessPqScriptSet((HarnessPq [])
+        {
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true),
+            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", "/pgdata", true),
+
+            HRNPQ_MACRO_CLOSE(8),
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_ASSIGN(result, dbGet(false, false), "get standbys");
+
+        TEST_RESULT_INT(result.primaryId, 0, "    check primary id");
+        TEST_RESULT_BOOL(result.primary == NULL, true, "    check primary");
+        TEST_RESULT_INT(result.standbyId, 1, "    check standby id");
+        TEST_RESULT_BOOL(result.standby != NULL, true, "    check standby");
+
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
         // Primary and standby found
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -226,6 +250,9 @@ testRun(void)
 
             HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5434", "/pgdata", false),
 
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(8, "2/3"),
+            HRNPQ_MACRO_WAL_SWITCH(8, "xlog", "000000010000000200000003"),
+
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
 
@@ -240,6 +267,7 @@ testRun(void)
 
         TEST_RESULT_INT(result.primaryId, 8, "    check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
+        TEST_RESULT_STR(strPtr(dbWalSwitch(result.primary)), "000000010000000200000003", "    wal switch");
         TEST_RESULT_INT(result.standbyId, 1, "    check standby id");
         TEST_RESULT_BOOL(result.standby != NULL, true, "    check standby");
 

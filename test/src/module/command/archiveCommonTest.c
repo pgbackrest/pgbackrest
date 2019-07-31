@@ -7,6 +7,7 @@ Test Archive Common
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessFork.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -200,16 +201,35 @@ testRun(void)
 
         storagePathCreateNP(storageTest, strNew("archive/db/9.6-2/1234567812345678"));
         TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no segment");
+        TEST_RESULT_PTR(
+            walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 500), NULL,
+            "no segment after 500ms");
 
-        storagePutNP(
-            storageNewWriteNP(
-                storageTest,
-                strNew("archive/db/9.6-2/1234567812345678/123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
-            NULL);
+        // Check timeout by making the wal segment appear after 250ms
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, false)
+            {
+                sleepMSec(250);
 
-        TEST_RESULT_STR(
-            strPtr(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0)),
-            "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "found segment");
+                storagePutNP(
+                    storageNewWriteNP(
+                        storageTest,
+                        strNew(
+                            "archive/db/9.6-2/1234567812345678/123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+                    NULL);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                TEST_RESULT_STR(
+                    strPtr(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 1000)),
+                    "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "found segment");
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
 
         storagePutNP(
             storageNewWriteNP(

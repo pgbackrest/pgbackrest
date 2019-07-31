@@ -95,6 +95,13 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("pgWalName()"))
+    {
+        TEST_RESULT_STR(strPtr(pgWalName(PG_VERSION_96)), "xlog", "check xlog name");
+        TEST_RESULT_STR(strPtr(pgWalName(PG_VERSION_10)), "wal", "check wal name");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("pgWalFromBuffer() and pgWalFromFile()"))
     {
         String *walFile = strNewFmt("%s/0000000F0000000F0000000F", testPath());
@@ -156,7 +163,6 @@ testRun(void)
             strPtr(pgControlToLog(&pgControl)),
             "{version: 110000, systemId: 1030522662895, walSegmentSize: 16777216, pageChecksum: true}", "check log");
     }
-
 
     // *****************************************************************************************************************************
     if (testBegin("pgWalToLog()"))
