@@ -3,6 +3,7 @@ Check Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/archive/common.h"
 #include "command/check/check.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -41,12 +42,30 @@ cmdCheck(void)
         if (dbGroup.primary != NULL)
         {
             // Perform WAL switch
-            dbWalSwitch(dbGroup.primary);
+            const String *walSegment = dbWalSwitch(dbGroup.primary);
             dbFree(dbGroup.primary);
 
             // Wait for the WAL to appear in the repo
-            (void)archiveId;
-            // !!!
+            TimeMSec archiveTimeout = (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
+            const String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, walSegment, archiveTimeout);
+
+            if (walSegmentFile != NULL)
+            {
+                LOG_INFO(
+                    "WAL segment %s successfully archived at '%s'", strPtr(walSegment),
+                    strPtr(
+                        storagePath(
+                            storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walSegmentFile)))));
+            }
+            else
+            {
+                THROW_FMT(
+                    ArchiveTimeoutError,
+                    "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
+                        "HINT: Check the archive_command to ensure that all options are correct (especially --stanza).\n"
+                        "HINT: Check the PostgreSQL server log for errors.",
+                    strPtr(walSegment), archiveTimeout);
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();

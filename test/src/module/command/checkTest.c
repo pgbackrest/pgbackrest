@@ -2,8 +2,11 @@
 Test Check Command
 ***********************************************************************************************************************************/
 #include "postgres/version.h"
+#include "storage/helper.h"
+#include "storage/storage.intern.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessInfo.h"
 #include "common/harnessPq.h"
 
 /***********************************************************************************************************************************
@@ -17,38 +20,88 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdCheck()"))
     {
-        String *pg1Path = strNewFmt("--repo1-path=%s/repo", testPath());
+        String *pg1Path = strNewFmt("--pg1-path=%s/pg1", testPath());
 
-        // content = strNew
-        // (
-        //     "[db]\n"
-        //     "db-id=1\n"
-        //     "db-system-id=6569239123849665679\n"
-        //     "db-version=\"9.4\"\n"
-        //     "\n"
-        //     "[db:history]\n"
-        //     "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-
-        // Single primary
-        // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, pg1Path);
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg1", testPath()));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--archive-timeout=.5");
         strLstAddZ(argList, "check");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        // Set script
+        TEST_ERROR_FMT(
+            cmdCheck(), FileMissingError,
+            "unable to load info file '%s/repo/archive/test1/archive.info' or '%s/repo/archive/test1/archive.info.copy':\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
+            testPath(), testPath(), strPtr(strNewFmt("%s/repo/archive/test1/archive.info", testPath())),
+            strPtr(strNewFmt("%s/repo/archive/test1/archive.info.copy", testPath())));
+
+        // Create archive.info file
+        storagePutNP(
+            storageNewWriteNP(storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR),
+            harnessInfoChecksum(
+                strNew(
+                    "[db]\n"
+                    "db-id=1\n"
+                    "db-system-id=6569239123849665679\n"
+                    "db-version=\"9.2\"\n"
+                    "\n"
+                    "[db:history]\n"
+                    "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n")));
+
+        // Single primary
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Error when WAL segment not found
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_84(1, "dbname='postgres' port=5432", strPtr(pg1Path)),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
 
+        TEST_ERROR(
+            cmdCheck(), ArchiveTimeoutError,
+            "WAL segment 000000010000000100000001 was not archived before the 500ms timeout\n"
+            "HINT: Check the archive_command to ensure that all options are correct (especially --stanza).\n"
+            "HINT: Check the PostgreSQL server log for errors.");
+
+        // Create WAL segment
+        Buffer *buffer = bufNew(16 * 1024 * 1024);
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+        bufUsedSet(buffer, bufSize(buffer));
+
+        // WAL segment is found
+        harnessPqScriptSet((HarnessPq [])
+        {
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
+            HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
+            HRNPQ_MACRO_CLOSE(1),
+            HRNPQ_MACRO_DONE()
+        });
+
+        storagePutNP(
+            storageNewWriteNP(
+                storageRepoWrite(),
+                strNew(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+            buffer);
+
         TEST_RESULT_VOID(cmdCheck(), "check");
+        harnessLogResult(
+            strPtr(
+                strNewFmt(
+                    "P00   INFO: WAL segment 000000010000000100000001 successfully archived at '%s/repo/archive/test1/9.2-1/"
+                        "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+                    testPath())));
 
         // Single standby
         // -------------------------------------------------------------------------------------------------------------------------
@@ -56,7 +109,8 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, pg1Path);
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg1", testPath()));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--archive-timeout=.5");
         strLstAddZ(argList, "check");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 

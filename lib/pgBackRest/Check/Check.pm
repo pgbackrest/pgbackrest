@@ -159,57 +159,14 @@ sub process
             };
         }
 
-        # If able to get the archive id then force archiving and check the arrival of the archived WAL file with the time specified
-        if ($iResult == 0 && !$oDb->isStandby())
-        {
-            $strWalSegment = $oDb->walSwitch();
-
-            eval
-            {
-                $strArchiveFile = walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment, $iArchiveTimeout);
-                return true;
-            }
-            # If this is a backrest error then capture the code and message else confess
-            or do
-            {
-                # Capture error information
-                $iResult = exceptionCode($EVAL_ERROR);
-                $strResultMessage = exceptionMessage($EVAL_ERROR);
-            };
-        }
-
         # Reset the console logging
         logLevelSet(undef, cfgOption(CFGOPT_LOG_LEVEL_CONSOLE));
     }
 
-    # If the archiving was successful and backup.info check did not error in an unexpected way, then indicate success
-    # Else, log the error.
-    if ($iResult == 0)
+    # Log the captured error
+    if ($iResult != 0)
     {
-        if (!$oDb->isStandby())
-        {
-            &log(INFO,
-            "WAL segment ${strWalSegment} successfully stored in the archive at '" .
-            storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/$strArchiveId/${strArchiveFile}") . "'");
-        }
-        else
-        {
-            &log(INFO, 'switch ' . $oDb->walId() . ' cannot be performed on the standby, all other checks passed successfully');
-        }
-    }
-    else
-    {
-        # Log the captured error
         &log(ERROR, $strResultMessage, $iResult);
-
-        # If a WAL switch was attempted, then alert the user that the WAL that did not reach the archive
-        if (defined($strWalSegment) && !defined($strArchiveFile))
-        {
-            &log(WARN,
-                "WAL segment ${strWalSegment} did not reach the archive:" . (defined($strArchiveId) ? $strArchiveId : '') . "\n" .
-                "HINT: Check the archive_command to ensure that all options are correct (especially --stanza).\n" .
-                "HINT: Check the PostgreSQL server log for errors.");
-        }
     }
 
     # Return from function and log return values if any
