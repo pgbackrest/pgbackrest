@@ -196,10 +196,10 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678")), NULL, "no path");
+        TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no path");
 
         storagePathCreateNP(storageTest, strNew("archive/db/9.6-2/1234567812345678"));
-        TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678")), NULL, "no segment");
+        TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no segment");
 
         storagePutNP(
             storageNewWriteNP(
@@ -208,7 +208,7 @@ testRun(void)
             NULL);
 
         TEST_RESULT_STR(
-            strPtr(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"))),
+            strPtr(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0)),
             "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "found segment");
 
         storagePutNP(
@@ -218,7 +218,7 @@ testRun(void)
             NULL);
 
         TEST_ERROR(
-            walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678")),
+            walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0),
             ArchiveDuplicateError,
             "duplicates found in archive for WAL segment 123456781234567812345678:"
                 " 123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -226,7 +226,7 @@ testRun(void)
                 "\nHINT: are multiple primaries archiving to this stanza?");
 
         TEST_RESULT_STR(
-            walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678.partial")), NULL,
+            walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678.partial"), 0), NULL,
             "did not find partial segment");
     }
 

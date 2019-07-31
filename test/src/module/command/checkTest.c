@@ -19,6 +19,16 @@ testRun(void)
     {
         String *pg1Path = strNewFmt("--repo1-path=%s/repo", testPath());
 
+        // content = strNew
+        // (
+        //     "[db]\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.4\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+
         // Single primary
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
