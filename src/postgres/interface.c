@@ -421,30 +421,15 @@ pgWalFromFile(const String *walFile)
 /***********************************************************************************************************************************
 Get WAL name (wal/xlog) for a PostgreSQL version
 ***********************************************************************************************************************************/
-PgWal
+const String *
 pgWalName(unsigned int pgVersion)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
 
-    ASSERT(walFile != NULL);
-
-    PgWal result = {0};
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Read WAL segment header
-        Buffer *walBuffer = storageGetP(storageNewReadNP(storageLocal(), walFile), .exactSize = PG_WAL_HEADER_SIZE);
-
-        result = pgWalFromBuffer(walBuffer);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(PG_WAL, result);
+    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
 }
-
-const String *walName(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
 Create pg_control for testing

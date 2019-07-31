@@ -95,6 +95,20 @@ Macros for defining repetive function groups
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
+#define HRNPQ_MACRO_WAL_SWITCH(sessionParam, walNameParam, walFileNameParam)                                                       \
+    {.session = sessionParam, .function = HRNPQ_SENDQUERY,                                                                         \
+        .param = "[\"select pg_" walNameParam "file_name(pg_switch_" walNameParam "())::test\"]", .resultInt = 1},                 \
+    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
+    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
+    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
+    {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
+    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 1},                                                          \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_TEXT},                              \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = walFileNameParam},                          \
+    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+
 #define HRNPQ_MACRO_CLOSE(sessionParam)                                                                                            \
     {.session = sessionParam, .function = HRNPQ_FINISH}
 

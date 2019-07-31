@@ -30,11 +30,9 @@ testRun(void)
         // Set script
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
-            HRNPQ_MACRO_SET_SEARCH_PATH(1),
-            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, strPtr(pg1Path)),
+            HRNPQ_MACRO_OPEN_84(1, "dbname='postgres' port=5432", strPtr(pg1Path)),
+            HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
             HRNPQ_MACRO_CLOSE(1),
-
             HRNPQ_MACRO_DONE()
         });
 

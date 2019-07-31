@@ -29,6 +29,7 @@ cmdCheck(void)
 
         // Perform a WAL switch and make sure the WAL is archived
         dbWalSwitch(dbGroup.primary);
+        dbFree(dbGroup.primary);
     }
     MEM_CONTEXT_TEMP_END();
 
