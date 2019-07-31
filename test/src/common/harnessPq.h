@@ -13,6 +13,7 @@ usage examples.
 
 #include "common/macro.h"
 #include "common/time.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Function constants
@@ -38,7 +39,7 @@ Function constants
 #define HRNPQ_STATUS                                                "PQstatus"
 
 /***********************************************************************************************************************************
-Macros for defining repetive function groups
+Macros for defining groups of functions that always appear together
 ***********************************************************************************************************************************/
 #define HRNPQ_MACRO_OPEN(sessionParam, connectParam)                                                                               \
     {.session = sessionParam, .function = HRNPQ_CONNECTDB, .param = "[\"" connectParam "\"]"},                                     \

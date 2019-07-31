@@ -4,7 +4,6 @@ Database Helper
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/memContext.h"
 #include "config/config.h"
 #include "db/helper.h"
 #include "postgres/interface.h"
@@ -48,10 +47,11 @@ dbGetId(unsigned int pgId)
 /***********************************************************************************************************************************
 Get primary cluster or primary and standby cluster.
 ***********************************************************************************************************************************/
-DbGetResult dbGet(bool primaryOnly)
+DbGetResult dbGet(bool primaryOnly, bool primaryRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, primaryOnly);
+        FUNCTION_LOG_PARAM(BOOL, primaryRequired);
     FUNCTION_LOG_END();
 
     DbGetResult result = {0};
@@ -112,7 +112,7 @@ DbGetResult dbGet(bool primaryOnly)
         }
 
         // Error if no primary was found
-        if (result.primaryId == 0)
+        if (result.primaryId == 0 && primaryRequired)
             THROW(DbConnectError, "unable to find primary cluster - cannot proceed");
 
         dbMove(result.primary, MEM_CONTEXT_OLD());
