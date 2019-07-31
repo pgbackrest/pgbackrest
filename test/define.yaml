@@ -630,7 +630,7 @@ unit:
         total: 2
 
         coverage:
-          command/control/control: full
+          command/control/common: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: expire

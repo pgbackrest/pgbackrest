@@ -10,7 +10,7 @@ Archive Push Command
 #include "command/archive/push/file.h"
 #include "command/archive/push/protocol.h"
 #include "command/command.h"
-#include "command/control/control.h"
+#include "command/control/common.h"
 #include "common/debug.h"
 #include "common/fork.h"
 #include "common/log.h"

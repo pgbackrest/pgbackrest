@@ -587,11 +587,11 @@ src/command/command.h:
   class: core
   type: c/h
 
-src/command/control/control.c:
+src/command/control/common.c:
   class: core
   type: c
 
-src/command/control/control.h:
+src/command/control/common.h:
   class: core
   type: c/h
 
