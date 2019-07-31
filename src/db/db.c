@@ -267,7 +267,7 @@ dbWalSwitch(Db *this)
         // Request a WAL segment switch
         const char *walName = strPtr(pgWalName(this->pgVersion));
         const String *walFileName = varStr(
-            dbQueryColumn(this, strNewFmt("select pg_%sfile_name(pg_switch_%s())::test", walName, walName)));
+            dbQueryColumn(this, strNewFmt("select pg_%sfile_name(pg_switch_%s())::text", walName, walName)));
 
         // Copy WAL segment name to calling context
         memContextSwitch(MEM_CONTEXT_OLD());

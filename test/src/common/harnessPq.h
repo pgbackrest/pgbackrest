@@ -97,7 +97,7 @@ Macros for defining repetive function groups
 
 #define HRNPQ_MACRO_WAL_SWITCH(sessionParam, walNameParam, walFileNameParam)                                                       \
     {.session = sessionParam, .function = HRNPQ_SENDQUERY,                                                                         \
-        .param = "[\"select pg_" walNameParam "file_name(pg_switch_" walNameParam "())::test\"]", .resultInt = 1},                 \
+        .param = "[\"select pg_" walNameParam "file_name(pg_switch_" walNameParam "())::text\"]", .resultInt = 1},                 \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
     {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
