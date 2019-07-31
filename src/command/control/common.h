@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
-Command Control
+Common Handler for Control Commands
 ***********************************************************************************************************************************/
-#ifndef COMMAND_CONTROL_CONTROL_H
-#define COMMAND_CONTROL_CONTROL_H
+#ifndef COMMAND_CONTROL_COMMON_H
+#define COMMAND_CONTROL_COMMON_H
 
 #include "common/type/string.h"
 

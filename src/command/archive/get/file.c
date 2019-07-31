@@ -5,7 +5,7 @@ Archive Get File
 
 #include "command/archive/get/file.h"
 #include "command/archive/common.h"
-#include "command/control/control.h"
+#include "command/control/common.h"
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/decompress.h"
 #include "common/crypto/cipherBlock.h"
