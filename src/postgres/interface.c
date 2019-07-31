@@ -36,6 +36,11 @@ something far larger needed but <= the minimum read size on just about any syste
 #define PG_WAL_HEADER_SIZE                                          ((unsigned int)(512))
 
 /***********************************************************************************************************************************
+Name of default PostgreSQL database used for running all queries and commands
+***********************************************************************************************************************************/
+STRING_EXTERN(PG_DB_POSTGRES_STR,                                   PG_DB_POSTGRES);
+
+/***********************************************************************************************************************************
 PostgreSQL interface definitions
 
 Each supported version of PostgreSQL must have interface files named postgres/interface/vXXX.c/h that implement the functions

@@ -71,8 +71,9 @@ Macros for defining repetive function groups
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
-#define HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam, applicationNameParam)                                                       \
-    {.session = sessionParam, .function = HRNPQ_SENDQUERY, .param = "[\"set application_name = '" applicationNameParam "'\"]",     \
+#define HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam)                                                                             \
+    {.session = sessionParam, .function = HRNPQ_SENDQUERY,                                                                         \
+        .param = strPtr(strNewFmt("[\"set application_name = '" PROJECT_NAME " [%s]'\"]", cfgCommandName(cfgCommand()))),          \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
@@ -108,11 +109,11 @@ Macros to simplify dbOpen() for specific database versions
     HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
     HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, PG_VERSION_84, pgPathParam)
 
-#define HRNPQ_MACRO_OPEN_92(sessionParam, connectParam, pgPathParam, applicationNameParam, standbyParam)                           \
+#define HRNPQ_MACRO_OPEN_92(sessionParam, connectParam, pgPathParam, standbyParam)                                                 \
     HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
     HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
     HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, PG_VERSION_92, pgPathParam),                                                          \
-    HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam, applicationNameParam),                                                          \
+    HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam),                                                                                \
     HRNPQ_MACRO_IS_STANDBY_QUERY(sessionParam, standbyParam)
 
 /***********************************************************************************************************************************

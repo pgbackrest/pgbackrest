@@ -4,10 +4,12 @@ Database Helper
 #include "build.auto.h"
 
 #include "common/debug.h"
-// #include "common/memContext.h"
+#include "common/memContext.h"
 #include "config/config.h"
 #include "db/helper.h"
+#include "postgres/interface.h"
 #include "protocol/helper.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Get specified cluster
@@ -21,16 +23,24 @@ dbGetId(unsigned int pgId)
 
     Db *result = NULL;
 
-    if (pgIsLocal(pgId))
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = dbNew(
-            pgClientNew(
-                cfgOptionStr(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), strNew("postgres"), NULL,
-                (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
-            NULL);
+        const String *applicationName = strNewFmt(PROJECT_NAME " [%s]", cfgCommandName(cfgCommand()));
+
+        if (pgIsLocal(pgId))
+        {
+            result = dbNew(
+                pgClientNew(
+                    cfgOptionStr(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), PG_DB_POSTGRES_STR, NULL,
+                    (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
+                NULL, applicationName);
+        }
+        else
+            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgId), applicationName);
+
+        dbMove(result, MEM_CONTEXT_OLD());
     }
-    else
-        result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgId));
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(DB, result);
 }

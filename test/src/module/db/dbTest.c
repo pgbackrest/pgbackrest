@@ -80,12 +80,12 @@ testRun(void)
                 TEST_ASSIGN(client, protocolClientNew(strNew("db test client"), strNew("test"), read, write), "create client");
 
                 // Open and free database
-                TEST_ASSIGN(db, dbNew(NULL, client), "create db");
+                TEST_ASSIGN(db, dbNew(NULL, client, strNew("test")), "create db");
                 TEST_RESULT_VOID(dbOpen(db), "open db");
                 TEST_RESULT_VOID(dbFree(db), "free db");
 
                 // Open the database, but don't free it so the server is force to do it on shutdown
-                TEST_ASSIGN(db, dbNew(NULL, client), "create db");
+                TEST_ASSIGN(db, dbNew(NULL, client, strNew("test")), "create db");
                 TEST_RESULT_VOID(dbOpen(db), "open db");
                 TEST_RESULT_VOID(memContextCallbackClear(db->memContext), "clear context so close is not called");
 
@@ -131,7 +131,7 @@ testRun(void)
             HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
             HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, "/pgdata"),
-            HRNPQ_MACRO_SET_APPLICATION_NAME(1, "dude"),
+            HRNPQ_MACRO_SET_APPLICATION_NAME(1),
             HRNPQ_MACRO_IS_STANDBY_QUERY(1, true),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
@@ -186,8 +186,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", "dude", true),
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", "/pgdata", "dude", true),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true),
+            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", "/pgdata", true),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -216,7 +216,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", "dude", true),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true),
 
             // pg-4 error
             {.session = 4, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
@@ -224,7 +224,7 @@ testRun(void)
             {.session = 4, .function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
             {.session = 4, .function = HRNPQ_FINISH},
 
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5434", "/pgdata", "dude", false),
+            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5434", "/pgdata", false),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),

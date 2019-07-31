@@ -11,6 +11,7 @@ Db Protocol Handler
 #include "config/config.h"
 #include "db/protocol.h"
 #include "postgres/client.h"
+#include "postgres/interface.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -63,7 +64,7 @@ dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *
             {
                 // Only a single db is passed to the remote
                 PgClient *pgClient = pgClientNew(
-                    cfgOptionStr(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), strNew("postgres"), NULL,
+                    cfgOptionStr(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), PG_DB_POSTGRES_STR, NULL,
                     (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC));
                 pgClientOpen(pgClient);
 

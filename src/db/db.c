@@ -20,6 +20,7 @@ struct Db
     PgClient *client;                                               // Local PostgreSQL client
     ProtocolClient *remoteClient;                                   // Protocol client for remote db queries
     unsigned int remoteIdx;                                         // Index provided by the remote on open for subsequent calls
+    const String *applicationName;                                  // Used to identify this connection in PostgreSQL
 
     unsigned int pgVersion;                                         // Version as reported by the database
     const String *pgDataPath;                                       // Data directory reported by the database
@@ -43,11 +44,12 @@ OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 Create object
 ***********************************************************************************************************************************/
 Db *
-dbNew(PgClient *client, ProtocolClient *remoteClient)
+dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationName)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, client);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, remoteClient);
+        FUNCTION_LOG_PARAM(STRING, applicationName);
     FUNCTION_LOG_END();
 
     ASSERT((client != NULL && remoteClient == NULL) || (client == NULL && remoteClient != NULL));
@@ -61,6 +63,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient)
 
         this->client = pgClientMove(client, this->memContext);
         this->remoteClient = remoteClient;
+        this->applicationName = strDup(applicationName);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -209,7 +212,7 @@ dbOpen(Db *this)
         MEM_CONTEXT_END();
 
         if (this->pgVersion >= PG_VERSION_APPLICATION_NAME)
-            dbExec(this, strNewFmt("set application_name = '%s'", "dude"));
+            dbExec(this, strNewFmt("set application_name = '%s'", strPtr(this->applicationName)));
     }
     MEM_CONTEXT_TEMP_END();
 
