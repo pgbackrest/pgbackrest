@@ -123,6 +123,7 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(cmdCheck(), "check");
+        harnessLogResult("P00   INFO: switch wal not performed because no primary was found");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -67,6 +67,9 @@ cmdCheck(void)
                     strPtr(walSegment), archiveTimeout);
             }
         }
+        else
+            LOG_INFO("switch wal not performed because no primary was found");
+
     }
     MEM_CONTEXT_TEMP_END();
 

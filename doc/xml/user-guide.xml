@@ -2756,7 +2756,7 @@
 
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
-                    <exe-highlight>all other checks passed</exe-highlight>
+                    <exe-highlight>because no primary was found</exe-highlight>
                 </execute>
             </execute-list>
         </section>
