@@ -17,6 +17,17 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="sean0101n"/>
+                            <release-item-ideator id="tim.garton"/>
+                            <release-item-ideator id="jesper.st.john"/>
+                            <release-item-ideator id="ales.zeleny"/>
+                        </release-item-contributor-list>
+
+                        <p>Retry <proper>S3</proper> <id>RequestTimeTooSkewed</id> errors instead of immediately terminating.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="pavel.suderevsky"/>
                         </release-item-contributor-list>
 
@@ -7132,6 +7143,11 @@
             <contributor-id type="github">arogozin</contributor-id>
         </contributor>
 
+        <contributor id="ales.zeleny">
+            <contributor-name-display>Ale&amp;scaron; Zelen&amp;yacute;</contributor-name-display>
+            <contributor-id type="github">aleszeleny</contributor-id>
+        </contributor>
+
         <contributor id="andres.freund">
             <contributor-name-display>Andres Freund</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
@@ -7514,6 +7530,11 @@
             <contributor-id type="github">sfrazer</contributor-id>
         </contributor>
 
+        <contributor id="sean0101n">
+            <contributor-name-display>sean0101n</contributor-name-display>
+            <contributor-id type="github">sean0101n</contributor-id>
+        </contributor>
+
         <contributor id="sebastien.lardiere">
             <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
             <contributor-id type="github">slardiere</contributor-id>
@@ -7532,6 +7553,11 @@
         <contributor id="stephen.frost">
             <contributor-name-display>Stephen Frost</contributor-name-display>
             <contributor-id type="github">sfrost</contributor-id>
+        </contributor>
+
+        <contributor id="tim.garton">
+            <contributor-name-display>Tim Garton</contributor-name-display>
+            <contributor-id type="github">ralfthewise</contributor-id>
         </contributor>
 
         <contributor id="todd.vernick">
