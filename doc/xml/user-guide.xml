@@ -1089,7 +1089,7 @@
 
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
-                    <exe-highlight> successfully stored in the archive at </exe-highlight>
+                    <exe-highlight> successfully archived to </exe-highlight>
                 </execute>
             </execute-list>
 

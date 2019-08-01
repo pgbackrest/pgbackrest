@@ -52,7 +52,7 @@ cmdCheck(void)
             if (walSegmentFile != NULL)
             {
                 LOG_INFO(
-                    "WAL segment %s successfully archived at '%s'", strPtr(walSegment),
+                    "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
                     strPtr(
                         storagePath(
                             storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walSegmentFile)))));

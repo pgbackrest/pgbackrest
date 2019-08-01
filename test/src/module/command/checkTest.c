@@ -99,7 +99,7 @@ testRun(void)
         harnessLogResult(
             strPtr(
                 strNewFmt(
-                    "P00   INFO: WAL segment 000000010000000100000001 successfully archived at '%s/repo/archive/test1/9.2-1/"
+                    "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo/archive/test1/9.2-1/"
                         "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
                     testPath())));
 
