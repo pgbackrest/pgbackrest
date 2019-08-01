@@ -17,6 +17,17 @@ Defines for various Postgres paths and files
 #define PG_PATH_ARCHIVE_STATUS                                      "archive_status"
 #define PG_PATH_GLOBAL                                              "global"
 
+#define PG_NAME_WAL                                                 "wal"
+    STRING_DECLARE(PG_NAME_WAL_STR);
+#define PG_NAME_XLOG                                                "xlog"
+    STRING_DECLARE(PG_NAME_XLOG_STR);
+
+/***********************************************************************************************************************************
+Name of default PostgreSQL database used for running all queries and commands
+***********************************************************************************************************************************/
+#define PG_DB_POSTGRES                                              "postgres"
+    STRING_DECLARE(PG_DB_POSTGRES_STR);
+
 /***********************************************************************************************************************************
 Define default page size
 
@@ -68,6 +79,8 @@ String *pgVersionToStr(unsigned int version);
 
 PgWal pgWalFromFile(const String *walFile);
 PgWal pgWalFromBuffer(const Buffer *walBuffer);
+
+const String *pgWalName(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
 Test Functions

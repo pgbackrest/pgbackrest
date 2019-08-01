@@ -9,10 +9,7 @@ Postgres Client
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
-#include "common/time.h"
 #include "common/type/list.h"
-#include "common/type/string.h"
-#include "common/type/variantList.h"
 #include "common/wait.h"
 #include "postgres/client.h"
 
@@ -350,13 +347,34 @@ pgClientClose(PgClient *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    CHECK(this->connection != NULL);
 
-    memContextCallbackClear(this->memContext);
-    PQfinish(this->connection);
-    this->connection = NULL;
+    if (this->connection != NULL)
+    {
+        memContextCallbackClear(this->memContext);
+        PQfinish(this->connection);
+        this->connection = NULL;
+    }
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Move the pg client object to a new context
+***********************************************************************************************************************************/
+PgClient *
+pgClientMove(PgClient *this, MemContext *parentNew)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PG_CLIENT, this);
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
+    FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
+
+    if (this != NULL)
+        memContextMove(this->memContext, parentNew);
+
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

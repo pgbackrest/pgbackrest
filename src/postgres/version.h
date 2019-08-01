@@ -27,6 +27,21 @@ PostgreSQL version constants
 #define PG_VERSION_MAX                                              PG_VERSION_11
 
 /***********************************************************************************************************************************
+Version where various PostgreSQL capabilities were introduced
+***********************************************************************************************************************************/
+// application_name can be set to show the application name in pg_stat_activity
+#define PG_VERSION_APPLICATION_NAME                                 PG_VERSION_90
+
+// pg_is_in_recovery() supported
+#define PG_VERSION_HOT_STANDBY                                      PG_VERSION_91
+
+// pg_create_restore_point() supported
+#define PG_VERSION_RESTORE_POINT                                    PG_VERSION_91
+
+// xlog was renamed to wal
+#define PG_VERSION_WAL_RENAME                                       PG_VERSION_10
+
+/***********************************************************************************************************************************
 PostgreSQL version string constants for use in error messages
 ***********************************************************************************************************************************/
 #define PG_VERSION_83_STR                                            "8.3"

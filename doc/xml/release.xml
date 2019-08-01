@@ -75,6 +75,14 @@
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Add <code>Db</code> object to encapsulate <postgres/> queries and commands.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Add PostgreSQL query client.</p>
                     </release-item>
                 </release-development-list>
