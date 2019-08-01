@@ -3,6 +3,12 @@ Start Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/control/common.h"
+#include "common/debug.h"
+#include "config/config.h"
+#include "storage/helper.h"
+#include "storage/storage.h"
+
 void
 cmdStart(void)
 {
@@ -18,7 +24,7 @@ cmdStart(void)
         if (storageExistsNP(storageLocal(), stopFile))
         {
             // If the file cannot be removed, storageRemove will throw an error if the error is not ENOENT
-            storageRemoveNP(storageLocal(), stopFile);
+            storageRemoveNP(storageLocalWrite(), stopFile);
         }
         else
         {
