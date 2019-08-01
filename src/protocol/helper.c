@@ -326,11 +326,13 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
         MEM_CONTEXT_END();
     }
 
-    // Determine protocol id for the remote.  If the process option is set then use that since we want to remote protocol id to
-    // match the local protocol id (but we'll still save it in position 0 or we'd need to allocated up to process-max slots).
-    // Otherwise set to 0 since the remote is being started from a main process.
+    // Determine protocol id for the remote.  If the process option is set then use that since we want the remote protocol id to
+    // match the local protocol id. Otherwise set to 0 since the remote is being started from a main process and there should only
+    // be one remote per host.
     unsigned int protocolId = 0;
-    unsigned int protocolIdx = 0;
+
+    // Use hostId to determine where to cache to remote
+    unsigned int protocolIdx = hostId - 1;
 
     if (cfgOptionTest(cfgOptProcess))
         protocolId = cfgOptionUInt(cfgOptProcess);
