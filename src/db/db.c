@@ -305,6 +305,6 @@ String *
 dbToLog(const Db *this)
 {
     return strNewFmt(
-        "{client: %s, remoteClient: %s}", this->client == NULL ? NULL_Z : strPtr(pgClientToLog(this->client)),
-        this->remoteClient == NULL ? NULL_Z : strPtr(protocolClientToLog(this->remoteClient)));
+        "{client: %s, remoteClient: %s}", this->client == NULL ? "null" : strPtr(pgClientToLog(this->client)),
+        this->remoteClient == NULL ? "null" : strPtr(protocolClientToLog(this->remoteClient)));
 }
