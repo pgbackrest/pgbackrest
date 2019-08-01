@@ -45,7 +45,7 @@ dbGetId(unsigned int pgId)
 }
 
 /***********************************************************************************************************************************
-Get primary cluster or primary and standby cluster.
+Get primary cluster or primary and standby cluster
 ***********************************************************************************************************************************/
 DbGetResult dbGet(bool primaryOnly, bool primaryRequired)
 {

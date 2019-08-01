@@ -29,7 +29,7 @@ static struct
 } dbProtocolLocal;
 
 /***********************************************************************************************************************************
-Process config protocol requests
+Process db protocol requests
 ***********************************************************************************************************************************/
 bool
 dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)

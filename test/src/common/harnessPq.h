@@ -39,7 +39,7 @@ Function constants
 #define HRNPQ_STATUS                                                "PQstatus"
 
 /***********************************************************************************************************************************
-Macros for defining groups of functions that always appear together
+Macros for defining groups of functions that implement various queries and commands
 ***********************************************************************************************************************************/
 #define HRNPQ_MACRO_OPEN(sessionParam, connectParam)                                                                               \
     {.session = sessionParam, .function = HRNPQ_CONNECTDB, .param = "[\"" connectParam "\"]"},                                     \
@@ -56,8 +56,8 @@ Macros for defining groups of functions that always appear together
 
 #define HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, versionParam, pgPathParam)                                                        \
     {.session = sessionParam, .function = HRNPQ_SENDQUERY, .param =                                                                \
-        "[\"select (select setting from pg_settings where name = 'server_version_num')::int4,"                                     \
-            " (select setting from pg_settings where name = 'data_directory')::text\"]",                                           \
+        "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"                          \
+            " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text\"]",                                \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
@@ -98,7 +98,7 @@ Macros for defining groups of functions that always appear together
 
 #define HRNPQ_MACRO_CREATE_RESTORE_POINT(sessionParam, lsnParam)                                                                   \
     {.session = sessionParam,                                                                                                      \
-        .function = HRNPQ_SENDQUERY, .param = "[\"select pg_create_restore_point('pgBackRest Archive Check')::text\"]",            \
+        .function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_create_restore_point('pgBackRest Archive Check')::text\"]", \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
@@ -113,7 +113,8 @@ Macros for defining groups of functions that always appear together
 
 #define HRNPQ_MACRO_WAL_SWITCH(sessionParam, walNameParam, walFileNameParam)                                                       \
     {.session = sessionParam, .function = HRNPQ_SENDQUERY,                                                                         \
-        .param = "[\"select pg_" walNameParam "file_name(pg_switch_" walNameParam "())::text\"]", .resultInt = 1},                 \
+        .param = "[\"select pg_catalog.pg_" walNameParam "file_name(pg_catalog.pg_switch_" walNameParam "())::text\"]",            \
+        .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
     {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
