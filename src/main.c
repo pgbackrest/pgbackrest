@@ -126,6 +126,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdCheck:
                 {
+                    // Functionality is currently split between Perl and C
                     perlExec();
                     cmdCheck();
                     break;
