@@ -1084,6 +1084,7 @@ testRun(void)
         strLstAddZ(argList, "--archive-async");
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
+        strLstAdd(argList, strNewFmt("--pg2-path=%s/db2", testPath()));
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -1136,6 +1137,13 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(storage->path), strPtr(strNewFmt("%s/db", testPath())), "check pg write storage path");
         TEST_RESULT_BOOL(storage->write, true, "check pg write storage write");
+
+        // Pg storage from another host id
+        // -------------------------------------------------------------------------------------------------------------------------
+        cfgOptionSet(cfgOptHostId, cfgSourceParam, VARUINT64(2));
+        cfgOptionValidSet(cfgOptHostId, true);
+
+        TEST_RESULT_STR(strPtr(storagePgGet(false)->path), strPtr(strNewFmt("%s/db2", testPath())), "check pg-2 storage path");
 
         // Change the stanza to NULL, stanzaInit flag to false and make sure helper fails because stanza is required
         // -------------------------------------------------------------------------------------------------------------------------
