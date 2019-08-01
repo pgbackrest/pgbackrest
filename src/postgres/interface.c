@@ -15,6 +15,12 @@ PostgreSQL Interface
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+Defines for various Postgres paths and files
+***********************************************************************************************************************************/
+STRING_EXTERN(PG_NAME_WAL_STR,                                      PG_NAME_WAL);
+STRING_EXTERN(PG_NAME_XLOG_STR,                                     PG_NAME_XLOG);
+
+/***********************************************************************************************************************************
 Define default wal segment size
 
 Before PostgreSQL 11 WAL segment size could only be changed at compile time and is not known to be well-tested, so only the default
@@ -34,6 +40,11 @@ WAL header size.  It doesn't seem worth tracking the exact size of the WAL heade
 something far larger needed but <= the minimum read size on just about any system.
 ***********************************************************************************************************************************/
 #define PG_WAL_HEADER_SIZE                                          ((unsigned int)(512))
+
+/***********************************************************************************************************************************
+Name of default PostgreSQL database used for running all queries and commands
+***********************************************************************************************************************************/
+STRING_EXTERN(PG_DB_POSTGRES_STR,                                   PG_DB_POSTGRES);
 
 /***********************************************************************************************************************************
 PostgreSQL interface definitions
@@ -405,6 +416,19 @@ pgWalFromFile(const String *walFile)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(PG_WAL, result);
+}
+
+/***********************************************************************************************************************************
+Get WAL name (wal/xlog) for a PostgreSQL version
+***********************************************************************************************************************************/
+const String *
+pgWalName(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
 }
 
 /***********************************************************************************************************************************

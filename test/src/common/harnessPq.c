@@ -64,7 +64,8 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
         harnessPqScriptFail = true;
 
         THROW_FMT(
-            AssertError, "pq script [%u] expected function '%s' but got '%s'", harnessPqScriptIdx, result->function, function);
+            AssertError, "pq script [%u] expected function %s (%s) but got %s (%s)", harnessPqScriptIdx, result->function,
+            result->param == NULL ? "" : result->param, function, strPtr(paramStr));
     }
 
     // Check that parameters match

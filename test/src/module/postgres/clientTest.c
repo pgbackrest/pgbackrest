@@ -53,7 +53,15 @@ testRun(void)
 #endif
 
         PgClient *client = NULL;
-        TEST_ASSIGN(client, pgClientNew(NULL, 5433, strNew("postg '\\res"), NULL, 3000), "new client");
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(client, pgClientNew(NULL, 5433, strNew("postg '\\res"), NULL, 3000), "new client");
+            TEST_RESULT_VOID(pgClientMove(client, MEM_CONTEXT_OLD()), "move client");
+            TEST_RESULT_VOID(pgClientMove(NULL, MEM_CONTEXT_OLD()), "move null client");
+        }
+        MEM_CONTEXT_TEMP_END();
+
         TEST_ERROR(
             pgClientOpen(client), DbConnectError,
             "unable to connect to 'dbname='postg \\'\\\\res' port=5433': could not connect to server: No such file or directory\n"
@@ -284,6 +292,7 @@ testRun(void)
         });
 #endif
         TEST_RESULT_VOID(pgClientClose(client), "close client");
+        TEST_RESULT_VOID(pgClientClose(client), "close client again");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
