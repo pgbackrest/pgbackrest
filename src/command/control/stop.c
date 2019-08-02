@@ -43,7 +43,7 @@ cmdStop(void)
 
             // Close the file
             close(fileHandle);
-
+// CSHANG Should the force check be outside (or in a function) - I mean even if the stop file already exists, should we make any further attempt to scan for lock files and send term signals?
             // If --force was specified then send term signals to running processes
             if (cfgOptionBool(cfgOptForce))
             {
@@ -59,7 +59,7 @@ cmdStop(void)
                     // Skip stop file
                     if (strEndsWithZ(lockFile, ".stop"))
                         continue;
-
+// CSHANG Do we not need to specifically look for the extension ".lock"? Can there be anything else in the dir?
                     fileHandle = open(strPtr(lockFile), O_RDONLY, 0);
 
                     // If we cannot open the lock file for any reason then warn and continue to next file
@@ -109,8 +109,8 @@ cmdStop(void)
         else
         {
             LOG_WARN("stop file already exists for %s",
-                (cfgOptionTest(cfgOptStanza) ? strPtr(strNewFmt(" stanza %s", strPtr(cfgOptionStr(cfgOptStanza)))) :
-                " all stanzas"));
+                (cfgOptionTest(cfgOptStanza) ? strPtr(strNewFmt("stanza %s", strPtr(cfgOptionStr(cfgOptStanza)))) :
+                "all stanzas"));
         }
     }
     MEM_CONTEXT_TEMP_END();
