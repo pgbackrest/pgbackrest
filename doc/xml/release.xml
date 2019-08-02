@@ -59,6 +59,14 @@
 
                         <p>The <cmd>local</cmd> command for <cmd>backup</cmd> is implemented entirely in C.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>The <cmd>check</cmd> command is implemented partly in C.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
