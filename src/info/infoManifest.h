@@ -38,4 +38,63 @@ Constants
 #define INFO_MANIFEST_KEY_OPT_ONLINE                                "option-online"
     VARIANT_DECLARE(INFO_MANIFEST_KEY_OPT_ONLINE_VAR);
 
+/***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct InfoManifest InfoManifest;
+
+#include "common/crypto/hash.h"
+#include "storage/storage.h"
+
+/***********************************************************************************************************************************
+Path type
+***********************************************************************************************************************************/
+typedef struct InfoManifestPath
+{
+    const String *name;                                             // Path name
+    bool base:1;                                                    // Is the the base path?
+    bool db:1;                                                      // Does this path contain db relation files?
+    mode_t mode;                                                    // Directory mode
+    const String *user;                                             // User name
+    const String *group;                                            // Group name
+} InfoManifestPath;
+
+/***********************************************************************************************************************************
+File type
+***********************************************************************************************************************************/
+typedef struct InfoManifestFile
+{
+    const String *name;                                             // File name
+    const InfoManifestPath *pathInfo;                               // Path info for this file
+    bool exists:1;                                                  // Does the file still exist?
+    bool master:1;                                                  // Should this file be copied from master?
+    bool checksum:1;                                                // Does this file have page checksums?
+    unsigned char checksumSha1[HASH_TYPE_SHA1_SIZE];                // SHA1 checksum
+    const String *checksumError;                                    // JSON result when there are checksum errors
+    const String *user;                                             // User name
+    const String *groupId;                                          // Group name
+    uint64_t size;                                                  // Original size
+    uint64_t sizeRepo;                                              // Size in repo
+    time_t timestamp;                                               // Original timestamp
+} InfoManifestFile;
+
+/***********************************************************************************************************************************
+Constructor
+***********************************************************************************************************************************/
+InfoManifest *infoManifestNew(const Storage *storagePg, unsigned int pgVersion);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+// const InfoManifestPath *infoManifestPath(InfoManifest *this, unsigned int index);
+// unsigned int infoManifestPathSize(InfoManifest *this);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_INFO_MANIFEST_TYPE                                                                                            \
+    InfoManifest *
+#define FUNCTION_LOG_INFO_MANIFEST_FORMAT(value, buffer, bufferSize)                                                               \
+    objToLog(value, "InfoManifest", buffer, bufferSize)
+
 #endif

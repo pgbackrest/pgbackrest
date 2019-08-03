@@ -13,9 +13,19 @@ PostgreSQL Interface
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
 #define PG_FILE_PGCONTROL                                           "pg_control"
+#define PG_FILE_PGVERSION                                           "PG_VERSION"
 
 #define PG_PATH_ARCHIVE_STATUS                                      "archive_status"
 #define PG_PATH_GLOBAL                                              "global"
+#define PG_PATH_PGDYNSHMEM                                          "pg_dynshmem"
+#define PG_PATH_PGNOTIFY                                            "pg_notify"
+#define PG_PATH_PGREPLSLOT                                          "pg_replslot"
+#define PG_PATH_PGSERIAL                                            "pg_serial"
+#define PG_PATH_PGSNAPSHOTS                                         "pg_snapshots"
+#define PG_PATH_PGSTATTMP                                           "pg_stat_tmp"
+#define PG_PATH_PGSUBTRANS                                          "pg_subtrans"
+
+#define PG_PREFIX_PGSQLTMP                                          "pgsql_tmp"
 
 #define PG_NAME_WAL                                                 "wal"
     STRING_DECLARE(PG_NAME_WAL_STR);
