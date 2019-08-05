@@ -1,5 +1,305 @@
 [
     {
+        "commit": "3d3003e9ca6dd449ea16c6812d1cabc392c9d294",
+        "date": "2019-08-01 20:35:01 -0400",
+        "subject": "The check command is implemented partly in C.",
+        "body": "Implement switch WAL and archive check in C but leave the rest in Perl for now.\n\nThe main idea was to have some real integration tests for the new database code so the rest of the migration can wait."
+    },
+    {
+        "commit": "e4901d50d5e99168f7962b93f7a327e45f7b7fed",
+        "date": "2019-08-01 15:38:27 -0400",
+        "subject": "Add Db object to encapsulate PostgreSQL queries and commands.",
+        "body": "Migrate functionality from the Perl Db module to C. For now this is just enough to implement the WAL switch check.\n\nAdd the dbGet() helper function to get Db objects easily.\n\nCreate macros in harnessPq to make writing pq scripts easier by grouping commonly used functions together."
+    },
+    {
+        "commit": "f9e1f3a79823ee1bd6656e4f7a8fb23e735b8ccf",
+        "date": "2019-08-01 14:28:30 -0400",
+        "subject": "Retry S3 RequestTimeTooSkewed errors instead of immediately terminating.",
+        "body": "The cause of this error seems to be that a failed request takes so long that a subsequent retry at the http level uses outdated headers.\n\nWe're not sure if pgBackRest it to blame here (in one case a kernel downgrade fixed it, in another case an incorrect network driver was the problem) so add retries to hopefully deal with the issue if it is not too persistent.  If SSL_write() has long delays before reporting an error then this will obviously affect backup performance."
+    },
+    {
+        "commit": "2eb3c9f95f6e57072b65da81cb07a1268ebbf38e",
+        "date": "2019-08-01 09:58:24 -0400",
+        "subject": "Improve error handling for SSL_write().",
+        "body": "Error codes were not being caught for SSL_write() so it was hard to see exactly what was happening in error cases.  Report errors to aid in debugging.\n\nAlso add a retry for SSL_ERROR_WANT_READ.  Even though we have not been able to reproduce this case it is required by SSL_write() so go ahead and implement it."
+    },
+    {
+        "commit": "89c67287bcb8bc7884b5dd37703b0d7786c68b95",
+        "date": "2019-07-31 20:44:49 -0400",
+        "subject": "Improve multi-host handling in protocol helper.",
+        "body": "Multiple PostgreSQL hosts were supported via the host-id option but there are cases where it is useful to be able to directly specify the host id required, e.g. to iterate through pg* hosts when looking for candidate primaries and standbys during backup."
+    },
+    {
+        "commit": "893ae24284e506c551fbc28bec8719881a856e2a",
+        "date": "2019-07-31 19:58:57 -0400",
+        "subject": "Add timeout to walSegmentFind().",
+        "body": "Keep trying to locate the WAL segment until timeout.  This is useful for the check and backup commands which must wait for segments to arrive in the archive."
+    },
+    {
+        "commit": "03b28da1cac8f39c7f57d2c15a83ad667a51b997",
+        "date": "2019-07-31 11:35:58 -0400",
+        "subject": "Rename control/control module to control/common.",
+        "body": "This is more consistent with how other common modules are named."
+    },
+    {
+        "commit": "a04baa1bdc07f85041bfaf910f122b7ae278d6aa",
+        "date": "2019-07-30 11:42:56 -0400",
+        "subject": "Fix incorrect comment (obviously pasted from S3 code)."
+    },
+    {
+        "commit": "3d892cfb75c3303b0b592d4481d415d25c3f0df9",
+        "date": "2019-07-30 11:39:01 -0400",
+        "subject": "Remove extra linefeed."
+    },
+    {
+        "commit": "88c1929ec5a41915753e3d3078bdaae62d14bf0f",
+        "date": "2019-07-26 08:37:58 -0400",
+        "subject": "Don't pass local config* options to the remote.",
+        "body": "The remotes have their own config options (repo-host-config, etc.) so don't pass the local config* options.\n\nThis was a regression from the behavior of the Perl code and while there have been no field reports it caused breakage on test systems with multiple configurations."
+    },
+    {
+        "commit": "f8b0676fd6edbe915bc23d2f082b4862004ca151",
+        "date": "2019-07-25 20:15:06 -0400",
+        "subject": "Allow modules to be included for testing without requiring coverage.",
+        "body": "Sometimes it is useful to get at the internals of a module that is not being tested for coverage in order to provide coverage for another module that is being tested.  The include directive allows this.\n\nUpdate modules that had previously been added to coverage that only need to be included."
+    },
+    {
+        "commit": "554d98746a96d5a93e3449d62c81c9b7a7c84e9d",
+        "date": "2019-07-25 17:36:51 -0400",
+        "subject": "Add repo-s3-port option for setting a non-standard S3 service port.",
+        "body": "If this option is set then ports appended to repo-s3-endpoint or repo-s3-host will be ignored.\n\nSetting this option explicitly may be the only way to use a bare ipv6 address with S3 (since multiple colons confuse the parser) but we plan to improve this in the future."
+    },
+    {
+        "commit": "d8ca0e5c5bc2af6b85b20f48b40b83762d415b7a",
+        "date": "2019-07-25 17:05:39 -0400",
+        "subject": "Add Perl interface to C PgQuery object.",
+        "body": "This validates that all current queries work with the new interface and removes the dependency on DBD::Pg."
+    },
+    {
+        "commit": "415542b4a3589ff7b25dbd97d1041a9b1ff87815",
+        "date": "2019-07-25 14:50:02 -0400",
+        "subject": "Add PostgreSQL query client.",
+        "body": "This direct interface to libpq allows simple queries to be run against PostgreSQL and supports timeouts.\n\nTesting is performed using a shim that can use scripted responses to test all aspects of the client code.  The shim will be very useful for testing backup scenarios on complex topologies."
+    },
+    {
+        "commit": "59f135340d4f76c522c8b24ecb23d56b57b2b0f8",
+        "date": "2019-07-25 14:34:16 -0400",
+        "subject": "The local command for backup is implemented entirely in C.",
+        "body": "The local process is now entirely migrated to C.  Since all major I/O operations are performed in the local process, the vast majority of I/O is now performed in C."
+    },
+    {
+        "commit": "54ec8f151e4164c3f363f417bece7c4b1533dfd6",
+        "date": "2019-07-24 19:45:35 -0400",
+        "subject": "Add int rendering to jsonFromVar()."
+    },
+    {
+        "commit": "615735e7eed32c429a13559584a7268e4dbff3fc",
+        "date": "2019-07-24 06:52:49 -0400",
+        "subject": "Add new types to JSON render.",
+        "body": "Add bool, array, and int64 as valid array subtypes.\n\nPretty print for the array subtype is not correct but is currently not in use (this can be seen at line 328 in typeJsonTest.c)."
+    },
+    {
+        "commit": "62f0c7fb37e160d4a8a2dbe410fe8a569bc4ba38",
+        "date": "2019-07-22 13:09:51 -0400",
+        "subject": "Add lock bot configuration.",
+        "body": "Lock closed issues after ninety days to prevent posting on old issues."
+    },
+    {
+        "commit": "38ba458616f450232dc1090306e651561c9b3076",
+        "date": "2019-07-18 08:42:42 -0400",
+        "subject": "Add IoSink filter.",
+        "body": "Discard all data passed to the filter.  Useful for calculating size/checksum on a remote system when no data needs to be returned.\n\nUpdate ioReadDrain() to automatically use the IoSink filter."
+    },
+    {
+        "commit": "d1dd6add4853a77d2ebbf27c326bbb4670b78955",
+        "date": "2019-07-17 16:55:21 -0400",
+        "subject": "Remove never-used infoBackupCheckPg() function.",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "3bdba4933d45451a3fa6f5dafcb79fd976bffef6",
+        "date": "2019-07-17 16:49:42 -0400",
+        "subject": "Fix incorrect handling of transfer-encoding response to HEAD request.",
+        "body": "The HTTP server can use either content-length or transfer-encoding to indicate that there is content in the response.  HEAD requests do not include content but return all the same headers as GET.  In the HEAD case we were ignoring content-length but not transfer-encoding which led to unexpected eof errors on AWS S3.  Our test server, minio, uses content-length so this was not caught in integration testing.\n\nIgnore all content for HEAD requests (no matter how it is reported) and add a unit test for transfer-encoding to prevent a regression."
+    },
+    {
+        "commit": "6f981c53bb63d3a644a8573cb9edb162c443d03b",
+        "date": "2019-07-17 15:44:55 -0400",
+        "subject": "Remove obsolete ignoreMissing parameter.",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "7662d32e6020148d822fd5080f2a5ebda7ebe103",
+        "date": "2019-07-17 15:42:37 -0400",
+        "subject": "Fix comment typos and clarify HEAD response behavior."
+    },
+    {
+        "commit": "eee67db4d611bb18950daf7bddb84217b010d767",
+        "date": "2019-07-17 14:09:50 -0400",
+        "subject": "Allow pg storage to be remote.",
+        "body": "None of the currently migrated commands needed remote pg storage but now backup, check, stanza-* will need it."
+    },
+    {
+        "commit": "30f55a3c2a139ffd59547fd8e422c3fae3feecd3",
+        "date": "2019-07-15 17:36:24 -0400",
+        "subject": "Add compressed storage feature.",
+        "body": "This feature denotes storage that can compress files so that they take up less space than what was written.  Currently this includes the Posix and CIFS drivers.  The stored size of the file will be rechecked after write to determine if the reported size is different.  This check would be wasted on object stores such as S3, and they might not report the file as existing immediately after write.\n\nAlso add tests to each storage driver to check features."
+    },
+    {
+        "commit": "3e1062825dde7cab506225a3b0658552b44de7ce",
+        "date": "2019-07-15 16:49:46 -0400",
+        "subject": "Allow multiple filters to be pushed to the remote and return results.",
+        "body": "Previously only a single filter could be pushed to the remote since order was not being maintained.  Now the filters are strictly ordered.\n\nResults are returned from the remote and set in the local IoFilterGroup so they can be retrieved.\n\nExpand remote filter support to include all filters."
+    },
+    {
+        "commit": "d5654375a5152764f76335eb5265eb994d1df6bd",
+        "date": "2019-07-15 08:44:41 -0400",
+        "subject": "Add ioReadDrain().",
+        "body": "Read all data from an IoRead object and discard it.  This is handy for calculating size, hash, etc. when the output is not needed.\n\nUpdate code where a loop was used before."
+    },
+    {
+        "commit": "cdb75ac8b38810e2e7c6f5d0161443650f94bb31",
+        "date": "2019-07-15 07:13:36 -0400",
+        "subject": "Add constants for path and archive.info/backup.info combinations.",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "ede7df9fb1d937f228e982d987d306345007dfe0",
+        "date": "2019-07-14 15:53:31 -0400",
+        "subject": "Allow NULL in JSON list."
+    },
+    {
+        "commit": "c836c483dc7198a685991753300bae49d3caa73c",
+        "date": "2019-07-14 15:42:55 -0400",
+        "subject": "Add lstClear() to List object."
+    },
+    {
+        "commit": "e10577d0b0c8054a08513b069e2f2647ddd51fb7",
+        "date": "2019-07-11 09:13:56 -0400",
+        "subject": "Fix incorrect offline upper bound for ignoring page checksum errors.",
+        "body": "For offline backups the upper bound was being set to 0x0000FFFF0000FFFF rather than UINT64_MAX.  This meant that page checksum errors might be ignored for databases with a lot of past WAL in offline mode.\n\nOnline mode is not affected since the upper bound is retrieved from pg_start_backup()."
+    },
+    {
+        "commit": "2fd0ebb78aabe882d4b080d4014d7ecabbded3da",
+        "date": "2019-07-10 15:08:35 -0400",
+        "subject": "Fix links broken by non-standard version.",
+        "body": "Using version 2.15.1 fixed the duplicate tarball problem but broke the auto-generated links.  Fix them manually since this should not be a common problem."
+    },
+    {
+        "commit": "6a89c1526e1ecc2940ed2bf42258ceb9ef85f0e0",
+        "date": "2019-07-10 12:04:25 -0400",
+        "subject": "Revert a2dcdc07.",
+        "body": "It is simpler to implement the required logic in stanza-delete rather than add complexity to this function."
+    },
+    {
+        "commit": "04646599a776348914b3e9bb9b707d2845540aac",
+        "date": "2019-07-10 06:17:33 -0400",
+        "subject": "Remove extraneous test macro."
+    },
+    {
+        "commit": "4e7db608dc6488feb99e5f2707f06e3ca39d78e8",
+        "date": "2019-07-10 06:11:21 -0400",
+        "subject": "Clarify that return statements are not removed in production builds."
+    },
+    {
+        "commit": "a22a6dc08c25a2af9ac9a6f2331144f2bae8dcbe",
+        "date": "2019-07-10 06:06:07 -0400",
+        "subject": "Update contributor name."
+    },
+    {
+        "commit": "a2dcdc0711a8dfb7d562b2ee0a8586de9676669f",
+        "date": "2019-07-09 16:41:58 -0400",
+        "subject": "Update lockStopTest() to optionally return a result rather than error.",
+        "body": "Some commands (e.g. stanza-delete) would prefer to throw a customized error."
+    },
+    {
+        "commit": "27b3246e852e98902f21589f5cdfece9ebb27b39",
+        "date": "2019-07-08 08:29:25 -0400",
+        "subject": "Exclude more build files from rsync between tests.",
+        "body": "Files (especially build.auto.h) were being removed and forcing a full build between separate invocations of test.pl.\n\nThis affected ad-hoc testing at the command-line, not a full test run in CI."
+    },
+    {
+        "commit": "5e1ed2e8a52c2c4d2151ef17496f0847cd9ae939",
+        "date": "2019-07-05 18:34:15 -0400",
+        "subject": "Remove clang static analysis.",
+        "body": "This analysis never produced anything but false positives (var might be NULL) but took over a minute per test run and added 600MB to the test container."
+    },
+    {
+        "commit": "488fb672948c07abfd7e38604eacbd0f82610b1a",
+        "date": "2019-07-05 17:25:01 -0400",
+        "subject": "Force PostgreSQL versions to string for newer versions of JSON:PP.",
+        "body": "Since 2.91 JSON::PP has a bias for saving variables that look like numbers as numbers even if they were declared as strings.\n\nForce versions to strings where needed by appending ''.\n\nUpdate the json-pp-perl package on Ubuntu 18.04 to 2.97 to provide test coverage."
+    },
+    {
+        "commit": "9836578520e3fb5c038230ebfb123001a7eb32fa",
+        "date": "2019-07-05 16:55:17 -0400",
+        "subject": "Remove perl critic and coverage.",
+        "body": "No new Perl code is being developed, so these tools are just taking up time and making migrations to newer platforms harder.  There are only a few Perl tests remaining with full coverage so the coverage tool does not warn of loss of coverage in most cases.\n\nRemove both tools and associated libraries."
+    },
+    {
+        "commit": "fc2101352206a87f8471fd37455d9cd990fce95d",
+        "date": "2019-07-05 16:25:28 -0400",
+        "subject": "Fix scoping violations exposed by optimizations in gcc 9.",
+        "body": "gcc < 9 makes all compound literals function scope, even though the C spec requires them to be invalid outside the current scope.  Since the compiler and valgrind were not enforcing this we had a few violations which caused problems in gcc >= 9.\n\nEven though we are not quite ready to support gcc 9 officially, fix the scoping violations that currently exist in the codebase."
+    },
+    {
+        "commit": "1708f1d1514b3f2afb69664317df705a1fccfaf7",
+        "date": "2019-07-02 22:20:35 -0400",
+        "subject": "Use minio for integration testing.",
+        "body": "ScalityS3 has not received any maintenance in years and is slow to start which is bad for testing.  Replace it with minio which starts quickly and ships as a single executable or a tiny container.\n\nMinio has stricter limits on allowable characters but should still provide enough coverage to show that our encoding is working correctly.\n\nThis commit also includes the upgrade to openssl 1.1.1 in the Ubuntu 18.04 container."
+    },
+    {
+        "commit": "b9b21315ead6610bb41ee19794763555a7265261",
+        "date": "2019-07-02 22:09:12 -0400",
+        "subject": "Updates for openssl 1.1.1.",
+        "body": "Some HTTP error tests were failing after the upgrade to openssl 1.1.1, though the rest of the unit and integration tests worked fine.  This seemed to be related to the very small messages used in the error testing, but it pointed to an issue with the code not being fully compliant, made worse by auto-retry being enabled by default.\n\nDisable auto-retry and implement better error handling to bring the code in line with openssl recommendations.\n\nThere's no evidence this is a problem in the field, but having all the tests pass seems like a good idea and the new code is certainly more robust.\n\nCoverage will be complete in the next commit when openssl 1.1.1 is introduced."
+    },
+    {
+        "commit": "c55009d0f9ebfea746ab270be167dc2d78976ce9",
+        "date": "2019-06-27 14:39:11 -0400",
+        "subject": "Community yum package can be installed with --var=package=yum.",
+        "body": "Like apt, the community yum package can now be installed instead of a user-specified package."
+    },
+    {
+        "commit": "b0728c33dbd7c99a7b785c152f20d5cdfa902bff",
+        "date": "2019-06-27 14:30:20 -0400",
+        "subject": "Remove Debian package patch merged to upstream."
+    },
+    {
+        "commit": "020101b30bfe9f2d34b878fcd51fad932781d9f8",
+        "date": "2019-06-27 09:38:40 -0400",
+        "subject": "Update release notes to explicitly select release commit when tagging."
+    },
+    {
+        "commit": "33e3d316d63a41cd64d217abe30786cfb48bf09e",
+        "date": "2019-06-26 19:52:04 -0400",
+        "subject": "Reverse loop in infoPgSave() to be consistent with infoPgNewLoad().",
+        "body": "Contributed by Cynthia Shang."
+    },
+    {
+        "commit": "4bffa0c5bb7d551c60b8d8bcff9a3bbe6e02eddd",
+        "date": "2019-06-26 15:02:30 -0400",
+        "subject": "Add test function to create the S3 bucket instead of using aws cli.",
+        "body": "Eventually the idea is to remove the dependency on aws cli since Python is a big install."
+    },
+    {
+        "commit": "4815752ccc46ff742f67b369bc75ad3efcf11204",
+        "date": "2019-06-26 08:24:58 -0400",
+        "subject": "Add Perl interface to C storage layer.",
+        "body": "Maintaining the storage layer/drivers in two languages is burdensome.  Since the integration tests require the Perl storage layer/drivers we'll need them even after the core code is migrated to C.  Create an interface layer so the Perl code can be removed and new storage drivers/features introduced without adding Perl equivalents.\n\nThe goal is to move the integration tests to C so this interface will eventually be removed.  That being the case, the interface was designed for maximum compatibility to ease the transition.  The result looks a bit hacky but we'll improve it as needed until it can be retired."
+    },
+    {
+        "commit": "bd6c0941e9e3aa2dab84f7404da1f9dc60cd693b",
+        "date": "2019-06-25 17:27:19 -0400",
+        "subject": "Fix missing dash in site name.",
+        "body": "Without this the project name and tagline just run together."
+    },
+    {
+        "commit": "466602387bc279aa44a811dc2948b893e4127b2c",
+        "date": "2019-06-25 08:42:20 -0400",
+        "subject": "Begin v2.16 development."
+    },
+    {
         "commit": "6650d8144cba46f93ad75c11ad98d87c57d2ea7f",
         "date": "2019-06-25 08:29:06 -0400",
         "subject": "v2.15: C Implementation of Expire"
@@ -26,13 +326,13 @@
         "commit": "c22e10e4a938b444ac7912efc3b751829401360f",
         "date": "2019-06-24 15:42:33 -0400",
         "subject": "Honor configure --prefix option.",
-        "body": "The --prefix option was entirely ignored and DESTDIR was a combination of DESTDIR and bindir.\n\nBring both in line with recommendations for autoconf and make as specified in https://www.gnu.org/software/make/manual/html_node/Directory-Variables.html and https://www.gnu.org/prep/standards/html_node/DESTDIR.html.\n\nSuggested by Daniel Westermann."
+        "body": "The --prefix option was entirely ignored and DESTDIR was a combination of DESTDIR and bindir.\n\nBring both in line with recommendations for autoconf and make as specified in https://www.gnu.org/software/make/manual/html_node/Directory-Variables.html and https://www.gnu.org/prep/standards/html_node/DESTDIR.html."
     },
     {
         "commit": "b498188f01f8d2ccd4d0ce2cce3af2e5069d9ac3",
         "date": "2019-06-24 11:59:44 -0400",
         "subject": "Error on db history mismatch when expiring.",
-        "body": "Amend commit 434cd832 to error when the db history in archive.info and backup.info do not match.\n\nThe Perl code would attempt to reconcile the history by matching on system id and version but we are not planning to migrate that code to C.  It's possible that there are users with mismatches but if so they should have been getting errors from info for the last six months.  It's easy enough to manually fix these files if there are any mismatches in the field.\n\nContributed by Cynthia Shang."
+        "body": "Amend commit 434cd832 to error when the db history in archive.info and backup.info do not match.\n\nThe Perl code would attempt to reconcile the history by matching on system id and version but we are not planning to migrate that code to C.  It's possible that there are users with mismatches but if so they should have been getting errors from info for the last six months.  It's easy enough to manually fix these files if there are any mismatches in the field."
     },
     {
         "commit": "039e515a319216035187c89efccf97143d4cac03",
@@ -61,7 +361,7 @@
         "commit": "434cd832855e4e189403962753fd8771e29880a4",
         "date": "2019-06-18 15:19:20 -0400",
         "subject": "The expire command is implemented entirely in C.",
-        "body": "This implementation duplicates the functionality of the Perl code but does so with different logic and includes full unit tests.\n\nAlong the way at least one bug was fixed, see issue #748.\n\nContributed by Cynthia Shang."
+        "body": "This implementation duplicates the functionality of the Perl code but does so with different logic and includes full unit tests.\n\nAlong the way at least one bug was fixed, see issue #748."
     },
     {
         "commit": "f88bee7b3321a2c79f0317913ba1e83a56d19c7d",
@@ -73,7 +373,7 @@
         "commit": "0efdf2576f02b1768fb8805b27571e403ac3cb52",
         "date": "2019-06-18 07:35:34 -0400",
         "subject": "Remove hard-coded PostgreSQL user so $PGUSER works.",
-        "body": "The PostgreSQL user was hard-coded to the OS user which libpq will automatically use if $PGUSER is not set, so this code was redundant and prevented $PGUSER from working when set.\n\nSuggested by Julian Zhang, Janis Puris."
+        "body": "The PostgreSQL user was hard-coded to the OS user which libpq will automatically use if $PGUSER is not set, so this code was redundant and prevented $PGUSER from working when set."
     },
     {
         "commit": "593446718a8997bfd674cf5e54230290cb5bcdea",
@@ -103,13 +403,13 @@
         "commit": "c64c9c05905d435cd650195ed9470355a4d2be2f",
         "date": "2019-06-17 06:59:06 -0400",
         "subject": "Add backup management functions to InfoBackup.",
-        "body": "Allow current backups to be listed and deleted.\n\nAlso expose some constants required by expire and stanza-* commands.\n\nContributed by Cynthia Shang."
+        "body": "Allow current backups to be listed and deleted.\n\nAlso expose some constants required by expire and stanza-* commands."
     },
     {
         "commit": "44bafc127d9d4e38478aa44d0adc0f34695c6640",
         "date": "2019-06-17 06:47:15 -0400",
         "subject": "Rename info*New() functions to info*NewLoad().",
-        "body": "These names more accurately reflect what the functions do and follow the convention started in Info and InfoPg.\n\nAlso remove the ignoreMissing parameter since it was never used.\n\nContributed by Cynthia Shang."
+        "body": "These names more accurately reflect what the functions do and follow the convention started in Info and InfoPg.\n\nAlso remove the ignoreMissing parameter since it was never used."
     },
     {
         "commit": "f05fbc54a8f00a56937439fb88eafe8e239781e8",
@@ -197,7 +497,7 @@
         "commit": "d7bd0c58cdd9a434aa5893db16e6bcf8425e26b9",
         "date": "2019-06-05 07:27:24 -0400",
         "subject": "Use wal_level=replica in the documentation for PostgreSQL >= 9.6.",
-        "body": "The documentation was using wal_level=hot_standby which is a deprecated setting.\n\nAlso remove the reference to wal_level=archive since it is no longer supported and is not recommended for older versions.\n\nSuggested by Patrick McLaughlin."
+        "body": "The documentation was using wal_level=hot_standby which is a deprecated setting.\n\nAlso remove the reference to wal_level=archive since it is no longer supported and is not recommended for older versions."
     },
     {
         "commit": "aca11b2fa19337f934fc095e33f014d5e6df71f3",
@@ -433,7 +733,7 @@
         "commit": "a839830333490555800377ea095d756765f476e4",
         "date": "2019-05-20 16:19:14 -0400",
         "subject": "Add most unimplemented functions to the remote storage driver.",
-        "body": "Add pathCreate(), pathRemove(), pathSync(), and remove() to the driver.\n\nContributed by Cynthia Shang."
+        "body": "Add pathCreate(), pathRemove(), pathSync(), and remove() to the driver."
     },
     {
         "commit": "bbf2e0d5b0876d3663cc69d10925c6e0d08cd729",

@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.16dev" title="UNDER DEVELOPMENT">
+        <release date="2019-08-05" version="2.16" title="C Migrations and Bug Fixes">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
