@@ -3,6 +3,8 @@ Test Command Control
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/io/handleRead.h"
+#include "common/io/handleWrite.h"
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
@@ -85,17 +87,15 @@ testRun(void)
         TEST_RESULT_VOID(cmdStop(), "no stanza, create stop file");
         StorageInfo info = {0};
         TEST_ASSIGN(info, storageInfoNP(storageTest, lockPath), "    get path info");
-// CSHANG How come info.name is always NULL? TEST_RESULT_STR(strPtr(info.name), strPtr(lockPath), "path name");
         TEST_RESULT_INT(info.mode, 0770, "    check path mode");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s/all.stop", strPtr(lockPath))), true,
             "    all stop file created");
         TEST_ASSIGN(info, storageInfoNP(storageTest, strNewFmt("%s/all.stop", strPtr(lockPath))), "    get file info");
         TEST_RESULT_INT(info.mode, 0640, "    check file mode");
-// TEST_RESULT_STR(strPtr(info.name), "all.stop", "    file name");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_RESULT_VOID(cmdStop(), "no stanza, stop file already exists");
-        // harnessLogResult("P00   WARN: stop file already exists for all stanzas");
+        TEST_RESULT_VOID(cmdStop(), "no stanza, stop file already exists");
+        harnessLogResult("P00   WARN: stop file already exists for all stanzas");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storageRemoveNP(storageTest, strNew("lockpath/all.stop")), "remove stop file");
@@ -104,17 +104,15 @@ testRun(void)
             "unable to stat '%s/all.stop': [13] Permission denied", strPtr(lockPath));
         TEST_RESULT_VOID(storagePathRemoveP(storageTest, lockPath, .recurse = true, .errorOnMissing = true),
             "    remove the lock path");
-// CSHANG If I comment out "WARN: stop file already exists for all stanzas" above this, then below "stanza, stop file already exists" test passes. If I do not, then it fails with
-// EXPECTED VOID RESULT FROM STATEMENT: cmdStop()
-//     BUT GOT FileWriteError: unable to write log to file: [9] Bad file descriptor
-// when it tries to write the warning in LOG_WARN. I tried using --dev-test, but still errors. I tried using --log-level-test=trace but I  get common/log:logWrite:290:(test build required for parameters)
+
         // -------------------------------------------------------------------------------------------------------------------------
+        String *stanzaStopFile = strNewFmt("%s/db.stop", strPtr(lockPath));
         strLstAddZ(argList, "--stanza=db");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s/db.stop", strPtr(lockPath))), true,
-            "    stanza stop file created");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, stanzaStopFile), true, "    stanza stop file created");
+
         StringList *lockPathList = NULL;
         TEST_ASSIGN(lockPathList, storageListP(storageTest, strNew("lockpath"), .errorOnMissing = true), "    get file list");
         TEST_RESULT_INT(strLstSize(lockPathList), 1, "    only file in lock path");
@@ -123,41 +121,248 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStop(), "stanza, stop file already exists");
         harnessLogResult("P00   WARN: stop file already exists for stanza db");
-        TEST_RESULT_VOID(storageRemoveNP(storageTest, strNew("lockpath/db.stop")), "    remove stop file");
+        TEST_RESULT_VOID(storageRemoveNP(storageTest, stanzaStopFile), "    remove stop file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--force");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file, force");
-        TEST_RESULT_VOID(storageRemoveNP(storageTest, strNew("lockpath/db.stop")), "    remove stop file");
+        TEST_RESULT_VOID(storageRemoveNP(storageTest, stanzaStopFile), "    remove stop file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteP(storageTest, strNewFmt("%s/bad.lock", strPtr(lockPath)), .modeFile = 0222), NULL),
+            "create a lock file that cannot be opened");
+        TEST_RESULT_VOID(cmdStop(), "    stanza, create stop file but unable to open lock file");
+        harnessLogResult(strPtr(strNewFmt("P00   WARN: unable to open lock file %s/bad.lock", strPtr(lockPath))));
+        TEST_RESULT_VOID(storagePathRemoveP(storageTest, lockPath, .recurse = true, .errorOnMissing = true),
+            "    remove the lock path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/empty.lock", strPtr(lockPath))), NULL),
             "create empty lock file");
         TEST_RESULT_VOID(cmdStop(), "    stanza, create stop file, force - empty lock file");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s/db.stop", strPtr(lockPath))), true,
-            "    stanza stop file created");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, stanzaStopFile), true, "    stanza stop file created");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s/empty.lock", strPtr(lockPath))), false,
-            "    lock file was removed");
+            "    no other process lock, lock file was removed");
 
+        // empty lock file with another process lock, processId == NULL
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(storageRemoveNP(storageTest, stanzaStopFile), "remove stop file");
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/empty.lock", strPtr(lockPath))), NULL),
-            "create empty lock file");
-        TEST_RESULT_VOID(storageRemoveNP(storageTest, strNew("lockpath/db.stop")), "    remove stop file");
-        int lockHandle = open(strPtr(strNewFmt("%s/empty.lock", strPtr(lockPath))), O_RDONLY, 0);
-        TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle aquired");
+            "    create empty lock file");
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the file");
+                IoRead *read = ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                ioWriteOpen(write);
+
+                int lockHandle = open(strPtr(strNewFmt("%s/empty.lock", strPtr(lockPath))), O_RDONLY, 0);
+                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle aquired");
+                TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the empty file");
+
+                // Let the parent know the lock has been acquired and wait for the parent to allow lock release
+                ioWriteStrLine(write, strNew(""));
+                // All writes are buffered so need to flush because buffer is not full
+                ioWriteFlush(write);
+                // Wait for a linefeed from the parent ioWriteLine below
+                ioReadLine(read);
+
+                // Parent remove the file so just close the handle
+                close(lockHandle);
             }
             HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                IoRead *read = ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                ioWriteOpen(write);
+
+                // Wait for the child to acquire the lock
+                ioReadLine(read);
+
+                TEST_RESULT_VOID(
+                    cmdStop(),
+                    "    stanza, create stop file, force - empty lock file with another process lock, processId == NULL");
+                TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s/empty.lock", strPtr(lockPath))), false,
+                    "    lock file was removed");
+
+                // Notify the child to release the lock
+                ioWriteLine(write, bufNew(0));
+                ioWriteFlush(write);
+            }
+            HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
 
-        // TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the file"); // CSHANG Why does this not lock the file?
-        TEST_RESULT_VOID(cmdStop(), "    stanza, create stop file, force - empty lock file, processId == NULL");
+        // not empty lock file with another process lock, processId size trimmed to 0
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(storageRemoveNP(storageTest, stanzaStopFile), "remove stop file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/empty.lock", strPtr(lockPath))), BUFSTRDEF(" ")),
+            "    create non-empty lock file");
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                IoRead *read = ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                ioWriteOpen(write);
+
+                int lockHandle = open(strPtr(strNewFmt("%s/empty.lock", strPtr(lockPath))), O_RDONLY, 0);
+                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle aquired");
+                TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the non-empty file");
+
+                // Let the parent know the lock has been acquired and wait for the parent to allow lock release
+                ioWriteStrLine(write, strNew(""));
+                // All writes are buffered so need to flush because buffer is not full
+                ioWriteFlush(write);
+                // Wait for a linefeed from the parent ioWriteLine below
+                ioReadLine(read);
+
+                // Parent remove the file so just close the handle
+                close(lockHandle);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                IoRead *read = ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                ioWriteOpen(write);
+
+                // Wait for the child to acquire the lock
+                ioReadLine(read);
+
+                TEST_RESULT_VOID(
+                    cmdStop(),
+                    "    stanza, create stop file, force - empty lock file with another process lock, processId size 0");
+                TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s/empty.lock", strPtr(lockPath))), false,
+                    "    lock file was removed");
+
+                // Notify the child to release the lock
+                ioWriteLine(write, bufNew(0));
+                ioWriteFlush(write);
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
+
+        // lock file with another process lock, processId is valid
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(storageRemoveNP(storageTest, stanzaStopFile), "remove stop file");
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                IoRead *read = ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                ioWriteOpen(write);
+
+                TEST_RESULT_BOOL(
+                    lockAcquire(lockPath, cfgOptionStr(cfgOptStanza), 0, 30000, true), true,"    child process aquires lock");
+
+                // Let the parent know the lock has been acquired and wait for the parent to allow lock release
+                ioWriteStrLine(write, strNew(""));
+                // All writes are buffered so need to flush because buffer is not full
+                ioWriteFlush(write);
+                // Wait for a linefeed from the parent ioWriteLine below
+                ioReadLine(read);
+
+                lockRelease(true);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                IoRead *read = ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                ioWriteOpen(write);
+
+                // Wait for the child to acquire the lock
+                ioReadLine(read);
+
+                TEST_RESULT_VOID(
+                    cmdStop(),
+                    "    stanza, create stop file, force - lock file with another process lock, processId is valid");
+
+                harnessLogResult(strPtr(strNewFmt("P00   INFO: sent term signal to process %d", HARNESS_FORK_PROCESS_ID(0))));
+
+                // Notify the child to release the lock
+                ioWriteLine(write, bufNew(0));
+                ioWriteFlush(write);
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
+
+        // lock file with another process lock, processId is invalid
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(storageRemoveNP(storageTest, stanzaStopFile), "remove stop file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/badpid.lock", strPtr(lockPath))), BUFSTRDEF("32768")),
+            "create lock file with invalid PID");
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                IoRead *read = ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
+                ioWriteOpen(write);
+
+                int lockHandle = open(strPtr(strNewFmt("%s/badpid.lock", strPtr(lockPath))), O_RDONLY, 0);
+                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle aquired");
+                TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the badpid file");
+
+                // Let the parent know the lock has been acquired and wait for the parent to allow lock release
+                ioWriteStrLine(write, strNew(""));
+                // All writes are buffered so need to flush because buffer is not full
+                ioWriteFlush(write);
+                // Wait for a linefeed from the parent ioWriteLine below
+                ioReadLine(read);
+
+                // Remove the file and close the handle
+                storageRemoveNP(storageTest, strNewFmt("%s/badpid.lock", strPtr(lockPath)));
+                close(lockHandle);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                IoRead *read = ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                ioWriteOpen(write);
+
+                // Wait for the child to acquire the lock
+                ioReadLine(read);
+
+                TEST_RESULT_VOID(
+                    cmdStop(),
+                    "    stanza, create stop file, force - lock file with another process lock, processId is invalid");
+                harnessLogResult("P00   WARN: unable to send term signal to process 32768");
+                TEST_RESULT_BOOL(storageExistsNP(storageTest, stanzaStopFile), true, "    stanza stop file not removed");
+
+                // Notify the child to release the lock
+                ioWriteLine(write, bufNew(0));
+                ioWriteFlush(write);
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

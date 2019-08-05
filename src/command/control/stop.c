@@ -33,12 +33,10 @@ cmdStop(void)
             // Create the lock path (ignore if already created)
             storagePathCreateP(storageLocalWrite(), strPath(stopFile), .mode = 0770);
 
-            // Initialize file handle for opening and closing files
-            int fileHandle = -1;
-
             // Create the stop file with Read/Write and Create only - do not use Truncate
+            int fileHandle = -1;
             THROW_ON_SYS_ERROR_FMT(
-                (fileHandle = open(strPtr(stopFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT) == -1), FileOpenError,
+                ((fileHandle = open(strPtr(stopFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1), FileOpenError,
                 "unable to open stop file '%s'", strPtr(stopFile));
 
             // Close the file
@@ -59,13 +57,13 @@ cmdStop(void)
                     // Skip stop file
                     if (strEndsWithZ(lockFile, ".stop"))
                         continue;
-// CSHANG Do we not need to specifically look for the extension ".lock"? Can there be anything else in the dir?
+// CSHANG Do we not need to specifically look for the extension ".lock"? Can there be anything else in the dir? If so and the file has something that can't be converted to a number, then cvtZToInt will blow up
                     fileHandle = open(strPtr(lockFile), O_RDONLY, 0);
 
                     // If we cannot open the lock file for any reason then warn and continue to next file
                     if (fileHandle == -1)
                     {
-// CSHANG Do we want to bypass the warning if (errno != ENOENT)? It may be possible the lock was release/file removed between the tie we got the dir listing and now...
+// CSHANG Do we want to bypass the warning if (errno != ENOENT)? It may be possible the lock was release/file removed between the time we got the dir listing and now...
                         LOG_WARN( "unable to open lock file %s", strPtr(lockFile));
                         continue;
                     }
@@ -80,7 +78,7 @@ cmdStop(void)
                     }
 
                     // The file is locked so that means there is a running process - read the process id and send it a term signal
-                    char contents[256];
+                    char contents[64] = "";
                     ssize_t actualBytes = read(fileHandle, &contents, 256);
 
                     String *processId = NULL;

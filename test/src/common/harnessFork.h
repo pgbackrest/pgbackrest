@@ -60,6 +60,7 @@ Return the process index of the child (i.e. the index in the total)
 /***********************************************************************************************************************************
 Return the id of the child process, 0 if in the child process
 ***********************************************************************************************************************************/
+// CSHANG processId should be processIdx, no?
 #define HARNESS_FORK_PROCESS_ID(processId)                                                                                         \
     HARNESS_FORK_processIdList[processId]
 
