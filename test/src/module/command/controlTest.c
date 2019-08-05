@@ -2,6 +2,7 @@
 Test Command Control
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
+#include "common/harnessFork.h"
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
@@ -144,7 +145,18 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveNP(storageTest, strNew("lockpath/db.stop")), "    remove stop file");
         int lockHandle = open(strPtr(strNewFmt("%s/empty.lock", strPtr(lockPath))), O_RDONLY, 0);
         TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle aquired");
-        TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the file"); // CSHANG Why does this not lock the file?
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, false)
+            {
+                TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the file");
+            }
+            HARNESS_FORK_CHILD_END();
+        }
+        HARNESS_FORK_END();
+
+        // TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the file"); // CSHANG Why does this not lock the file?
         TEST_RESULT_VOID(cmdStop(), "    stanza, create stop file, force - empty lock file, processId == NULL");
     }
 
