@@ -1,5 +1,10 @@
 [
     {
+        "commit": "9e730c1bd61b00fa506ea443cdd6161e88ed31ae",
+        "date": "2019-08-05 12:03:04 -0400",
+        "subject": "v2.16: C Migrations and Bug Fixes"
+    },
+    {
         "commit": "3d3003e9ca6dd449ea16c6812d1cabc392c9d294",
         "date": "2019-08-01 20:35:01 -0400",
         "subject": "The check command is implemented partly in C.",
