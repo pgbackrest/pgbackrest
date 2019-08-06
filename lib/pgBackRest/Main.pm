@@ -171,13 +171,6 @@ sub main
                 # ------------------------------------------------------------------------------------------------------------------
                 elsif (cfgCommandTest(CFGCMD_RESTORE))
                 {
-                    # Check locality
-                    if (!isDbLocal())
-                    {
-                        confess &log(ERROR,
-                            cfgCommandName(cfgCommandGet()) . ' command must be run on the PostgreSQL host', ERROR_HOST_INVALID);
-                    }
-
                     # Load module dynamically
                     require pgBackRest::Restore;
                     pgBackRest::Restore->import();

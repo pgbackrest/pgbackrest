@@ -16,6 +16,7 @@ Main
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/restore/restore.h"
 #include "command/storage/list.h"
 #include "common/debug.h"
 #include "common/error.h"
@@ -183,6 +184,8 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRestore:
                 {
+                    // Functionality is currently split between Perl and C
+                    cmdRestore();
                     perlExec();
                     break;
                 }
