@@ -7,6 +7,7 @@ Restore Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "info/infoManifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
@@ -40,6 +41,20 @@ cmdRestore(void)
                     "HINT: presence of '" PG_FILE_POSTMASTERPID "' in '%s' indicates PostgreSQL is running.\n"
                     "HINT: remove '" PG_FILE_POSTMASTERPID "' only if PostgreSQL is not running.",
                 strPtr(cfgOptionStr(cfgOptPgPath)));
+        }
+
+        // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
+        if ((cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)) &&
+            !storageExistsNP(storagePg(), STRDEF(PG_FILE_PGVERSION)) && !storageExistsNP(storagePg(), STRDEF(INFO_MANIFEST_FILE)))
+        {
+            LOG_WARN(
+                "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" INFO_MANIFEST_FILE "' in '%s' to"
+                    " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
+                    " exist in the destination directories the restore will be aborted.",
+               strPtr(cfgOptionStr(cfgOptPgPath)));
+
+            cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
+            cfgOptionSet(cfgOptForce, cfgSourceDefault, VARBOOL(false));
         }
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down

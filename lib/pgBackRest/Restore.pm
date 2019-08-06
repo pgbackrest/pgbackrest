@@ -1057,20 +1057,6 @@ sub process
     # Db storage
     my $oStorageDb = storageDb();
 
-    # If the restore will be destructive attempt to verify that $PGDATA is valid
-    if ((cfgOption(CFGOPT_DELTA) || cfgOption(CFGOPT_FORCE)) &&
-        !($oStorageDb->exists($self->{strDbClusterPath} . '/' . DB_FILE_PGVERSION) ||
-          $oStorageDb->exists($self->{strDbClusterPath} . '/' . FILE_MANIFEST)))
-    {
-        &log(WARN, '--delta or --force specified but unable to find \'' . DB_FILE_PGVERSION . '\' or \'' . FILE_MANIFEST .
-                   '\' in \'' . $self->{strDbClusterPath} . '\' to confirm that this is a valid $PGDATA directory.' .
-                   '  --delta and --force have been disabled and if any files exist in the destination directories the restore' .
-                   ' will be aborted.');
-
-        cfgOptionSet(CFGOPT_DELTA, false);
-        cfgOptionSet(CFGOPT_FORCE, false);
-    }
-
     # Copy backup info, load it, then delete
     $oStorageDb->copy(
         storageRepo()->openRead(STORAGE_REPO_BACKUP . qw(/) . FILE_BACKUP_INFO),

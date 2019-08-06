@@ -286,8 +286,66 @@ testRun(void)
 
         storageRemoveP(storagePgWrite(), strNew("postmaster.pid"), .errorOnMissing = true);
 
+        // PGDATA directory does not look valid
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--delta");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(cmdRestore(), "restore --delta with invalid PGDATA");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "--delta set to false");
+        harnessLogResult(
+            strPtr(
+                strNewFmt(
+                    "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
+                        " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
+                        " exist in the destination directories the restore will be aborted.",
+                testPath())));
+
+        cfgOptionSet(cfgOptDelta, cfgSourceConfig, VARBOOL(true));
+        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("backup.manifest")), NULL);
+        TEST_RESULT_VOID(cmdRestore(), "restore --delta with valid PGDATA");
+        storageRemoveP(storagePgWrite(), strNew("backup.manifest"), .errorOnMissing = true);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--force");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(cmdRestore(), "restore --force with invalid PGDATA");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "--force set to false");
+        harnessLogResult(
+            strPtr(
+                strNewFmt(
+                    "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
+                        " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
+                        " exist in the destination directories the restore will be aborted.",
+                testPath())));
+
+        cfgOptionSet(cfgOptForce, cfgSourceConfig, VARBOOL(true));
+        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew(PG_FILE_PGVERSION)), NULL);
+        TEST_RESULT_VOID(cmdRestore(), "restore --force with valid PGDATA");
+        storageRemoveP(storagePgWrite(), strNew(PG_FILE_PGVERSION), .errorOnMissing = true);
+
         // SUCCESS TEST FOR COVERAGE -- WILL BE REMOVED / MODIFIED AT SOME POINT
         // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
     }
 
