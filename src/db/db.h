@@ -1,44 +1,51 @@
 /***********************************************************************************************************************************
-Protocol Helper
-***********************************************************************************************************************************/
-#ifndef PROTOCOL_HELPER_H
-#define PROTOCOL_HELPER_H
+Database Client
 
-/***********************************************************************************************************************************
-Protocol storage type enum
+Implements the required PostgreSQL queries and commands.  Notice that there is no general purpose query function -- all queries are
+expected to be embedded in this object.
 ***********************************************************************************************************************************/
-typedef enum
-{
-    protocolStorageTypeRepo,
-    protocolStorageTypePg,
-} ProtocolStorageType;
+#ifndef DB_DB_H
+#define DB_DB_H
 
+#include "postgres/client.h"
 #include "protocol/client.h"
 
 /***********************************************************************************************************************************
-Constants
+Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_SERVICE_LOCAL                                      "local"
-    STRING_DECLARE(PROTOCOL_SERVICE_LOCAL_STR);
-#define PROTOCOL_SERVICE_REMOTE                                     "remote"
-    STRING_DECLARE(PROTOCOL_SERVICE_REMOTE_STR);
+#define DB_TYPE                                                     Db
+#define DB_PREFIX                                                   db
+
+typedef struct Db Db;
+
+/***********************************************************************************************************************************
+Constructor
+***********************************************************************************************************************************/
+Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationName);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void protocolKeepAlive(void);
-ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolId);
-ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
+void dbOpen(Db *this);
+bool dbIsStandby(Db *this);
+String *dbWalSwitch(Db *this);
+void dbClose(Db *this);
 
-/***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
-bool pgIsLocal(unsigned int hostId);
-bool repoIsLocal(void);
+Db *dbMove(Db *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolFree(void);
+void dbFree(Db *this);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+String *dbToLog(const Db *this);
+
+#define FUNCTION_LOG_DB_TYPE                                                                                                       \
+    Db *
+#define FUNCTION_LOG_DB_FORMAT(value, buffer, bufferSize)                                                                          \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, dbToLog, buffer, bufferSize)
 
 #endif

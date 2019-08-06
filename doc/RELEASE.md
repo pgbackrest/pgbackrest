@@ -132,7 +132,7 @@ use constant PROJECT_VERSION                                        => '2.15dev'
 
 Run deploy to generate git history (ctrl-c as soon as the file is generated):
 ```
-doc/release.pl --deploy
+doc/release.pl --build
 ```
 
 Build to generate files and test documentation:

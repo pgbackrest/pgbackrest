@@ -157,8 +157,13 @@ protocolServerProcess(ProtocolServer *this)
                     // Get the next handler
                     ProtocolServerProcessHandler handler = *(ProtocolServerProcessHandler *)lstGet(this->handlerList, handlerIdx);
 
-                    // Send the command to the handler
-                    found = handler(command, paramList, this);
+                    // Send the command to the handler.  Run the handler in the server's memory context in case any persistent data
+                    // needs to be stored by the handler.
+                    MEM_CONTEXT_BEGIN(this->memContext)
+                    {
+                        found = handler(command, paramList, this);
+                    }
+                    MEM_CONTEXT_END();
 
                     // If the handler processed the command then exit the handler loop
                     if (found)

@@ -8,6 +8,10 @@ casts to queries to output one of these types.
 #ifndef POSTGRES_QUERY_H
 #define POSTGRES_QUERY_H
 
+#include "common/type/string.h"
+#include "common/type/variantList.h"
+#include "common/time.h"
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -28,6 +32,8 @@ Functions
 PgClient *pgClientOpen(PgClient *this);
 VariantList *pgClientQuery(PgClient *this, const String *query);
 void pgClientClose(PgClient *this);
+
+PgClient *pgClientMove(PgClient *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Destructor

@@ -68,7 +68,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
                 // If a WAL segment search among the possible file names
                 if (walIsSegment(archiveFile))
                 {
-                    String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile);
+                    String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile, 0);
 
                     if (walSegmentFile != NULL)
                     {

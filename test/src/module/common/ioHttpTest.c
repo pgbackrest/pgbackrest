@@ -419,7 +419,7 @@ testRun(void)
 
         TEST_ERROR(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FileReadError,
-            "unable to read data from '" TLS_TEST_HOST ":9443' after 500ms");
+            "timeout after 500ms waiting for read from '" TLS_TEST_HOST ":9443'");
 
         // Test invalid http version
         TEST_ERROR(

@@ -113,6 +113,21 @@ testS3Server(void)
         // -------------------------------------------------------------------------------------------------------------------------
         // File is written all at once
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD"));
+        harnessTlsServerReply(testS3ServerResponse(
+            403, "Forbidden", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message>"
+                "<RequestTime>20190726T221748Z</RequestTime>"
+                "<ServerTime>2019-07-26T22:33:27Z</ServerTime>"
+                "<MaxAllowedSkewMilliseconds>900000</MaxAllowedSkewMilliseconds>"
+                "<RequestId>601AA1A7F7E37AE9</RequestId>"
+                "<HostId>KYMys77PoloZrGCkiQRyOIl0biqdHsk4T2EdTkhzkH1l8x00D4lvv/py5uUuHwQXG9qz6NRuldQ=</HostId>"
+                "</Error>"));
+
+        harnessTlsServerAccept();
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD"));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
         // Zero-length file
@@ -209,9 +224,42 @@ testS3Server(void)
 
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
-        // Throw error
+        // Throw errors
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
-        harnessTlsServerReply(testS3ServerResponse(344, "Another bad status", NULL, NULL));
+        harnessTlsServerReply(testS3ServerResponse( 344, "Another bad status", NULL, NULL));
+
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            344, "Another bad status with xml", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>SomeOtherCode</Code>"
+                "</Error>"));
+
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            403, "Forbidden", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message>"
+                "</Error>"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            403, "Forbidden", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message>"
+                "</Error>"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            403, "Forbidden", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message>"
+                "</Error>"));
 
         // list a file/path in root
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
@@ -837,6 +885,35 @@ testRun(void)
             "host: " S3_TEST_HOST "\n"
             "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
             "x-amz-date: <redacted>");
+        TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
+            "S3 request failed with 344: Another bad status with xml\n"
+            "*** URI/Query ***:\n"
+            "/?delimiter=%2F&list-type=2\n"
+            "*** Request Headers ***:\n"
+            "authorization: <redacted>\n"
+            "content-length: 0\n"
+            "host: " S3_TEST_HOST "\n"
+            "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
+            "x-amz-date: <redacted>\n"
+            "*** Response Headers ***:\n"
+            "content-length: 79\n"
+            "*** Response Content ***:\n"
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>SomeOtherCode</Code></Error>");
+        TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
+            "S3 request failed with 403: Forbidden\n"
+            "*** URI/Query ***:\n"
+            "/?delimiter=%2F&list-type=2\n"
+            "*** Request Headers ***:\n"
+            "authorization: <redacted>\n"
+            "content-length: 0\n"
+            "host: " S3_TEST_HOST "\n"
+            "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
+            "x-amz-date: <redacted>\n"
+            "*** Response Headers ***:\n"
+            "content-length: 179\n"
+            "*** Response Content ***:\n"
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message></Error>");
 
         TEST_RESULT_STR(strPtr(strLstJoin(storageListNP(s3, strNew("/")), ",")), "path1,test1.txt", "list a file/path in root");
         TEST_RESULT_STR(

@@ -9,6 +9,7 @@ Main
 
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
+#include "command/check/check.h"
 #include "command/command.h"
 #include "command/control/start.h"
 #include "command/control/stop.h"
@@ -127,7 +128,9 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdCheck:
                 {
+                    // Functionality is currently split between Perl and C
                     perlExec();
+                    cmdCheck();
                     break;
                 }
 
