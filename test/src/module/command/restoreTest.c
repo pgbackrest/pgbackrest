@@ -258,7 +258,7 @@ testRun(void)
 
         TEST_ERROR(cmdRestore(), HostInvalidError, "restore command must be run on the PostgreSQL host");
 
-        // SUCCESS TEST FOR COVERAGE -- WILL BE REMOVED / MODIFIED AT SOME POINT
+        // PGDATA missing
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -268,6 +268,26 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
+        TEST_ERROR_FMT(cmdRestore(), PathMissingError, "$PGDATA directory '%s/pg' does not exist", testPath());
+
+        // Create PGDATA
+        storagePathCreateNP(storagePgWrite(), strNew("pg"));
+
+        // postmaster.pid is present
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("postmaster.pid")), NULL);
+
+        TEST_ERROR_FMT(
+            cmdRestore(), PostmasterRunningError,
+            "unable to restore while PostgreSQL is running\n"
+                "HINT: presence of 'postmaster.pid' in '%s/pg' indicates PostgreSQL is running.\n"
+                "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.",
+            testPath());
+
+        storageRemoveP(storagePgWrite(), strNew("postmaster.pid"), .errorOnMissing = true);
+
+        // SUCCESS TEST FOR COVERAGE -- WILL BE REMOVED / MODIFIED AT SOME POINT
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
     }
 

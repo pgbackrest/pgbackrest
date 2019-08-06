@@ -1057,21 +1057,6 @@ sub process
     # Db storage
     my $oStorageDb = storageDb();
 
-    if (!$oStorageDb->pathExists($self->{strDbClusterPath}))
-    {
-        confess &log(ERROR, "\$PGDATA directory $self->{strDbClusterPath} does not exist");
-    }
-
-    # Make sure that Postgres is not running
-    if ($oStorageDb->exists($self->{strDbClusterPath} . '/' . DB_FILE_POSTMASTERPID))
-    {
-        confess &log(ERROR,
-            "unable to restore while PostgreSQL is running\n" .
-            "HINT: presence of '" . DB_FILE_POSTMASTERPID . "' in '$self->{strDbClusterPath}' indicates PostgreSQL is running.\n" .
-            "HINT: remove '" . DB_FILE_POSTMASTERPID . "' only if PostgreSQL is not running.",
-            ERROR_POSTMASTER_RUNNING);
-    }
-
     # If the restore will be destructive attempt to verify that $PGDATA is valid
     if ((cfgOption(CFGOPT_DELTA) || cfgOption(CFGOPT_FORCE)) &&
         !($oStorageDb->exists($self->{strDbClusterPath} . '/' . DB_FILE_PGVERSION) ||
