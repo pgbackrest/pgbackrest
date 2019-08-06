@@ -4,6 +4,7 @@ Manifest Info Handler
 #ifndef INFO_INFOMANIFEST_H
 #define INFO_INFOMANIFEST_H
 
+#include "common/crypto/common.h"
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
@@ -81,13 +82,8 @@ typedef struct InfoManifestFile
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoManifest *infoManifestNew(const Storage *storagePg, unsigned int pgVersion);
-
-/***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
-// const InfoManifestPath *infoManifestPath(InfoManifest *this, unsigned int index);
-// unsigned int infoManifestPathSize(InfoManifest *this);
+InfoManifest *infoManifestNewLoad(
+    const Storage *storagePg, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging
