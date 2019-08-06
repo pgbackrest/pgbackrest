@@ -41,7 +41,7 @@ cmdStop(void)
 
             // Close the file
             close(fileHandle);
-// CSHANG Should the force check be outside (or in a function) - I mean even if the stop file already exists, should we make any further attempt to scan for lock files and send term signals?
+
             // If --force was specified then send term signals to running processes
             if (cfgOptionBool(cfgOptForce))
             {
@@ -54,16 +54,13 @@ cmdStop(void)
                 {
                     String *lockFile = strNewFmt("%s/%s", strPtr(lockPath), strPtr(strLstGet(lockPathFileList, idx)));
 
-                    // Skip stop file
-                    if (strEndsWithZ(lockFile, ".stop"))
+                    // Skip any file that is not a lock file
+                    if (!strEndsWithZ(lockFile, LOCK_FILE_EXT))
                         continue;
-// CSHANG Do we not need to specifically look for the extension ".lock"? Can there be anything else in the dir? If so and the file has something that can't be converted to a number, then cvtZToInt will blow up
-                    fileHandle = open(strPtr(lockFile), O_RDONLY, 0);
 
                     // If we cannot open the lock file for any reason then warn and continue to next file
-                    if (fileHandle == -1)
+                    if ((fileHandle = open(strPtr(lockFile), O_RDONLY, 0)) == -1)
                     {
-// CSHANG Do we want to bypass the warning if (errno != ENOENT)? It may be possible the lock was release/file removed between the time we got the dir listing and now...
                         LOG_WARN( "unable to open lock file %s", strPtr(lockFile));
                         continue;
                     }
@@ -90,12 +87,9 @@ cmdStop(void)
                     {
                         if (kill(cvtZToInt(strPtr(processId)), SIGTERM) != 0)
                             LOG_WARN("unable to send term signal to process %s", strPtr(processId));
-// CSHANG I added the 'else' here because it seemed silly to issue a warning that we were unable to send the term signal and then also issue an INFO message that we sent the term signal
                         else
                             LOG_INFO("sent term signal to process %s", strPtr(processId));
                     }
-// CSHANG I guess we don't really care if there was a read error at this point? There shouldn't be since we have been able to open the file for reading and were able to attempt a lock. And since we aren't checking for any error with unlink or close, we shouldn't care.
-                    // Else not a valid lock file so delete it
                     else
                     {
                         unlink(strPtr(lockFile));
