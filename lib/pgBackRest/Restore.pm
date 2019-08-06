@@ -1057,7 +1057,7 @@ sub process
     # Db storage
     my $oStorageDb = storageDb();
 
-    # Copy backup info, load it, then delete
+    # Copy backup info, load it, then delete (ONLY HERE NOW TO GET CIPHER SUB PASS)
     $oStorageDb->copy(
         storageRepo()->openRead(STORAGE_REPO_BACKUP . qw(/) . FILE_BACKUP_INFO),
         $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
@@ -1066,29 +1066,7 @@ sub process
 
     $oStorageDb->remove($self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
 
-    # If set to restore is latest then get the actual set
-    if ($self->{strBackupSet} eq cfgOptionDefault(CFGOPT_SET))
-    {
-        $self->{strBackupSet} = $oBackupInfo->last(CFGOPTVAL_BACKUP_TYPE_INCR);
-
-        if (!defined($self->{strBackupSet}))
-        {
-            confess &log(ERROR, "no backup sets to restore", ERROR_BACKUP_SET_INVALID);
-        }
-    }
-    # Otherwise check to make sure specified set is valid
-    else
-    {
-        if (!$oBackupInfo->current($self->{strBackupSet}))
-        {
-            confess &log(ERROR, "backup set $self->{strBackupSet} is not valid", ERROR_BACKUP_SET_INVALID);
-        }
-    }
-
-    # Log the backup set to restore
-    &log(INFO, "restore backup set " . $self->{strBackupSet});
-
-    # Make sure the backup path is valid and load the manifest
+    # Load the manifest
     my $oManifest = $self->manifestLoad($oBackupInfo->cipherPassSub());
 
     # Delete pg_control file.  This will be copied from the backup at the very end to prevent a partially restored database

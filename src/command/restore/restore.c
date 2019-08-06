@@ -7,6 +7,7 @@ Restore Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "info/infoBackup.h"
 #include "info/infoManifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -59,6 +60,41 @@ cmdRestore(void)
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
+
+        // Load backup.info
+        InfoBackup *infoBackup = infoBackupNewLoad(
+            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            cfgOptionStr(cfgOptRepoCipherPass));
+
+        // If backup set to restore is default (i.e. latest) then get the actual set
+        if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
+        {
+            if (infoBackupDataTotal(infoBackup) == 0)
+                THROW(BackupSetInvalidError, "no backup sets to restore");
+
+            cfgOptionSet(
+                cfgOptSet, cfgSourceConfig, VARSTR(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel));
+        }
+        // Otherwise check to make sure the specified backup set is valid
+        else
+        {
+            bool found = false;
+
+            for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
+            {
+                if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, cfgOptionStr(cfgOptSet)))
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+                THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strPtr(cfgOptionStr(cfgOptSet)));
+        }
+
+        // Log the backup set to restore
+        LOG_INFO("restore backup set %s", strPtr(cfgOptionStr(cfgOptSet)));
     }
     MEM_CONTEXT_TEMP_END();
 

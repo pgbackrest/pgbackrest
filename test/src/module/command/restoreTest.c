@@ -10,6 +10,7 @@ Test Restore Command
 #include "storage/helper.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -286,6 +287,83 @@ testRun(void)
 
         storageRemoveP(storagePgWrite(), strNew("postmaster.pid"), .errorOnMissing = true);
 
+        // Error when no backups are present then add backups to backup.info
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *infoBackupStr = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR), harnessInfoChecksum(infoBackupStr)),
+            "write backup info");
+
+        TEST_ERROR_FMT(cmdRestore(), BackupSetInvalidError, "no backup sets to restore");
+
+        infoBackupStr = strNew
+        (
+            "[backup:current]\n"
+            "20161219-212741F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
+            "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","
+            "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159776,\"backup-info-size\":26897030,"
+            "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "20161219-212741F_20161219-212803D={\"backrest-format\":5,\"backrest-version\":\"2.04\","
+            "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","
+            "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
+            "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\"],"
+            "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"diff\",\"db-id\":1,"
+            "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","
+            "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
+            "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
+            "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","
+            "\"20161219-212741F_20161219-212803D\"],"
+            "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"incr\",\"db-id\":1,"
+            "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR), harnessInfoChecksum(infoBackupStr)),
+            "write backup info");
+
+        // Error on invalid backup set
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--set=BOGUS");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(cmdRestore(), BackupSetInvalidError, "backup set BOGUS is not valid");
+
         // PGDATA directory does not look valid
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -304,13 +382,15 @@ testRun(void)
                 strNewFmt(
                     "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
                         " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                        " exist in the destination directories the restore will be aborted.",
+                        " exist in the destination directories the restore will be aborted.\n"
+                    "P00   INFO: restore backup set 20161219-212741F_20161219-212918I",
                 testPath())));
 
-        cfgOptionSet(cfgOptDelta, cfgSourceConfig, VARBOOL(true));
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("backup.manifest")), NULL);
         TEST_RESULT_VOID(cmdRestore(), "restore --delta with valid PGDATA");
         storageRemoveP(storagePgWrite(), strNew("backup.manifest"), .errorOnMissing = true);
+        harnessLogResult("P00   INFO: restore backup set 20161219-212741F_20161219-212918I");
 
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -328,13 +408,15 @@ testRun(void)
                 strNewFmt(
                     "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
                         " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                        " exist in the destination directories the restore will be aborted.",
+                        " exist in the destination directories the restore will be aborted.\n"
+                    "P00   INFO: restore backup set 20161219-212741F_20161219-212918I",
                 testPath())));
 
-        cfgOptionSet(cfgOptForce, cfgSourceConfig, VARBOOL(true));
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew(PG_FILE_PGVERSION)), NULL);
         TEST_RESULT_VOID(cmdRestore(), "restore --force with valid PGDATA");
         storageRemoveP(storagePgWrite(), strNew(PG_FILE_PGVERSION), .errorOnMissing = true);
+        harnessLogResult("P00   INFO: restore backup set 20161219-212741F_20161219-212918I");
 
         // SUCCESS TEST FOR COVERAGE -- WILL BE REMOVED / MODIFIED AT SOME POINT
         // -------------------------------------------------------------------------------------------------------------------------
@@ -343,10 +425,12 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--set=20161219-212741F_20161219-212918I");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
+        harnessLogResult("P00   INFO: restore backup set 20161219-212741F_20161219-212918I");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
