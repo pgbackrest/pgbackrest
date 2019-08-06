@@ -160,7 +160,7 @@ testRun(void)
                 TEST_ASSIGN(client, protocolClientNew(strNew("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), "create client");
                 protocolClientNoOp(client);
 
-                storageExistsNP(storageTest, strNewFmt("--lock-path=%s/lock/test-archive.lock", testPath()));
+                storageExistsNP(storageTest, strNewFmt("--lock-path=%s/lock/test-archive" LOCK_FILE_EXT, testPath()));
 
                 protocolClientFree(client);
             }
