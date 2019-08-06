@@ -76,7 +76,7 @@ cmdStop(void)
 
                     // The file is locked so that means there is a running process - read the process id and send it a term signal
                     char contents[64] = "";
-                    ssize_t actualBytes = read(fileHandle, &contents, 256);
+                    ssize_t actualBytes = read(fileHandle, &contents, 64);
 
                     String *processId = NULL;
                     if (actualBytes > 0)
