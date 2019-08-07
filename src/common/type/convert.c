@@ -324,6 +324,18 @@ cvtModeToZ(mode_t value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(result);
 }
 
+mode_t
+cvtZToMode(const char *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+
+    FUNCTION_TEST_RETURN(cvtZToUIntBase(value, 8));
+}
+
 /***********************************************************************************************************************************
 Convert size to zero-terminated string
 ***********************************************************************************************************************************/

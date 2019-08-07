@@ -53,7 +53,7 @@ Path type
 typedef struct InfoManifestPath
 {
     const String *name;                                             // Path name
-    bool base:1;                                                    // Is the the base path?
+    bool base:1;                                                    // Is this the base path?
     bool db:1;                                                      // Does this path contain db relation files?
     mode_t mode;                                                    // Directory mode
     const String *user;                                             // User name

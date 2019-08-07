@@ -33,9 +33,15 @@ VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_ONLINE_VAR,             INFO_MANIFES
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_STR,                "target:path");
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path:default");
 
-STRING_STATIC(INFO_MANIFEST_KEY_GROUP_STR,                          "group");
-STRING_STATIC(INFO_MANIFEST_KEY_MODE_STR,                           "mode");
-STRING_STATIC(INFO_MANIFEST_KEY_USER_STR,                           "user");
+#define INFO_MANIFEST_KEY_GROUP                                     "group"
+    STRING_STATIC(INFO_MANIFEST_KEY_GROUP_STR,                      INFO_MANIFEST_KEY_GROUP);
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_GROUP_VAR,              INFO_MANIFEST_KEY_GROUP);
+#define INFO_MANIFEST_KEY_MODE                                      "mode"
+    STRING_STATIC(INFO_MANIFEST_KEY_MODE_STR,                       INFO_MANIFEST_KEY_MODE);
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_MODE_VAR,               INFO_MANIFEST_KEY_MODE);
+#define INFO_MANIFEST_KEY_USER                                      "user"
+    STRING_STATIC(INFO_MANIFEST_KEY_USER_STR,                       INFO_MANIFEST_KEY_USER);
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_USER_VAR,               INFO_MANIFEST_KEY_USER);
 
 // STRING_STATIC(INFO_MANIFEST_PATH_PGDATA_STR,                        "pg_data");
 
@@ -57,7 +63,47 @@ struct InfoManifest
 };
 
 /***********************************************************************************************************************************
-Create object from a file
+Add owner to the owner list if it is not there already and return the pointer.  This saves a lot of space.
+***********************************************************************************************************************************/
+static const String *
+infoManifestOwnerCache(InfoManifest *this, const String *owner)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, owner);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    const String *result = NULL;
+
+    if (owner != NULL)
+    {
+        // Search for the owner in the list
+        for (unsigned int ownerIdx = 0; ownerIdx < strLstSize(this->ownerList); ownerIdx++)
+        {
+            const String *found = strLstGet(this->ownerList, ownerIdx);
+
+            if (strEq(owner, found))
+            {
+                result = found;
+                break;
+            }
+        }
+
+        // If not found then add it
+        if (result == NULL)
+        {
+            strLstAdd(this->ownerList, owner);
+            result = strLstGet(this->ownerList, strLstSize(this->ownerList) - 1);
+        }
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Load from file
 ***********************************************************************************************************************************/
 InfoManifest *
 infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
@@ -92,22 +138,33 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Load path defaults
-            const String *userDefault = iniGetDefault(
-                iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, NULL);
-            const String *groupDefault = iniGetDefault(
-                iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, NULL);
-            const String *modeDefault = iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR);
+            const String *userDefault = jsonToStr(
+                iniGetDefault(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, NULL));
+            const String *groupDefault = jsonToStr(
+                iniGetDefault(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, NULL));
+            const String *modeDefault = jsonToStr(
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
 
             // Load path list
             StringList *pathKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR);
 
             for (unsigned int pathKeyIdx = 0; pathKeyIdx < strLstSize(pathKeyList); pathKeyIdx++)
             {
-                const String *path = strLstGet(pathKeyList, pathKeyIdx);
-                KeyValue *pathData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path)));
+                memContextSwitch(lstMemContext(this->pathList));
+                InfoManifestPath path = {.name = strDup(strLstGet(pathKeyList, pathKeyIdx))};
+                memContextSwitch(MEM_CONTEXT_TEMP());
 
-                // const String *user = iniGetDefault(
-                //     iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, NULL);
+                KeyValue *pathData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path.name)));
+
+                path.user = infoManifestOwnerCache(
+                    this, varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_USER_VAR, VARSTR(userDefault))));
+                path.group = infoManifestOwnerCache(
+                    this, varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_GROUP_VAR, VARSTR(groupDefault))));
+                path.mode = cvtZToMode(strPtr(varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(modeDefault)))));
+                // ??? Set base path?
+                // ??? Set db path?
+
+                lstAdd(this->pathList, &path);
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -115,4 +172,37 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_MANIFEST, this);
+}
+
+/***********************************************************************************************************************************
+Save to file
+***********************************************************************************************************************************/
+void
+infoManifestSave(
+    InfoManifest *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_MANIFEST, this);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        Ini *ini = iniNew();
+
+
+
+        infoSave(this->info, ini, storage, fileName, cipherType, cipherPass);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
