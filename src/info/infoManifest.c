@@ -5,10 +5,13 @@ Manifest Info Handler
 
 #include "common/debug.h"
 #include "common/log.h"
+#include "common/type/json.h"
 #include "common/type/list.h"
+#include "info/info.h"
 #include "info/infoManifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -27,6 +30,13 @@ VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_COMPRESS_VAR,           INFO_MANIFES
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_HARDLINK_VAR,           INFO_MANIFEST_KEY_OPT_HARDLINK);
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_ONLINE_VAR,             INFO_MANIFEST_KEY_OPT_ONLINE);
 
+STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_STR,                "target:path");
+STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path:default");
+
+STRING_STATIC(INFO_MANIFEST_KEY_GROUP_STR,                          "group");
+STRING_STATIC(INFO_MANIFEST_KEY_MODE_STR,                           "mode");
+STRING_STATIC(INFO_MANIFEST_KEY_USER_STR,                           "user");
+
 // STRING_STATIC(INFO_MANIFEST_PATH_PGDATA_STR,                        "pg_data");
 
 /***********************************************************************************************************************************
@@ -37,6 +47,10 @@ struct InfoManifest
     MemContext *memContext;                                         // Context that contains the InfoManifest
     unsigned int pgVersion;                                         // PostgreSQL version
 
+    Info *info;                                                     // Base info object
+
+    StringList *ownerList;                                          // List of users/groups
+
     List *pathList;                                                 // List of paths
     List *fileList;                                                 // List of files
     List *linkList;                                                 // List of links
@@ -46,18 +60,18 @@ struct InfoManifest
 Create object from a file
 ***********************************************************************************************************************************/
 InfoManifest *
-infoManifestNewLoad(const Storage *storagePg, const String *fileName, CipherType cipherType, const String *cipherPass)
+infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storagePg);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
-    ASSERT(storagePg != NULL);
+    ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
 
     InfoManifest *this = NULL;
 
@@ -68,10 +82,35 @@ infoManifestNewLoad(const Storage *storagePg, const String *fileName, CipherType
         this->memContext = MEM_CONTEXT_NEW();
 
         // Create lists
+        this->ownerList = strLstNew();
         this->pathList = lstNew(sizeof(InfoManifestPath));
 
         // Load the manifest
-        // !!! NEXT THING IS TO LOAD THE MANIFEST
+        Ini *iniLocal = NULL;
+        this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, &iniLocal);
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Load path defaults
+            const String *userDefault = iniGetDefault(
+                iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, NULL);
+            const String *groupDefault = iniGetDefault(
+                iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, NULL);
+            const String *modeDefault = iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR);
+
+            // Load path list
+            StringList *pathKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR);
+
+            for (unsigned int pathKeyIdx = 0; pathKeyIdx < strLstSize(pathKeyList); pathKeyIdx++)
+            {
+                const String *path = strLstGet(pathKeyList, pathKeyIdx);
+                KeyValue *pathData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path)));
+
+                // const String *user = iniGetDefault(
+                //     iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, NULL);
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_NEW_END();
 
