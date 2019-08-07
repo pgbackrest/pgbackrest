@@ -96,6 +96,14 @@
 
                         <p>Add PostgreSQL query client.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Implement <cmd>start</cmd> and <cmd>stop</cmd> in C (although Perl code will still use the Perl version).</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>
