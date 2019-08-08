@@ -8,7 +8,7 @@ Calculate Most Common Value
 Object type
 ***********************************************************************************************************************************/
 #define MOST_COMMON_VALUE_TYPE                                      MostCommonValue
-#define MOST_COMMON_VALUE_PREFIX                                    MostCommonValue
+#define MOST_COMMON_VALUE_PREFIX                                    mcv
 
 typedef struct MostCommonValue MostCommonValue;
 
@@ -18,9 +18,9 @@ typedef struct MostCommonValue MostCommonValue;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-MostCommonValue *mcvNew(void);
-MostCommonValue *mcvUpdate(MostCommonValue *this, Variant *value);
-const Variant *mcvResult(MostCommonValue *this);
+MostCommonValue *mcvNew(VariantType type);
+MostCommonValue *mcvUpdate(MostCommonValue *this, const Variant *value);
+const Variant *mcvResult(const MostCommonValue *this);
 void mcvFree(MostCommonValue *this);
 
 /***********************************************************************************************************************************

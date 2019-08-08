@@ -6,6 +6,7 @@ Calculate Most Common Value
 #include "common/debug.h"
 #include "common/object.h"
 #include "common/type/list.h"
+#include "common/type/mcv.h"
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
@@ -21,7 +22,7 @@ struct MostCommonValue
 typedef struct MostCommonValueEntry
 {
     const Variant *value;                                           // Value to be counted
-    unsigned int total;                                             // Total count for the value
+    uint64_t total;                                                 // Total count for the value
 } MostCommonValueEntry;
 
 OBJECT_DEFINE_FREE(MOST_COMMON_VALUE);
@@ -43,7 +44,7 @@ mcvNew(VariantType type)
         this = memNew(sizeof(MostCommonValue));
         this->memContext = MEM_CONTEXT_NEW();
         this->type = type;
-        this->list = lstNew(sizeof(Variant *));
+        this->list = lstNew(sizeof(MostCommonValueEntry));
     }
     MEM_CONTEXT_NEW_END();
 
@@ -54,7 +55,7 @@ mcvNew(VariantType type)
 Update counts for a value
 ***********************************************************************************************************************************/
 MostCommonValue *
-mcvUpdate(MostCommonValue *this, Variant *value)
+mcvUpdate(MostCommonValue *this, const Variant *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MOST_COMMON_VALUE, this);
@@ -67,9 +68,9 @@ mcvUpdate(MostCommonValue *this, Variant *value)
 
     for (unsigned int listIdx = 0; listIdx < lstSize(this->list); listIdx++)
     {
-        MostCommonValueEntry *entry = (MostCommonValue *)lstGet(listIdx);
+        MostCommonValueEntry *entry = (MostCommonValueEntry *)lstGet(this->list, listIdx);
 
-        if (varEq(value, entry))
+        if (varEq(value, entry->value))
         {
             entry->total++;
             found = true;
@@ -103,6 +104,18 @@ mcvResult(const MostCommonValue *this)
     ASSERT(this != NULL);
 
     const Variant *result = NULL;
+    uint64_t resultTotal = 0;
+
+    for (unsigned int listIdx = 0; listIdx < lstSize(this->list); listIdx++)
+    {
+        MostCommonValueEntry *entry = (MostCommonValueEntry *)lstGet(this->list, listIdx);
+
+        if (entry->total > resultTotal)
+        {
+            result = entry->value;
+            resultTotal = entry->total;
+        }
+    }
 
     FUNCTION_TEST_RETURN(result);
 }
