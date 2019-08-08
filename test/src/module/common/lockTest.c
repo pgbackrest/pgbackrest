@@ -21,7 +21,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lockAcquireFile() and lockReleaseFile()"))
     {
-        String *archiveLock = strNewFmt("%s/main-archive.lock", testPath());
+        String *archiveLock = strNewFmt("%s/main-archive" LOCK_FILE_EXT, testPath());
         int lockHandleTest = -1;
 
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(archiveLock)))), 0, "touch lock file");
@@ -48,7 +48,7 @@ testRun(void)
         TEST_RESULT_VOID(lockReleaseFile(lockHandleTest, archiveLock), "release lock again without error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        String *subPathLock = strNewFmt("%s/sub1/sub2/db-backup.lock", testPath());
+        String *subPathLock = strNewFmt("%s/sub1/sub2/db-backup" LOCK_FILE_EXT, testPath());
 
         TEST_ASSIGN(lockHandleTest, lockAcquireFile(subPathLock, 0, true), "get lock in subpath");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, subPathLock), true, "lock file was created");
@@ -57,7 +57,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsNP(storageTest, subPathLock), false, "lock file was removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        String *dirLock = strNewFmt("%s/dir.lock", testPath());
+        String *dirLock = strNewFmt("%s/dir" LOCK_FILE_EXT, testPath());
 
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo mkdir -p 750 %s", strPtr(dirLock)))), 0, "create dirtest.lock dir");
 
@@ -78,7 +78,7 @@ testRun(void)
                     strPtr(noPermLock), strPtr(noPermLock))));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        String *backupLock = strNewFmt("%s/main-backup.lock", testPath());
+        String *backupLock = strNewFmt("%s/main-backup" LOCK_FILE_EXT, testPath());
 
         HARNESS_FORK_BEGIN()
         {
@@ -110,8 +110,8 @@ testRun(void)
     {
         String *stanza = strNew("test");
         String *lockPath = strNew(testPath());
-        String *archiveLockFile = strNewFmt("%s/%s-archive.lock", testPath(), strPtr(stanza));
-        String *backupLockFile = strNewFmt("%s/%s-backup.lock", testPath(), strPtr(stanza));
+        String *archiveLockFile = strNewFmt("%s/%s-archive" LOCK_FILE_EXT, testPath(), strPtr(stanza));
+        String *backupLockFile = strNewFmt("%s/%s-backup" LOCK_FILE_EXT, testPath(), strPtr(stanza));
         int lockHandleTest = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------

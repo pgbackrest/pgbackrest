@@ -189,7 +189,7 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, Tim
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
-            lockFile[lockIdx] = strNewFmt("%s/%s-%s.lock", strPtr(lockPath), strPtr(stanza), lockTypeName[lockIdx]);
+            lockFile[lockIdx] = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strPtr(lockPath), strPtr(stanza), lockTypeName[lockIdx]);
 
             lockHandle[lockIdx] = lockAcquireFile(lockFile[lockIdx], lockTimeout, failOnNoLock);
 
