@@ -340,16 +340,22 @@ kvGetDefault(const KeyValue *this, const Variant *key, const Variant *defaultVal
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
         FUNCTION_TEST_PARAM(VARIANT, key);
-        FUNCTION_TEST_PARAM(VARIANT, default);
+        FUNCTION_TEST_PARAM(VARIANT, defaultValue);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    const Variant *result = kvGet(this, key);
+    const Variant *result = NULL;
 
-    if (result == NULL)
+    // Find the key
+    unsigned int listIdx = kvGetIdx(this, key);
+
+    // If key not found then return default, else return the value
+    if (listIdx == KEY_NOT_FOUND)
         result = defaultValue;
+    else
+        result = ((KeyValuePair *)lstGet(this->list, listIdx))->value;
 
     FUNCTION_TEST_RETURN(result);
 }

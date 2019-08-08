@@ -7,6 +7,7 @@ Manifest Info Handler
 #include "common/log.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
+#include "common/type/mcv.h"
 #include "info/info.h"
 #include "info/infoManifest.h"
 #include "postgres/interface.h"
@@ -198,7 +199,44 @@ infoManifestSave(
     {
         Ini *ini = iniNew();
 
+        // Save default path values
+        MostCommonValue *userMcv = mcvNew(varTypeString);
+        MostCommonValue *groupMcv = mcvNew(varTypeString);
+        MostCommonValue *modeMcv = mcvNew(varTypeUInt);
 
+        for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+        {
+            InfoManifestPath *path = lstGet(this->pathList, pathIdx);
+
+            mcvUpdate(userMcv, VARSTR(path->user));
+            mcvUpdate(groupMcv, VARSTR(path->group));
+            mcvUpdate(modeMcv, VARUINT(path->mode));
+        }
+
+        iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(mcvResult(userMcv), 0));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(mcvResult(groupMcv), 0));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
+            jsonFromStr(strNewFmt("%04o", varUInt(mcvResult(modeMcv)))));
+
+        // Save paths
+        for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+        {
+            InfoManifestPath *path = lstGet(this->pathList, pathIdx);
+            KeyValue *pathData = kvNew();
+
+            if (!varEq(VARSTR(path->user), VARSTR(varStr(mcvResult(userMcv)))))
+                kvPut(pathData, INFO_MANIFEST_KEY_USER_VAR, VARSTR(path->user));
+
+            if (!varEq(VARSTR(path->group), VARSTR(varStr(mcvResult(groupMcv)))))
+                kvPut(pathData, INFO_MANIFEST_KEY_GROUP_VAR, VARSTR(path->group));
+
+            if (!varEq(VARUINT(path->mode), mcvResult(modeMcv)))
+                kvPut(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
+
+            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathData, 0));
+        }
 
         infoSave(this->info, ini, storage, fileName, cipherType, cipherPass);
     }

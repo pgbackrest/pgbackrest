@@ -34,7 +34,9 @@ testRun(void)
             "[target:path]\n"
             "pg_data={\"user\":\"user2\"}\n"
             "pg_data/base={\"group\":\"group2\"}\n"
-            "pg_data/base/16384={\"mode\":\"0750\"}\n"
+            "pg_data/base/16384={\"group\":null,\"mode\":\"0750\"}\n"
+            "pg_data/base/32768={}\n"
+            "pg_data/base/65536={\"user\":null}\n"
             "\n"
             "[target:path:default]\n"
             "group=\"group1\"\n"
@@ -43,10 +45,17 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew(INFO_BACKUP_FILE)), harnessInfoChecksum(manifestStr)),
+            storagePutNP(storageNewWriteNP(storageTest, strNew(INFO_MANIFEST_FILE ".expected")), harnessInfoChecksum(manifestStr)),
             "write manifest");
 
-        TEST_ASSIGN(manifest, infoManifestNewLoad(storageTest, strNew(INFO_BACKUP_FILE), cipherTypeNone, NULL), "load manifest");
-        (void)manifest; // !!! REMOVE WHEN TESTS
+        TEST_ASSIGN(
+            manifest, infoManifestNewLoad(storageTest, strNew(INFO_MANIFEST_FILE ".expected"), cipherTypeNone, NULL),
+            "load manifest");
+        TEST_RESULT_VOID(
+            infoManifestSave(manifest, storageTest, strNew(INFO_MANIFEST_FILE ".actual"), cipherTypeNone, NULL), "save manifest");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew(INFO_MANIFEST_FILE ".actual"))))),
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew(INFO_MANIFEST_FILE ".expected"))))),
+            "compare manifests");
     }
 }
