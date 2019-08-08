@@ -69,10 +69,10 @@ typedef struct InfoManifestFile
     // const InfoManifestPath *pathInfo;                               // Path info for this file
     // bool exists:1;                                                  // Does the file still exist?
     bool master:1;                                                  // Should this file be copied from master?
-    bool checksum:1;                                                // Does this file have page checksums?
+    bool checksumPage:1;                                            // Does this file have page checksums?
     mode_t mode;                                                    // File mode
-    unsigned char checksumSha1[HASH_TYPE_SHA1_SIZE];                // SHA1 checksum
-    const String *checksumError;                                    // JSON result when there are checksum errors
+    unsigned char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];        // SHA1 checksum
+    const String *checksumPageError;                                // JSON result when there are checksum page errors
     const String *user;                                             // User name
     const String *group;                                            // Group name
     uint64_t size;                                                  // Original size

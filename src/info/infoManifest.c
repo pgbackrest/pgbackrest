@@ -3,6 +3,8 @@ Manifest Info Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <string.h>
+
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/type/json.h"
@@ -31,18 +33,29 @@ VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_COMPRESS_VAR,           INFO_MANIFES
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_HARDLINK_VAR,           INFO_MANIFEST_KEY_OPT_HARDLINK);
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_ONLINE_VAR,             INFO_MANIFEST_KEY_OPT_ONLINE);
 
-// STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_STR,                "target:file");
-// STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR,        "target:file:default");
+STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_STR,                "target:file");
+STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR,        "target:file:default");
 
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_STR,                "target:path");
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path:default");
 
+#define INFO_MANIFEST_KEY_CHECKSUM                                  "checksum"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_VAR,           INFO_MANIFEST_KEY_CHECKSUM);
+#define INFO_MANIFEST_KEY_CHECKSUM_PAGE                             "checksum-page"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR,      INFO_MANIFEST_KEY_CHECKSUM_PAGE);
 #define INFO_MANIFEST_KEY_GROUP                                     "group"
     STRING_STATIC(INFO_MANIFEST_KEY_GROUP_STR,                      INFO_MANIFEST_KEY_GROUP);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_GROUP_VAR,              INFO_MANIFEST_KEY_GROUP);
+#define INFO_MANIFEST_KEY_MASTER                                    "master"
+    STRING_STATIC(INFO_MANIFEST_KEY_MASTER_STR,                     INFO_MANIFEST_KEY_MASTER);
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_MASTER_VAR,             INFO_MANIFEST_KEY_MASTER);
 #define INFO_MANIFEST_KEY_MODE                                      "mode"
     STRING_STATIC(INFO_MANIFEST_KEY_MODE_STR,                       INFO_MANIFEST_KEY_MODE);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_MODE_VAR,               INFO_MANIFEST_KEY_MODE);
+#define INFO_MANIFEST_KEY_SIZE                                      "size"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_VAR,               INFO_MANIFEST_KEY_SIZE);
+#define INFO_MANIFEST_KEY_TIMESTAMP                                 "timestamp"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TIMESTAMP_VAR,          INFO_MANIFEST_KEY_TIMESTAMP);
 #define INFO_MANIFEST_KEY_USER                                      "user"
     STRING_STATIC(INFO_MANIFEST_KEY_USER_STR,                       INFO_MANIFEST_KEY_USER);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_USER_VAR,               INFO_MANIFEST_KEY_USER);
@@ -191,45 +204,51 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
                 lstAdd(this->pathList, &path);
             }
 
-    //         // Load file defaults
-    //         // ---------------------------------------------------------------------------------------------------------------------
-    //         const String *fileDefault = iniGet(
-    //             iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR);
-    //         const Variant *fileUserDefault = strEq(fileDefault, FALSE_STR) ? BOOL_FALSE_VAR : VARSTR(fileDefault);
-    //         fileDefault = iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR);
-    //         const Variant *fileGroupDefault = strEq(fileDefault, FALSE_STR) ? BOOL_FALSE_VAR : VARSTR(fileDefault);
-    //         const String *fileModeDefault = jsonToStr(
-    //             iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
-    //
-    //         // Load file list
-    //         // ---------------------------------------------------------------------------------------------------------------------
-    //         StringList *fileKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR);
-    //
-    //         for (unsigned int fileKeyIdx = 0; fileKeyIdx < strLstSize(fileKeyList); fileKeyIdx++)
-    //         {
-    //             memContextSwitch(lstMemContext(this->fileList));
-    //             InfoManifestFile file = {.name = strDup(strLstGet(fileKeyList, fileKeyIdx))};
-    //             memContextSwitch(MEM_CONTEXT_TEMP());
-    //
-    //             // KeyValue *fileData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file.name)));
-    //
-    // // bool master:1;                                                  // Should this file be copied from master?
-    // // bool checksum:1;                                                // Does this file have page checksums?
-    // // unsigned char checksumSha1[HASH_TYPE_SHA1_SIZE];                // SHA1 checksum
-    // // const String *checksumError;                                    // JSON result when there are checksum errors
-    // // uint64_t size;                                                  // Original size
-    // // uint64_t sizeRepo;                                              // Size in repo
-    // // time_t timestamp;                                               // Original timestamp
-    //
-    //             const Variant *fileUser = kvGetDefault(fileData, INFO_MANIFEST_KEY_USER_VAR, VARSTR(fileUserDefault));
-    //             file.user = infoManifestOwnerCache(
-    //                 this, varStr());
-    //             file.group = infoManifestOwnerCache(
-    //                 this, varStr(kvGetDefault(fileData, INFO_MANIFEST_KEY_GROUP_VAR, VARSTR(fileGroupDefault))));
-    //             file.mode = cvtZToMode(strPtr(varStr(kvGetDefault(fileData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(fileModeDefault)))));
-    //
-    //             lstAdd(this->fileList, &file);
-    //         }
+            // Load file defaults
+            // ---------------------------------------------------------------------------------------------------------------------
+            const Variant *fileUserDefault = infoManifestOwnerDefaultGet(
+                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
+            const Variant *fileGroupDefault = infoManifestOwnerDefaultGet(
+                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
+            const String *fileModeDefault = jsonToStr(
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
+            const Variant *fileMasterDefault = jsonToVar(
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MASTER_STR));
+
+            // Load file list
+            // ---------------------------------------------------------------------------------------------------------------------
+            StringList *fileKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR);
+
+            for (unsigned int fileKeyIdx = 0; fileKeyIdx < strLstSize(fileKeyList); fileKeyIdx++)
+            {
+                memContextSwitch(lstMemContext(this->fileList));
+                InfoManifestFile file = {.name = strDup(strLstGet(fileKeyList, fileKeyIdx))};
+                memContextSwitch(MEM_CONTEXT_TEMP());
+
+                KeyValue *fileData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file.name)));
+
+    // const String *checksumPageError;                                    // JSON result when there are checksum errors
+
+                file.user = infoManifestOwnerCache(this, kvGetDefault(fileData, INFO_MANIFEST_KEY_USER_VAR, fileUserDefault));
+                file.group = infoManifestOwnerCache(this, kvGetDefault(fileData, INFO_MANIFEST_KEY_GROUP_VAR, fileGroupDefault));
+                file.mode = cvtZToMode(strPtr(varStr(kvGetDefault(fileData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(fileModeDefault)))));
+                file.master = varBool(kvGetDefault(fileData, INFO_MANIFEST_KEY_MASTER_VAR, fileMasterDefault));
+                file.checksumPage = varBool(kvGetDefault(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_FALSE_VAR));
+                file.size = varUInt64(kvGet(fileData, INFO_MANIFEST_KEY_SIZE_VAR));
+                file.sizeRepo = varUInt64(kvGetDefault(fileData, INFO_MANIFEST_KEY_SIZE_VAR, VARUINT64(file.size)));
+                file.timestamp = (time_t)varUInt64(kvGet(fileData, INFO_MANIFEST_KEY_TIMESTAMP_VAR));
+
+                if (file.size == 0)
+                    memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                else
+                {
+                    memcpy(
+                        file.checksumSha1, strPtr(varStr(kvGet(fileData, INFO_MANIFEST_KEY_CHECKSUM_VAR))),
+                        HASH_TYPE_SHA1_SIZE_HEX + 1);
+                }
+
+                lstAdd(this->fileList, &file);
+            }
         }
         MEM_CONTEXT_TEMP_END();
     }
