@@ -56,7 +56,7 @@ Convert log level to string and vice versa
 ***********************************************************************************************************************************/
 #define LOG_LEVEL_TOTAL                                             (LOG_LEVEL_MAX + 1)
 
-static const char *logLevelList[LOG_LEVEL_TOTAL] =
+static const char *const logLevelList[LOG_LEVEL_TOTAL] =
 {
     "OFF",
     "ASSERT",
