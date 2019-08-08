@@ -67,6 +67,23 @@ struct InfoManifest
 };
 
 /***********************************************************************************************************************************
+Convert the owner to a variant.  The input could be boolean false (meaning there is no owner) or a string (there is an owner).
+***********************************************************************************************************************************/
+static const Variant *
+infoManifestOwnerDefaultGet(InfoManifest *this, const String *ownerDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, ownerDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(ownerDefault != NULL);
+
+    FUNCTION_TEST_RETURN(strEq(ownerDefault, FALSE_STR) ? BOOL_FALSE_VAR : varNewStr(jsonToStr(ownerDefault)));
+}
+
+/***********************************************************************************************************************************
 Add owner to the owner list if it is not there already and return the pointer.  This saves a lot of space.
 ***********************************************************************************************************************************/
 static const String *
@@ -146,11 +163,10 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
         {
             // Load path defaults
             // ---------------------------------------------------------------------------------------------------------------------
-            const String *pathDefault = iniGet(
-                iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR);
-            const Variant *pathUserDefault = strEq(pathDefault, FALSE_STR) ? BOOL_FALSE_VAR : VARSTR(jsonToStr(pathDefault));
-            pathDefault = iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR);
-            const Variant *pathGroupDefault = strEq(pathDefault, FALSE_STR) ? BOOL_FALSE_VAR : VARSTR(jsonToStr(pathDefault));
+            const Variant *pathUserDefault = infoManifestOwnerDefaultGet(
+                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
+            const Variant *pathGroupDefault = infoManifestOwnerDefaultGet(
+                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
             const String *pathModeDefault = jsonToStr(
                 iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
 
@@ -225,6 +241,17 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
 /***********************************************************************************************************************************
 Save to file
 ***********************************************************************************************************************************/
+// Convert the owner MCV to a default.  If the input is NULL boolean false should be return, else the owner string.
+static const Variant *
+infoManifestOwnerGet(const String *ownerDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, ownerDefault);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(ownerDefault == NULL ? BOOL_FALSE_VAR : varNewStr(ownerDefault));
+}
+
 void
 infoManifestSave(
     InfoManifest *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
@@ -261,21 +288,15 @@ infoManifestSave(
             mcvUpdate(modeMcv, VARUINT(path->mode));
         }
 
-        const Variant *userDefault = mcvResult(userMcv);
-
-        if (userDefault == NULL)
-            userDefault = BOOL_FALSE_VAR;
-
-        const Variant *groupDefault = mcvResult(groupMcv);
-
-        if (groupDefault == NULL)
-            groupDefault = BOOL_FALSE_VAR;
+        const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
+        const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
+        const Variant *modeDefault = mcvResult(modeMcv);
 
         iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
         iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
         iniSet(
             ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
-            jsonFromStr(strNewFmt("%04o", varUInt(mcvResult(modeMcv)))));
+            jsonFromStr(strNewFmt("%04o", varUInt(modeDefault))));
 
         // Save path list
         // -------------------------------------------------------------------------------------------------------------------------
@@ -284,13 +305,13 @@ infoManifestSave(
             InfoManifestPath *path = lstGet(this->pathList, pathIdx);
             KeyValue *pathData = kvNew();
 
-            if (!varEq(path->user == NULL ? BOOL_FALSE_VAR : VARSTR(path->user), userDefault))
-                kvPut(pathData, INFO_MANIFEST_KEY_USER_VAR, path->user == NULL ? BOOL_FALSE_VAR : VARSTR(path->user));
+            if (!varEq(infoManifestOwnerGet(path->user), userDefault))
+                kvPut(pathData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(path->user));
 
-            if (!varEq(path->group == NULL ? BOOL_FALSE_VAR : VARSTR(path->group), groupDefault))
-                kvPut(pathData, INFO_MANIFEST_KEY_GROUP_VAR, path->group == NULL ? BOOL_FALSE_VAR : VARSTR(path->group));
+            if (!varEq(infoManifestOwnerGet(path->group), groupDefault))
+                kvPut(pathData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(path->group));
 
-            if (!varEq(VARUINT(path->mode), mcvResult(modeMcv)))
+            if (!varEq(VARUINT(path->mode), modeDefault))
                 kvPut(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
 
             iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathData, 0));
