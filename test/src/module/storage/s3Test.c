@@ -46,9 +46,7 @@ testS3ServerRequest(const char *verb, const char *uri, const char *content)
         "x-amz-content-sha256:%s\r\n"
         "x-amz-date:" DATETIME_REPLACE "\r\n"
         "\r\n",
-        content == NULL ?
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" :
-            strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTRZ(content)))));
+        content == NULL ? HASH_TYPE_SHA256_ZERO : strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTRZ(content)))));
 
     if (content != NULL)
         strCat(request, content);
@@ -698,9 +696,7 @@ testRun(void)
         httpQueryAdd(query, strNew("list-type"), strNew("2"));
 
         TEST_RESULT_VOID(
-            storageS3Auth(
-                driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header,
-                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
+            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR(
             strPtr(httpHeaderGet(header, strNew("authorization"))),
@@ -713,9 +709,7 @@ testRun(void)
         const Buffer *lastSigningKey = driver->signingKey;
 
         TEST_RESULT_VOID(
-            storageS3Auth(
-                driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header,
-                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
+            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR(
             strPtr(httpHeaderGet(header, strNew("authorization"))),
@@ -727,9 +721,7 @@ testRun(void)
 
         // Change the date to generate a new signing key
         TEST_RESULT_VOID(
-            storageS3Auth(
-                driver, strNew("GET"), strNew("/"), query, strNew("20180814T080808Z"), header,
-                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
+            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20180814T080808Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "    generate authorization");
         TEST_RESULT_STR(
             strPtr(httpHeaderGet(header, strNew("authorization"))),
@@ -747,9 +739,7 @@ testRun(void)
                 NULL, NULL));
 
         TEST_RESULT_VOID(
-            storageS3Auth(
-                driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header,
-                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
+            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR(
             strPtr(httpHeaderGet(header, strNew("authorization"))),
