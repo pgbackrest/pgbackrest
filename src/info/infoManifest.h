@@ -66,18 +66,27 @@ File type
 typedef struct InfoManifestFile
 {
     const String *name;                                             // File name
-    const InfoManifestPath *pathInfo;                               // Path info for this file
-    bool exists:1;                                                  // Does the file still exist?
+    // const InfoManifestPath *pathInfo;                               // Path info for this file
+    // bool exists:1;                                                  // Does the file still exist?
     bool master:1;                                                  // Should this file be copied from master?
     bool checksum:1;                                                // Does this file have page checksums?
+    mode_t mode;                                                    // File mode
     unsigned char checksumSha1[HASH_TYPE_SHA1_SIZE];                // SHA1 checksum
     const String *checksumError;                                    // JSON result when there are checksum errors
     const String *user;                                             // User name
-    const String *groupId;                                          // Group name
+    const String *group;                                            // Group name
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
 } InfoManifestFile;
+
+/***********************************************************************************************************************************
+Link type
+***********************************************************************************************************************************/
+typedef struct InfoManifestLink
+{
+    const String *name;                                             // Link name
+} InfoManifestLink;
 
 /***********************************************************************************************************************************
 Constructor
