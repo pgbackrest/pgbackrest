@@ -282,9 +282,7 @@ storageS3Request(
             // Generate authorization header
             storageS3Auth(
                 this, verb, httpUriEncode(uri, true), query, storageS3DateTime(time(NULL)), requestHeader,
-                body == NULL || bufUsed(body) == 0 ?
-                    STRDEF("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855") :
-                    bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
+                body == NULL || bufUsed(body) == 0 ? HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
 
             // Get an http client
             HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
