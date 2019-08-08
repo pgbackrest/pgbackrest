@@ -87,6 +87,8 @@ testRun(void)
 
         TEST_RESULT_INT(cvtModeToZ(0777, buffer, STACK_TRACE_PARAM_MAX), 4, "convert mode to string");
         TEST_RESULT_STR(buffer, "0777", "    check buffer");
+
+        TEST_RESULT_UINT(cvtZToMode("0700"), 0700, "convert string to mode");
     }
 
     // *****************************************************************************************************************************
