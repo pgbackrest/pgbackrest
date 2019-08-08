@@ -31,6 +31,9 @@ VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_COMPRESS_VAR,           INFO_MANIFES
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_HARDLINK_VAR,           INFO_MANIFEST_KEY_OPT_HARDLINK);
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_ONLINE_VAR,             INFO_MANIFEST_KEY_OPT_ONLINE);
 
+STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_STR,                "target:file");
+STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR,        "target:file:default");
+
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_STR,                "target:path");
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path:default");
 
@@ -139,14 +142,16 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Load path defaults
-            const String *userDefault = jsonToStr(
+            // ---------------------------------------------------------------------------------------------------------------------
+            const String *pathUserDefault = jsonToStr(
                 iniGetDefault(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, NULL));
-            const String *groupDefault = jsonToStr(
+            const String *pathGroupDefault = jsonToStr(
                 iniGetDefault(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, NULL));
-            const String *modeDefault = jsonToStr(
+            const String *pathModeDefault = jsonToStr(
                 iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
 
             // Load path list
+            // ---------------------------------------------------------------------------------------------------------------------
             StringList *pathKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR);
 
             for (unsigned int pathKeyIdx = 0; pathKeyIdx < strLstSize(pathKeyList); pathKeyIdx++)
@@ -158,12 +163,42 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
                 KeyValue *pathData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path.name)));
 
                 path.user = infoManifestOwnerCache(
-                    this, varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_USER_VAR, VARSTR(userDefault))));
+                    this, varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_USER_VAR, VARSTR(pathUserDefault))));
                 path.group = infoManifestOwnerCache(
-                    this, varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_GROUP_VAR, VARSTR(groupDefault))));
-                path.mode = cvtZToMode(strPtr(varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(modeDefault)))));
+                    this, varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_GROUP_VAR, VARSTR(pathGroupDefault))));
+                path.mode = cvtZToMode(strPtr(varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(pathModeDefault)))));
                 // ??? Set base path?
                 // ??? Set db path?
+
+                lstAdd(this->pathList, &path);
+            }
+
+            // Load file defaults
+            // ---------------------------------------------------------------------------------------------------------------------
+            const String *fileUserDefault = jsonToStr(
+                iniGetDefault(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, NULL));
+            const String *fileGroupDefault = jsonToStr(
+                iniGetDefault(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, NULL));
+            const String *fileModeDefault = jsonToStr(
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
+
+            // Load file list
+            // ---------------------------------------------------------------------------------------------------------------------
+            StringList *fileKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR);
+
+            for (unsigned int fileKeyIdx = 0; fileKeyIdx < strLstSize(fileKeyList); fileKeyIdx++)
+            {
+                memContextSwitch(lstMemContext(this->fileList));
+                InfoManifestFile file = {.name = strDup(strLstGet(fileKeyList, fileKeyIdx))};
+                memContextSwitch(MEM_CONTEXT_TEMP());
+
+                KeyValue *fileData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file.name)));
+
+                path.user = infoManifestOwnerCache(
+                    this, varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_USER_VAR, VARSTR(pathUserDefault))));
+                path.group = infoManifestOwnerCache(
+                    this, varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_GROUP_VAR, VARSTR(pathGroupDefault))));
+                path.mode = cvtZToMode(strPtr(varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(pathModeDefault)))));
 
                 lstAdd(this->pathList, &path);
             }
@@ -200,6 +235,7 @@ infoManifestSave(
         Ini *ini = iniNew();
 
         // Save default path values
+        // -------------------------------------------------------------------------------------------------------------------------
         MostCommonValue *userMcv = mcvNew(varTypeString);
         MostCommonValue *groupMcv = mcvNew(varTypeString);
         MostCommonValue *modeMcv = mcvNew(varTypeUInt);
@@ -220,7 +256,8 @@ infoManifestSave(
             ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
             jsonFromStr(strNewFmt("%04o", varUInt(mcvResult(modeMcv)))));
 
-        // Save paths
+        // Save path list
+        // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
         {
             InfoManifestPath *path = lstGet(this->pathList, pathIdx);
