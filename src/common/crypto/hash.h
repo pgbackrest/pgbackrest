@@ -28,6 +28,7 @@ Hash types
 /***********************************************************************************************************************************
 Hashes for zero-length files (i.e., starting hash)
 ***********************************************************************************************************************************/
+#define HASH_TYPE_MD5_ZERO                                          "d41d8cd98f00b204e9800998ecf8427e"
 #define HASH_TYPE_SHA1_ZERO                                         "da39a3ee5e6b4b0d3255bfef95601890afd80709"
     STRING_DECLARE(HASH_TYPE_SHA1_ZERO_STR);
 #define HASH_TYPE_SHA256_ZERO                                                                                                      \

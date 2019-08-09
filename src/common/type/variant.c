@@ -21,7 +21,7 @@ Constant variants that are generally useful
 ***********************************************************************************************************************************/
 // Used to declare Bool Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
 #define VARIANT_BOOL_EXTERN(name, dataParam)                                                                                       \
-    const Variant *name = ((const Variant *)&(const VariantBoolConst){.type = varTypeBool, .data = dataParam})
+    const Variant *const name = ((const Variant *)&(const VariantBoolConst){.type = varTypeBool, .data = dataParam})
 
 VARIANT_BOOL_EXTERN(BOOL_FALSE_VAR,                                 false);
 VARIANT_BOOL_EXTERN(BOOL_TRUE_VAR,                                  true);
@@ -100,7 +100,7 @@ typedef struct VariantVariantList
 /***********************************************************************************************************************************
 Variant type names
 ***********************************************************************************************************************************/
-static const char *variantTypeName[] =
+static const char *const variantTypeName[] =
 {
     "bool",                                                         // varTypeBool
     "double",                                                       // varTypeDouble,
@@ -349,7 +349,7 @@ varBoolForce(const Variant *this)
         case varTypeString:
         {
             // List of false/true boolean string values.  Note that false/true values must be equal.
-            static const char *boolString[] =
+            static const char *const boolString[] =
             {
                 "n", "f", "0",  "no", "false", "off",
                 "y", "t", "1", "yes",  "true",  "on",
