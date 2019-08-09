@@ -4,7 +4,7 @@ Stanza Delete Command
 #include "build.auto.h"
 
 #include "command/control/common.h"
-#include "command/stanza/stanzaDelete.h"
+#include "command/stanza/delete.h"
 #include "command/backup/common.h"
 #include "common/debug.h"
 #include "common/memContext.h"

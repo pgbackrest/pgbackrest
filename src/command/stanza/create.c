@@ -8,7 +8,7 @@ Stanza Create Command
 #include <inttypes.h>
 
 #include "command/stanza/common.h"
-#include "command/stanza/stanzaCreate.h"
+#include "command/stanza/create.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"

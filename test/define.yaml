@@ -681,9 +681,9 @@ unit:
 
         coverage:
           command/stanza/common: full
-          command/stanza/stanzaCreate: full
-          command/stanza/stanzaUpgrade: full
-          command/stanza/stanzaDelete: full
+          command/stanza/create: full
+          command/stanza/upgrade: full
+          command/stanza/delete: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: storage

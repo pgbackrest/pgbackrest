@@ -8,7 +8,7 @@ Stanza Update Command
 #include <inttypes.h>
 
 #include "command/stanza/common.h"
-#include "command/stanza/stanzaUpgrade.h"
+#include "command/stanza/upgrade.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
