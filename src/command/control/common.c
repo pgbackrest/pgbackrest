@@ -18,7 +18,8 @@ lockStopFileName(const String *stanza)
         FUNCTION_TEST_PARAM(STRING, stanza);
     FUNCTION_TEST_END();
 
-    String *result = strNewFmt("%s/%s.stop", strPtr(cfgOptionStr(cfgOptLockPath)), stanza != NULL ? strPtr(stanza) : "all");
+    String *result = strNewFmt(
+        "%s/%s" STOP_FILE_EXT, strPtr(cfgOptionStr(cfgOptLockPath)), stanza != NULL ? strPtr(stanza) : "all");
 
     FUNCTION_TEST_RETURN(result);
 }

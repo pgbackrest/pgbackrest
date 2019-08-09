@@ -11,6 +11,8 @@ Main
 #include "command/archive/push/push.h"
 #include "command/check/check.h"
 #include "command/command.h"
+#include "command/control/start.h"
+#include "command/control/stop.h"
 #include "command/expire/expire.h"
 #include "command/help/help.h"
 #include "command/info/info.h"
@@ -218,7 +220,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStart:
                 {
-                    perlExec();
+                    cmdStart();
                     break;
                 }
 
@@ -226,7 +228,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStop:
                 {
-                    perlExec();
+                    cmdStop();
                     break;
                 }
 

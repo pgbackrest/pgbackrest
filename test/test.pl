@@ -1148,6 +1148,9 @@ eval
                         $oStorageBackRest->pathCreate("${strBuildPath}/RPMS", {bIgnoreExists => true, bCreateParent => true});
                         $oStorageBackRest->pathCreate("${strBuildPath}/BUILD", {bIgnoreExists => true, bCreateParent => true});
 
+                        # Install PostreSQL 11 development for package builds
+                        executeTest("docker exec -i test-build bash -c 'yum install -y postgresql11-devel 2>&1'");
+
                         # Copy source files
                         executeTest(
                             "tar --transform='s_^_pgbackrest-release-${strVersionBase}/_'" .

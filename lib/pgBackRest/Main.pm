@@ -117,17 +117,6 @@ sub main
 
             $iResult = new pgBackRest::Check::Check()->process();
         }
-
-        # Process start/stop commands
-        # --------------------------------------------------------------------------------------------------------------------------
-        elsif (cfgCommandTest(CFGCMD_START))
-        {
-            lockStart();
-        }
-        elsif (cfgCommandTest(CFGCMD_STOP))
-        {
-            lockStop();
-        }
         else
         {
             # Check that the repo path exists
