@@ -1,20 +1,34 @@
 --- pgbackrest.spec
 +++ pgbackrest.spec
-@@ -10,15 +10,14 @@
+@@ -10,18 +10,14 @@
  Source0:	https://github.com/pgbackrest/pgbackrest/archive/release/%{version}.tar.gz
  Source1:	pgbackrest-conf.patch
  BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 -Requires:	perl-XML-LibXML perl-IO-Socket-SSL
  %if 0%{?rhel} && 0%{?rhel} <= 6
- Requires:	perl-parent perl-JSON perl-Time-HiRes
+-Requires:	perl-parent perl-JSON perl-Time-HiRes
++Requires:	perl-parent perl-JSON
  %else
  Requires:	perl-JSON-PP
  %endif
 -Requires:	perl-Digest-SHA perl-DBD-Pg perl-Time-HiRes zlib
-+Requires:	perl-Digest-SHA perl-Time-HiRes zlib libxml2
++Requires:	perl-Time-HiRes openssl zlib libxml2 postgresql11-libs
  Requires:	perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 -BuildRequires:	openssl-devel zlib-devel perl-ExtUtils-Embed
-+BuildRequires:	openssl-devel zlib-devel postgresql-libs perl-ExtUtils-Embed
+-BuildRequires:	postgresql%{pgajorversion}-devel
+-Requires:	postgresql%{pgajorversion}-libs
+-
++BuildRequires:	openssl-devel zlib-devel perl-ExtUtils-Embed libxml2-devel postgresql11-devel
  
  %description
  pgBackRest aims to be a simple, reliable backup and restore system that can
+@@ -39,8 +35,7 @@
+ 
+ %build
+ pushd src
+-export CPPFLAGS='-I %{pginstdir}/include'
+-LDFLAGS='-L%{pginstdir}/lib' %configure
++LDFLAGS='-L/usr/pgsql-11/lib' PATH=$PATH:/usr/pgsql-11/bin %configure
+ %{__make}
+ popd
+ 
