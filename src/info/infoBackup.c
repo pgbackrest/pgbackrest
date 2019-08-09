@@ -206,7 +206,7 @@ infoBackupSave(
     InfoBackup *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_PG, this);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
         FUNCTION_LOG_PARAM(ENUM, cipherType);

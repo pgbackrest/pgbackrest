@@ -2008,6 +2008,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3KeySecret,
     },
 
+    // repo-s3-port option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_S3_PORT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3Port,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_S3_PORT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Port,
+    },
+
     // repo-s3-region option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2421,6 +2433,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoS3Host,
     cfgOptRepoS3Key,
     cfgOptRepoS3KeySecret,
+    cfgOptRepoS3Port,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
     cfgOptRepoS3VerifyTls,

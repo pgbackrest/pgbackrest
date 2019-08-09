@@ -5,7 +5,7 @@ Archive Get File
 
 #include "command/archive/get/file.h"
 #include "command/archive/common.h"
-#include "command/control/control.h"
+#include "command/control/common.h"
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/decompress.h"
 #include "common/crypto/cipherBlock.h"
@@ -68,7 +68,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
                 // If a WAL segment search among the possible file names
                 if (walIsSegment(archiveFile))
                 {
-                    String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile);
+                    String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile, 0);
 
                     if (walSegmentFile != NULL)
                     {

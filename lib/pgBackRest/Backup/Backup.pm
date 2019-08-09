@@ -336,13 +336,6 @@ sub processManifest
         }
     }
 
-    # Build the lsn start parameter to pass to the extra function
-    my $hStartLsnParam =
-    {
-        iWalId => defined($strLsnStart) ? hex((split('/', $strLsnStart))[0]) : 0xFFFFFFFF,
-        iWalOffset => defined($strLsnStart) ? hex((split('/', $strLsnStart))[1]) : 0xFFFFFFFF,
-    };
-
     # Iterate all files in the manifest
     foreach my $strRepoFile (
         sort {sprintf("%016d-%s", $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $b, MANIFEST_SUBKEY_SIZE), $b) cmp
@@ -401,13 +394,13 @@ sub processManifest
         # Queue for parallel backup
         $oBackupProcess->queueJob(
             $iHostConfigIdx, $strQueueKey, $strRepoFile, OP_BACKUP_FILE,
-            [$strDbFile, $strRepoFile, $lSize,
+            [$strDbFile, $bIgnoreMissing, $lSize,
                 $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
-                cfgOption(CFGOPT_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false, $strBackupLabel, $bCompress,
-                cfgOption(CFGOPT_COMPRESS_LEVEL), $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile,
-                MANIFEST_SUBKEY_TIMESTAMP, false), $bIgnoreMissing,
-                cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef,
-                cfgOption(CFGOPT_DELTA), defined($strReference) ? true : false],
+                cfgOption(CFGOPT_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false,
+                defined($strLsnStart) ? hex((split('/', $strLsnStart))[0]) : 0xFFFFFFFF,
+                defined($strLsnStart) ? hex((split('/', $strLsnStart))[1]) : 0xFFFFFFFF,
+                $strRepoFile, defined($strReference) ? true : false, $bCompress, cfgOption(CFGOPT_COMPRESS_LEVEL),
+                $strBackupLabel, cfgOption(CFGOPT_DELTA)],
             {rParamSecure => $oBackupManifest->cipherPassSub() ? [$oBackupManifest->cipherPassSub()] : undef});
 
         # Size and checksum will be removed and then verified later as a sanity check
@@ -449,7 +442,8 @@ sub processManifest
         {
             ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
                 $oBackupManifest, cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $hJob->{iHostConfigIdx}), false),
-                $hJob->{iProcessId}, @{$hJob->{rParam}}[0..4], @{$hJob->{rResult}}, $lSizeTotal, $lSizeCurrent, $lManifestSaveSize,
+                $hJob->{iProcessId}, @{$hJob->{rParam}}[0], @{$hJob->{rParam}}[7], @{$hJob->{rParam}}[2], @{$hJob->{rParam}}[3],
+                @{$hJob->{rParam}}[4], @{$hJob->{rResult}}, $lSizeTotal, $lSizeCurrent, $lManifestSaveSize,
                 $lManifestSaveCurrent);
         }
 

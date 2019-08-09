@@ -72,6 +72,7 @@ These includes define data structures that are required for the C to Perl interf
 ***********************************************************************************************************************************/
 #include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
+#include "xs/postgres/client.xsh"
 #include "xs/storage/storage.xsh"
 #include "xs/storage/storageRead.xsh"
 #include "xs/storage/storageWrite.xsh"
@@ -102,6 +103,7 @@ INCLUDE: xs/config/configTest.xs
 INCLUDE: xs/config/define.xs
 INCLUDE: xs/crypto/hash.xs
 INCLUDE: xs/crypto/random.xs
+INCLUDE: xs/postgres/client.xs
 INCLUDE: xs/postgres/pageChecksum.xs
 INCLUDE: xs/storage/storage.xs
 INCLUDE: xs/storage/storageRead.xs

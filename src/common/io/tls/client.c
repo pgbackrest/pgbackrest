@@ -329,6 +329,46 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
+Wait for the socket to be readable
+***********************************************************************************************************************************/
+static void
+tlsClientReadWait(TlsClient *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->session != NULL);
+
+    // Initialize the file descriptor set used for select
+    fd_set selectSet;
+    FD_ZERO(&selectSet);
+
+    // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
+    FD_SET((unsigned int)this->socket, &selectSet);
+
+    // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
+    struct timeval timeoutSelect;
+    timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
+    timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
+
+    // Determine if there is data to be read
+    int result = select(this->socket + 1, &selectSet, NULL, NULL, &timeoutSelect);
+    THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
+
+    // If no data read after time allotted then error
+    if (!result)
+    {
+        THROW_FMT(
+            FileReadError, "timeout after %" PRIu64 "ms waiting for read from '%s:%u'", this->timeout, strPtr(this->host),
+            this->port);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Read from the TLS session
 ***********************************************************************************************************************************/
 size_t
@@ -354,31 +394,7 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
     {
         // If no tls data pending then check the socket
         if (!SSL_pending(this->session))
-        {
-            // Initialize the file descriptor set used for select
-            fd_set selectSet;
-            FD_ZERO(&selectSet);
-
-            // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
-            FD_SET((unsigned int)this->socket, &selectSet);
-
-            // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
-            struct timeval timeoutSelect;
-            timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-            timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
-
-            // Determine if there is data to be read
-            int result = select(this->socket + 1, &selectSet, NULL, NULL, &timeoutSelect);
-            THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
-
-            // If no data read after time allotted then error
-            if (!result)
-            {
-                THROW_FMT(
-                    FileReadError, "unable to read data from '%s:%u' after %" PRIu64 "ms",
-                    strPtr(this->host), this->port, this->timeout);
-            }
-        }
+            tlsClientReadWait(this);
 
         // Read and handle errors
         size_t expectedBytes = bufRemains(buffer);
@@ -402,6 +418,49 @@ tlsClientRead(THIS_VOID, Buffer *buffer, bool block)
 /***********************************************************************************************************************************
 Write to the tls session
 ***********************************************************************************************************************************/
+static bool
+tlsWriteContinue(TlsClient *this, int writeResult, int writeError, size_t writeSize)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM(INT, writeResult);
+        FUNCTION_LOG_PARAM(INT, writeError);
+        FUNCTION_LOG_PARAM(SIZE, writeSize);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(writeSize > 0);
+
+    bool result = true;
+
+    // Handle errors
+    if (writeResult <= 0)
+    {
+        // If error = SSL_ERROR_NONE then this is the first write attempt so continue
+        if (writeError != SSL_ERROR_NONE)
+        {
+            // Error if the error indicates that we should not continue trying
+            if (!tlsError(this, writeError))
+                THROW_FMT(FileWriteError, "unable to write to tls [%d]", writeError);
+
+            // Wait for the socket to be readable for tls renegotiation
+            tlsClientReadWait(this);
+        }
+    }
+    else
+    {
+        if ((size_t)writeResult != writeSize)
+        {
+            THROW_FMT(
+                FileWriteError, "unable to write to tls, write size %d does not match expected size %zu", writeResult, writeSize);
+        }
+
+        result = false;
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
 void
 tlsClientWrite(THIS_VOID, const Buffer *buffer)
 {
@@ -416,7 +475,14 @@ tlsClientWrite(THIS_VOID, const Buffer *buffer)
     ASSERT(this->session != NULL);
     ASSERT(buffer != NULL);
 
-    cryptoError(SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer)) != (int)bufUsed(buffer), "unable to write");
+    int result = 0;
+    int error = SSL_ERROR_NONE;
+
+    while (tlsWriteContinue(this, result, error, bufUsed(buffer)))
+    {
+        result = SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer));
+        error = SSL_get_error(this->session, result);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }

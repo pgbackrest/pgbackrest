@@ -107,30 +107,6 @@ sub main
                 cfgOption(CFGOPT_LOCK_PATH), cfgOption(CFGOPT_COMMAND), cfgOption(CFGOPT_STANZA, false), cfgOption(CFGOPT_PROCESS));
         }
 
-        # Process local command
-        # --------------------------------------------------------------------------------------------------------------------------
-        elsif (cfgCommandTest(CFGCMD_LOCAL))
-        {
-            # Set log levels
-            cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);
-            logLevelSet(cfgOption(CFGOPT_LOG_LEVEL_FILE), OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
-
-            logFileSet(
-                storageLocal(),
-                cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgOption(CFGOPT_COMMAND)) . '-' .
-                    lc(cfgCommandName(cfgCommandGet())) . '-' . sprintf("%03d", cfgOption(CFGOPT_PROCESS)));
-
-            # Load module dynamically
-            require pgBackRest::Protocol::Local::Minion;
-            pgBackRest::Protocol::Local::Minion->import();
-
-            # Create the local object
-            my $oLocal = new pgBackRest::Protocol::Local::Minion();
-
-            # Process local requests
-            $oLocal->process();
-        }
-
         # Process check command
         # --------------------------------------------------------------------------------------------------------------------------
         elsif (cfgCommandTest(CFGCMD_CHECK))

@@ -104,15 +104,15 @@ By convention all string constant identifiers are appended with _STR.
 
 // Used to declare String constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
 #define STRING_EXTERN(name, buffer)                                                                                                \
-    const String *name = STRDEF(buffer)
+    const String *const name = STRDEF(buffer)
 
 // Used to declare String constants that will be local to the .c file.  Must be used in a .c file.
 #define STRING_STATIC(name, buffer)                                                                                                \
-    static const String *name = STRDEF(buffer)
+    static const String *const name = STRDEF(buffer)
 
 // Used to extern String constants declared with STRING_EXTERN().  Must be used in a .h file.
 #define STRING_DECLARE(name)                                                                                                       \
-    extern const String *name
+    extern const String *const name
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful

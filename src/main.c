@@ -9,6 +9,7 @@ Main
 
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
+#include "command/check/check.h"
 #include "command/command.h"
 #include "command/expire/expire.h"
 #include "command/help/help.h"
@@ -128,7 +129,9 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdCheck:
                 {
+                    // Functionality is currently split between Perl and C
                     perlExec();
+                    cmdCheck();
                     break;
                 }
 
@@ -161,15 +164,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdLocal:
                 {
-                    if (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR)  ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_RESTORE_STR))
-                    {
-                        cmdLocal(STDIN_FILENO, STDOUT_FILENO);
-                    }
-                    else
-                        perlExec();
-
+                    cmdLocal(STDIN_FILENO, STDOUT_FILENO);
                     break;
                 }
 

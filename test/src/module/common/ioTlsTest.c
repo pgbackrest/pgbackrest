@@ -81,7 +81,11 @@ testTlsServer(void)
         // Second protocol exchange
         harnessTlsServerExpect("more protocol info");
         harnessTlsServerReply("0123456789AB");
+        harnessTlsServerClose();
 
+        // Need data in read buffer to test tlsWriteContinue()
+        harnessTlsServerAccept();
+        harnessTlsServerReply("0123456789AB");
         harnessTlsServerClose();
 
         exit(0);
@@ -220,7 +224,7 @@ testRun(void)
         output = bufNew(12);
         TEST_ERROR(
             ioRead(tlsClientIoRead(client), output), FileReadError,
-            "unable to read data from 'tls.test.pgbackrest.org:9443' after 500ms");
+            "timeout after 500ms waiting for read from 'tls.test.pgbackrest.org:9443'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         input = BUFSTRDEF("more protocol info");
@@ -237,6 +241,16 @@ testRun(void)
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 0, "read no output after eof");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), true, "    check eof = true");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(tlsClientOpen(client), "open client again (was closed by server)");
+        TEST_RESULT_BOOL(tlsWriteContinue(client, -1, SSL_ERROR_WANT_READ, 1), true, "continue on WANT_READ");
+        TEST_RESULT_BOOL(tlsWriteContinue(client, 0, SSL_ERROR_NONE, 1), true, "continue on WANT_READ");
+        TEST_ERROR(
+            tlsWriteContinue(client, 77, 0, 88), FileWriteError,
+            "unable to write to tls, write size 77 does not match expected size 88");
+        TEST_ERROR(tlsWriteContinue(client, 0, SSL_ERROR_ZERO_RETURN, 1), FileWriteError, "unable to write to tls [6]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(tlsClientStatStr() != NULL, true, "check statistics exist");
 
         TEST_RESULT_VOID(tlsClientFree(client), "free client");

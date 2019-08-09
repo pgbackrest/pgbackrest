@@ -288,12 +288,17 @@ testRun(void)
 
         TEST_ASSIGN(varListOuter, varNewVarLst(varLstNew()), "new variant list with keyValues");
         varLstAdd(varVarLst(varListOuter), varNewStrZ("ASTRING"));
+        varLstAdd(varVarLst(varListOuter), varNewInt64(9223372036854775807LL));
+        varLstAdd(varVarLst(varListOuter), varNewInt(2147483647));
+        varLstAdd(varVarLst(varListOuter), varNewBool(true));
+        varLstAdd(varVarLst(varListOuter), varNewVarLst(varLstNew()));
         varLstAdd(varVarLst(varListOuter), NULL);
         varLstAdd(varVarLst(varListOuter), keyValue);
 
         TEST_ASSIGN(json, jsonFromVar(varListOuter, 0), "VariantList - no indent");
         TEST_RESULT_STR(strPtr(json),
-            "[\"ASTRING\",null,{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+            "[\"ASTRING\",9223372036854775807,2147483647,true,[],null,{\"backup-info-size-delta\":1982702,"
+            "\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
             "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
@@ -304,7 +309,8 @@ testRun(void)
 
         TEST_ASSIGN(json, jsonFromVar(varListOuter, 0), "VariantList - no indent - multiple elements");
         TEST_RESULT_STR(strPtr(json),
-            "[\"ASTRING\",null,{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+            "[\"ASTRING\",9223372036854775807,2147483647,true,[],null,{\"backup-info-size-delta\":1982702,"
+            "\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
             "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}},"
@@ -318,6 +324,10 @@ testRun(void)
         TEST_RESULT_STR(strPtr(json),
             "[\n"
             "  \"ASTRING\",\n"
+            "  9223372036854775807,\n"
+            "  2147483647,\n"
+            "  true,\n"
+            "  []\n,\n"
             "  null,\n"
             "  {\n"
             "    \"backup-info-size-delta\" : 1982702,\n"

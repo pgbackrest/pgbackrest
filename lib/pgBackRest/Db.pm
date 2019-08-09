@@ -6,13 +6,13 @@ package pgBackRest::Db;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
-use DBD::Pg ':async';
-use DBI;
 use Exporter qw(import);
     our @EXPORT =  qw();
 use Fcntl qw(O_RDONLY);
 use File::Basename qw(dirname);
+use JSON::PP;
 
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
@@ -126,10 +126,10 @@ sub DESTROY
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
 
-    if (defined($self->{hDb}))
+    if (defined($self->{oDb}))
     {
-        $self->{hDb}->disconnect();
-        undef($self->{hDb});
+        $self->{oDb}->close();
+        undef($self->{oDb});
     }
 
     # Return from function and log return values if any
@@ -167,63 +167,46 @@ sub connect
     # Else run locally
     else
     {
-        if (!defined($self->{hDb}))
+        if (!defined($self->{oDb}))
         {
-            # Connect to the db
-            my $strDbName = 'postgres';
-            my $strDbSocketPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_SOCKET_PATH, $self->{iRemoteIdx}), false);
+            $self->{oDb} = new pgBackRest::LibC::PgClient(
+                cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_SOCKET_PATH, $self->{iRemoteIdx}), false),
+                cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PORT, $self->{iRemoteIdx})), 'postgres',
+                cfgOption(CFGOPT_DB_TIMEOUT) * 1000);
 
-            # Make sure the socket path is absolute
-            if (defined($strDbSocketPath) && $strDbSocketPath !~ /^\//)
+            if ($bWarnOnError)
             {
-                confess &log(ERROR, "'${strDbSocketPath}' is not valid for '" . cfgOptionName(CFGOPT_PG_SOCKET_PATH) . "' option:" .
-                                    " path must be absolute", ERROR_OPTION_INVALID_VALUE);
-            }
-
-            # Construct the URI
-            my $strDbUri =
-                "dbi:Pg:dbname=${strDbName};port=" . cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PORT, $self->{iRemoteIdx})) .
-                (defined($strDbSocketPath) ? ";host=${strDbSocketPath}" : '');
-
-            logDebugMisc
-            (
-                $strOperation, undef,
-                {name => 'strDbUri', value => $strDbUri},
-            );
-
-            $self->{hDb} = DBI->connect($strDbUri, undef, undef,
-                                        {AutoCommit => 1, RaiseError => 0, PrintError => 0, Warn => 0});
-
-            # If db handle is not valid then check error
-            if (!$self->{hDb})
-            {
-                # Throw an error unless a warning was requested
-                if (!$bWarnOnError)
+                eval
                 {
-                    confess &log(ERROR, $DBI::errstr, ERROR_DB_CONNECT);
+                    $self->{oDb}->open();
+                    return true;
                 }
+                or do
+                {
+                    &log(WARN, exceptionMessage($EVAL_ERROR));
+                    $bResult = false;
 
-                # Log a warning
-                &log(WARN, $DBI::errstr);
-
-                $bResult = false;
-                undef($self->{hDb});
+                    undef($self->{oDb});
+                }
             }
             else
+            {
+                $self->{oDb}->open();
+            }
+
+            if (defined($self->{oDb}))
             {
                 my ($fDbVersion) = $self->versionGet();
 
                 if ($fDbVersion >= PG_VERSION_APPLICATION_NAME)
                 {
                     # Set application name for monitoring and debugging
-                    $self->{hDb}->do(
+                    $self->{oDb}->query(
                         "set application_name = '" . PROJECT_NAME . ' [' .
-                        (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'")
-                        or confess &log(ERROR, $self->{hDb}->errstr, ERROR_DB_QUERY);
+                        (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'");
 
                     # Clear search path to prevent possible function overrides
-                    $self->{hDb}->do("set search_path = 'pg_catalog'")
-                        or confess &log(ERROR, $self->{hDb}->errstr, ERROR_DB_QUERY);
+                    $self->{oDb}->query("set search_path = 'pg_catalog'");
                 }
             }
         }
@@ -273,73 +256,11 @@ sub executeSql
     else
     {
         $self->connect();
+        my $strResult = $self->{oDb}->query($strSql);
 
-        # Prepare the query
-        my $hStatement = $self->{hDb}->prepare($strSql, {pg_async => PG_ASYNC})
-            or confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
-
-        # Execute the query
-        $hStatement->execute()
-            or confess &log(ERROR, $DBI::errstr. ":\n${strSql}", ERROR_DB_QUERY);
-
-        # Wait for the query to return
-        my $oWait = waitInit(cfgOption(CFGOPT_DB_TIMEOUT));
-        my $bTimeout = true;
-
-        do
+        if (defined($strResult))
         {
-            # Is the statement done?
-            if ($hStatement->pg_ready())
-            {
-                # return now if there is no result expected
-                if (!$bResult)
-                {
-                    return \@stryResult;
-                }
-
-                if (!$hStatement->pg_result())
-                {
-                    # Return if the error should be ignored
-                    if ($bIgnoreError)
-                    {
-                        return \@stryResult;
-                    }
-
-                    # Else report it
-                    confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
-                }
-
-                # Get rows and return them
-                my @stryRow;
-
-                do
-                {
-                    # Get next row
-                    @stryRow = $hStatement->fetchrow_array;
-
-                    # If the row has data then add it to the result
-                    if (@stryRow)
-                    {
-                        push(@{$stryResult[@stryResult]}, @stryRow);
-                    }
-                    # Else check for error
-                    elsif ($hStatement->err)
-                    {
-                        confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
-                    }
-                }
-                while (@stryRow);
-
-                $bTimeout = false;
-            }
-        } while ($bTimeout && waitMore($oWait));
-
-        # If timeout then cancel the query and confess
-        if ($bTimeout)
-        {
-            $hStatement->pg_cancel();
-            confess &log(ERROR, 'statement timed out after ' . waitInterval($oWait) .
-                                " second(s):\n${strSql}", ERROR_DB_TIMEOUT);
+            @stryResult = @{JSON::PP->new()->allow_nonref()->decode($strResult)};
         }
     }
 
@@ -849,38 +770,6 @@ sub lsnId
 }
 
 ####################################################################################################################################
-# walSwitch
-#
-# Forces a switch to the next transaction log in order to archive the current log.
-####################################################################################################################################
-sub walSwitch
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(__PACKAGE__ . '->walSwitch');
-
-    # Create a restore point to ensure current WAL will be archived.  For versions <= 9.0 activity will need to be generated by
-    # the user if there have been no writes since the last WAL switch.
-    if ($self->{strDbVersion} >= PG_VERSION_91)
-    {
-        $self->executeSql("select pg_create_restore_point('" . PROJECT_NAME . " Archive Check');");
-    }
-
-    my $strWalFileName = $self->executeSqlOne(
-        'select pg_' . $self->walId() . 'file_name from pg_' . $self->walId() . 'file_name(pg_switch_' . $self->walId() . '());');
-
-    &log(INFO, "switch WAL ${strWalFileName}");
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strWalFileName', value => $strWalFileName}
-    );
-}
-
-####################################################################################################################################
 # isStandby
 #
 # Determines if a database is a standby by testing if it is in recovery mode.
@@ -1005,7 +894,7 @@ sub replayWait
 
     if ($self->{strDbVersion} >= PG_VERSION_96)
     {
-        $strCheckpointLSN = $self->executeSqlOne('select checkpoint_' . $self->lsnId() .' from pg_control_checkpoint()');
+        $strCheckpointLSN = $self->executeSqlOne('select checkpoint_' . $self->lsnId() .'::text from pg_control_checkpoint()');
 
         if (lsnNormalize($strCheckpointLSN) le lsnNormalize($strTargetLSN))
         {

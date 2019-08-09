@@ -150,18 +150,21 @@ storagePgGet(bool write)
 
     Storage *result = NULL;
 
+    // Determine which host to use
+    unsigned int hostId = cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1;
+
     // Use remote storage
-    if (!pgIsLocal())
+    if (!pgIsLocal(hostId))
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL,
-            protocolRemoteGet(protocolStorageTypePg), cfgOptionUInt(cfgOptCompressLevelNetwork));
+            protocolRemoteGet(protocolStorageTypePg, hostId), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use Posix storage
     else
     {
         result = storagePosixNew(
-            cfgOptionStr(cfgOptPgPath + protocolHostId() - 1), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL);
+            cfgOptionStr(cfgOptPgPath + hostId - 1), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -304,7 +307,7 @@ storageRepoGet(const String *type, bool write)
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo), cfgOptionUInt(cfgOptCompressLevelNetwork));
+            protocolRemoteGet(protocolStorageTypeRepo, 1), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use CIFS storage
     else if (strEqZ(type, STORAGE_TYPE_CIFS))
@@ -322,11 +325,15 @@ storageRepoGet(const String *type, bool write)
     else if (strEqZ(type, STORAGE_TYPE_S3))
     {
         // Set the default port
-        unsigned int port = STORAGE_S3_PORT_DEFAULT;
+        unsigned int port = cfgOptionUInt(cfgOptRepoS3Port);
 
         // Extract port from the endpoint and host if it is present
         const String *endPoint = cfgOptionHostPort(cfgOptRepoS3Endpoint, &port);
         const String *host = cfgOptionHostPort(cfgOptRepoS3Host, &port);
+
+        // If the port option was set explicitly then use it in preference to appended ports
+        if (cfgOptionSource(cfgOptRepoS3Port) != cfgSourceDefault)
+            port = cfgOptionUInt(cfgOptRepoS3Port);
 
         result = storageS3New(
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,

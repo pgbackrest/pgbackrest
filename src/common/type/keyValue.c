@@ -332,6 +332,35 @@ kvGet(const KeyValue *this, const Variant *key)
 }
 
 /***********************************************************************************************************************************
+Get a value using the key and return a default if not found
+***********************************************************************************************************************************/
+const Variant *
+kvGetDefault(const KeyValue *this, const Variant *key, const Variant *defaultValue)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+        FUNCTION_TEST_PARAM(VARIANT, defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
+    const Variant *result = NULL;
+
+    // Find the key
+    unsigned int listIdx = kvGetIdx(this, key);
+
+    // If key not found then return default, else return the value
+    if (listIdx == KEY_NOT_FOUND)
+        result = defaultValue;
+    else
+        result = ((KeyValuePair *)lstGet(this->list, listIdx))->value;
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Get a value as a list (even if there is only one value) using the key
 ***********************************************************************************************************************************/
 VariantList *

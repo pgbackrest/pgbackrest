@@ -201,11 +201,11 @@ By convention all variant constant identifiers are appended with _VAR.
 
 // Used to declare String Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
 #define VARIANT_STRDEF_EXTERN(name, dataParam)                                                                                     \
-    const Variant *name = VARSTRDEF(dataParam)
+    const Variant *const name = VARSTRDEF(dataParam)
 
 // Used to declare String Variant constants that will be local to the .c file.  Must be used in a .c file.
 #define VARIANT_STRDEF_STATIC(name, dataParam)                                                                                     \
-    static const Variant *name = VARSTRDEF(dataParam)
+    static const Variant *const name = VARSTRDEF(dataParam)
 
 // Create a UInt Variant constant inline from an unsigned int
 #define VARUINT(dataParam)                                                                                                       \
@@ -217,7 +217,7 @@ By convention all variant constant identifiers are appended with _VAR.
 
 // Used to extern String Variant constants declared with VARIANT_STRDEF_EXTERN/STATIC().  Must be used in a .h file.
 #define VARIANT_DECLARE(name)                                                                                                      \
-    extern const Variant *name
+    extern const Variant *const name
 
 /***********************************************************************************************************************************
 Constant variants that are generally useful

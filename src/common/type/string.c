@@ -465,13 +465,15 @@ strEq(const String *this, const String *compare)
         FUNCTION_TEST_PARAM(STRING, compare);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(compare != NULL);
-
     bool result = false;
 
-    if (this->size == compare->size)
-        result = strcmp(strPtr(this), strPtr(compare)) == 0;
+    if (this != NULL && compare != NULL)
+    {
+        if (this->size == compare->size)
+            result = strcmp(strPtr(this), strPtr(compare)) == 0;
+    }
+    else
+        result = this == NULL && compare == NULL;
 
     FUNCTION_TEST_RETURN(result);
 }

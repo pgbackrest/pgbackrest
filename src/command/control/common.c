@@ -1,9 +1,9 @@
 /***********************************************************************************************************************************
-Command Control
+Common Handler for Control Commands
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/control/control.h"
+#include "command/control/common.h"
 #include "common/debug.h"
 #include "config/config.h"
 #include "storage/helper.h"

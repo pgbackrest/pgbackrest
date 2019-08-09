@@ -24,7 +24,7 @@ testRun(void)
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("kvPut(), kvAdd(), kvKeyExists(), kvKeyList(), kvGet(), kvGetList(), and kvDup()"))
+    if (testBegin("kvPut(), kvAdd(), kvKeyExists(), kvKeyList(), kvGet(), kvGetDefault(), kvGetList(), and kvDup()"))
     {
         KeyValue *store = NULL;
 
@@ -50,7 +50,9 @@ testRun(void)
         TEST_RESULT_INT(varInt(varLstGet(kvGetList(store, varNewInt(42)), 0)), 57, "get int/int");
         TEST_RESULT_INT(varInt(kvGet(store, varNewStr(strNew("str-key-int")))), 99, "get string/int");
         TEST_RESULT_PTR(kvGet(store, varNewInt(78)), NULL, "get int/null");
+        TEST_RESULT_PTR(kvGetDefault(store, varNewInt(78), varNewInt(999)), NULL, "get int/null (default ignored)");
         TEST_RESULT_PTR(kvGet(store, varNewInt(777)), NULL, "get missing key");
+        TEST_RESULT_INT(varInt(kvGetDefault(store, varNewInt(777), varNewInt(888))), 888, "get missing key with default");
 
         // Check key exists
         // -------------------------------------------------------------------------------------------------------------------------

@@ -95,7 +95,7 @@ By convention all buffer constant identifiers are appended with _BUF.
 
 // Used to declare buffer constants that will be externed using BUFFER_DECLARE().  Must be used in a .c file.
 #define BUFFER_STRDEF_EXTERN(name, string)                                                                                         \
-    const Buffer *name = BUFSTRDEF(string)
+    const Buffer *const name = BUFSTRDEF(string)
 
 // Used to declare buffer constants that will be local to the .c file.  Must be used in a .c file.
 #define BUFFER_STRDEF_STATIC(name, string)                                                                                         \
@@ -103,7 +103,7 @@ By convention all buffer constant identifiers are appended with _BUF.
 
 // Used to extern buffer constants declared with BUFFER_STRDEF_EXTERN(.  Must be used in a .h file.
 #define BUFFER_DECLARE(name)                                                                                                       \
-    extern const Buffer *name
+    extern const Buffer *const name
 
 /***********************************************************************************************************************************
 Constant buffers that are generally useful

@@ -46,9 +46,7 @@ testS3ServerRequest(const char *verb, const char *uri, const char *content)
         "x-amz-content-sha256:%s\r\n"
         "x-amz-date:" DATETIME_REPLACE "\r\n"
         "\r\n",
-        content == NULL ?
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" :
-            strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTRZ(content)))));
+        content == NULL ? HASH_TYPE_SHA256_ZERO : strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTRZ(content)))));
 
     if (content != NULL)
         strCat(request, content);
@@ -112,6 +110,21 @@ testS3Server(void)
         // storageS3NewWrite() and StorageWriteS3
         // -------------------------------------------------------------------------------------------------------------------------
         // File is written all at once
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD"));
+        harnessTlsServerReply(testS3ServerResponse(
+            403, "Forbidden", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message>"
+                "<RequestTime>20190726T221748Z</RequestTime>"
+                "<ServerTime>2019-07-26T22:33:27Z</ServerTime>"
+                "<MaxAllowedSkewMilliseconds>900000</MaxAllowedSkewMilliseconds>"
+                "<RequestId>601AA1A7F7E37AE9</RequestId>"
+                "<HostId>KYMys77PoloZrGCkiQRyOIl0biqdHsk4T2EdTkhzkH1l8x00D4lvv/py5uUuHwQXG9qz6NRuldQ=</HostId>"
+                "</Error>"));
+
+        harnessTlsServerAccept();
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD"));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
@@ -209,9 +222,42 @@ testS3Server(void)
 
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
-        // Throw error
+        // Throw errors
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
-        harnessTlsServerReply(testS3ServerResponse(344, "Another bad status", NULL, NULL));
+        harnessTlsServerReply(testS3ServerResponse( 344, "Another bad status", NULL, NULL));
+
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            344, "Another bad status with xml", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>SomeOtherCode</Code>"
+                "</Error>"));
+
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            403, "Forbidden", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message>"
+                "</Error>"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            403, "Forbidden", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message>"
+                "</Error>"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            403, "Forbidden", NULL,
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<Error>"
+                "<Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message>"
+                "</Error>"));
 
         // list a file/path in root
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
@@ -599,6 +645,39 @@ testRun(void)
             strPtr(((StorageS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
         TEST_RESULT_STR(
             strPtr(((StorageS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
+
+        // Use the port option to override both
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--repo1-type=s3");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strPtr(host)));
+        strLstAddZ(argList, "--repo1-s3-port=9001");
+        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
+        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_FAKE_PATH "/pgbackrest-test.crt");
+        setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
+        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
+        setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
+        TEST_RESULT_STR(
+            strPtr(((StorageS3 *)storage->driver)->bucketEndpoint), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
+            "    check host");
+        TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 9001, "    check port");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
+        TEST_RESULT_STR(
+            strPtr(((StorageS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
+        TEST_RESULT_STR(
+            strPtr(((StorageS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
     }
 
     // *****************************************************************************************************************************
@@ -617,9 +696,7 @@ testRun(void)
         httpQueryAdd(query, strNew("list-type"), strNew("2"));
 
         TEST_RESULT_VOID(
-            storageS3Auth(
-                driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header,
-                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
+            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR(
             strPtr(httpHeaderGet(header, strNew("authorization"))),
@@ -632,9 +709,7 @@ testRun(void)
         const Buffer *lastSigningKey = driver->signingKey;
 
         TEST_RESULT_VOID(
-            storageS3Auth(
-                driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header,
-                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
+            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR(
             strPtr(httpHeaderGet(header, strNew("authorization"))),
@@ -646,9 +721,7 @@ testRun(void)
 
         // Change the date to generate a new signing key
         TEST_RESULT_VOID(
-            storageS3Auth(
-                driver, strNew("GET"), strNew("/"), query, strNew("20180814T080808Z"), header,
-                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
+            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20180814T080808Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "    generate authorization");
         TEST_RESULT_STR(
             strPtr(httpHeaderGet(header, strNew("authorization"))),
@@ -666,9 +739,7 @@ testRun(void)
                 NULL, NULL));
 
         TEST_RESULT_VOID(
-            storageS3Auth(
-                driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header,
-                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
+            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR(
             strPtr(httpHeaderGet(header, strNew("authorization"))),
@@ -804,6 +875,35 @@ testRun(void)
             "host: " S3_TEST_HOST "\n"
             "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
             "x-amz-date: <redacted>");
+        TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
+            "S3 request failed with 344: Another bad status with xml\n"
+            "*** URI/Query ***:\n"
+            "/?delimiter=%2F&list-type=2\n"
+            "*** Request Headers ***:\n"
+            "authorization: <redacted>\n"
+            "content-length: 0\n"
+            "host: " S3_TEST_HOST "\n"
+            "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
+            "x-amz-date: <redacted>\n"
+            "*** Response Headers ***:\n"
+            "content-length: 79\n"
+            "*** Response Content ***:\n"
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>SomeOtherCode</Code></Error>");
+        TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
+            "S3 request failed with 403: Forbidden\n"
+            "*** URI/Query ***:\n"
+            "/?delimiter=%2F&list-type=2\n"
+            "*** Request Headers ***:\n"
+            "authorization: <redacted>\n"
+            "content-length: 0\n"
+            "host: " S3_TEST_HOST "\n"
+            "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
+            "x-amz-date: <redacted>\n"
+            "*** Response Headers ***:\n"
+            "content-length: 179\n"
+            "*** Response Content ***:\n"
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>RequestTimeTooSkewed</Code>"
+                "<Message>The difference between the request time and the current time is too large.</Message></Error>");
 
         TEST_RESULT_STR(strPtr(strLstJoin(storageListNP(s3, strNew("/")), ",")), "path1,test1.txt", "list a file/path in root");
         TEST_RESULT_STR(

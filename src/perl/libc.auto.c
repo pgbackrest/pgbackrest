@@ -80,6 +80,7 @@ These includes define data structures that are required for the C to Perl interf
 ***********************************************************************************************************************************/
 #include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
+#include "xs/postgres/client.xsh"
 #include "xs/storage/storage.xsh"
 #include "xs/storage/storageRead.xsh"
 #include "xs/storage/storageWrite.xsh"
@@ -268,7 +269,10 @@ XS_EUPXS(XS_pgBackRest__LibC_libcUvSize)
 /* INCLUDE:  Including 'xs/crypto/random.xs' from 'xs/crypto/hash.xs' */
 
 
-/* INCLUDE:  Including 'xs/postgres/pageChecksum.xs' from 'xs/crypto/random.xs' */
+/* INCLUDE:  Including 'xs/postgres/client.xs' from 'xs/crypto/random.xs' */
+
+
+/* INCLUDE:  Including 'xs/postgres/pageChecksum.xs' from 'xs/postgres/client.xs' */
 
 
 /* INCLUDE:  Including 'xs/storage/storage.xs' from 'xs/postgres/pageChecksum.xs' */
@@ -1570,7 +1574,162 @@ XS_EUPXS(XS_pgBackRest__LibC_pageChecksum)
 }
 
 
-/* INCLUDE: Returning to 'xs/crypto/random.xs' from 'xs/postgres/pageChecksum.xs' */
+/* INCLUDE: Returning to 'xs/postgres/client.xs' from 'xs/postgres/pageChecksum.xs' */
+
+
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_new); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_new)
+{
+    dVAR; dXSARGS;
+    if (items != 5)
+       croak_xs_usage(cv,  "class, host, port, database, queryTimeout");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	const String *	class = STR_NEW_SV(ST(0));
+	const String *	host = STR_NEW_SV(ST(1));
+	U32	port = (unsigned long)SvUV(ST(2))
+;
+	const String *	database = STR_NEW_SV(ST(3));
+	UV	queryTimeout = (UV)SvUV(ST(4))
+;
+	pgBackRest__LibC__PgClient	RETVAL;
+    CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::PgClient"));
+
+    memContextSwitch(MEM_CONTEXT_XS_OLD());
+    RETVAL = pgClientNew(host, port, database, NULL, queryTimeout);
+    memContextSwitch(MEM_CONTEXT_XS_TEMP());
+	{
+	    SV * RETVALSV;
+	    RETVALSV = sv_newmortal();
+	    sv_setref_pv(RETVALSV, "pgBackRest::LibC::PgClient", (void*)RETVAL);
+	    ST(0) = RETVALSV;
+	}
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_open); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_open)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__PgClient	self;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::PgClient")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__PgClient,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::PgClient::open",
+			"self", "pgBackRest::LibC::PgClient")
+;
+    pgClientOpen(self);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_query); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_query)
+{
+    dVAR; dXSARGS;
+    if (items != 2)
+       croak_xs_usage(cv,  "self, query");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__PgClient	self;
+	const String *	query = STR_NEW_SV(ST(1));
+	const char *	RETVAL;
+	dXSTARG;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::PgClient")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__PgClient,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::PgClient::query",
+			"self", "pgBackRest::LibC::PgClient")
+;
+    VariantList *result = pgClientQuery(self, query);
+    RETVAL = result ? strPtr(jsonFromVar(varNewVarLst(result), 0)) : NULL;
+	sv_setpv(TARG, RETVAL); XSprePUSH; PUSHTARG;
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_close); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_close)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__PgClient	self;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::PgClient")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__PgClient,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::PgClient::close",
+			"self", "pgBackRest::LibC::PgClient")
+;
+    pgClientClose(self);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_DESTROY); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__PgClient_DESTROY)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+	pgBackRest__LibC__PgClient	self;
+
+	if (SvROK(ST(0))) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__PgClient,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not a reference",
+			"pgBackRest::LibC::PgClient::DESTROY",
+			"self")
+;
+    pgClientFree(self);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
+/* INCLUDE: Returning to 'xs/crypto/random.xs' from 'xs/postgres/client.xs' */
 
 
 XS_EUPXS(XS_pgBackRest__LibC_cryptoRandomBytes); /* prototype to pass -Wmissing-prototypes */
@@ -2142,6 +2301,11 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::Storage::type", XS_pgBackRest__LibC__Storage_type);
         newXS_deffile("pgBackRest::LibC::storageRepoFree", XS_pgBackRest__LibC_storageRepoFree);
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);
+        newXS_deffile("pgBackRest::LibC::PgClient::new", XS_pgBackRest__LibC__PgClient_new);
+        newXS_deffile("pgBackRest::LibC::PgClient::open", XS_pgBackRest__LibC__PgClient_open);
+        newXS_deffile("pgBackRest::LibC::PgClient::query", XS_pgBackRest__LibC__PgClient_query);
+        newXS_deffile("pgBackRest::LibC::PgClient::close", XS_pgBackRest__LibC__PgClient_close);
+        newXS_deffile("pgBackRest::LibC::PgClient::DESTROY", XS_pgBackRest__LibC__PgClient_DESTROY);
         newXS_deffile("pgBackRest::LibC::cryptoRandomBytes", XS_pgBackRest__LibC_cryptoRandomBytes);
         newXS_deffile("pgBackRest::LibC::cryptoHashOne", XS_pgBackRest__LibC_cryptoHashOne);
         newXS_deffile("pgBackRest::LibC::cfgCommandId", XS_pgBackRest__LibC_cfgCommandId);

@@ -191,10 +191,6 @@ lib/pgBackRest/Backup/File.pm:
   class: core
   type: perl
 
-lib/pgBackRest/Backup/Filter/PageChecksum.pm:
-  class: core
-  type: perl
-
 lib/pgBackRest/Backup/Info.pm:
   class: core
   type: perl
@@ -213,14 +209,6 @@ lib/pgBackRest/Common/Exception.pm:
 
 lib/pgBackRest/Common/ExceptionAuto.pm:
   class: core/auto
-  type: perl
-
-lib/pgBackRest/Common/Http/Client.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Common/Http/Common.pm:
-  class: core
   type: perl
 
 lib/pgBackRest/Common/Ini.pm:
@@ -260,10 +248,6 @@ lib/pgBackRest/Common/String.pm:
   type: perl
 
 lib/pgBackRest/Common/Wait.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Common/Xml.pm:
   class: core
   type: perl
 
@@ -323,10 +307,6 @@ lib/pgBackRest/Protocol/Local/Master.pm:
   class: core
   type: perl
 
-lib/pgBackRest/Protocol/Local/Minion.pm:
-  class: core
-  type: perl
-
 lib/pgBackRest/Protocol/Local/Process.pm:
   class: core
   type: perl
@@ -367,63 +347,19 @@ lib/pgBackRest/Storage/Base.pm:
   class: core
   type: perl
 
-lib/pgBackRest/Storage/Cifs/Driver.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/Filter/CipherBlock.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/Filter/Gzip.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/Filter/Sha.pm:
-  class: core
-  type: perl
-
 lib/pgBackRest/Storage/Helper.pm:
   class: core
   type: perl
 
-lib/pgBackRest/Storage/Local.pm:
+lib/pgBackRest/Storage/Storage.pm:
   class: core
   type: perl
 
-lib/pgBackRest/Storage/Posix/Driver.pm:
+lib/pgBackRest/Storage/StorageRead.pm:
   class: core
   type: perl
 
-lib/pgBackRest/Storage/Posix/FileRead.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/Posix/FileWrite.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/S3/Auth.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/S3/Driver.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/S3/FileRead.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/S3/FileWrite.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/S3/Info.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Storage/S3/Request.pm:
+lib/pgBackRest/Storage/StorageWrite.pm:
   class: core
   type: perl
 
@@ -471,14 +407,6 @@ libc/xs/config/define.xs:
   class: core
   type: xs
 
-libc/xs/crypto/cipherBlock.xs:
-  class: core
-  type: xs
-
-libc/xs/crypto/cipherBlock.xsh:
-  class: core
-  type: c/h
-
 libc/xs/crypto/hash.xs:
   class: core
   type: xs
@@ -491,6 +419,14 @@ libc/xs/crypto/random.xs:
   class: core
   type: xs
 
+libc/xs/postgres/client.xs:
+  class: core
+  type: xs
+
+libc/xs/postgres/client.xsh:
+  class: core
+  type: c/h
+
 libc/xs/postgres/pageChecksum.xs:
   class: core
   type: xs
@@ -498,6 +434,26 @@ libc/xs/postgres/pageChecksum.xs:
 libc/xs/storage/storage.xs:
   class: core
   type: xs
+
+libc/xs/storage/storage.xsh:
+  class: core
+  type: c/h
+
+libc/xs/storage/storageRead.xs:
+  class: core
+  type: xs
+
+libc/xs/storage/storageRead.xsh:
+  class: core
+  type: c/h
+
+libc/xs/storage/storageWrite.xs:
+  class: core
+  type: xs
+
+libc/xs/storage/storageWrite.xsh:
+  class: core
+  type: c/h
 
 src/Makefile.in:
   class: build
@@ -571,11 +527,35 @@ src/command/backup/common.h:
   class: core
   type: c/h
 
+src/command/backup/file.c:
+  class: core
+  type: c
+
+src/command/backup/file.h:
+  class: core
+  type: c/h
+
 src/command/backup/pageChecksum.c:
   class: core
   type: c
 
 src/command/backup/pageChecksum.h:
+  class: core
+  type: c/h
+
+src/command/backup/protocol.c:
+  class: core
+  type: c
+
+src/command/backup/protocol.h:
+  class: core
+  type: c/h
+
+src/command/check/check.c:
+  class: core
+  type: c
+
+src/command/check/check.h:
   class: core
   type: c/h
 
@@ -587,11 +567,11 @@ src/command/command.h:
   class: core
   type: c/h
 
-src/command/control/control.c:
+src/command/control/common.c:
   class: core
   type: c
 
-src/command/control/control.h:
+src/command/control/common.h:
   class: core
   type: c/h
 
@@ -824,6 +804,14 @@ src/common/io/filter/group.c:
   type: c
 
 src/common/io/filter/group.h:
+  class: core
+  type: c/h
+
+src/common/io/filter/sink.c:
+  class: core
+  type: c
+
+src/common/io/filter/sink.h:
   class: core
   type: c/h
 
@@ -1155,6 +1143,30 @@ src/configure.ac:
   class: build
   type: make
 
+src/db/db.c:
+  class: core
+  type: c
+
+src/db/db.h:
+  class: core
+  type: c/h
+
+src/db/helper.c:
+  class: core
+  type: c
+
+src/db/helper.h:
+  class: core
+  type: c/h
+
+src/db/protocol.c:
+  class: core
+  type: c
+
+src/db/protocol.h:
+  class: core
+  type: c/h
+
 src/info/info.c:
   class: core
   type: c
@@ -1222,6 +1234,14 @@ src/perl/exec.h:
 src/perl/libc.auto.c:
   class: core/auto
   type: c
+
+src/postgres/client.c:
+  class: core
+  type: c
+
+src/postgres/client.h:
+  class: core
+  type: c/h
 
 src/postgres/interface.c:
   class: core
@@ -1619,10 +1639,6 @@ test/lib/pgBackRestTest/Env/HostEnvTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Env/S3EnvTest.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Module/Backup/BackupFileUnitPerlTest.pm:
   class: test/module
   type: perl
@@ -1640,10 +1656,6 @@ test/lib/pgBackRestTest/Module/Command/CommandArchiveGetPerlTest.pm:
   type: perl
 
 test/lib/pgBackRestTest/Module/Common/CommonEncodePerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Common/CommonHttpClientPerlTest.pm:
   class: test/module
   type: perl
 
@@ -1703,10 +1715,6 @@ test/lib/pgBackRestTest/Module/Performance/PerformanceArchiveTest.pm:
   class: test/module
   type: perl
 
-test/lib/pgBackRestTest/Module/Performance/PerformanceIoTest.pm:
-  class: test/module
-  type: perl
-
 test/lib/pgBackRestTest/Module/Protocol/ProtocolCommonMinionPerlTest.pm:
   class: test/module
   type: perl
@@ -1723,43 +1731,11 @@ test/lib/pgBackRestTest/Module/Stanza/StanzaAllPerlTest.pm:
   class: test/module
   type: perl
 
-test/lib/pgBackRestTest/Module/Storage/StorageFilterCipherBlockPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Storage/StorageFilterGzipPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Storage/StorageFilterShaPerlTest.pm:
-  class: test/module
-  type: perl
-
 test/lib/pgBackRestTest/Module/Storage/StorageHelperPerlTest.pm:
   class: test/module
   type: perl
 
-test/lib/pgBackRestTest/Module/Storage/StorageLocalPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Storage/StoragePosixPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Storage/StorageS3AuthPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Storage/StorageS3CertPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Storage/StorageS3PerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Storage/StorageS3RequestPerlTest.pm:
+test/lib/pgBackRestTest/Module/Storage/StoragePerlTest.pm:
   class: test/module
   type: perl
 
@@ -1795,6 +1771,14 @@ test/src/common/harnessLog.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessPq.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPq.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessTest.c:
   class: test/harness
   type: c
@@ -1824,6 +1808,14 @@ test/src/module/command/archivePushTest.c:
   type: c
 
 test/src/module/command/backupCommonTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/backupTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/checkTest.c:
   class: test/module
   type: c
 
@@ -2015,6 +2007,10 @@ test/src/module/config/protocolTest.c:
   class: test/module
   type: c
 
+test/src/module/db/dbTest.c:
+  class: test/module
+  type: c
+
 test/src/module/info/infoArchiveTest.c:
   class: test/module
   type: c
@@ -2036,6 +2032,10 @@ test/src/module/perl/configTest.c:
   type: c
 
 test/src/module/perl/execTest.c:
+  class: test/module
+  type: c
+
+test/src/module/postgres/clientTest.c:
   class: test/module
   type: c
 

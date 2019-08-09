@@ -28,13 +28,12 @@ Functions
 ***********************************************************************************************************************************/
 void protocolKeepAlive(void);
 ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolId);
-ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType);
+ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool pgIsLocal(void);
-unsigned int protocolHostId(void);
+bool pgIsLocal(unsigned int hostId);
 bool repoIsLocal(void);
 
 /***********************************************************************************************************************************

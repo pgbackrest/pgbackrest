@@ -5,7 +5,7 @@ Archive Push File
 
 #include "command/archive/push/file.h"
 #include "command/archive/common.h"
-#include "command/control/control.h"
+#include "command/control/common.h"
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/compress.h"
 #include "common/crypto/cipherBlock.h"
@@ -80,7 +80,7 @@ archivePushFile(
             const String *walSegmentChecksum = varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
 
             // If the wal segment already exists in the repo then compare checksums
-            walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile);
+            walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile, 0);
 
             if (walSegmentFile != NULL)
             {

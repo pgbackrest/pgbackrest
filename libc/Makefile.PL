@@ -42,7 +42,6 @@ my @stryCFile =
 (
     'LibC.c',
 
-    'command/backup/pageChecksum.c',
     'command/command.c',
     'common/compress/gzip/common.c',
     'common/compress/gzip/compress.c',
@@ -100,6 +99,7 @@ my @stryCFile =
 	'protocol/parallel.c',
 	'protocol/parallelJob.c',
 	'protocol/server.c',
+    'postgres/client.c',
     'postgres/pageChecksum.c',
     'storage/posix/read.c',
     'storage/posix/storage.c',
@@ -133,6 +133,7 @@ WriteMakefile
         -D_POSIX_C_SOURCE=200112L
         -D_FILE_OFFSET_BITS=64
         `xml2-config --cflags`
+        -I`pg_config --includedir`
     )),
 
     INC => join(' ', qw(
@@ -142,7 +143,7 @@ WriteMakefile
 
     C => \@stryCFile,
 
-    LIBS => '-lcrypto -lssl -lxml2',
+    LIBS => '-lcrypto -lpq -lssl -lxml2',
 
     OBJECT => '$(O_FILES)',
 );

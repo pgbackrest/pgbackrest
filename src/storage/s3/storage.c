@@ -46,6 +46,11 @@ STRING_STATIC(S3_QUERY_PREFIX_STR,                                  "prefix");
 STRING_STATIC(S3_QUERY_VALUE_LIST_TYPE_2_STR,                       "2");
 
 /***********************************************************************************************************************************
+S3 errors
+***********************************************************************************************************************************/
+STRING_STATIC(S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR,                 "RequestTimeTooSkewed");
+
+/***********************************************************************************************************************************
 XML tags
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_XML_TAG_CODE_STR,                                  "Code");
@@ -249,98 +254,137 @@ storageS3Request(
     ASSERT(uri != NULL);
 
     StorageS3RequestResult result = {0};
+    unsigned int retryRemaining = 2;
+    bool done;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    do
     {
-        // Create header list and add content length
-        HttpHeader *requestHeader = httpHeaderNew(this->headerRedactList);
+        done = true;
 
-        // Set content length
-        httpHeaderAdd(
-            requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-            body == NULL || bufUsed(body) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(body)));
-
-        // Calculate content-md5 header if there is content
-        if (body != NULL)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-            encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, body)), HASH_TYPE_M5_SIZE, md5Hash);
-            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
-        }
+            // Create header list and add content length
+            HttpHeader *requestHeader = httpHeaderNew(this->headerRedactList);
 
-        // Generate authorization header
-        storageS3Auth(
-            this, verb, httpUriEncode(uri, true), query, storageS3DateTime(time(NULL)), requestHeader,
-            body == NULL || bufUsed(body) == 0 ?
-                STRDEF("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855") :
-                bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
+            // Set content length
+            httpHeaderAdd(
+                requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
+                body == NULL || bufUsed(body) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(body)));
 
-        // Get an http client
-        HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
-
-        // Process request
-        Buffer *response = httpClientRequest(httpClient, verb, uri, query, requestHeader, body, returnContent);
-
-        // Error if the request was not successful
-        if (!httpClientResponseCodeOk(httpClient) &&
-            (!allowMissing || httpClientResponseCode(httpClient) != HTTP_RESPONSE_CODE_NOT_FOUND))
-        {
-            // General error message
-            String *error = strNewFmt(
-                "S3 request failed with %u: %s", httpClientResponseCode(httpClient),
-                strPtr(httpClientResponseMessage(httpClient)));
-
-            // Output uri/query
-            strCat(error, "\n*** URI/Query ***:");
-
-            strCatFmt(error, "\n%s", strPtr(httpUriEncode(uri, true)));
-
-            if (query != NULL)
-                strCatFmt(error, "?%s", strPtr(httpQueryRender(query)));
-
-            // Output request headers
-            const StringList *requestHeaderList = httpHeaderList(requestHeader);
-
-            strCat(error, "\n*** Request Headers ***:");
-
-            for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
+            // Calculate content-md5 header if there is content
+            if (body != NULL)
             {
-                const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
-
-                strCatFmt(
-                    error, "\n%s: %s", strPtr(key),
-                    httpHeaderRedact(requestHeader, key) || strEq(key, S3_HEADER_DATE_STR) ?
-                        "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
+                char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
+                encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, body)), HASH_TYPE_M5_SIZE, md5Hash);
+                httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
             }
 
-            // Output response headers
-            const HttpHeader *responseHeader = httpClientReponseHeader(httpClient);
-            const StringList *responseHeaderList = httpHeaderList(responseHeader);
+            // Generate authorization header
+            storageS3Auth(
+                this, verb, httpUriEncode(uri, true), query, storageS3DateTime(time(NULL)), requestHeader,
+                body == NULL || bufUsed(body) == 0 ? HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
 
-            if (strLstSize(responseHeaderList) > 0)
+            // Get an http client
+            HttpClient *httpClient = httpClientCacheGet(this->httpClientCache);
+
+            // Process request
+            Buffer *response = httpClientRequest(httpClient, verb, uri, query, requestHeader, body, returnContent);
+
+            // Error if the request was not successful
+            if (!httpClientResponseCodeOk(httpClient) &&
+                (!allowMissing || httpClientResponseCode(httpClient) != HTTP_RESPONSE_CODE_NOT_FOUND))
             {
-                strCat(error, "\n*** Response Headers ***:");
-
-                for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
+                // If there are retries remaining and a response parse it as XML to extract the S3 error code
+                if (response != NULL && retryRemaining > 0)
                 {
-                    const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
-                    strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
+                    // Attempt to parse the XML and extract the S3 error code
+                    TRY_BEGIN()
+                    {
+                        XmlNode *error = xmlDocumentRoot(xmlDocumentNewBuf(response));
+                        const String *errorCode = xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true));
+
+                        if (strEq(errorCode, S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
+                        {
+                            LOG_DEBUG(
+                                "retry %s: %s", strPtr(errorCode),
+                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
+
+                            retryRemaining--;
+                            done = false;
+                        }
+                    }
+                    // On failure just drop through and report the error as usual
+                    CATCH_ANY()
+                    {
+                    }
+                    TRY_END();
+                }
+
+                // If not done then retry instead of reporting the error
+                if (done)
+                {
+                    // General error message
+                    String *error = strNewFmt(
+                        "S3 request failed with %u: %s", httpClientResponseCode(httpClient),
+                        strPtr(httpClientResponseMessage(httpClient)));
+
+                    // Output uri/query
+                    strCat(error, "\n*** URI/Query ***:");
+
+                    strCatFmt(error, "\n%s", strPtr(httpUriEncode(uri, true)));
+
+                    if (query != NULL)
+                        strCatFmt(error, "?%s", strPtr(httpQueryRender(query)));
+
+                    // Output request headers
+                    const StringList *requestHeaderList = httpHeaderList(requestHeader);
+
+                    strCat(error, "\n*** Request Headers ***:");
+
+                    for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
+                    {
+                        const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
+
+                        strCatFmt(
+                            error, "\n%s: %s", strPtr(key),
+                            httpHeaderRedact(requestHeader, key) || strEq(key, S3_HEADER_DATE_STR) ?
+                                "<redacted>" : strPtr(httpHeaderGet(requestHeader, key)));
+                    }
+
+                    // Output response headers
+                    const HttpHeader *responseHeader = httpClientReponseHeader(httpClient);
+                    const StringList *responseHeaderList = httpHeaderList(responseHeader);
+
+                    if (strLstSize(responseHeaderList) > 0)
+                    {
+                        strCat(error, "\n*** Response Headers ***:");
+
+                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
+                        {
+                            const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
+                            strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
+                        }
+                    }
+
+                    // If there was content then output it
+                    if (response!= NULL)
+                        strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
+
+                    THROW(ProtocolError, strPtr(error));
                 }
             }
+            else
+            {
+                // On success move the buffer to the calling context
+                result.httpClient = httpClient;
+                result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientReponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
+                result.response = bufMove(response, MEM_CONTEXT_OLD());
+            }
 
-            // If there was content then output it
-            if (response!= NULL)
-                strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
-
-            THROW(ProtocolError, strPtr(error));
         }
-
-        // On success move the buffer to the calling context
-        result.httpClient = httpClient;
-        result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientReponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
-        result.response = bufMove(response, MEM_CONTEXT_OLD());
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
+    while (!done);
 
     FUNCTION_LOG_RETURN(STORAGE_S3_REQUEST_RESULT, result);
 }
