@@ -52,7 +52,7 @@ cmdStanzaUpgrade(void)
         //     = $self->{oDb}->info();
 
         // !!! Temporary until can communicate with PG: Get control info from the pgControlFile
-        PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+        PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
 
         // Load the info files (errors if missing)
         InfoArchive *infoArchive = infoArchiveNewLoad(

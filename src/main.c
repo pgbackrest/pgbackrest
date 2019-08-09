@@ -27,6 +27,7 @@ Main
 #include "config/load.h"
 #include "postgres/interface.h"
 #include "perl/exec.h"
+#include "storage/helper.h"
 #include "version.h"
 
 int
@@ -107,7 +108,7 @@ main(int argListSize, const char *argList[])
                     // archive-get/archive-push and end up in the PostgreSQL log which is not output in CI.  This can be removed
                     // once backup is written in C.
                     if (cfgOptionBool(cfgOptOnline) && !cfgOptionBool(cfgOptBackupStandby) && !cfgOptionTest(cfgOptPgHost))
-                        pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+                        pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
 #endif
 
                     // Run backup

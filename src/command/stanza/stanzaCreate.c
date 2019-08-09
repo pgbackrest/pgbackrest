@@ -55,7 +55,7 @@ cmdStanzaCreate(void)
         //     = $self->{oDb}->info();
 
         // !!! Temporary until can communicate with PG: Get control info from the pgControlFile
-        PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+        PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath)); // Add passing of storagePg to this function
 
         bool archiveInfoFileExists = storageExistsNP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR);
         bool archiveInfoFileCopyExists = storageExistsNP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);

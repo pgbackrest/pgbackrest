@@ -47,7 +47,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get pg control info
-        PgControl controlInfo = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+        PgControl controlInfo = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
 
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveNewLoad(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
