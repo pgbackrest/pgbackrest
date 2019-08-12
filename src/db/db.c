@@ -311,3 +311,30 @@ dbToLog(const Db *this)
         "{client: %s, remoteClient: %s}", this->client == NULL ? "null" : strPtr(pgClientToLog(this->client)),
         this->remoteClient == NULL ? "null" : strPtr(protocolClientToLog(this->remoteClient)));
 }
+
+/***********************************************************************************************************************************
+Accessor functions
+***********************************************************************************************************************************/
+unsigned int
+dbPgVersion(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->pgVersion);
+}
+
+const String *
+dbPgDataPath(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->pgDataPath);
+}

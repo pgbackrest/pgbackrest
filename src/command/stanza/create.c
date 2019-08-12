@@ -7,12 +7,15 @@ Stanza Create Command
 #include <string.h>
 #include <inttypes.h>
 
+#include "command/check/common.h"
 #include "command/stanza/common.h"
 #include "command/stanza/create.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "db/db.h"
+#include "db/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
@@ -30,32 +33,29 @@ cmdStanzaCreate(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        if (cfgOptionBool(cfgOptForce))
+            LOG_WARN("Option --force is deprecated and no longer supported");
+
         const Storage *storageRepoReadStanza = storageRepo();
         const Storage *storageRepoWriteStanza = storageRepoWrite();
         InfoArchive *infoArchive = NULL;
         InfoBackup *infoBackup = NULL;
+        PgControl pgControl = {0};
 
-        if (cfgOptionBool(cfgOptForce))
-            LOG_WARN("Option --force is deprecated and no longer supported");
+        if (cfgOptionBool(cfgOptOnline))
+        {
+            // Check the connections of the master (and standby, if any) and return the master database object.
+            DbGetResult dbObject = dbGet(false, true);
 
-        // !!! Perl code that still needs to be incorporated
-        //
-        // ($self->{oDb}) = dbObjectGet();
-        //
-        // # Validate the database configuration. Do not require the database to be online before creating a stanza because the
-        // # archive_command will attempt to push an achive before the archive.info file exists which will result in an error in the
-        // # postgres logs.
-        // if (cfgOption(CFGOPT_ONLINE))
-        // {
-        //     # If the pg-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
-        //     $self->{oDb}->configValidate();
-        // }
-        //
-        // ($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
-        //     = $self->{oDb}->info();
+            // Get the pgControl information from the pg*-path deemed to be the master
+            pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbObject.primaryId));
 
-        // !!! Temporary until can communicate with PG: Get control info from the pgControlFile
-        PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath)); // Add passing of storagePg to this function
+            // Check the user configured path and version against the database
+            checkDbConfig(pgControl.version, dbObject.primary, dbObject.primaryId);
+        }
+        // If the database is not online, assume that pg1 is the master
+        else
+            pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
 
         bool archiveInfoFileExists = storageExistsNP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR);
         bool archiveInfoFileCopyExists = storageExistsNP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);
