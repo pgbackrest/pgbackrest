@@ -5,6 +5,7 @@ Test Stanza Commands
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessPq.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 
@@ -28,7 +29,7 @@ testRun(void)
 
     StringList *argListBase = strLstNew();
     strLstAddZ(argListBase, "pgbackrest");
-    strLstAdd(argListBase,  strNewFmt("--stanza=%s", strPtr(stanza)));
+    strLstAdd(argListBase, strNewFmt("--stanza=%s", strPtr(stanza)));
     strLstAdd(argListBase, strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
 
@@ -37,6 +38,7 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--no-online");
         strLstAddZ(argList, "stanza-create");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -157,16 +159,16 @@ testRun(void)
             storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)), .errorOnMissing = true),
             "archive.info.copy removed");
         TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
-            "backup.info exists but archive.info is missing\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileMissingError, "backup.info exists but archive.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // Archive files removed - backup.info.copy exists
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)), .errorOnMissing = true),
             "backup.info.copy removed");
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
-            "backup.info exists but archive.info is missing\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileMissingError, "backup.info exists but archive.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // Archive files removed - backup.info exists
@@ -175,8 +177,8 @@ testRun(void)
                 storageNewReadNP(storageTest, backupInfoFileName),
                 storageNewWriteNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)))),
             "backup.info moved to backup.info.copy");
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
-            "backup.info exists but archive.info is missing\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileMissingError, "backup.info exists but archive.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // Backup files removed - archive.info file exists
@@ -187,8 +189,8 @@ testRun(void)
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)), .errorOnMissing = true),
             "backup.info.copy removed");
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
-            "archive.info exists but backup.info is missing\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // Backup files removed - archive.info.copy file exists
@@ -197,8 +199,8 @@ testRun(void)
                 storageNewReadNP(storageTest, archiveInfoFileName),
                 storageNewWriteNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))),
                 "archive.info moved to archive.info.copy");
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
-            "archive.info exists but backup.info is missing\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // Backup files removed - archive.info and archive.info.copy exist
@@ -206,8 +208,8 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to file");
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileMissingError,
-            "archive.info exists but backup.info is missing\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // infoValidate()
@@ -231,8 +233,8 @@ testRun(void)
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad db-id");
 
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
-            "backup info file and archive info file do not match\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
@@ -256,8 +258,8 @@ testRun(void)
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad system-id");
 
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
-            "backup info file and archive info file do not match\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
             "HINT: this may be a symptom of repository corruption!");
@@ -281,8 +283,8 @@ testRun(void)
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad system-id and version");
 
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
-            "backup info file and archive info file do not match\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.5, system-id = 6569239123849665999\n"
             "HINT: this may be a symptom of repository corruption!");
@@ -306,8 +308,8 @@ testRun(void)
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put back info to file - bad version");
 
-        TEST_ERROR_FMT(cmdStanzaCreate(), FileInvalidError,
-            "backup info file and archive info file do not match\n"
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
@@ -381,7 +383,8 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
         TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
 
-        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))),
+        TEST_RESULT_VOID(
+            storagePathCreateNP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))),
             "create directory in backup");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "backup directory not empty");
 
@@ -406,12 +409,97 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("cmdStanzaCreate() - online"))
+    {
+        String *pg1 = strNew("pg1");
+        String *pg1Path = strNewFmt("%s/%s", testPath(), strPtr(pg1));
+
+        // Load Parameters
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pg1Path)));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "stanza-create");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+// one db, port, path, standby or not -- one scenario pass a bogus path, one valid and one bad version - last one to make my own test. Need to write out pg_control file with 91 to get version mismatch.
+
+        // Create pg_control
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_CLOSE(1),
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - db online");
+        TEST_RESULT_BOOL(
+            storageExistsNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), true, "    stanza created");
+        TEST_RESULT_VOID(
+            storagePathRemoveP(storageTest, strNewFmt("%s/repo/archive", testPath()), .recurse=true), "    remove stanza archive");
+        TEST_RESULT_VOID(
+            storagePathRemoveP(storageTest, strNewFmt("%s/repo/backup", testPath()), .recurse=true), "    remove stanza backup");
+
+        // Version mismatch
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Create pg_control with different version
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_91, .systemId = 6569239123849665699}));
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_CLOSE(1),
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
+            " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
+            "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters",
+            strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path), strPtr(pgVersionToStr(PG_VERSION_91)), strPtr(pg1Path),
+            strPtr(pg1Path));
+        TEST_RESULT_BOOL(
+            storageExistsNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), false,
+            "    stanza not created");
+
+        // Path mismatch
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Create pg_control
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(strNewFmt("%s/pg2", testPath())), false),
+            HRNPQ_MACRO_CLOSE(1),
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
+            " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
+            "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters",
+            strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(strNewFmt("%s/pg2", testPath())), strPtr(pgVersionToStr(PG_VERSION_92)),
+            strPtr(pg1Path), strPtr(pg1Path));
+// CSHANG Should I write a test with a standby?
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdStanzaCreate() - encryption"))
     {
         StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-create");
+        strLstAddZ(argList, "--no-online");
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
+        strLstAddZ(argList, "stanza-create");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create pg_control
@@ -433,7 +521,8 @@ testRun(void)
             "  load backup info");
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
 
-        TEST_RESULT_BOOL(strEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
+        TEST_RESULT_BOOL(
+            strEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
             "  cipher sub different for archive and backup");
     }
 
@@ -464,8 +553,8 @@ testRun(void)
         storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)), .errorOnMissing = true);
         storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)), .errorOnMissing = true);
 
-        //--------------------------------------------------------------------------------------------------------------------------
         // backup info up to date but archive info db-id mismatch
+        //--------------------------------------------------------------------------------------------------------------------------
         String *contentArchive = strNew
         (
             "[db]\n"
@@ -481,14 +570,14 @@ testRun(void)
                 storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to file");
 
-        TEST_ERROR_FMT(cmdStanzaUpgrade(), FileInvalidError,
-            "backup info file and archive info file do not match\n"
+        TEST_ERROR_FMT(
+            cmdStanzaUpgrade(), FileInvalidError, "backup info file and archive info file do not match\n"
             "archive: id = 2, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        //--------------------------------------------------------------------------------------------------------------------------
         // backup info up to date but archive info version is not
+        //--------------------------------------------------------------------------------------------------------------------------
         String *contentBackup = strNew
         (
             "[db]\n"
@@ -549,8 +638,8 @@ testRun(void)
                 storageGetNP(storageNewReadNP(storageTest, fileName)))),
             true, "    test and stanza archive info files are equal");
 
-        //--------------------------------------------------------------------------------------------------------------------------
         // archive info up to date but backup info version is not
+        //--------------------------------------------------------------------------------------------------------------------------
         contentBackup = strNew
         (
             "[db]\n"
@@ -599,8 +688,8 @@ testRun(void)
                 storageGetNP(storageNewReadNP(storageTest, fileName)))),
             true, "    test and stanza backup info files are equal");
 
-        //--------------------------------------------------------------------------------------------------------------------------
         // backup info up to date but archive info system-id is not
+        //--------------------------------------------------------------------------------------------------------------------------
         contentBackup = strNew
         (
             "[db]\n"
@@ -661,8 +750,8 @@ testRun(void)
                 storageGetNP(storageNewReadNP(storageTest, fileName)))),
             true, "    test and stanza archive info files are equal");
 
-        //--------------------------------------------------------------------------------------------------------------------------
         // archive info up to date but backup info system-id is not
+        //--------------------------------------------------------------------------------------------------------------------------
         contentBackup = strNew
         (
             "[db]\n"
@@ -765,7 +854,8 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza to be deleted");
         TEST_RESULT_BOOL(
             storageExistsNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), true, "    stanza created");
-        TEST_ERROR_FMT(cmdStanzaDelete(), FileMissingError, "stop file does not exist for stanza 'db'\n"
+        TEST_ERROR_FMT(
+            cmdStanzaDelete(), FileMissingError, "stop file does not exist for stanza 'db'\n"
             "HINT: has the pgbackrest stop command been run on this server for this stanza?");
 
         // Create the stop file
@@ -782,9 +872,11 @@ testRun(void)
 
         // Create stanza with directories only
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("repo/archive/%s/9.6-1/1234567812345678", strPtr(stanza))),
+        TEST_RESULT_VOID(
+            storagePathCreateNP(storageTest, strNewFmt("repo/archive/%s/9.6-1/1234567812345678", strPtr(stanza))),
             "create archive sub directory");
-        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))),
+        TEST_RESULT_VOID(
+            storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))),
             "create backup sub directory");
         TEST_RESULT_VOID(
             storagePutNP(
@@ -833,7 +925,8 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
-        TEST_ERROR_FMT(cmdStanzaDelete(), FileRemoveError,
+        TEST_ERROR_FMT(
+            cmdStanzaDelete(), FileRemoveError,
             "unable to remove '%s/repo/backup/%s/20190708-154306F/backup.manifest': [20] Not a directory", testPath(),
             strPtr(stanza));
         TEST_RESULT_VOID(
@@ -870,10 +963,10 @@ testRun(void)
         // Create only stanza paths
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete");
-        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))),
-            "create empty stanza archive path");
-        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))),
-            "create empty stanza backup path");
+        TEST_RESULT_VOID(
+            storagePathCreateNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), "create empty stanza archive path");
+        TEST_RESULT_VOID(
+            storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), "create empty stanza backup path");
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - empty directories");
 
         // Ensure other stanza never deleted

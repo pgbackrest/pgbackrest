@@ -6,6 +6,7 @@ Stanza Create Command
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <stdio.h> // CSHANG remove
 
 #include "command/check/common.h"
 #include "command/stanza/common.h"
@@ -46,9 +47,11 @@ cmdStanzaCreate(void)
         {
             // Check the connections of the master (and standby, if any) and return the master database object.
             DbGetResult dbObject = dbGet(false, true);
-
+printf("PRI: %u, ID: %d, HOST: %u\n", dbObject.primaryId, cfgOptPgPath, (cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1)); fflush(stdout);
             // Get the pgControl information from the pg*-path deemed to be the master
-            pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbObject.primaryId));
+            pgControl = pgControlFromFile(
+                storagePg(), (dbObject.primaryId == 1 ? cfgOptionStr(cfgOptPgPath) :
+                cfgOptionStr(cfgOptPgPath + dbObject.primaryId)));
 
             // Check the user configured path and version against the database
             checkDbConfig(pgControl.version, dbObject.primary, dbObject.primaryId);

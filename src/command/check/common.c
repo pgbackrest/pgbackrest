@@ -21,18 +21,18 @@ checkDbConfig(const unsigned int pgVersion, const Db *dbObject, const unsigned i
         FUNCTION_TEST_PARAM(UINT, dbIdx);
     FUNCTION_TEST_END();
 
+    unsigned int pgPath = dbIdx == 1 ? cfgOptPgPath : cfgOptPgPath + dbIdx;
+
     // Error if the version from the control file and the configured pg-path do not match the values obtained from the database
-    if (pgVersion != dbPgVersion(dbObject) ||
-        strCmp(cfgOptionStr(cfgOptPgPath + dbIdx), dbPgDataPath(dbObject)) != 0)
+    if (pgVersion != dbPgVersion(dbObject) || strCmp(cfgOptionStr(pgPath), dbPgDataPath(dbObject)) != 0)
     {
 // CSHANG We don't check for this message anywhere that I can find so need to add to a mock or real test...
         THROW_FMT(
-            DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
-            "read from '%s/" PG_FILE_PGCONTROL "'\nHINT: the %s and %s settings likely reference different clusters",
+            DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
+            PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\nHINT: the %s and %s settings likely reference different clusters",
             strPtr(pgVersionToStr(dbPgVersion(dbObject))), strPtr(dbPgDataPath(dbObject)),
-            strPtr(pgVersionToStr(pgVersion)), cfgOptionName(cfgOptPgPath + dbIdx),
-            strPtr(cfgOptionStr(cfgOptPgPath + dbIdx)), cfgOptionName(cfgOptPgPath + dbIdx),
-            cfgOptionName(cfgOptPgPort + dbIdx));
+            strPtr(pgVersionToStr(pgVersion)), strPtr(cfgOptionStr(pgPath)), strPtr(cfgOptionStr(pgPath)), cfgOptionName(pgPath),
+            cfgOptionName(dbIdx == 1 ? cfgOptPgPort : cfgOptPgPort + dbIdx));
     }
 
     FUNCTION_TEST_RETURN_VOID();
