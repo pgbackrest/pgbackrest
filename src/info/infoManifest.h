@@ -48,6 +48,17 @@ typedef struct InfoManifest InfoManifest;
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
+Manifest data
+***********************************************************************************************************************************/
+typedef struct InfoManifestData
+{
+    const String *backupLabel;                                      // Backup label (unique identifier for the backup)
+    time_t backupTimestampCopyStart;                                // When did the file copy start?
+    time_t backupTimestampStart;                                    // When did the backup start?
+    time_t backupTimestampStop;                                     // When did the backup stop?
+} InfoManifestData;
+
+/***********************************************************************************************************************************
 Target type
 ***********************************************************************************************************************************/
 typedef enum

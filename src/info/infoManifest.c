@@ -36,6 +36,9 @@ VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_ONLINE_VAR,             INFO_MANIFES
 STRING_STATIC(INFO_MANIFEST_TARGET_TYPE_LINK_STR,                   "link");
 STRING_STATIC(INFO_MANIFEST_TARGET_TYPE_PATH_STR,                   "path");
 
+STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_STR,                     "backup");
+STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_DB_STR,                  "backup:db");
+STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_OPTION_STR,              "backup:option");
 STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_TARGET_STR,              "backup:target");
 
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_STR,                "target:file");
@@ -47,6 +50,14 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR,        "target:link
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_STR,                "target:path");
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path:default");
 
+#define INFO_MANIFEST_KEY_BACKUP_LABEL                              "backup-label"
+    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_LABEL_STR,               INFO_MANIFEST_KEY_BACKUP_LABEL);
+#define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START               "backup-timestamp-copy-start"
+    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START);
+#define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START                    "backup-timestamp-start"
+    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,     INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START);
+#define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                     "backup-timestamp-stop"
+    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,      INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP);
 #define INFO_MANIFEST_KEY_CHECKSUM                                  "checksum"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_VAR,           INFO_MANIFEST_KEY_CHECKSUM);
 #define INFO_MANIFEST_KEY_CHECKSUM_PAGE                             "checksum-page"
@@ -88,11 +99,11 @@ Object type
 struct InfoManifest
 {
     MemContext *memContext;                                         // Context that contains the InfoManifest
-    unsigned int pgVersion;                                         // PostgreSQL version
 
     Info *info;                                                     // Base info object
     StringList *ownerList;                                          // List of users/groups
 
+    InfoManifestData data;                                          // Manifest data and options
     List *targetList;                                               // List of paths
     List *pathList;                                                 // List of paths
     List *fileList;                                                 // List of files
@@ -190,6 +201,16 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
         // Load the manifest
         Ini *iniLocal = NULL;
         this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, &iniLocal);
+
+        // Load configuration
+        // -------------------------------------------------------------------------------------------------------------------------
+        this->data.backupLabel = jsonToStr(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LABEL_STR));
+        this->data.backupTimestampCopyStart = (time_t)jsonToUInt64(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR));
+        this->data.backupTimestampStart = (time_t)jsonToUInt64(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR));
+        this->data.backupTimestampStop = (time_t)jsonToUInt64(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR));
 
         // Load targets
         // -------------------------------------------------------------------------------------------------------------------------
@@ -379,6 +400,19 @@ infoManifestSave(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         Ini *ini = iniNew();
+
+        // Load configuration
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LABEL_STR, jsonFromStr(this->data.backupLabel));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,
+            jsonFromInt64(this->data.backupTimestampCopyStart));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,
+            jsonFromInt64(this->data.backupTimestampStart));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,
+            jsonFromInt64(this->data.backupTimestampStop));
 
         // Save targets
         // -------------------------------------------------------------------------------------------------------------------------
