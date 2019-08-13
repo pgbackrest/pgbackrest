@@ -92,14 +92,12 @@ struct InfoManifest
 Convert the owner to a variant.  The input could be boolean false (meaning there is no owner) or a string (there is an owner).
 ***********************************************************************************************************************************/
 static const Variant *
-infoManifestOwnerDefaultGet(InfoManifest *this, const String *ownerDefault)
+infoManifestOwnerDefaultGet(const String *ownerDefault)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
         FUNCTION_TEST_PARAM(STRING, ownerDefault);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
     ASSERT(ownerDefault != NULL);
 
     FUNCTION_TEST_RETURN(strEq(ownerDefault, FALSE_STR) ? BOOL_FALSE_VAR : varNewStr(jsonToStr(ownerDefault)));
@@ -186,9 +184,9 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
             // Load path defaults
             // ---------------------------------------------------------------------------------------------------------------------
             const Variant *pathUserDefault = infoManifestOwnerDefaultGet(
-                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
             const Variant *pathGroupDefault = infoManifestOwnerDefaultGet(
-                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
             const String *pathModeDefault = jsonToStr(
                 iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
 
@@ -214,9 +212,9 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
             // Load file defaults
             // ---------------------------------------------------------------------------------------------------------------------
             const Variant *fileUserDefault = infoManifestOwnerDefaultGet(
-                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
             const Variant *fileGroupDefault = infoManifestOwnerDefaultGet(
-                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
             const String *fileModeDefault = jsonToStr(
                 iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
             const Variant *fileMasterDefault = jsonToVar(
@@ -271,9 +269,9 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
             // Load link defaults
             // ---------------------------------------------------------------------------------------------------------------------
             const Variant *linkUserDefault = infoManifestOwnerDefaultGet(
-                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
             const Variant *linkGroupDefault = infoManifestOwnerDefaultGet(
-                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
+                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
 
             // Load link list
             // ---------------------------------------------------------------------------------------------------------------------
