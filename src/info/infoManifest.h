@@ -5,7 +5,7 @@ Manifest Info Handler
 #define INFO_INFOMANIFEST_H
 
 #include "common/crypto/common.h"
-#include "common/type/variant.h"
+#include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -71,8 +71,8 @@ typedef struct InfoManifestFile
     bool master:1;                                                  // Should this file be copied from master?
     bool checksumPage:1;                                            // Does this file have page checksums?
     mode_t mode;                                                    // File mode
-    unsigned char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];        // SHA1 checksum
-    const String *checksumPageError;                                // JSON result when there are checksum page errors
+    char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
+    const VariantList *checksumPageError;                           // List if page checksum errors if there are any
     const String *user;                                             // User name
     const String *group;                                            // Group name
     uint64_t size;                                                  // Original size

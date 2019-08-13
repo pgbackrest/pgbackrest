@@ -43,6 +43,8 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_VAR,           INFO_MANIFEST_KEY_CHECKSUM);
 #define INFO_MANIFEST_KEY_CHECKSUM_PAGE                             "checksum-page"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR,      INFO_MANIFEST_KEY_CHECKSUM_PAGE);
+#define INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR                       "checksum-page-error"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR,INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
 #define INFO_MANIFEST_KEY_GROUP                                     "group"
     STRING_STATIC(INFO_MANIFEST_KEY_GROUP_STR,                      INFO_MANIFEST_KEY_GROUP);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_GROUP_VAR,              INFO_MANIFEST_KEY_GROUP);
@@ -54,6 +56,8 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_MODE_VAR,               INFO_MANIFEST_KEY_MODE);
 #define INFO_MANIFEST_KEY_SIZE                                      "size"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_VAR,               INFO_MANIFEST_KEY_SIZE);
+#define INFO_MANIFEST_KEY_SIZE_REPO                                 "size-repo"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_REPO_VAR,          INFO_MANIFEST_KEY_SIZE_REPO);
 #define INFO_MANIFEST_KEY_TIMESTAMP                                 "timestamp"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TIMESTAMP_VAR,          INFO_MANIFEST_KEY_TIMESTAMP);
 #define INFO_MANIFEST_KEY_USER                                      "user"
@@ -227,16 +231,27 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
 
                 KeyValue *fileData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file.name)));
 
-    // const String *checksumPageError;                                    // JSON result when there are checksum errors
-
                 file.user = infoManifestOwnerCache(this, kvGetDefault(fileData, INFO_MANIFEST_KEY_USER_VAR, fileUserDefault));
                 file.group = infoManifestOwnerCache(this, kvGetDefault(fileData, INFO_MANIFEST_KEY_GROUP_VAR, fileGroupDefault));
                 file.mode = cvtZToMode(strPtr(varStr(kvGetDefault(fileData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(fileModeDefault)))));
                 file.master = varBool(kvGetDefault(fileData, INFO_MANIFEST_KEY_MASTER_VAR, fileMasterDefault));
-                file.checksumPage = varBool(kvGetDefault(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_FALSE_VAR));
                 file.size = varUInt64(kvGet(fileData, INFO_MANIFEST_KEY_SIZE_VAR));
-                file.sizeRepo = varUInt64(kvGetDefault(fileData, INFO_MANIFEST_KEY_SIZE_VAR, VARUINT64(file.size)));
+                file.sizeRepo = varUInt64(kvGetDefault(fileData, INFO_MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.size)));
                 file.timestamp = (time_t)varUInt64(kvGet(fileData, INFO_MANIFEST_KEY_TIMESTAMP_VAR));
+
+                if (kvGetDefault(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, NULL) != NULL)
+                {
+                    file.checksumPage = true;
+
+                    const Variant *checksumPageError = kvGetDefault(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
+
+                    if (checksumPageError != NULL)
+                    {
+                        memContextSwitch(lstMemContext(this->fileList));
+                        file.checksumPageError = varLstDup(varVarLst(checksumPageError));
+                        memContextSwitch(MEM_CONTEXT_TEMP());
+                    }
+                }
 
                 if (file.size == 0)
                     memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
@@ -260,7 +275,7 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
 /***********************************************************************************************************************************
 Save to file
 ***********************************************************************************************************************************/
-// Convert the owner MCV to a default.  If the input is NULL boolean false should be return, else the owner string.
+// Helper to convert the owner MCV to a default.  If the input is NULL boolean false should be returned, else the owner string.
 static const Variant *
 infoManifestOwnerGet(const String *ownerDefault)
 {
@@ -292,49 +307,130 @@ infoManifestSave(
     {
         Ini *ini = iniNew();
 
-        // Save default path values
+        // Save paths
         // -------------------------------------------------------------------------------------------------------------------------
-        MostCommonValue *userMcv = mcvNew(varTypeString);
-        MostCommonValue *groupMcv = mcvNew(varTypeString);
-        MostCommonValue *modeMcv = mcvNew(varTypeUInt);
-
-        for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            InfoManifestPath *path = lstGet(this->pathList, pathIdx);
+            // Save default path values
+            MostCommonValue *userMcv = mcvNew(varTypeString);
+            MostCommonValue *groupMcv = mcvNew(varTypeString);
+            MostCommonValue *modeMcv = mcvNew(varTypeUInt);
 
-            mcvUpdate(userMcv, VARSTR(path->user));
-            mcvUpdate(groupMcv, VARSTR(path->group));
-            mcvUpdate(modeMcv, VARUINT(path->mode));
+            for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+            {
+                InfoManifestPath *path = lstGet(this->pathList, pathIdx);
+
+                mcvUpdate(userMcv, VARSTR(path->user));
+                mcvUpdate(groupMcv, VARSTR(path->group));
+                mcvUpdate(modeMcv, VARUINT(path->mode));
+            }
+
+            const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
+            const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
+            const Variant *modeDefault = mcvResult(modeMcv);
+
+            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
+            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
+            iniSet(
+                ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
+                jsonFromStr(strNewFmt("%04o", varUInt(modeDefault))));
+
+            // Save path list
+            for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+            {
+                InfoManifestPath *path = lstGet(this->pathList, pathIdx);
+                KeyValue *pathData = kvNew();
+
+                if (!varEq(infoManifestOwnerGet(path->user), userDefault))
+                    kvPut(pathData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(path->user));
+
+                if (!varEq(infoManifestOwnerGet(path->group), groupDefault))
+                    kvPut(pathData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(path->group));
+
+                if (!varEq(VARUINT(path->mode), modeDefault))
+                    kvPut(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
+
+                iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathData, 0));
+            }
         }
+        MEM_CONTEXT_TEMP_END();
 
-        const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
-        const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
-        const Variant *modeDefault = mcvResult(modeMcv);
-
-        iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
-        iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
-            jsonFromStr(strNewFmt("%04o", varUInt(modeDefault))));
-
-        // Save path list
+        // Save files
         // -------------------------------------------------------------------------------------------------------------------------
-        for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            InfoManifestPath *path = lstGet(this->pathList, pathIdx);
-            KeyValue *pathData = kvNew();
+            // Save default file values
+            MostCommonValue *userMcv = mcvNew(varTypeString);
+            MostCommonValue *groupMcv = mcvNew(varTypeString);
+            MostCommonValue *modeMcv = mcvNew(varTypeUInt);
+            MostCommonValue *masterMcv = mcvNew(varTypeBool);
 
-            if (!varEq(infoManifestOwnerGet(path->user), userDefault))
-                kvPut(pathData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(path->user));
+            for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
+            {
+                InfoManifestFile *file = lstGet(this->fileList, fileIdx);
 
-            if (!varEq(infoManifestOwnerGet(path->group), groupDefault))
-                kvPut(pathData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(path->group));
+                mcvUpdate(userMcv, VARSTR(file->user));
+                mcvUpdate(groupMcv, VARSTR(file->group));
+                mcvUpdate(modeMcv, VARUINT(file->mode));
+                mcvUpdate(masterMcv, VARBOOL(file->master));
+            }
 
-            if (!varEq(VARUINT(path->mode), modeDefault))
-                kvPut(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
+            const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
+            const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
+            const Variant *modeDefault = mcvResult(modeMcv);
+            const Variant *masterDefault = mcvResult(masterMcv);
 
-            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathData, 0));
+            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
+            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
+            iniSet(
+                ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
+                jsonFromStr(strNewFmt("%04o", varUInt(modeDefault))));
+            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MASTER_STR, jsonFromVar(masterDefault, 0));
+
+            // Save file list
+            for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
+            {
+                InfoManifestFile *file = lstGet(this->fileList, fileIdx);
+                KeyValue *fileData = kvNew();
+
+                if (!varEq(infoManifestOwnerGet(file->user), userDefault))
+                    kvPut(fileData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(file->user));
+
+                if (!varEq(infoManifestOwnerGet(file->group), groupDefault))
+                    kvPut(fileData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(file->group));
+
+                if (!varEq(VARUINT(file->mode), modeDefault))
+                    kvPut(fileData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", file->mode)));
+
+                if (!varEq(VARBOOL(file->master), masterDefault))
+                    kvPut(fileData, INFO_MANIFEST_KEY_MASTER_VAR, VARBOOL(file->master));
+
+
+                kvPut(fileData, INFO_MANIFEST_KEY_SIZE_VAR, varNewUInt64(file->size));
+
+                if (file->sizeRepo != file->size)
+                    kvPut(fileData, INFO_MANIFEST_KEY_SIZE_REPO_VAR, varNewUInt64(file->sizeRepo));
+
+                kvPut(fileData, INFO_MANIFEST_KEY_TIMESTAMP_VAR, varNewUInt64((uint64_t)file->timestamp));
+
+                if (file->checksumPage)
+                {
+                    if (file->checksumPageError == NULL)
+                        kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_TRUE_VAR);
+                    else
+                    {
+                        kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_FALSE_VAR);
+                        kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, varNewVarLst(file->checksumPageError));
+                    }
+                }
+
+                if (file->size != 0)
+                    kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_VAR, VARSTRZ(file->checksumSha1));
+
+                iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file->name, jsonFromKv(fileData, 0));
+            }
         }
+        MEM_CONTEXT_TEMP_END();
 
         infoSave(this->info, ini, storage, fileName, cipherType, cipherPass);
     }
