@@ -36,6 +36,9 @@ VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_ONLINE_VAR,             INFO_MANIFES
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_STR,                "target:file");
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR,        "target:file:default");
 
+STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_LINK_STR,                "target:link");
+STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR,        "target:link:default");
+
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_STR,                "target:path");
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path:default");
 
@@ -45,6 +48,8 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR,      INFO_MANIFEST_KEY_CHECKSUM_PAGE);
 #define INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR                       "checksum-page-error"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR,INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
+#define INFO_MANIFEST_KEY_DESTINATION                               "destination"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_DESTINATION_VAR,        INFO_MANIFEST_KEY_DESTINATION);
 #define INFO_MANIFEST_KEY_GROUP                                     "group"
     STRING_STATIC(INFO_MANIFEST_KEY_GROUP_STR,                      INFO_MANIFEST_KEY_GROUP);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_GROUP_VAR,              INFO_MANIFEST_KEY_GROUP);
@@ -202,8 +207,6 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
                 path.user = infoManifestOwnerCache(this, kvGetDefault(pathData, INFO_MANIFEST_KEY_USER_VAR, pathUserDefault));
                 path.group = infoManifestOwnerCache(this, kvGetDefault(pathData, INFO_MANIFEST_KEY_GROUP_VAR, pathGroupDefault));
                 path.mode = cvtZToMode(strPtr(varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(pathModeDefault)))));
-                // ??? Set base path?
-                // ??? Set db path?
 
                 lstAdd(this->pathList, &path);
             }
@@ -263,6 +266,35 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
                 }
 
                 lstAdd(this->fileList, &file);
+            }
+
+            // Load link defaults
+            // ---------------------------------------------------------------------------------------------------------------------
+            const Variant *linkUserDefault = infoManifestOwnerDefaultGet(
+                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
+            const Variant *linkGroupDefault = infoManifestOwnerDefaultGet(
+                this, iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
+
+            // Load link list
+            // ---------------------------------------------------------------------------------------------------------------------
+            StringList *linkKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_STR);
+
+            for (unsigned int linkKeyIdx = 0; linkKeyIdx < strLstSize(linkKeyList); linkKeyIdx++)
+            {
+                memContextSwitch(lstMemContext(this->linkList));
+                InfoManifestLink link = {.name = strDup(strLstGet(linkKeyList, linkKeyIdx))};
+                memContextSwitch(MEM_CONTEXT_TEMP());
+
+                KeyValue *linkData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_STR, link.name)));
+
+                memContextSwitch(lstMemContext(this->linkList));
+                link.destination = strDup(varStr(kvGet(linkData, INFO_MANIFEST_KEY_DESTINATION_VAR)));
+                memContextSwitch(MEM_CONTEXT_TEMP());
+
+                link.user = infoManifestOwnerCache(this, kvGetDefault(linkData, INFO_MANIFEST_KEY_USER_VAR, linkUserDefault));
+                link.group = infoManifestOwnerCache(this, kvGetDefault(linkData, INFO_MANIFEST_KEY_GROUP_VAR, linkGroupDefault));
+
+                lstAdd(this->linkList, &link);
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -405,7 +437,6 @@ infoManifestSave(
                 if (!varEq(VARBOOL(file->master), masterDefault))
                     kvPut(fileData, INFO_MANIFEST_KEY_MASTER_VAR, VARBOOL(file->master));
 
-
                 kvPut(fileData, INFO_MANIFEST_KEY_SIZE_VAR, varNewUInt64(file->size));
 
                 if (file->sizeRepo != file->size)
@@ -428,6 +459,47 @@ infoManifestSave(
                     kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_VAR, VARSTRZ(file->checksumSha1));
 
                 iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file->name, jsonFromKv(fileData, 0));
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Save links
+        // -------------------------------------------------------------------------------------------------------------------------
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Save default link values
+            MostCommonValue *userMcv = mcvNew(varTypeString);
+            MostCommonValue *groupMcv = mcvNew(varTypeString);
+
+            for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
+            {
+                InfoManifestLink *link = lstGet(this->linkList, linkIdx);
+
+                mcvUpdate(userMcv, VARSTR(link->user));
+                mcvUpdate(groupMcv, VARSTR(link->group));
+            }
+
+            const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
+            const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
+
+            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
+            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
+
+            // Save link list
+            for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
+            {
+                InfoManifestLink *link = lstGet(this->linkList, linkIdx);
+                KeyValue *linkData = kvNew();
+
+                if (!varEq(infoManifestOwnerGet(link->user), userDefault))
+                    kvPut(linkData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(link->user));
+
+                if (!varEq(infoManifestOwnerGet(link->group), groupDefault))
+                    kvPut(linkData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(link->group));
+
+                kvPut(linkData, INFO_MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
+
+                iniSet(ini, INFO_MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonFromKv(linkData, 0));
             }
         }
         MEM_CONTEXT_TEMP_END();

@@ -66,8 +66,6 @@ File type
 typedef struct InfoManifestFile
 {
     const String *name;                                             // File name
-    // const InfoManifestPath *pathInfo;                               // Path info for this file
-    // bool exists:1;                                                  // Does the file still exist?
     bool master:1;                                                  // Should this file be copied from master?
     bool checksumPage:1;                                            // Does this file have page checksums?
     mode_t mode;                                                    // File mode
@@ -86,6 +84,9 @@ Link type
 typedef struct InfoManifestLink
 {
     const String *name;                                             // Link name
+    const String *destination;                                      // Link destination
+    const String *user;                                             // User name
+    const String *group;                                            // Group name
 } InfoManifestLink;
 
 /***********************************************************************************************************************************

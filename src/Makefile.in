@@ -61,6 +61,8 @@ SRCS = \
 	command/info/info.c \
 	command/command.c \
 	command/control/common.c \
+	command/control/start.c \
+	command/control/stop.c \
 	command/local/local.c \
 	command/restore/file.c \
 	command/restore/protocol.c \
