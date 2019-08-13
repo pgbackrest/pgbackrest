@@ -48,6 +48,23 @@ typedef struct InfoManifest InfoManifest;
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
+Target type
+***********************************************************************************************************************************/
+typedef enum
+{
+    manifestTargetTypePath,
+    manifestTargetTypeLink,
+} ManifestTargetType;
+
+typedef struct InfoManifestTarget
+{
+    const String *name;                                             // Target name
+    ManifestTargetType type;                                        // Target type
+    const String *path;                                             // Target path (if path or link)
+    const String *file;                                             // Target file (if file link)
+} InfoManifestTarget;
+
+/***********************************************************************************************************************************
 Path type
 ***********************************************************************************************************************************/
 typedef struct InfoManifestPath

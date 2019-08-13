@@ -31,6 +31,11 @@ testRun(void)
 
         String *manifestStr = strNew
         (
+            "[backup:target]\n"
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
+            "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"
+            "pg_data/pg_stat={\"path\":\"../pg_stat\",\"type\":\"link\"}\n"
+            "\n"
             "[target:file]\n"
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true,\"size\":4"
                 ",\"timestamp\":1565282114}\n"

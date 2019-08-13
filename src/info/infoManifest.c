@@ -33,6 +33,11 @@ VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_COMPRESS_VAR,           INFO_MANIFES
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_HARDLINK_VAR,           INFO_MANIFEST_KEY_OPT_HARDLINK);
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_OPT_ONLINE_VAR,             INFO_MANIFEST_KEY_OPT_ONLINE);
 
+STRING_STATIC(INFO_MANIFEST_TARGET_TYPE_LINK_STR,                   "link");
+STRING_STATIC(INFO_MANIFEST_TARGET_TYPE_PATH_STR,                   "path");
+
+STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_TARGET_STR,              "backup:target");
+
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_STR,                "target:file");
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR,        "target:file:default");
 
@@ -50,6 +55,8 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR,INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
 #define INFO_MANIFEST_KEY_DESTINATION                               "destination"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_DESTINATION_VAR,        INFO_MANIFEST_KEY_DESTINATION);
+#define INFO_MANIFEST_KEY_FILE                                      "file"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_FILE_VAR,               INFO_MANIFEST_KEY_FILE);
 #define INFO_MANIFEST_KEY_GROUP                                     "group"
     STRING_STATIC(INFO_MANIFEST_KEY_GROUP_STR,                      INFO_MANIFEST_KEY_GROUP);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_GROUP_VAR,              INFO_MANIFEST_KEY_GROUP);
@@ -59,12 +66,16 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
 #define INFO_MANIFEST_KEY_MODE                                      "mode"
     STRING_STATIC(INFO_MANIFEST_KEY_MODE_STR,                       INFO_MANIFEST_KEY_MODE);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_MODE_VAR,               INFO_MANIFEST_KEY_MODE);
+#define INFO_MANIFEST_KEY_PATH                                      "path"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_PATH_VAR,               INFO_MANIFEST_KEY_PATH);
 #define INFO_MANIFEST_KEY_SIZE                                      "size"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_VAR,               INFO_MANIFEST_KEY_SIZE);
 #define INFO_MANIFEST_KEY_SIZE_REPO                                 "size-repo"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_REPO_VAR,          INFO_MANIFEST_KEY_SIZE_REPO);
 #define INFO_MANIFEST_KEY_TIMESTAMP                                 "timestamp"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TIMESTAMP_VAR,          INFO_MANIFEST_KEY_TIMESTAMP);
+#define INFO_MANIFEST_KEY_TYPE                                      "type"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TYPE_VAR,               INFO_MANIFEST_KEY_TYPE);
 #define INFO_MANIFEST_KEY_USER                                      "user"
     STRING_STATIC(INFO_MANIFEST_KEY_USER_STR,                       INFO_MANIFEST_KEY_USER);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_USER_VAR,               INFO_MANIFEST_KEY_USER);
@@ -80,9 +91,9 @@ struct InfoManifest
     unsigned int pgVersion;                                         // PostgreSQL version
 
     Info *info;                                                     // Base info object
-
     StringList *ownerList;                                          // List of users/groups
 
+    List *targetList;                                               // List of paths
     List *pathList;                                                 // List of paths
     List *fileList;                                                 // List of files
     List *linkList;                                                 // List of links
@@ -171,6 +182,7 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
 
         // Create lists
         this->ownerList = strLstNew();
+        this->targetList = lstNew(sizeof(InfoManifestPath));
         this->pathList = lstNew(sizeof(InfoManifestPath));
         this->fileList = lstNew(sizeof(InfoManifestFile));
         this->linkList = lstNew(sizeof(InfoManifestLink));
@@ -178,6 +190,37 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
         // Load the manifest
         Ini *iniLocal = NULL;
         this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, &iniLocal);
+
+        // Load targets
+        // -------------------------------------------------------------------------------------------------------------------------
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Load target list
+            StringList *targetKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR);
+
+            for (unsigned int targetKeyIdx = 0; targetKeyIdx < strLstSize(targetKeyList); targetKeyIdx++)
+            {
+                const String *targetName = strLstGet(targetKeyList, targetKeyIdx);
+                KeyValue *targetData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR, targetName)));
+                const String *targetType = varStr(kvGet(targetData, INFO_MANIFEST_KEY_TYPE_VAR));
+
+                ASSERT(
+                    strEq(targetType, INFO_MANIFEST_TARGET_TYPE_LINK_STR) || strEq(targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR));
+
+                memContextSwitch(lstMemContext(this->targetList));
+
+                InfoManifestTarget target =
+                {
+                    .name = strDup(targetName),
+                    .type = strEq(targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR) ? manifestTargetTypePath : manifestTargetTypeLink,
+                    .path = strDup(varStr(kvGet(targetData, INFO_MANIFEST_KEY_PATH_VAR))),
+                    .file = strDup(varStr(kvGetDefault(targetData, INFO_MANIFEST_KEY_FILE_VAR, NULL))),
+                };
+
+                lstAdd(this->targetList, &target);
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -336,6 +379,32 @@ infoManifestSave(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         Ini *ini = iniNew();
+
+        // Save targets
+        // -------------------------------------------------------------------------------------------------------------------------
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Save target list
+            for (unsigned int targetIdx = 0; targetIdx < lstSize(this->targetList); targetIdx++)
+            {
+                InfoManifestTarget *target = lstGet(this->targetList, targetIdx);
+                KeyValue *targetData = kvNew();
+
+                kvPut(
+                    targetData, INFO_MANIFEST_KEY_TYPE_VAR,
+                    VARSTR(
+                        target->type == manifestTargetTypePath ?
+                            INFO_MANIFEST_TARGET_TYPE_PATH_STR : INFO_MANIFEST_TARGET_TYPE_LINK_STR));
+
+                kvPut(targetData, INFO_MANIFEST_KEY_PATH_VAR, VARSTR(target->path));
+
+                if (target->file != NULL)
+                    kvPut(targetData, INFO_MANIFEST_KEY_FILE_VAR, VARSTR(target->file));
+
+                iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonFromKv(targetData, 0));
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
 
         // Save paths
         // -------------------------------------------------------------------------------------------------------------------------
