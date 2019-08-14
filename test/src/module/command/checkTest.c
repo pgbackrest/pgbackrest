@@ -18,7 +18,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdCheck()"))
+    if (testBegin("cmdCheck(), checkDbConfig()"))
     {
         String *pg1Path = strNewFmt("--pg1-path=%s/pg1", testPath());
 
@@ -124,6 +124,11 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdCheck(), "check");
         harnessLogResult("P00   INFO: switch wal not performed because no primary was found");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // CSHANG pgControl.version, dbObject.primaryId, dbVersion, dbDataPath -- pgPath is set from the db_idx so pg1-path, pg2-path whatever must be set
+        // strPtr(cfgOptionStr(pgPath)), strPtr(cfgOptionStr(pgPath)), cfgOptionName(pgPath), cfgOptionName(cfgOptPgPort + (dbIdx - 1)));
+        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92,  1, PG_VERSION_92, testPath()), "valid db config");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

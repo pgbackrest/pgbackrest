@@ -9,6 +9,6 @@ Check Command Common
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void checkDbConfig(const unsigned int pgVersion, const Db *dbObject, const unsigned int dbIdx);
+void checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const unsigned int dbVersion, const String *dbPath);
 
 #endif

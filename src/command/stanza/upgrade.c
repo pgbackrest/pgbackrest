@@ -35,24 +35,8 @@ cmdStanzaUpgrade(void)
         bool infoArchiveUpgrade = false;
         bool infoBackupUpgrade = false;
 
-        // !!! Perl code that still needs to be incorporated
-        //
-        // ($self->{oDb}) = dbObjectGet();
-        //
-        // # Validate the database configuration. Do not require the database to be online before creating a stanza because the
-        // # archive_command will attempt to push an achive before the archive.info file exists which will result in an error in the
-        // # postgres logs.
-        // if (cfgOption(CFGOPT_ONLINE))
-        // {
-        //     # If the pg-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
-        //     $self->{oDb}->configValidate();
-        // }
-        //
-        // ($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
-        //     = $self->{oDb}->info();
-
-        // !!! Temporary until can communicate with PG: Get control info from the pgControlFile
-        PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
+        // Get the version and system information - validating it if the database is online
+        PgControl pgControl = pgValidate();
 
         // Load the info files (errors if missing)
         InfoArchive *infoArchive = infoArchiveNewLoad(

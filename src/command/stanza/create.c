@@ -6,17 +6,13 @@ Stanza Create Command
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-#include <stdio.h> // CSHANG remove
 
-#include "command/check/common.h"
 #include "command/stanza/common.h"
 #include "command/stanza/create.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "db/db.h"
-#include "db/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
@@ -41,24 +37,9 @@ cmdStanzaCreate(void)
         const Storage *storageRepoWriteStanza = storageRepoWrite();
         InfoArchive *infoArchive = NULL;
         InfoBackup *infoBackup = NULL;
-        PgControl pgControl = {0};
 
-        if (cfgOptionBool(cfgOptOnline))
-        {
-            // Check the connections of the master (and standby, if any) and return the master database object.
-            DbGetResult dbObject = dbGet(false, true);
-printf("PRI: %u, ID: %d, HOST: %u\n", dbObject.primaryId, cfgOptPgPath, (cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1)); fflush(stdout);
-            // Get the pgControl information from the pg*-path deemed to be the master
-            pgControl = pgControlFromFile(
-                storagePg(), (dbObject.primaryId == 1 ? cfgOptionStr(cfgOptPgPath) :
-                cfgOptionStr(cfgOptPgPath + dbObject.primaryId)));
-
-            // Check the user configured path and version against the database
-            checkDbConfig(pgControl.version, dbObject.primary, dbObject.primaryId);
-        }
-        // If the database is not online, assume that pg1 is the master
-        else
-            pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
+        // Get the version and system information - validating it if the database is online
+        PgControl pgControl = pgValidate();
 
         bool archiveInfoFileExists = storageExistsNP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR);
         bool archiveInfoFileCopyExists = storageExistsNP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);

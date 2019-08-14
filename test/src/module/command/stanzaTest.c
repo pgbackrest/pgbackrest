@@ -29,6 +29,7 @@ testRun(void)
 
     StringList *argListBase = strLstNew();
     strLstAddZ(argListBase, "pgbackrest");
+    strLstAddZ(argListBase, "--no-online");
     strLstAdd(argListBase, strNewFmt("--stanza=%s", strPtr(stanza)));
     strLstAdd(argListBase, strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
@@ -38,7 +39,6 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--no-online");
         strLstAddZ(argList, "stanza-create");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -409,7 +409,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdStanzaCreate() - online"))
+    if (testBegin("pgValidate(), online=y"))
     {
         String *pg1 = strNew("pg1");
         String *pg1Path = strNewFmt("%s/%s", testPath(), strPtr(pg1));
@@ -423,8 +423,8 @@ testRun(void)
         strLstAddZ(argList, "stanza-create");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-// one db, port, path, standby or not -- one scenario pass a bogus path, one valid and one bad version - last one to make my own test. Need to write out pg_control file with 91 to get version mismatch.
-
+        // pgControl and database match
+        //--------------------------------------------------------------------------------------------------------------------------
         // Create pg_control
         storagePutNP(
             storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
@@ -440,10 +440,16 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - db online");
         TEST_RESULT_BOOL(
             storageExistsNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), true, "    stanza created");
-        TEST_RESULT_VOID(
-            storagePathRemoveP(storageTest, strNewFmt("%s/repo/archive", testPath()), .recurse=true), "    remove stanza archive");
-        TEST_RESULT_VOID(
-            storagePathRemoveP(storageTest, strNewFmt("%s/repo/backup", testPath()), .recurse=true), "    remove stanza backup");
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_CLOSE(1),
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - db online");
+        harnessLogResult("P00   INFO: stanza 'db' is already up to date");
 
         // Version mismatch
         //--------------------------------------------------------------------------------------------------------------------------
@@ -460,14 +466,11 @@ testRun(void)
         });
 
         TEST_ERROR_FMT(
-            cmdStanzaCreate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
-            " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
-            "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters",
+            pgValidate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
+            " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters",
             strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path), strPtr(pgVersionToStr(PG_VERSION_91)), strPtr(pg1Path),
             strPtr(pg1Path));
-        TEST_RESULT_BOOL(
-            storageExistsNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), false,
-            "    stanza not created");
 
         // Path mismatch
         //--------------------------------------------------------------------------------------------------------------------------
@@ -484,19 +487,53 @@ testRun(void)
         });
 
         TEST_ERROR_FMT(
-            cmdStanzaCreate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
+            pgValidate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
             " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
             "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters",
             strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(strNewFmt("%s/pg2", testPath())), strPtr(pgVersionToStr(PG_VERSION_92)),
             strPtr(pg1Path), strPtr(pg1Path));
-// CSHANG Should I write a test with a standby?
+
+        // Primary at pg2
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", testPath()));
+        strLstAdd(argList, strNewFmt("--pg2-path=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--pg2-port=5434");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "stanza-create");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Create pg_control for master
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
+
+        // Create pg_control for standby
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, testPath())),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 6569239123849665700}));
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", testPath(), true),
+            HRNPQ_MACRO_OPEN_92(2, "dbname='postgres' port=5434", strPtr(pg1Path), false),
+            HRNPQ_MACRO_CLOSE(2),
+            HRNPQ_MACRO_CLOSE(1),
+            HRNPQ_MACRO_DONE()
+        });
+
+        PgControl pgControl = {0};
+        TEST_ASSIGN(pgControl, pgValidate(), "validate master");
+        TEST_RESULT_UINT(pgControl.version, PG_VERSION_92, "    version set");
+        TEST_RESULT_UINT(pgControl.systemId, 6569239123849665699, "    systemId set");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaCreate() - encryption"))
     {
         StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--no-online");
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
         strLstAddZ(argList, "stanza-create");
@@ -814,6 +851,7 @@ testRun(void)
         StringList *argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanzaOther)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanzaOther)));
+        strLstAddZ(argList, "--no-online");
         strLstAddZ(argList,"stanza-create");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -843,6 +881,7 @@ testRun(void)
         argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
+        strLstAddZ(argList, "--no-online");
         strLstAddZ(argList,"stanza-create");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -854,6 +893,13 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza to be deleted");
         TEST_RESULT_BOOL(
             storageExistsNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), true, "    stanza created");
+
+        argList = strLstDup(argListCmd);
+        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
+        strLstAddZ(argList,"stanza-delete");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
         TEST_ERROR_FMT(
             cmdStanzaDelete(), FileMissingError, "stop file does not exist for stanza 'db'\n"
             "HINT: has the pgbackrest stop command been run on this server for this stanza?");
@@ -968,6 +1014,15 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), "create empty stanza backup path");
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - empty directories");
+
+        // Create only stanza paths
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/" PG_FILE_POSTMASTERPID, strPtr(stanza))), BUFSTRDEF("")),
+            "create postmaster file");
+        TEST_ERROR_FMT(
+            cmdStanzaDelete(), PostmasterRunningError, PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running. "
+            "To delete stanza 'db', shutdown the postmaster for stanza 'db' and try again, or use --force.");
 
         // Ensure other stanza never deleted
         //--------------------------------------------------------------------------------------------------------------------------

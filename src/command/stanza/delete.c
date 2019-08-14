@@ -70,7 +70,6 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
         // If something exists in either directory, then remove
         if (archiveNotEmpty || backupNotEmpty)
         {
-// CSHANG issue #765 requests that the stop file be ignored when --force is used. But if --force is local, then it should be best practice to run the pgbackrest --stanza=XXX stop - the stop can be issued even when there is nothing configured, right?
             // If the stop file does not exist, then error. This check is required even when --force is issued.
             if (!storageExistsNP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))))
             {
@@ -79,25 +78,16 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                     "HINT: has the pgbackrest stop command been run on this server for this stanza?",
                     strPtr(cfgOptionStr(cfgOptStanza)));
             }
-            // if (!cfgOptionBool(cfgOptForce))
 
-            // # If a force has not been issued, then check the database
-            // if (!cfgOption(CFGOPT_FORCE))
-            // {
-            //     # Get the master database object and index
-            //     my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
-            //
-            //     # Initialize the master file object and path
-            //     my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
-            //
-            //     # Check if Postgres is running and if so only continue when forced
-            //     if ($oStorageDbMaster->exists(DB_FILE_POSTMASTERPID))
-            //     {
-                    // confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
-                    //     "To delete stanza '${strStanza}', shutdown the postmaster for stanza '${strStanza}' and try again, " .
-                    //     "or use --force.", ERROR_POSTMASTER_RUNNING);
-            //     }
-            // }
+            // If a force has not been issued and Postgres is running, then error
+// CSHANG Does storagePg construct the pathe for the postmaster file?
+            if (!cfgOptionBool(cfgOptForce) && storageExistsNP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
+            {
+                THROW_FMT(
+                    PostmasterRunningError, PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running. "
+                    "To delete stanza '%s', shutdown the postmaster for stanza '%s' and try again, or use --force.",
+                    strPtr(cfgOptionStr(cfgOptStanza)), strPtr(cfgOptionStr(cfgOptStanza)));
+            }
 
             // Delete the archive info files
             if (archiveNotEmpty)
