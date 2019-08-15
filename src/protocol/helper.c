@@ -64,6 +64,12 @@ Is the repository local?
 bool
 repoIsLocal(void)
 {
+// CSHANG Why was this test omitted?
+// # Not valid for remote
+// if (cfgCommandTest(CFGCMD_REMOTE) && !cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP))
+// {
+//     confess &log(ASSERT, 'isRepoLocal() not valid on ' . cfgOption(CFGOPT_TYPE) . ' remote');
+// }
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(!cfgOptionTest(cfgOptRepoHost));
 }

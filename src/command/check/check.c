@@ -68,7 +68,7 @@ cmdCheck(void)
             }
         }
         else
-            LOG_INFO("switch wal not performed because no primary was found");
+            LOG_INFO("switch wal not performed because no primary was found"); // CSHANG Shouldn't this be a warning?
 
     }
     MEM_CONTEXT_TEMP_END();

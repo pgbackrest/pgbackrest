@@ -11,6 +11,7 @@ Main
 #include "command/archive/push/push.h"
 #include "command/check/check.h"
 #include "command/command.h"
+#include "command/control/common.h"
 #include "command/control/start.h"
 #include "command/control/stop.h"
 #include "command/expire/expire.h"
@@ -19,6 +20,7 @@ Main
 #include "command/local/local.h"
 #include "command/remote/remote.h"
 #include "command/storage/list.h"
+#include "command/stanza/common.h"
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
 #include "command/stanza/upgrade.h"
@@ -28,6 +30,7 @@ Main
 #include "config/config.h"
 #include "config/load.h"
 #include "postgres/interface.h"
+#include "protocol/helper.h"
 #include "perl/exec.h"
 #include "storage/helper.h"
 #include "version.h"
@@ -193,27 +196,26 @@ main(int argListSize, const char *argList[])
                     break;
                 }
 
-                // Stanza create command
+                // Stanza commands
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaCreate:
-                {
-                    cmdStanzaCreate();
-                    break;
-                }
-
-                // Stanza delete command
-                // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaDelete:
-                {
-                    cmdStanzaDelete();
-                    break;
-                }
-
-                // Stanza upgrade command
-                // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaUpgrade:
                 {
-                    cmdStanzaUpgrade();
+                    // Don't run stanza-create or stanza-upgrade if pgbackrest stop command was issued
+                    if (cfgCommand() != cfgCmdStanzaDelete)
+                        lockStopTest();
+                    // CSHANG repoIsLocal will also be run for delete - I don't understand why it was not done in the first place
+                    if (!repoIsLocal())
+                        THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName(cfgCommand()));
+
+                    if (cfgCommand() == cfgCmdStanzaCreate)
+                        cmdStanzaCreate();
+                    else if (cfgCommand() == cfgCmdStanzaUpgrade)
+                        cmdStanzaUpgrade();
+                    else
+                        cmdStanzaDelete();
+
                     break;
                 }
 

@@ -129,7 +129,7 @@ sub main
                     cfgOptionName(CFGOPT_REPO_PATH) . ' \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist',
                     ERROR_PATH_MISSING);
             }
-
+# CSHANG Why is this still here?
             # Process info command
             # ----------------------------------------------------------------------------------------------------------------------
             if (cfgCommandTest(CFGCMD_INFO))
@@ -142,23 +142,14 @@ sub main
             }
             else
             {
+# CSHANG Where is logFileSet done in the main.c file?
                 logFileSet(
                     storageLocal(),
                     cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
 
-                # Process delete command
-                # --------------------------------------------------------------------------------------------------------------
-                if (cfgCommandTest(CFGCMD_STANZA_DELETE))
-                {
-                    # Load module dynamically
-                    require pgBackRest::Stanza;
-                    pgBackRest::Stanza->import();
-
-                    new pgBackRest::Stanza()->process();
-                }
                 # Process restore command
                 # ------------------------------------------------------------------------------------------------------------------
-                elsif (cfgCommandTest(CFGCMD_RESTORE))
+                if (cfgCommandTest(CFGCMD_RESTORE))
                 {
                     # Check locality
                     if (!isDbLocal())
@@ -176,9 +167,11 @@ sub main
                 }
                 else
                 {
+# CSHANG Why are we not checking to see if processes have been stopped in general for all other commands (except maybe restore and info)
+# The user guide says "Does not allow any new pgBackRest processes to run."
                     # Check if processes have been stopped
                     lockStopTest();
-
+# CSHANG Where is repoIsLocal done in the main.c file?
                     # Check locality
                     if (!isRepoLocal())
                     {
@@ -186,20 +179,9 @@ sub main
                             cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
                     }
 
-                    # Process stanza-create and stanza-upgrade commands
-                    # --------------------------------------------------------------------------------------------------------------
-                    if (cfgCommandTest(CFGCMD_STANZA_CREATE) || cfgCommandTest(CFGCMD_STANZA_UPGRADE))
-                    {
-                        # Load module dynamically
-                        require pgBackRest::Stanza;
-                        pgBackRest::Stanza->import();
-
-                        $iResult = new pgBackRest::Stanza()->process();
-                    }
-
                     # Process backup command
                     # --------------------------------------------------------------------------------------------------------------
-                    elsif (cfgCommandTest(CFGCMD_BACKUP))
+                    if (cfgCommandTest(CFGCMD_BACKUP))
                     {
                         # Load module dynamically
                         require pgBackRest::Backup::Backup;

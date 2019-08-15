@@ -324,13 +324,13 @@ sub run
             $self->controlGenerate(
                 $oHostDbMaster->dbPath() . '/testbase', $self->pgVersion() eq PG_VERSION_94 ? PG_VERSION_95 : PG_VERSION_94);
 # CSHANG commenting out until configValidate() available in stanza-create -- and why is this only tested if repo not encrypted?
-            # if (!$bRepoEncrypt)
-            # {
-            #     # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
-            #     $oHostBackup->stanzaCreate('fail on database mismatch with directory',
-            #         {strOptionalParam => ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
-            #         '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
-            # }
+            if (!$bRepoEncrypt)
+            {
+                # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
+                $oHostBackup->stanzaCreate('fail on database mismatch with directory',
+                    {strOptionalParam => ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
+                    '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
+            }
 
             # Remove the directories to be able to create the stanza
             forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP, {bRecurse => true});

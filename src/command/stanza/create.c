@@ -55,7 +55,7 @@ cmdStanzaCreate(void)
             bool backupNotEmpty = strLstSize(
                 storageListNP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP))) > 0 ? true : false;
 
-            // If something exists in the backup or archive directories for this stanza, then error
+            // If something else exists in the backup or archive directories for this stanza, then error
             if (archiveNotEmpty || backupNotEmpty)
             {
                 THROW_FMT(
