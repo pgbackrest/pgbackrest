@@ -525,7 +525,7 @@ testRun(void)
         });
 
         PgControl pgControl = {0};
-        TEST_ASSIGN(pgControl, pgValidate(), "validate master");
+        TEST_ASSIGN(pgControl, pgValidate(), "validate master on pg2");
         TEST_RESULT_UINT(pgControl.version, PG_VERSION_92, "    version set");
         TEST_RESULT_UINT(pgControl.systemId, 6569239123849665699, "    systemId set");
     }
@@ -839,7 +839,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdStanzaDelete(), stanzaDelete()"))
+    if (testBegin("cmdStanzaDelete(), stanzaDelete(), manifestDelete()"))
     {
         String *stanzaOther = strNew("otherstanza");
 
@@ -928,7 +928,7 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
-        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - sub directories only");
+        TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - sub directories only");
         TEST_RESULT_BOOL(
             storagePathExistsNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), false, "    stanza archive deleted");
         TEST_RESULT_BOOL(
@@ -944,7 +944,7 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
-        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - archive only");
+        TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - archive only");
         TEST_RESULT_BOOL(
             storagePathExistsNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), false, "    stanza deleted");
 
@@ -957,7 +957,7 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
-        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - backup only");
+        TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - backup only");
         TEST_RESULT_BOOL(
             storagePathExistsNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza deleted");
 
@@ -1013,16 +1013,31 @@ testRun(void)
             storagePathCreateNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), "create empty stanza archive path");
         TEST_RESULT_VOID(
             storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), "create empty stanza backup path");
-        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - empty directories");
+        TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - empty directories");
 
-        // Create only stanza paths
+        // Create postmaster.pid
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageTest, strNewFmt("repo/backup/%s/backup.info", strPtr(stanza))), BUFSTRDEF("")),
+                "create backup.info");
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+                "create stop file");
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/" PG_FILE_POSTMASTERPID, strPtr(stanza))), BUFSTRDEF("")),
             "create postmaster file");
         TEST_ERROR_FMT(
             cmdStanzaDelete(), PostmasterRunningError, PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running. "
             "To delete stanza 'db', shutdown the postmaster for stanza 'db' and try again, or use --force.");
+
+        // Force deletion
+        strLstAddZ(argList,"--force");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete --force");
+        TEST_RESULT_BOOL(
+            storagePathExistsNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza deleted");
 
         // Ensure other stanza never deleted
         //--------------------------------------------------------------------------------------------------------------------------

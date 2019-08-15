@@ -13,6 +13,7 @@ Stanza Delete Command
 #include "info/infoBackup.h"
 #include "info/infoManifest.h"
 #include "info/infoPg.h"
+#include "postgres/interface.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -80,7 +81,6 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
             }
 
             // If a force has not been issued and Postgres is running, then error
-// CSHANG Does storagePg construct the pathe for the postmaster file?
             if (!cfgOptionBool(cfgOptForce) && storageExistsNP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
             {
                 THROW_FMT(

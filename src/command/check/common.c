@@ -17,11 +17,13 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const unsi
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
-        FUNCTION_TEST_PARAM(DB, dbObject);
         FUNCTION_TEST_PARAM(UINT, dbIdx);
+        FUNCTION_TEST_PARAM(UINT, dbVersion);
+        FUNCTION_TEST_PARAM(STRING, dbPath);
     FUNCTION_TEST_END();
 
     ASSERT(dbIdx > 0);
+    ASSERT(dbPath != NULL);
 
     unsigned int pgPath = cfgOptPgPath + (dbIdx - 1);
 

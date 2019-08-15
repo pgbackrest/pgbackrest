@@ -17,15 +17,16 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // *****************************************************************************************************************************
-    if (testBegin("cmdCheck(), checkDbConfig()"))
-    {
-        String *pg1Path = strNewFmt("--pg1-path=%s/pg1", testPath());
+    String *pg1Path = strNewFmt("%s/pg1", testPath());
+    String *pg1PathOpt = strNewFmt("--pg1-path=%s", strPtr(pg1Path));
 
+    // *****************************************************************************************************************************
+    if (testBegin("cmdCheck()"))
+    {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, pg1Path);
+        strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
         strLstAddZ(argList, "check");
@@ -108,7 +109,7 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, pg1Path);
+        strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
         strLstAddZ(argList, "check");
@@ -124,11 +125,38 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdCheck(), "check");
         harnessLogResult("P00   INFO: switch wal not performed because no primary was found");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("checkDbConfig()"))
+    {
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, pg1PathOpt);
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "check");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, 1, PG_VERSION_92, pg1Path), "valid db config");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // CSHANG pgControl.version, dbObject.primaryId, dbVersion, dbDataPath -- pgPath is set from the db_idx so pg1-path, pg2-path whatever must be set
-        // strPtr(cfgOptionStr(pgPath)), strPtr(cfgOptionStr(pgPath)), cfgOptionName(pgPath), cfgOptionName(cfgOptPgPort + (dbIdx - 1)));
-        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92,  1, PG_VERSION_92, testPath()), "valid db config");
+        TEST_ERROR_FMT(
+            checkDbConfig(PG_VERSION_92, 1, PG_VERSION_94, pg1Path),
+            DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
+            " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters",
+            strPtr(pgVersionToStr(PG_VERSION_94)), strPtr(pg1Path), strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path),
+            strPtr(pg1Path));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR_FMT(
+            checkDbConfig(PG_VERSION_92, 1, PG_VERSION_92, strNew("bogus/path")),
+            DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
+            " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters",
+            strPtr(pgVersionToStr(PG_VERSION_92)), "bogus/path", strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path),
+            strPtr(pg1Path));
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
