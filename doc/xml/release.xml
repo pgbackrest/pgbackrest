@@ -22,6 +22,14 @@
 
                         <p>The <cmd>start</cmd>/<cmd>stop</cmd> commands are implemented entirely in C.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="damiano.albani"/>
+                        </release-item-contributor-list>
+
+                        <p>Create log directories/files with <id>0750</id>/<id>0640</id> mode.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-core-list>
         </release>
@@ -7270,6 +7278,11 @@
         <contributor id="cynthia.shang">
             <contributor-name-display>Cynthia Shang</contributor-name-display>
             <contributor-id type="github">cmwshang</contributor-id>
+        </contributor>
+
+        <contributor id="damiano.albani">
+            <contributor-name-display>Damiano Albani</contributor-name-display>
+            <contributor-id type="github">dalbani</contributor-id>
         </contributor>
 
         <contributor id="dan.farrell">

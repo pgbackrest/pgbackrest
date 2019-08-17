@@ -211,7 +211,7 @@ logFileSet(const char *logFile)
     if (logLevelFile != logLevelOff)
     {
         // Open the file and handle errors
-        logHandleFile = open(logFile, O_CREAT | O_APPEND | O_WRONLY, 0750);
+        logHandleFile = open(logFile, O_CREAT | O_APPEND | O_WRONLY, 0640);
 
         if (logHandleFile == -1)
         {
