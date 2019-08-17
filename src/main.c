@@ -116,7 +116,8 @@ main(int argListSize, const char *argList[])
                     // Switch to expire command
                     cmdEnd(0, NULL);
                     cfgCommandSet(cfgCmdExpire);
-                    cmdBegin(false);
+                    cfgLoadLogFile();
+                    cmdBegin(true);
 
                     // Run expire
                     perlExec();
