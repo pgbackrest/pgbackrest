@@ -240,10 +240,33 @@ Attempt to set the log file and turn file logging off if the file cannot be open
 the file again and error out.
 ***********************************************************************************************************************************/
 void
-cfgLoadLogFile(const String *logFile)
+cfgLoadLogFile(void)
 {
-    if (!logFileSet(strPtr(logFile)))
-        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
+    if (cfgLogFile() && !cfgCommandHelp())
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Construct log filename prefix
+            String *logFile = strNewFmt(
+                "%s/%s-", strPtr(cfgOptionStr(cfgOptLogPath)),
+                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all");
+
+            // If local or remote command add command name and process id
+            if (cfgCommand() == cfgCmdLocal || cfgCommand() == cfgCmdRemote)
+            {
+                strCatFmt(
+                    logFile, "%s-%s-%03u.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
+                    cfgOptionUInt(cfgOptProcess));
+            }
+            // Else add command name
+            else
+                strCatFmt(logFile, "%s.log", cfgCommandName(cfgCommand()));
+
+            if (!logFileSet(strPtr(logFile)))
+                cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
 }
 
 /***********************************************************************************************************************************
@@ -277,27 +300,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
                 ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
 
             // Open the log file if this command logs to a file
-            if (cfgLogFile() && !cfgCommandHelp())
-            {
-                // Construct log filename prefix
-                String *logFile = strNewFmt(
-                    "%s/%s-", strPtr(cfgOptionStr(cfgOptLogPath)),
-                    cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all");
-
-                // If local or remote command add command name and process id
-                if (cfgCommand() == cfgCmdLocal || cfgCommand() == cfgCmdRemote)
-                {
-                    strCatFmt(
-                        logFile, "%s-%s-%03u.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
-                        cfgOptionUInt(cfgOptProcess));
-                }
-                // Else add command name
-                else
-                    strCatFmt(logFile, "%s.log", cfgCommandName(cfgCommand()));
-
-                // Set the log file name
-                cfgLoadLogFile(logFile);
-            }
+            cfgLoadLogFile();
 
             // Begin the command
             cmdBegin(true);

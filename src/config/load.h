@@ -13,7 +13,7 @@ Functions
 ***********************************************************************************************************************************/
 void cfgLoad(unsigned int argListSize, const char *argList[]);
 void cfgLoadLogSetting(void);
-void cfgLoadLogFile(const String *logFile);
+void cfgLoadLogFile(void);
 void cfgLoadUpdateOption(void);
 
 #endif
