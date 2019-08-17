@@ -113,9 +113,9 @@ const String *backupTypeStr(BackupType type)
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type >= backupTypeFull && type <= backupTypeIncr);
+    ASSERT(type <= backupTypeIncr);
 
-    const String *result;
+    const String *result = NULL;
 
     switch (type)
     {
