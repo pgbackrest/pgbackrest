@@ -38,7 +38,7 @@ STRING_STATIC(INFO_MANIFEST_TARGET_TYPE_PATH_STR,                   "path");
 
 STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_STR,                     "backup");
 STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_DB_STR,                  "backup:db");
-// STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_OPTION_STR,              "backup:option");
+STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_OPTION_STR,              "backup:option");
 STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_TARGET_STR,              "backup:target");
 
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_STR,                "target:file");
@@ -53,7 +53,7 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
 #define INFO_MANIFEST_KEY_BACKUP_LABEL                              "backup-label"
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_LABEL_STR,               INFO_MANIFEST_KEY_BACKUP_LABEL);
 #define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START               "backup-timestamp-copy-start"
-    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START);
+    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START);
 #define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START                    "backup-timestamp-start"
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,     INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START);
 #define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                     "backup-timestamp-stop"
@@ -75,7 +75,7 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
 #define INFO_MANIFEST_KEY_CHECKSUM_PAGE                             "checksum-page"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR,      INFO_MANIFEST_KEY_CHECKSUM_PAGE);
 #define INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR                       "checksum-page-error"
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR,INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
 #define INFO_MANIFEST_KEY_DESTINATION                               "destination"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_DESTINATION_VAR,        INFO_MANIFEST_KEY_DESTINATION);
 #define INFO_MANIFEST_KEY_FILE                                      "file"
@@ -89,6 +89,32 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
 #define INFO_MANIFEST_KEY_MODE                                      "mode"
     STRING_STATIC(INFO_MANIFEST_KEY_MODE_STR,                       INFO_MANIFEST_KEY_MODE);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_MODE_VAR,               INFO_MANIFEST_KEY_MODE);
+
+#define INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK                      "option-archive-check"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR,       INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK);
+#define INFO_MANIFEST_KEY_OPTION_ARCHIVE_COPY                       "option-archive-copy"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR,        INFO_MANIFEST_KEY_OPTION_ARCHIVE_COPY);
+#define INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY                     "option-backup-standby"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR,      INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY);
+#define INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE                        "option-buffer-size"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE_STR,         INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE);
+#define INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE                      "option-checksum-page"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR,       INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE);
+#define INFO_MANIFEST_KEY_OPTION_COMPRESS                           "option-compress"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_COMPRESS_STR,            INFO_MANIFEST_KEY_OPTION_COMPRESS);
+#define INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL                     "option-compress-level"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR,      INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL);
+#define INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK             "option-compress-level-network"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK);
+#define INFO_MANIFEST_KEY_OPTION_DELTA                              "option-delta"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_DELTA_STR,               INFO_MANIFEST_KEY_OPTION_DELTA);
+#define INFO_MANIFEST_KEY_OPTION_HARDLINK                           "option-hardlink"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_HARDLINK_STR,            INFO_MANIFEST_KEY_OPTION_HARDLINK);
+#define INFO_MANIFEST_KEY_OPTION_ONLINE                             "option-online"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_ONLINE_STR,              INFO_MANIFEST_KEY_OPTION_ONLINE);
+#define INFO_MANIFEST_KEY_OPTION_PROCESS_MAX                        "option-process-max"
+    STRING_STATIC(INFO_MANIFEST_KEY_OPTION_PROCESS_MAX_STR,         INFO_MANIFEST_KEY_OPTION_PROCESS_MAX);
+
 #define INFO_MANIFEST_KEY_PATH                                      "path"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_PATH_VAR,               INFO_MANIFEST_KEY_PATH);
 #define INFO_MANIFEST_KEY_SIZE                                      "size"
@@ -102,8 +128,6 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
 #define INFO_MANIFEST_KEY_USER                                      "user"
     STRING_STATIC(INFO_MANIFEST_KEY_USER_STR,                       INFO_MANIFEST_KEY_USER);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_USER_VAR,               INFO_MANIFEST_KEY_USER);
-
-// STRING_STATIC(INFO_MANIFEST_PATH_PGDATA_STR,                        "pg_data");
 
 /***********************************************************************************************************************************
 Object type
@@ -235,6 +259,38 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
             iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CONTROL_VERSION_STR));
         this->data.pgCatalogVersion = jsonToUInt(
             iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR));
+
+        this->data.backupOptionArchiveCheck = jsonToBool(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR));
+        this->data.backupOptionArchiveCopy = jsonToBool(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR));
+        this->data.backupOptionStandby = jsonToBool(
+            iniGetDefault(
+                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR, FALSE_STR));
+        this->data.backupOptionBufferSize = (size_t)jsonToUInt64(
+            iniGetDefault(
+                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE_STR, STRDEF("0")));
+        this->data.backupOptionChecksumPage = jsonToBool(
+            iniGetDefault(
+                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR, FALSE_STR));
+        this->data.backupOptionCompress = jsonToBool(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_STR));
+        this->data.backupOptionCompressLevel = jsonToUInt(
+            iniGetDefault(
+                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR, STRDEF("6")));
+        this->data.backupOptionCompressLevelNetwork = jsonToUInt(
+            iniGetDefault(
+                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
+                STRDEF("3")));
+        this->data.backupOptionDelta = jsonToBool(
+            iniGetDefault(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_DELTA_STR, FALSE_STR));
+        this->data.backupOptionHardLink = jsonToBool(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_HARDLINK_STR));
+        this->data.backupOptionOnline = jsonToBool(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ONLINE_STR));
+        this->data.backupOptionProcessMax = jsonToUInt(
+            iniGetDefault(
+                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_PROCESS_MAX_STR, STRDEF("1")));
 
         // Load targets
         // -------------------------------------------------------------------------------------------------------------------------
@@ -452,6 +508,43 @@ infoManifestSave(
         iniSet(
             ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR,
             jsonFromUInt(this->data.pgCatalogVersion));
+
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR,
+            jsonFromBool(this->data.backupOptionArchiveCheck));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR,
+            jsonFromBool(this->data.backupOptionArchiveCopy));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR,
+            jsonFromBool(this->data.backupOptionStandby));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE_STR,
+            jsonFromUInt64(this->data.backupOptionBufferSize));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR,
+            jsonFromBool(this->data.backupOptionChecksumPage));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_STR,
+            jsonFromBool(this->data.backupOptionCompress));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR,
+            jsonFromUInt(this->data.backupOptionCompressLevel));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
+            jsonFromUInt(this->data.backupOptionCompressLevelNetwork));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_DELTA_STR,
+            jsonFromBool(this->data.backupOptionDelta));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_HARDLINK_STR,
+            jsonFromBool(this->data.backupOptionHardLink));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ONLINE_STR,
+            jsonFromBool(this->data.backupOptionOnline));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_PROCESS_MAX_STR,
+            jsonFromUInt(this->data.backupOptionProcessMax));
 
         // Save targets
         // -------------------------------------------------------------------------------------------------------------------------

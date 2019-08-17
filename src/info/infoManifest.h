@@ -64,6 +64,19 @@ typedef struct InfoManifestData
     uint64_t pgSystemId;                                            // PostgreSQL system identifier
     uint32_t pgControlVersion;                                      // PostgreSQL control version
     uint32_t pgCatalogVersion;                                      // PostgreSQL catalog version
+
+    bool backupOptionArchiveCheck;                                  // Will WAL segments be checked at the end of the backup?
+    bool backupOptionArchiveCopy;                                   // Will WAL segments be copied to the backup?
+    bool backupOptionStandby;                                       // Will the backup be performed from a standby?
+    size_t backupOptionBufferSize;                                  // Buffer size used for file/protocol operations
+    bool backupOptionChecksumPage;                                  // Will page checksums be verified?
+    bool backupOptionCompress;                                      // Will compression be used for backup?
+    unsigned int backupOptionCompressLevel;                         // Level to use for compression
+    unsigned int backupOptionCompressLevelNetwork;                  // Level to use for network compression
+    bool backupOptionDelta;                                         // Will a checksum delta be performed?
+    bool backupOptionHardLink;                                      // Will hardlinks be created in the backup?
+    bool backupOptionOnline;                                        // Will an online backup be performed?
+    unsigned int backupOptionProcessMax;                            // How many processes will be used for backup?
 } InfoManifestData;
 
 /***********************************************************************************************************************************
