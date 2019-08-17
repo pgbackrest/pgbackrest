@@ -4,6 +4,7 @@ Manifest Info Handler
 #ifndef INFO_INFOMANIFEST_H
 #define INFO_INFOMANIFEST_H
 
+#include "command/backup/common.h"
 #include "common/crypto/common.h"
 #include "common/type/variantList.h"
 
@@ -56,6 +57,13 @@ typedef struct InfoManifestData
     time_t backupTimestampCopyStart;                                // When did the file copy start?
     time_t backupTimestampStart;                                    // When did the backup start?
     time_t backupTimestampStop;                                     // When did the backup stop?
+    BackupType backupType;                                          // Type of backup: full, diff, incr
+
+    unsigned int pgId;                                              // PostgreSQL id in backup.info
+    unsigned int pgVersion;                                         // PostgreSQL version
+    uint64_t pgSystemId;                                            // PostgreSQL system identifier
+    uint32_t pgControlVersion;                                      // PostgreSQL control version
+    uint32_t pgCatalogVersion;                                      // PostgreSQL catalog version
 } InfoManifestData;
 
 /***********************************************************************************************************************************

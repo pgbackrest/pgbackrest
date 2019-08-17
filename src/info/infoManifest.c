@@ -37,7 +37,7 @@ STRING_STATIC(INFO_MANIFEST_TARGET_TYPE_LINK_STR,                   "link");
 STRING_STATIC(INFO_MANIFEST_TARGET_TYPE_PATH_STR,                   "path");
 
 STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_STR,                     "backup");
-// STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_DB_STR,                  "backup:db");
+STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_DB_STR,                  "backup:db");
 // STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_OPTION_STR,              "backup:option");
 STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_TARGET_STR,              "backup:target");
 
@@ -58,6 +58,18 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,     INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START);
 #define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                     "backup-timestamp-stop"
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,      INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP);
+#define INFO_MANIFEST_KEY_BACKUP_TYPE                               "backup-type"
+    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TYPE_STR,                INFO_MANIFEST_KEY_BACKUP_TYPE);
+#define INFO_MANIFEST_KEY_DB_CATALOG_VERSION                        "db-catalog-version"
+    STRING_STATIC(INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR,         INFO_MANIFEST_KEY_DB_CATALOG_VERSION);
+#define INFO_MANIFEST_KEY_DB_CONTROL_VERSION                        "db-control-version"
+    STRING_STATIC(INFO_MANIFEST_KEY_DB_CONTROL_VERSION_STR,         INFO_MANIFEST_KEY_DB_CONTROL_VERSION);
+#define INFO_MANIFEST_KEY_DB_ID                                     "db-id"
+    STRING_STATIC(INFO_MANIFEST_KEY_DB_ID_STR,                      INFO_MANIFEST_KEY_DB_ID);
+#define INFO_MANIFEST_KEY_DB_SYSTEM_ID                              "db-system-id"
+    STRING_STATIC(INFO_MANIFEST_KEY_DB_SYSTEM_ID_STR,               INFO_MANIFEST_KEY_DB_SYSTEM_ID);
+#define INFO_MANIFEST_KEY_DB_VERSION                                "db-version"
+    STRING_STATIC(INFO_MANIFEST_KEY_DB_VERSION_STR,                 INFO_MANIFEST_KEY_DB_VERSION);
 #define INFO_MANIFEST_KEY_CHECKSUM                                  "checksum"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_VAR,           INFO_MANIFEST_KEY_CHECKSUM);
 #define INFO_MANIFEST_KEY_CHECKSUM_PAGE                             "checksum-page"
@@ -211,6 +223,18 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
             iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR));
         this->data.backupTimestampStop = (time_t)jsonToUInt64(
             iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR));
+        this->data.backupType = backupType(
+            jsonToStr(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TYPE_STR)));
+
+        this->data.pgId = jsonToUInt(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_ID_STR));
+        this->data.pgVersion = pgVersionFromStr(
+            jsonToStr(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_VERSION_STR)));
+        this->data.pgSystemId = jsonToUInt64(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_SYSTEM_ID_STR));
+        this->data.pgControlVersion = jsonToUInt(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CONTROL_VERSION_STR));
+        this->data.pgCatalogVersion = jsonToUInt(
+            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR));
 
         // Load targets
         // -------------------------------------------------------------------------------------------------------------------------
@@ -413,6 +437,21 @@ infoManifestSave(
         iniSet(
             ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,
             jsonFromInt64(this->data.backupTimestampStop));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TYPE_STR,
+            jsonFromStr(backupTypeStr(this->data.backupType)));
+
+        iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_ID_STR, jsonFromUInt(this->data.pgId));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_VERSION_STR,
+            jsonFromStr(pgVersionToStr(this->data.pgVersion)));
+        iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_SYSTEM_ID_STR, jsonFromUInt64(this->data.pgSystemId));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CONTROL_VERSION_STR,
+            jsonFromUInt(this->data.pgControlVersion));
+        iniSet(
+            ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR,
+            jsonFromUInt(this->data.pgCatalogVersion));
 
         // Save targets
         // -------------------------------------------------------------------------------------------------------------------------
