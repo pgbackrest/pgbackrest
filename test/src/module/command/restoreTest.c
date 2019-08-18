@@ -364,6 +364,71 @@ testRun(void)
 
         TEST_ERROR(cmdRestore(), BackupSetInvalidError, "backup set BOGUS is not valid");
 
+        // Error on missing backup set
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--set=20161219-212741F_20161219-212803D");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(cmdRestore(), FileMissingError, "backup '20161219-212741F_20161219-212803D' does not exist");
+
+        // Write a valid manifest
+        String *manifestStr = strNew
+        (
+            "[backup]\n"
+            "backup-label=\"20161219-212741F_20161219-212918I\"\n"
+            "backup-timestamp-copy-start=1565282141\n"
+            "backup-timestamp-start=1565282140\n"
+            "backup-timestamp-stop=1565282142\n"
+            "backup-type=\"incr\"\n"
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=1000000000000000094\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[backup:option]\n"
+            "option-archive-check=true\n"
+            "option-archive-copy=true\n"
+            "option-compress=false\n"
+            "option-hardlink=false\n"
+            "option-online=false\n"
+            "\n"
+            "[backup:target]\n"
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
+            "\n"
+            "[target:file]\n"
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
+            "\n"
+            "[target:file:default]\n"
+            "group=\"group1\"\n"
+            "master=true\n"
+            "mode=\"0600\"\n"
+            "user=\"user1\"\n"
+            "\n"
+            "[target:path]\n"
+            "pg_data={}\n"
+            "\n"
+            "[target:path:default]\n"
+            "group=\"group1\"\n"
+            "mode=\"0700\"\n"
+            "user=\"user1\"\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(
+                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" INFO_MANIFEST_FILE)),
+                harnessInfoChecksum(manifestStr)),
+            "write manifest");
+
         // PGDATA directory does not look valid
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();

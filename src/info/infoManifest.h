@@ -12,6 +12,7 @@ Manifest Info Handler
 Constants
 ***********************************************************************************************************************************/
 #define INFO_MANIFEST_FILE                                          "backup.manifest"
+    STRING_DECLARE(INFO_MANIFEST_FILE_STR);
 
 #define INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START                      "backup-archive-start"
     VARIANT_DECLARE(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_VAR);

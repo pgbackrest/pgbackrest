@@ -93,6 +93,22 @@ cmdRestore(void)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strPtr(cfgOptionStr(cfgOptSet)));
         }
 
+        // Copy manifest to the PGDATA path
+        if (!storageCopy(
+                storageNewReadP(
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(cfgOptionStr(cfgOptSet))),
+                    .ignoreMissing = true),
+                storageNewWriteP(storagePgWrite(), INFO_MANIFEST_FILE_STR, .modeFile = 0600, .noCreatePath = true)))
+        {
+            THROW_FMT(FileMissingError, "backup '%s' does not exist", strPtr(cfgOptionStr(cfgOptSet)));
+        }
+
+        // Load manifest
+        InfoManifest *manifest = infoManifestNewLoad(
+            storagePg(), INFO_MANIFEST_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            cfgOptionStr(cfgOptRepoCipherPass));
+        (void)manifest;
+
         // Log the backup set to restore
         LOG_INFO("restore backup set %s", strPtr(cfgOptionStr(cfgOptSet)));
     }

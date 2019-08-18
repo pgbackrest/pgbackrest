@@ -29,7 +29,76 @@ testRun(void)
     {
         InfoManifest *manifest = NULL;
 
+        // Manifest with minimal features
+        // -------------------------------------------------------------------------------------------------------------------------
         String *manifestStr = strNew
+        (
+            "[backup]\n"
+            "backup-label=\"20190808-163540F\"\n"
+            "backup-timestamp-copy-start=1565282141\n"
+            "backup-timestamp-start=1565282140\n"
+            "backup-timestamp-stop=1565282142\n"
+            "backup-type=\"full\"\n"
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=1000000000000000094\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[backup:option]\n"
+            "option-archive-check=true\n"
+            "option-archive-copy=true\n"
+            "option-backup-standby=false\n"
+            "option-buffer-size=16384\n"
+            "option-checksum-page=true\n"
+            "option-compress=false\n"
+            "option-compress-level=3\n"
+            "option-compress-level-network=3\n"
+            "option-delta=false\n"
+            "option-hardlink=false\n"
+            "option-online=false\n"
+            "option-process-max=32\n"
+            "\n"
+            "[backup:target]\n"
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
+            "\n"
+            "[target:file]\n"
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
+            "\n"
+            "[target:file:default]\n"
+            "group=\"group1\"\n"
+            "master=true\n"
+            "mode=\"0600\"\n"
+            "user=\"user1\"\n"
+            "\n"
+            "[target:path]\n"
+            "pg_data={}\n"
+            "\n"
+            "[target:path:default]\n"
+            "group=\"group1\"\n"
+            "mode=\"0700\"\n"
+            "user=\"user1\"\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageTest, strNew(INFO_MANIFEST_FILE ".expected")), harnessInfoChecksum(manifestStr)),
+            "write manifest");
+
+        TEST_ASSIGN(
+            manifest, infoManifestNewLoad(storageTest, strNew(INFO_MANIFEST_FILE ".expected"), cipherTypeNone, NULL),
+            "load manifest");
+        TEST_RESULT_VOID(
+            infoManifestSave(manifest, storageTest, strNew(INFO_MANIFEST_FILE ".actual"), cipherTypeNone, NULL), "save manifest");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew(INFO_MANIFEST_FILE ".actual"))))),
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew(INFO_MANIFEST_FILE ".expected"))))),
+            "compare manifests");
+
+        // Manifest with all features
+        // -------------------------------------------------------------------------------------------------------------------------
+        manifestStr = strNew
         (
             "[backup]\n"
             "backup-label=\"20190808-163540F\"\n"
