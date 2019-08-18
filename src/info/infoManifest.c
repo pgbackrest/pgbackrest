@@ -767,3 +767,18 @@ infoManifestSave(
 
     FUNCTION_LOG_RETURN_VOID();
 }
+
+/***********************************************************************************************************************************
+Return manifest configuration and options
+***********************************************************************************************************************************/
+const InfoManifestData *
+infoManifestData(const InfoManifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(&this->data);
+}

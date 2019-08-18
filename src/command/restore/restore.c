@@ -68,22 +68,25 @@ cmdRestore(void)
             cfgOptionStr(cfgOptRepoCipherPass));
 
         // If backup set to restore is default (i.e. latest) then get the actual set
+        const String *backupSet = NULL;
+
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
             if (infoBackupDataTotal(infoBackup) == 0)
                 THROW(BackupSetInvalidError, "no backup sets to restore");
 
-            cfgOptionSet(
-                cfgOptSet, cfgSourceConfig, VARSTR(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel));
+            backupSet = strDup(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel);
         }
         // Otherwise check to make sure the specified backup set is valid
         else
         {
+            backupSet = strDup(cfgOptionStr(cfgOptSet));
+
             bool found = false;
 
             for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
             {
-                if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, cfgOptionStr(cfgOptSet)))
+                if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSet))
                 {
                     found = true;
                     break;
@@ -91,7 +94,7 @@ cmdRestore(void)
             }
 
             if (!found)
-                THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strPtr(cfgOptionStr(cfgOptSet)));
+                THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strPtr(backupSet));
         }
 
         // Open manifest file in the PGDATA path
@@ -111,19 +114,30 @@ cmdRestore(void)
         // Copy manifest to the PGDATA path
         if (!storageCopy(
                 storageNewReadP(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(cfgOptionStr(cfgOptSet))),
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet)),
                     .ignoreMissing = true),
                 manifestFile))
         {
-            THROW_FMT(FileMissingError, "backup '%s' does not exist", strPtr(cfgOptionStr(cfgOptSet)));
+            THROW_FMT(FileMissingError, "backup '%s' does not exist", strPtr(backupSet));
         }
 
         // Load manifest
         InfoManifest *manifest = infoManifestNewLoad(storagePg(), INFO_MANIFEST_FILE_STR, cipherTypeNone, NULL);
-        (void)manifest;
+
+        // Sanity check to ensure the manifest has not been moved to a new directory
+        const InfoManifestData *manifestData = infoManifestData(manifest);
+
+        if (!strEq(manifestData->backupLabel, backupSet))                               // {uncovered_branch - !!! ADD}
+        {
+            THROW_FMT(                                                                  // {uncovered - !!! ADD}
+                FormatError,
+                "requested backup '%s' and label '%s' do not match -- this indicates some sort of corruption (at the very least "
+                    "paths have been renamed",
+                strPtr(backupSet), strPtr(manifestData->backupLabel));
+        }
 
         // Log the backup set to restore
-        LOG_INFO("restore backup set %s", strPtr(cfgOptionStr(cfgOptSet)));
+        LOG_INFO("restore backup set %s", strPtr(backupSet));
     }
     MEM_CONTEXT_TEMP_END();
 

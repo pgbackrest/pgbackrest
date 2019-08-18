@@ -44,7 +44,6 @@ sub new
 
     # Initialize variables
     $self->{strDbClusterPath} = cfgOption(CFGOPT_PG_PATH);
-    $self->{strBackupSet} = cfgOption(CFGOPT_SET);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -220,19 +219,6 @@ sub manifestLoad
     # Load the manifest into a hash
     my $oManifest = new pgBackRest::Manifest(
         storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), {oStorage => storageDb()});
-
-    # If backup is latest then set it equal to backup label, else verify that requested backup and label match
-    my $strBackupLabel = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
-
-    if ($self->{strBackupSet} eq cfgOptionDefault(CFGOPT_SET))
-    {
-        $self->{strBackupSet} = $strBackupLabel;
-    }
-    elsif ($self->{strBackupSet} ne $strBackupLabel)
-    {
-        confess &log(ASSERT, "request backup $self->{strBackupSet} and label ${strBackupLabel} do not match " .
-                             ' - this indicates some sort of corruption (at the very least paths have been renamed)');
-    }
 
     if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH))
     {
@@ -1224,7 +1210,8 @@ sub process
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_USER),
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_GROUP),
                 $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START),  cfgOption(CFGOPT_DELTA),
-                $self->{strBackupSet}, $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS)],
+                $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL),
+                $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS)],
             {rParamSecure => $oManifest->cipherPassSub() ? [$oManifest->cipherPassSub()] : undef});
     }
 
