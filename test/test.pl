@@ -1187,7 +1187,8 @@ eval
 
                         # Build package
                         executeTest(
-                            "docker exec -i test-build rpmbuild -v -bb --clean root/rpmbuild/SPECS/pgbackrest.spec",
+                            "docker exec -i test-build rpmbuild --define 'pgmajorversion %{nil}' -v -bb --clean" .
+                                " root/rpmbuild/SPECS/pgbackrest.spec",
                             {bSuppressStdErr => true});
 
                         # Remove build container
