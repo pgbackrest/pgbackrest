@@ -211,24 +211,11 @@ sub manifestLoad
     my
     (
         $strOperation,
-        $strCipherPass,                                             # Passphrase to decrypt the manifest file if encrypted
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->manifestLoad', \@_,
-            {name => 'strCipherPass', required => false, redact => true},
         );
-
-    # Error if the backup set does not exist
-    if (!storageRepo()->exists(STORAGE_REPO_BACKUP . "/$self->{strBackupSet}/" . FILE_MANIFEST))
-    {
-        confess &log(ERROR, "backup '$self->{strBackupSet}' does not exist");
-    }
-
-    # Copy the backup manifest to the db cluster path
-    storageDb()->copy(
-        storageRepo()->openRead(STORAGE_REPO_BACKUP . "/$self->{strBackupSet}/" . FILE_MANIFEST, {strCipherPass => $strCipherPass}),
-        $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
     # Load the manifest into a hash
     my $oManifest = new pgBackRest::Manifest(
@@ -1057,17 +1044,8 @@ sub process
     # Db storage
     my $oStorageDb = storageDb();
 
-    # Copy backup info, load it, then delete (ONLY HERE NOW TO GET CIPHER SUB PASS)
-    $oStorageDb->copy(
-        storageRepo()->openRead(STORAGE_REPO_BACKUP . qw(/) . FILE_BACKUP_INFO),
-        $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
-
-    my $oBackupInfo = new pgBackRest::Backup::Info($self->{strDbClusterPath}, false, undef, {oStorage => storageDb()});
-
-    $oStorageDb->remove($self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
-
     # Load the manifest
-    my $oManifest = $self->manifestLoad($oBackupInfo->cipherPassSub());
+    my $oManifest = $self->manifestLoad();
 
     # Delete pg_control file.  This will be copied from the backup at the very end to prevent a partially restored database
     # from being started by PostgreSQL.

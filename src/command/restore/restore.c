@@ -4,6 +4,7 @@ Restore Command
 #include "build.auto.h"
 
 #include "command/restore/restore.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -93,20 +94,32 @@ cmdRestore(void)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strPtr(cfgOptionStr(cfgOptSet)));
         }
 
+        // Open manifest file in the PGDATA path
+        StorageWrite *manifestFile = storageNewWriteP(
+            storagePgWrite(), INFO_MANIFEST_FILE_STR, .modeFile = 0600, .noCreatePath = true);
+
+        // Add decryption filter
+        if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) != cipherTypeNone)               // {uncovered_branch - !!! ADD}
+        {
+            ioFilterGroupAdd(                                                               // {uncovered - !!! ADD}
+                ioWriteFilterGroup(storageWriteIo(manifestFile)),                           // {uncovered - !!! ADD}
+                cipherBlockNew(                                                             // {uncovered - !!! ADD}
+                    cipherModeDecrypt, cipherType(cfgOptionStr(cfgOptRepoCipherType)),      // {uncovered - !!! ADD}
+                    BUFSTR(infoPgCipherPass(infoBackupPg(infoBackup))), NULL));             // {uncovered - !!! ADD}
+        }
+
         // Copy manifest to the PGDATA path
         if (!storageCopy(
                 storageNewReadP(
                     storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(cfgOptionStr(cfgOptSet))),
                     .ignoreMissing = true),
-                storageNewWriteP(storagePgWrite(), INFO_MANIFEST_FILE_STR, .modeFile = 0600, .noCreatePath = true)))
+                manifestFile))
         {
             THROW_FMT(FileMissingError, "backup '%s' does not exist", strPtr(cfgOptionStr(cfgOptSet)));
         }
 
         // Load manifest
-        InfoManifest *manifest = infoManifestNewLoad(
-            storagePg(), INFO_MANIFEST_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            infoPgCipherPass(infoBackupPg(infoBackup)));
+        InfoManifest *manifest = infoManifestNewLoad(storagePg(), INFO_MANIFEST_FILE_STR, cipherTypeNone, NULL);
         (void)manifest;
 
         // Log the backup set to restore
