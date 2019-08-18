@@ -615,7 +615,7 @@ sub run
                 $strFullBackup,
                 {&MANIFEST_SECTION_TARGET_PATH =>
                     {&MANIFEST_TARGET_PGDATA =>
-                        {&MANIFEST_SUBKEY_USER => undef, &MANIFEST_SUBKEY_GROUP => undef, &MANIFEST_SUBKEY_MODE => undef}}},
+                        {&MANIFEST_SUBKEY_USER => undef, &MANIFEST_SUBKEY_GROUP => undef}}},
                 false);
 
             delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER});
