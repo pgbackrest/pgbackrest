@@ -106,7 +106,7 @@ cmdRestore(void)
         // Load manifest
         InfoManifest *manifest = infoManifestNewLoad(
             storagePg(), INFO_MANIFEST_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+            infoPgCipherPass(infoBackupPg(infoBackup)));
         (void)manifest;
 
         // Log the backup set to restore
