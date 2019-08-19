@@ -855,30 +855,30 @@ sub build
         next if ($bOnline && $strFile =~ (qw{^} . MANIFEST_TARGET_PGDATA . qw{/} . $self->walPath() . '\/') &&
                  $strFile !~ ('^' . MANIFEST_TARGET_PGDATA . qw{/} . $self->walPath() . qw{/} . DB_PATH_ARCHIVESTATUS . '$'));
 
-        # DONE Skip all directories and files that start with pgsql_tmp.  The files are removed when the server is restarted and the
+        # Skip all directories and files that start with pgsql_tmp.  The files are removed when the server is restarted and the
         # directories are recreated.
         next if $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP);
 
-        # DONE Skip pg_dynshmem/* since these files cannot be reused on recovery
+        # Skip pg_dynshmem/* since these files cannot be reused on recovery
         next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '\/') && $self->dbVersion() >= PG_VERSION_94;
 
-        # DONE Skip pg_notify/* since these files cannot be reused on recovery
+        # Skip pg_notify/* since these files cannot be reused on recovery
         next if $strFile =~ ('^' . MANIFEST_PATH_PGNOTIFY . '\/') && $self->dbVersion() >= PG_VERSION_90;
 
-        # DONE Skip pg_replslot/* since these files are generally not useful after a restore
+        # Skip pg_replslot/* since these files are generally not useful after a restore
         next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/') && $self->dbVersion() >= PG_VERSION_94;
 
-        # DONE Skip pg_serial/* since these files are reset
+        # Skip pg_serial/* since these files are reset
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSERIAL . '\/') && $self->dbVersion() >= PG_VERSION_91;
 
-        # DONE Skip pg_snapshots/* since these files cannot be reused on recovery
+        # Skip pg_snapshots/* since these files cannot be reused on recovery
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/') && $self->dbVersion() >= PG_VERSION_92;
 
-        # DONE Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
+        # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
         # there.
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/') && $self->dbVersion() >= PG_VERSION_84;
 
-        # DONE Skip pg_subtrans/* since these files are reset
+        # Skip pg_subtrans/* since these files are reset
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSUBTRANS . '\/');
 
         # Skip pg_internal.init since it is recreated on startup

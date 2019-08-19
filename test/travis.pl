@@ -140,7 +140,7 @@ eval
 
         processBegin("${strVm} test");
         executeTest(
-            "${strTestExe} --no-package --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}", {bShowOutputAsync => true});
+            "${strTestExe} --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}", {bShowOutputAsync => true});
         processEnd();
     }
 
