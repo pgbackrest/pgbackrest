@@ -188,5 +188,7 @@ testRun(void)
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew(INFO_MANIFEST_FILE ".actual"))))),
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew(INFO_MANIFEST_FILE ".expected"))))),
             "compare manifests");
+
+        TEST_RESULT_STR(strPtr(infoManifestData(manifest)->backupLabel), "20190808-163540F", "check manifest data");
     }
 }
