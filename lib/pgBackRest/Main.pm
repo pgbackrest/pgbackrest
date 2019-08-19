@@ -129,7 +129,7 @@ sub main
                     cfgOptionName(CFGOPT_REPO_PATH) . ' \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist',
                     ERROR_PATH_MISSING);
             }
-# CSHANG Why is this still here?
+
             # Process info command
             # ----------------------------------------------------------------------------------------------------------------------
             if (cfgCommandTest(CFGCMD_INFO))
@@ -142,7 +142,6 @@ sub main
             }
             else
             {
-# CSHANG Where is logFileSet done in the main.c file?
                 logFileSet(
                     storageLocal(),
                     cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
@@ -167,11 +166,9 @@ sub main
                 }
                 else
                 {
-# CSHANG Why are we not checking to see if processes have been stopped in general for all other commands (except maybe restore and info)
-# The user guide says "Does not allow any new pgBackRest processes to run."
                     # Check if processes have been stopped
                     lockStopTest();
-# CSHANG Where is repoIsLocal done in the main.c file?
+
                     # Check locality
                     if (!isRepoLocal())
                     {

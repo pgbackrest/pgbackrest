@@ -64,14 +64,22 @@ Is the repository local?
 bool
 repoIsLocal(void)
 {
-// CSHANG Why was this test omitted?
-// # Not valid for remote
-// if (cfgCommandTest(CFGCMD_REMOTE) && !cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP))
-// {
-//     confess &log(ASSERT, 'isRepoLocal() not valid on ' . cfgOption(CFGOPT_TYPE) . ' remote');
-// }
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(!cfgOptionTest(cfgOptRepoHost));
+}
+
+/***********************************************************************************************************************************
+Error if the repository is not local
+***********************************************************************************************************************************/
+void
+repoIsLocalVerify(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (!repoIsLocal())
+        THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName(cfgCommand()));
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -256,9 +264,13 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
         if (cfgOptionSource(cfgOptPgSocketPath + hostIdx) != cfgSourceDefault)
             kvPut(optionReplace, VARSTR(CFGOPT_PG1_SOCKET_PATH_STR), cfgOption(cfgOptPgSocketPath + hostIdx));
+        else
+            kvPut(optionReplace, VARSTR(CFGOPT_PG1_SOCKET_PATH_STR), NULL);
 
         if (cfgOptionSource(cfgOptPgPort + hostIdx) != cfgSourceDefault)
             kvPut(optionReplace, VARSTR(CFGOPT_PG1_PORT_STR), cfgOption(cfgOptPgPort + hostIdx));
+        else
+            kvPut(optionReplace, VARSTR(CFGOPT_PG1_PORT_STR), NULL);
     }
 
     // Remove pg options that are not needed on the remote.  This is to reduce clustter and make debugging options easier.

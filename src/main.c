@@ -199,23 +199,20 @@ main(int argListSize, const char *argList[])
                 // Stanza commands
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaCreate:
+                {
+                    cmdStanzaCreate();
+                    break;
+                }
+
                 case cfgCmdStanzaDelete:
+                {
+                    cmdStanzaDelete();
+                    break;
+                }
+
                 case cfgCmdStanzaUpgrade:
                 {
-                    // Don't run stanza-create or stanza-upgrade if pgbackrest stop command was issued
-                    if (cfgCommand() != cfgCmdStanzaDelete)
-                        lockStopTest();
-                    // CSHANG repoIsLocal will also be run for delete - I don't understand why it was not done in the first place
-                    if (!repoIsLocal())
-                        THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName(cfgCommand()));
-
-                    if (cfgCommand() == cfgCmdStanzaCreate)
-                        cmdStanzaCreate();
-                    else if (cfgCommand() == cfgCmdStanzaUpgrade)
-                        cmdStanzaUpgrade();
-                    else
-                        cmdStanzaDelete();
-
+                    cmdStanzaUpgrade();
                     break;
                 }
 

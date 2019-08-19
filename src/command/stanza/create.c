@@ -7,6 +7,7 @@ Stanza Create Command
 #include <string.h>
 #include <inttypes.h>
 
+#include "command/control/common.h"
 #include "command/stanza/common.h"
 #include "command/stanza/create.h"
 #include "common/debug.h"
@@ -18,6 +19,7 @@ Stanza Create Command
 #include "info/infoPg.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
+#include "protocol/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -27,6 +29,10 @@ void
 cmdStanzaCreate(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
+
+    // Verify the repo is local and that a stop was not issued before proceeding
+    repoIsLocalVerify();
+    lockStopTest();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

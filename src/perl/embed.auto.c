@@ -8284,7 +8284,6 @@ static const EmbeddedModule embeddedModule[] =
             "}\n"
             "else\n"
             "{\n"
-            "\n"
             "logFileSet(\n"
             "storageLocal(),\n"
             "cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));\n"

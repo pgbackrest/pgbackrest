@@ -425,7 +425,7 @@ sub info
 
             sysopen($hFile, $strControlFile, O_RDONLY)
                 or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
-# CSHANG Where are these errors thrown?
+
             # Read system identifier
             sysread($hFile, $tBlock, 8) == 8
                 or confess &log(ERROR, "unable to read database system identifier");

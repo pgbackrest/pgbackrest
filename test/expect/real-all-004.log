@@ -85,6 +85,10 @@ stanza-create db - fail on backup info file missing from non-empty dir (backup h
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
+stanza-create db - fail on database mismatch with directory (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --pg1-path=[TEST_PATH]/db-master/db/testbase/ stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+
 stanza-create db - successfully create stanza files to be upgraded (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --pg1-path=[TEST_PATH]/db-master/db/testbase/ --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------

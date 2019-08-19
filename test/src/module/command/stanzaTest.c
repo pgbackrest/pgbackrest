@@ -39,6 +39,29 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-host=/repo/not/local");
+        strLstAddZ(argList, "stanza-create");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR_FMT(
+            cmdStanzaCreate(), HostInvalidError, "stanza-create command must be run on the repository host");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "stanza-create");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Create the stop file
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+                "create stop file");
+        TEST_ERROR_FMT(cmdStanzaCreate(), StopError, "stop file exists for stanza %s", strPtr(stanza));
+        TEST_RESULT_VOID(
+            storageRemoveNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "    remove the stop file");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argListBase);
         strLstAddZ(argList, "stanza-create");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -568,6 +591,30 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-host=/repo/not/local");
+        strLstAddZ(argList, "stanza-upgrade");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR_FMT(
+            cmdStanzaUpgrade(), HostInvalidError, "stanza-upgrade command must be run on the repository host");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "stanza-upgrade");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Create the stop file
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+                "create stop file");
+        TEST_ERROR_FMT(cmdStanzaUpgrade(), StopError, "stop file exists for stanza %s", strPtr(stanza));
+        TEST_RESULT_VOID(
+            storageRemoveNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "    remove the stop file");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Load Parameters
+        argList = strLstDup(argListBase);
         strLstAddZ(argList, "stanza-create");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -841,14 +888,26 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaDelete(), stanzaDelete(), manifestDelete()"))
     {
-        String *stanzaOther = strNew("otherstanza");
-
+        // Load Parameters
         StringList *argListCmd = strLstNew();
         strLstAddZ(argListCmd, "pgbackrest");
         strLstAdd(argListCmd, strNewFmt("--repo1-path=%s/repo", testPath()));
 
-        // Load Parameters
         StringList *argList = strLstDup(argListCmd);
+        strLstAddZ(argList, "--repo1-host=/repo/not/local");
+        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
+        strLstAddZ(argList,"stanza-delete");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR_FMT(
+            cmdStanzaDelete(), HostInvalidError, "stanza-delete command must be run on the repository host");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        String *stanzaOther = strNew("otherstanza");
+
+        // Load Parameters
+        argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanzaOther)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanzaOther)));
         strLstAddZ(argList, "--no-online");

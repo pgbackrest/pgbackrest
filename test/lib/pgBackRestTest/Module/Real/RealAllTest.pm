@@ -310,12 +310,9 @@ sub run
             forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
-# CSHANG S3 should behave the same way so we should not be exluding it here
-            # if (!$bS3)
-            # {
-                $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
-                    {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
-            # }
+
+            $oHostBackup->stanzaCreate(
+                'fail on backup info file missing from non-empty dir', {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
 
             # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
             storageDb()->pathCreate(
@@ -323,14 +320,11 @@ sub run
                 {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
             $self->controlGenerate(
                 $oHostDbMaster->dbPath() . '/testbase', $self->pgVersion() eq PG_VERSION_94 ? PG_VERSION_95 : PG_VERSION_94);
-# CSHANG commenting out until configValidate() available in stanza-create -- and why is this only tested if repo not encrypted?
-            if (!$bRepoEncrypt)
-            {
-                # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
-                $oHostBackup->stanzaCreate('fail on database mismatch with directory',
-                    {strOptionalParam => ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
-                    '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
-            }
+
+            # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
+            $oHostBackup->stanzaCreate('fail on database mismatch with directory',
+                {strOptionalParam => ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
+                '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
 
             # Remove the directories to be able to create the stanza
             forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP, {bRecurse => true});

@@ -14,6 +14,7 @@ Stanza Delete Command
 #include "info/infoManifest.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
+#include "protocol/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -133,6 +134,9 @@ void
 cmdStanzaDelete(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
+
+    // Verify the repo is local before proceeding
+    repoIsLocalVerify();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
