@@ -20,7 +20,12 @@ void
 cmdCheck(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
-
+// CSHANG May need to do something like we do in pgValidate of stanza-create
+            // // Get the pgControl information from the pg*-path deemed to be the master
+            // result = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbObject.primaryId - 1));
+            //
+            // // Check the user configured path and version against the database
+            // checkDbConfig(result.version,  dbObject.primaryId, dbPgVersion(dbObject.primary), dbPgDataPath(dbObject.primary));
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
@@ -68,6 +73,7 @@ cmdCheck(void)
             }
         }
         else
+ // CSHANG I'm not a fan of this message because it sounds like something is wrong
             LOG_INFO("switch wal not performed because no primary was found");
 
     }
