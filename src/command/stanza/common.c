@@ -80,8 +80,7 @@ pgValidate(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-// CSHANG I thought if I added the call to here it would work, but it still errors in the same way
-storagePg();
+// CSHANG I thought if I added the call to storagePg(); here it would work, but it still errors in the same way
         if (cfgOptionBool(cfgOptOnline))
         {
             // Check the connections of the master (and standby, if any) and return the master database object.
