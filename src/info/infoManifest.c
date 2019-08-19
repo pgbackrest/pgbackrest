@@ -597,9 +597,9 @@ infoManifestSave(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Save default path values
-            MostCommonValue *userMcv = mcvNew(varTypeString);
-            MostCommonValue *groupMcv = mcvNew(varTypeString);
-            MostCommonValue *modeMcv = mcvNew(varTypeUInt);
+            MostCommonValue *userMcv = mcvNew();
+            MostCommonValue *groupMcv = mcvNew();
+            MostCommonValue *modeMcv = mcvNew();
 
             for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
             {
@@ -645,10 +645,10 @@ infoManifestSave(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Save default file values
-            MostCommonValue *userMcv = mcvNew(varTypeString);
-            MostCommonValue *groupMcv = mcvNew(varTypeString);
-            MostCommonValue *modeMcv = mcvNew(varTypeUInt);
-            MostCommonValue *masterMcv = mcvNew(varTypeBool);
+            MostCommonValue *userMcv = mcvNew();
+            MostCommonValue *groupMcv = mcvNew();
+            MostCommonValue *modeMcv = mcvNew();
+            MostCommonValue *masterMcv = mcvNew();
 
             for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
             {
@@ -723,8 +723,8 @@ infoManifestSave(
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Save default link values
-                MostCommonValue *userMcv = mcvNew(varTypeString);
-                MostCommonValue *groupMcv = mcvNew(varTypeString);
+                MostCommonValue *userMcv = mcvNew();
+                MostCommonValue *groupMcv = mcvNew();
 
                 for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
                 {

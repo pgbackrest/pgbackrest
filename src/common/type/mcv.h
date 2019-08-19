@@ -1,5 +1,10 @@
 /***********************************************************************************************************************************
 Calculate Most Common Value
+
+Calculate the most common value in a list of variants.  If there is a tie then the first value passed to mcvUpdate() wins.
+
+mcvResult() can be called multiple times because it does not end processing, but there is a cost to calculating the result each time
+since it is not stored.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_MCV_H
 #define COMMON_TYPE_MCV_H
@@ -18,7 +23,7 @@ typedef struct MostCommonValue MostCommonValue;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-MostCommonValue *mcvNew(VariantType type);
+MostCommonValue *mcvNew(void);
 MostCommonValue *mcvUpdate(MostCommonValue *this, const Variant *value);
 const Variant *mcvResult(const MostCommonValue *this);
 void mcvFree(MostCommonValue *this);

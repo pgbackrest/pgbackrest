@@ -15,7 +15,6 @@ Object type
 struct MostCommonValue
 {
     MemContext *memContext;                                         // Mem context
-    VariantType type;                                               // Type of variant to calculate most common value for
     List *list;                                                     // List of unique values
 };
 
@@ -31,11 +30,9 @@ OBJECT_DEFINE_FREE(MOST_COMMON_VALUE);
 New object
 ***********************************************************************************************************************************/
 MostCommonValue *
-mcvNew(VariantType type)
+mcvNew(void)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_VOID();
 
     MostCommonValue *this = NULL;
 
@@ -43,7 +40,6 @@ mcvNew(VariantType type)
     {
         this = memNew(sizeof(MostCommonValue));
         this->memContext = MEM_CONTEXT_NEW();
-        this->type = type;
         this->list = lstNew(sizeof(MostCommonValueEntry));
     }
     MEM_CONTEXT_NEW_END();
@@ -66,6 +62,7 @@ mcvUpdate(MostCommonValue *this, const Variant *value)
 
     bool found = false;
 
+    // Increment the value if it already exists
     for (unsigned int listIdx = 0; listIdx < lstSize(this->list); listIdx++)
     {
         MostCommonValueEntry *entry = (MostCommonValueEntry *)lstGet(this->list, listIdx);
@@ -78,6 +75,7 @@ mcvUpdate(MostCommonValue *this, const Variant *value)
         }
     }
 
+    // Add the value if it doesn't
     if (!found)
     {
         MEM_CONTEXT_BEGIN(this->memContext)
