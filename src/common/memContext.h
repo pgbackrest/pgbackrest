@@ -170,6 +170,29 @@ MEM_CONTEXT_TEMP_END();
                                                                                                                                    \
     MEM_CONTEXT_BEGIN(MEM_CONTEXT_TEMP())
 
+#define MEM_CONTEXT_TEMP_RESET_BEGIN()                                                                                             \
+{                                                                                                                                  \
+    MemContext *MEM_CONTEXT_TEMP() = memContextNew("temporary");                                                                   \
+    unsigned int MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                   \
+                                                                                                                                   \
+    MEM_CONTEXT_BEGIN(MEM_CONTEXT_TEMP())
+
+#define MEM_CONTEXT_TEMP_RESET(resetTotal)                                                                                         \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        MEM_CONTEXT_TEMP_loopTotal++;                                                                                              \
+                                                                                                                                   \
+        if (MEM_CONTEXT_TEMP_loopTotal >= resetTotal)                                                                              \
+        {                                                                                                                          \
+            memContextSwitch(MEM_CONTEXT_OLD());                                                                                   \
+            memContextFree(MEM_CONTEXT_TEMP());                                                                                    \
+            MEM_CONTEXT_TEMP() = memContextNew("temporary");                                                                       \
+            memContextSwitch(MEM_CONTEXT_TEMP());                                                                                  \
+            MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                        \
+        }                                                                                                                          \
+    }                                                                                                                              \
+    while (0)
+
 #define MEM_CONTEXT_TEMP_END()                                                                                                     \
         /* Switch back to the old context and free temp context */                                                                 \
         FINALLY()                                                                                                                  \
