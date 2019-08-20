@@ -42,6 +42,18 @@
                     </release-item>
                 </release-improvement-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="laurenz.albe"/>
+                        </release-item-contributor-list>
+
+                        <p>Build <backrest/> as an unprivileged user.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2019-08-05" version="2.16" title="C Migrations and Bug Fixes">
@@ -7451,6 +7463,11 @@
         <contributor id="laetitia">
             <contributor-name-display>L&amp;aelig;titia</contributor-name-display>
             <contributor-id type="github">LaetitiaLoxo</contributor-id>
+        </contributor>
+
+        <contributor id="laurenz.albe">
+            <contributor-name-display>Laurenz Albe</contributor-name-display>
+            <contributor-id type="github">laurenz</contributor-id>
         </contributor>
 
         <contributor id="leo.khomenko">
