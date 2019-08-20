@@ -1576,29 +1576,6 @@ db-version="9.4"
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
-stanza-create db - create required data for stanza (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online --force stanza-create
-------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [055]: backup information missing and repo is encrypted and info file(s) are missing, --force cannot be used
-
-+ supplemental file: /archive/db/archive.info
----------------------------------------------
-[backrest]
-backrest-checksum="[CHECKSUM]"
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[cipher]
-cipher-pass=[CIPHER-PASS-2]
-
-[db]
-db-id=1
-db-system-id=1000000000000000094
-db-version="9.4"
-
-[db:history]
-1={"db-id":1000000000000000094,"db-version":"9.4"}
-
 incr backup - update files (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
