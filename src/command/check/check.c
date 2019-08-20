@@ -20,7 +20,9 @@ void
 cmdCheck(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
-// CSHANG May need to do something like we do in pgValidate of stanza-create
+// CSHANG Maybe add a check that confirms if backup-standby is set that there IS a standby configured
+// CSHANG May need to do something like we do in pgValidate of stanza-create. Basically, both primary and standby can be defined when the repo is remote. Primary and standby never "know" about each other - only the repo server knows about both. The repo can be on the primary, though or it could be on the standby (neither config is ideal but it can happen). If the standby is only a standby, no primary will be set - so maybe part of check will have to confirm that - how? if pg*-path total = 1 and repo not local, it is OK to have standby-only set?
+// CSHANG Will the pg-control only be read from the local system? That can't be right since if the repo is remote and the command is run on the repo, we have to get the pg-control from the remote db, no?
             // // Get the pgControl information from the pg*-path deemed to be the master
             // result = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbObject.primaryId - 1));
             //
