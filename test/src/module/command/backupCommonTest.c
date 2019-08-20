@@ -254,5 +254,18 @@ testRun(void)
         TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("backupType() and backupTypeStr()"))
+    {
+        TEST_RESULT_UINT(backupType(strNew("full")), backupTypeFull, "backup type full");
+        TEST_RESULT_UINT(backupType(strNew("diff")), backupTypeDiff, "backup type diff");
+        TEST_RESULT_UINT(backupType(strNew("incr")), backupTypeIncr, "backup type incr");
+        TEST_ERROR(backupType(strNew("bogus")), AssertError, "invalid backup type 'bogus'");
+
+        TEST_RESULT_STR(strPtr(backupTypeStr(backupTypeFull)), "full", "backup type str full");
+        TEST_RESULT_STR(strPtr(backupTypeStr(backupTypeDiff)), "diff", "backup type str diff");
+        TEST_RESULT_STR(strPtr(backupTypeStr(backupTypeIncr)), "incr", "backup type str incr");
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }

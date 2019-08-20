@@ -245,6 +245,8 @@ testRun(void)
         strLstAddZ(argList, "--process=4");
         strLstAddZ(argList, "--host-id=2");
         strLstAddZ(argList, "--pg1-path=/path/to/1");
+        strLstAddZ(argList, "--pg1-socket-path=/socket3");
+        strLstAddZ(argList, "--pg1-port=1111");
         strLstAddZ(argList, "--pg2-path=/path/to/2");
         strLstAddZ(argList, "--pg2-host=pg2-host");
         strLstAddZ(argList, "--type=db");

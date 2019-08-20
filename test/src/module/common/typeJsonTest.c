@@ -219,7 +219,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("jsonFromVar()"))
     {
-        TEST_ERROR(jsonFromVar(varNewBool(true), 0), JsonFormatError, "variant type is invalid");
+        TEST_ERROR(jsonFromVar(varNewInt(1), 0), JsonFormatError, "variant type is invalid");
 
         String *json = NULL;
         Variant *keyValue = NULL;
@@ -378,6 +378,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(jsonFromVar(NULL, 0)), "null", "null variant");
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewBool(true), 0)), "true", "bool variant");
         TEST_RESULT_STR(strPtr(jsonFromVar(varNewUInt(66), 0)), "66", "uint variant");
         TEST_RESULT_STR(strPtr(jsonFromVar(varNewUInt64(10000000001), 0)), "10000000001", "uint64 variant");
         TEST_RESULT_STR(strPtr(jsonFromVar(varNewStrZ("test \" string"), 0)), "\"test \\\" string\"", "string variant");

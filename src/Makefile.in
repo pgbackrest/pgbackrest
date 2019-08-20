@@ -116,6 +116,7 @@ SRCS = \
 	common/type/json.c \
 	common/type/keyValue.c \
 	common/type/list.c \
+	common/type/mcv.c \
 	common/type/string.c \
 	common/type/stringList.c \
 	common/type/variant.c \
@@ -424,6 +425,9 @@ common/type/keyValue.o: common/type/keyValue.c build.auto.h common/assert.h comm
 
 common/type/list.o: common/type/list.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/list.h common/type/string.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/type/list.c -o common/type/list.o
+
+common/type/mcv.o: common/type/mcv.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/list.h common/type/mcv.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/type/mcv.c -o common/type/mcv.o
 
 common/type/string.o: common/type/string.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/macro.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/type/string.c -o common/type/string.o

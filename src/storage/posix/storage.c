@@ -223,7 +223,7 @@ storagePosixInfoList(THIS_VOID, const String *path, StorageInfoListCallback call
 
         TRY_BEGIN()
         {
-            MEM_CONTEXT_TEMP_BEGIN()
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
                 // Read the directory entries
                 struct dirent *dirEntry = readdir(dir);
@@ -235,6 +235,9 @@ storagePosixInfoList(THIS_VOID, const String *path, StorageInfoListCallback call
 
                     // Get next entry
                     dirEntry = readdir(dir);
+
+                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                    MEM_CONTEXT_TEMP_RESET(1000);
                 }
             }
             MEM_CONTEXT_TEMP_END();

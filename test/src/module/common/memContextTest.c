@@ -293,6 +293,19 @@ testRun(void)
             AssertError, "error in test block");
 
         TEST_RESULT_STR(memContextName(memContextCurrent()), "TOP", "context is now top");
+
+        // Reset temp mem context after a single interation
+        // -------------------------------------------------------------------------------------------------------------------------
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
+        {
+            TEST_RESULT_BOOL(MEM_CONTEXT_TEMP()->allocList[0].active, false, "nothing allocated");
+            memNew(99);
+            TEST_RESULT_BOOL(MEM_CONTEXT_TEMP()->allocList[0].active, true, "1 allocation");
+
+            MEM_CONTEXT_TEMP_RESET(1);
+            TEST_RESULT_BOOL(MEM_CONTEXT_TEMP()->allocList[0].active, false, "nothing allocated");
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     // *****************************************************************************************************************************

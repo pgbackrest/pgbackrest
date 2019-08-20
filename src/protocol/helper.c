@@ -261,16 +261,12 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     if (hostIdx != 0)
     {
         kvPut(optionReplace, VARSTR(CFGOPT_PG1_PATH_STR), cfgOption(cfgOptPgPath + hostIdx));
-
-        if (cfgOptionSource(cfgOptPgSocketPath + hostIdx) != cfgSourceDefault)
-            kvPut(optionReplace, VARSTR(CFGOPT_PG1_SOCKET_PATH_STR), cfgOption(cfgOptPgSocketPath + hostIdx));
-        else
-            kvPut(optionReplace, VARSTR(CFGOPT_PG1_SOCKET_PATH_STR), NULL);
-
-        if (cfgOptionSource(cfgOptPgPort + hostIdx) != cfgSourceDefault)
-            kvPut(optionReplace, VARSTR(CFGOPT_PG1_PORT_STR), cfgOption(cfgOptPgPort + hostIdx));
-        else
-            kvPut(optionReplace, VARSTR(CFGOPT_PG1_PORT_STR), NULL);
+        kvPut(
+            optionReplace, VARSTR(CFGOPT_PG1_SOCKET_PATH_STR),
+            cfgOptionSource(cfgOptPgSocketPath + hostIdx) != cfgSourceDefault ? cfgOption(cfgOptPgSocketPath + hostIdx) : NULL);
+        kvPut(
+            optionReplace, VARSTR(CFGOPT_PG1_PORT_STR),
+            cfgOptionSource(cfgOptPgPort + hostIdx) != cfgSourceDefault ? cfgOption(cfgOptPgPort + hostIdx) : NULL);
     }
 
     // Remove pg options that are not needed on the remote.  This is to reduce clustter and make debugging options easier.
