@@ -34,12 +34,13 @@ sub iniHeader
     my $strChecksum = shift;
 
     return
-        "[backrest]" .
-        "\nbackrest-checksum=\"" .
-            (defined($strChecksum) ? $strChecksum : $oIni->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM)) . "\"" .
-        "\nbackrest-format=" . (defined($iFormat) ? $iFormat : $oIni->get(INI_SECTION_BACKREST, INI_KEY_FORMAT)) .
-        "\nbackrest-version=\"" . (defined($iVersion) ? $iVersion : $oIni->get(INI_SECTION_BACKREST, INI_KEY_VERSION)) . "\"" .
-        "\n";
+        "[backrest]\n" .
+        "backrest-format=" . (defined($iFormat) ? $iFormat : $oIni->get(INI_SECTION_BACKREST, INI_KEY_FORMAT)) . "\n" .
+        "backrest-version=\"" . (defined($iVersion) ? $iVersion : $oIni->get(INI_SECTION_BACKREST, INI_KEY_VERSION)) . "\"\n" .
+        "\n" .
+        "[backrest]\n" .
+        "backrest-checksum=\"" .
+            (defined($strChecksum) ? $strChecksum : $oIni->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM)) . "\"\n";
 }
 
 ####################################################################################################################################
