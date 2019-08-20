@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.17dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jens.wilke"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix slow manifest build for very large quantities of tables/segments.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
