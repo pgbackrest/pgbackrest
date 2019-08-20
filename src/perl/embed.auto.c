@@ -8304,7 +8304,7 @@ static const EmbeddedModule embeddedModule[] =
             "}\n"
             "else\n"
             "{\n"
-            "\n\n\n"
+            "\n"
             "lockStopTest();\n"
             "\n\n"
             "if (!isRepoLocal())\n"

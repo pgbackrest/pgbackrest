@@ -192,6 +192,10 @@ sub stanzaCreate
     $self->controlGenerate($strDbPath, $strDbVersion);
     executeTest('sudo chmod 600 ' . $strDbPath . '/' . DB_FILE_PGCONTROL);
 
+    # Create the stanza repo paths if they don't exist
+    storageTest()->pathCreate(cfgOption(CFGOPT_REPO_PATH) . "/archive/$strStanza", {bIgnoreExists => true, bCreateParent => true});
+    storageTest()->pathCreate(cfgOption(CFGOPT_REPO_PATH) . "/backup/$strStanza", {bIgnoreExists => true, bCreateParent => true});
+
     # Create the stanza and set the local stanza object
     $self->stanzaSet($strStanza, $strDbVersion, false);
 

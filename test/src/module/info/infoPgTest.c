@@ -51,9 +51,6 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoCipherPass(infoPgInfo(infoPg))), NULL, "  cipherPass not set");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
-            infoPgSet(infoPgNew(cipherTypeAes256Cbc, strNew("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679, 0, 942),
-            AssertError, "assertion 'type == infoPgArchive || (pgControlVersion != 0 && pgCatalogVersion != 0)' failed");
         TEST_ASSIGN(
             infoPg, infoPgSet(infoPgNew(cipherTypeAes256Cbc, strNew("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679,
             201409291, 942), "infoPgSet - infoPgBackup");
