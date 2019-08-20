@@ -1,7 +1,21 @@
 /***********************************************************************************************************************************
 Test Ini
 ***********************************************************************************************************************************/
+#include "common/io/bufferRead.h"
+#include "common/type/buffer.h"
 #include "storage/posix/storage.h"
+
+/***********************************************************************************************************************************
+Test callback to accumulate ini load results
+***********************************************************************************************************************************/
+static void
+testIniLoadCallback(void *data, const String *section, const String *key, const String *value)
+{
+    (void)data;
+    (void)section;
+    (void)key;
+    (void)value;
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -13,6 +27,16 @@ testRun(void)
 
     Storage *storageTest = storagePosixNew(
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+
+    // *****************************************************************************************************************************
+    if (testBegin("iniLoad()"))
+    {
+        const Buffer *iniBuf = BUFSTRZ(
+            "[section1]\n"
+            "key1=value1\n");
+
+        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, NULL), "load ini");
+    }
 
     // *****************************************************************************************************************************
     if (testBegin("iniNew() and iniFree()"))

@@ -216,11 +216,11 @@ Read linefeed-terminated string
 The entire string to search for must fit within a single buffer.
 ***********************************************************************************************************************************/
 String *
-ioReadLine(IoRead *this)
+ioReadLineParam(IoRead *this, bool allowEof)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_READ, this);
-        FUNCTION_LOG_PARAM(BUFFER, this->output);
+        FUNCTION_LOG_PARAM(BOOL, allowEof);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -269,14 +269,37 @@ ioReadLine(IoRead *this)
                 THROW_FMT(FileReadError, "unable to find line in %zu byte buffer", bufSize(this->output));
 
             if (ioReadEof(this))
-                THROW(FileReadError, "unexpected eof while reading line");
-
-            ioReadInternal(this, this->output, false);
+            {
+                if (allowEof)
+                {
+                    if (bufSize(this->output) == 0)
+                        result = strNew("");
+                    else
+                        result = strNewN((char *)bufPtr(this->output), bufSize(this->output));
+                }
+                else
+                    THROW(FileReadError, "unexpected eof while reading line");
+            }
+            else
+                ioReadInternal(this, this->output, false);
         }
     }
     while (result == NULL);
 
     FUNCTION_LOG_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
+Read linefeed-terminated string
+***********************************************************************************************************************************/
+String *
+ioReadLine(IoRead *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(STRING, ioReadLineParam(this, false));
 }
 
 /***********************************************************************************************************************************

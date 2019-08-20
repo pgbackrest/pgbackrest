@@ -12,6 +12,7 @@ Ini object
 
 typedef struct Ini Ini;
 
+#include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/type/variant.h"
 
@@ -23,6 +24,10 @@ Ini *iniNew(void);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+void iniLoad(
+    IoRead *read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
+    void *callbackData);
+
 Ini *iniMove(Ini *this, MemContext *parentNew);
 void iniParse(Ini *this, const String *content);
 void iniSave(Ini *this, IoWrite *write);

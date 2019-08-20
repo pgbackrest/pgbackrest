@@ -9,6 +9,7 @@ Ini Handler
 
 #include "common/debug.h"
 #include "common/memContext.h"
+#include "common/log.h"
 #include "common/ini.h"
 #include "common/type/keyValue.h"
 #include "common/object.h"
@@ -45,6 +46,89 @@ iniNew(void)
 
     // Return buffer
     return this;
+}
+
+/***********************************************************************************************************************************
+Load an ini file and return data to a callback
+***********************************************************************************************************************************/
+void
+iniLoad(
+    IoRead *read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
+    void *callbackData)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_READ, read);
+    FUNCTION_LOG_END();
+
+    ASSERT(read != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Track the current section
+        String *section = NULL;
+
+        // Keep track of the line numnber for error reporting
+        unsigned int lineIdx = 0;
+
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
+        {
+            ioReadOpen(read);
+
+            do
+            {
+                const String *line = ioReadLineParam(read, true);
+                const char *linePtr = strPtr(line);
+
+                LOG_WARN("YEAH WE READ A LINE");
+
+                // Only interested in lines that are not blank or comments
+                if (strSize(line) > 0 && linePtr[0] != '#')
+                {
+                    // Looks like this line is a section
+                    if (linePtr[0] == '[')
+                    {
+                        // Make sure the section ends with ]
+                        if (linePtr[strSize(line) - 1] != ']')
+                            THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", lineIdx + 1, linePtr);
+
+                        // Assign section
+                        memContextSwitch(MEM_CONTEXT_OLD());
+                        section = strNewN(linePtr + 1, strSize(line) - 2);
+                        memContextSwitch(MEM_CONTEXT_TEMP());
+                    }
+                    // Else it should be a key/value
+                    else
+                    {
+                        if (section == NULL)
+                            THROW_FMT(FormatError, "key/value found outside of section at line %u: %s", lineIdx + 1, linePtr);
+
+                        // Find the =
+                        const char *lineEqual = strstr(linePtr, "=");
+
+                        if (lineEqual == NULL)
+                            THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", lineIdx + 1, linePtr);
+
+                        // Extract the key
+                        String *key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
+
+                        if (strSize(key) == 0)
+                            THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
+
+                        // Callback with the section/key/value
+                        callbackFunction(callbackData, section, key, strTrim(strNew(lineEqual + 1)));
+                    }
+                }
+
+                lineIdx++;
+                MEM_CONTEXT_TEMP_RESET(1000);
+            }
+            while (!ioReadEof(read));
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
