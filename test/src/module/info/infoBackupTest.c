@@ -93,6 +93,15 @@ testRun(void)
             "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "    cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 1, "    history set");
 
+        //--------------------------------------------------------------------------------------------------------------------------
+        InfoPgData infoPgData = {0};
+        TEST_RESULT_VOID(infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, 12345, 54321), "add another infoPg");
+        TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 2, "    history incremented");
+        TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackup->infoPg), "    get current infoPgData");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
+        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    systemId set");
+        TEST_RESULT_INT(infoPgData.controlVersion, 12345, "    catalog set");
+        TEST_RESULT_INT(infoPgData.catalogVersion, 54321, "    catalog set");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(infoBackup, infoBackupNewInternal(), "infoBackupNewInternal()");

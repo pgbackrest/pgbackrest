@@ -94,8 +94,8 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgCont
     InfoBackup *this = infoBackupNewInternal();
 
     // Initialize the pg data
-    this->infoPg = infoPgSet(
-        infoPgNew(cipherType, cipherPassSub), infoPgBackup, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
+    this->infoPg = infoPgNew(cipherType, cipherPassSub);
+    infoBackupPgSet(this, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }

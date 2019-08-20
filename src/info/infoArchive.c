@@ -75,9 +75,9 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, CipherType cipherTyp
 
     InfoArchive *this = infoArchiveNewInternal();
 
-    // Initialize the pg data and set the archiveId for the current PG db-version and db-id
-    this->infoPg = infoPgSet(infoPgNew(cipherType, cipherPassSub), infoPgArchive, pgVersion, pgSystemId, 0, 0);
-    this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
+    // Initialize the pg data
+    this->infoPg = infoPgNew(cipherType, cipherPassSub);
+    infoArchivePgSet(this, pgVersion, pgSystemId);
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
@@ -140,6 +140,8 @@ infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
     FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
 
     this->infoPg = infoPgSet(this->infoPg, infoPgArchive, pgVersion, pgSystemId, 0, 0);
     this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));

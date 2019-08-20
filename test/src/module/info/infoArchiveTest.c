@@ -107,6 +107,14 @@ testRun(void)
         TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 1, "    history set");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        InfoPgData infoPgData = {0};
+        TEST_RESULT_VOID(infoArchivePgSet(info, PG_VERSION_94, 6569239123849665679), "add another infoPg");
+        TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 2, "    history incremented");
+        TEST_ASSIGN(infoPgData, infoPgDataCurrent(info->infoPg), "    get current infoPgData");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
+        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    systemId set");
+
+        //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(info, infoArchiveNewInternal(), "infoArchiveNewInternal()");
         TEST_RESULT_PTR(infoArchivePg(info), NULL, "    infoPg not set");
 
