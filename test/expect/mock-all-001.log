@@ -151,7 +151,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -244,6 +243,9 @@ pg_data/pg_tblspc={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -412,7 +414,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -508,6 +509,9 @@ pg_data/pg_tblspc={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -1058,7 +1062,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1159,6 +1162,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
@@ -1253,7 +1259,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1364,6 +1369,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
@@ -1454,7 +1462,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-1]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1560,6 +1567,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
@@ -1650,7 +1660,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-2]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1755,6 +1764,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -1923,7 +1935,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-3]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2024,6 +2035,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -2151,7 +2165,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-4]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2253,6 +2266,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
@@ -2349,7 +2365,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-3]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2451,6 +2466,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
@@ -2526,7 +2544,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-5]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2628,6 +2645,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
@@ -2727,7 +2747,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-4]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2827,6 +2846,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
@@ -2922,7 +2944,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-3]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3021,6 +3042,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -3479,7 +3503,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-5]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3580,6 +3603,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -3971,7 +3997,6 @@ bogus=bogus
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-6]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -4073,6 +4098,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
@@ -4144,7 +4172,6 @@ start-fast=y
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-7]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -4245,6 +4272,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------

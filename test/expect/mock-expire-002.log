@@ -9,7 +9,6 @@ run 002 - stanzaUpgrade, enc 0, s3 0
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -27,6 +26,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -133,7 +135,6 @@ db-version="9.2"
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -156,6 +157,9 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -805,7 +809,6 @@ db-version="9.3"
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -828,6 +831,9 @@ db-version="10"
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 3={"db-catalog-version":201707211,"db-control-version":1002,"db-system-id":1000000000000000100,"db-version":"10"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1219,7 +1225,6 @@ db-version="10"
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1240,6 +1245,9 @@ db-version="10"
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 3={"db-catalog-version":201707211,"db-control-version":1002,"db-system-id":1000000000000000100,"db-version":"10"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------

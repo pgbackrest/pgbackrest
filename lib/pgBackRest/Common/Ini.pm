@@ -523,11 +523,24 @@ sub iniRender
             # Else write as stricter JSON
             else
             {
-                $strContent .= "${strKey}=" . $oJSON->encode($strValue) . "\n";
+                # Skip the checksum for now but write all other key/value pairs
+                if (!($strSection eq INI_SECTION_BACKREST && $strKey eq INI_KEY_CHECKSUM))
+                {
+                    $strContent .= "${strKey}=" . $oJSON->encode($strValue) . "\n";
+                }
             }
         }
 
         $bFirst = false;
+    }
+
+    # If there is a checksum write it at the end of the file.  Having the checksum at the end of the file allows some major
+    # performance optimizations which we won't implement in Perl, but will make the C code much more efficient.
+    if (!$bRelaxed && defined($oContent->{&INI_SECTION_BACKREST}) && defined($oContent->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM}))
+    {
+        $strContent .=
+            "\n[" . INI_SECTION_BACKREST . "]\n" .
+            INI_KEY_CHECKSUM . '=' . $oJSON->encode($oContent->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM}) . "\n";
     }
 
     # Return from function and log return values if any
