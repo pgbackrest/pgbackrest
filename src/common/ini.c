@@ -76,10 +76,8 @@ iniLoad(
 
             do
             {
-                const String *line = ioReadLineParam(read, true);
+                const String *line = strTrim(ioReadLineParam(read, true));
                 const char *linePtr = strPtr(line);
-
-                LOG_WARN("YEAH WE READ A LINE");
 
                 // Only interested in lines that are not blank or comments
                 if (strSize(line) > 0 && linePtr[0] != '#')

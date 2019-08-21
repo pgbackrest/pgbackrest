@@ -271,12 +271,7 @@ ioReadLineParam(IoRead *this, bool allowEof)
             if (ioReadEof(this))
             {
                 if (allowEof)
-                {
-                    if (bufSize(this->output) == 0)
-                        result = strNew("");
-                    else
-                        result = strNewN((char *)bufPtr(this->output), bufSize(this->output));
-                }
+                    result = strNewN((char *)bufPtr(this->output), bufUsed(this->output));
                 else
                     THROW(FileReadError, "unexpected eof while reading line");
             }

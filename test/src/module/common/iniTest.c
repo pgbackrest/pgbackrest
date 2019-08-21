@@ -11,10 +11,7 @@ Test callback to accumulate ini load results
 static void
 testIniLoadCallback(void *data, const String *section, const String *key, const String *value)
 {
-    (void)data;
-    (void)section;
-    (void)key;
-    (void)value;
+    strCatFmt((String *)data, "%s:%s:%s\n", strPtr(section), strPtr(key), strPtr(value));
 }
 
 /***********************************************************************************************************************************
@@ -31,11 +28,90 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("iniLoad()"))
     {
-        const Buffer *iniBuf = BUFSTRZ(
-            "[section1]\n"
-            "key1=value1\n");
+        // Empty file
+        // -------------------------------------------------------------------------------------------------------------------------
+        const Buffer *iniBuf = bufNew(0);
+        String *result = strNew("");
 
-        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, NULL), "load ini");
+        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
+        TEST_RESULT_STR(strPtr(result), "", "    check ini");
+
+        // Invalid section
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "  [section  ");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "ini section should end with ] at line 1: [section");
+
+        // Key outside of section
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "key=value\n");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "key/value found outside of section at line 1: key=value");
+
+        // Key outside of section
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "[section]\n"
+            "key");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "missing '=' in key/value at line 2: key");
+
+        // Zero length key
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "[section]\n"
+            "=value");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "key is zero-length at line 1: =value");
+
+        // One section
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "# comment\n"
+            "[section1]\n"
+            "key1=value1\n"
+            "key2=value2");
+        result = strNew("");
+
+        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
+        TEST_RESULT_STR(
+            strPtr(result),
+            "section1:key1:value1\n"
+                "section1:key2:value2\n",
+            "    check ini");
+
+        // Two sections
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "# comment\n"
+            "[section1]\n"
+            "key1=value1\n"
+            "key2=value2\n"
+            "\n"
+            "[section2]\n"
+            "key1=\n"
+            "\n"
+            "key2=value2");
+        result = strNew("");
+
+        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
+        TEST_RESULT_STR(
+            strPtr(result),
+            "section1:key1:value1\n"
+                "section1:key2:value2\n"
+                "section2:key1:\n"
+                "section2:key2:value2\n",
+            "    check ini");
     }
 
     // *****************************************************************************************************************************
