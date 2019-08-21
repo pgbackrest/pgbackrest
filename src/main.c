@@ -18,6 +18,9 @@ Main
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/stanza/create.h"
+#include "command/stanza/delete.h"
+#include "command/stanza/upgrade.h"
 #include "command/storage/list.h"
 #include "common/debug.h"
 #include "common/error.h"
@@ -195,7 +198,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaCreate:
                 {
-                    perlExec();
+                    cmdStanzaCreate();
                     break;
                 }
 
@@ -203,7 +206,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaDelete:
                 {
-                    perlExec();
+                    cmdStanzaDelete();
                     break;
                 }
 
@@ -211,7 +214,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaUpgrade:
                 {
-                    perlExec();
+                    cmdStanzaUpgrade();
                     break;
                 }
 

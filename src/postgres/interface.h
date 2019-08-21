@@ -14,6 +14,7 @@ PostgreSQL Interface
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
 #define PG_FILE_PGCONTROL                                           "pg_control"
+#define PG_FILE_POSTMASTERPID                                       "postmaster.pid"
 
 #define PG_PATH_ARCHIVE_STATUS                                      "archive_status"
 #define PG_PATH_GLOBAL                                              "global"
