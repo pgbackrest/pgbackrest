@@ -22,7 +22,7 @@ cmdCheck(void)
     FUNCTION_LOG_VOID(logLevelDebug);
 // CSHANG Maybe add a check that confirms if backup-standby is set that there IS a standby configured
 // CSHANG May need to do something like we do in pgValidate of stanza-create. Basically, both primary and standby can be defined when the repo is remote. Primary and standby never "know" about each other - only the repo server knows about both. The repo can be on the primary, though or it could be on the standby (neither config is ideal but it can happen). If the standby is only a standby, no primary will be set - so maybe part of check will have to confirm that - how? if pg*-path total = 1 and repo not local, it is OK to have standby-only set?
-// CSHANG Will the pg-control only be read from the local system? That can't be right since if the repo is remote and the command is run on the repo, we have to get the pg-control from the remote db, no?
+// CSHANG Need changes from the stanza-to-c conversion to pass storagePg to pgControlFile so we can get the remote DB info.
             // // Get the pgControl information from the pg*-path deemed to be the master
             // result = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbObject.primaryId - 1));
             //
@@ -42,8 +42,29 @@ cmdCheck(void)
         // Get the primary/standby connections (standby is only required if backup from standby is enabled)
         DbGetResult dbGroup = dbGet(false, false);
 
-        // Free the standby connection immediately since we don't need it for anything
-        dbFree(dbGroup.standby);
+        // If a standby is defined, do some sanity checks
+        if (dbGroup.standby != NULL)
+        {
+            // If not primary was not found
+            if (dbGroup.primary == NULL)
+            {
+                // If the repo is local or more than one pg-path is found then a master should have been found so error
+                if (repoIsLocal() || cfgOptionIndexTotal(cfgOptPgPath) > 1)
+                    THROW_FMT("SOMETHING");
+
+                // Validate the standby database config
+                PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
+
+                // Check the user configured path and version against the database
+                checkDbConfig(pgControl.version, dbGroup.standbyId, dbPgVersion(dbGroup.standby), dbPgDataPath(dbGroup.standby));
+
+                // Check that the backup info file exists and is valid for the current database of the stanza
+                // CSHANG In the old code, we actually would get the DB config from the repo?
+            }
+
+            // Free the standby connection
+            dbFree(dbGroup.standby);
+        }
 
         // Perform a WAL switch and make sure the WAL is archived if a primary was found
         if (dbGroup.primary != NULL)
@@ -75,7 +96,8 @@ cmdCheck(void)
             }
         }
         else
- // CSHANG I'm not a fan of this message because it sounds like something is wrong
+ // CSHANG I'm not a fan of this message because it sounds like something is wrong. Since now adding code to ensure the standby is
+ // configed properly. Do we even need this message? Maybe we leave it or change it to "switch wal not performed because this is a standby"
             LOG_INFO("switch wal not performed because no primary was found");
 
     }
