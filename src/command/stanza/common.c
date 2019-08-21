@@ -89,7 +89,7 @@ pgValidate(void)
             result = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbObject.primaryId - 1));
 
             // Check the user configured path and version against the database
-            checkDbConfig(result.version,  dbObject.primaryId, dbPgVersion(dbObject.primary), dbPgDataPath(dbObject.primary));
+            checkDbConfig(result.version, dbObject.primaryId, dbPgVersion(dbObject.primary), dbPgDataPath(dbObject.primary));
         }
         // If the database is not online, assume that pg1 is the master
         else
