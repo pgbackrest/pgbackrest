@@ -1124,16 +1124,19 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(storageHelper.storagePg, NULL, "pg storage not cached");
         TEST_ASSIGN(storage, storagePg(), "new pg storage");
-        TEST_RESULT_PTR(storageHelper.storagePg, storage, "pg storage cached");
+        TEST_RESULT_PTR(storageHelper.storagePg[0], storage, "pg storage cached");
         TEST_RESULT_PTR(storagePg(), storage, "get cached pg storage");
 
         TEST_RESULT_STR(strPtr(storage->path), strPtr(strNewFmt("%s/db", testPath())), "check pg storage path");
         TEST_RESULT_BOOL(storage->write, false, "check pg storage write");
+        TEST_RESULT_STR(strPtr(storagePgId(2)->path), strPtr(strNewFmt("%s/db2", testPath())), "check pg 2 storage path");
 
         TEST_RESULT_PTR(storageHelper.storagePgWrite, NULL, "pg write storage not cached");
         TEST_ASSIGN(storage, storagePgWrite(), "new pg write storage");
-        TEST_RESULT_PTR(storageHelper.storagePgWrite, storage, "pg write storage cached");
+        TEST_RESULT_PTR(storageHelper.storagePgWrite[0], storage, "pg write storage cached");
         TEST_RESULT_PTR(storagePgWrite(), storage, "get cached pg write storage");
+        TEST_RESULT_STR(
+            strPtr(storagePgIdWrite(2)->path), strPtr(strNewFmt("%s/db2", testPath())), "check pg 2 write storage path");
 
         TEST_RESULT_STR(strPtr(storage->path), strPtr(strNewFmt("%s/db", testPath())), "check pg write storage path");
         TEST_RESULT_BOOL(storage->write, true, "check pg write storage write");
@@ -1143,7 +1146,7 @@ testRun(void)
         cfgOptionSet(cfgOptHostId, cfgSourceParam, VARUINT64(2));
         cfgOptionValidSet(cfgOptHostId, true);
 
-        TEST_RESULT_STR(strPtr(storagePgGet(false)->path), strPtr(strNewFmt("%s/db2", testPath())), "check pg-2 storage path");
+        TEST_RESULT_STR(strPtr(storagePg()->path), strPtr(strNewFmt("%s/db2", testPath())), "check pg-2 storage path");
 
         // Change the stanza to NULL, stanzaInit flag to false and make sure helper fails because stanza is required
         // -------------------------------------------------------------------------------------------------------------------------
