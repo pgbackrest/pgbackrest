@@ -48,17 +48,22 @@ typedef enum
 } InfoPgType;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
+InfoPg *infoPgNew(CipherType cipherType, const String *cipherPass);
 InfoPg *infoPgNewLoad(
     const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass, Ini **ini);
-void infoPgSave(
-    InfoPg *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
+InfoPg *infoPgSet(
+    InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const uint32_t pgControlVersion,
+    const uint32_t pgCatalogVersion);
+void infoPgSave(
+    InfoPg *this, Ini *ini, const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType,
+    const String *cipherPass);
 
 /***********************************************************************************************************************************
 Getters
@@ -70,6 +75,7 @@ InfoPgData infoPgDataCurrent(const InfoPg *this);
 unsigned int infoPgDataCurrentId(const InfoPg *this);
 Info *infoPgInfo(const InfoPg *this);
 unsigned int infoPgDataTotal(const InfoPg *this);
+unsigned int infoPgCurrentDataId(const InfoPg *this);
 
 /***********************************************************************************************************************************
 Destructor

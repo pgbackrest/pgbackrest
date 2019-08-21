@@ -30,6 +30,14 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>The <cmd>stanza-create/update/delete</cmd> commands are implemented entirely in C.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>The <cmd>start</cmd>/<cmd>stop</cmd> commands are implemented entirely in C.</p>
                     </release-item>
 

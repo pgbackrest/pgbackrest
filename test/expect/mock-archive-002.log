@@ -26,9 +26,9 @@ P00  ERROR: [055]: unable to load info file 'archive/db/archive.info' or 'archiv
 P00   INFO: archive-get command end: aborted with exception [055]
 
 stanza-create db - stanza create (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online --force stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --force --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00 DETAIL: tls statistics:[TLS-STATISTICS]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: stanza-create command end: completed successfully
@@ -36,6 +36,7 @@ P00   INFO: stanza-create command end: completed successfully
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
+backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -49,12 +50,10 @@ db-version="9.4"
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
-[backrest]
-backrest-checksum="[CHECKSUM]"
-
 + supplemental file: /archive/db/archive.info
 ---------------------------------------------
 [backrest]
+backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -65,9 +64,6 @@ db-version="9.4"
 
 [db:history]
 1={"db-id":1000000000000000094,"db-version":"9.4"}
-
-[backrest]
-backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --cmd-ssh=/usr/bin/ssh --compress [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
