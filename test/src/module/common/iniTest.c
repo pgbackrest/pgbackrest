@@ -15,6 +15,18 @@ testIniLoadCallback(void *data, const String *section, const String *key, const 
 }
 
 /***********************************************************************************************************************************
+Test callback to count ini load results
+***********************************************************************************************************************************/
+static void
+testIniLoadCountCallback(void *data, const String *section, const String *key, const String *value)
+{
+    (*(unsigned int *)data)++;
+    (void)section;
+    (void)key;
+    (void)value;
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -221,6 +233,28 @@ testRun(void)
                 "[section2]\n"
                 "key1=value1\n",
             "check ini");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("iniLoad() performance"))
+    {
+        String *iniStr = strNew("[section1]\n");
+        unsigned int iniMax = 1000;
+
+        // /backrest/test/test.pl --vm=u18 --smart --no-package --module=common --test=ini --run=5 --no-cleanup --vm-out
+        // BASELINE PERF ON DESKTOP 50784ms
+
+        for (unsigned int keyIdx = 0; keyIdx < iniMax; keyIdx++)
+            strCatFmt(iniStr, "key%u=value%u\n", keyIdx, keyIdx);
+
+        TEST_LOG_FMT("ini size is %zu", strSize(iniStr));
+
+        TimeMSec timeBegin = timeMSec();
+        unsigned int iniTotal = 0;
+
+        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(BUFSTR(iniStr)), testIniLoadCountCallback, &iniTotal), "parse ini");
+        TEST_LOG_FMT("parse completed in %ums", (unsigned int)(timeMSec() - timeBegin));
+        TEST_RESULT_INT(iniTotal, iniMax, "    check ini total");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
