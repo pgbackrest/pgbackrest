@@ -33,10 +33,10 @@ static struct
 {
     MemContext *memContext;                                         // Mem context for protocol helper
 
-    unsigned int clientRemoteSize;                                 // Remote clients
+    unsigned int clientRemoteSize;                                  // Remote clients
     ProtocolHelperClient *clientRemote;
 
-    unsigned int clientLocalSize;                                  // Local clients
+    unsigned int clientLocalSize;                                   // Local clients
     ProtocolHelperClient *clientLocal;
 } protocolHelper;
 
