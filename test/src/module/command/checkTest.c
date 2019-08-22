@@ -8,6 +8,8 @@ Test Check Command
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPq.h"
+#include "info/infoArchive.h"
+#include "info/infoBackup.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -19,7 +21,6 @@ testRun(void)
 
     String *pg1Path = strNewFmt("%s/pg1", testPath());
     String *pg1PathOpt = strNewFmt("--pg1-path=%s", strPtr(pg1Path));
-
     // *****************************************************************************************************************************
     if (testBegin("cmdCheck()"))
     {
@@ -157,6 +158,61 @@ testRun(void)
             "HINT: the pg1-path and pg1-port settings likely reference different clusters",
             strPtr(pgVersionToStr(PG_VERSION_92)), "bogus/path", strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path),
             strPtr(pg1Path));
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("checkStanzaInfo()"))
+    {
+        InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_96, 6569239123849665679, cipherTypeNone, NULL);
+        InfoPgData archivePg = infoPgData(infoArchivePg(archiveInfo), infoPgDataCurrentId(infoArchivePg(archiveInfo)));
+
+        InfoBackup *backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665679, 123, 12345, cipherTypeNone, NULL);
+        InfoPgData backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
+
+        TEST_RESULT_VOID(checkStanzaInfo(&archivePg, &backupPg), "stanza infor files match");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Create a corrupted backup file - system id
+        backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, 123, 12345, cipherTypeNone, NULL);
+        backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
+
+        TEST_ERROR_FMT(
+            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError, "backup info file and archive info file do not match\n"
+            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
+            "HINT: this may be a symptom of repository corruption!");
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Create a corrupted backup file - system id and version
+        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, 123, 12345, cipherTypeNone, NULL);
+        backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
+
+        TEST_ERROR_FMT(
+            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError, "backup info file and archive info file do not match\n"
+            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "backup : id = 1, version = 9.5, system-id = 6569239123849665999\n"
+            "HINT: this may be a symptom of repository corruption!");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Create a corrupted backup file - version
+        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, 123, 12345, cipherTypeNone, NULL);
+        backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
+
+        TEST_ERROR_FMT(
+            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError, "backup info file and archive info file do not match\n"
+            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
+            "HINT: this may be a symptom of repository corruption!");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Create a corrupted backup file - db id
+        infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679, 960, 201608131);
+        backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
+
+        TEST_ERROR_FMT(
+            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError, "backup info file and archive info file do not match\n"
+            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
+            "HINT: this may be a symptom of repository corruption!");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

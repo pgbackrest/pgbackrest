@@ -42,29 +42,53 @@ cmdCheck(void)
         // Get the primary/standby connections (standby is only required if backup from standby is enabled)
         DbGetResult dbGroup = dbGet(false, false);
 
-        // If a standby is defined, do some sanity checks
-        if (dbGroup.standby != NULL)
-        {
-            // If not primary was not found
-            if (dbGroup.primary == NULL)
-            {
-                // If the repo is local or more than one pg-path is found then a master should have been found so error
-                if (repoIsLocal() || cfgOptionIndexTotal(cfgOptPgPath) > 1)
-                    THROW_FMT("SOMETHING");
-
-                // Validate the standby database config
-                PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
-
-                // Check the user configured path and version against the database
-                checkDbConfig(pgControl.version, dbGroup.standbyId, dbPgVersion(dbGroup.standby), dbPgDataPath(dbGroup.standby));
-
-                // Check that the backup info file exists and is valid for the current database of the stanza
-                // CSHANG In the old code, we actually would get the DB config from the repo?
-            }
+//         // If a standby is defined, do some sanity checks
+//         if (dbGroup.standby != NULL)
+//         {
+//             // If not primary was not found
+//             if (dbGroup.primary == NULL)
+//             {
+//                 // If the repo is local or more than one pg-path is found then a master should have been found so error
+//                 if (repoIsLocal() || cfgOptionIndexTotal(cfgOptPgPath) > 1)
+//                     THROW_FMT("SOMETHING");
+//
+//                 // Validate the standby database config
+//                 PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
+//
+//                 // Check the user configured path and version against the database
+//                 checkDbConfig(pgControl.version, dbGroup.standbyId, dbPgVersion(dbGroup.standby), dbPgDataPath(dbGroup.standby));
+// // CSHANG Check the info files against each other first (checkStanzaInfo()) then check that one of them matches the pgControl (like we do in stanza-*) - create checkStanzaPg() function for this.
+//                 // Check that the backup info file exists and is valid for the current database of the stanza
+//                 InfoBackup *infoBackup = infoBackupNewLoad(
+//                     storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+//                     cfgOptionStr(cfgOptRepoCipherPass));
+//                 InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+//                 if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
+//                 {
+//                     THROW_FMT(
+//                         BackupMismatchError, "database version =%s , system-id %" PRIu64 " do not match backup version %s, "
+//                         "system-id %" PRIu64 "\nHINT: is this the correct stanza?", strPtr(pgVersionToStr(pgControl.version)),
+//                         pgControl.systemId, strPtr(pgVersionToStr(backupInfo.version)), backupInfo.systemId);
+//                 }
+//
+//                 // Check that the archive info file exists and is valid for the current database of the stanza
+//                 InfoArchive *infoArchive = infoArchiveNewLoad(
+//                     storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+//                     cfgOptionStr(cfgOptRepoCipherPass));
+//                 InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
+//                 if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
+//                 {
+//                     THROW_FMT(
+//                         ArchiveMismatchError, "database version =%s , system-id %" PRIu64 " do not match archive version %s, "
+//                         "system-id %" PRIu64 "\nHINT: is this the correct stanza?", strPtr(pgVersionToStr(pgControl.version)),
+//                         pgControl.systemId, strPtr(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId);
+//                 }
+//
+//             }
 
             // Free the standby connection
             dbFree(dbGroup.standby);
-        }
+        // }
 
         // Perform a WAL switch and make sure the WAL is archived if a primary was found
         if (dbGroup.primary != NULL)

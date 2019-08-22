@@ -7,6 +7,7 @@ Stanza Update Command
 #include <string.h>
 #include <inttypes.h>
 
+#include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/stanza/common.h"
 #include "command/stanza/upgrade.h"
@@ -75,7 +76,7 @@ cmdStanzaUpgrade(void)
         // needed to be updated)
         backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
         archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
-        infoValidate(&archiveInfo, &backupInfo);
+        checkStanzaInfo(&archiveInfo, &backupInfo);
 
         // Save archive info
         if (infoArchiveUpgrade)

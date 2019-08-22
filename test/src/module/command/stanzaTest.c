@@ -35,7 +35,7 @@ testRun(void)
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdStanzaCreate(), infoValidate()"))
+    if (testBegin("cmdStanzaCreate(), checkStanzaInfo()"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -235,7 +235,7 @@ testRun(void)
             cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // infoValidate()
+        // checkStanzaInfo() - already checked in checkTest so just a sanity check here
         //--------------------------------------------------------------------------------------------------------------------------
         // Create a corrupted backup file - db id
         contentBackup = strNew
@@ -260,81 +260,6 @@ testRun(void)
             cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        // Create a corrupted backup file - system id
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad system-id");
-
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        // Create a corrupted backup file - system id and version
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.5\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.5\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad system-id and version");
-
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.5, system-id = 6569239123849665999\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        // Create a corrupted backup file - version
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.5\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.5\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad version");
-
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
         //--------------------------------------------------------------------------------------------------------------------------

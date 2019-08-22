@@ -7,6 +7,7 @@ Stanza Create Command
 #include <string.h>
 #include <inttypes.h>
 
+#include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/stanza/common.h"
 #include "command/stanza/create.h"
@@ -104,7 +105,7 @@ cmdStanzaCreate(void)
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
             // Error if there is a mismatch between the archive and backup info files
-            infoValidate(&archiveInfo, &backupInfo);
+            checkStanzaInfo(&archiveInfo, &backupInfo);
 
             // The archive and backup info files match so check if the versions or system ids match the current database,
             // if not, then an upgrade may be necessary
