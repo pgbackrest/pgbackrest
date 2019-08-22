@@ -320,12 +320,18 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadLogFile()"))
     {
-        cfgInit();
-        cfgOptionValidSet(cfgOptLogLevelFile, true);
-        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("detail"));
+        StringList *argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--pg1-path=/path"));
+        strLstAdd(argList, strNew("--log-path=/bogus"));
+        strLstAdd(argList, strNew("--log-level-file=info"));
+        strLstAdd(argList, strNew("backup"));
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for backup");
+        lockRelease(true);
 
         // On the error case is tested here, success is tested in cfgLoad()
-        TEST_RESULT_VOID(cfgLoadLogFile(strNew("/BOGUS")), "attempt to open bogus log file");
+        TEST_RESULT_VOID(cfgLoadLogFile(), "attempt to open bogus log file");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptLogLevelFile)), "off", "log-level-file should now be off");
     }
 

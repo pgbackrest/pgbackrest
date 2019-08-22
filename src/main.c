@@ -11,11 +11,16 @@ Main
 #include "command/archive/push/push.h"
 #include "command/check/check.h"
 #include "command/command.h"
+#include "command/control/start.h"
+#include "command/control/stop.h"
 #include "command/expire/expire.h"
 #include "command/help/help.h"
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/stanza/create.h"
+#include "command/stanza/delete.h"
+#include "command/stanza/upgrade.h"
 #include "command/storage/list.h"
 #include "common/debug.h"
 #include "common/error.h"
@@ -24,6 +29,7 @@ Main
 #include "config/load.h"
 #include "postgres/interface.h"
 #include "perl/exec.h"
+#include "storage/helper.h"
 #include "version.h"
 
 int
@@ -104,7 +110,7 @@ main(int argListSize, const char *argList[])
                     // archive-get/archive-push and end up in the PostgreSQL log which is not output in CI.  This can be removed
                     // once backup is written in C.
                     if (cfgOptionBool(cfgOptOnline) && !cfgOptionBool(cfgOptBackupStandby) && !cfgOptionTest(cfgOptPgHost))
-                        pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+                        pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
 #endif
 
                     // Run backup
@@ -113,7 +119,8 @@ main(int argListSize, const char *argList[])
                     // Switch to expire command
                     cmdEnd(0, NULL);
                     cfgCommandSet(cfgCmdExpire);
-                    cmdBegin(false);
+                    cfgLoadLogFile();
+                    cmdBegin(true);
 
                     // Run expire
                     perlExec();
@@ -191,7 +198,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaCreate:
                 {
-                    perlExec();
+                    cmdStanzaCreate();
                     break;
                 }
 
@@ -199,7 +206,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaDelete:
                 {
-                    perlExec();
+                    cmdStanzaDelete();
                     break;
                 }
 
@@ -207,7 +214,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaUpgrade:
                 {
-                    perlExec();
+                    cmdStanzaUpgrade();
                     break;
                 }
 
@@ -215,7 +222,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStart:
                 {
-                    perlExec();
+                    cmdStart();
                     break;
                 }
 
@@ -223,7 +230,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStop:
                 {
-                    perlExec();
+                    cmdStop();
                     break;
                 }
 

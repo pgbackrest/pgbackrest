@@ -1,12 +1,14 @@
 /***********************************************************************************************************************************
-Check Command
+Check Command Common
 ***********************************************************************************************************************************/
-#ifndef COMMAND_CHECK_CHECK_H
-#define COMMAND_CHECK_CHECK_H
+#ifndef COMMAND_CHECK_COMMON_H
+#define COMMAND_CHECK_COMMON_H
+
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void cmdCheck(void);
+void checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const unsigned int dbVersion, const String *dbPath);
 
 #endif

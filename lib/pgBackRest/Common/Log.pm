@@ -130,13 +130,13 @@ sub logFileSet
     # Only open the log file if file logging is enabled
     if ($strLogLevelFile ne OFF)
     {
-        $oStorage->pathCreate(dirname($strFile), {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+        $oStorage->pathCreate(dirname($strFile), {strMode => '0750', bIgnoreExists => true, bCreateParent => true});
 
         $strFile .= '.log';
         $bLogFileExists = -e $strFile ? true : false;
         $bLogFileFirst = defined($bLogFileFirstParam) ? $bLogFileFirstParam : false;
 
-        if (!sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT | O_APPEND, oct('0660')))
+        if (!sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT | O_APPEND, oct('0640')))
         {
             logErrorResult(ERROR_FILE_OPEN, "unable to open log file '${strFile}'", $OS_ERROR);
         }

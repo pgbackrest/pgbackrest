@@ -13,6 +13,55 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.17dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jens.wilke"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix slow manifest build for very large quantities of tables/segments.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>The <cmd>stanza-create/update/delete</cmd> commands are implemented entirely in C.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>The <cmd>start</cmd>/<cmd>stop</cmd> commands are implemented entirely in C.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="damiano.albani"/>
+                        </release-item-contributor-list>
+
+                        <p>Create log directories/files with <id>0750</id>/<id>0640</id> mode.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="laurenz.albe"/>
+                        </release-item-contributor-list>
+
+                        <p>Build <backrest/> as an unprivileged user.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2019-08-05" version="2.16" title="C Migrations and Bug Fixes">
@@ -7261,6 +7310,11 @@
             <contributor-id type="github">cmwshang</contributor-id>
         </contributor>
 
+        <contributor id="damiano.albani">
+            <contributor-name-display>Damiano Albani</contributor-name-display>
+            <contributor-id type="github">dalbani</contributor-id>
+        </contributor>
+
         <contributor id="dan.farrell">
             <contributor-name-display>Dan Farrell</contributor-name-display>
             <contributor-id type="github">farrellit</contributor-id>
@@ -7417,6 +7471,11 @@
         <contributor id="laetitia">
             <contributor-name-display>L&amp;aelig;titia</contributor-name-display>
             <contributor-id type="github">LaetitiaLoxo</contributor-id>
+        </contributor>
+
+        <contributor id="laurenz.albe">
+            <contributor-name-display>Laurenz Albe</contributor-name-display>
+            <contributor-id type="github">laurenz</contributor-id>
         </contributor>
 
         <contributor id="leo.khomenko">

@@ -21,6 +21,7 @@ Backup Info Handler
 #include "info/infoManifest.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -52,6 +53,54 @@ struct InfoBackup
 OBJECT_DEFINE_FREE(INFO_BACKUP);
 
 /***********************************************************************************************************************************
+Create new object
+***********************************************************************************************************************************/
+static InfoBackup *
+infoBackupNewInternal(void)
+{
+    FUNCTION_LOG_VOID(logLevelTrace);
+
+    InfoBackup *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("InfoBackup")
+    {
+        // Create object
+        this = memNew(sizeof(InfoBackup));
+        this->memContext = MEM_CONTEXT_NEW();
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
+}
+
+/***********************************************************************************************************************************
+Create new object without loading it from a file
+***********************************************************************************************************************************/
+InfoBackup *
+infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgControlVersion, const uint32_t pgCatalogVersion,
+    CipherType cipherType, const String *cipherPassSub)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
+        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
+    FUNCTION_LOG_END();
+
+    ASSERT(pgVersion > 0 && pgSystemId > 0 && pgControlVersion > 0 && pgCatalogVersion > 0);
+
+    InfoBackup *this = infoBackupNewInternal();
+
+    // Initialize the pg data
+    this->infoPg = infoPgNew(cipherType, cipherPassSub);
+    infoBackupPgSet(this, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
+
+    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
+}
+
+/***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoBackup *
@@ -68,15 +117,11 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    InfoBackup *this = NULL;
+    InfoBackup *this = infoBackupNewInternal();
 
-    MEM_CONTEXT_NEW_BEGIN("InfoBackup")
+    MEM_CONTEXT_BEGIN(this->memContext)
     {
         Ini *ini = NULL;
-
-        // Create object
-        this = memNew(sizeof(InfoBackup));
-        this->memContext = MEM_CONTEXT_NEW();
 
         // Catch file missing error and add backup-specific hints before rethrowing
         TRY_BEGIN()
@@ -148,7 +193,7 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
 
         iniFree(ini);
     }
-    MEM_CONTEXT_NEW_END();
+    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
@@ -219,7 +264,7 @@ infoBackupSave(
             iniSet(ini, STRDEF(INFO_BACKUP_SECTION_BACKUP_CURRENT), backupData.backupLabel, jsonFromKv(backupDataKv, 0));
         }
 
-        infoPgSave(infoBackupPg(this), ini, storage, fileName, cipherType, cipherPass);
+        infoPgSave(infoBackupPg(this), ini, storage, fileName, infoPgBackup, cipherType, cipherPass);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -239,6 +284,25 @@ infoBackupPg(const InfoBackup *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->infoPg);
+}
+
+/***********************************************************************************************************************************
+Set the infoPg data
+***********************************************************************************************************************************/
+InfoBackup *
+infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
+        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
+    FUNCTION_LOG_END();
+
+    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
+
+    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
 
 /***********************************************************************************************************************************
@@ -331,6 +395,21 @@ infoBackupDataLabelList(const InfoBackup *this, const String *expression)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
+}
+
+/***********************************************************************************************************************************
+Return the cipher passphrase
+***********************************************************************************************************************************/
+const String *
+infoBackupCipherPass(const InfoBackup *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
 }
 
 /***********************************************************************************************************************************

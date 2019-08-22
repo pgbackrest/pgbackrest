@@ -83,7 +83,7 @@ testRun(void)
     if (testBegin("storageExists()"))
     {
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storagePgGet(false), "get remote pg storage");
+        TEST_ASSIGN(storageRemote, storagePgGet(1, false), "get remote pg storage");
         storagePathCreateNP(storageTest, strNew("pg"));
 
         TEST_RESULT_BOOL(storageExistsNP(storageRemote, strNew("test.txt")), false, "file does not exist");

@@ -10,7 +10,7 @@ Check Common Handler
 #include "postgres/interface.h"
 
 /***********************************************************************************************************************************
-Check the database path and version are configured correctly.
+Check the database path and version are configured correctly
 ***********************************************************************************************************************************/
 void
 checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const unsigned int dbVersion, const String *dbPath)

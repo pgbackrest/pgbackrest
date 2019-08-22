@@ -1343,13 +1343,27 @@ sub infoMunge
                 foreach my $strSubKey (keys(%{$hParam->{$strSection}{$strKey}}))
                 {
                     # Munge the copy with the new parameter values
-                    $oMungeIni->set($strSection, $strKey, $strSubKey, $hParam->{$strSection}{$strKey}{$strSubKey});
+                    if (defined($hParam->{$strSection}{$strKey}{$strSubKey}))
+                    {
+                        $oMungeIni->set($strSection, $strKey, $strSubKey, $hParam->{$strSection}{$strKey}{$strSubKey});
+                    }
+                    else
+                    {
+                        $oMungeIni->remove($strSection, $strKey, $strSubKey);
+                    }
                 }
             }
             else
             {
                 # Munge the copy with the new parameter values
-                $oMungeIni->set($strSection, $strKey, undef, $hParam->{$strSection}{$strKey});
+                if (defined($hParam->{$strSection}{$strKey}))
+                {
+                    $oMungeIni->set($strSection, $strKey, undef, $hParam->{$strSection}{$strKey});
+                }
+                else
+                {
+                    $oMungeIni->remove($strSection, $strKey);
+                }
             }
         }
     }

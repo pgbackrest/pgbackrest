@@ -302,6 +302,36 @@ dbMove(Db *this, MemContext *parentNew)
 }
 
 /***********************************************************************************************************************************
+Get pg data path loaded from the data_directory GUC
+***********************************************************************************************************************************/
+const String *
+dbPgDataPath(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->pgDataPath);
+}
+
+/***********************************************************************************************************************************
+Get pg version loaded from the server_version_num GUC
+***********************************************************************************************************************************/
+unsigned int
+dbPgVersion(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->pgVersion);
+}
+
+/***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
 String *

@@ -156,6 +156,8 @@ testRun(void)
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
         TEST_RESULT_INT(result.standbyId, 0, "    check standby id");
         TEST_RESULT_BOOL(result.standby == NULL, true, "    check standby");
+        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_84, "    version set");
+        TEST_RESULT_STR(strPtr(dbPgDataPath(result.primary)), "/pgdata", "    path set");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
 

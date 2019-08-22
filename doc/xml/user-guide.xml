@@ -163,7 +163,7 @@
 
         <variable key="host-build-id">build</variable>
         <variable key="host-build">build</variable>
-        <variable key="host-build-user">root</variable>
+        <variable key="host-build-user">{[host-user]}</variable>
         <variable key="host-build-image">{[host-image]}</variable>
         <variable key="host-build-mount">{[host-mount]}</variable>
 
@@ -448,7 +448,7 @@
             <title>Copy <backrest/> binary from build host</title>
 
             <execute user="root">
-                <exe-cmd>scp {[host-build]}:/root/pgbackrest-release-{[version]}/src/pgbackrest /usr/bin</exe-cmd>
+                <exe-cmd>scp {[host-build]}:/build/pgbackrest-release-{[version]}/src/pgbackrest /usr/bin</exe-cmd>
                 <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -729,24 +729,27 @@
         <p>When building from source it is best to use a build host rather than building on production.  Many of the tools required for the build should generally not be installed in production.  <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
         <execute-list host="{[host-build]}">
-            <title>Download version <id>{[version]}</id> of <backrest/></title>
+            <title>Download version <id>{[version]}</id> of <backrest/> to pre-created <path>/build</path> path</title>
 
             <!-- This is shown to the user but never actually run for the very good reason that the release is not available before the documentation is built -->
             <execute user="root" skip="y">
                 <exe-cmd>wget -q -O -
                     {[github-url-release]}/{[version]}.tar.gz |
-                    sudo tar zx -C /root</exe-cmd>
+                    tar zx -C /build</exe-cmd>
             </execute>
 
             <!-- These commands simulate what the command above would do if it could be run -->
             <execute user="root" show="n">
-                <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>mkdir -p /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/libc /root/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/libc /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src /root/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src /build/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root" show="n">
+                <exe-cmd>chown -R {[host-build-user]} /build/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -796,12 +799,12 @@
         <execute-list host="{[host-build]}">
             <title>Build <backrest/> package</title>
 
-            <execute user="root" user-force="y">
-                <exe-cmd>(cd /root/pgbackrest-release-{[version]}/src &amp;&amp; ./configure)</exe-cmd>
+            <execute>
+                <exe-cmd>cd /build/pgbackrest-release-{[version]}/src &amp;&amp; ./configure</exe-cmd>
             </execute>
 
-            <execute user="root">
-                <exe-cmd>make -s -C /root/pgbackrest-release-{[version]}/src</exe-cmd>
+            <execute>
+                <exe-cmd>make -s -C /build/pgbackrest-release-{[version]}/src</exe-cmd>
             </execute>
         </execute-list>
     </section>

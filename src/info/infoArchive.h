@@ -29,8 +29,10 @@ Archive info filename
     STRING_DECLARE(INFO_ARCHIVE_PATH_FILE_COPY_STR);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
+InfoArchive *infoArchiveNew(
+    const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub);
 InfoArchive *infoArchiveNewLoad(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
@@ -39,6 +41,10 @@ Functions
 ***********************************************************************************************************************************/
 const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
+InfoArchive *infoArchivePgSet(
+    InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
+void infoArchiveSave(
+    InfoArchive *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Getters
