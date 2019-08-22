@@ -182,8 +182,6 @@ storagePosixInfoListEntry(
             storageInfo.name = name;
             callback(callbackData, &storageInfo);
         }
-
-        strFree(pathInfo);
     }
 
     FUNCTION_TEST_RETURN_VOID();
