@@ -297,6 +297,7 @@ sub run
             $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2');
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2/logfile', 'IGNORE');
 
+            executeTest('mkfifo ' . $oHostDbMaster->dbBasePath() . '/apipe');
         }
 
         # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.
@@ -401,6 +402,11 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 4194304;
+
+        # Add pipe to exclusions
+        $oHostBackup->configUpdate(
+            {(CFGDEF_SECTION_GLOBAL . ':backup') =>
+                {cfgOptionName(CFGOPT_EXCLUDE) => ['postgresql.auto.conf', 'pg_log/', 'pg_log2', 'apipe']}});
 
         # Error on backup option to check logging
         #---------------------------------------------------------------------------------------------------------------------------

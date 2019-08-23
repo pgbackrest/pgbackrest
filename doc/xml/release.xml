@@ -22,6 +22,16 @@
 
                         <p>Fix slow manifest build for very large quantities of tables/segments.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="clueless.technologist"/>
+                            <release-item-ideator id="janis.puris"/>
+                            <release-item-ideator id="rachid.braum"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix exclusions for special files.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -7310,6 +7320,11 @@
             <contributor-id type="github">clad</contributor-id>
         </contributor>
 
+        <contributor id="clueless.technologist">
+            <contributor-name-display>CluelessTechnologist</contributor-name-display>
+            <contributor-id type="github">CluelessTechnologist</contributor-id>
+        </contributor>
+
         <contributor id="craig.a.james">
             <contributor-name-display>Craig A. James</contributor-name-display>
             <contributor-id type="github">cjames53</contributor-id>
@@ -7586,6 +7601,11 @@
         <contributor id="pritam.barhate">
             <contributor-name-display>Pritam Barhate</contributor-name-display>
             <contributor-id type="github">pritammobisoft</contributor-id>
+        </contributor>
+
+        <contributor id="rachid.braum">
+            <contributor-name-display>Rachid Broum</contributor-name-display>
+            <contributor-id type="github">rachid-casa</contributor-id>
         </contributor>
 
         <contributor id="rakshitha.br">
