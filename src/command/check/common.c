@@ -17,18 +17,20 @@ Check Common Handler
 Check the database path and version are configured correctly
 ***********************************************************************************************************************************/
 void
-checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const unsigned int dbVersion, const String *dbPath)
+checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const Db *dbObject, bool isStandby)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT, dbIdx);
-        FUNCTION_TEST_PARAM(UINT, dbVersion);
-        FUNCTION_TEST_PARAM(STRING, dbPath);
+        FUNCTION_TEST_PARAM(DB, dbObject);
+        FUNCTION_TEST_PARAM(BOOL, isStandby);
     FUNCTION_TEST_END();
 
     ASSERT(dbIdx > 0);
-    ASSERT(dbPath != NULL);
+    ASSERT(dbObject != NULL);
 
+    unsigned int dbVersion = dbPgVersion(dbObject);
+    String *dbPath = dbPgDataPath(dbObject);
     unsigned int pgPath = cfgOptPgPath + (dbIdx - 1);
 
     // Error if the version from the control file and the configured pg-path do not match the values obtained from the database
@@ -40,6 +42,35 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const unsi
             strPtr(pgVersionToStr(dbVersion)), strPtr(dbPath), strPtr(pgVersionToStr(pgVersion)), strPtr(cfgOptionStr(pgPath)),
             strPtr(cfgOptionStr(pgPath)), cfgOptionName(pgPath), cfgOptionName(cfgOptPgPort + (dbIdx - 1)));
     }
+
+    // Check archive configuration if option is valid for the command and set
+    if (!isStandby && cfgOptionValid(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCheck))
+    {
+        String *archiveMode = dbArchiveMode(dbObject);
+
+        // Error if archive_mode = off since pg_start_backup () will fail
+        if (strCmpZ(archiveMode, "off")
+        {
+            THROW(ArchiveDisabledError, "archive_mode must be enabled");
+        }
+
+        // Error if archive_mode = always (support has not been added yet)
+        if (strCmpZ(archiveMode, "always")
+        {
+            THROW(FeatureNotSupportedError, "archive_mode=always not supported");
+        }
+// CSHANG Must add this in as well...
+        // # Check if archive_command is set
+        // my $strArchiveCommand = $self->executeSqlOne('show archive_command');
+        //
+        // if (index($strArchiveCommand, PROJECT_EXE) == -1)
+        // {
+        //     confess &log(ERROR,
+        //         'archive_command ' . (defined($strArchiveCommand) ? "'${strArchiveCommand}'" : '[null]') . ' must contain \'' .
+        //         PROJECT_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
+        // }
+    }
+}
 
     FUNCTION_TEST_RETURN_VOID();
 }

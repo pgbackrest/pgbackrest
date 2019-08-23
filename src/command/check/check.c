@@ -49,7 +49,7 @@ cmdCheck(void)
                 storagePgId(dbGroup.standbyId), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
 
             // Check the user configured path and version against the database
-            checkDbConfig(pgControl.version, dbGroup.standbyId, dbPgVersion(dbGroup.standby), dbPgDataPath(dbGroup.standby));
+            checkDbConfig(pgControl.version, dbGroup.standbyId, dbGroup.standby, true);
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
@@ -76,7 +76,7 @@ cmdCheck(void)
                 storagePgId(dbGroup.primaryId), cfgOptionStr(cfgOptPgPath + dbGroup.primaryId - 1));
 
             // Check the user configured path and version against the database
-            checkDbConfig(pgControl.version, dbGroup.primaryId, dbPgVersion(dbGroup.primary), dbPgDataPath(dbGroup.primary));
+            checkDbConfig(pgControl.version, dbGroup.primaryId, dbGroup.primary, false);
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(

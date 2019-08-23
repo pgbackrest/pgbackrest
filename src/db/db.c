@@ -283,6 +283,34 @@ dbWalSwitch(Db *this)
 }
 
 /***********************************************************************************************************************************
+Get the archive_mode
+***********************************************************************************************************************************/
+String *
+dbArchiveMode(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *archiveMode = varStr(dbQueryColumn(this, STRDEF("show archive_mode")));
+
+        // Copy archive_mode to the calling context
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strDup(archiveMode);
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Move the object to a new context
 ***********************************************************************************************************************************/
 Db *
