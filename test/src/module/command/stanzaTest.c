@@ -302,7 +302,7 @@ testRun(void)
                 "put archive info file");
 
         TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup and archive info files already exist but do not match the database\n"
+            cmdStanzaCreate(), FileInvalidError, "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
 
@@ -341,7 +341,7 @@ testRun(void)
                 "put back info to file");
 
         TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup and archive info files already exist but do not match the database\n"
+            cmdStanzaCreate(), FileInvalidError, "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
 

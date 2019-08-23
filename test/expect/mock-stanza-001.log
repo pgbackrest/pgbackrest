@@ -103,7 +103,7 @@ stanza-create db - fail on database mismatch and warn force option deprecated (d
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: option --force is no longer supported
-P00  ERROR: [028]: backup and archive info files already exist but do not match the database
+P00  ERROR: [028]: backup and archive info files exist but do not match the database
             HINT: is this the correct stanza?
             HINT: did an error occur during stanza-upgrade?
 P00   INFO: stanza-create command end: aborted with exception [028]

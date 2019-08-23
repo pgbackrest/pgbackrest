@@ -8,7 +8,10 @@ Check Common Handler
 #include "config/config.h"
 #include "db/db.h"
 #include "db/helper.h"
+#include "info/infoArchive.h"
+#include "info/infoBackup.h"
 #include "postgres/interface.h"
+#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Check the database path and version are configured correctly
@@ -66,6 +69,44 @@ checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo)
             "HINT: this may be a symptom of repository corruption!",
             archiveInfo->id, strPtr(pgVersionToStr(archiveInfo->version)), archiveInfo->systemId, backupInfo->id,
             strPtr(pgVersionToStr(backupInfo->version)), backupInfo->systemId);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Load and validate the database data of the info files against each other and the current database
+***********************************************************************************************************************************/
+void
+checkStanzaInfoPg(
+    const Storage *storage, const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType,
+    const String *cipherPass)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_TEST_END();
+
+    ASSERT(storage != NULL);
+
+    // Check that the backup and archive info files exist
+    InfoArchive *infoArchive = infoArchiveNewLoad(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
+    InfoPgData archiveInfoPg = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
+    InfoBackup *infoBackup = infoBackupNewLoad(storage, INFO_BACKUP_PATH_FILE_STR, cipherType, cipherPass);
+    InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+
+    // Check that the info files pg data match each other
+    checkStanzaInfo(&archiveInfoPg, &backupInfoPg);
+
+    // Check that the version and system id match the current database
+    if (pgVersion != archiveInfoPg.version || pgSystemId != archiveInfoPg.systemId)
+    {
+        THROW(FileInvalidError, "backup and archive info files exist but do not match the database\n"
+            "HINT: is this the correct stanza?\n"
+            "HINT: did an error occur during stanza-upgrade?");
     }
 
     FUNCTION_TEST_RETURN_VOID();

@@ -12,5 +12,8 @@ Functions
 ***********************************************************************************************************************************/
 void checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const unsigned int dbVersion, const String *dbPath);
 void checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo);
+void checkStanzaInfoPg(
+    const Storage *storage, const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType,
+    const String *cipherPass);
 
 #endif

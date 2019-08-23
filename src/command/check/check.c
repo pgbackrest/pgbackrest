@@ -5,12 +5,15 @@ Check Command
 
 #include "command/archive/common.h"
 #include "command/check/check.h"
+#include "command/check/common.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
+#include "postgres/interface.h"
+#include "protocol/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -33,67 +36,62 @@ cmdCheck(void)
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
 
-        // Attempt to load the archive info file
-        InfoArchive *archiveInfo = infoArchiveNewLoad(
-            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
-        const String *archiveId = infoArchiveId(archiveInfo);
-
         // Get the primary/standby connections (standby is only required if backup from standby is enabled)
         DbGetResult dbGroup = dbGet(false, false);
 
-//         // If a standby is defined, do some sanity checks
-//         if (dbGroup.standby != NULL)
-//         {
-//             // If not primary was not found
-//             if (dbGroup.primary == NULL)
-//             {
-//                 // If the repo is local or more than one pg-path is found then a master should have been found so error
-//                 if (repoIsLocal() || cfgOptionIndexTotal(cfgOptPgPath) > 1)
-//                     THROW_FMT("SOMETHING");
-//
-//                 // Validate the standby database config
-//                 PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
-//
-//                 // Check the user configured path and version against the database
-//                 checkDbConfig(pgControl.version, dbGroup.standbyId, dbPgVersion(dbGroup.standby), dbPgDataPath(dbGroup.standby));
-// // CSHANG Check the info files against each other first (checkStanzaInfo()) then check that one of them matches the pgControl (like we do in stanza-*) - create checkStanzaPg() function for this.
-//                 // Check that the backup info file exists and is valid for the current database of the stanza
-//                 InfoBackup *infoBackup = infoBackupNewLoad(
-//                     storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-//                     cfgOptionStr(cfgOptRepoCipherPass));
-//                 InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
-//                 if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
-//                 {
-//                     THROW_FMT(
-//                         BackupMismatchError, "database version =%s , system-id %" PRIu64 " do not match backup version %s, "
-//                         "system-id %" PRIu64 "\nHINT: is this the correct stanza?", strPtr(pgVersionToStr(pgControl.version)),
-//                         pgControl.systemId, strPtr(pgVersionToStr(backupInfo.version)), backupInfo.systemId);
-//                 }
-//
-//                 // Check that the archive info file exists and is valid for the current database of the stanza
-//                 InfoArchive *infoArchive = infoArchiveNewLoad(
-//                     storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-//                     cfgOptionStr(cfgOptRepoCipherPass));
-//                 InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
-//                 if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
-//                 {
-//                     THROW_FMT(
-//                         ArchiveMismatchError, "database version =%s , system-id %" PRIu64 " do not match archive version %s, "
-//                         "system-id %" PRIu64 "\nHINT: is this the correct stanza?", strPtr(pgVersionToStr(pgControl.version)),
-//                         pgControl.systemId, strPtr(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId);
-//                 }
-//
-//             }
+        // If a standby is defined, check the configuration
+        if (dbGroup.standby != NULL)
+        {
+            // If primary was not found
+            if (dbGroup.primary == NULL)
+            {
+                // If the repo is local or more than one pg-path is found then a master should have been found so error
+                if (repoIsLocal() || cfgOptionIndexTotal(cfgOptPgPath) > 1)
+                    THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
+            }
+// CSHANG I don't see how storagePg can be used here since we could have a standby and primary configured on the repo with pg1-host and pg2-host
+// so calling just storagePg would always get the local host configured (as far as I can tell). What worries me is that we're requiring that pg1-*
+// always be the local db host (you mentioned archive-push) so I think we need to make that very clear in the user-guide. Do we test for p2-path being the only thing configured on the primary to confirm archive push still works?
+            // Validate the standby database config
+            PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
+
+            // Check the user configured path and version against the database
+            checkDbConfig(pgControl.version, dbGroup.standbyId, dbPgVersion(dbGroup.standby), dbPgDataPath(dbGroup.standby));
+
+            // Check that the backup and archive info files exist and are valid for the current database of the stanza
+            checkStanzaInfoPg(
+                storageRepo(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
+// CSHANG "switch wal not performed because no primary was found" sounds like something is wrong. Since now adding code to ensure the standby is
+// configed properly, do we even need this message? It used to log:
+//  &log(INFO, 'switch ' . $oDb->walId() . ' cannot be performed on the standby, all other checks passed successfully');
+            LOG_INFO("switch wal not performed because this is a standby");
 
             // Free the standby connection
             dbFree(dbGroup.standby);
-        // }
+        }
 
-        // Perform a WAL switch and make sure the WAL is archived if a primary was found
+        // If a primary is defined, check the configuration and perform a WAL switch and make sure the WAL is archived
         if (dbGroup.primary != NULL)
         {
-            // Perform WAL switch
+            // Validate the primary database config
+            PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbGroup.primaryId - 1));
+
+            // Check the user configured path and version against the database
+            checkDbConfig(pgControl.version, dbGroup.primaryId, dbPgVersion(dbGroup.primary), dbPgDataPath(dbGroup.primary));
+
+            // Check that the backup and archive info files exist and are valid for the current database of the stanza
+            checkStanzaInfoPg(
+                storageRepo(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
+
+            // Attempt to load the archive info file and retrieve the archiveId
+            InfoArchive *archiveInfo = infoArchiveNewLoad(
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
+            const String *archiveId = infoArchiveId(archiveInfo);
+
+            // Perform a WAL switch
             const String *walSegment = dbWalSwitch(dbGroup.primary);
             dbFree(dbGroup.primary);
 
@@ -114,16 +112,11 @@ cmdCheck(void)
                 THROW_FMT(
                     ArchiveTimeoutError,
                     "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
-                        "HINT: Check the archive_command to ensure that all options are correct (especially --stanza).\n"
-                        "HINT: Check the PostgreSQL server log for errors.",
+                        "HINT: check the archive_command to ensure that all options are correct (especially --stanza)\n"
+                        "HINT: check the PostgreSQL server log for errors",
                     strPtr(walSegment), archiveTimeout);
             }
         }
-        else
- // CSHANG I'm not a fan of this message because it sounds like something is wrong. Since now adding code to ensure the standby is
- // configed properly. Do we even need this message? Maybe we leave it or change it to "switch wal not performed because this is a standby"
-            LOG_INFO("switch wal not performed because no primary was found");
-
     }
     MEM_CONTEXT_TEMP_END();
 

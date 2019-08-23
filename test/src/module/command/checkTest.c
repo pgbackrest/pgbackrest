@@ -73,8 +73,8 @@ testRun(void)
         TEST_ERROR(
             cmdCheck(), ArchiveTimeoutError,
             "WAL segment 000000010000000100000001 was not archived before the 500ms timeout\n"
-            "HINT: Check the archive_command to ensure that all options are correct (especially --stanza).\n"
-            "HINT: Check the PostgreSQL server log for errors.");
+            "HINT: check the archive_command to ensure that all options are correct (especially --stanza)\n"
+            "HINT: check the PostgreSQL server log for errors");
 
         // Create WAL segment
         Buffer *buffer = bufNew(16 * 1024 * 1024);
