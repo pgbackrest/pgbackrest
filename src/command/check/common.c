@@ -104,6 +104,7 @@ checkStanzaInfoPg(
     // Check that the version and system id match the current database
     if (pgVersion != archiveInfoPg.version || pgSystemId != archiveInfoPg.systemId)
     {
+// CSHANG Might want to consider adding a StanzaConfigError or StanzaMismatchError and catch it to have different hints in stanza commands vs check command
         THROW(FileInvalidError, "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");

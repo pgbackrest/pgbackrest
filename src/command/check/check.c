@@ -23,14 +23,7 @@ void
 cmdCheck(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
-// CSHANG Maybe add a check that confirms if backup-standby is set that there IS a standby configured
-// CSHANG May need to do something like we do in pgValidate of stanza-create. Basically, both primary and standby can be defined when the repo is remote. Primary and standby never "know" about each other - only the repo server knows about both. The repo can be on the primary, though or it could be on the standby (neither config is ideal but it can happen). If the standby is only a standby, no primary will be set - so maybe part of check will have to confirm that - how? if pg*-path total = 1 and repo not local, it is OK to have standby-only set?
-// CSHANG Need changes from the stanza-to-c conversion to pass storagePg to pgControlFile so we can get the remote DB info.
-            // // Get the pgControl information from the pg*-path deemed to be the master
-            // result = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbObject.primaryId - 1));
-            //
-            // // Check the user configured path and version against the database
-            // checkDbConfig(result.version,  dbObject.primaryId, dbPgVersion(dbObject.primary), dbPgDataPath(dbObject.primary));
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
@@ -38,7 +31,8 @@ cmdCheck(void)
 
         // Get the primary/standby connections (standby is only required if backup from standby is enabled)
         DbGetResult dbGroup = dbGet(false, false);
-
+// CSHANG TODO: Need to generate the manifest
+// CSHANG TODO: CFGOPT_ARCHIVE_CHECK checks
         // If a standby is defined, check the configuration
         if (dbGroup.standby != NULL)
         {
@@ -49,11 +43,10 @@ cmdCheck(void)
                 if (repoIsLocal() || cfgOptionIndexTotal(cfgOptPgPath) > 1)
                     THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
             }
-// CSHANG I don't see how storagePg can be used here since we could have a standby and primary configured on the repo with pg1-host and pg2-host
-// so calling just storagePg would always get the local host configured (as far as I can tell). What worries me is that we're requiring that pg1-*
-// always be the local db host (you mentioned archive-push) so I think we need to make that very clear in the user-guide. Do we test for p2-path being the only thing configured on the primary to confirm archive push still works?
+// CSHANG What worries me is that we're requiring that pg1-* always be the local db host (you mentioned archive-push) so I think we need to make that very clear in the user-guide. Do we test for p2-path being the only thing configured on the primary to confirm archive push still works?
             // Validate the standby database config
-            PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
+            PgControl pgControl = pgControlFromFile(
+                storagePgId(dbGroup.standbyId), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
 
             // Check the user configured path and version against the database
             checkDbConfig(pgControl.version, dbGroup.standbyId, dbPgVersion(dbGroup.standby), dbPgDataPath(dbGroup.standby));
@@ -62,20 +55,25 @@ cmdCheck(void)
             checkStanzaInfoPg(
                 storageRepo(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
-// CSHANG "switch wal not performed because no primary was found" sounds like something is wrong. Since now adding code to ensure the standby is
-// configed properly, do we even need this message? It used to log:
+// CSHANG "switch wal not performed because no primary was found" sounds like something is wrong. It used to log:
 //  &log(INFO, 'switch ' . $oDb->walId() . ' cannot be performed on the standby, all other checks passed successfully');
             LOG_INFO("switch wal not performed because this is a standby");
 
             // Free the standby connection
             dbFree(dbGroup.standby);
         }
+        // If backup from standby is configured and is true then warn when a standby not found
+        else if (cfgOptionTest(cfgOptBackupStandby) && cfgOptionBool(cfgOptBackupStandby))
+        {
+            &LOG_WARN("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
+        }
 
         // If a primary is defined, check the configuration and perform a WAL switch and make sure the WAL is archived
         if (dbGroup.primary != NULL)
         {
             // Validate the primary database config
-            PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath + dbGroup.primaryId - 1));
+            PgControl pgControl = pgControlFromFile(
+                storagePgId(dbGroup.primaryId), cfgOptionStr(cfgOptPgPath + dbGroup.primaryId - 1));
 
             // Check the user configured path and version against the database
             checkDbConfig(pgControl.version, dbGroup.primaryId, dbPgVersion(dbGroup.primary), dbPgDataPath(dbGroup.primary));
