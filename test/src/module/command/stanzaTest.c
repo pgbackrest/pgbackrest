@@ -267,7 +267,25 @@ testRun(void)
         storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
         storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
 
-        // Create an archive.info file that matches the backup.info file but does not match the current database version
+        // Create an archive.info file and backup.info files that match but do not match the current database version
+        contentBackup = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
+            "db-id=2\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.5\"}\n"
+        );
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+                "put back info to file");
+
         contentArchive = strNew
         (
             "[db]\n"
