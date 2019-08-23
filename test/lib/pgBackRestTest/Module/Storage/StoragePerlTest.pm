@@ -198,6 +198,8 @@ sub run
         utime(1111111113, 1111111113, $self->testPath() . '/sub1/sub2/test-sub2.txt');
         executeTest('chmod 0646 ' . $self->testPath() . '/sub1/test-sub1.txt');
 
+        executeTest('mkfifo -m 606 ' . $self->testPath() . '/sub1/apipe');
+
         executeTest('ln ' . $self->testPath() . '/test.txt ' . $self->testPath() . '/sub1/test-hardlink.txt');
         executeTest('ln ' . $self->testPath() . '/test.txt ' . $self->testPath() . '/sub1/sub2/test-hardlink.txt');
 
@@ -212,6 +214,7 @@ sub run
             sub {$self->storageLocal()->manifest($self->testPath())},
             '{. => {group => ' . $self->group() . ', mode => 0770, type => d, user => ' . $self->pgUser() . '}, ' .
             'sub1 => {group => ' . $self->group() . ', mode => 0750, type => d, user => ' . $self->pgUser() . '}, ' .
+            'sub1/apipe => {group => ' . $self->group() . ', mode => 0606, type => s, user => ' . $self->pgUser() . '}, ' .
             'sub1/sub2 => {group => ' . $self->group() . ', mode => 0750, type => d, user => ' . $self->pgUser() . '}, ' .
             'sub1/sub2/test => {group => ' . $self->group() . ', link_destination => ../.., type => l, user => ' .
                 $self->pgUser() . '}, ' .

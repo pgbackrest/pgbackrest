@@ -62,6 +62,12 @@ storageManifestXsInfo(const String *path, const StorageInfo *info)
             strCatFmt(json, "d\",\"mode\":\"%04o\"}", info->mode);
             break;
         }
+
+        case storageTypeSpecial:
+        {
+            strCatFmt(json, "s\",\"mode\":\"%04o\"}", info->mode);
+            break;
+        }
     }
 
     return json;

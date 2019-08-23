@@ -243,9 +243,17 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *pipeName = strNewFmt("%s/testpipe", testPath());
-        TEST_RESULT_INT(system(strPtr(strNewFmt("mkfifo %s", strPtr(pipeName)))), 0, "create pipe");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("mkfifo -m 666 %s", strPtr(pipeName)))), 0, "create pipe");
 
-        TEST_ERROR_FMT(storageInfoNP(storageTest, pipeName), FileInfoError, "invalid type for '%s'", strPtr(pipeName));
+        TEST_ASSIGN(info, storageInfoNP(storageTest, pipeName), "get info from pipe (special file)");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
+        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_INT(info.mode, 0666, "    check mode");
+        TEST_RESULT_STR(strPtr(info.linkDestination), NULL, "    check link destination");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         storageRemoveP(storageTest, pipeName, .errorOnMissing = true);
     }
