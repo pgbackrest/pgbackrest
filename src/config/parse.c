@@ -242,7 +242,7 @@ Rules:
   the config-include-path will be appended and at least one is expected to exist.
 - If --no-config is specified and --config-include-path is specified then only *.conf files in the config-include-path will be
   loaded; the directory is required.
-- If --no-config is specified and --config-path is specified then only *.conf files in the overriden default config-include-path
+- If --no-config is specified and --config-path is specified then only *.conf files in the overridden default config-include-path
   (<config-path>/conf.d) will be loaded if exist but not required.
 - If --no-config is specified and neither --config-include-path nor --config-path are specified then no configs will be loaded.
 - If --config-path only, the defaults for config and config-include-path will be changed to use that as a base path but the files
