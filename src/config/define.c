@@ -154,7 +154,7 @@ typedef enum
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
         configDefDataTypeDepend, sizeof((const char *[]){__VA_ARGS__}) / sizeof(const char *), optionDepend, __VA_ARGS__),
 
-#define CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE(...)                                                                          \
+#define CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE(...)                                                                          \
     __VA_ARGS__
 
 #define CFGDEFDATA_OPTION_OPTIONAL_COMMAND(command)                                                                                \
