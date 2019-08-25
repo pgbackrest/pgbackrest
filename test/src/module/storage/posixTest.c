@@ -434,7 +434,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsNP(storageTest, sourceFile), false, "check source file not exists");
         TEST_RESULT_BOOL(storageExistsNP(storageTmp, destinationFile), true, "check destination file exists");
 
-        // Move across fileystems without syncing the paths
+        // Move across filesystems without syncing the paths
         // -------------------------------------------------------------------------------------------------------------------------
         sourceFile = destinationFile;
         source = storageNewReadNP(storageTmp, sourceFile);
