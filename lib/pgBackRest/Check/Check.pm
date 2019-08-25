@@ -84,7 +84,7 @@ sub process
         {
             eval
             {
-                # Passing file location dev/null so that the save will fail if it is ever attempted. Pass a miscellaneus value for
+                # Passing file location dev/null so that the save will fail if it is ever attempted. Pass a miscellaneous value for
                 # encryption key since the file will not be saved.
                 my $oBackupManifest = new pgBackRest::Manifest("/dev/null/manifest.chk",
                     {bLoad => false, strDbVersion => $strDbVersion, iDbCatalogVersion => $iCatalogVersion,
