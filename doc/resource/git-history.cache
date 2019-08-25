@@ -7326,7 +7326,7 @@
     {
         "commit": "9516db4ad660a4be29fd43b34ab9e0ef848daaf8",
         "date": "2016-06-27 20:37:25 -0400",
-        "subject": "Closed #209: Dont' use \"localtime\" for HTML-docs.",
+        "subject": "Closed #209: Don't use \"localtime\" for HTML-docs.",
         "body": "The release-date-static var has been added to allow the html footer to use the last release date instead of localtime()."
     },
     {
