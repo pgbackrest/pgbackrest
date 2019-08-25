@@ -519,7 +519,7 @@ sub run
                 $oHostDbStandby->check('verify check command on standby');
             }
 
-            # Shutdown the stanby before creating tablespaces (this will error since paths are different)
+            # Shutdown the standby before creating tablespaces (this will error since paths are different)
             $oHostDbStandby->clusterStop({bIgnoreLogError => true});
         }
 
