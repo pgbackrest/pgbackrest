@@ -1530,7 +1530,7 @@ sub run
         $oManifestBase->{oStorage} = $oStorageTemp;
         $oManifestExpected->{oStorage} = $oStorageTemp;
 
-        # Add a bogus file - all traces to be removed after the manifest has been built to simulate an inital manifest and avoid
+        # Add a bogus file - all traces to be removed after the manifest has been built to simulate an initial manifest and avoid
         # missing files error
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . BOGUS,
             {strMode => MODE_0750, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
