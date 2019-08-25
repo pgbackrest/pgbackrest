@@ -1125,7 +1125,7 @@ sub run
         $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTablespace, MANIFEST_SUBKEY_PATH, $self->{strDbPath} .
             "/tablespace/" . $strTablespaceName);
         $self->testResult(sub {$oManifest->repoPathGet($strTablespace)}, $strTablespace,
-            'repoPathGet() - tablespace - no tablepace-id nor subpath');
+            'repoPathGet() - tablespace - no tablespace-id nor subpath');
 
         # repoPathGet - fully qualified tablespace target
         #---------------------------------------------------------------------------------------------------------------------------
