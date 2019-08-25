@@ -600,7 +600,7 @@ sub run
         }
 
         # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
-        # are run in non-exlusive mode.
+        # are run in non-exclusive mode.
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_93 && $oHostDbMaster->pgVersion() < PG_VERSION_96)
         {
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will cause an error', true)");
