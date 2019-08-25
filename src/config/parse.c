@@ -932,7 +932,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                         // If depend not resolved and option value is set on the command-line then error.  It's OK to have
                         // unresolved options in the config file because they may be there for another command.  For instance,
-                        // spool-path is only loaded for the archive-push command when archive-async=y, and the presense of
+                        // spool-path is only loaded for the archive-push command when archive-async=y, and the presence of
                         // spool-path in the config file should not cause an error here, it will just end up null.
                         if (!dependResolved && optionSet && parseOption->source == cfgSourceParam)
                         {
