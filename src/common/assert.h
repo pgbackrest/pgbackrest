@@ -7,7 +7,7 @@ Assert Routines
 #include "common/error.h"
 
 /***********************************************************************************************************************************
-Asserts are used in test code to ensure that certain conditions are true.  They are ommitted from production builds.
+Asserts are used in test code to ensure that certain conditions are true.  They are omitted from production builds.
 ***********************************************************************************************************************************/
 #ifndef NDEBUG
     #define ASSERT(condition)                                                                                                      \
