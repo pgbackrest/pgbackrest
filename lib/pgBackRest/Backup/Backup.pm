@@ -516,7 +516,7 @@ sub process
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
 
-    # Get passphrase to open manifest (undefined if repo not encrypted) and intialize passphrase variable for backup files
+    # Get passphrase to open manifest (undefined if repo not encrypted) and initialize passphrase variable for backup files
     my $strCipherPassManifest = $oBackupInfo->cipherPassSub();
     my $strCipherPassBackupSet;
 
