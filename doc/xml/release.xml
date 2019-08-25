@@ -3021,7 +3021,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Buld performance improvements.  Improve bin and libc build performance.  Improve code generation performance.</p>
+                        <p>Build performance improvements.  Improve bin and libc build performance.  Improve code generation performance.</p>
                     </release-item>
 
                     <release-item>
