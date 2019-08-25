@@ -70,14 +70,14 @@ sub new
 ####################################################################################################################################
 # initModule
 #
-# Empty init sub in case the ancestor class does not delare one.
+# Empty init sub in case the ancestor class does not declare one.
 ####################################################################################################################################
 sub initModule {}
 
 ####################################################################################################################################
 # initTest
 #
-# Empty init sub in case the ancestor class does not delare one.
+# Empty init sub in case the ancestor class does not declare one.
 ####################################################################################################################################
 sub initTest {}
 
@@ -96,7 +96,7 @@ sub cleanTest
 ####################################################################################################################################
 # cleanModule
 #
-# Empty final sub in case the ancestor class does not delare one.
+# Empty final sub in case the ancestor class does not declare one.
 ####################################################################################################################################
 sub cleanModule {}
 
