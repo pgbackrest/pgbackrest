@@ -166,7 +166,7 @@ testRun(void)
                 ioWriteOpen(write);
 
                 int lockHandle = open(strPtr(strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), O_RDONLY, 0);
-                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle aquired");
+                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle acquired");
                 TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the empty file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
@@ -223,7 +223,7 @@ testRun(void)
                 ioWriteOpen(write);
 
                 int lockHandle = open(strPtr(strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), O_RDONLY, 0);
-                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle aquired");
+                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle acquired");
                 TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the non-empty file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
@@ -275,7 +275,7 @@ testRun(void)
                 ioWriteOpen(write);
 
                 TEST_RESULT_BOOL(
-                    lockAcquire(lockPath, cfgOptionStr(cfgOptStanza), 0, 30000, true), true,"    child process aquires lock");
+                    lockAcquire(lockPath, cfgOptionStr(cfgOptStanza), 0, 30000, true), true,"    child process acquires lock");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew(""));
@@ -324,7 +324,7 @@ testRun(void)
                 ioWriteOpen(write);
 
                 int lockHandle = open(strPtr(strNewFmt("%s/badpid" LOCK_FILE_EXT, strPtr(lockPath))), O_RDONLY, 0);
-                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle aquired");
+                TEST_RESULT_BOOL(lockHandle != -1, true, "    file handle acquired");
                 TEST_RESULT_INT(flock(lockHandle, LOCK_EX | LOCK_NB), 0, "    lock the badpid file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
