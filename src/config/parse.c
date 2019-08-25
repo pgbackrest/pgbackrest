@@ -1077,7 +1077,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         cfgOptionName(optionId));
                                 }
 
-                                // Make sure there are no occurences of //
+                                // Make sure there are no occurrences of //
                                 if (strstr(strPtr(value), "//") != NULL)
                                 {
                                     THROW_FMT(
