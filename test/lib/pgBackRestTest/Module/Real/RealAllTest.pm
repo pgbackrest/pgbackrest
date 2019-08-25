@@ -337,20 +337,20 @@ sub run
                 {strOptionalParam =>
                     ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
                     '/testbase/ --no-' .  cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
-            my $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
+            my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
             my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
 
             # Read info files to confirm the files were created with a different database version
             if ($self->pgVersion() eq PG_VERSION_94)
             {
-                $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                     PG_VERSION_95)}, true, 'archive upgrade forced with pg mismatch');
                 $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
                     PG_VERSION_95)}, true, 'backup upgrade forced with pg mismatch');
             }
             else
             {
-                $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                     PG_VERSION_94)}, true, 'archive create forced with pg mismatch in prep for stanza-upgrade');
                 $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
                     PG_VERSION_94)}, true, 'backup create forced with pg mismatch in prep for stanza-upgrade');
@@ -360,9 +360,9 @@ sub run
             $oHostBackup->stanzaUpgrade('upgrade stanza files online');
 
             # Reread the info files and confirm the result
-            $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
+            $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
             $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
-            $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+            $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                 $self->pgVersion())}, true, 'archive upgrade online corrects db');
             $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
                 $self->pgVersion())}, true, 'backup upgrade online corrects db');

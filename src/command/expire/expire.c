@@ -361,7 +361,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                     for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(listArchiveDisk); archiveIdx++)
                     {
-                        // Is there an archive directory for this archvieId? If not, move on to the next.
+                        // Is there an archive directory for this archiveId? If not, move on to the next.
                         if (strCmp(archiveId, strLstGet(listArchiveDisk, archiveIdx)) != 0)
                             continue;
 
