@@ -191,7 +191,7 @@ sub main
     # ------------------------------------------------------------------------------------------------------------------------------
     or do
     {
-        # Perl 5.10 seems to have a problem propogating errors up through a large call stack, so in the case that the error arrives
+        # Perl 5.10 seems to have a problem propagating errors up through a large call stack, so in the case that the error arrives
         # blank just use the last logged error instead.  Don't do this in all cases because newer Perls seem to work fine and there
         # are other errors that could be arriving in $EVAL_ERROR.
         my $oException = defined($EVAL_ERROR) && length($EVAL_ERROR) > 0 ? $EVAL_ERROR : logErrorLast();
