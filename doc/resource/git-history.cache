@@ -8616,7 +8616,7 @@
         "commit": "148836fe44e81622d1836f851b8b87e21d32188e",
         "date": "2015-06-13 18:25:49 -0400",
         "subject": "Implemented issue #26: Info command.",
-        "body": "* Includes updating the manifest to format 4.  It turns out the manifest and .info files were not very good for providing information.  A format update was required anyway so worked through the backlog of changes that would require a format change.\n\n* Multiple database versions are now supported in the archive.  Does't actually work yet but the structure should be good.\n\n* Tests use more constants now that test logs can catch name regressions."
+        "body": "* Includes updating the manifest to format 4.  It turns out the manifest and .info files were not very good for providing information.  A format update was required anyway so worked through the backlog of changes that would require a format change.\n\n* Multiple database versions are now supported in the archive.  Doesn't actually work yet but the structure should be good.\n\n* Tests use more constants now that test logs can catch name regressions."
     },
     {
         "commit": "5a73b1a2408fd22f90417fcbf70edd41a6a99f3b",
