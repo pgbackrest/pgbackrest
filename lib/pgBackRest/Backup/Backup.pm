@@ -920,7 +920,7 @@ sub process
         &log(WARN, "aborted backup ${strBackupLabel} of same type exists, will be cleaned to remove invalid files and resumed");
         &log(TEST, TEST_BACKUP_RESUME);
 
-        # Clean the backup path before resuming. The delta option may have changed from false to true during the reseume clean
+        # Clean the backup path before resuming. The delta option may have changed from false to true during the resume clean
         # so set it to the result.
         cfgOptionSet(CFGOPT_DELTA, $self->resumeClean($oStorageRepo, $strBackupLabel, $oBackupManifest, $oAbortedManifest,
             cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $strTimelineCurrent, $strTimelineAborted));
