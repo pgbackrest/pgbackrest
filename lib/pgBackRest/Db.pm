@@ -558,7 +558,7 @@ sub backupStart
     my $bChecksumPage =
         $self->executeSqlOne("select count(*) = 1 from pg_settings where name = 'data_checksums' and setting = 'on'");
 
-    # If checksum page option is not explictly set then set it to whatever the database says
+    # If checksum page option is not explicitly set then set it to whatever the database says
     if (!cfgOptionTest(CFGOPT_CHECKSUM_PAGE))
     {
         cfgOptionSet(CFGOPT_CHECKSUM_PAGE, $bChecksumPage);

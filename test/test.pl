@@ -316,7 +316,7 @@ eval
         confess "Only one --test can be provided when --run is specified";
     }
 
-    # Set test path if not expicitly set
+    # Set test path if not explicitly set
     if (!defined($strTestPath))
     {
         $strTestPath = cwd() . '/test';

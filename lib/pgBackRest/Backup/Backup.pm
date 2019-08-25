@@ -809,7 +809,7 @@ sub process
     # If this is an offline backup
     if (!cfgOption(CFGOPT_ONLINE))
     {
-        # If checksum-page is not explictly enabled then disable it.  Even if the version is high enough to have checksums we can't
+        # If checksum-page is not explicitly enabled then disable it.  Even if the version is high enough to have checksums we can't
         # know if they are enabled without asking the database.  When pg_control can be reliably parsed then this decision could be
         # based on that.
         if (!cfgOptionTest(CFGOPT_CHECKSUM_PAGE))
