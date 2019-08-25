@@ -481,7 +481,7 @@ use constant CFGDEF_LOG_FILE                                        => 'log-file
 
 # Defines the log level to use for default messages that are output for every command.  For example, the log message that lists all
 # the options passed is usually output at the info level, but that might not be appropriate for some commands, such as info.  Allow
-# the log level to be lowered so these common messages will not be emmitted where they might be distracting.
+# the log level to be lowered so these common messages will not be emitted where they might be distracting.
 use constant CFGDEF_LOG_LEVEL_DEFAULT                               => 'log-level-default';
     push @EXPORT, qw(CFGDEF_LOG_LEVEL_DEFAULT);
 
