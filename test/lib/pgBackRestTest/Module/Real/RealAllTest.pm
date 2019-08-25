@@ -996,7 +996,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestExtra && !$bS3 && $bHostBackup)
         {
-            # With stanza-delete --force, allow stanza to be deleted regardless of accessiblility of database host
+            # With stanza-delete --force, allow stanza to be deleted regardless of accessibility of database host
             if ($bHostBackup)
             {
                 $oHostDbMaster->stop();
