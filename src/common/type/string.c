@@ -713,7 +713,7 @@ strSize(const String *this)
 }
 
 /***********************************************************************************************************************************
-Trim whitespace from the beginnning and end of a string
+Trim whitespace from the beginning and end of a string
 ***********************************************************************************************************************************/
 String *
 strTrim(String *this)
