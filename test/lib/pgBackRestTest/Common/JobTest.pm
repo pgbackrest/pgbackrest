@@ -365,7 +365,7 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_EXPECT_PATH\]\}/$self->{strExpectPath}/g;
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
 
-                # Set defalt log level
+                # Set default log level
                 my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});
                 $strTestC =~ s/\{\[C\_LOG\_LEVEL\_TEST\]\}/$strLogLevelTestC/g;
 

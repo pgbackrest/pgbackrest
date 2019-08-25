@@ -330,7 +330,7 @@ testRun(void)
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
-            "config new default exists with files, config-include-path passed, defualt config and config-include-path read");
+            "config new default exists with files, config-include-path passed, default config and config-include-path read");
 
         // config and config-include-path are "default".
         //--------------------------------------------------------------------------------------------------------------------------
