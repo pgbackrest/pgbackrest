@@ -2995,7 +2995,7 @@
         "commit": "a9feaba9e521e39928ff5fdbc025eeff8fc17646",
         "date": "2018-11-07 08:51:32 -0500",
         "subject": "Add memContextCallbackClear() to prevent double free() calls.",
-        "body": "If an object free() method was called manually when a callback was set then the callback would call free() again.  This meant that each free() method had to protect against a subsequent call.\n\nInstead, clear the callback (if present) before calling memContextFree().  This is faster (since there is no unecessary callback) and removes the need for semaphores to protect against a double free()."
+        "body": "If an object free() method was called manually when a callback was set then the callback would call free() again.  This meant that each free() method had to protect against a subsequent call.\n\nInstead, clear the callback (if present) before calling memContextFree().  This is faster (since there is no unnecessary callback) and removes the need for semaphores to protect against a double free()."
     },
     {
         "commit": "48d2795f312224f03dc88e99434865540ca71c7e",
