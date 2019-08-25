@@ -1421,7 +1421,7 @@ sub buildDefault
 ####################################################################################################################################
 # validate
 #
-# Checks for any mising values or inconsistencies in the manifest.
+# Checks for any missing values or inconsistencies in the manifest.
 ####################################################################################################################################
 sub validate
 {
