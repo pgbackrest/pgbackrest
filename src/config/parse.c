@@ -582,7 +582,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             if (argFound)
                 THROW_FMT(CommandRequiredError, "no command found");
 
-            // Otherwise set the comand to help
+            // Otherwise set the command to help
             cfgCommandHelpSet(true);
         }
 
