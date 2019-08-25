@@ -2638,7 +2638,7 @@
     {
         "commit": "410a04a58ee59de3055483a2f971c2e42015267e",
         "date": "2018-11-28 14:20:12 -0500",
-        "subject": "Allow arbitary InOut filters to be chained in IoFilterGroup.",
+        "subject": "Allow arbitrary InOut filters to be chained in IoFilterGroup.",
         "body": "If InOut filters were placed next to each other then the second filter would never get a NULL input signaling it to flush.  This arrangement only worked if the second filter had some other indication that it should flush, such as a decompression filter where the flush is indicated in the input stream.\n\nThis is not a live issue because currently no InOut filters are chained together."
     },
     {

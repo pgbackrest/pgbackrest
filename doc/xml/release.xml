@@ -1326,7 +1326,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Allow arbitary <code>InOut</code> filters to be chained in <code>IoFilterGroup</code>.</p>
+                        <p>Allow arbitrary <code>InOut</code> filters to be chained in <code>IoFilterGroup</code>.</p>
                     </release-item>
 
                     <release-item>
