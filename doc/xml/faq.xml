@@ -25,7 +25,7 @@
         <list>
             <list-item>check the archive_command in <postgres/></list-item>
             <list-item>check the <backrest/> configuration settings on each host (e.g. pg* settings are set on the repository host and repo* settings on the pg host)</list-item>
-            <list-item>run the <cmd>check</cmd> command with <br-setting>{[dash]}-archive-timeout</br-setting> set to a higher value than in the <backrest/> configuration file (or default) to see if the WAL queue needs more time to clear. If the system is generating a lot of WAL, then consider configuring <link url="https://pgbackrest.org/user-guide.html#async-archiving">asyncronous archiving</link></list-item>
+            <list-item>run the <cmd>check</cmd> command with <br-setting>{[dash]}-archive-timeout</br-setting> set to a higher value than in the <backrest/> configuration file (or default) to see if the WAL queue needs more time to clear. If the system is generating a lot of WAL, then consider configuring <link url="https://pgbackrest.org/user-guide.html#async-archiving">asynchronous archiving</link></list-item>
         </list>
     </section>
 
