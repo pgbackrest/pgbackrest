@@ -150,7 +150,7 @@ strNewFmt(const char *format, ...)
 /***********************************************************************************************************************************
 Create a new string from a string with a specific length
 
-The string may or may not be zero-terminated but we'll use that nomeclature since we're not concerned about the end of the string.
+The string may or may not be zero-terminated but we'll use that nomenclature since we're not concerned about the end of the string.
 ***********************************************************************************************************************************/
 String *
 strNewN(const char *string, size_t size)
