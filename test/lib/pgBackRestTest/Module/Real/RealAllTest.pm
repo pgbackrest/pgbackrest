@@ -408,7 +408,7 @@ sub run
         # Enabled async archiving
         $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_ARCHIVE_ASYNC) => 'y'}});
 
-        # Kick out a bunch of archive logs to excercise async archiving.  Only do this when compressed and remote to slow it
+        # Kick out a bunch of archive logs to exercise async archiving.  Only do this when compressed and remote to slow it
         # down enough to make it evident that the async process is working.
         if ($bTestExtra && $bCompress && $strBackupDestination eq HOST_BACKUP)
         {
