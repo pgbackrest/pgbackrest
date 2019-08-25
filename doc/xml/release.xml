@@ -2691,7 +2691,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Error handling improvments.  Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.  Add <code>_FMT</code> variants for all <code>THROW</code> macros so format types are checked by the compiler.</p>
+                        <p>Error handling improvements.  Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.  Add <code>_FMT</code> variants for all <code>THROW</code> macros so format types are checked by the compiler.</p>
                     </release-item>
 
                     <release-item>
