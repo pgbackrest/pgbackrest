@@ -5487,7 +5487,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Miminize TeXLive package list to save time during VM builds.</p>
+                        <p>Minimize TeXLive package list to save time during VM builds.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>

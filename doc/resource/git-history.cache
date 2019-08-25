@@ -6869,7 +6869,7 @@
         "commit": "6f34fbc6957f16719749372d78c014abe9b8a5f7",
         "date": "2016-10-03 09:15:29 -0400",
         "subject": "Vagrant build improvements:",
-        "body": "* Miminize TeXLive package list to save time during VM builds.\n* General cleanup and added timestamps.\n* Pin to specific box version."
+        "body": "* Minimize TeXLive package list to save time during VM builds.\n* General cleanup and added timestamps.\n* Pin to specific box version."
     },
     {
         "commit": "07898d33e332aa892e406d2df729c5d900110d41",
