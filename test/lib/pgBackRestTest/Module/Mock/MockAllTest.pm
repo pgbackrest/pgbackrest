@@ -365,7 +365,7 @@ sub run
         $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad',
                                               '../pg_config/postgresql.conf.link');
 
-        # Fail bacause two links point to the same place
+        # Fail because two links point to the same place
         $strFullBackup = $oHostBackup->backup(
             $strType, 'error on link to a link',
             {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
