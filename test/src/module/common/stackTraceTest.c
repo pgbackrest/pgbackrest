@@ -188,7 +188,7 @@ testRun(void)
             }
             CATCH(ConfigError)
             {
-                // Ignore the error since we are just testing stack cleaup
+                // Ignore the error since we are just testing stack cleanup
             }
             TRY_END();
 
@@ -197,7 +197,7 @@ testRun(void)
         }
         CATCH(ConfigError)
         {
-            // Ignore the error since we are just testing stack cleaup
+            // Ignore the error since we are just testing stack cleanup
         }
         TRY_END();
 
