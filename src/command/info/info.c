@@ -317,7 +317,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         }
         CATCH(CryptoError)
         {
-            // If a reason for the error is due to a an ecryption error, add a hint
+            // If a reason for the error is due to a an encryption error, add a hint
             THROW_FMT(
                 CryptoError,
                 "%s\n"
