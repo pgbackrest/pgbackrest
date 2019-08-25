@@ -83,7 +83,7 @@ process-max=1
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 
-        <p>It is often desireable to restore the latest backup from a production server to a development server. In principal, the instructions are the same as in <link url="https://pgbackrest.org/user-guide.html#replication/hot-standby">setting up a hot standby</link> with a few exceptions.</p>
+        <p>It is often desirable to restore the latest backup from a production server to a development server. In principal, the instructions are the same as in <link url="https://pgbackrest.org/user-guide.html#replication/hot-standby">setting up a hot standby</link> with a few exceptions.</p>
 
         <p>NEED TO ELABORATE HERE:  Need an example of the restore command - what settings are different? Would they be {[dash]}-target, {[dash]}-target-action=promote, {[dash]}-type=immediate on the command-line? What about in the POSTGRES (e.g. hot_standby = on / wal_level = hot_standby - these would be different, no?) and PGBACKREST (e.g. would recovery-option=standby_mode=on still be set?) config files</p>
     </section>
