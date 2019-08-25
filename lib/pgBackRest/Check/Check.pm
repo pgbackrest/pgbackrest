@@ -69,7 +69,7 @@ sub process
     # Get the master database object to test to see if the manifest can be built
     my ($oDb) = dbMasterGet();
 
-    # Get the databse version to pass to the manifest constructor and the system-id in the event of a failure
+    # Get the database version to pass to the manifest constructor and the system-id in the event of a failure
     my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info();
 
     # Turn off console logging to control when to display the error
