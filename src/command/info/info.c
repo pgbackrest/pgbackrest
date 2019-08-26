@@ -482,13 +482,13 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
                     backupResult, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
                 strCat(backupResult, "            wal start/stop: ");
 
-                KeyValue *archiveDBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
+                KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
 
-                if (kvGet(archiveDBackupInfo, KEY_START_VAR) != NULL &&
-                    kvGet(archiveDBackupInfo, KEY_STOP_VAR) != NULL)
+                if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL &&
+                    kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)
                 {
-                    strCatFmt(backupResult, "%s / %s\n", strPtr(varStr(kvGet(archiveDBackupInfo, KEY_START_VAR))),
-                        strPtr(varStr(kvGet(archiveDBackupInfo, KEY_STOP_VAR))));
+                    strCatFmt(backupResult, "%s / %s\n", strPtr(varStr(kvGet(archiveBackupInfo, KEY_START_VAR))),
+                        strPtr(varStr(kvGet(archiveBackupInfo, KEY_STOP_VAR))));
                 }
                 else
                     strCat(backupResult, "n/a\n");
