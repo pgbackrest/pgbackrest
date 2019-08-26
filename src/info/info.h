@@ -30,7 +30,9 @@ Constants
 Constructors
 ***********************************************************************************************************************************/
 Info *infoNew(CipherType cipherType, const String *cipherPassSub);
-Info *infoNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass, Ini **ini);
+Info *infoNewLoad(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
+    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value), void *callbackData);
 
 /***********************************************************************************************************************************
 Functions

@@ -116,7 +116,7 @@ infoPgNewLoad(
     {
         // Load info
         Ini *iniLocal = NULL;
-        this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, &iniLocal);
+        this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, NULL, NULL);
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
