@@ -548,7 +548,7 @@ sub buildConfigDefine
                 {
                     $strBuildSourceOptional .=
                         (defined($strBuildSourceOptional) ? "\n" : '') .
-                        "            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE\n" .
+                        "            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE\n" .
                         "            (\n" .
                         "                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(" . buildConfigDefineCommandEnum($strCommand) . ")\n" .
                         "\n" .

@@ -261,7 +261,7 @@ sub run
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL . '/anything.tmp', 'IGNORE');
 
-            # Create pg_snaphots dir and file - only file will be ignored
+            # Create pg_snapshots dir and file - only file will be ignored
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS . '/anything.tmp', 'IGNORE');
 
@@ -297,6 +297,7 @@ sub run
             $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2');
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2/logfile', 'IGNORE');
 
+            executeTest('mkfifo ' . $oHostDbMaster->dbBasePath() . '/apipe');
         }
 
         # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.
@@ -364,7 +365,7 @@ sub run
         $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad',
                                               '../pg_config/postgresql.conf.link');
 
-        # Fail bacause two links point to the same place
+        # Fail because two links point to the same place
         $strFullBackup = $oHostBackup->backup(
             $strType, 'error on link to a link',
             {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
@@ -401,6 +402,11 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 4194304;
+
+        # Add pipe to exclusions
+        $oHostBackup->configUpdate(
+            {(CFGDEF_SECTION_GLOBAL . ':backup') =>
+                {cfgOptionName(CFGOPT_EXCLUDE) => ['postgresql.auto.conf', 'pg_log/', 'pg_log2', 'apipe']}});
 
         # Error on backup option to check logging
         #---------------------------------------------------------------------------------------------------------------------------

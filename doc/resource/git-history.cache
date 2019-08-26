@@ -2638,7 +2638,7 @@
     {
         "commit": "410a04a58ee59de3055483a2f971c2e42015267e",
         "date": "2018-11-28 14:20:12 -0500",
-        "subject": "Allow arbitary InOut filters to be chained in IoFilterGroup.",
+        "subject": "Allow arbitrary InOut filters to be chained in IoFilterGroup.",
         "body": "If InOut filters were placed next to each other then the second filter would never get a NULL input signaling it to flush.  This arrangement only worked if the second filter had some other indication that it should flush, such as a decompression filter where the flush is indicated in the input stream.\n\nThis is not a live issue because currently no InOut filters are chained together."
     },
     {
@@ -2995,7 +2995,7 @@
         "commit": "a9feaba9e521e39928ff5fdbc025eeff8fc17646",
         "date": "2018-11-07 08:51:32 -0500",
         "subject": "Add memContextCallbackClear() to prevent double free() calls.",
-        "body": "If an object free() method was called manually when a callback was set then the callback would call free() again.  This meant that each free() method had to protect against a subsequent call.\n\nInstead, clear the callback (if present) before calling memContextFree().  This is faster (since there is no unecessary callback) and removes the need for semaphores to protect against a double free()."
+        "body": "If an object free() method was called manually when a callback was set then the callback would call free() again.  This meant that each free() method had to protect against a subsequent call.\n\nInstead, clear the callback (if present) before calling memContextFree().  This is faster (since there is no unnecessary callback) and removes the need for semaphores to protect against a double free()."
     },
     {
         "commit": "48d2795f312224f03dc88e99434865540ca71c7e",
@@ -6869,7 +6869,7 @@
         "commit": "6f34fbc6957f16719749372d78c014abe9b8a5f7",
         "date": "2016-10-03 09:15:29 -0400",
         "subject": "Vagrant build improvements:",
-        "body": "* Miminize TeXLive package list to save time during VM builds.\n* General cleanup and added timestamps.\n* Pin to specific box version."
+        "body": "* Minimize TeXLive package list to save time during VM builds.\n* General cleanup and added timestamps.\n* Pin to specific box version."
     },
     {
         "commit": "07898d33e332aa892e406d2df729c5d900110d41",
@@ -7326,7 +7326,7 @@
     {
         "commit": "9516db4ad660a4be29fd43b34ab9e0ef848daaf8",
         "date": "2016-06-27 20:37:25 -0400",
-        "subject": "Closed #209: Dont' use \"localtime\" for HTML-docs.",
+        "subject": "Closed #209: Don't use \"localtime\" for HTML-docs.",
         "body": "The release-date-static var has been added to allow the html footer to use the last release date instead of localtime()."
     },
     {
@@ -7474,7 +7474,7 @@
     {
         "commit": "9a9f26a96f0365b0223231f74426602edb5caad9",
         "date": "2016-05-27 18:36:25 -0400",
-        "subject": "Some word smithing in the introduction."
+        "subject": "Some wordsmithing in the introduction."
     },
     {
         "commit": "174b16165b2cd555fd63a6516520900089d643ab",
@@ -8616,7 +8616,7 @@
         "commit": "148836fe44e81622d1836f851b8b87e21d32188e",
         "date": "2015-06-13 18:25:49 -0400",
         "subject": "Implemented issue #26: Info command.",
-        "body": "* Includes updating the manifest to format 4.  It turns out the manifest and .info files were not very good for providing information.  A format update was required anyway so worked through the backlog of changes that would require a format change.\n\n* Multiple database versions are now supported in the archive.  Does't actually work yet but the structure should be good.\n\n* Tests use more constants now that test logs can catch name regressions."
+        "body": "* Includes updating the manifest to format 4.  It turns out the manifest and .info files were not very good for providing information.  A format update was required anyway so worked through the backlog of changes that would require a format change.\n\n* Multiple database versions are now supported in the archive.  Doesn't actually work yet but the structure should be good.\n\n* Tests use more constants now that test logs can catch name regressions."
     },
     {
         "commit": "5a73b1a2408fd22f90417fcbf70edd41a6a99f3b",

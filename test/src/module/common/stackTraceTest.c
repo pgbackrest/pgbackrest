@@ -91,14 +91,14 @@ testRun(void)
             TEST_RESULT_STR(
                 buffer,
                 "file1:function2:99:(test build required for parameters)\n"
-                "    ... function(s) ommitted ...\n"
+                "    ... function(s) omitted ...\n"
                 "file1:function1:0:(void)",
                 "    check stack trace");
 #else
             TEST_RESULT_STR(
                 buffer,
                 "file1:function2:99:(test build required for parameters)\n"
-                "    ... function(s) ommitted ...\n"
+                "    ... function(s) omitted ...\n"
                 "file1:function1:(void)",
                 "    check stack trace");
 #endif
@@ -188,7 +188,7 @@ testRun(void)
             }
             CATCH(ConfigError)
             {
-                // Ignore the error since we are just testing stack cleaup
+                // Ignore the error since we are just testing stack cleanup
             }
             TRY_END();
 
@@ -197,7 +197,7 @@ testRun(void)
         }
         CATCH(ConfigError)
         {
-            // Ignore the error since we are just testing stack cleaup
+            // Ignore the error since we are just testing stack cleanup
         }
         TRY_END();
 

@@ -82,7 +82,7 @@ infoNew(CipherType cipherType, const String *cipherPassSub)
 
     Info *this = infoNewInternal();
 
-    // Cipher used to encrypt/descrypt subsequent dependent files. Value may be NULL.
+    // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
     if (cipherPassSub != NULL)
         this->cipherPass = cipherPassSub;
 

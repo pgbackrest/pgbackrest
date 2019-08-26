@@ -65,7 +65,7 @@
             <p>Retention polices can be set for full and differential backups to create coverage for any timeframe.  WAL archive can be maintained for all backups or strictly for the most recent backups.  In the latter case WAL required to make older backups consistent will be maintained in the archive.</p>
         </section>
 
-        <section id="backup-intregrity">
+        <section id="backup-integrity">
             <title>Backup Integrity</title>
 
             <p>Checksums are calculated for every file in the backup and rechecked during a restore.  After a backup finishes copying files, it waits until every WAL segment required to make the backup consistent reaches the repository.</p>

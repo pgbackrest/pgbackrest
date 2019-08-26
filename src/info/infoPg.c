@@ -153,7 +153,7 @@ infoPgNewLoad(
                     this->historyCurrent = lstSize(this->history);
 
                 // Get values that are only in backup and manifest files.  These are really vestigial since stanza-create verifies
-                // the control and catalog versions so there is no good reason to store them.  However, for backward compatability
+                // the control and catalog versions so there is no good reason to store them.  However, for backward compatibility
                 // we must write them at least, even if we give up reading them.
                 if (type == infoPgBackup || type == infoPgManifest)
                 {

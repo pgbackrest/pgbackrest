@@ -159,7 +159,7 @@ Structure for scripting pq responses
 ***********************************************************************************************************************************/
 typedef struct HarnessPq
 {
-    unsigned int session;                                           // Session number when mutliple sessions are run concurrently
+    unsigned int session;                                           // Session number when multiple sessions are run concurrently
     const char *function;                                           // Function call expected
     const char *param;                                              // Params expected by the function for verification
     int resultInt;                                                  // Int result value

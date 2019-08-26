@@ -387,7 +387,7 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
             this->interface.remove(this->driver, storageReadName(source), false);
 
             // Sync source path if the destination path was synced.  We know the source and destination paths are different because
-            // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented becaue there's
+            // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented because there's
             // no way to get coverage on it now.
             if (storageWriteSyncPath(destination))
                 this->interface.pathSync(this->driver, strPath(storageReadName(source)));

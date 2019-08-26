@@ -361,7 +361,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                     for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(listArchiveDisk); archiveIdx++)
                     {
-                        // Is there an archive directory for this archvieId? If not, move on to the next.
+                        // Is there an archive directory for this archiveId? If not, move on to the next.
                         if (strCmp(archiveId, strLstGet(listArchiveDisk, archiveIdx)) != 0)
                             continue;
 
@@ -406,7 +406,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         }
 
                         // If we get here, then a local backup was found for retention
-                        StringList *localBackupArchiveRententionList = strLstNew();
+                        StringList *localBackupArchiveRetentionList = strLstNew();
 
                         // If the archive retention is less than or equal to the number of all backups, then perform selective
                         // expiration
@@ -423,7 +423,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                             strLstGet(globalBackupArchiveRetentionList, globalIdx),
                                             strLstGet(localBackupRetentionList, localIdx)) == 0)
                                     {
-                                        strLstAdd(localBackupArchiveRententionList, strLstGet(localBackupRetentionList, localIdx));
+                                        strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, localIdx));
                                     }
                                 }
                             }
@@ -437,15 +437,15 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             LOG_INFO(
                                 "full backup total < %u - using oldest full backup for %s archive retention", archiveRetention,
                                 strPtr(archiveId));
-                            strLstAdd(localBackupArchiveRententionList, strLstGet(localBackupRetentionList, 0));
+                            strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, 0));
                         }
 
                         // If no local backups were found as part of retention then set the backup archive retention to the newest
                         // backup so that the database is fully recoverable (can be recovered from the last backup through pitr)
-                        if (strLstSize(localBackupArchiveRententionList) == 0)
+                        if (strLstSize(localBackupArchiveRetentionList) == 0)
                         {
                             strLstAdd(
-                                localBackupArchiveRententionList,
+                                localBackupArchiveRetentionList,
                                 strLstGet(localBackupRetentionList, strLstSize(localBackupRetentionList) - 1));
                         }
 
@@ -458,7 +458,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             InfoBackupData archiveIdBackup = infoBackupData(infoBackup, infoBackupIdx);
 
                             // If this is the backup selected for retention, store its data
-                            if (strCmp(archiveIdBackup.backupLabel, strLstGet(localBackupArchiveRententionList, 0)) == 0)
+                            if (strCmp(archiveIdBackup.backupLabel, strLstGet(localBackupArchiveRetentionList, 0)) == 0)
                                 archiveRetentionBackup = infoBackupData(infoBackup, infoBackupIdx);
 
                             // If this is a backup associated with this archive Id, then add it to the list to check

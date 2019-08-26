@@ -92,7 +92,7 @@ Core context handling macros, only intended to be called from other macros
     TRY_END();
 
 /***********************************************************************************************************************************
-Simplifies creation of the memory context in contructors and includes error handling
+Simplifies creation of the memory context in constructors and includes error handling
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_XS_NEW_BEGIN(contextName)                                                                                      \
 {                                                                                                                                  \

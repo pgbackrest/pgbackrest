@@ -9,7 +9,7 @@ Common Functions and Definitions for Backup and Expire Commands
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Backup type enum and contants
+Backup type enum and constants
 ***********************************************************************************************************************************/
 typedef enum
 {

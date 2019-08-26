@@ -243,9 +243,17 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *pipeName = strNewFmt("%s/testpipe", testPath());
-        TEST_RESULT_INT(system(strPtr(strNewFmt("mkfifo %s", strPtr(pipeName)))), 0, "create pipe");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("mkfifo -m 666 %s", strPtr(pipeName)))), 0, "create pipe");
 
-        TEST_ERROR_FMT(storageInfoNP(storageTest, pipeName), FileInfoError, "invalid type for '%s'", strPtr(pipeName));
+        TEST_ASSIGN(info, storageInfoNP(storageTest, pipeName), "get info from pipe (special file)");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
+        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_INT(info.mode, 0666, "    check mode");
+        TEST_RESULT_STR(strPtr(info.linkDestination), NULL, "    check link destination");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         storageRemoveP(storageTest, pipeName, .errorOnMissing = true);
     }
@@ -281,13 +289,16 @@ testRun(void)
         TEST_RESULT_UINT(testStorageInfoListSize, 0, "    no file found");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageTest, strNew("pg"), .mode = 0766);
+        storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0766);
 
         TEST_RESULT_VOID(
             storageInfoListNP(storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent()),
             "empty directory");
-        TEST_RESULT_UINT(testStorageInfoListSize, 1, "    only path returned");
-        TEST_RESULT_STR(strPtr(testStorageInfoList[0].name), ".", "    check name");
+        TEST_RESULT_UINT(testStorageInfoListSize, 2, "    two paths returned");
+        TEST_RESULT_STR(
+            strPtr(testStorageInfoList[0].name), strEqZ(testStorageInfoList[1].name, ".") ? ".include" : ".", "    check name");
+        TEST_RESULT_STR(
+            strPtr(testStorageInfoList[1].name), strEqZ(testStorageInfoList[0].name, ".") ? ".include" : ".", "    check name");
     }
 
     // *****************************************************************************************************************************
@@ -315,9 +326,9 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew("aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
+            storagePutNP(storageNewWriteNP(storageTest, strNew(".aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(storageListNP(storageTest, NULL), ", ")), "aaa.txt, noperm",
+            strPtr(strLstJoin(strLstSort(storageListNP(storageTest, NULL), sortOrderAsc), ", ")), ".aaa.txt, noperm",
             "dir list");
 
         TEST_RESULT_VOID(
@@ -426,7 +437,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsNP(storageTest, sourceFile), false, "check source file not exists");
         TEST_RESULT_BOOL(storageExistsNP(storageTmp, destinationFile), true, "check destination file exists");
 
-        // Move across fileystems without syncing the paths
+        // Move across filesystems without syncing the paths
         // -------------------------------------------------------------------------------------------------------------------------
         sourceFile = destinationFile;
         source = storageNewReadNP(storageTmp, sourceFile);

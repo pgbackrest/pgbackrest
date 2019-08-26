@@ -156,7 +156,7 @@ parameters.
     /* Format the expected result */                                                                                               \
     formatMacro(type, format, TEST_RESULT_resultExpected);                                                                         \
                                                                                                                                    \
-    /* Try to run the statement.  Assign expected to result to silence compiler warning about unitialized var. */                  \
+    /* Try to run the statement.  Assign expected to result to silence compiler warning about uninitialized var. */                \
     type TEST_RESULT_result = (type)TEST_RESULT_resultExpected;                                                                    \
                                                                                                                                    \
     TRY_BEGIN()                                                                                                                    \

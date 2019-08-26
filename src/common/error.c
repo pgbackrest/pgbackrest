@@ -315,7 +315,7 @@ errorInternalTry(const char *fileName, const char *functionName, int fileLine)
 }
 
 /***********************************************************************************************************************************
-Propogate the error up so it can be caught
+Propagate the error up so it can be caught
 ***********************************************************************************************************************************/
 void
 errorInternalPropagate(void)
@@ -368,7 +368,7 @@ errorInternalProcess(bool catch)
     // Remove the try
     errorContext.tryTotal--;
 
-    // If not caught in the last try then propogate
+    // If not caught in the last try then propagate
     if (errorContext.tryList[errorContext.tryTotal + 1].uncaught)
         errorInternalPropagate();
 
@@ -403,7 +403,7 @@ errorInternalThrow(const ErrorType *errorType, const char *fileName, const char 
 
     errorContext.error.stackTrace = (const char *)stackTraceBuffer;
 
-    // Propogate the error
+    // Propagate the error
     errorInternalPropagate();
 }
 

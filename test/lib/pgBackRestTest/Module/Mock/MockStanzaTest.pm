@@ -217,9 +217,9 @@ sub run
         forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoFile, {bRecurse => false});
 
         #  Confirm versions
-        my $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
+        my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
         my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
-        $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+        $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
             PG_VERSION_93)}, true, 'archive at old pg version');
         $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
             PG_VERSION_95)}, true, 'backup at new pg version');

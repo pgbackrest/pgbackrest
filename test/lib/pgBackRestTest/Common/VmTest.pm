@@ -362,7 +362,7 @@ my $oyVm =
 };
 
 ####################################################################################################################################
-# Set VM_DB_TEST to VM_DB if it is not defined so it doesn't have to be checked everywere
+# Set VM_DB_TEST to VM_DB if it is not defined so it doesn't have to be checked everywhere
 ####################################################################################################################################
 foreach my $strVm (sort(keys(%{$oyVm})))
 {

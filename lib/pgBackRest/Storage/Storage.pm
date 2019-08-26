@@ -991,7 +991,7 @@ sub encrypted
 }
 
 ####################################################################################################################################
-# encryptionValid - determine if encyption set properly based on the value passed
+# encryptionValid - determine if encryption set properly based on the value passed
 ####################################################################################################################################
 sub encryptionValid
 {

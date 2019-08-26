@@ -69,7 +69,7 @@ sub codeCountScan
                  $strFile eq 'test/src/valgrind.suppress' ||
                  $strFile eq 'test/src/lcov.conf');
 
-        # Classify the souce file
+        # Classify the source file
         my $strClass = 'test/harness';
 
         if ($strFile =~ '^doc/xml/' || $strFile eq 'doc/manifest.xml')
