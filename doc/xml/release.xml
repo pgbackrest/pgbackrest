@@ -1326,7 +1326,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Allow arbitary <code>InOut</code> filters to be chained in <code>IoFilterGroup</code>.</p>
+                        <p>Allow arbitrary <code>InOut</code> filters to be chained in <code>IoFilterGroup</code>.</p>
                     </release-item>
 
                     <release-item>
@@ -2691,7 +2691,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Error handling improvments.  Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.  Add <code>_FMT</code> variants for all <code>THROW</code> macros so format types are checked by the compiler.</p>
+                        <p>Error handling improvements.  Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.  Add <code>_FMT</code> variants for all <code>THROW</code> macros so format types are checked by the compiler.</p>
                     </release-item>
 
                     <release-item>
@@ -3021,7 +3021,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Buld performance improvements.  Improve bin and libc build performance.  Improve code generation performance.</p>
+                        <p>Build performance improvements.  Improve bin and libc build performance.  Improve code generation performance.</p>
                     </release-item>
 
                     <release-item>
@@ -5487,7 +5487,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Miminize TeXLive package list to save time during VM builds.</p>
+                        <p>Minimize TeXLive package list to save time during VM builds.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
