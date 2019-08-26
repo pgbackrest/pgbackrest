@@ -194,9 +194,13 @@ sub run
         utime(1111111112, 1111111112, $self->testPath() . '/sub1/test-sub1.txt');
         executeTest('chmod 0640 ' . $self->testPath() . '/sub1/test-sub1.txt');
 
+        executeTest("echo 'TESTDATA_' > ". $self->testPath() . '/sub1/.test-sub1.txt');
+        utime(1111111112, 1111111112, $self->testPath() . '/sub1/.test-sub1.txt');
+        executeTest('chmod 0640 ' . $self->testPath() . '/sub1/.test-sub1.txt');
+
         executeTest("echo 'TESTDATA__' > " . $self->testPath() . '/sub1/sub2/test-sub2.txt');
         utime(1111111113, 1111111113, $self->testPath() . '/sub1/sub2/test-sub2.txt');
-        executeTest('chmod 0646 ' . $self->testPath() . '/sub1/test-sub1.txt');
+        executeTest('chmod 0646 ' . $self->testPath() . '/sub1/sub2/test-sub2.txt');
 
         executeTest('mkfifo -m 606 ' . $self->testPath() . '/sub1/apipe');
 
@@ -214,6 +218,9 @@ sub run
             sub {$self->storageLocal()->manifest($self->testPath())},
             '{. => {group => ' . $self->group() . ', mode => 0770, type => d, user => ' . $self->pgUser() . '}, ' .
             'sub1 => {group => ' . $self->group() . ', mode => 0750, type => d, user => ' . $self->pgUser() . '}, ' .
+            'sub1/.test-sub1.txt => ' .
+                '{group => ' . $self->group() . ', mode => 0640, modification_time => 1111111112, size => 10, type => f, user => ' .
+                $self->pgUser() . '}, ' .
             'sub1/apipe => {group => ' . $self->group() . ', mode => 0606, type => s, user => ' . $self->pgUser() . '}, ' .
             'sub1/sub2 => {group => ' . $self->group() . ', mode => 0750, type => d, user => ' . $self->pgUser() . '}, ' .
             'sub1/sub2/test => {group => ' . $self->group() . ', link_destination => ../.., type => l, user => ' .
@@ -222,14 +229,14 @@ sub run
                 '{group => ' . $self->group() . ', mode => 0640, modification_time => 1111111111, size => 9, type => f, user => ' .
                 $self->pgUser() . '}, ' .
             'sub1/sub2/test-sub2.txt => ' .
-                '{group => ' . $self->group() . ', mode => 0666, modification_time => 1111111113, size => 11, type => f, user => ' .
+                '{group => ' . $self->group() . ', mode => 0646, modification_time => 1111111113, size => 11, type => f, user => ' .
                 $self->pgUser() . '}, ' .
             'sub1/test => {group => ' . $self->group() . ', link_destination => .., type => l, user => ' . $self->pgUser() . '}, ' .
             'sub1/test-hardlink.txt => ' .
                 '{group => ' . $self->group() . ', mode => 0640, modification_time => 1111111111, size => 9, type => f, user => ' .
                 $self->pgUser() . '}, ' .
             'sub1/test-sub1.txt => ' .
-                '{group => ' . $self->group() . ', mode => 0646, modification_time => 1111111112, size => 10, type => f, user => ' .
+                '{group => ' . $self->group() . ', mode => 0640, modification_time => 1111111112, size => 10, type => f, user => ' .
                 $self->pgUser() . '}, ' .
             'sub2 => {group => ' . $self->group() . ', mode => 0750, type => d, user => ' . $self->pgUser() . '}, ' .
             'test.txt => ' .
