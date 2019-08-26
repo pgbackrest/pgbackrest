@@ -570,7 +570,7 @@ httpClientResponseCodeOk(const HttpClient *this)
 Get the response headers
 ***********************************************************************************************************************************/
 const HttpHeader *
-httpClientReponseHeader(const HttpClient *this)
+httpClientResponseHeader(const HttpClient *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_CLIENT, this);

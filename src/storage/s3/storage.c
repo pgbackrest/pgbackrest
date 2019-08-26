@@ -352,7 +352,7 @@ storageS3Request(
                     }
 
                     // Output response headers
-                    const HttpHeader *responseHeader = httpClientReponseHeader(httpClient);
+                    const HttpHeader *responseHeader = httpClientResponseHeader(httpClient);
                     const StringList *responseHeaderList = httpHeaderList(responseHeader);
 
                     if (strLstSize(responseHeaderList) > 0)
@@ -377,7 +377,7 @@ storageS3Request(
             {
                 // On success move the buffer to the calling context
                 result.httpClient = httpClient;
-                result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientReponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
+                result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientResponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
                 result.response = bufMove(response, MEM_CONTEXT_OLD());
             }
 

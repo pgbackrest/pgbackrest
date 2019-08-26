@@ -82,7 +82,7 @@ Getters
 bool httpClientBusy(const HttpClient *this);
 IoRead *httpClientIoRead(const HttpClient *this);
 unsigned int httpClientResponseCode(const HttpClient *this);
-const HttpHeader *httpClientReponseHeader(const HttpClient *this);
+const HttpHeader *httpClientResponseHeader(const HttpClient *this);
 const String *httpClientResponseMessage(const HttpClient *this);
 bool httpClientResponseCodeOk(const HttpClient *this);
 

@@ -470,7 +470,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
         TEST_RESULT_UINT(httpClientEof(client), true, "    io is eof");
         TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'ack', key1: '0', key2: 'value2'}",
+            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{connection: 'ack', key1: '0', key2: 'value2'}",
             "    check response headers");
 
         // Head request with content-length but no content
@@ -482,7 +482,7 @@ testRun(void)
         TEST_RESULT_BOOL(httpClientEof(client), true, "    io is eof");
         TEST_RESULT_BOOL(httpClientBusy(client), false, "    client is not busy");
         TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{content-length: '380'}", "    check response headers");
+            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{content-length: '380'}", "    check response headers");
 
         // Head request with transfer encoding but no content
         TEST_RESULT_VOID(
@@ -493,7 +493,7 @@ testRun(void)
         TEST_RESULT_BOOL(httpClientEof(client), true, "    io is eof");
         TEST_RESULT_BOOL(httpClientBusy(client), false, "    client is not busy");
         TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{transfer-encoding: 'chunked'}",
+            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{transfer-encoding: 'chunked'}",
             "    check response headers");
 
         // Error with content length 0
@@ -502,7 +502,7 @@ testRun(void)
         TEST_RESULT_UINT(httpClientResponseCode(client), 404, "    check response code");
         TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "Not Found", "    check response message");
         TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{content-length: '0'}", "    check response headers");
+            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{content-length: '0'}", "    check response headers");
 
         // Error with content
         Buffer *buffer = NULL;
@@ -512,7 +512,7 @@ testRun(void)
         TEST_RESULT_UINT(httpClientResponseCode(client), 403, "    check response code");
         TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "Auth Error", "    check response message");
         TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{content-length: '7'}", "    check response headers");
+            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{content-length: '7'}", "    check response headers");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "CONTENT", "    check response");
 
         // Request with content using content-length
@@ -526,7 +526,7 @@ testRun(void)
                 BUFSTRDEF("012345678901234567890123456789"), true),
             "request with content length");
         TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'close', content-length: '32'}",
+            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{connection: 'close', content-length: '32'}",
             "    check response headers");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901", "    check response");
         TEST_RESULT_UINT(httpClientRead(client, bufNew(1), true), 0, "    call internal read to check eof");
@@ -551,7 +551,7 @@ testRun(void)
         TEST_RESULT_VOID(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request with chunked encoding");
         TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{transfer-encoding: 'chunked'}",
+            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{transfer-encoding: 'chunked'}",
             "    check response headers");
 
         buffer = bufNew(35);
