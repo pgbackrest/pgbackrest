@@ -800,7 +800,7 @@ testRun(void)
             "            wal start/stop: n/a\n"
             "            database size: 0B, backup size: 0B\n"
             "            repository size: 0B, repository backup size: 0B\n"
-            ,"formatTextDb only backup section (code cverage only)");
+            ,"formatTextDb only backup section (code coverage only)");
     }
 
     //******************************************************************************************************************************

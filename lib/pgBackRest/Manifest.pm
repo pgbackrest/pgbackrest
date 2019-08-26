@@ -898,7 +898,7 @@ sub build
         # If version is greater than 9.0, check for files to exclude
         if ($self->dbVersion() >= PG_VERSION_90 && $hManifest->{$strName}{type} eq 'f')
         {
-            # Get the directory name from the manifest; it will be used later to seach for existence in the keys
+            # Get the directory name from the manifest; it will be used later to search for existence in the keys
             my $strDir = dirname($strName);
 
             # If it is a database data directory (base or tablespace) then check for files to skip
@@ -1421,7 +1421,7 @@ sub buildDefault
 ####################################################################################################################################
 # validate
 #
-# Checks for any mising values or inconsistencies in the manifest.
+# Checks for any missing values or inconsistencies in the manifest.
 ####################################################################################################################################
 sub validate
 {

@@ -320,7 +320,7 @@ sub controlGenerateContent
     $tControlContent .= pack('L', $self->dbControlVersion($strPgVersion));
     $tControlContent .= pack('L', $self->dbCatalogVersion($strPgVersion));
 
-    # Offset to page size by archecture bits and version
+    # Offset to page size by architecture bits and version
     my $rhOffsetToPageSize =
     {
         32 =>

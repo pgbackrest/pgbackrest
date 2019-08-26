@@ -56,7 +56,7 @@ sub backupRegExpGet
         confess &log(ASSERT, 'at least one backup type must be selected');
     }
 
-    # Standard regexp to match date and time formattting
+    # Standard regexp to match date and time formatting
     my $strDateTimeRegExp = "[0-9]{8}\\-[0-9]{6}";
     # Start the expression with the anchor if requested, date/time regexp and full backup indicator
     my $strRegExp = ($bAnchor ? '^' : '') . $strDateTimeRegExp . 'F';

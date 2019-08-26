@@ -224,7 +224,7 @@ sub run
         # Clear the storage repo settings
         storageRepoCacheClear();
 
-        # Create an encrypted storage and generate an encyption sub passphrase to store in the file
+        # Create an encrypted storage and generate an encryption sub passphrase to store in the file
         my $strCipherPassSub = cipherPassGen();
 
         # Error on encrypted repo but no passphrase passed to store in the file

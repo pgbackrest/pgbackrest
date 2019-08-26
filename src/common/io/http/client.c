@@ -61,7 +61,7 @@ struct HttpClient
     String *responseMessage;                                        // Response message e.g. (OK, Not Found)
     HttpHeader *responseHeader;                                     // Response headers
 
-    bool contentChunked;                                            // Is the reponse content chunked?
+    bool contentChunked;                                            // Is the response content chunked?
     uint64_t contentSize;                                           // Content size (ignored for chunked)
     uint64_t contentRemaining;                                      // Content remaining (per chunk if chunked)
     bool closeOnContentEof;                                         // Will server close after content is sent?
@@ -389,7 +389,7 @@ httpClientRequest(
                 bool contentExists = (this->contentChunked || this->contentSize > 0) && !strEq(verb, HTTP_VERB_HEAD_STR);
                 this->contentEof = !contentExists;
 
-                // If all content should be returned from this function then read the buffer.  Also read the reponse if there has
+                // If all content should be returned from this function then read the buffer.  Also read the response if there has
                 // been an error.
                 if (returnContent || !httpClientResponseCodeOk(this))
                 {

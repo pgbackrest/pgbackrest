@@ -108,7 +108,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
             manifestDelete(storageRepoWriteStanza);
         }
 
-        // Recusively remove the entire stanza repo if exists. S3 will attempt to remove even if not.
+        // Recursively remove the entire stanza repo if exists. S3 will attempt to remove even if not.
         if (archiveList != NULL)
             storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE), .recurse = true);
 

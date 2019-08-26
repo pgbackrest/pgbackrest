@@ -193,7 +193,7 @@ sub new
 ####################################################################################################################################
 # validate
 #
-# Comfirm the file exists and reconstruct as necessary.
+# Confirm the file exists and reconstruct as necessary.
 ####################################################################################################################################
 sub validate
 {
@@ -1018,7 +1018,7 @@ sub confirmDb
     # If the db-id for the backup exists in the list
     if (exists $hDbList->{$iDbHistoryId})
     {
-        # If the version and system-id match then datbase is confirmed for the backup
+        # If the version and system-id match then database is confirmed for the backup
         if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&
             ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} eq $ullDbSysId))
         {

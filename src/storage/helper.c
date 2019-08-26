@@ -280,7 +280,7 @@ storageRepoPathExpression(const String *expression, const String *path)
 
     if (strEqZ(expression, STORAGE_REPO_ARCHIVE))
     {
-        // Contruct the base path
+        // Construct the base path
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strPtr(storageHelper.stanza));
         else
@@ -300,7 +300,7 @@ storageRepoPathExpression(const String *expression, const String *path)
     }
     else if (strEqZ(expression, STORAGE_REPO_BACKUP))
     {
-        // Contruct the base path
+        // Construct the base path
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(storageHelper.stanza));
         else

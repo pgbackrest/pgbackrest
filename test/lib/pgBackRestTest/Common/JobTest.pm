@@ -365,7 +365,7 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_EXPECT_PATH\]\}/$self->{strExpectPath}/g;
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
 
-                # Set defalt log level
+                # Set default log level
                 my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});
                 $strTestC =~ s/\{\[C\_LOG\_LEVEL\_TEST\]\}/$strLogLevelTestC/g;
 
@@ -420,7 +420,7 @@ sub run
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
                     ($self->{bDebug} ? '' : ' -DNDEBUG') . ($self->{bDebugTestTrace} ? ' -DDEBUG_TEST_TRACE' : '');
 
-                # Flags used to buid harness files
+                # Flags used to build harness files
                 my $strHarnessFlags =
                     '-O2' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
@@ -429,7 +429,7 @@ sub run
                     $self->{oStorageTest}, "$self->{strGCovPath}/harnessflags",
                     "${strCommonFlags} ${strWarningFlags} ${strHarnessFlags}");
 
-                # Flags used to buid test.c
+                # Flags used to build test.c
                 my $strTestFlags =
                     '-DDEBUG_TEST_TRACE -O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
@@ -440,7 +440,7 @@ sub run
                     $self->{oStorageTest}, "$self->{strGCovPath}/testflags",
                     "${strCommonFlags} ${strWarningFlags} ${strTestFlags}");
 
-                # Flags used to buid all other files
+                # Flags used to build all other files
                 my $strBuildFlags =
                     ($self->{bOptimize} ? '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
 

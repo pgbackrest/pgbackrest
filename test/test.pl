@@ -74,7 +74,7 @@ test.pl [options]
    --test               execute the specified test in a module
    --run                execute only the specified test run
    --dry-run            show only the tests that would be executed but don't execute them
-   --no-cleanup         don't cleaup after the last test is complete - useful for debugging
+   --no-cleanup         don't cleanup after the last test is complete - useful for debugging
    --pg-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --build-only         compile the test library / packages and run tests only
@@ -316,7 +316,7 @@ eval
         confess "Only one --test can be provided when --run is specified";
     }
 
-    # Set test path if not expicitly set
+    # Set test path if not explicitly set
     if (!defined($strTestPath))
     {
         $strTestPath = cwd() . '/test';

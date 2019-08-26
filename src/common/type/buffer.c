@@ -434,7 +434,7 @@ bufSize(const Buffer *this)
 Get/set the amount of the buffer actually used
 
 Tracks how much of the buffer has actually been used.  This will be updated automatically when possible but if the buffer is
-modified by using bufPtr() then the user is reponsible for updating the used size.
+modified by using bufPtr() then the user is responsible for updating the used size.
 ***********************************************************************************************************************************/
 size_t
 bufUsed(const Buffer *this)

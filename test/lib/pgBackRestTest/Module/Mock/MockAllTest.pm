@@ -261,7 +261,7 @@ sub run
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL . '/anything.tmp', 'IGNORE');
 
-            # Create pg_snaphots dir and file - only file will be ignored
+            # Create pg_snapshots dir and file - only file will be ignored
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS . '/anything.tmp', 'IGNORE');
 
@@ -365,7 +365,7 @@ sub run
         $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad',
                                               '../pg_config/postgresql.conf.link');
 
-        # Fail bacause two links point to the same place
+        # Fail because two links point to the same place
         $strFullBackup = $oHostBackup->backup(
             $strType, 'error on link to a link',
             {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});

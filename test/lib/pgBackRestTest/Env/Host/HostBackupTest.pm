@@ -1032,7 +1032,7 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT)} = 60;
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_DB_TIMEOUT)} = 45;
 
-    # Set to make sure that changinf the default works and to speed compression for testing
+    # Set to make sure that changing the default works and to speed compression for testing
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_LEVEL)} = 3;
 
     # Only set network compress level if there is more than one host
