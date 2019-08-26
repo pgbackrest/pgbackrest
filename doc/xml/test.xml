@@ -6,7 +6,7 @@
     <section id="introduction">
         <title>Introduction</title>
 
-        <p><backrest/> uses Docker to run tests and generate documentation.  Docker's light-weight virualization provides the a good balance between proper OS emulation and performance (especially startup)</p>
+        <p><backrest/> uses Docker to run tests and generate documentation.  Docker's light-weight virtualization provides the a good balance between proper OS emulation and performance (especially startup)</p>
 
         <p>A `Vagrantfile` is provided that contains the complete configuration required to run <backrest/> tests and build documentation.  If Vagrant is not suitable then the `Vagrantfile` still contains the configuration steps required to build a test system.</p>
 
