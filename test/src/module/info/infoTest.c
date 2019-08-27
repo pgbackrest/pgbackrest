@@ -7,10 +7,37 @@ Test Info Handler
 Test load callbackup
 ***********************************************************************************************************************************/
 static void
-testInfoLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
+testInfoLoadCallback(InfoCallbackType type, void *callbackData, const String *section, const String *key, const String *value)
 {
     if (callbackData != NULL)
-        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strPtr(section), strPtr(key), strPtr(value));
+    {
+        switch (type)
+        {
+            case infoCallbackTypeBegin:
+            {
+                strCat((String *)callbackData, "BEGIN\n");
+                break;
+            }
+
+            case infoCallbackTypeReset:
+            {
+                strCat((String *)callbackData, "RESET\n");
+                break;
+            }
+
+            case infoCallbackTypeValue:
+            {
+                strCatFmt((String *)callbackData, "[%s] %s=%s\n", strPtr(section), strPtr(key), strPtr(value));
+                break;
+            }
+
+            case infoCallbackTypeEnd:
+            {
+                strCat((String *)callbackData, "END\n");
+                break;
+            }
+        }
+    }
 }
 
 /***********************************************************************************************************************************
@@ -86,11 +113,26 @@ testRun(void)
 
         // Only copy exists and one is required
         //--------------------------------------------------------------------------------------------------------------------------
+        String *callbackContent = strNew("");
+
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put info.copy to file");
 
         TEST_ASSIGN(
-            info, infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), "load copy file");
+            info, infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, callbackContent),
+            "load copy file");
+
+        TEST_RESULT_STR(
+            strPtr(callbackContent),
+            "BEGIN\n"
+            "RESET\n"
+            "BEGIN\n"
+            "[db] db-id=1\n"
+                "[db] db-system-id=6569239123849665679\n"
+                "[db] db-version=\"9.4\"\n"
+                "[db:history] 1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+                "END\n",
+            "    check callback content");
 
         TEST_RESULT_PTR(infoCipherPass(info), NULL, "    cipherPass is not set");
 
@@ -107,7 +149,6 @@ testRun(void)
             infoWrite,
             BUFSTRDEF(
                 "[backrest]\n"
-                "backrest-checksum=\"ca596e25ad0147ffa8d4fc09d233ca3c089307f8\"\n"
                 "backrest-format=5\n"
                 "backrest-version=\"2.04\"\n"
                 "\n"
@@ -121,10 +162,13 @@ testRun(void)
                 "db-version=\"9.4\"\n"
                 "\n"
                 "[db:history]\n"
-                "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"));
+                "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+                "\n"
+                "[backrest]\n"
+                "backrest-checksum=\"ca596e25ad0147ffa8d4fc09d233ca3c089307f8\"\n"));
 
         // Only main info exists and is required
-        String *callbackContent = strNew("");
+        callbackContent = strNew("");
 
         TEST_ASSIGN(
             info,
@@ -133,10 +177,12 @@ testRun(void)
 
         TEST_RESULT_STR(
             strPtr(callbackContent),
+            "BEGIN\n"
             "[db] db-id=1\n"
                 "[db] db-system-id=6569239123849665679\n"
                 "[db] db-version=\"9.4\"\n"
-                "[db:history] 1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n",
+                "[db:history] 1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+                "END\n",
             "    check callback content");
 
         TEST_RESULT_STR(strPtr(infoCipherPass(info)), "ABCDEFGH", "    cipherPass is set");

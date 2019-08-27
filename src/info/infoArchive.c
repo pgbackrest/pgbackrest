@@ -106,7 +106,7 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
         // Catch file missing error and add archive-specific hints before rethrowing
         TRY_BEGIN()
         {
-            this->infoPg = infoPgNewLoad(storage, fileName, infoPgArchive, cipherType, cipherPass, NULL);
+            this->infoPg = infoPgNewLoad(storage, fileName, infoPgArchive, cipherType, cipherPass, NULL, NULL);
         }
         CATCH_ANY()
         {

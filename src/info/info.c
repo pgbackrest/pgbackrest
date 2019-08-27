@@ -168,18 +168,18 @@ infoHash(const Ini *ini)
 /***********************************************************************************************************************************
 Load and validate the info file (or copy)
 ***********************************************************************************************************************************/
-typedef struct IniLoadData
+typedef struct InfoLoadData
 {
     MemContext *memContext;                                         // Mem context to use for storing data in this structure
     void (*callbackFunction)(                                       // Callback function for child object
-        void *data, const String *section, const String *key, const String *value);
+        InfoCallbackType type, void *data, const String *section, const String *key, const String *value);
     void *callbackData;                                             // Callback data for child object
     const String *fileName;                                         // File being loaded
     String *sectionLast;                                            // The last section seen during load
     IoFilter *checksumActual;                                       // Checksum calculated from the file
     String *checksumExpected;                                       // Checksum found in ini file
     String *cipherPass;                                             // Cipher passphrase (when present)
-} IniLoadData;
+} InfoLoadData;
 
 static void
 infoLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
@@ -196,7 +196,7 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    IniLoadData *data = (IniLoadData *)callbackData;
+    InfoLoadData *data = (InfoLoadData *)callbackData;
 
     // Calculate checksum
     if (!(strEq(section, INFO_SECTION_BACKREST_STR) && strEq(key, INFO_KEY_CHECKSUM_STR)))
@@ -257,7 +257,7 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
         }
     }
     else
-        data->callbackFunction(data->callbackData, section, key, value);
+        data->callbackFunction(infoCallbackTypeValue, data->callbackData, section, key, value);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -265,7 +265,8 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
 static void
 infoLoad(
     Info *this, const Storage *storage, const String *fileName, bool copyFile, CipherType cipherType, const String *cipherPass,
-    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value), void *callbackData)
+    void (*callbackFunction)(InfoCallbackType type, void *data, const String *section, const String *key, const String *value),
+    void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
         FUNCTION_LOG_PARAM(INFO, this);
@@ -283,7 +284,7 @@ infoLoad(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        IniLoadData data =
+        InfoLoadData data =
         {
             .memContext = MEM_CONTEXT_TEMP(),
             .callbackFunction = callbackFunction,
@@ -305,6 +306,9 @@ infoLoad(
         // Load and parse the info file
         ioFilterProcessIn(data.checksumActual, BUFSTRDEF("{"));
 
+        // Notify callback function that the ini load is beginning
+        data.callbackFunction(infoCallbackTypeBegin, data.callbackData, NULL, NULL, NULL);
+
         TRY_BEGIN()
         {
             iniLoad(storageReadIo(infoRead), infoLoadCallback, &data);
@@ -318,6 +322,9 @@ infoLoad(
         TRY_END();
 
         ioFilterProcessIn(data.checksumActual, BUFSTRDEF("}}"));
+
+        // Notify callback function that the ini load is ending
+        data.callbackFunction(infoCallbackTypeEnd, data.callbackData, NULL, NULL, NULL);
 
         // Verify the checksum
         const String *checksumActual = varStr(ioFilterResult(data.checksumActual));
@@ -351,7 +358,8 @@ Create new object and load contents from a file
 Info *
 infoNewLoad(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
-    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value), void *callbackData)
+    void (*callbackFunction)(InfoCallbackType type, void *data, const String *section, const String *key, const String *value),
+    void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -382,6 +390,9 @@ infoNewLoad(
             String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
             bool primaryMissing = errorType() == &FileMissingError;
             const ErrorType *primaryErrorType = errorType();
+
+            // Notify callback of a reset
+            callbackFunction(infoCallbackTypeReset, callbackData, NULL, NULL, NULL);
 
             TRY_BEGIN()
             {

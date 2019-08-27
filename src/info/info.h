@@ -27,12 +27,24 @@ Constants
     STRING_DECLARE(INFO_KEY_FORMAT_STR);
 
 /***********************************************************************************************************************************
+Info callback types used during ini processing
+***********************************************************************************************************************************/
+typedef enum
+{
+    infoCallbackTypeBegin,                                          // Load of the ini is beginning
+    infoCallbackTypeReset,                                          // An error occurred and data should be reset
+    infoCallbackTypeValue,                                          // A section/key/value from the ini
+    infoCallbackTypeEnd,                                            // Load of the ini has ended
+} InfoCallbackType;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 Info *infoNew(CipherType cipherType, const String *cipherPassSub);
 Info *infoNewLoad(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
-    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value), void *callbackData);
+    void (*callbackFunction)(InfoCallbackType type, void *data, const String *section, const String *key, const String *value),
+    void *callbackData);
 
 /***********************************************************************************************************************************
 Functions

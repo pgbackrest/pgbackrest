@@ -3,6 +3,8 @@ PostgreSQL Info Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <limits.h>
+#include <stdarg.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,6 +29,7 @@ Internal constants
 STRING_STATIC(INFO_SECTION_DB_STR,                                          "db");
 STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                                  "db:history");
 
+STRING_STATIC(INFO_KEY_DB_ID_STR,                                           INFO_KEY_DB_ID);
 VARIANT_STRDEF_EXTERN(INFO_KEY_DB_ID_VAR,                                   INFO_KEY_DB_ID);
 VARIANT_STRDEF_STATIC(INFO_KEY_DB_CATALOG_VERSION_VAR,                      "db-catalog-version");
 VARIANT_STRDEF_STATIC(INFO_KEY_DB_CONTROL_VERSION_VAR,                      "db-control-version");
@@ -61,11 +64,6 @@ infoPgNewInternal(void)
         // Create object
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
-
-        // Get the pg history list
-        this->history = lstNew(sizeof(InfoPgData));
-
-        this->historyCurrent = 0;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -85,6 +83,7 @@ infoPgNew(CipherType cipherType, const String *cipherPassSub)
 
     InfoPg *this = infoPgNewInternal();
 
+    this->history = lstNew(sizeof(InfoPgData));
     this->info = infoNew(cipherType, cipherPassSub);
 
     FUNCTION_LOG_RETURN(INFO_PG, this);
@@ -93,9 +92,132 @@ infoPgNew(CipherType cipherType, const String *cipherPassSub)
 /***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
+typedef struct InfoPgLoadData
+{
+    MemContext *memContext;                                         // Mem context to use for storing data in this structure
+    void (*callbackFunction)(                                       // Callback function for child object
+        InfoCallbackType type, void *data, const String *section, const String *key, const String *value);
+    void *callbackData;                                             // Callback data for child object
+    InfoPgType type;                                                // Type of info file being loaded
+    unsigned int currentId;                                         // Current database id
+    List *history;                                                  // Database history list
+    unsigned int historyCurrent;                                    // Current id in history list
+} InfoPgLoadData;
+
+static void
+infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *section, const String *key, const String *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(callbackData != NULL);
+    ASSERT(type != infoCallbackTypeValue || section != NULL);
+    ASSERT(type != infoCallbackTypeValue || key != NULL);
+    ASSERT(type != infoCallbackTypeValue || value != NULL);
+
+    InfoPgLoadData *data = (InfoPgLoadData *)callbackData;
+
+    switch (type)
+    {
+        case infoCallbackTypeBegin:
+        {
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->history = lstNew(sizeof(InfoPgData));
+                data->currentId = 0;
+                data->historyCurrent = UINT_MAX;
+            }
+            MEM_CONTEXT_END();
+
+            if (data->callbackFunction != NULL)
+                data->callbackFunction(type, data->callbackData, NULL, NULL, NULL);
+
+            break;
+        }
+
+        case infoCallbackTypeReset:
+        {
+            lstFree(data->history);
+            break;
+        }
+
+        case infoCallbackTypeValue:
+        {
+            if (strEq(section, INFO_SECTION_DB_STR))
+            {
+                if (strEq(key, INFO_KEY_DB_ID_STR))
+                    data->currentId = jsonToUInt(value);
+            }
+            else if (strEq(section, INFO_SECTION_DB_HISTORY_STR))
+            {
+                // Load JSON data into a KeyValue
+                const KeyValue *pgDataKv = jsonToKv(value);
+
+                // Get db values that are common to all info files
+                InfoPgData infoPgData =
+                {
+                    .id = cvtZToUInt(strPtr(key)),
+                    .version = pgVersionFromStr(varStr(kvGet(pgDataKv, INFO_KEY_DB_VERSION_VAR))),
+
+                    // This is different in archive.info due to a typo that can't be fixed without a format version bump
+                    .systemId = varUInt64Force(
+                        kvGet(pgDataKv, data->type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
+                };
+
+                // Set index if this is the current history item
+                if (infoPgData.id == data->currentId)
+                    data->historyCurrent = lstSize(data->history);
+
+                // Get values that are only in backup and manifest files.  These are really vestigial since stanza-create verifies
+                // the control and catalog versions so there is no good reason to store them.  However, for backward compatibility
+                // we must write them at least, even if we give up reading them.
+                if (data->type == infoPgBackup || data->type == infoPgManifest)
+                {
+                    infoPgData.catalogVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR));
+                    infoPgData.controlVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR));
+                }
+                else if (data->type != infoPgArchive)
+                    THROW_FMT(AssertError, "invalid InfoPg type %u", data->type);
+
+                // Using lstAdd because it is more efficient than lstInsert and loading this file is in critical code paths
+                lstAdd(data->history, &infoPgData);
+            }
+            else if (data->callbackFunction != NULL)
+                data->callbackFunction(infoCallbackTypeValue, data->callbackData, section, key, value);
+
+            break;
+        }
+
+        case infoCallbackTypeEnd:
+        {
+            // History must include at least one item or the file is corrupt
+            CHECK(lstSize(data->history) > 0);
+
+            // If the current id was not found then the file is corrupt
+            CHECK(data->currentId > 0);
+
+            // If the current id did not match the history list then the file is corrupt
+            CHECK(data->historyCurrent != UINT_MAX);
+
+            if (data->callbackFunction != NULL)
+                data->callbackFunction(infoCallbackTypeEnd, data->callbackData, NULL, NULL, NULL);
+
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 InfoPg *
 infoPgNewLoad(
-    const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass, Ini **ini)
+    const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass,
+    void (*callbackFunction)(InfoCallbackType type, void *data, const String *section, const String *key, const String *value),
+    void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -103,76 +225,38 @@ infoPgNewLoad(
         FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
-        FUNCTION_LOG_PARAM_P(INI, ini);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT((callbackFunction == NULL && callbackData == NULL) || (callbackFunction != NULL && callbackData != NULL));
 
     InfoPg *this = infoPgNewInternal();
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Load info
-        Ini *iniLocal = NULL;
-        this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, NULL, NULL);
-
-        MEM_CONTEXT_TEMP_BEGIN()
+        // Set callback data
+        InfoPgLoadData data =
         {
-            const StringList *pgHistoryKey = iniSectionKeyList(iniLocal, INFO_SECTION_DB_HISTORY_STR);
+            .memContext = MEM_CONTEXT_TEMP(),
+            .callbackFunction = callbackFunction,
+            .callbackData = callbackData,
+            .type = type,
+        };
 
-            // Get the current history id
-            unsigned int pgId = jsonToUInt(iniGet(iniLocal, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR)));
-
-            // History must include at least one item or the file is corrupt
-            ASSERT(strLstSize(pgHistoryKey) > 0);
-
-            // Iterate in reverse because we would like the most recent pg history to be in position 0.  If we need to look at the
-            // history list at all we'll be iterating from newest to oldest and putting newest in position 0 makes for more natural
-            // looping. Cast the index check to an integer to test for >= 0 (for readability).
-            for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; (int)pgHistoryIdx >= 0; pgHistoryIdx--)
-            {
-                // Load JSON data into a KeyValue
-                const KeyValue *pgDataKv = jsonToKv(
-                    iniGet(iniLocal, INFO_SECTION_DB_HISTORY_STR, strLstGet(pgHistoryKey, pgHistoryIdx)));
-
-                // Get db values that are common to all info files
-                InfoPgData infoPgData =
-                {
-                    .id = cvtZToUInt(strPtr(strLstGet(pgHistoryKey, pgHistoryIdx))),
-                    .version = pgVersionFromStr(varStr(kvGet(pgDataKv, INFO_KEY_DB_VERSION_VAR))),
-
-                    // This is different in archive.info due to a typo that can't be fixed without a format version bump
-                    .systemId = varUInt64Force(
-                        kvGet(pgDataKv, type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
-                };
-
-                // Set index if this is the current history item
-                if (infoPgData.id == pgId)
-                    this->historyCurrent = lstSize(this->history);
-
-                // Get values that are only in backup and manifest files.  These are really vestigial since stanza-create verifies
-                // the control and catalog versions so there is no good reason to store them.  However, for backward compatibility
-                // we must write them at least, even if we give up reading them.
-                if (type == infoPgBackup || type == infoPgManifest)
-                {
-                    infoPgData.catalogVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR));
-                    infoPgData.controlVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR));
-                }
-                else if (type != infoPgArchive)
-                    THROW_FMT(AssertError, "invalid InfoPg type %u", type);
-
-                // Using lstAdd because it is more efficient than lstInsert and loading this file is in critical code paths
-                lstAdd(this->history, &infoPgData);
-            }
+        // Load info
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, infoPgLoadCallback, &data);
+            this->historyCurrent = data.historyCurrent;
+            this->history = lstMove(data.history, this->memContext);
         }
-        MEM_CONTEXT_TEMP_END();
-
-        if (ini != NULL)
-            *ini = iniMove(iniLocal, MEM_CONTEXT_OLD());
+        MEM_CONTEXT_END();
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INFO_PG, this);
 }

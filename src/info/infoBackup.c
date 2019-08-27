@@ -126,7 +126,7 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
         // Catch file missing error and add backup-specific hints before rethrowing
         TRY_BEGIN()
         {
-            this->infoPg = infoPgNewLoad(storage, fileName, infoPgBackup, cipherType, cipherPass, &ini);
+            this->infoPg = infoPgNewLoad(storage, fileName, infoPgBackup, cipherType, cipherPass, NULL, NULL);
         }
         CATCH_ANY()
         {
