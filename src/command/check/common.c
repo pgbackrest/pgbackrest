@@ -3,15 +3,17 @@ Check Common Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <string.h>
+
 #include "command/check/common.h"
 #include "common/debug.h"
 #include "config/config.h"
-#include "db/db.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Check the database path and version are configured correctly
@@ -30,7 +32,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const Db *
     ASSERT(dbObject != NULL);
 
     unsigned int dbVersion = dbPgVersion(dbObject);
-    String *dbPath = dbPgDataPath(dbObject);
+    const String *dbPath = dbPgDataPath(dbObject);
     unsigned int pgPath = cfgOptPgPath + (dbIdx - 1);
 
     // Error if the version from the control file and the configured pg-path do not match the values obtained from the database
@@ -46,31 +48,31 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const Db *
     // Check archive configuration if option is valid for the command and set
     if (!isStandby && cfgOptionValid(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCheck))
     {
-        String *archiveMode = dbArchiveMode(dbObject);
-
         // Error if archive_mode = off since pg_start_backup () will fail
-        if (strCmpZ(archiveMode, "off")
+        if (strCmpZ(dbArchiveMode(dbObject), "off"))
         {
             THROW(ArchiveDisabledError, "archive_mode must be enabled");
         }
 
         // Error if archive_mode = always (support has not been added yet)
-        if (strCmpZ(archiveMode, "always")
+        if (strCmpZ(dbArchiveMode(dbObject), "always"))
         {
             THROW(FeatureNotSupportedError, "archive_mode=always not supported");
         }
-// CSHANG Must add this in as well...
-        // # Check if archive_command is set
-        // my $strArchiveCommand = $self->executeSqlOne('show archive_command');
-        //
-        // if (index($strArchiveCommand, PROJECT_EXE) == -1)
-        // {
-        //     confess &log(ERROR,
-        //         'archive_command ' . (defined($strArchiveCommand) ? "'${strArchiveCommand}'" : '[null]') . ' must contain \'' .
-        //         PROJECT_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
-        // }
+
+        // Check if archive_command is set and is valid
+        unsigned int archiveError = dbArchiveCommand(dbObject) == NULL;
+
+        if (!archiveError && strstr(strPtr(dbArchiveCommand(dbObject)), PROJECT_NAME) == NULL)
+            archiveError = true;
+
+        if (archiveError)
+        {
+            THROW_FMT(
+                ArchiveCommandInvalidError, "archive_command '%s' must contain %s", (dbArchiveCommand(dbObject) != NULL ?
+                strPtr(dbArchiveCommand(dbObject)) : "[null]"), PROJECT_NAME);
+        }
     }
-}
 
     FUNCTION_TEST_RETURN_VOID();
 }

@@ -29,10 +29,25 @@ cmdCheck(void)
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
 
+// CSHANG The perl code for testing the manifest build doesn't seem right as it was truly only looking at things that were remote because it was using the CFGOPT_PG_HOST total.
+        // // Loop through all defined databases and attempt to build a manifest
+        // for (unsigned int pgIdx = 0; pgIdx < cfgOptionIndexTotal(cfgOptPgPath); pgIdx++)
+        // {
+        //     if (cfgOptionTest(cfgOptPgHost + pgIdx) || cfgOptionTest(cfgOptPgPath + pgIdx))
+        //     {
+        //         // CSHANG Placeholder for manifest builds - this is here just to make sure the loop is run and to check error
+        //         // (like make the dir owned by root) that way when do manifestBuild then should have same error from testing
+        //         // StringList *listTest =
+        //         storageListNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP));
+        //     }
+        // }
+
         // Get the primary/standby connections (standby is only required if backup from standby is enabled)
         DbGetResult dbGroup = dbGet(false, false);
-// CSHANG TODO: Need to generate the manifest
-// CSHANG TODO: CFGOPT_ARCHIVE_CHECK checks
+
+        if (dbGroup.standby == NULL && dbGroup.primary == NULL)
+            THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+
         // If a standby is defined, check the configuration
         if (dbGroup.standby != NULL)
         {
@@ -55,8 +70,7 @@ cmdCheck(void)
             checkStanzaInfoPg(
                 storageRepo(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
-// CSHANG "switch wal not performed because no primary was found" sounds like something is wrong. It used to log:
-//  &log(INFO, 'switch ' . $oDb->walId() . ' cannot be performed on the standby, all other checks passed successfully');
+
             LOG_INFO("switch wal not performed because this is a standby");
 
             // Free the standby connection
@@ -65,7 +79,7 @@ cmdCheck(void)
         // If backup from standby is configured and is true then warn when a standby not found
         else if (cfgOptionTest(cfgOptBackupStandby) && cfgOptionBool(cfgOptBackupStandby))
         {
-            &LOG_WARN("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
+            LOG_WARN("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
         }
 
         // If a primary is defined, check the configuration and perform a WAL switch and make sure the WAL is archived

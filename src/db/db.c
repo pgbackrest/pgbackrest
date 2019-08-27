@@ -26,6 +26,8 @@ struct Db
 
     unsigned int pgVersion;                                         // Version as reported by the database
     const String *pgDataPath;                                       // Data directory reported by the database
+    const String *archiveMode;                                      // The archive_mode reported by the database
+    const String *archiveCommand;                                   // The archive_command reported by the database
 };
 
 OBJECT_DEFINE_FREE(DB);
@@ -202,17 +204,21 @@ dbOpen(Db *this)
             this,
             STRDEF(
                 "select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
-                " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text"));
+                " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
+                " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
+                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text"));
 
         // Strip the minor version off since we don't need it.  In the future it might be a good idea to warn users when they are
         // running an old minor version.
         this->pgVersion = varUIntForce(varLstGet(row, 0)) / 100 * 100;
 
-        // Store the data directory that PostgreSQL is running in.  This can be compared to the configured pgBackRest directory when
-        // validating the configuration.
+        // Store the data directory that PostgreSQL is running in, the archive mode and archive command. These can be compared to
+        // the configured pgBackRest directory, and archive settings checked for validity, when validating the configuration.
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             this->pgDataPath = strDup(varStr(varLstGet(row, 1)));
+            this->archiveMode = strDup(varStr(varLstGet(row, 2)));
+            this->archiveCommand = strDup(varStr(varLstGet(row, 3)));
         }
         MEM_CONTEXT_END();
 
@@ -283,34 +289,6 @@ dbWalSwitch(Db *this)
 }
 
 /***********************************************************************************************************************************
-Get the archive_mode
-***********************************************************************************************************************************/
-String *
-dbArchiveMode(Db *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(DB, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        const String *archiveMode = varStr(dbQueryColumn(this, STRDEF("show archive_mode")));
-
-        // Copy archive_mode to the calling context
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(archiveMode);
-        memContextSwitch(MEM_CONTEXT_TEMP());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING, result);
-}
-
-/***********************************************************************************************************************************
 Move the object to a new context
 ***********************************************************************************************************************************/
 Db *
@@ -357,6 +335,36 @@ dbPgVersion(const Db *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->pgVersion);
+}
+
+/***********************************************************************************************************************************
+Get pg version loaded from the server_version_num GUC
+***********************************************************************************************************************************/
+const String *
+dbArchiveMode(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->archiveMode);
+}
+
+/***********************************************************************************************************************************
+Get pg version loaded from the server_version_num GUC
+***********************************************************************************************************************************/
+const String *
+dbArchiveCommand(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->archiveCommand);
 }
 
 /***********************************************************************************************************************************
