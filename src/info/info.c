@@ -199,27 +199,31 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
     IniLoadData *data = (IniLoadData *)callbackData;
 
     // Calculate checksum
-    bool sectionChanged = false;
-
-    if (data->sectionLast == NULL || !strEq(section, data->sectionLast))
+    if (!(strEq(section, INFO_SECTION_BACKREST_STR) && strEq(key, INFO_KEY_CHECKSUM_STR)))
     {
-        if (data->sectionLast != NULL)
-            ioFilterProcessIn(data->checksumActual, BUFSTRDEF("},"));
+        if (data->sectionLast == NULL || !strEq(section, data->sectionLast))
+        {
+            if (data->sectionLast != NULL)
+                ioFilterProcessIn(data->checksumActual, BUFSTRDEF("},"));
+
+            ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\""));
+            ioFilterProcessIn(data->checksumActual, BUFSTR(section));
+            ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\":{"));
+
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->sectionLast = strDup(section);
+            }
+            MEM_CONTEXT_END();
+        }
+        else
+            ioFilterProcessIn(data->checksumActual, BUFSTRDEF(","));
 
         ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\""));
-        ioFilterProcessIn(data->checksumActual, BUFSTR(section));
-        ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\":{"));
-
-        sectionChanged = true;
+        ioFilterProcessIn(data->checksumActual, BUFSTR(key));
+        ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\":"));
+        ioFilterProcessIn(data->checksumActual, BUFSTR(value));
     }
-
-    if (!sectionChanged)
-        ioFilterProcessIn(data->checksumActual, BUFSTRDEF(","));
-
-    ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\""));
-    ioFilterProcessIn(data->checksumActual, BUFSTR(key));
-    ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\":"));
-    ioFilterProcessIn(data->checksumActual, BUFSTR(value));
 
     if (strEq(section, INFO_SECTION_BACKREST_STR))
     {
@@ -236,7 +240,7 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
         {
             MEM_CONTEXT_BEGIN(data->memContext)
             {
-                data->checksumExpected = strDup(value);
+                data->checksumExpected = jsonToStr(value);
             }
             MEM_CONTEXT_END();
         }
@@ -253,9 +257,7 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
         }
     }
     else
-    {
-        // !!! CALL PASSED CALLBACK
-    }
+        data->callbackFunction(data->callbackData, section, key, value);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -324,16 +326,13 @@ infoLoad(
         {
             THROW_FMT(
                 ChecksumError, "invalid checksum in '%s', expected '%s' but no checksum found",
-                strPtr(storagePathNP(storage, data.fileName)), strPtr(data.checksumExpected));
+                strPtr(storagePathNP(storage, data.fileName)), strPtr(checksumActual));
         }
-        else
+        else if (!strEq(data.checksumExpected, checksumActual))
         {
-            if (!strEq(data.checksumExpected, checksumActual))
-            {
                 THROW_FMT(
                     ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
-                    strPtr(storagePathNP(storage, data.fileName)), strPtr(data.checksumExpected), strPtr(checksumActual));
-            }
+                    strPtr(storagePathNP(storage, data.fileName)), strPtr(checksumActual), strPtr(data.checksumExpected));
         }
 
         // Assign cipher pass if present
@@ -366,8 +365,7 @@ infoNewLoad(
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
-    // !!! ASSERT(callbackFunction != NULL);
-    // !!! ASSERT(callbackData != NULL);
+    ASSERT(callbackFunction != NULL);
 
     Info *this = infoNewInternal();
 

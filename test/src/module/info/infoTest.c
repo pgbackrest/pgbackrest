@@ -4,6 +4,16 @@ Test Info Handler
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
+Test load callbackup
+***********************************************************************************************************************************/
+static void
+testInfoLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
+{
+    if (callbackData != NULL)
+        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strPtr(section), strPtr(key), strPtr(value));
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -67,7 +77,7 @@ testRun(void)
         // Info files missing and at least one is required
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL, NULL), FileMissingError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), FileMissingError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING,
@@ -79,7 +89,8 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put info.copy to file");
 
-        TEST_ASSIGN(info, infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL, NULL), "load copy file");
+        TEST_ASSIGN(
+            info, infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), "load copy file");
 
         TEST_RESULT_PTR(infoCipherPass(info), NULL, "    cipherPass is not set");
 
@@ -96,12 +107,13 @@ testRun(void)
             infoWrite,
             BUFSTRDEF(
                 "[backrest]\n"
-                "backrest-checksum=\"9d2f6dce339751e1a056187fad67d2834b3d4ab3\"\n"
+                "backrest-checksum=\"ca596e25ad0147ffa8d4fc09d233ca3c089307f8\"\n"
                 "backrest-format=5\n"
                 "backrest-version=\"2.04\"\n"
                 "\n"
                 "[cipher]\n"
                 "cipher-pass=\"ABCDEFGH\"\n"
+                "random-value=null\n"
                 "\n"
                 "[db]\n"
                 "db-id=1\n"
@@ -112,9 +124,21 @@ testRun(void)
                 "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"));
 
         // Only main info exists and is required
-        TEST_ASSIGN(info, infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), NULL, NULL), "load file");
+        String *callbackContent = strNew("");
 
-        // TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"ABCDEFGH\"", "    check ini");
+        TEST_ASSIGN(
+            info,
+            infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), testInfoLoadCallback, callbackContent),
+            "load file");
+
+        TEST_RESULT_STR(
+            strPtr(callbackContent),
+            "[db] db-id=1\n"
+                "[db] db-system-id=6569239123849665679\n"
+                "[db] db-version=\"9.4\"\n"
+                "[db:history] 1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n",
+            "    check callback content");
+
         TEST_RESULT_STR(strPtr(infoCipherPass(info)), "ABCDEFGH", "    cipherPass is set");
 
         // Invalid format
@@ -145,7 +169,7 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put invalid br format to file");
 
         TEST_ERROR_FMT(
-            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL, NULL), FormatError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), FormatError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
             "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING,
@@ -155,7 +179,7 @@ testRun(void)
         (
             "[backrest]\n"
             "backrest-checksum=\"14617b089cb5c9b3224e739bb794e865b9bcdf4b\"\n"
-            "backrest-format=4\n"
+            "backrest-format=5\n"
             "backrest-version=\"2.05\"\n"
             "\n"
             "[db]\n"
@@ -175,12 +199,12 @@ testRun(void)
                 storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put invalid info to copy file");
 
         TEST_ERROR(
-            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL, NULL), FileOpenError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), FileOpenError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
                     "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
-                    "ChecksumError: invalid checksum in '%s/test.ini.copy', expected 'af92308095d6141bcda6b2df6d574f98d1115163'"
+                    "ChecksumError: invalid checksum in '%s/test.ini.copy', expected 'd9f68c7a646e1cb9d650ef3bb28d77a5e8c8ea57'"
                         " but found '14617b089cb5c9b3224e739bb794e865b9bcdf4b'",
                 testPath(), testPath(), testPath(), testPath())));
 
@@ -214,7 +238,6 @@ testRun(void)
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\n"
             "backrest-format=5\n"
             "backrest-version=\"1.23\"\n"
             "\n"
@@ -233,12 +256,12 @@ testRun(void)
 
         // Copy file error
         TEST_ERROR(
-            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL, NULL), ChecksumError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), ChecksumError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-                    "ChecksumError: invalid checksum in '%s/test.ini', expected '4306ec205f71417c301e403c4714090e61c8a736' but"
-                        " no checksum found\n"
+                    "ChecksumError: invalid checksum in '%s/test.ini', expected '4306ec205f71417c301e403c4714090e61c8a736'"
+                        " but no checksum found\n"
                     "ChecksumError: invalid checksum in '%s/test.ini.copy', expected '4306ec205f71417c301e403c4714090e61c8a736'"
                         " but found '4306ec205f71417c301e403c4714090e61c8a999'",
                 testPath(), testPath(), testPath(), testPath())));
@@ -247,7 +270,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storageRemoveNP(storageLocalWrite(), fileName);
         TEST_ERROR_FMT(
-            infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), NULL, NULL), CryptoError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), testInfoLoadCallback, NULL), CryptoError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
                 "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
                 "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
@@ -269,9 +292,8 @@ testRun(void)
         Info *info = infoNew(cipherTypeNone, NULL);
         TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeNone, NULL), "save info");
 
-        ini = NULL;
-        TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeNone, NULL, NULL, NULL), "    reload info");
-        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value1", "    check ini");
+        TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), "    reload info");
+        // TEST_RESULT_PTR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value1", "    check ini");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, fileName), true, "check main exists");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))), true, "check copy exists");
@@ -288,10 +310,10 @@ testRun(void)
         info = infoNew(cipherTypeAes256Cbc, strNew("/hall-pass"));
         TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
 
-        ini = NULL;
-        TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, NULL, NULL), "    reload info");
-        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value4", "    check ini");
-        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"/hall-pass\"", "    check cipher-pass");
+        TEST_RESULT_VOID(
+            infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, testInfoLoadCallback, NULL), "    reload info");
+        // TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value4", "    check ini");
+        // TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"/hall-pass\"", "    check cipher-pass");
 
         TEST_ERROR(
             infoSave(info, ini, storageTest, fileName, cipherTypeNone, NULL), AssertError,
