@@ -133,6 +133,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
             }
             MEM_CONTEXT_END();
 
+            // Callback if set
             if (data->callbackFunction != NULL)
                 data->callbackFunction(type, data->callbackData, NULL, NULL, NULL);
 
@@ -168,10 +169,6 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
                         kvGet(pgDataKv, data->type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
                 };
 
-                // Set index if this is the current history item
-                if (infoPgData.id == data->currentId)
-                    data->historyCurrent = lstSize(data->history);
-
                 // Get values that are only in backup and manifest files.  These are really vestigial since stanza-create verifies
                 // the control and catalog versions so there is no good reason to store them.  However, for backward compatibility
                 // we must write them at least, even if we give up reading them.
@@ -184,8 +181,9 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
                     THROW_FMT(AssertError, "invalid InfoPg type %u", data->type);
 
                 // Using lstAdd because it is more efficient than lstInsert and loading this file is in critical code paths
-                lstAdd(data->history, &infoPgData);
+                lstInsert(data->history, 0, &infoPgData);
             }
+            // Callback if set
             else if (data->callbackFunction != NULL)
                 data->callbackFunction(infoCallbackTypeValue, data->callbackData, section, key, value);
 
@@ -200,9 +198,17 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
             // If the current id was not found then the file is corrupt
             CHECK(data->currentId > 0);
 
+            // Find the current history item
+            for (unsigned int historyIdx = 0; historyIdx < lstSize(data->history); historyIdx++)
+            {
+                if (((InfoPgData *)lstGet(data->history, historyIdx))->id == data->currentId)
+                    data->historyCurrent = historyIdx;
+            }
+
             // If the current id did not match the history list then the file is corrupt
             CHECK(data->historyCurrent != UINT_MAX);
 
+            // Callback if set
             if (data->callbackFunction != NULL)
                 data->callbackFunction(infoCallbackTypeEnd, data->callbackData, NULL, NULL, NULL);
 
