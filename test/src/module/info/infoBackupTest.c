@@ -69,7 +69,6 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName2, cipherTypeNone, NULL), "load backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "    cipher sub not set");
-        TEST_RESULT_PTR(infoBackup->backup, NULL, "    backupCurrent NULL");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "    infoBackupDataTotal returns 0");
 
         // Remove both files and recreate from scratch with cipher
