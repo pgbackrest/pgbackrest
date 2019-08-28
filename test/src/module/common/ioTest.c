@@ -431,6 +431,11 @@ testRun(void)
         ioReadOpen(read);
         TEST_ERROR(ioReadLine(read), FileReadError, "unable to find line in 10 byte buffer");
 
+        // Read line without eof
+        read = ioBufferReadNew(BUFSTRDEF("1234"));
+        ioReadOpen(read);
+        TEST_RESULT_STR(strPtr(ioReadLineParam(read, true)), "1234", "read line without eof");
+
         // Read IO into a buffer
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(8);
