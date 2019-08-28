@@ -26,8 +26,6 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
 
 // CSHANG The perl code for testing the manifest build doesn't seem right as it was truly only looking at things that were remote because it was using the CFGOPT_PG_HOST total.
         // // Loop through all defined databases and attempt to build a manifest
@@ -66,6 +64,9 @@ cmdCheck(void)
             // Check the user configured path and version against the database
             checkDbConfig(pgControl.version, dbGroup.standbyId, dbGroup.standby, true);
 
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
+            storageRepo();
+
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
                 storageRepo(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
@@ -91,6 +92,9 @@ cmdCheck(void)
 
             // Check the user configured path and version against the database
             checkDbConfig(pgControl.version, dbGroup.primaryId, dbGroup.primary, false);
+
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
+            storageRepo();
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
