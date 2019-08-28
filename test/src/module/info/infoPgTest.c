@@ -79,6 +79,7 @@ testRun(void)
     {
         String *content = NULL;
         String *fileName = strNewFmt("%s/test.ini", testPath());
+        String *fileNameCopy = strNewFmt("%s/test.ini.copy", testPath());
         String *fileName2 = strNewFmt("%s/test2.ini", testPath());
         String *fileName3 = strNewFmt("%s/test3.ini", testPath());
 
@@ -107,7 +108,8 @@ testRun(void)
         strCat(contentExtra, contentDbHistory);
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(contentExtra)), "put info to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), harnessInfoChecksum(contentExtra)),
+            "put info to file");
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName2), harnessInfoChecksum(content)),
             "put check info to file");
@@ -121,6 +123,8 @@ testRun(void)
             "load file");
         TEST_RESULT_STR(
             strPtr(callbackContent),
+            "BEGIN\n"
+            "RESET\n"
             "BEGIN\n"
                 "[backup:current] 20161219-212741F={}\n"
                 "END\n",
@@ -177,7 +181,8 @@ testRun(void)
         strCat(contentExtra, contentDbHistory);
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(contentExtra)), "put info to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), harnessInfoChecksum(contentExtra)),
+            "put info to file");
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName2), harnessInfoChecksum(content)),
             "put check info to file");
@@ -231,8 +236,8 @@ testRun(void)
         TEST_ERROR_FMT(
             infoPgNewLoad(storageLocal(), fileName, 10, cipherTypeNone, NULL, NULL, NULL), AssertError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-            "AssertError: invalid InfoPg type 10\n"
-            "FileMissingError: unable to open missing file '%s/test.ini.copy' for read",
+            "FileMissingError: unable to open missing file '%s/test.ini' for read\n"
+            "AssertError: invalid InfoPg type 10",
             testPath(), testPath(), testPath());
         TEST_ERROR(
             infoPgNewLoad(storageLocal(), NULL, infoPgBackup, cipherTypeNone, NULL, NULL, NULL), AssertError,

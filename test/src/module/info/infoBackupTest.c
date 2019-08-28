@@ -16,7 +16,9 @@ testRun(void)
     //--------------------------------------------------------------------------------------------------------------------------
     String *content = NULL;
     String *fileName = strNewFmt("%s/test.ini", testPath());
+    String *fileNameCopy = strNewFmt("%s/test.ini.copy", testPath());
     String *fileName2 = strNewFmt("%s/test2.ini", testPath());
+    String *fileName3 = strNewFmt("%s/test3.ini", testPath());
     InfoBackup *infoBackup = NULL;
 
     // *****************************************************************************************************************************
@@ -37,43 +39,57 @@ testRun(void)
 
         // File exists, no backup:current section
         //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
-        (
+        const char *contentDb =
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.4\"\n";
+
+        const char *contentDbHistory =
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+                "\"db-version\":\"9.4\"}\n";
+
+        content = strNew(contentDb);
+        strCat(content, contentDbHistory);
+
+        String *contentExtra = strNew(contentDb);
+        strCat(
+            contentExtra,
+            "\n"
+            "[another-section]\n"
+            "key1=value1\n");
+        strCat(contentExtra, contentDbHistory);
 
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), harnessInfoChecksum(contentExtra)),
+            "put info to file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName2), harnessInfoChecksum(content)),
+            "put check info to file");
 
         TEST_ASSIGN(
             infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, 942, 201409291, cipherTypeNone, NULL),
             "infoBackupNew() - no cipher sub");
         TEST_RESULT_VOID(
-            infoBackupSave(infoBackup, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "    save backup info from new");
+            infoBackupSave(infoBackup, storageLocalWrite(), fileName3, cipherTypeNone, NULL), "    save backup info from new");
         TEST_RESULT_BOOL(
             bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
-                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName2)),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName3))),
             true, "    files are equal");
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName2, cipherTypeNone, NULL), "load backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "load backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "    cipher sub not set");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "    infoBackupDataTotal returns 0");
 
         // Remove both files and recreate from scratch with cipher
         //--------------------------------------------------------------------------------------------------------------------------
-        storageRemoveP(storageLocalWrite(), fileName, .errorOnMissing = true);
+        storageRemoveP(storageLocalWrite(), fileNameCopy, .errorOnMissing = true);
         storageRemoveP(storageLocalWrite(), fileName2, .errorOnMissing = true);
 
         TEST_ASSIGN(

@@ -143,6 +143,11 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
         case infoCallbackTypeReset:
         {
             lstFree(data->history);
+
+            // Callback if set
+            if (data->callbackFunction != NULL)
+                data->callbackFunction(type, data->callbackData, NULL, NULL, NULL);
+
             break;
         }
 
