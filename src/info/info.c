@@ -225,8 +225,10 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
         ioFilterProcessIn(data->checksumActual, BUFSTR(value));
     }
 
+    // Process backrest section
     if (strEq(section, INFO_SECTION_BACKREST_STR))
     {
+        // Validate format
         if (strEq(key, INFO_KEY_FORMAT_STR))
         {
             if (jsonToUInt(value) != REPOSITORY_FORMAT)
@@ -236,6 +238,7 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
                     cvtZToInt(strPtr(value)));
             }
         }
+        // Store checksum to be validated later
         else if (strEq(key, INFO_KEY_CHECKSUM_STR))
         {
             MEM_CONTEXT_BEGIN(data->memContext)
@@ -245,8 +248,10 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
             MEM_CONTEXT_END();
         }
     }
+    // Process cipher section
     else if (strEq(section, INFO_SECTION_CIPHER_STR))
     {
+        // No validation needed for cipher-pass, just store it
         if (strEq(key, INFO_KEY_CIPHER_PASS_STR))
         {
             MEM_CONTEXT_BEGIN(data->memContext)
@@ -303,11 +308,11 @@ infoLoad(
                 cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
         }
 
-        // Load and parse the info file
-        ioFilterProcessIn(data.checksumActual, BUFSTRDEF("{"));
-
         // Notify callback function that the ini load is beginning
         data.callbackFunction(infoCallbackTypeBegin, data.callbackData, NULL, NULL, NULL);
+
+        // Load and parse the info file
+        ioFilterProcessIn(data.checksumActual, BUFSTRDEF("{"));
 
         TRY_BEGIN()
         {

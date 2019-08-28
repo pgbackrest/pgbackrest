@@ -24,10 +24,6 @@ Ini *iniNew(void);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void iniLoad(
-    IoRead *read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
-    void *callbackData);
-
 Ini *iniMove(Ini *this, MemContext *parentNew);
 void iniParse(Ini *this, const String *content);
 void iniSave(Ini *this, IoWrite *write);
@@ -49,6 +45,13 @@ bool iniFileExists(const Ini *this);
 Destructor
 ***********************************************************************************************************************************/
 void iniFree(Ini *this);
+
+/***********************************************************************************************************************************
+Helper Functions
+***********************************************************************************************************************************/
+void iniLoad(
+    IoRead *read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
+    void *callbackData);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -123,6 +123,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
 
     switch (type)
     {
+        // Begin processing
         case infoCallbackTypeBegin:
         {
             MEM_CONTEXT_BEGIN(data->memContext)
@@ -140,6 +141,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
             break;
         }
 
+        // Reset processing
         case infoCallbackTypeReset:
         {
             lstFree(data->history);
@@ -151,13 +153,16 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
             break;
         }
 
+        // Process values
         case infoCallbackTypeValue:
         {
+            // Process db section
             if (strEq(section, INFO_SECTION_DB_STR))
             {
                 if (strEq(key, INFO_KEY_DB_ID_STR))
                     data->currentId = jsonToUInt(value);
             }
+            // Process db:history section
             else if (strEq(section, INFO_SECTION_DB_HISTORY_STR))
             {
                 // Load JSON data into a KeyValue

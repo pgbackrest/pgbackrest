@@ -130,6 +130,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
 
     switch (type)
     {
+        // Begin processing
         case infoCallbackTypeBegin:
         {
             MEM_CONTEXT_BEGIN(data->memContext)
@@ -141,14 +142,17 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
             break;
         }
 
+        // Reset processing
         case infoCallbackTypeReset:
         {
             lstFree(data->backup);
             break;
         }
 
+        // Process values
         case infoCallbackTypeValue:
         {
+            // Process current backup list
             if (strEq(section, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR))
             {
                 const KeyValue *backupKv = jsonToKv(value);
@@ -196,6 +200,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
             break;
         }
 
+        // End processing
         case infoCallbackTypeEnd:
             break;
     }
