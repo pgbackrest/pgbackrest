@@ -285,7 +285,7 @@ ioReadLineParam(IoRead *this, bool allowEof)
 }
 
 /***********************************************************************************************************************************
-Read linefeed-terminated string
+Read linefeed-terminated string and error on eof
 ***********************************************************************************************************************************/
 String *
 ioReadLine(IoRead *this)
