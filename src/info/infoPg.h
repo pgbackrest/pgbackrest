@@ -44,7 +44,6 @@ typedef enum
 {
     infoPgArchive,                                                  // archive info file
     infoPgBackup,                                                   // backup info file
-    infoPgManifest,                                                 // manifest file
 } InfoPgType;
 
 /***********************************************************************************************************************************

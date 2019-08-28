@@ -3,42 +3,7 @@ Test Info Handler
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
-/***********************************************************************************************************************************
-Test load callbackup
-***********************************************************************************************************************************/
-static void
-testInfoLoadCallback(InfoCallbackType type, void *callbackData, const String *section, const String *key, const String *value)
-{
-    if (callbackData != NULL)
-    {
-        switch (type)
-        {
-            case infoCallbackTypeBegin:
-            {
-                strCat((String *)callbackData, "BEGIN\n");
-                break;
-            }
-
-            case infoCallbackTypeReset:
-            {
-                strCat((String *)callbackData, "RESET\n");
-                break;
-            }
-
-            case infoCallbackTypeValue:
-            {
-                strCatFmt((String *)callbackData, "[%s] %s=%s\n", strPtr(section), strPtr(key), strPtr(value));
-                break;
-            }
-
-            case infoCallbackTypeEnd:
-            {
-                strCat((String *)callbackData, "END\n");
-                break;
-            }
-        }
-    }
-}
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -104,7 +69,7 @@ testRun(void)
         // Info files missing and at least one is required
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), FileMissingError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, harnessInfoLoadCallback, NULL), FileMissingError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING,
@@ -119,7 +84,7 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put info.copy to file");
 
         TEST_ASSIGN(
-            info, infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, callbackContent),
+            info, infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, harnessInfoLoadCallback, callbackContent),
             "load copy file");
 
         TEST_RESULT_STR(
@@ -172,7 +137,8 @@ testRun(void)
 
         TEST_ASSIGN(
             info,
-            infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), testInfoLoadCallback, callbackContent),
+            infoNewLoad(
+                storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), harnessInfoLoadCallback, callbackContent),
             "load file");
 
         TEST_RESULT_STR(
@@ -215,7 +181,7 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put invalid br format to file");
 
         TEST_ERROR_FMT(
-            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), FormatError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, harnessInfoLoadCallback, NULL), FormatError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
             "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING,
@@ -245,7 +211,7 @@ testRun(void)
                 storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put invalid info to copy file");
 
         TEST_ERROR(
-            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), FileOpenError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, harnessInfoLoadCallback, NULL), FileOpenError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -302,7 +268,7 @@ testRun(void)
 
         // Copy file error
         TEST_ERROR(
-            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), ChecksumError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, harnessInfoLoadCallback, NULL), ChecksumError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -316,7 +282,8 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storageRemoveNP(storageLocalWrite(), fileName);
         TEST_ERROR_FMT(
-            infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), testInfoLoadCallback, NULL), CryptoError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), harnessInfoLoadCallback, NULL),
+            CryptoError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
                 "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
                 "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
@@ -338,7 +305,8 @@ testRun(void)
         Info *info = infoNew(cipherTypeNone, NULL);
         TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeNone, NULL), "save info");
 
-        TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeNone, NULL, testInfoLoadCallback, NULL), "    reload info");
+        TEST_RESULT_VOID(
+            infoNewLoad(storageTest, fileName, cipherTypeNone, NULL, harnessInfoLoadCallback, NULL), "    reload info");
         // TEST_RESULT_PTR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value1", "    check ini");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, fileName), true, "check main exists");
@@ -357,7 +325,7 @@ testRun(void)
         TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
 
         TEST_RESULT_VOID(
-            infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, testInfoLoadCallback, NULL), "    reload info");
+            infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, harnessInfoLoadCallback, NULL), "    reload info");
         // TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value4", "    check ini");
         // TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"/hall-pass\"", "    check cipher-pass");
 

@@ -65,19 +65,6 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoCipherPass(infoPgInfo(infoPg))), "123xyz", "  cipherPass set");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(
-            infoPg, infoPgSet(infoPgNew(cipherTypeNone, NULL), infoPgManifest, PG_VERSION_95, 6569239123849665699,
-            201510051, 950), "infoPgSet - infoPgManifest");
-        TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
-        TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
-        pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
-        TEST_RESULT_INT(pgData.id, 1, "  id set");
-        TEST_RESULT_INT(pgData.systemId, 6569239123849665699, "  system-id set");
-        TEST_RESULT_INT(pgData.version, PG_VERSION_95, "  version set");
-        TEST_RESULT_INT(pgData.catalogVersion, 950, "  catalog-version set");
-        TEST_RESULT_INT(pgData.controlVersion, 201510051, "  control-version set");
-
-        //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(infoPg, infoPgNewInternal(), "infoPgNewInternal()");
         TEST_RESULT_PTR(infoPgInfo(infoPg), NULL, "  info not set");
 
@@ -97,67 +84,103 @@ testRun(void)
 
         // Archive info
         //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
-        (
+        const char *contentDb =
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.4\"\n";
+
+        const char *contentDbHistory =
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-        );
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n";
+
+        content = strNew(contentDb);
+        strCat(content, contentDbHistory);
+
+        String *contentExtra = strNew(contentDb);
+        strCat(
+            contentExtra,
+            "\n"
+            "[backup:current]\n"
+            "20161219-212741F={}\n");
+        strCat(contentExtra, contentDbHistory);
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put info to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(contentExtra)), "put info to file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName2), harnessInfoChecksum(content)),
+            "put check info to file");
 
+        String *callbackContent = strNew("");
         InfoPg *infoPg = NULL;
-        Ini *ini = NULL;
 
         TEST_ASSIGN(
-            infoPg, infoPgNewLoad(storageLocal(), fileName, infoPgArchive, cipherTypeNone, NULL, NULL, NULL), "load file");
-        // TEST_RESULT_STR(strPtr(iniGet(ini, strNew("db"), strNew("db-id"))), "1", "    check ini");
+            infoPg,
+            infoPgNewLoad(storageLocal(), fileName, infoPgArchive, cipherTypeNone, NULL, harnessInfoLoadCallback, callbackContent),
+            "load file");
+        TEST_RESULT_STR(
+            strPtr(callbackContent),
+            "BEGIN\n"
+                "[backup:current] 20161219-212741F={}\n"
+                "END\n",
+            "    check callback content");
+        TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
 
         // Save the file and verify it
-        ini = iniNew();
+        Ini *ini = iniNew();
         TEST_RESULT_VOID(
             infoPgSave(infoPg, ini, storageLocalWrite(), fileName3, infoPgArchive, cipherTypeNone, NULL), "infoPgSave - archive");
         TEST_RESULT_BOOL(
             bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName2)),
                 storageGetNP(storageNewReadNP(storageLocal(), fileName3))),
             true, "    saved files are equal");
 
-        TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
-
-        InfoPgData infoPgData = infoPgDataCurrent(infoPg);
-        TEST_RESULT_INT(infoPgData.id, 1, "    id set");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
-        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    system-id set");
-        TEST_RESULT_INT(infoPgData.catalogVersion, 0, "    catalog-version not set");
-        TEST_RESULT_INT(infoPgData.controlVersion, 0, "    control-version not set");
+        InfoPgData pgData = infoPgDataCurrent(infoPg);
+        TEST_RESULT_INT(pgData.id, 1, "    id set");
+        TEST_RESULT_INT(pgData.version, PG_VERSION_94, "    version set");
+        TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "    system-id set");
+        TEST_RESULT_INT(pgData.catalogVersion, 0, "    catalog-version not set");
+        TEST_RESULT_INT(pgData.controlVersion, 0, "    control-version not set");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "    check pg data total");
         TEST_RESULT_STR(strPtr(infoPgArchiveId(infoPg, 0)), "9.4-1", "    check pg archive id");
         TEST_RESULT_PTR(infoPgCipherPass(infoPg), NULL, "    no cipher passphrase");
 
         // Backup info
         //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
-        (
+        contentDb =
             "[db]\n"
-            "db-catalog-version=201409291\n"
+            "db-catalog-version=201510051\n"
             "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-id=2\n"
+            "db-system-id=6365925855999999999\n"
+            "db-version=\"9.5\"\n";
+
+        contentDbHistory =
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.4\"}\n"
-        );
+            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6365925855999999999,"
+                "\"db-version\":\"9.5\"}\n";
+
+        content = strNew(contentDb);
+        strCat(content, contentDbHistory);
+
+        contentExtra = strNew(contentDb);
+        strCat(
+            contentExtra,
+            "\n"
+            "[backup:current]\n"
+            "20161219-212741F={}\n");
+        strCat(contentExtra, contentDbHistory);
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put info to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(contentExtra)), "put info to file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName2), harnessInfoChecksum(content)),
+            "put check info to file");
         TEST_ASSIGN(
             infoPg, infoPgNewLoad(storageLocal(), fileName, infoPgBackup, cipherTypeNone, NULL, NULL, NULL), "load file");
 
@@ -167,76 +190,41 @@ testRun(void)
             infoPgSave(infoPg, ini, storageLocalWrite(), fileName3, infoPgBackup, cipherTypeNone, NULL), "infoPgSave - backup");
         TEST_RESULT_BOOL(
             bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName2)),
                 storageGetNP(storageNewReadNP(storageLocal(), fileName3))),
             true, "    saved files are equal");
-        TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
 
-        infoPgData = infoPgDataCurrent(infoPg);
-        TEST_RESULT_INT(infoPgData.id, 1, "    id set");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
-        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    system-id set");
-        TEST_RESULT_INT(infoPgData.catalogVersion, 201409291, "    catalog-version set");
-        TEST_RESULT_INT(infoPgData.controlVersion, 942, "    control-version set");
+        TEST_RESULT_INT(infoPgDataTotal(infoPg), 2, "    check pg data total");
 
-        // Manifest info
-        //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201510051\n"
-            "db-control-version=942\n"
-            "db-id=2\n"
-            "db-system-id=6365925855999999999\n"
-            "db-version=\"9.5\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6365925855999999999,"
-                "\"db-version\":\"9.5\"}\n"
-        );
+        pgData = infoPgDataCurrent(infoPg);
+        TEST_RESULT_INT(pgData.id, 2, "    id set");
+        TEST_RESULT_INT(pgData.version, PG_VERSION_95, "    version set");
+        TEST_RESULT_INT(pgData.systemId, 6365925855999999999, "    system-id set");
+        TEST_RESULT_INT(pgData.catalogVersion, 201510051, "    catalog-version set");
+        TEST_RESULT_INT(pgData.controlVersion, 942, "    control-version set");
 
-        // Put the file and load it
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put info to file");
-        TEST_ASSIGN(
-            infoPg, infoPgNewLoad(storageLocal(), fileName, infoPgManifest, cipherTypeNone, NULL, NULL, NULL), "load file");
-
-        // Save the file and verify it
-        ini = iniNew();
-        TEST_RESULT_VOID(
-            infoPgSave(infoPg, ini, storageLocalWrite(), fileName2, infoPgManifest, cipherTypeNone, NULL), "infoPgSave - manifest");
-        TEST_RESULT_BOOL(
-            bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
-                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
-            true, "    saved files are equal");
-
-        TEST_RESULT_INT(lstSize(infoPg->history), 2, "history record added");
-
-        infoPgData = infoPgDataCurrent(infoPg);
-        TEST_RESULT_INT(infoPgData.id, 2, "    id set");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_95, "    version set");
-        TEST_RESULT_INT(infoPgData.systemId, 6365925855999999999, "    system-id set");
-        TEST_RESULT_INT(infoPgData.catalogVersion, 201510051, "    catalog-version set");
-        TEST_RESULT_INT(infoPgData.controlVersion, 942, "    control-version set");
+        pgData = infoPgData(infoPg, 1);
+        TEST_RESULT_INT(pgData.id, 1, "    id set");
+        TEST_RESULT_INT(pgData.version, PG_VERSION_94, "    version set");
+        TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "    system-id set");
+        TEST_RESULT_INT(pgData.catalogVersion, 201409291, "    catalog-version set");
+        TEST_RESULT_INT(pgData.controlVersion, 942, "    control-version set");
 
         // infoPgAdd
         //--------------------------------------------------------------------------------------------------------------------------
-        infoPgData.id = 3;
-        infoPgData.version = PG_VERSION_96;
-        infoPgData.systemId = 6399999999999999999;
-        infoPgData.catalogVersion = 201608131;
-        infoPgData.controlVersion = 960;
-        TEST_RESULT_VOID(infoPgAdd(infoPg, &infoPgData), "infoPgAdd");
+        pgData.id = 3;
+        pgData.version = PG_VERSION_96;
+        pgData.systemId = 6399999999999999999;
+        pgData.catalogVersion = 201608131;
+        pgData.controlVersion = 960;
+        TEST_RESULT_VOID(infoPgAdd(infoPg, &pgData), "infoPgAdd");
 
-        InfoPgData infoPgDataTest = infoPgDataCurrent(infoPg);
-        TEST_RESULT_INT(infoPgDataTest.id, 3, "    id set");
-        TEST_RESULT_INT(infoPgDataTest.version, PG_VERSION_96, "    version set");
-        TEST_RESULT_INT(infoPgDataTest.systemId, 6399999999999999999, "    system-id set");
-        TEST_RESULT_INT(infoPgDataTest.catalogVersion, 201608131, "    catalog-version set");
-        TEST_RESULT_INT(infoPgDataTest.controlVersion, 960, "    control-version set");
+        InfoPgData pgDataTest = infoPgDataCurrent(infoPg);
+        TEST_RESULT_INT(pgDataTest.id, 3, "    id set");
+        TEST_RESULT_INT(pgDataTest.version, PG_VERSION_96, "    version set");
+        TEST_RESULT_INT(pgDataTest.systemId, 6399999999999999999, "    system-id set");
+        TEST_RESULT_INT(pgDataTest.catalogVersion, 201608131, "    catalog-version set");
+        TEST_RESULT_INT(pgDataTest.controlVersion, 960, "    control-version set");
 
         // Errors
         //--------------------------------------------------------------------------------------------------------------------------
@@ -247,12 +235,12 @@ testRun(void)
             "FileMissingError: unable to open missing file '%s/test.ini.copy' for read",
             testPath(), testPath(), testPath());
         TEST_ERROR(
-            infoPgNewLoad(storageLocal(), NULL, infoPgManifest, cipherTypeNone, NULL, NULL, NULL), AssertError,
+            infoPgNewLoad(storageLocal(), NULL, infoPgBackup, cipherTypeNone, NULL, NULL, NULL), AssertError,
             "assertion 'fileName != NULL' failed");
 
         TEST_ERROR(infoPgDataCurrent(NULL), AssertError, "assertion 'this != NULL' failed");
 
-        TEST_ERROR(infoPgAdd(NULL, &infoPgData), AssertError, "assertion 'this != NULL' failed");
+        TEST_ERROR(infoPgAdd(NULL, &pgData), AssertError, "assertion 'this != NULL' failed");
         TEST_ERROR(infoPgAdd(infoPg, NULL), AssertError, "assertion 'infoPgData != NULL' failed");
         TEST_ERROR(
             infoPgSave(infoPg, ini, storageLocalWrite(), fileName2, 10000, cipherTypeNone, NULL),
@@ -265,13 +253,13 @@ testRun(void)
         // infoPgDataToLog
         //--------------------------------------------------------------------------------------------------------------------------
         // test max values
-        infoPgDataTest.id = (unsigned int)4294967295;
-        infoPgDataTest.version = (unsigned int)4294967295;
-        infoPgDataTest.systemId = 18446744073709551615U;
-        infoPgDataTest.catalogVersion = (uint32_t)4294967295;
-        infoPgDataTest.controlVersion = (uint32_t)4294967295;
+        pgDataTest.id = (unsigned int)4294967295;
+        pgDataTest.version = (unsigned int)4294967295;
+        pgDataTest.systemId = 18446744073709551615U;
+        pgDataTest.catalogVersion = (uint32_t)4294967295;
+        pgDataTest.controlVersion = (uint32_t)4294967295;
         TEST_RESULT_STR(
-            strPtr(infoPgDataToLog(&infoPgDataTest)),
+            strPtr(infoPgDataToLog(&pgDataTest)),
             "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615, catalogVersion: 4294967295, controlVersion:"
                 " 4294967295}",
             "    check max format");

@@ -135,7 +135,7 @@ infoHash(const Ini *ini)
                 String *key = strLstGet(keyList, keyIdx);
 
                 // Skip the backrest checksum in the file
-                if (!strEq(section, INFO_SECTION_BACKREST_STR) || !strEq(key, INFO_KEY_CHECKSUM_STR))
+                if (!strEq(section, INFO_SECTION_BACKREST_STR) || !strEq(key, INFO_KEY_CHECKSUM_STR)) // {uncovered_branch - to be removed}
                 {
                     ioFilterProcessIn(hash, BUFSTRDEF("\""));
                     ioFilterProcessIn(hash, BUFSTR(key));

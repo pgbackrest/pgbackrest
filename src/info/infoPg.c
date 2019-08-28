@@ -172,7 +172,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
                 // Get values that are only in backup and manifest files.  These are really vestigial since stanza-create verifies
                 // the control and catalog versions so there is no good reason to store them.  However, for backward compatibility
                 // we must write them at least, even if we give up reading them.
-                if (data->type == infoPgBackup || data->type == infoPgManifest)
+                if (data->type == infoPgBackup)
                 {
                     infoPgData.catalogVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR));
                     infoPgData.controlVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR));
@@ -324,7 +324,7 @@ infoPgSet(
             .systemId = pgSystemId,
         };
 
-        if (type == infoPgBackup || type == infoPgManifest)
+        if (type == infoPgBackup)
         {
             infoPgData.catalogVersion = pgCatalogVersion;
             infoPgData.controlVersion = pgControlVersion;
@@ -373,7 +373,7 @@ infoPgSave(
         iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_VERSION_VAR), jsonFromStr(pgVersionToStr(pgData.version)));
         iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_SYSTEM_ID_VAR), jsonFromUInt64(pgData.systemId));
 
-        if (type == infoPgBackup || type == infoPgManifest)
+        if (type == infoPgBackup)
         {
 
             iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR), jsonFromUInt(pgData.catalogVersion));
@@ -390,7 +390,7 @@ infoPgSave(
             KeyValue *pgDataKv = kvNew();
             kvPut(pgDataKv, INFO_KEY_DB_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
 
-            if (type == infoPgBackup || type == infoPgManifest)
+            if (type == infoPgBackup)
             {
                 kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgData.catalogVersion));
                 kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgData.controlVersion));
