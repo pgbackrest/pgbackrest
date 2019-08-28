@@ -412,7 +412,7 @@ infoPgSave(
             iniSet(ini, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)), jsonFromKv(pgDataKv, 0));
         }
 
-        infoSave(infoPgInfo(this), ini, storage, fileName, cipherType, cipherPass);
+        // infoSave(infoPgInfo(this), ini, storage, fileName, cipherType, cipherPass);
     }
     MEM_CONTEXT_TEMP_END();
 

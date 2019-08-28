@@ -11,6 +11,7 @@ Object type
 #define INFO_PREFIX                                                 info
 
 typedef struct Info Info;
+typedef struct InfoSave InfoSave;
 
 #include "common/crypto/common.h"
 #include "common/ini.h"
@@ -49,8 +50,12 @@ Info *infoNewLoad(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
+
 void infoSave(
-    Info *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+    Info *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
+    InfoSaveCallback *callbackFunction, void *callbackData);
+void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value);
 
 /***********************************************************************************************************************************
 Getters
@@ -71,5 +76,10 @@ Macros for function logging
     Info *
 #define FUNCTION_LOG_INFO_FORMAT(value, buffer, bufferSize)                                                                        \
     objToLog(value, "Info", buffer, bufferSize)
+
+#define FUNCTION_LOG_INFO_SAVE_TYPE                                                                                                \
+    InfoSave *
+#define FUNCTION_LOG_INFO_SAVE_FORMAT(value, buffer, bufferSize)                                                                   \
+    objToLog(value, "InfoSave", buffer, bufferSize)
 
 #endif

@@ -428,51 +428,143 @@ infoNewLoad(
 /***********************************************************************************************************************************
 Save to file
 ***********************************************************************************************************************************/
+struct InfoSave
+{
+    MemContext *memContext;                                         // Mem context
+    IoWrite *infoWrite;                                             // Write object for main copy
+    IoFilter *checksum;                                             // hash to generate file checksum
+    String *sectionLast;                                            // The last section seen
+};
+
+void
+infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(infoSaveData != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
+
+    // Do we calculate the checksum for this value?
+    bool checksum = !(strEq(section, INFO_SECTION_BACKREST_STR) && strEq(key, INFO_KEY_CHECKSUM_STR));
+
+    // Calculate checksum
+    if (infoSaveData->sectionLast == NULL || !strEq(section, infoSaveData->sectionLast))
+    {
+        if (infoSaveData->sectionLast != NULL)
+        {
+            if (checksum)
+                ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("},"));
+
+            ioWriteLine(infoSaveData->infoWrite, BUFSTRDEF(""));
+        }
+
+        if (checksum)
+        {
+            ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("\""));
+            ioFilterProcessIn(infoSaveData->checksum, BUFSTR(section));
+            ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("\":{"));
+        }
+
+        ioWrite(infoSaveData->infoWrite, BRACKETL_BUF);
+        ioWrite(infoSaveData->infoWrite, BUFSTR(section));
+        ioWriteLine(infoSaveData->infoWrite, BRACKETR_BUF);
+
+        MEM_CONTEXT_BEGIN(infoSaveData->memContext)
+        {
+            infoSaveData->sectionLast = strDup(section);
+        }
+        MEM_CONTEXT_END();
+    }
+    else if (checksum)
+        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF(","));
+
+    if (checksum)
+    {
+        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("\""));
+        ioFilterProcessIn(infoSaveData->checksum, BUFSTR(key));
+        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("\":"));
+        ioFilterProcessIn(infoSaveData->checksum, BUFSTR(value));
+    }
+
+    ioWrite(infoSaveData->infoWrite, BUFSTR(key));
+    ioWrite(infoSaveData->infoWrite, EQ_BUF);
+    ioWriteLine(infoSaveData->infoWrite, BUFSTR(value));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 void
 infoSave(
-    Info *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+    Info *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
+    InfoSaveCallback callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO, this);
-        FUNCTION_LOG_PARAM(INI, ini);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(ini != NULL);
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
     ASSERT(
         !((cipherType != cipherTypeNone && this->cipherPass == NULL) ||
           (cipherType == cipherTypeNone && this->cipherPass != NULL)));
+    ASSERT(callbackFunction != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Add version and format
-        iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
-        iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromUInt(REPOSITORY_FORMAT));
+        InfoSave *infoSaveData = memNew(sizeof(InfoSave));
+        infoSaveData->memContext = memContextCurrent();
 
-        // Add cipher passphrase if defined
-        if (this->cipherPass != NULL)
-            iniSet(ini, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(this->cipherPass));
-
-        // Add checksum (this must be set after all other values or it will not be valid)
-        iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR, jsonFromStr(infoHash(ini)));
-
-        // Save info file
-        IoWrite *infoWrite = storageWriteIo(storageNewWriteP(storage, fileName, .compressible = cipherType == cipherTypeNone));
+        // Open info file for write
+        infoSaveData->infoWrite = storageWriteIo(storageNewWriteP(storage, fileName, .compressible = cipherType == cipherTypeNone));
 
         if (cipherType != cipherTypeNone)
         {
             ioFilterGroupAdd(
-                ioWriteFilterGroup(infoWrite), cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
+                ioWriteFilterGroup(infoSaveData->infoWrite),
+                cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
         }
 
-        iniSave(ini, infoWrite);
+        ioWriteOpen(infoSaveData->infoWrite);
+
+        // Hash object to calculate checksum
+        infoSaveData->checksum = cryptoHashNew(HASH_TYPE_SHA1_STR);
+
+        // Add version and format
+        callbackFunction(callbackData, INFO_SECTION_BACKREST_STR, infoSaveData);
+        infoSaveValue(infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
+        infoSaveValue(infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromUInt(REPOSITORY_FORMAT));
+
+        // Add cipher passphrase if defined
+        if (this->cipherPass != NULL)
+        {
+            callbackFunction(callbackData, INFO_SECTION_BACKREST_STR, infoSaveData);
+            infoSaveValue(infoSaveData, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(this->cipherPass));
+        }
+
+        // Flush out any additional sections
+        callbackFunction(callbackData, NULL, infoSaveData);
+
+        // Add checksum (this must be set after all other values or it will not be valid)
+        infoSaveValue(
+            infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR, jsonFromVar(ioFilterResult(infoSaveData->checksum), 0));
+
+        // Close the file
+        ioWriteClose(infoSaveData->infoWrite);
 
         // Copy to .copy file
         storageCopyNP(
