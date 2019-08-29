@@ -75,7 +75,7 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = pgPathParam},                               \
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = archiveMode == NULL ? "on"                  \
         : archiveMode},                                                                                                            \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = archiveCommand == NULL ? PROJECT_NAME       \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = archiveCommand == NULL ? PROJECT_BIN        \
         : archiveCommand},                                                                                                         \
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}

@@ -28,17 +28,20 @@ cmdCheck(void)
     {
 
 // CSHANG The perl code for testing the manifest build doesn't seem right as it was truly only looking at things that were remote because it was using the CFGOPT_PG_HOST total.
+
+        unsigned int pgPathDefinedTotal = 0;
         // // Loop through all defined databases and attempt to build a manifest
-        // for (unsigned int pgIdx = 0; pgIdx < cfgOptionIndexTotal(cfgOptPgPath); pgIdx++)
-        // {
-        //     if (cfgOptionTest(cfgOptPgHost + pgIdx) || cfgOptionTest(cfgOptPgPath + pgIdx))
-        //     {
-        //         // CSHANG Placeholder for manifest builds - this is here just to make sure the loop is run and to check error
-        //         // (like make the dir owned by root) that way when do manifestBuild then should have same error from testing
-        //         // StringList *listTest =
-        //         storageListNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP));
-        //     }
-        // }
+        for (unsigned int pgIdx = 0; pgIdx < cfgOptionIndexTotal(cfgOptPgPath); pgIdx++)
+        {
+            if (cfgOptionTest(cfgOptPgHost + pgIdx) || cfgOptionTest(cfgOptPgPath + pgIdx))
+            {
+                pgPathDefinedTotal++;
+                // CSHANG Placeholder for manifest builds - this is here just to make sure the loop is run and to check error
+                // (like make the dir owned by root) that way when do manifestBuild then should have same error from testing
+                // StringList *listTest =
+                // storageListNP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP));
+            }
+        }
 
         // Get the primary/standby connections (standby is only required if backup from standby is enabled)
         DbGetResult dbGroup = dbGet(false, false);
@@ -53,7 +56,7 @@ cmdCheck(void)
             if (dbGroup.primary == NULL)
             {
                 // If the repo is local or more than one pg-path is found then a master should have been found so error
-                if (repoIsLocal() || cfgOptionIndexTotal(cfgOptPgPath) > 1)
+                if (repoIsLocal() || pgPathDefinedTotal > 1)
                     THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
             }
 // CSHANG What worries me is that we're requiring that pg1-* always be the local db host (you mentioned archive-push) so I think we need to make that very clear in the user-guide. Do we test for p2-path being the only thing configured on the primary to confirm archive push still works?
