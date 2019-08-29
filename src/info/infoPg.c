@@ -376,6 +376,10 @@ infoPgSaveCallback(void *callbackData, const String **sectionLast, const String 
 
     InfoPgSaveData *data = (InfoPgSaveData *)callbackData;
 
+    // Process the callback even if none of the sections below get executed
+    if (data->callbackFunction != NULL)
+        data->callbackFunction(data->callbackData, sectionLast, sectionNext, infoSaveData);
+
     if (INFO_SAVE_SECTION(INFO_SECTION_DB_STR))
     {
         if (data->callbackFunction != NULL)
