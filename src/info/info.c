@@ -91,81 +91,6 @@ infoNew(CipherType cipherType, const String *cipherPassSub)
 }
 
 /***********************************************************************************************************************************
-Generate hash for the contents of an ini file
-***********************************************************************************************************************************/
-String *
-infoHash(const Ini *ini)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, ini);
-    FUNCTION_TEST_END();
-
-    ASSERT(ini != NULL);
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        IoFilter *hash = cryptoHashNew(HASH_TYPE_SHA1_STR);
-        StringList *sectionList = strLstSort(iniSectionList(ini), sortOrderAsc);
-
-        // Initial JSON opening bracket
-        ioFilterProcessIn(hash, BUFSTRDEF("{"));
-
-        // Loop through sections and create hash for checking checksum
-        for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
-        {
-            String *section = strLstGet(sectionList, sectionIdx);
-
-            // Add a comma before additional sections
-            if (sectionIdx != 0)
-                ioFilterProcessIn(hash, BUFSTRDEF(","));
-
-            // Create the section header
-            ioFilterProcessIn(hash, BUFSTRDEF("\""));
-            ioFilterProcessIn(hash, BUFSTR(section));
-            ioFilterProcessIn(hash, BUFSTRDEF("\":{"));
-
-            StringList *keyList = strLstSort(iniSectionKeyList(ini, section), sortOrderAsc);
-            unsigned int keyListSize = strLstSize(keyList);
-
-            // Loop through values and build the section
-            for (unsigned int keyIdx = 0; keyIdx < keyListSize; keyIdx++)
-            {
-                String *key = strLstGet(keyList, keyIdx);
-
-                // Skip the backrest checksum in the file
-                if (!strEq(section, INFO_SECTION_BACKREST_STR) || !strEq(key, INFO_KEY_CHECKSUM_STR)) // {uncovered_branch - to be removed}
-                {
-                    ioFilterProcessIn(hash, BUFSTRDEF("\""));
-                    ioFilterProcessIn(hash, BUFSTR(key));
-                    ioFilterProcessIn(hash, BUFSTRDEF("\":"));
-                    ioFilterProcessIn(hash, BUFSTR(iniGet(ini, section, strLstGet(keyList, keyIdx))));
-
-                    if ((keyListSize > 1) && (keyIdx < keyListSize - 1))
-                        ioFilterProcessIn(hash, BUFSTRDEF(","));
-                }
-            }
-
-            // Close the key/value list
-            ioFilterProcessIn(hash, BUFSTRDEF("}"));
-        }
-
-        // JSON closing bracket
-        ioFilterProcessIn(hash, BUFSTRDEF("}"));
-
-        Variant *resultVar = ioFilterResult(hash);
-
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(varStr(resultVar));
-        memContextSwitch(MEM_CONTEXT_TEMP());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/***********************************************************************************************************************************
 Load and validate the info file (or copy)
 ***********************************************************************************************************************************/
 typedef struct InfoLoadData
@@ -482,8 +407,14 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
         }
         MEM_CONTEXT_END();
     }
-    else if (checksum)
+    else
+    {
+        // Since the checksum goes in a section by itself we should never be skipping checksums in a section with more than one
+        // value.  If this changes in the future then this assertion will break.
+        ASSERT(checksum);
+
         ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF(","));
+    }
 
     if (checksum)
     {
@@ -543,6 +474,7 @@ infoSave(
 
         // Hash object to calculate checksum
         infoSaveData->checksum = cryptoHashNew(HASH_TYPE_SHA1_STR);
+        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("{"));
 
         // Add version and format
         callbackFunction(callbackData, INFO_SECTION_BACKREST_STR, infoSaveData);
@@ -560,6 +492,7 @@ infoSave(
         callbackFunction(callbackData, NULL, infoSaveData);
 
         // Add checksum (this must be set after all other values or it will not be valid)
+        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("}}"));
         infoSaveValue(
             infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR, jsonFromVar(ioFilterResult(infoSaveData->checksum), 0));
 

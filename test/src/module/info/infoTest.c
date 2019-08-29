@@ -11,7 +11,7 @@ Test save callback
 void testInfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
 {
     if (sectionNext == NULL || strCmp(strNew("backup"), sectionNext) < 0)
-        infoSaveValue(infoSaveData, strNew("backup"), strNew("key1"), (String *)data);
+        infoSaveValue(infoSaveData, strNew("backup"), strNew("key"), (String *)data);
 }
 
 /***********************************************************************************************************************************
@@ -321,38 +321,40 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(callbackContent),
             "BEGIN\n"
-            "RESET\n"
-            "BEGIN\n"
-            "[db] db-id=1\n"
-                "[db] db-system-id=6569239123849665679\n"
-                "[db] db-version=\"9.4\"\n"
-                "[db:history] 1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-                "END\n",
+            "[backup] key=value1\n"
+            "END\n",
             "    check callback content");
 
-        // TEST_RESULT_BOOL(storageExistsNP(storageTest, fileName), true, "check main exists");
-        // TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))), true, "check copy exists");
-        //
-        // TEST_ERROR(
-        //     infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), AssertError,
-        //     "assertion '!((cipherType != cipherTypeNone && this->cipherPass == NULL) || "
-        //     "(cipherType == cipherTypeNone && this->cipherPass != NULL))' failed");
-        //
-        // // Add encryption
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // ini = iniNew();
-        // iniSet(ini, strNew("section1"), strNew("key1"), strNew("value4"));
-        // info = infoNew(cipherTypeAes256Cbc, strNew("/hall-pass"));
-        // TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
-        //
-        // TEST_RESULT_VOID(
-        //     infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, harnessInfoLoadCallback, NULL), "    reload info");
-        // // TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value4", "    check ini");
-        // // TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"/hall-pass\"", "    check cipher-pass");
-        //
-        // TEST_ERROR(
-        //     infoSave(info, ini, storageTest, fileName, cipherTypeNone, NULL), AssertError,
-        //     "assertion '!((cipherType != cipherTypeNone && this->cipherPass == NULL) || "
-        //     "(cipherType == cipherTypeNone && this->cipherPass != NULL))' failed");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, fileName), true, "check main exists");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))), true, "check copy exists");
+
+        TEST_ERROR(
+            infoSave(info, storageTest, fileName, cipherTypeAes256Cbc, cipherPass, testInfoSaveCallback, NULL), AssertError,
+            "assertion '!((cipherType != cipherTypeNone && this->cipherPass == NULL) || "
+            "(cipherType == cipherTypeNone && this->cipherPass != NULL))' failed");
+
+        // Add encryption
+        // -------------------------------------------------------------------------------------------------------------------------
+        info = infoNew(cipherTypeAes256Cbc, strNew("/hall-pass"));
+        TEST_RESULT_VOID(
+            infoSave(info, storageTest, fileName, cipherTypeAes256Cbc, cipherPass, testInfoSaveCallback, strNew("value2")),
+            "save encrypted info");
+
+        callbackContent = strNew("");
+
+        TEST_RESULT_VOID(
+            infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, harnessInfoLoadCallback, callbackContent),
+            "    reload info");
+        TEST_RESULT_STR(
+            strPtr(callbackContent),
+            "BEGIN\n"
+            "[backup] key=value2\n"
+            "END\n",
+            "    check callback content");
+
+        TEST_ERROR(
+            infoSave(info, storageTest, fileName, cipherTypeNone, NULL, testInfoSaveCallback, NULL), AssertError,
+            "assertion '!((cipherType != cipherTypeNone && this->cipherPass == NULL) || "
+            "(cipherType == cipherTypeNone && this->cipherPass != NULL))' failed");
     }
 }

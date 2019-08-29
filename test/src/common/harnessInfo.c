@@ -4,10 +4,87 @@ Harness for Loading Test Configurations
 #include "common/harnessDebug.h"
 #include "common/harnessInfo.h"
 
+#include "common/crypto/hash.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/type/json.h"
 #include "info/info.h"
 #include "version.h"
+
+/***********************************************************************************************************************************
+Generate hash for the contents of an ini file
+***********************************************************************************************************************************/
+static String *
+infoHash(const Ini *ini)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, ini);
+    FUNCTION_TEST_END();
+
+    ASSERT(ini != NULL);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        IoFilter *hash = cryptoHashNew(HASH_TYPE_SHA1_STR);
+        StringList *sectionList = strLstSort(iniSectionList(ini), sortOrderAsc);
+
+        // Initial JSON opening bracket
+        ioFilterProcessIn(hash, BUFSTRDEF("{"));
+
+        // Loop through sections and create hash for checking checksum
+        for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+        {
+            String *section = strLstGet(sectionList, sectionIdx);
+
+            // Add a comma before additional sections
+            if (sectionIdx != 0)
+                ioFilterProcessIn(hash, BUFSTRDEF(","));
+
+            // Create the section header
+            ioFilterProcessIn(hash, BUFSTRDEF("\""));
+            ioFilterProcessIn(hash, BUFSTR(section));
+            ioFilterProcessIn(hash, BUFSTRDEF("\":{"));
+
+            StringList *keyList = strLstSort(iniSectionKeyList(ini, section), sortOrderAsc);
+            unsigned int keyListSize = strLstSize(keyList);
+
+            // Loop through values and build the section
+            for (unsigned int keyIdx = 0; keyIdx < keyListSize; keyIdx++)
+            {
+                String *key = strLstGet(keyList, keyIdx);
+
+                // Skip the backrest checksum in the file
+                if (!strEq(section, STRDEF("backrest")) || !strEq(key, STRDEF("backrest-checksum")))
+                {
+                    ioFilterProcessIn(hash, BUFSTRDEF("\""));
+                    ioFilterProcessIn(hash, BUFSTR(key));
+                    ioFilterProcessIn(hash, BUFSTRDEF("\":"));
+                    ioFilterProcessIn(hash, BUFSTR(iniGet(ini, section, strLstGet(keyList, keyIdx))));
+
+                    if ((keyListSize > 1) && (keyIdx < keyListSize - 1))
+                        ioFilterProcessIn(hash, BUFSTRDEF(","));
+                }
+            }
+
+            // Close the key/value list
+            ioFilterProcessIn(hash, BUFSTRDEF("}"));
+        }
+
+        // JSON closing bracket
+        ioFilterProcessIn(hash, BUFSTRDEF("}"));
+
+        Variant *resultVar = ioFilterResult(hash);
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strDup(varStr(resultVar));
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
 
 /***********************************************************************************************************************************
 Load a test configuration without any side effects

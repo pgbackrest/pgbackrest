@@ -61,8 +61,6 @@ void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *
 Getters
 ***********************************************************************************************************************************/
 const String *infoCipherPass(const Info *this);
-String *infoHash(const Ini *ini);
-Ini *infoIni(const Info *this);
 
 /***********************************************************************************************************************************
 Destructor
