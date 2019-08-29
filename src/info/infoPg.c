@@ -355,7 +355,6 @@ Save to file
 ***********************************************************************************************************************************/
 typedef struct InfoPgSaveData
 {
-    MemContext *memContext;                                         // Mem context to use for storing data in this structure
     InfoSaveCallback *callbackFunction;                             // Callback function for child object
     void *callbackData;                                             // Callback data for child object
     InfoPgType type;                                                // Type of info file being loaded
@@ -456,7 +455,6 @@ infoPgSave(
         // Set callback data
         InfoPgSaveData data =
         {
-            .memContext = MEM_CONTEXT_TEMP(),
             .callbackFunction = callbackFunction,
             .callbackData = callbackData,
             .type = type,
