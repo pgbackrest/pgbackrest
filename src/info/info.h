@@ -51,9 +51,9 @@ Info *infoNewLoad(
 Functions
 ***********************************************************************************************************************************/
 #define INFO_SAVE_SECTION(section)                                                                                                 \
-    ((sectionLast == NULL || strCmp(section, sectionLast) > 0) && (sectionNext == NULL || strCmp(section, sectionNext) < 0))
+    ((*sectionLast == NULL || strCmp(section, *sectionLast) > 0) && (sectionNext == NULL || strCmp(section, sectionNext) < 0))
 
-typedef void InfoSaveCallback(void *data, const String *sectionLast, const String *sectionNext, InfoSave *infoSaveData);
+typedef void InfoSaveCallback(void *data, const String **sectionLast, const String *sectionNext, InfoSave *infoSaveData);
 
 void infoSave(
     Info *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,

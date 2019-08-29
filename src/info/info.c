@@ -477,19 +477,19 @@ infoSave(
         ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("{"));
 
         // Add version and format
-        callbackFunction(callbackData, infoSaveData->sectionLast, INFO_SECTION_BACKREST_STR, infoSaveData);
+        callbackFunction(callbackData, (const String **)&infoSaveData->sectionLast, INFO_SECTION_BACKREST_STR, infoSaveData);
         infoSaveValue(infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromUInt(REPOSITORY_FORMAT));
         infoSaveValue(infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
 
         // Add cipher passphrase if defined
         if (this->cipherPass != NULL)
         {
-            callbackFunction(callbackData, infoSaveData->sectionLast, INFO_SECTION_CIPHER_STR, infoSaveData);
+            callbackFunction(callbackData, (const String **)&infoSaveData->sectionLast, INFO_SECTION_CIPHER_STR, infoSaveData);
             infoSaveValue(infoSaveData, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(this->cipherPass));
         }
 
         // Flush out any additional sections
-        callbackFunction(callbackData, infoSaveData->sectionLast, NULL, infoSaveData);
+        callbackFunction(callbackData, (const String **)&infoSaveData->sectionLast, NULL, infoSaveData);
 
         // Add checksum (this must be set after all other values or it will not be valid)
         ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("}}"));

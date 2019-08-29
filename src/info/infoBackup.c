@@ -263,31 +263,27 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
 /***********************************************************************************************************************************
 Save to file
 ***********************************************************************************************************************************/
-void
-infoBackupSave(
-    InfoBackup *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+static void
+infoBackupSaveCallback(void *callbackData, const String **sectionLast, const String *sectionNext, InfoSave *infoSaveData)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM_P(STRING, sectionLast);
+        FUNCTION_TEST_PARAM(STRING, sectionNext);
+        FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
+    FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT(callbackData != NULL);
+    ASSERT(infoSaveData != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    InfoBackup *infoBackup = (InfoBackup *)callbackData;
+
+    if (INFO_SAVE_SECTION(INFO_BACKUP_SECTION_BACKUP_CURRENT_STR))
     {
-        Ini *ini = iniNew();
-
         // Set the backup current section
-        for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(this); backupIdx++)
+        for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
         {
-            InfoBackupData backupData = infoBackupData(this, backupIdx);
+            InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
 
             KeyValue *backupDataKv = kvNew();
             kvPut(backupDataKv, VARSTR(INFO_KEY_FORMAT_STR), VARUINT(backupData.backrestFormat));
@@ -323,10 +319,33 @@ infoBackupSave(
             kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_HARDLINK_VAR, VARBOOL(backupData.optionHardlink));
             kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ONLINE_VAR, VARBOOL(backupData.optionOnline));
 
-            iniSet(ini, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel, jsonFromKv(backupDataKv, 0));
+            infoSaveValue(
+                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel, jsonFromKv(backupDataKv, 0));
         }
+    }
 
-        infoPgSave(infoBackupPg(this), storage, fileName, infoPgBackup, cipherType, cipherPass, NULL, NULL);
+    FUNCTION_TEST_RETURN_VOID()
+}
+
+void
+infoBackupSave(InfoBackup *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        infoPgSave(infoBackupPg(this), storage, fileName, infoPgBackup, cipherType, cipherPass, infoBackupSaveCallback, this);
     }
     MEM_CONTEXT_TEMP_END();
 
