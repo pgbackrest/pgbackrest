@@ -171,7 +171,7 @@ infoArchiveSave(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        infoPgSave(infoArchivePg(this), iniNew(), storage, fileName, infoPgArchive, cipherType, cipherPass);
+        infoPgSave(infoArchivePg(this), storage, fileName, infoPgArchive, cipherType, cipherPass, NULL, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 

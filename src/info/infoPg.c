@@ -353,54 +353,60 @@ infoPgSet(
 /***********************************************************************************************************************************
 Save to file
 ***********************************************************************************************************************************/
-void
-infoPgSave(
-    InfoPg *this, Ini *ini, const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType,
-    const String *cipherPass)
+typedef struct InfoPgSaveData
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_PG, this);
-        FUNCTION_LOG_PARAM(INI, ini);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, type);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
-    FUNCTION_LOG_END();
+    MemContext *memContext;                                         // Mem context to use for storing data in this structure
+    InfoSaveCallback *callbackFunction;                             // Callback function for child object
+    void *callbackData;                                             // Callback data for child object
+    InfoPgType type;                                                // Type of info file being loaded
+    InfoPg *infoPg;                                                 // InfoPg object to be saved
+} InfoPgSaveData;
 
-    ASSERT(this != NULL);
-    ASSERT(ini != NULL);
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+void infoPgSaveCallback(void *callbackData, const String *sectionLast, const String *sectionNext, InfoSave *infoSaveData)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STRING, sectionLast);
+        FUNCTION_TEST_PARAM(STRING, sectionNext);
+        FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
+    FUNCTION_TEST_END();
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    ASSERT(callbackData != NULL);
+    ASSERT(infoSaveData != NULL);
+
+    InfoPgSaveData *data = (InfoPgSaveData *)callbackData;
+
+    if (INFO_SAVE_SECTION(INFO_SECTION_DB_STR))
     {
-        // Set the db section
-        InfoPgData pgData = infoPgDataCurrent(this);
+        InfoPgData pgData = infoPgDataCurrent(data->infoPg);
 
-        iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR), jsonFromUInt(pgData.id));
-        iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_VERSION_VAR), jsonFromStr(pgVersionToStr(pgData.version)));
-        iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_SYSTEM_ID_VAR), jsonFromUInt64(pgData.systemId));
-
-        if (type == infoPgBackup)
+        if (data->type == infoPgBackup)
         {
-
-            iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR), jsonFromUInt(pgData.catalogVersion));
-            iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR), jsonFromUInt(pgData.controlVersion));
+            infoSaveValue(
+                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR), jsonFromUInt(pgData.catalogVersion));
+            infoSaveValue(
+                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR), jsonFromUInt(pgData.controlVersion));
         }
-        else if (type != infoPgArchive)
-            THROW_FMT(AssertError, "invalid InfoPg type %u", type);
+        else if (data->type != infoPgArchive)
+            THROW_FMT(AssertError, "invalid InfoPg type %u", data->type);
 
+        infoSaveValue(infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR), jsonFromUInt(pgData.id));
+        infoSaveValue(infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_SYSTEM_ID_VAR), jsonFromUInt64(pgData.systemId));
+        infoSaveValue(
+            infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_VERSION_VAR), jsonFromStr(pgVersionToStr(pgData.version)));
+    }
+
+    if (INFO_SAVE_SECTION(INFO_SECTION_DB_HISTORY_STR))
+    {
         // Set the db history section in reverse so oldest history is first instead of last to be consistent with load
-        for (unsigned int pgDataIdx = infoPgDataTotal(this) - 1; (int)pgDataIdx >= 0; pgDataIdx--)
+        for (unsigned int pgDataIdx = infoPgDataTotal(data->infoPg) - 1; (int)pgDataIdx >= 0; pgDataIdx--)
         {
-            InfoPgData pgData = infoPgData(this, pgDataIdx);
+            InfoPgData pgData = infoPgData(data->infoPg, pgDataIdx);
 
             KeyValue *pgDataKv = kvNew();
             kvPut(pgDataKv, INFO_KEY_DB_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
 
-            if (type == infoPgBackup)
+            if (data->type == infoPgBackup)
             {
                 kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgData.catalogVersion));
                 kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgData.controlVersion));
@@ -409,10 +415,48 @@ infoPgSave(
             else
                 kvPut(pgDataKv, INFO_KEY_DB_ID_VAR, VARUINT64(pgData.systemId));
 
-            iniSet(ini, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)), jsonFromKv(pgDataKv, 0));
+            infoSaveValue(infoSaveData, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)), jsonFromKv(pgDataKv, 0));
         }
+    }
 
-        // infoSave(infoPgInfo(this), ini, storage, fileName, cipherType, cipherPass);
+    FUNCTION_TEST_RETURN_VOID()
+}
+
+void
+infoPgSave(
+    InfoPg *this, const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass,
+    InfoSaveCallback *callbackFunction, void *callbackData)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT((callbackFunction == NULL && callbackData == NULL) || (callbackFunction != NULL && callbackData != NULL));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Set callback data
+        InfoPgSaveData data =
+        {
+            .memContext = MEM_CONTEXT_TEMP(),
+            .callbackFunction = callbackFunction,
+            .callbackData = callbackData,
+            .type = type,
+            .infoPg = this,
+        };
+
+        infoSave(infoPgInfo(this), storage, fileName, cipherType, cipherPass, infoPgSaveCallback, &data);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -56,16 +56,13 @@ infoHash(const Ini *ini)
                 String *key = strLstGet(keyList, keyIdx);
 
                 // Skip the backrest checksum in the file
-                if (!strEq(section, STRDEF("backrest")) || !strEq(key, STRDEF("backrest-checksum")))
-                {
-                    ioFilterProcessIn(hash, BUFSTRDEF("\""));
-                    ioFilterProcessIn(hash, BUFSTR(key));
-                    ioFilterProcessIn(hash, BUFSTRDEF("\":"));
-                    ioFilterProcessIn(hash, BUFSTR(iniGet(ini, section, strLstGet(keyList, keyIdx))));
+                ioFilterProcessIn(hash, BUFSTRDEF("\""));
+                ioFilterProcessIn(hash, BUFSTR(key));
+                ioFilterProcessIn(hash, BUFSTRDEF("\":"));
+                ioFilterProcessIn(hash, BUFSTR(iniGet(ini, section, strLstGet(keyList, keyIdx))));
 
-                    if ((keyListSize > 1) && (keyIdx < keyListSize - 1))
-                        ioFilterProcessIn(hash, BUFSTRDEF(","));
-                }
+                if ((keyListSize > 1) && (keyIdx < keyListSize - 1))
+                    ioFilterProcessIn(hash, BUFSTRDEF(","));
             }
 
             // Close the key/value list
@@ -109,11 +106,13 @@ harnessInfoChecksum(const String *info)
         // Add header and checksum values
         iniSet(ini, STRDEF("backrest"), STRDEF("backrest-version"), jsonFromStr(STRDEF(PROJECT_VERSION)));
         iniSet(ini, STRDEF("backrest"), STRDEF("backrest-format"), jsonFromUInt(REPOSITORY_FORMAT));
-        iniSet(ini, STRDEF("backrest"), STRDEF("backrest-checksum"), jsonFromStr(infoHash(ini)));
 
         // Write to a buffer
         result = bufNew(0);
         iniSave(ini, ioBufferWriteNew(result));
+        bufCat(result, BUFSTRDEF("\n[backrest]\nbackrest-checksum="));
+        bufCat(result, BUFSTR(jsonFromStr(infoHash(ini))));
+        bufCat(result, BUFSTRDEF("\n"));
         bufMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();

@@ -63,8 +63,8 @@ InfoPg *infoPgSet(
     InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const uint32_t pgControlVersion,
     const uint32_t pgCatalogVersion);
 void infoPgSave(
-    InfoPg *this, Ini *ini, const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType,
-    const String *cipherPass);
+    InfoPg *this, const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass,
+    InfoSaveCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Getters

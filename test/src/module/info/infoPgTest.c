@@ -132,9 +132,8 @@ testRun(void)
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
 
         // Save the file and verify it
-        Ini *ini = iniNew();
         TEST_RESULT_VOID(
-            infoPgSave(infoPg, ini, storageLocalWrite(), fileName3, infoPgArchive, cipherTypeNone, NULL), "infoPgSave - archive");
+            infoPgSave(infoPg, storageLocalWrite(), fileName3, infoPgArchive, cipherTypeNone, NULL, NULL, NULL), "infoPgSave - archive");
         TEST_RESULT_BOOL(
             bufEq(
                 storageGetNP(storageNewReadNP(storageLocal(), fileName2)),
@@ -190,9 +189,8 @@ testRun(void)
             infoPg, infoPgNewLoad(storageLocal(), fileName, infoPgBackup, cipherTypeNone, NULL, NULL, NULL), "load file");
 
         // Save the file and verify it
-        ini = iniNew();
         TEST_RESULT_VOID(
-            infoPgSave(infoPg, ini, storageLocalWrite(), fileName3, infoPgBackup, cipherTypeNone, NULL), "infoPgSave - backup");
+            infoPgSave(infoPg, storageLocalWrite(), fileName3, infoPgBackup, cipherTypeNone, NULL, NULL, NULL), "infoPgSave - backup");
         TEST_RESULT_BOOL(
             bufEq(
                 storageGetNP(storageNewReadNP(storageLocal(), fileName2)),
@@ -248,8 +246,8 @@ testRun(void)
         TEST_ERROR(infoPgAdd(NULL, &pgData), AssertError, "assertion 'this != NULL' failed");
         TEST_ERROR(infoPgAdd(infoPg, NULL), AssertError, "assertion 'infoPgData != NULL' failed");
         TEST_ERROR(
-            infoPgSave(infoPg, ini, storageLocalWrite(), fileName2, 10000, cipherTypeNone, NULL),
-            AssertError, "invalid InfoPg type 10000");
+            infoPgSave(infoPg, storageLocalWrite(), fileName2, 10000, cipherTypeNone, NULL, NULL, NULL), AssertError,
+            "invalid InfoPg type 10000");
 
         // infoPgFree
         //--------------------------------------------------------------------------------------------------------------------------
