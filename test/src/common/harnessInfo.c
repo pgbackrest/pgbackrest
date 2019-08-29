@@ -4,6 +4,7 @@ Harness for Loading Test Configurations
 #include "common/harnessDebug.h"
 #include "common/harnessInfo.h"
 
+#include "common/assert.h"
 #include "common/crypto/hash.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/filter/filter.intern.h"
@@ -17,9 +18,9 @@ Generate hash for the contents of an ini file
 static String *
 infoHash(const Ini *ini)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, ini);
-    FUNCTION_TEST_END();
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INI, ini);
+    FUNCTION_HARNESS_END();
 
     ASSERT(ini != NULL);
 
@@ -80,7 +81,7 @@ infoHash(const Ini *ini)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_HARNESS_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
