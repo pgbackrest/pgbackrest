@@ -130,7 +130,8 @@ testRun(void)
 
         TEST_ASSIGN(
             infoPg,
-            infoPgNewLoad(storageLocal(), fileName, infoPgArchive, cipherTypeNone, NULL, harnessInfoLoadCallback, callbackContent),
+            infoPgNewLoad(
+                storageLocal(), fileName, infoPgArchive, cipherTypeNone, NULL, harnessInfoLoadNewCallback, callbackContent),
             "load file");
         TEST_RESULT_STR(
             strPtr(callbackContent),

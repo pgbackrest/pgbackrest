@@ -41,24 +41,20 @@ typedef enum
 /***********************************************************************************************************************************
 Function types for loading and saving
 ***********************************************************************************************************************************/
-typedef void InfoLoadCallback(InfoCallbackType type, void *data, const String *section, const String *key, const String *value);
+typedef void InfoLoadNewCallback(InfoCallbackType type, void *data, const String *section, const String *key, const String *value);
 typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 Info *infoNew(CipherType cipherType, const String *cipherPassSub);
-Info *infoNewLoad(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
-    InfoLoadCallback *callbackFunction, void *callbackData);
+Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 Info *infoMove(Info *this, MemContext *parentNew);
-void infoSave(
-    Info *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
-    InfoSaveCallback *callbackFunction, void *callbackData);
+void infoSave(Info *this, IoWrite *write, InfoSaveCallback callbackFunction, void *callbackData);
 bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext);
 void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value);
 

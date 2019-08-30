@@ -95,7 +95,7 @@ Create new object and load contents from a file
 typedef struct InfoPgLoadData
 {
     MemContext *memContext;                                         // Mem context to use for storing data in this structure
-    InfoLoadCallback *callbackFunction;                             // Callback function for child object
+    InfoLoadNewCallback *callbackFunction;                          // Callback function for child object
     void *callbackData;                                             // Callback data for child object
     InfoPgType type;                                                // Type of info file being loaded
     InfoPg *infoPg;                                                 // Pg info
@@ -230,7 +230,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
 InfoPg *
 infoPgNewLoad(
     const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass,
-    InfoLoadCallback *callbackFunction, void *callbackData)
+    InfoLoadNewCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -261,7 +261,7 @@ infoPgNewLoad(
         };
 
         // Load info
-        Info *info = infoNewLoad(storage, fileName, cipherType, cipherPass, infoPgLoadCallback, &data);
+        Info *info = infoNewLoad(NULL, infoPgLoadCallback, &data);
 
         this = infoPgMove(data.infoPg, MEM_CONTEXT_OLD());
         this->info = infoMove(info, this->memContext);
@@ -458,7 +458,7 @@ infoPgSave(
             .infoPg = this,
         };
 
-        infoSave(infoPgInfo(this), storage, fileName, cipherType, cipherPass, infoPgSaveCallback, &data);
+        infoSave(infoPgInfo(this), NULL, infoPgSaveCallback, &data);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -52,7 +52,7 @@ Constructors
 InfoPg *infoPgNew(CipherType cipherType, const String *cipherPass);
 InfoPg *infoPgNewLoad(
     const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass,
-    InfoLoadCallback *callbackFunction, void *callbackData);
+    InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Functions

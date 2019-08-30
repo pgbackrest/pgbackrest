@@ -116,33 +116,23 @@ harnessInfoChecksumZ(const char *info)
 Test callback that logs the results to a string
 ***********************************************************************************************************************************/
 void
-harnessInfoLoadCallback(InfoCallbackType type, void *callbackData, const String *section, const String *key, const String *value)
+harnessInfoLoadNewCallback(InfoCallbackType type, void *callbackData, const String *section, const String *key, const String *value)
 {
     if (callbackData != NULL)
     {
         switch (type)
         {
             case infoCallbackTypeBegin:
-            {
-                strCat((String *)callbackData, "BEGIN\n");
-                break;
-            }
-
             case infoCallbackTypeReset:
+            case infoCallbackTypeEnd:
             {
-                strCat((String *)callbackData, "RESET\n");
+                strCat((String *)callbackData, "BADDATA\n");
                 break;
             }
 
             case infoCallbackTypeValue:
             {
                 strCatFmt((String *)callbackData, "[%s] %s=%s\n", strPtr(section), strPtr(key), strPtr(value));
-                break;
-            }
-
-            case infoCallbackTypeEnd:
-            {
-                strCat((String *)callbackData, "END\n");
                 break;
             }
         }

@@ -50,7 +50,7 @@ OBJECT_DEFINE_FREE(INFO);
 struct InfoSave
 {
     MemContext *memContext;                                         // Mem context
-    IoWrite *infoWrite;                                             // Write object for main copy
+    IoWrite *write;                                                 // Write object
     IoFilter *checksum;                                             // hash to generate file checksum
     String *sectionLast;                                            // The last section seen
 };
@@ -165,13 +165,12 @@ Load and validate the info file (or copy)
 typedef struct InfoLoadData
 {
     MemContext *memContext;                                         // Mem context to use for storing data in this structure
-    InfoLoadCallback *callbackFunction;                             // Callback function for child object
+    InfoLoadNewCallback *callbackFunction;                          // Callback function for child object
     void *callbackData;                                             // Callback data for child object
-    const String *fileName;                                         // File being loaded
+    Info *info;                                                     // Info object
     String *sectionLast;                                            // The last section seen during load
     IoFilter *checksumActual;                                       // Checksum calculated from the file
     String *checksumExpected;                                       // Checksum found in ini file
-    String *cipherPass;                                             // Cipher passphrase (when present)
 } InfoLoadData;
 
 static void
@@ -220,11 +219,7 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
         if (strEq(key, INFO_KEY_FORMAT_STR))
         {
             if (jsonToUInt(value) != REPOSITORY_FORMAT)
-            {
-                THROW_FMT(
-                    FormatError, "invalid format in '%s', expected %d but found %d", strPtr(data->fileName), REPOSITORY_FORMAT,
-                    cvtZToInt(strPtr(value)));
-            }
+                THROW_FMT(FormatError, "expected format %d but found %d", REPOSITORY_FORMAT, cvtZToInt(strPtr(value)));
         }
         // Store checksum to be validated later
         else if (strEq(key, INFO_KEY_CHECKSUM_STR))
@@ -242,9 +237,9 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
         // No validation needed for cipher-pass, just store it
         if (strEq(key, INFO_KEY_CIPHER_PASS_STR))
         {
-            MEM_CONTEXT_BEGIN(data->memContext)
+            MEM_CONTEXT_BEGIN(data->info->memContext)
             {
-                data->cipherPass = jsonToStr(value);
+                data->info->cipherPass = jsonToStr(value);
             }
             MEM_CONTEXT_END();
         }
@@ -256,160 +251,63 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
     FUNCTION_TEST_RETURN_VOID();
 }
 
-static void
-infoLoad(
-    Info *this, const Storage *storage, const String *fileName, bool copyFile, CipherType cipherType, const String *cipherPass,
-    InfoLoadCallback *callbackFunction, void *callbackData)
+/***********************************************************************************************************************************
+Create new object and load contents from a file
+***********************************************************************************************************************************/
+Info *
+infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
-        FUNCTION_LOG_PARAM(INFO, this);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);                     // Full path/filename to load
-        FUNCTION_LOG_PARAM(BOOL, copyFile);                       // Is this the copy file?
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_READ, read);
         FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
-    ASSERT(fileName != NULL);
+    ASSERT(read != NULL);
+    ASSERT(callbackFunction != NULL);
+    ASSERT(callbackData != NULL);
+
+    Info *this = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        this = infoNewInternal();
+
         InfoLoadData data =
         {
             .memContext = MEM_CONTEXT_TEMP(),
             .callbackFunction = callbackFunction,
             .callbackData = callbackData,
-            .fileName = copyFile ? strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName)) : fileName,
+            .info = this,
             .checksumActual = cryptoHashNew(HASH_TYPE_SHA1_STR),
         };
-
-        // Attempt to load the file
-        StorageRead *infoRead = storageNewReadP(storage, data.fileName, .compressible = cipherType == cipherTypeNone);
-
-        if (cipherType != cipherTypeNone)
-        {
-            ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(infoRead)),
-                cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
-        }
-
-        // Notify callback function that the ini load is beginning
-        data.callbackFunction(infoCallbackTypeBegin, data.callbackData, NULL, NULL, NULL);
 
         // Load and parse the info file
         INFO_CHECKSUM_BEGIN(data.checksumActual);
 
         TRY_BEGIN()
         {
-            iniLoad(storageReadIo(infoRead), infoLoadCallback, &data);
+            iniLoad(read, infoLoadCallback, &data);
         }
         CATCH(CryptoError)
         {
-            THROW_FMT(
-                CryptoError, "'%s' %s\nHINT: is or was the repo encrypted?", strPtr(storagePathNP(storage, data.fileName)),
-                errorMessage());
+            THROW_FMT(CryptoError, "%s\nHINT: is or was the repo encrypted?", errorMessage());
         }
         TRY_END();
 
         INFO_CHECKSUM_END(data.checksumActual);
 
-        // Notify callback function that the ini load is ending
-        data.callbackFunction(infoCallbackTypeEnd, data.callbackData, NULL, NULL, NULL);
-
         // Verify the checksum
         const String *checksumActual = varStr(ioFilterResult(data.checksumActual));
 
         if (data.checksumExpected == NULL)
-        {
-            THROW_FMT(
-                ChecksumError, "invalid checksum in '%s', actual '%s' but no checksum found",
-                strPtr(storagePathNP(storage, data.fileName)), strPtr(checksumActual));
-        }
+            THROW_FMT(ChecksumError, "invalid checksum, actual '%s' but no checksum found", strPtr(checksumActual));
         else if (!strEq(data.checksumExpected, checksumActual))
         {
             THROW_FMT(
-                ChecksumError, "invalid checksum in '%s', actual '%s' but expected '%s'",
-                strPtr(storagePathNP(storage, data.fileName)), strPtr(checksumActual), strPtr(data.checksumExpected));
+                ChecksumError, "invalid checksum, actual '%s' but expected '%s'", strPtr(checksumActual),
+                strPtr(data.checksumExpected));
         }
-
-        // Assign cipher pass if present
-        memContextSwitch(this->memContext);
-        this->cipherPass = strDup(data.cipherPass);
-        memContextSwitch(MEM_CONTEXT_TEMP());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Create new object and load contents from a file
-***********************************************************************************************************************************/
-Info *
-infoNewLoad(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
-    InfoLoadCallback *callbackFunction, void *callbackData)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);                     // Full path/filename to load
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
-    ASSERT(callbackFunction != NULL);
-
-    Info *this = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Attempt to load the primary file
-        TRY_BEGIN()
-        {
-            this = infoNewInternal();
-            infoLoad(this, storage, fileName, false, cipherType, cipherPass, callbackFunction, callbackData);
-        }
-        CATCH_ANY()
-        {
-            infoFree(this);
-            this = infoNewInternal();
-
-            // On error store the error and try to load the copy
-            String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
-            bool primaryMissing = errorType() == &FileMissingError;
-            const ErrorType *primaryErrorType = errorType();
-
-            // Notify callback of a reset
-            callbackFunction(infoCallbackTypeReset, callbackData, NULL, NULL, NULL);
-
-            TRY_BEGIN()
-            {
-                infoLoad(this, storage, fileName, true, cipherType, cipherPass, callbackFunction, callbackData);
-            }
-            CATCH_ANY()
-            {
-                // If both copies of the file have the same error then throw that error,
-                // else if one file is missing but the other is in error and it is not missing, throw that error
-                // else throw an open error
-                THROWP_FMT(
-                    errorType() == primaryErrorType ? errorType() :
-                        (errorType() == &FileMissingError ? primaryErrorType :
-                        (primaryMissing ? errorType() : &FileOpenError)),
-                    "unable to load info file '%s' or '%s" INFO_COPY_EXT "':\n%s\n%s: %s",
-                    strPtr(storagePathNP(storage, fileName)), strPtr(storagePathNP(storage, fileName)),
-                    strPtr(primaryError), errorTypeName(errorType()), errorMessage());
-            }
-            TRY_END();
-        }
-        TRY_END();
 
         infoMove(this, MEM_CONTEXT_OLD());
     }
@@ -459,14 +357,14 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
         if (infoSaveData->sectionLast != NULL)
         {
             INFO_CHECKSUM_SECTION_NEXT(infoSaveData->checksum);
-            ioWriteLine(infoSaveData->infoWrite, BUFSTRDEF(""));
+            ioWriteLine(infoSaveData->write, BUFSTRDEF(""));
         }
 
         INFO_CHECKSUM_SECTION(infoSaveData->checksum, section);
 
-        ioWrite(infoSaveData->infoWrite, BRACKETL_BUF);
-        ioWrite(infoSaveData->infoWrite, BUFSTR(section));
-        ioWriteLine(infoSaveData->infoWrite, BRACKETR_BUF);
+        ioWrite(infoSaveData->write, BRACKETL_BUF);
+        ioWrite(infoSaveData->write, BUFSTR(section));
+        ioWriteLine(infoSaveData->write, BRACKETR_BUF);
 
         MEM_CONTEXT_BEGIN(infoSaveData->memContext)
         {
@@ -480,9 +378,9 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
     // Save key/value
     INFO_CHECKSUM_KEY_VALUE(infoSaveData->checksum, key, value);
 
-    ioWrite(infoSaveData->infoWrite, BUFSTR(key));
-    ioWrite(infoSaveData->infoWrite, EQ_BUF);
-    ioWriteLine(infoSaveData->infoWrite, BUFSTR(value));
+    ioWrite(infoSaveData->write, BUFSTR(key));
+    ioWrite(infoSaveData->write, EQ_BUF);
+    ioWriteLine(infoSaveData->write, BUFSTR(value));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -491,77 +389,57 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
 Save to file
 ***********************************************************************************************************************************/
 void
-infoSave(
-    Info *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
-    InfoSaveCallback callbackFunction, void *callbackData)
+infoSave(Info *this, IoWrite *write, InfoSaveCallback callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO, this);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(IO_WRITE, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
-    ASSERT(
-        !((cipherType != cipherTypeNone && this->cipherPass == NULL) ||
-          (cipherType == cipherTypeNone && this->cipherPass != NULL)));
+    ASSERT(write != NULL);
     ASSERT(callbackFunction != NULL);
+    ASSERT(callbackData != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        InfoSave *infoSaveData = memNew(sizeof(InfoSave));
-        infoSaveData->memContext = memContextCurrent();
-
-        // Open info file for write
-        infoSaveData->infoWrite = storageWriteIo(storageNewWriteP(storage, fileName, .compressible = cipherType == cipherTypeNone));
-
-        if (cipherType != cipherTypeNone)
+        InfoSave data =
         {
-            ioFilterGroupAdd(
-                ioWriteFilterGroup(infoSaveData->infoWrite),
-                cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
-        }
+            .memContext = MEM_CONTEXT_TEMP(),
+            .write = write,
+        };
 
-        ioWriteOpen(infoSaveData->infoWrite);
+        ioWriteOpen(data.write);
 
         // Begin checksum calculation
-        infoSaveData->checksum = cryptoHashNew(HASH_TYPE_SHA1_STR);
-        INFO_CHECKSUM_BEGIN(infoSaveData->checksum);
+        data.checksum = cryptoHashNew(HASH_TYPE_SHA1_STR);
+        INFO_CHECKSUM_BEGIN(data.checksum);
 
         // Add version and format
-        callbackFunction(callbackData, INFO_SECTION_BACKREST_STR, infoSaveData);
-        infoSaveValue(infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromUInt(REPOSITORY_FORMAT));
-        infoSaveValue(infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
+        callbackFunction(callbackData, INFO_SECTION_BACKREST_STR, &data);
+        infoSaveValue(&data, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromUInt(REPOSITORY_FORMAT));
+        infoSaveValue(&data, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
 
         // Add cipher passphrase if defined
         if (this->cipherPass != NULL)
         {
-            callbackFunction(callbackData, INFO_SECTION_CIPHER_STR, infoSaveData);
-            infoSaveValue(infoSaveData, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(this->cipherPass));
+            callbackFunction(callbackData, INFO_SECTION_CIPHER_STR, &data);
+            infoSaveValue(&data, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(this->cipherPass));
         }
 
         // Flush out any additional sections
-        callbackFunction(callbackData, NULL, infoSaveData);
+        callbackFunction(callbackData, NULL, &data);
 
         // Add checksum (this must be set after all other values or it will not be valid)
-        INFO_CHECKSUM_END(infoSaveData->checksum);
+        INFO_CHECKSUM_END(data.checksum);
 
-        ioWrite(infoSaveData->infoWrite, BUFSTRDEF("\n[" INFO_SECTION_BACKREST "]\n" INFO_KEY_CHECKSUM "="));
-        ioWriteLine(infoSaveData->infoWrite, BUFSTR(jsonFromVar(ioFilterResult(infoSaveData->checksum), 0)));
+        ioWrite(data.write, BUFSTRDEF("\n[" INFO_SECTION_BACKREST "]\n" INFO_KEY_CHECKSUM "="));
+        ioWriteLine(data.write, BUFSTR(jsonFromVar(ioFilterResult(data.checksum), 0)));
 
         // Close the file
-        ioWriteClose(infoSaveData->infoWrite);
-
-        // Copy to .copy file
-        storageCopyNP(
-            storageNewReadNP(storage, fileName), storageNewWriteNP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
+        ioWriteClose(data.write);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -582,3 +460,48 @@ infoCipherPass(const Info *this)
 
     FUNCTION_TEST_RETURN(this->cipherPass);
 }
+
+/***********************************************************************************************************************************
+Load info file(s)
+***********************************************************************************************************************************/
+// Info *
+// infoLoad(CipherType cipherType, const String *cipherPass,
+
+            // // Attempt to load the primary file
+            // TRY_BEGIN()
+            // {
+            //     infoLoad(this, storage, fileName, false, cipherType, cipherPass, callbackFunction, callbackData);
+            // }
+            // CATCH_ANY()
+            // {
+            //     infoFree(this);
+            //     this = infoNewInternal();
+            //
+            //     // On error store the error and try to load the copy
+            //     String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
+            //     bool primaryMissing = errorType() == &FileMissingError;
+            //     const ErrorType *primaryErrorType = errorType();
+            //
+            //     // Notify callback of a reset
+            //     callbackFunction(infoCallbackTypeReset, callbackData, NULL, NULL, NULL);
+            //
+            //     TRY_BEGIN()
+            //     {
+            //         infoLoad(this, storage, fileName, true, cipherType, cipherPass, callbackFunction, callbackData);
+            //     }
+            //     CATCH_ANY()
+            //     {
+            //         // If both copies of the file have the same error then throw that error,
+            //         // else if one file is missing but the other is in error and it is not missing, throw that error
+            //         // else throw an open error
+            //         THROWP_FMT(
+            //             errorType() == primaryErrorType ? errorType() :
+            //                 (errorType() == &FileMissingError ? primaryErrorType :
+            //                 (primaryMissing ? errorType() : &FileOpenError)),
+            //             "unable to load info file '%s' or '%s" INFO_COPY_EXT "':\n%s\n%s: %s",
+            //             strPtr(storagePathNP(storage, fileName)), strPtr(storagePathNP(storage, fileName)),
+            //             strPtr(primaryError), errorTypeName(errorType()), errorMessage());
+            //     }
+            //     TRY_END();
+            // }
+            // TRY_END();
