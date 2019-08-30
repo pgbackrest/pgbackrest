@@ -44,6 +44,7 @@ struct Info
     const String *cipherPass;                                       // Cipher passphrase if set
 };
 
+OBJECT_DEFINE_MOVE(INFO);
 OBJECT_DEFINE_FREE(INFO);
 
 struct InfoSave
@@ -58,59 +59,59 @@ struct InfoSave
 Macros and buffer constants for checksum generation
 ***********************************************************************************************************************************/
 #define INFO_CHECKSUM_BEGIN(checksum)                                                                                              \
-do                                                                                                                                 \
-{                                                                                                                                  \
-    ioFilterProcessIn(checksum, BRACEL_BUF);                                                                                       \
-}                                                                                                                                  \
-while (0)
+    do                                                                                                                             \
+    {                                                                                                                              \
+        ioFilterProcessIn(checksum, BRACEL_BUF);                                                                                   \
+    }                                                                                                                              \
+    while (0)
 
 BUFFER_STRDEF_STATIC(INFO_CHECKSUM_SECTION_END_BUF, "\":{");
 
 #define INFO_CHECKSUM_SECTION(checksum, section)                                                                                   \
-do                                                                                                                                 \
-{                                                                                                                                  \
-    ioFilterProcessIn(checksum, QUOTED_BUF);                                                                                       \
-    ioFilterProcessIn(checksum, BUFSTR(section));                                                                                  \
-    ioFilterProcessIn(checksum, INFO_CHECKSUM_SECTION_END_BUF);                                                                    \
-}                                                                                                                                  \
-while (0)
+    do                                                                                                                             \
+    {                                                                                                                              \
+        ioFilterProcessIn(checksum, QUOTED_BUF);                                                                                   \
+        ioFilterProcessIn(checksum, BUFSTR(section));                                                                              \
+        ioFilterProcessIn(checksum, INFO_CHECKSUM_SECTION_END_BUF);                                                                \
+    }                                                                                                                              \
+    while (0)
 
 BUFFER_STRDEF_STATIC(INFO_CHECKSUM_SECTION_NEXT_END_BUF, "},");
 
 #define INFO_CHECKSUM_SECTION_NEXT(checksum)                                                                                       \
-do                                                                                                                                 \
-{                                                                                                                                  \
-    ioFilterProcessIn(checksum, INFO_CHECKSUM_SECTION_NEXT_END_BUF);                                                               \
-}                                                                                                                                  \
-while (0)
+    do                                                                                                                             \
+    {                                                                                                                              \
+        ioFilterProcessIn(checksum, INFO_CHECKSUM_SECTION_NEXT_END_BUF);                                                           \
+    }                                                                                                                              \
+    while (0)
 
 BUFFER_STRDEF_STATIC(INFO_CHECKSUM_KEY_VALUE_END_BUF, "\":");
 
 #define INFO_CHECKSUM_KEY_VALUE(checksum, key, value)                                                                              \
-do                                                                                                                                 \
-{                                                                                                                                  \
-    ioFilterProcessIn(checksum, QUOTED_BUF);                                                                                       \
-    ioFilterProcessIn(checksum, BUFSTR(key));                                                                                      \
-    ioFilterProcessIn(checksum, INFO_CHECKSUM_KEY_VALUE_END_BUF);                                                                  \
-    ioFilterProcessIn(checksum, BUFSTR(value));                                                                                    \
-}                                                                                                                                  \
-while (0)
+    do                                                                                                                             \
+    {                                                                                                                              \
+        ioFilterProcessIn(checksum, QUOTED_BUF);                                                                                   \
+        ioFilterProcessIn(checksum, BUFSTR(key));                                                                                  \
+        ioFilterProcessIn(checksum, INFO_CHECKSUM_KEY_VALUE_END_BUF);                                                              \
+        ioFilterProcessIn(checksum, BUFSTR(value));                                                                                \
+    }                                                                                                                              \
+    while (0)
 
 #define INFO_CHECKSUM_KEY_VALUE_NEXT(checksum)                                                                                     \
-do                                                                                                                                 \
-{                                                                                                                                  \
-    ioFilterProcessIn(checksum, COMMA_BUF);                                                                                        \
-}                                                                                                                                  \
-while (0)
+    do                                                                                                                             \
+    {                                                                                                                              \
+        ioFilterProcessIn(checksum, COMMA_BUF);                                                                                    \
+    }                                                                                                                              \
+    while (0)
 
 BUFFER_STRDEF_STATIC(INFO_CHECKSUM_END_BUF, "}}");
 
 #define INFO_CHECKSUM_END(checksum)                                                                                                \
-do                                                                                                                                 \
-{                                                                                                                                  \
-    ioFilterProcessIn(checksum, INFO_CHECKSUM_END_BUF);                                                                            \
-}                                                                                                                                  \
-while (0)
+    do                                                                                                                             \
+    {                                                                                                                              \
+        ioFilterProcessIn(checksum, INFO_CHECKSUM_END_BUF);                                                                        \
+    }                                                                                                                              \
+    while (0)
 
 /***********************************************************************************************************************************
 Internal constructor
@@ -329,13 +330,13 @@ infoLoad(
         }
         else if (!strEq(data.checksumExpected, checksumActual))
         {
-                THROW_FMT(
-                    ChecksumError, "invalid checksum in '%s', actual '%s' but expected '%s'",
-                    strPtr(storagePathNP(storage, data.fileName)), strPtr(checksumActual), strPtr(data.checksumExpected));
+            THROW_FMT(
+                ChecksumError, "invalid checksum in '%s', actual '%s' but expected '%s'",
+                strPtr(storagePathNP(storage, data.fileName)), strPtr(checksumActual), strPtr(data.checksumExpected));
         }
 
         // Assign cipher pass if present
-        memContextSwitch(MEM_CONTEXT_OLD());
+        memContextSwitch(this->memContext);
         this->cipherPass = strDup(data.cipherPass);
         memContextSwitch(MEM_CONTEXT_TEMP());
     }
@@ -366,17 +367,21 @@ infoNewLoad(
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
     ASSERT(callbackFunction != NULL);
 
-    Info *this = infoNewInternal();
+    Info *this = NULL;
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
         // Attempt to load the primary file
         TRY_BEGIN()
         {
+            this = infoNewInternal();
             infoLoad(this, storage, fileName, false, cipherType, cipherPass, callbackFunction, callbackData);
         }
         CATCH_ANY()
         {
+            infoFree(this);
+            this = infoNewInternal();
+
             // On error store the error and try to load the copy
             String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
             bool primaryMissing = errorType() == &FileMissingError;
@@ -405,8 +410,10 @@ infoNewLoad(
             TRY_END();
         }
         TRY_END();
+
+        infoMove(this, MEM_CONTEXT_OLD());
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INFO, this);
 }

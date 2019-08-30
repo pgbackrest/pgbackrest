@@ -51,6 +51,7 @@ struct InfoBackup
     List *backup;                                                   // List of current backups and their associated data
 };
 
+OBJECT_DEFINE_MOVE(INFO_BACKUP);
 OBJECT_DEFINE_FREE(INFO_BACKUP);
 
 /***********************************************************************************************************************************
@@ -68,6 +69,7 @@ infoBackupNewInternal(void)
         // Create object
         this = memNew(sizeof(InfoBackup));
         this->memContext = MEM_CONTEXT_NEW();
+        this->backup = lstNew(sizeof(InfoBackupData));
     }
     MEM_CONTEXT_NEW_END();
 
@@ -97,7 +99,6 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgCont
     // Initialize the pg data
     this->infoPg = infoPgNew(cipherType, cipherPassSub);
     infoBackupPgSet(this, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
-    this->backup = lstNew(sizeof(InfoBackupData));
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
@@ -108,7 +109,7 @@ Create new object and load contents from a file
 typedef struct InfoBackupLoadData
 {
     MemContext *memContext;                                         // Mem context to use for storing data in this structure
-    List *backup;                                                   // Backup list
+    InfoBackup *infoBackup;                                         // Backup info
 } InfoBackupLoadData;
 
 static void
@@ -135,7 +136,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
         {
             MEM_CONTEXT_BEGIN(data->memContext)
             {
-                data->backup = lstNew(sizeof(InfoBackupData));
+                data->infoBackup = infoBackupNewInternal();
             }
             MEM_CONTEXT_END();
 
@@ -145,7 +146,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
         // Reset processing
         case infoCallbackTypeReset:
         {
-            lstFree(data->backup);
+            infoBackupFree(data->infoBackup);
             break;
         }
 
@@ -157,7 +158,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
             {
                 const KeyValue *backupKv = jsonToKv(value);
 
-                MEM_CONTEXT_BEGIN(lstMemContext(data->backup))
+                MEM_CONTEXT_BEGIN(lstMemContext(data->infoBackup->backup))
                 {
                     InfoBackupData infoBackupData =
                     {
@@ -192,7 +193,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
                     };
 
                     // Add the backup data to the list
-                    lstAdd(data->backup, &infoBackupData);
+                    lstAdd(data->infoBackup->backup, &infoBackupData);
                 }
                 MEM_CONTEXT_END();
             }
@@ -232,28 +233,26 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
             .memContext = MEM_CONTEXT_TEMP(),
         };
 
-        // Load info
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            // Catch file missing error and add backup-specific hints before rethrowing
-            TRY_BEGIN()
-            {
-                this->infoPg = infoPgNewLoad(storage, fileName, infoPgBackup, cipherType, cipherPass, infoPgLoadCallback, &data);
-            }
-            CATCH_ANY()
-            {
-                THROWP_FMT(
-                    errorType(),
-                    "%s\n"
-                    "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-                    "HINT: has a stanza-create been performed?",
-                    errorMessage());
-            }
-            TRY_END();
+        // Catch file missing error and add backup-specific hints before rethrowing
+        InfoPg *infoPg = NULL;
 
-            this->backup = lstMove(data.backup, this->memContext);
+        TRY_BEGIN()
+        {
+            infoPg = infoPgNewLoad(storage, fileName, infoPgBackup, cipherType, cipherPass, infoPgLoadCallback, &data);
         }
-        MEM_CONTEXT_END();
+        CATCH_ANY()
+        {
+            THROWP_FMT(
+                errorType(),
+                "%s\n"
+                "HINT: backup.info cannot be opened and is required to perform a backup.\n"
+                "HINT: has a stanza-create been performed?",
+                errorMessage());
+        }
+        TRY_END();
+
+        this = infoBackupMove(data.infoBackup, MEM_CONTEXT_OLD());
+        this->infoPg = infoPgMove(infoPg, this->memContext);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -55,6 +55,7 @@ Info *infoNewLoad(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+Info *infoMove(Info *this, MemContext *parentNew);
 void infoSave(
     Info *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
     InfoSaveCallback *callbackFunction, void *callbackData);

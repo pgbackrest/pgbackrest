@@ -47,6 +47,7 @@ struct InfoPg
     unsigned int historyCurrent;                                    // Index of the current history item
 };
 
+OBJECT_DEFINE_MOVE(INFO_PG);
 OBJECT_DEFINE_FREE(INFO_PG);
 
 /***********************************************************************************************************************************
@@ -64,6 +65,7 @@ infoPgNewInternal(void)
         // Create object
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
+        this->history = lstNew(sizeof(InfoPgData));
     }
     MEM_CONTEXT_NEW_END();
 
@@ -82,8 +84,6 @@ infoPgNew(CipherType cipherType, const String *cipherPassSub)
     FUNCTION_LOG_END();
 
     InfoPg *this = infoPgNewInternal();
-
-    this->history = lstNew(sizeof(InfoPgData));
     this->info = infoNew(cipherType, cipherPassSub);
 
     FUNCTION_LOG_RETURN(INFO_PG, this);
@@ -98,9 +98,8 @@ typedef struct InfoPgLoadData
     InfoLoadCallback *callbackFunction;                             // Callback function for child object
     void *callbackData;                                             // Callback data for child object
     InfoPgType type;                                                // Type of info file being loaded
+    InfoPg *infoPg;                                                 // Pg info
     unsigned int currentId;                                         // Current database id
-    List *history;                                                  // Database history list
-    unsigned int historyCurrent;                                    // Current id in history list
 } InfoPgLoadData;
 
 static void
@@ -127,9 +126,8 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
         {
             MEM_CONTEXT_BEGIN(data->memContext)
             {
-                data->history = lstNew(sizeof(InfoPgData));
-                data->currentId = 0;
-                data->historyCurrent = UINT_MAX;
+                data->infoPg = infoPgNewInternal();
+                data->infoPg->historyCurrent = UINT_MAX;
             }
             MEM_CONTEXT_END();
 
@@ -143,7 +141,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
         // Reset processing
         case infoCallbackTypeReset:
         {
-            lstFree(data->history);
+            infoPgFree(data->infoPg);
 
             // Callback if set
             if (data->callbackFunction != NULL)
@@ -190,7 +188,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
                     THROW_FMT(AssertError, "invalid InfoPg type %u", data->type);
 
                 // Using lstAdd because it is more efficient than lstInsert and loading this file is in critical code paths
-                lstInsert(data->history, 0, &infoPgData);
+                lstInsert(data->infoPg->history, 0, &infoPgData);
             }
             // Callback if set
             else if (data->callbackFunction != NULL)
@@ -202,20 +200,20 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
         case infoCallbackTypeEnd:
         {
             // History must include at least one item or the file is corrupt
-            CHECK(lstSize(data->history) > 0);
+            CHECK(lstSize(data->infoPg->history) > 0);
 
             // If the current id was not found then the file is corrupt
             CHECK(data->currentId > 0);
 
             // Find the current history item
-            for (unsigned int historyIdx = 0; historyIdx < lstSize(data->history); historyIdx++)
+            for (unsigned int historyIdx = 0; historyIdx < lstSize(data->infoPg->history); historyIdx++)
             {
-                if (((InfoPgData *)lstGet(data->history, historyIdx))->id == data->currentId)
-                    data->historyCurrent = historyIdx;
+                if (((InfoPgData *)lstGet(data->infoPg->history, historyIdx))->id == data->currentId)
+                    data->infoPg->historyCurrent = historyIdx;
             }
 
             // If the current id did not match the history list then the file is corrupt
-            CHECK(data->historyCurrent != UINT_MAX);
+            CHECK(data->infoPg->historyCurrent != UINT_MAX);
 
             // Callback if set
             if (data->callbackFunction != NULL)
@@ -248,7 +246,7 @@ infoPgNewLoad(
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
     ASSERT((callbackFunction == NULL && callbackData == NULL) || (callbackFunction != NULL && callbackData != NULL));
 
-    InfoPg *this = infoPgNewInternal();
+    InfoPg *this = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -262,13 +260,10 @@ infoPgNewLoad(
         };
 
         // Load info
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, infoPgLoadCallback, &data);
-            this->historyCurrent = data.historyCurrent;
-            this->history = lstMove(data.history, this->memContext);
-        }
-        MEM_CONTEXT_END();
+        Info *info = infoNewLoad(storage, fileName, cipherType, cipherPass, infoPgLoadCallback, &data);
+
+        this = infoPgMove(data.infoPg, MEM_CONTEXT_OLD());
+        this->info = infoMove(info, this->memContext);
     }
     MEM_CONTEXT_TEMP_END();
 

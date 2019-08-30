@@ -58,6 +58,7 @@ InfoPg *infoPgNewLoad(
 Functions
 ***********************************************************************************************************************************/
 void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
+InfoPg *infoPgMove(InfoPg *this, MemContext *parentNew);
 InfoPg *infoPgSet(
     InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const uint32_t pgControlVersion,
     const uint32_t pgCatalogVersion);
