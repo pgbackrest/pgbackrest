@@ -345,25 +345,6 @@ iniSet(Ini *this, const String *section, const String *key, const String *value)
 }
 
 /***********************************************************************************************************************************
-Move to a new mem context
-***********************************************************************************************************************************/
-Ini *
-iniMove(Ini *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
 Load an ini file and return data to a callback
 ***********************************************************************************************************************************/
 void
