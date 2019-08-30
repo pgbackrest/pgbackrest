@@ -26,7 +26,6 @@ Functions
 ***********************************************************************************************************************************/
 Ini *iniMove(Ini *this, MemContext *parentNew);
 void iniParse(Ini *this, const String *content);
-void iniSave(Ini *this, IoWrite *write);
 void iniSet(Ini *this, const String *section, const String *key, const String *value);
 
 /***********************************************************************************************************************************

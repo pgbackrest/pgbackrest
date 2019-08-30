@@ -362,11 +362,10 @@ typedef struct InfoPgSaveData
 } InfoPgSaveData;
 
 static void
-infoPgSaveCallback(void *callbackData, const String **sectionLast, const String *sectionNext, InfoSave *infoSaveData)
+infoPgSaveCallback(void *callbackData, const String *sectionNext, InfoSave *infoSaveData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM_P(STRING, sectionLast);
         FUNCTION_TEST_PARAM(STRING, sectionNext);
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
     FUNCTION_TEST_END();
@@ -376,14 +375,10 @@ infoPgSaveCallback(void *callbackData, const String **sectionLast, const String 
 
     InfoPgSaveData *data = (InfoPgSaveData *)callbackData;
 
-    // Process the callback even if none of the sections below get executed
-    if (data->callbackFunction != NULL)
-        data->callbackFunction(data->callbackData, sectionLast, sectionNext, infoSaveData);
-
-    if (INFO_SAVE_SECTION(INFO_SECTION_DB_STR))
+    if (infoSaveSection(infoSaveData, INFO_SECTION_DB_STR, sectionNext))
     {
         if (data->callbackFunction != NULL)
-            data->callbackFunction(data->callbackData, sectionLast, INFO_SECTION_DB_STR, infoSaveData);
+            data->callbackFunction(data->callbackData, INFO_SECTION_DB_STR, infoSaveData);
 
         InfoPgData pgData = infoPgDataCurrent(data->infoPg);
 
@@ -403,10 +398,10 @@ infoPgSaveCallback(void *callbackData, const String **sectionLast, const String 
             infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_VERSION_VAR), jsonFromStr(pgVersionToStr(pgData.version)));
     }
 
-    if (INFO_SAVE_SECTION(INFO_SECTION_DB_HISTORY_STR))
+    if (infoSaveSection(infoSaveData, INFO_SECTION_DB_HISTORY_STR, sectionNext))
     {
         if (data->callbackFunction != NULL)
-            data->callbackFunction(data->callbackData, sectionLast, INFO_SECTION_DB_HISTORY_STR, infoSaveData);
+            data->callbackFunction(data->callbackData, INFO_SECTION_DB_HISTORY_STR, infoSaveData);
 
         // Set the db history section in reverse so oldest history is first instead of last to be consistent with load
         for (unsigned int pgDataIdx = infoPgDataTotal(data->infoPg) - 1; (int)pgDataIdx >= 0; pgDataIdx--)
@@ -428,6 +423,10 @@ infoPgSaveCallback(void *callbackData, const String **sectionLast, const String 
             infoSaveValue(infoSaveData, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)), jsonFromKv(pgDataKv, 0));
         }
     }
+
+    // Process the callback even if none of the sections above get executed
+    if (data->callbackFunction != NULL)
+        data->callbackFunction(data->callbackData, sectionNext, infoSaveData);
 
     FUNCTION_TEST_RETURN_VOID()
 }

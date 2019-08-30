@@ -34,7 +34,7 @@ STRING_EXTERN(INFO_KEY_FORMAT_STR,                                  INFO_KEY_FOR
 STRING_EXTERN(INFO_KEY_VERSION_STR,                                 INFO_KEY_VERSION);
 
 /***********************************************************************************************************************************
-Object type
+Object types
 ***********************************************************************************************************************************/
 struct Info
 {
@@ -43,6 +43,14 @@ struct Info
 };
 
 OBJECT_DEFINE_FREE(INFO);
+
+struct InfoSave
+{
+    MemContext *memContext;                                         // Mem context
+    IoWrite *infoWrite;                                             // Write object for main copy
+    IoFilter *checksum;                                             // hash to generate file checksum
+    String *sectionLast;                                            // The last section seen
+};
 
 /***********************************************************************************************************************************
 Internal constructor
@@ -351,16 +359,25 @@ infoNewLoad(
 }
 
 /***********************************************************************************************************************************
-Save to file
+Check to see if the section should be saved
 ***********************************************************************************************************************************/
-struct InfoSave
+bool
+infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext)
 {
-    MemContext *memContext;                                         // Mem context
-    IoWrite *infoWrite;                                             // Write object for main copy
-    IoFilter *checksum;                                             // hash to generate file checksum
-    String *sectionLast;                                            // The last section seen
-};
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, sectionNext);
+    FUNCTION_TEST_END();
 
+    FUNCTION_TEST_RETURN(
+        (infoSaveData->sectionLast == NULL || strCmp(section, infoSaveData->sectionLast) > 0) &&
+            (sectionNext == NULL || strCmp(section, sectionNext) < 0));
+}
+
+/***********************************************************************************************************************************
+Save a value
+***********************************************************************************************************************************/
 void
 infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value)
 {
@@ -431,6 +448,9 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Save to file
+***********************************************************************************************************************************/
 void
 infoSave(
     Info *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
@@ -477,19 +497,19 @@ infoSave(
         ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("{"));
 
         // Add version and format
-        callbackFunction(callbackData, (const String **)&infoSaveData->sectionLast, INFO_SECTION_BACKREST_STR, infoSaveData);
+        callbackFunction(callbackData, INFO_SECTION_BACKREST_STR, infoSaveData);
         infoSaveValue(infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromUInt(REPOSITORY_FORMAT));
         infoSaveValue(infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
 
         // Add cipher passphrase if defined
         if (this->cipherPass != NULL)
         {
-            callbackFunction(callbackData, (const String **)&infoSaveData->sectionLast, INFO_SECTION_CIPHER_STR, infoSaveData);
+            callbackFunction(callbackData, INFO_SECTION_CIPHER_STR, infoSaveData);
             infoSaveValue(infoSaveData, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(this->cipherPass));
         }
 
         // Flush out any additional sections
-        callbackFunction(callbackData, (const String **)&infoSaveData->sectionLast, NULL, infoSaveData);
+        callbackFunction(callbackData, NULL, infoSaveData);
 
         // Add checksum (this must be set after all other values or it will not be valid)
         ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("}}"));

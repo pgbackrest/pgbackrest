@@ -34,9 +34,6 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-
     // *****************************************************************************************************************************
     if (testBegin("iniLoad()"))
     {
@@ -211,28 +208,6 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("global"), strNew("compress"))), "y", "get compress");
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("db"), strNew("pg1-path"))), "/path/to/pg", "get pg1-path");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("iniSave()"))
-    {
-        Ini *ini = iniNew();
-        iniSet(ini, strNew("section2"), strNew("key1"), strNew("value1"));
-        iniSet(ini, strNew("section1"), strNew("key2"), strNew("value2"));
-        iniSet(ini, strNew("section1"), strNew("key1"), strNew("value1"));
-
-        StorageWrite *write = storageNewWriteNP(storageTest, strNew("test.ini"));
-        TEST_RESULT_VOID(iniSave(ini, storageWriteIo(write)), "save ini");
-
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("test.ini"))))),
-            "[section1]\n"
-                "key1=value1\n"
-                "key2=value2\n"
-                "\n"
-                "[section2]\n"
-                "key1=value1\n",
-            "check ini");
     }
 
     // *****************************************************************************************************************************

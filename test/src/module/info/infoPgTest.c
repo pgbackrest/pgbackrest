@@ -4,6 +4,24 @@ Test PostgreSQL Info Handler
 #include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
+Test save callback
+***********************************************************************************************************************************/
+static void
+testInfoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
+{
+    (void)data;
+
+    if (infoSaveSection(infoSaveData, STRDEF("backup:current"), sectionNext))
+        infoSaveValue(infoSaveData, STRDEF("backup:current"), STRDEF("20161219-212741F"), STRDEF("{}"));
+
+    if (infoSaveSection(infoSaveData, STRDEF("db:backup"), sectionNext))
+        infoSaveValue(infoSaveData, STRDEF("db:backup"), STRDEF("key"), STRDEF("value"));
+
+    if (infoSaveSection(infoSaveData, STRDEF("later"), sectionNext))
+        infoSaveValue(infoSaveData, STRDEF("later"), STRDEF("key"), STRDEF("value"));
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -85,34 +103,27 @@ testRun(void)
 
         // Archive info
         //--------------------------------------------------------------------------------------------------------------------------
-        const char *contentDb =
+        content = strNew(
+            "[backup:current]\n"
+            "20161219-212741F={}\n"
+            "\n"
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n";
-
-        const char *contentDbHistory =
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:backup]\n"
+            "key=value\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n";
-
-        content = strNew(contentDb);
-        strCat(content, contentDbHistory);
-
-        String *contentExtra = strNew(contentDb);
-        strCat(
-            contentExtra,
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
             "\n"
-            "[backup:current]\n"
-            "20161219-212741F={}\n");
-        strCat(contentExtra, contentDbHistory);
+            "[later]\n"
+            "key=value\n");
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), harnessInfoChecksum(contentExtra)),
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), harnessInfoChecksum(content)),
             "put info to file");
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName2), harnessInfoChecksum(content)),
-            "put check info to file");
 
         String *callbackContent = strNew("");
         InfoPg *infoPg = NULL;
@@ -127,17 +138,21 @@ testRun(void)
             "RESET\n"
             "BEGIN\n"
                 "[backup:current] 20161219-212741F={}\n"
+                "[db:backup] key=value\n"
+                "[later] key=value\n"
                 "END\n",
             "    check callback content");
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
 
         // Save the file and verify it
         TEST_RESULT_VOID(
-            infoPgSave(infoPg, storageLocalWrite(), fileName3, infoPgArchive, cipherTypeNone, NULL, NULL, NULL), "infoPgSave - archive");
+            infoPgSave(
+                infoPg, storageLocalWrite(), fileName2, infoPgArchive, cipherTypeNone, NULL, testInfoBackupSaveCallback, (void *)1),
+            "infoPgSave - archive");
         TEST_RESULT_BOOL(
             bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileName2)),
-                storageGetNP(storageNewReadNP(storageLocal(), fileName3))),
+                storageGetNP(storageNewReadNP(storageLocal(), fileNameCopy)),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
             true, "    saved files are equal");
 
         InfoPgData pgData = infoPgDataCurrent(infoPg);
@@ -152,7 +167,7 @@ testRun(void)
 
         // Backup info
         //--------------------------------------------------------------------------------------------------------------------------
-        contentDb =
+        const char *contentDb =
             "[db]\n"
             "db-catalog-version=201510051\n"
             "db-control-version=942\n"
@@ -160,7 +175,7 @@ testRun(void)
             "db-system-id=6365925855999999999\n"
             "db-version=\"9.5\"\n";
 
-        contentDbHistory =
+        const char *contentDbHistory =
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
@@ -171,7 +186,7 @@ testRun(void)
         content = strNew(contentDb);
         strCat(content, contentDbHistory);
 
-        contentExtra = strNew(contentDb);
+        String *contentExtra = strNew(contentDb);
         strCat(
             contentExtra,
             "\n"

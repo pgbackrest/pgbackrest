@@ -8,9 +8,10 @@ Test Info Handler
 /***********************************************************************************************************************************
 Test save callback
 ***********************************************************************************************************************************/
-void testInfoSaveCallback(void *data, const String **sectionLast, const String *sectionNext, InfoSave *infoSaveData)
+static void
+testInfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
 {
-    if (INFO_SAVE_SECTION(STRDEF("backup")))
+    if (infoSaveSection(infoSaveData, STRDEF("backup"), sectionNext))
         infoSaveValue(infoSaveData, strNew("backup"), strNew("key"), (String *)data);
 }
 

@@ -264,11 +264,10 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
 Save to file
 ***********************************************************************************************************************************/
 static void
-infoBackupSaveCallback(void *callbackData, const String **sectionLast, const String *sectionNext, InfoSave *infoSaveData)
+infoBackupSaveCallback(void *callbackData, const String *sectionNext, InfoSave *infoSaveData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM_P(STRING, sectionLast);
         FUNCTION_TEST_PARAM(STRING, sectionNext);
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
     FUNCTION_TEST_END();
@@ -278,7 +277,7 @@ infoBackupSaveCallback(void *callbackData, const String **sectionLast, const Str
 
     InfoBackup *infoBackup = (InfoBackup *)callbackData;
 
-    if (INFO_SAVE_SECTION(INFO_BACKUP_SECTION_BACKUP_CURRENT_STR))
+    if (infoSaveSection(infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, sectionNext))
     {
         // Set the backup current section
         for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)

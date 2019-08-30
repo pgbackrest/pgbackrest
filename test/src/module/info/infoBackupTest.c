@@ -97,7 +97,8 @@ testRun(void)
                 strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
         TEST_RESULT_VOID(
-            infoBackupSave(infoBackup, storageLocalWrite(), fileName, cipherTypeAes256Cbc, strNew("123xyz")), "    save new encrypted");
+            infoBackupSave(infoBackup, storageLocalWrite(), fileName, cipherTypeAes256Cbc, strNew("123xyz")),
+            "    save new encrypted");
 
         infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("123xyz")),
@@ -235,11 +236,13 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList without expression");
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I",
+            "infoBackupDataLabelList without expression");
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(
                 infoBackup, backupRegExpP(.full=true, .differential=true, .incremental=true)), sortOrderAsc), ", ")),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList with expression");
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I",
+            "infoBackupDataLabelList with expression");
         TEST_RESULT_STR(
             strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), ", ")),
             "20161219-212741F", "  full=true");
