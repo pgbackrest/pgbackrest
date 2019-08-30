@@ -28,6 +28,7 @@ struct Db
     const String *pgDataPath;                                       // Data directory reported by the database
 };
 
+OBJECT_DEFINE_MOVE(DB);
 OBJECT_DEFINE_FREE(DB);
 
 /***********************************************************************************************************************************
@@ -280,25 +281,6 @@ dbWalSwitch(Db *this)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING, result);
-}
-
-/***********************************************************************************************************************************
-Move the object to a new context
-***********************************************************************************************************************************/
-Db *
-dbMove(Db *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DB, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

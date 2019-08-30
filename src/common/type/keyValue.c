@@ -27,6 +27,7 @@ struct KeyValue
     VariantList *keyList;                                           // List of keys
 };
 
+OBJECT_DEFINE_MOVE(KEY_VALUE);
 OBJECT_DEFINE_FREE(KEY_VALUE);
 
 /***********************************************************************************************************************************
@@ -386,23 +387,4 @@ kvGetList(const KeyValue *this, const Variant *key)
         result = varLstAdd(varLstNew(), varDup(value));
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/***********************************************************************************************************************************
-Move to a new mem context
-***********************************************************************************************************************************/
-KeyValue *
-kvMove(KeyValue *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(KEY_VALUE, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }

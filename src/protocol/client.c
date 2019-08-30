@@ -41,6 +41,7 @@ struct ProtocolClient
     TimeMSec keepAliveTime;
 };
 
+OBJECT_DEFINE_MOVE(PROTOCOL_CLIENT);
 OBJECT_DEFINE_FREE(PROTOCOL_CLIENT);
 
 /***********************************************************************************************************************************
@@ -241,25 +242,6 @@ protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool
     protocolClientWriteCommand(this, command);
 
     FUNCTION_LOG_RETURN_CONST(VARIANT, protocolClientReadOutput(this, outputRequired));
-}
-
-/***********************************************************************************************************************************
-Move the protocol client object to a new context
-***********************************************************************************************************************************/
-ProtocolClient *
-protocolClientMove(ProtocolClient *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

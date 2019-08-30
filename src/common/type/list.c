@@ -24,6 +24,7 @@ struct List
     unsigned char *list;
 };
 
+OBJECT_DEFINE_MOVE(LIST);
 OBJECT_DEFINE_FREE(LIST);
 
 /***********************************************************************************************************************************
@@ -202,25 +203,6 @@ lstMemContext(const List *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->memContext);
-}
-
-/***********************************************************************************************************************************
-Move the string list
-***********************************************************************************************************************************/
-List *
-lstMove(List *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

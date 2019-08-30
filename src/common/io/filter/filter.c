@@ -23,6 +23,7 @@ struct IoFilter
     bool flushing;                                                  // Has the filter started flushing?
 };
 
+OBJECT_DEFINE_MOVE(IO_FILTER);
 OBJECT_DEFINE_FREE(IO_FILTER);
 
 /***********************************************************************************************************************************
@@ -109,25 +110,6 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
 
     CHECK(!ioFilterInputSame(this) || bufUsed(output) > 0);
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Move the object to a new context
-***********************************************************************************************************************************/
-IoFilter *
-ioFilterMove(IoFilter *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

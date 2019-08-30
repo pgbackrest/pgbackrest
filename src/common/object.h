@@ -38,6 +38,8 @@ Create a local "this" variable of the correct type from a THIS_VOID parameter
 Define a function used by the caller to move an object from one context to another
 
 The object type is expected to have a memmber named "memContext" and the object must allocate *all* memory in that context.
+
+If "this" is NULL then no action is taken.
 ***********************************************************************************************************************************/
 #define OBJECT_DEFINE_MOVE(objectMacro)                                                                                            \
     objectMacro##_TYPE *                                                                                                           \

@@ -23,6 +23,7 @@ struct Ini
     KeyValue *store;                                                // Key value store that contains the ini data
 };
 
+OBJECT_DEFINE_MOVE(INI);
 OBJECT_DEFINE_FREE(INI);
 
 /***********************************************************************************************************************************

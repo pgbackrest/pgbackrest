@@ -19,6 +19,7 @@ struct HttpHeader
     KeyValue *kv;                                                   // KeyValue store
 };
 
+OBJECT_DEFINE_MOVE(HTTP_HEADER);
 OBJECT_DEFINE_FREE(HTTP_HEADER);
 
 /***********************************************************************************************************************************
@@ -134,25 +135,6 @@ httpHeaderList(const HttpHeader *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
-}
-
-/***********************************************************************************************************************************
-Move object to a new mem context
-***********************************************************************************************************************************/
-HttpHeader *
-httpHeaderMove(HttpHeader *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_HEADER, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
