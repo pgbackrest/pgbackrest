@@ -55,37 +55,43 @@ struct InfoSave
 };
 
 /***********************************************************************************************************************************
-Macros for checksum generation
+Macros and buffer constants for checksum generation
 ***********************************************************************************************************************************/
 #define INFO_CHECKSUM_BEGIN(checksum)                                                                                              \
 do                                                                                                                                 \
 {                                                                                                                                  \
-    ioFilterProcessIn(checksum, BUFSTRDEF("{"));                                                                                   \
+    ioFilterProcessIn(checksum, BRACEL_BUF);                                                                                       \
 }                                                                                                                                  \
 while (0)
+
+BUFFER_STRDEF_STATIC(INFO_CHECKSUM_SECTION_END_BUF, "\":{");
 
 #define INFO_CHECKSUM_SECTION(checksum, section)                                                                                   \
 do                                                                                                                                 \
 {                                                                                                                                  \
-    ioFilterProcessIn(checksum, BUFSTRDEF("\""));                                                                                  \
+    ioFilterProcessIn(checksum, QUOTED_BUF);                                                                                       \
     ioFilterProcessIn(checksum, BUFSTR(section));                                                                                  \
-    ioFilterProcessIn(checksum, BUFSTRDEF("\":{"));                                                                                \
+    ioFilterProcessIn(checksum, INFO_CHECKSUM_SECTION_END_BUF);                                                                    \
 }                                                                                                                                  \
 while (0)
+
+BUFFER_STRDEF_STATIC(INFO_CHECKSUM_SECTION_NEXT_END_BUF, "},");
 
 #define INFO_CHECKSUM_SECTION_NEXT(checksum)                                                                                       \
 do                                                                                                                                 \
 {                                                                                                                                  \
-    ioFilterProcessIn(checksum, BUFSTRDEF("},"));                                                                                  \
+    ioFilterProcessIn(checksum, INFO_CHECKSUM_SECTION_NEXT_END_BUF);                                                               \
 }                                                                                                                                  \
 while (0)
+
+BUFFER_STRDEF_STATIC(INFO_CHECKSUM_KEY_VALUE_END_BUF, "\":");
 
 #define INFO_CHECKSUM_KEY_VALUE(checksum, key, value)                                                                              \
 do                                                                                                                                 \
 {                                                                                                                                  \
-    ioFilterProcessIn(checksum, BUFSTRDEF("\""));                                                                                  \
+    ioFilterProcessIn(checksum, QUOTED_BUF);                                                                                       \
     ioFilterProcessIn(checksum, BUFSTR(key));                                                                                      \
-    ioFilterProcessIn(checksum, BUFSTRDEF("\":"));                                                                                 \
+    ioFilterProcessIn(checksum, INFO_CHECKSUM_KEY_VALUE_END_BUF);                                                                  \
     ioFilterProcessIn(checksum, BUFSTR(value));                                                                                    \
 }                                                                                                                                  \
 while (0)
@@ -93,14 +99,16 @@ while (0)
 #define INFO_CHECKSUM_KEY_VALUE_NEXT(checksum)                                                                                     \
 do                                                                                                                                 \
 {                                                                                                                                  \
-    ioFilterProcessIn(checksum, BUFSTRDEF(","));                                                                                   \
+    ioFilterProcessIn(checksum, COMMA_BUF);                                                                                        \
 }                                                                                                                                  \
 while (0)
+
+BUFFER_STRDEF_STATIC(INFO_CHECKSUM_END_BUF, "}}");
 
 #define INFO_CHECKSUM_END(checksum)                                                                                                \
 do                                                                                                                                 \
 {                                                                                                                                  \
-    ioFilterProcessIn(checksum, BUFSTRDEF("}}"));                                                                                  \
+    ioFilterProcessIn(checksum, INFO_CHECKSUM_END_BUF);                                                                            \
 }                                                                                                                                  \
 while (0)
 
