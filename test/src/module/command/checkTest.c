@@ -31,14 +31,16 @@ testRun(void)
     String *pg8Path = strNewFmt("%s/%s", testPath(), strPtr(pg8));
     String *pg8PathOpt = strNewFmt("--pg8-path=%s", strPtr(pg8Path));
     String *stanza = strNew("test1");
+    String *stanzaOpt = strNewFmt("--stanza=%s", strPtr(stanza));
+    StringList *argList = strLstNew();
 
     // *****************************************************************************************************************************
     if (testBegin("cmdCheck()"))
     {
         // Load Parameters
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
@@ -74,7 +76,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAddZ(argList, "--pg8-path=/path/to/standby2");
         strLstAddZ(argList, "--pg8-port=5433");
@@ -101,7 +103,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAddZ(argList, "--repo1-host=repo.domain.com");
         strLstAddZ(argList, "--archive-timeout=.5");
@@ -123,7 +125,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
@@ -155,7 +157,7 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
@@ -258,11 +260,11 @@ testRun(void)
         TEST_ERROR_FMT(cmdCheck(), ArchiveDisabledError, "archive_mode must be enabled");
         harnessLogResult("P00   INFO: switch wal not performed because this is a standby");
 
-        // Single primary and --no-backup-standby
+        // Single primary
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
@@ -313,6 +315,30 @@ testRun(void)
                     "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo/archive/test1/9.2-1/"
                         "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
                     testPath())));
+
+        // Primary == NULL (for test coverage)
+        // -------------------------------------------------------------------------------------------------------------------------
+        DbGetResult dbGroup = {0};
+        TEST_RESULT_VOID(checkPrimary(dbGroup), "primary == NULL");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("checkManifest()"))
+    {
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAdd(argList, stanzaOpt);
+        strLstAdd(argList, pg1PathOpt);
+        strLstAddZ(argList, "--pg5-host=localhost");
+        strLstAddZ(argList, "--pg5-path=/path/to/pg5");
+        strLstAdd(argList, strNewFmt("--pg5-host-user=%s", testUser()));
+        strLstAddZ(argList, "check");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Placeholder test for manifest
+        TEST_ERROR(
+            checkManifest(), UnknownError,
+            "remote-0 process on 'localhost' terminated unexpectedly [127]: bash: pgbackrest: command not found");
     }
 
     // *****************************************************************************************************************************
@@ -335,9 +361,9 @@ testRun(void)
         TEST_RESULT_BOOL(checkArchiveCommand(strNew("pgbackrest --stanza=demo archive-push %p")), true, "archive_command valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, pg8PathOpt);
         strLstAddZ(argList, "--pg8-port=5433");
@@ -392,7 +418,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, pg8PathOpt);
         strLstAddZ(argList, "--pg8-port=5433");
@@ -410,7 +436,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "check");
@@ -488,10 +514,10 @@ testRun(void)
 
         // checkStanzaInfoPg
         // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--no-online");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");

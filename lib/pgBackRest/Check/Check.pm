@@ -114,55 +114,6 @@ sub process
     # Reset the console logging
     logLevelSet(undef, cfgOption(CFGOPT_LOG_LEVEL_CONSOLE));
 
-    # If the manifest builds are ok, then proceed with the other checks
-    if ($iResult == 0)
-    {
-        # Reinitialize the database object in order to check the configured replicas. This will throw an error if at least one is not
-        # able to be connected to and warnings for any that cannot be properly connected to.
-        ($oDb) = dbObjectGet();
-
-        # Validate the database configuration
-        $oDb->configValidate();
-
-        # Turn off console logging to control when to display the error
-        logLevelSet(undef, OFF);
-
-        # Check backup.info - if the archive check fails below (e.g --no-archive-check set) then at least know backup.info succeeded
-        eval
-        {
-            # Check that the backup info file is written and is valid for the current database of the stanza
-            $self->backupInfoCheck();
-            return true;
-        }
-        # If there is an unhandled error then confess
-        or do
-        {
-            # Capture error information
-            $iResult = exceptionCode($EVAL_ERROR);
-            $strResultMessage = exceptionMessage($EVAL_ERROR);
-        };
-
-        # Check archive.info
-        if ($iResult == 0)
-        {
-            eval
-            {
-                # Check that the archive info file is written and is valid for the current database of the stanza
-                ($strArchiveId) = archiveGetCheck();
-                return true;
-            }
-            or do
-            {
-                # Capture error information
-                $iResult = exceptionCode($EVAL_ERROR);
-                $strResultMessage = exceptionMessage($EVAL_ERROR);
-            };
-        }
-
-        # Reset the console logging
-        logLevelSet(undef, cfgOption(CFGOPT_LOG_LEVEL_CONSOLE));
-    }
-
     # Log the captured error
     if ($iResult != 0)
     {
