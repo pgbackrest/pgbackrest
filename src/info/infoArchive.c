@@ -32,9 +32,9 @@ struct InfoArchive
 {
     MemContext *memContext;                                         // Mem context
     InfoPg *infoPg;                                                 // Contents of the DB data
-    String *archiveId;                                              // Archive id for the current PG version
 };
 
+OBJECT_DEFINE_MOVE(INFO_ARCHIVE);
 OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 
 /***********************************************************************************************************************************
@@ -99,14 +99,16 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
     ASSERT(fileName != NULL);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    InfoArchive *this = infoArchiveNewInternal();
+    InfoArchive *this = NULL;
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
         // Catch file missing error and add archive-specific hints before rethrowing
+        InfoPg *infoPg = NULL;
+
         TRY_BEGIN()
         {
-            this->infoPg = infoPgNewLoad(storage, fileName, infoPgArchive, cipherType, cipherPass, NULL, NULL);
+            infoPg = infoPgNewLoad(storage, fileName, infoPgArchive, cipherType, cipherPass, NULL, NULL);
         }
         CATCH_ANY()
         {
@@ -122,9 +124,12 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
         TRY_END();
 
         // Store the archiveId for the current PG db-version db-id
-        this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
+        this = infoArchiveNewInternal();
+        this->infoPg = infoPgMove(infoPg, this->memContext);
+
+        infoArchiveMove(this, MEM_CONTEXT_OLD());
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
@@ -144,7 +149,6 @@ infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
     ASSERT(this != NULL);
 
     this->infoPg = infoPgSet(this->infoPg, infoPgArchive, pgVersion, pgSystemId, 0, 0);
-    this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
@@ -249,7 +253,7 @@ infoArchiveId(const InfoArchive *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->archiveId);
+    FUNCTION_TEST_RETURN(infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg)));
 }
 
 /***********************************************************************************************************************************

@@ -197,6 +197,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
             break;
         }
 
+        // End processing
         case infoCallbackTypeEnd:
         {
             // History must include at least one item or the file is corrupt
