@@ -13,9 +13,10 @@ Harness for Loading Test Configurations
 #include "version.h"
 
 /***********************************************************************************************************************************
-Load a test configuration without any side effects
+Add header and checksum to an info file
 
-There's no need to open log files, acquire locks, reset log levels, etc.
+This prevents churn in headers and checksums in the unit tests.  We purposefully do not use the checksum macros from the info module
+here as a cross-check of that code.
 ***********************************************************************************************************************************/
 typedef struct HarnessInfoChecksumData
 {
@@ -72,7 +73,7 @@ harnessInfoChecksum(const String *info)
             .checksum = cryptoHashNew(HASH_TYPE_SHA1_STR),
         };
 
-        // Create buffer with header and data
+        // Create buffer with space for data, header, and checksum
         result = bufNew(strSize(info) + 256);
 
         bufCat(result, BUFSTRDEF("[backrest]\nbackrest-format="));

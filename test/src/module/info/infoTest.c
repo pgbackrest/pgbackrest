@@ -226,8 +226,8 @@ testRun(void)
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
                     "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
-                    "ChecksumError: invalid checksum in '%s/test.ini.copy', expected 'd9f68c7a646e1cb9d650ef3bb28d77a5e8c8ea57'"
-                        " but found '14617b089cb5c9b3224e739bb794e865b9bcdf4b'",
+                    "ChecksumError: invalid checksum in '%s/test.ini.copy', actual 'd9f68c7a646e1cb9d650ef3bb28d77a5e8c8ea57'"
+                        " but expected '14617b089cb5c9b3224e739bb794e865b9bcdf4b'",
                 testPath(), testPath(), testPath(), testPath())));
 
         // Invalid checksum
@@ -282,10 +282,10 @@ testRun(void)
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-                    "ChecksumError: invalid checksum in '%s/test.ini', expected '4306ec205f71417c301e403c4714090e61c8a736'"
+                    "ChecksumError: invalid checksum in '%s/test.ini', actual '4306ec205f71417c301e403c4714090e61c8a736'"
                         " but no checksum found\n"
-                    "ChecksumError: invalid checksum in '%s/test.ini.copy', expected '4306ec205f71417c301e403c4714090e61c8a736'"
-                        " but found '4306ec205f71417c301e403c4714090e61c8a999'",
+                    "ChecksumError: invalid checksum in '%s/test.ini.copy', actual '4306ec205f71417c301e403c4714090e61c8a736'"
+                        " but expected '4306ec205f71417c301e403c4714090e61c8a999'",
                 testPath(), testPath(), testPath(), testPath())));
 
         // Encryption error

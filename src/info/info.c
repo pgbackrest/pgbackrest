@@ -25,11 +25,13 @@ Info Handler
 /***********************************************************************************************************************************
 Internal constants
 ***********************************************************************************************************************************/
-STRING_STATIC(INFO_SECTION_BACKREST_STR,                            "backrest");
+#define INFO_SECTION_BACKREST                                       "backrest"
+STRING_STATIC(INFO_SECTION_BACKREST_STR,                            INFO_SECTION_BACKREST);
 STRING_STATIC(INFO_SECTION_CIPHER_STR,                              "cipher");
 
 STRING_STATIC(INFO_KEY_CIPHER_PASS_STR,                             "cipher-pass");
-STRING_STATIC(INFO_KEY_CHECKSUM_STR,                                "backrest-checksum");
+#define INFO_KEY_CHECKSUM                                           "backrest-checksum"
+    STRING_STATIC(INFO_KEY_CHECKSUM_STR,                            INFO_KEY_CHECKSUM);
 STRING_EXTERN(INFO_KEY_FORMAT_STR,                                  INFO_KEY_FORMAT);
 STRING_EXTERN(INFO_KEY_VERSION_STR,                                 INFO_KEY_VERSION);
 
@@ -51,6 +53,56 @@ struct InfoSave
     IoFilter *checksum;                                             // hash to generate file checksum
     String *sectionLast;                                            // The last section seen
 };
+
+/***********************************************************************************************************************************
+Macros for checksum generation
+***********************************************************************************************************************************/
+#define INFO_CHECKSUM_BEGIN(checksum)                                                                                              \
+do                                                                                                                                 \
+{                                                                                                                                  \
+    ioFilterProcessIn(checksum, BUFSTRDEF("{"));                                                                                   \
+}                                                                                                                                  \
+while (0)
+
+#define INFO_CHECKSUM_SECTION(checksum, section)                                                                                   \
+do                                                                                                                                 \
+{                                                                                                                                  \
+    ioFilterProcessIn(checksum, BUFSTRDEF("\""));                                                                                  \
+    ioFilterProcessIn(checksum, BUFSTR(section));                                                                                  \
+    ioFilterProcessIn(checksum, BUFSTRDEF("\":{"));                                                                                \
+}                                                                                                                                  \
+while (0)
+
+#define INFO_CHECKSUM_SECTION_NEXT(checksum)                                                                                       \
+do                                                                                                                                 \
+{                                                                                                                                  \
+    ioFilterProcessIn(checksum, BUFSTRDEF("},"));                                                                                  \
+}                                                                                                                                  \
+while (0)
+
+#define INFO_CHECKSUM_KEY_VALUE(checksum, key, value)                                                                              \
+do                                                                                                                                 \
+{                                                                                                                                  \
+    ioFilterProcessIn(checksum, BUFSTRDEF("\""));                                                                                  \
+    ioFilterProcessIn(checksum, BUFSTR(key));                                                                                      \
+    ioFilterProcessIn(checksum, BUFSTRDEF("\":"));                                                                                 \
+    ioFilterProcessIn(checksum, BUFSTR(value));                                                                                    \
+}                                                                                                                                  \
+while (0)
+
+#define INFO_CHECKSUM_KEY_VALUE_NEXT(checksum)                                                                                     \
+do                                                                                                                                 \
+{                                                                                                                                  \
+    ioFilterProcessIn(checksum, BUFSTRDEF(","));                                                                                   \
+}                                                                                                                                  \
+while (0)
+
+#define INFO_CHECKSUM_END(checksum)                                                                                                \
+do                                                                                                                                 \
+{                                                                                                                                  \
+    ioFilterProcessIn(checksum, BUFSTRDEF("}}"));                                                                                  \
+}                                                                                                                                  \
+while (0)
 
 /***********************************************************************************************************************************
 Internal constructor
@@ -137,11 +189,9 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
         if (data->sectionLast == NULL || !strEq(section, data->sectionLast))
         {
             if (data->sectionLast != NULL)
-                ioFilterProcessIn(data->checksumActual, BUFSTRDEF("},"));
+                INFO_CHECKSUM_SECTION_NEXT(data->checksumActual);
 
-            ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\""));
-            ioFilterProcessIn(data->checksumActual, BUFSTR(section));
-            ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\":{"));
+            INFO_CHECKSUM_SECTION(data->checksumActual, section);
 
             MEM_CONTEXT_BEGIN(data->memContext)
             {
@@ -150,12 +200,9 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
             MEM_CONTEXT_END();
         }
         else
-            ioFilterProcessIn(data->checksumActual, BUFSTRDEF(","));
+            INFO_CHECKSUM_KEY_VALUE_NEXT(data->checksumActual);
 
-        ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\""));
-        ioFilterProcessIn(data->checksumActual, BUFSTR(key));
-        ioFilterProcessIn(data->checksumActual, BUFSTRDEF("\":"));
-        ioFilterProcessIn(data->checksumActual, BUFSTR(value));
+        INFO_CHECKSUM_KEY_VALUE(data->checksumActual, key, value);
     }
 
     // Process backrest section
@@ -245,7 +292,7 @@ infoLoad(
         data.callbackFunction(infoCallbackTypeBegin, data.callbackData, NULL, NULL, NULL);
 
         // Load and parse the info file
-        ioFilterProcessIn(data.checksumActual, BUFSTRDEF("{"));
+        INFO_CHECKSUM_BEGIN(data.checksumActual);
 
         TRY_BEGIN()
         {
@@ -259,7 +306,7 @@ infoLoad(
         }
         TRY_END();
 
-        ioFilterProcessIn(data.checksumActual, BUFSTRDEF("}}"));
+        INFO_CHECKSUM_END(data.checksumActual);
 
         // Notify callback function that the ini load is ending
         data.callbackFunction(infoCallbackTypeEnd, data.callbackData, NULL, NULL, NULL);
@@ -270,13 +317,13 @@ infoLoad(
         if (data.checksumExpected == NULL)
         {
             THROW_FMT(
-                ChecksumError, "invalid checksum in '%s', expected '%s' but no checksum found",
+                ChecksumError, "invalid checksum in '%s', actual '%s' but no checksum found",
                 strPtr(storagePathNP(storage, data.fileName)), strPtr(checksumActual));
         }
         else if (!strEq(data.checksumExpected, checksumActual))
         {
                 THROW_FMT(
-                    ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
+                    ChecksumError, "invalid checksum in '%s', actual '%s' but expected '%s'",
                     strPtr(storagePathNP(storage, data.fileName)), strPtr(checksumActual), strPtr(data.checksumExpected));
         }
 
@@ -393,26 +440,16 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    // Do we calculate the checksum for this value?
-    bool checksum = !(strEq(section, INFO_SECTION_BACKREST_STR) && strEq(key, INFO_KEY_CHECKSUM_STR));
-
     // Calculate checksum
     if (infoSaveData->sectionLast == NULL || !strEq(section, infoSaveData->sectionLast))
     {
         if (infoSaveData->sectionLast != NULL)
         {
-            if (checksum)
-                ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("},"));
-
+            INFO_CHECKSUM_SECTION_NEXT(infoSaveData->checksum);
             ioWriteLine(infoSaveData->infoWrite, BUFSTRDEF(""));
         }
 
-        if (checksum)
-        {
-            ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("\""));
-            ioFilterProcessIn(infoSaveData->checksum, BUFSTR(section));
-            ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("\":{"));
-        }
+        INFO_CHECKSUM_SECTION(infoSaveData->checksum, section);
 
         ioWrite(infoSaveData->infoWrite, BRACKETL_BUF);
         ioWrite(infoSaveData->infoWrite, BUFSTR(section));
@@ -425,21 +462,9 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
         MEM_CONTEXT_END();
     }
     else
-    {
-        // Since the checksum goes in a section by itself we should never be skipping checksums in a section with more than one
-        // value.  If this changes in the future then this assertion will break.
-        ASSERT(checksum);
+        INFO_CHECKSUM_KEY_VALUE_NEXT(infoSaveData->checksum);
 
-        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF(","));
-    }
-
-    if (checksum)
-    {
-        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("\""));
-        ioFilterProcessIn(infoSaveData->checksum, BUFSTR(key));
-        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("\":"));
-        ioFilterProcessIn(infoSaveData->checksum, BUFSTR(value));
-    }
+    INFO_CHECKSUM_KEY_VALUE(infoSaveData->checksum, key, value);
 
     ioWrite(infoSaveData->infoWrite, BUFSTR(key));
     ioWrite(infoSaveData->infoWrite, EQ_BUF);
@@ -494,7 +519,7 @@ infoSave(
 
         // Hash object to calculate checksum
         infoSaveData->checksum = cryptoHashNew(HASH_TYPE_SHA1_STR);
-        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("{"));
+        INFO_CHECKSUM_BEGIN(infoSaveData->checksum);
 
         // Add version and format
         callbackFunction(callbackData, INFO_SECTION_BACKREST_STR, infoSaveData);
@@ -512,9 +537,10 @@ infoSave(
         callbackFunction(callbackData, NULL, infoSaveData);
 
         // Add checksum (this must be set after all other values or it will not be valid)
-        ioFilterProcessIn(infoSaveData->checksum, BUFSTRDEF("}}"));
-        infoSaveValue(
-            infoSaveData, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR, jsonFromVar(ioFilterResult(infoSaveData->checksum), 0));
+        INFO_CHECKSUM_END(infoSaveData->checksum);
+
+        ioWrite(infoSaveData->infoWrite, BUFSTRDEF("\n[" INFO_SECTION_BACKREST "]\n" INFO_KEY_CHECKSUM "="));
+        ioWriteLine(infoSaveData->infoWrite, BUFSTR(jsonFromVar(ioFilterResult(infoSaveData->checksum), 0)));
 
         // Close the file
         ioWriteClose(infoSaveData->infoWrite);
