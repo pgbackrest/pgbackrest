@@ -80,12 +80,12 @@ cmdCheck(void)
             // Free the standby connection
             dbFree(dbGroup.standby);
         }
-        // If backup from standby is configured and is true then warn when a standby not found
-        else if (cfgOptionTest(cfgOptBackupStandby) && cfgOptionBool(cfgOptBackupStandby))
+        // If backup from standby is true then warn when a standby not found
+        else if (cfgOptionBool(cfgOptBackupStandby))
         {
             LOG_WARN("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
         }
-
+// CSHANG Can't test primary==NULL in unit tests because would need standby only and repo would have to be remote
         // If a primary is defined, check the configuration and perform a WAL switch and make sure the WAL is archived
         if (dbGroup.primary != NULL)
         {
