@@ -1,8 +1,7 @@
 /***********************************************************************************************************************************
 Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
-#include "common/harnessDebug.h"
-#include "common/harnessInfo.h"
+#include <string.h>
 
 #include "common/assert.h"
 #include "common/crypto/hash.h"
@@ -11,6 +10,9 @@ Harness for Loading Test Configurations
 #include "common/type/json.h"
 #include "info/info.h"
 #include "version.h"
+
+#include "common/harnessDebug.h"
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Add header and checksum to an info file
@@ -107,7 +109,7 @@ harnessInfoChecksumZ(const char *info)
         FUNCTION_HARNESS_PARAM(STRINGZ, info);
     FUNCTION_HARNESS_END();
 
-    FUNCTION_HARNESS_RESULT(BUFFER, harnessInfoChecksum(STRDEF(info)));
+    FUNCTION_HARNESS_RESULT(BUFFER, harnessInfoChecksum(STR(info)));
 }
 
 /***********************************************************************************************************************************
