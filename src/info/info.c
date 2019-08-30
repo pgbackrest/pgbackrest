@@ -164,8 +164,7 @@ Load and validate the info file (or copy)
 typedef struct InfoLoadData
 {
     MemContext *memContext;                                         // Mem context to use for storing data in this structure
-    void (*callbackFunction)(                                       // Callback function for child object
-        InfoCallbackType type, void *data, const String *section, const String *key, const String *value);
+    InfoLoadCallback *callbackFunction;                             // Callback function for child object
     void *callbackData;                                             // Callback data for child object
     const String *fileName;                                         // File being loaded
     String *sectionLast;                                            // The last section seen during load
@@ -249,6 +248,7 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
             MEM_CONTEXT_END();
         }
     }
+    // Else pass to callback for processing
     else
         data->callbackFunction(infoCallbackTypeValue, data->callbackData, section, key, value);
 
@@ -258,8 +258,7 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
 static void
 infoLoad(
     Info *this, const Storage *storage, const String *fileName, bool copyFile, CipherType cipherType, const String *cipherPass,
-    void (*callbackFunction)(InfoCallbackType type, void *data, const String *section, const String *key, const String *value),
-    void *callbackData)
+    InfoLoadCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
         FUNCTION_LOG_PARAM(INFO, this);
@@ -309,7 +308,7 @@ infoLoad(
         CATCH(CryptoError)
         {
             THROW_FMT(
-                CryptoError, "'%s' %s\nHINT: Is or was the repo encrypted?", strPtr(storagePathNP(storage, data.fileName)),
+                CryptoError, "'%s' %s\nHINT: is or was the repo encrypted?", strPtr(storagePathNP(storage, data.fileName)),
                 errorMessage());
         }
         TRY_END();
@@ -351,8 +350,7 @@ Create new object and load contents from a file
 Info *
 infoNewLoad(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
-    void (*callbackFunction)(InfoCallbackType type, void *data, const String *section, const String *key, const String *value),
-    void *callbackData)
+    InfoLoadCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -414,7 +412,7 @@ infoNewLoad(
 }
 
 /***********************************************************************************************************************************
-Check to see if the section should be saved
+Check if the section should be saved
 ***********************************************************************************************************************************/
 bool
 infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext)
@@ -431,7 +429,7 @@ infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sec
 }
 
 /***********************************************************************************************************************************
-Save a value
+Save a value and update checksum
 ***********************************************************************************************************************************/
 void
 infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value)
@@ -448,7 +446,7 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    // Calculate checksum
+    // Save section
     if (infoSaveData->sectionLast == NULL || !strEq(section, infoSaveData->sectionLast))
     {
         if (infoSaveData->sectionLast != NULL)
@@ -472,6 +470,7 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
     else
         INFO_CHECKSUM_KEY_VALUE_NEXT(infoSaveData->checksum);
 
+    // Save key/value
     INFO_CHECKSUM_KEY_VALUE(infoSaveData->checksum, key, value);
 
     ioWrite(infoSaveData->infoWrite, BUFSTR(key));
@@ -525,7 +524,7 @@ infoSave(
 
         ioWriteOpen(infoSaveData->infoWrite);
 
-        // Hash object to calculate checksum
+        // Begin checksum calculation
         infoSaveData->checksum = cryptoHashNew(HASH_TYPE_SHA1_STR);
         INFO_CHECKSUM_BEGIN(infoSaveData->checksum);
 

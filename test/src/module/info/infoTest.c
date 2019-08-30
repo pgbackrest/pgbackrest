@@ -297,7 +297,7 @@ testRun(void)
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
                 "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
                 "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
-                "HINT: Is or was the repo encrypted?",
+                "HINT: is or was the repo encrypted?",
             testPath(), testPath(), strPtr(strNewFmt("%s/test.ini", testPath())), testPath());
 
         storageRemoveNP(storageLocalWrite(), fileNameCopy);

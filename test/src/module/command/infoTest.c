@@ -741,7 +741,7 @@ testRun(void)
             infoRender(), CryptoError,
             "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
             "CryptoError: '%s/backup.info' cipher header invalid\n"
-            "HINT: Is or was the repo encrypted?\n"
+            "HINT: is or was the repo encrypted?\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?\n"

@@ -95,8 +95,7 @@ Create new object and load contents from a file
 typedef struct InfoPgLoadData
 {
     MemContext *memContext;                                         // Mem context to use for storing data in this structure
-    void (*callbackFunction)(                                       // Callback function for child object
-        InfoCallbackType type, void *data, const String *section, const String *key, const String *value);
+    InfoLoadCallback *callbackFunction;                             // Callback function for child object
     void *callbackData;                                             // Callback data for child object
     InfoPgType type;                                                // Type of info file being loaded
     unsigned int currentId;                                         // Current database id
@@ -232,8 +231,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
 InfoPg *
 infoPgNewLoad(
     const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass,
-    void (*callbackFunction)(InfoCallbackType type, void *data, const String *section, const String *key, const String *value),
-    void *callbackData)
+    InfoLoadCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);

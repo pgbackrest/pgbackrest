@@ -39,19 +39,22 @@ typedef enum
 } InfoCallbackType;
 
 /***********************************************************************************************************************************
+Function types for loading and saving
+***********************************************************************************************************************************/
+typedef void InfoLoadCallback(InfoCallbackType type, void *data, const String *section, const String *key, const String *value);
+typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 Info *infoNew(CipherType cipherType, const String *cipherPassSub);
 Info *infoNewLoad(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
-    void (*callbackFunction)(InfoCallbackType type, void *data, const String *section, const String *key, const String *value),
-    void *callbackData);
+    InfoLoadCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
-
 void infoSave(
     Info *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass,
     InfoSaveCallback *callbackFunction, void *callbackData);
