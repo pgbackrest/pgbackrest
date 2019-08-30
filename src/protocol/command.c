@@ -27,6 +27,7 @@ struct ProtocolCommand
     Variant *parameterList;
 };
 
+OBJECT_DEFINE_MOVE(PROTOCOL_COMMAND);
 OBJECT_DEFINE_FREE(PROTOCOL_COMMAND);
 
 /***********************************************************************************************************************************
@@ -78,25 +79,6 @@ protocolCommandParamAdd(ProtocolCommand *this, const Variant *param)
         varLstAdd(varVarLst(this->parameterList), varDup(param));
     }
     MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
-Move object to a new context
-***********************************************************************************************************************************/
-ProtocolCommand *
-protocolCommandMove(ProtocolCommand *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
 
     FUNCTION_TEST_RETURN(this);
 }

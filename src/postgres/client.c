@@ -28,6 +28,7 @@ struct PgClient
     PGconn *connection;
 };
 
+OBJECT_DEFINE_MOVE(PG_CLIENT);
 OBJECT_DEFINE_FREE(PG_CLIENT);
 
 /***********************************************************************************************************************************
@@ -356,25 +357,6 @@ pgClientClose(PgClient *this)
     }
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Move the pg client object to a new context
-***********************************************************************************************************************************/
-PgClient *
-pgClientMove(PgClient *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PG_CLIENT, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

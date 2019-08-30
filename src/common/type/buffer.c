@@ -29,6 +29,7 @@ struct Buffer
     MemContext *memContext;                                         // Mem context for dynamic buffers
 };
 
+OBJECT_DEFINE_MOVE(BUFFER);
 OBJECT_DEFINE_FREE(BUFFER);
 
 /***********************************************************************************************************************************
@@ -241,25 +242,6 @@ bufHex(const Buffer *this)
         strCatFmt(result, "%02x", this->buffer[bufferIdx]);
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/***********************************************************************************************************************************
-Move buffer to a new mem context
-***********************************************************************************************************************************/
-Buffer *
-bufMove(Buffer *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

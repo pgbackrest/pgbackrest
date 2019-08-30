@@ -22,6 +22,7 @@ struct Ini
     KeyValue *store;                                                // Key value store that contains the ini data
 };
 
+OBJECT_DEFINE_MOVE(INI);
 OBJECT_DEFINE_FREE(INI);
 
 /***********************************************************************************************************************************
@@ -390,23 +391,4 @@ iniSave(Ini *this, IoWrite *write)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Move to a new mem context
-***********************************************************************************************************************************/
-Ini *
-iniMove(Ini *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
