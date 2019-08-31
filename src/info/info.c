@@ -477,6 +477,7 @@ infoLoad(InfoLoadCallback callbackFunction, void *callbackData)
 
     unsigned int try = 0;
     bool done = false;
+    bool loaded = false;
     const ErrorType *loadErrorType = NULL;
     String *loadErrorMessage = NULL;
 
@@ -485,7 +486,8 @@ infoLoad(InfoLoadCallback callbackFunction, void *callbackData)
         // Attempt to load the file
         TRY_BEGIN()
         {
-            done = callbackFunction(callbackData, try);
+            loaded = callbackFunction(callbackData, try);
+            done = true;
 
             // There must be at least one attempt to the load file
             ASSERT(done || try > 0);
@@ -543,7 +545,7 @@ infoLoad(InfoLoadCallback callbackFunction, void *callbackData)
     while (!done);
 
     // Error when no file was loaded
-    if (!done)
+    if (!loaded)
         THROWP(loadErrorType, strPtr(loadErrorMessage));
 
     FUNCTION_LOG_RETURN_VOID();

@@ -8,12 +8,11 @@ Test Info Handler
 #include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
-Test load callbacks
+Test load callback
 ***********************************************************************************************************************************/
 typedef struct TestInfoLoad
 {
     unsigned int errorTotal;
-    // bool errorSame;
 } TestInfoLoad;
 
 static bool
@@ -21,8 +20,33 @@ testInfoLoadCallback(void *data, unsigned int try)
 {
     TestInfoLoad *testInfoLoad = (TestInfoLoad *)data;
 
-    if (testInfoLoad->errorTotal == 1 && try == 0)
-        THROW(ChecksumError, "checksum error");
+    if (testInfoLoad->errorTotal == 1)
+    {
+        if (try == 0)
+            THROW(ChecksumError, "checksum error");
+        else
+            return false;
+    }
+
+    if (testInfoLoad->errorTotal == 2)
+    {
+        if (try < 2)
+            THROW(FormatError, "format error");
+        else
+            return false;
+    }
+
+    if (testInfoLoad->errorTotal == 3)
+    {
+        if (try == 0)
+            THROW(FormatError, "format error");
+        else if (try == 1)
+            THROW(ChecksumError, "checksum error\nHINT: have you checked the thing?");
+        else if (try == 2)
+            THROW(FileMissingError, "file missing error");
+        else
+            return false;
+    }
 
     return true;
 }
@@ -46,10 +70,6 @@ Test Run
 void
 testRun(void)
 {
-    // Create default storage object for testing
-    // Storage *storageTest = storagePosixNew(
-    //     strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-
     // *****************************************************************************************************************************
     if (testBegin("infoNew()"))
     {
@@ -193,24 +213,6 @@ testRun(void)
 
         TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNew("1")), "info save");
         TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
-
-        // // Encryption error
-        // //--------------------------------------------------------------------------------------------------------------------------
-        // storageRemoveNP(storageLocalWrite(), fileName);
-        // TEST_ERROR_FMT(
-        //     infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), harnessInfoLoadNewCallback, NULL),
-        //     CryptoError,
-        //     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-        //         "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-        //         "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
-        //         "HINT: is or was the repo encrypted?",
-        //     testPath(), testPath(), strPtr(strNewFmt("%s/test.ini", testPath())), testPath());
-        //
-        // storageRemoveNP(storageLocalWrite(), fileNameCopy);
-        //
-        // // infoFree()
-        // //--------------------------------------------------------------------------------------------------------------------------
-        // TEST_RESULT_VOID(infoFree(info), "infoFree() - free info memory context");
     }
 
     // *****************************************************************************************************************************
@@ -220,59 +222,37 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TestInfoLoad testInfoLoad = {.errorTotal = 1};
 
-        infoLoad(testInfoLoadCallback, &testInfoLoad);
+        TEST_ERROR(
+            infoLoad(testInfoLoadCallback, &testInfoLoad), ChecksumError,
+            "unable to load info file(s):\n"
+                "ChecksumError: checksum error");
 
-        // Sucess
+        // Two errors (same error)
+        //--------------------------------------------------------------------------------------------------------------------------
+        testInfoLoad = (TestInfoLoad){.errorTotal = 2};
+
+        TEST_ERROR(
+            infoLoad(testInfoLoadCallback, &testInfoLoad), FormatError,
+            "unable to load info file(s):\n"
+                "FormatError: format error\n"
+                "FormatError: format error");
+
+        // Three errors (mixed)
+        //--------------------------------------------------------------------------------------------------------------------------
+        testInfoLoad = (TestInfoLoad){.errorTotal = 3};
+
+        TEST_ERROR(
+            infoLoad(testInfoLoadCallback, &testInfoLoad), FileOpenError,
+            "unable to load info file(s):\n"
+                "FormatError: format error\n"
+                "ChecksumError: checksum error\n"
+                "HINT: have you checked the thing?\n"
+                "FileMissingError: file missing error");
+
+        // Success
         //--------------------------------------------------------------------------------------------------------------------------
         testInfoLoad = (TestInfoLoad){0};
 
         infoLoad(testInfoLoadCallback, &testInfoLoad);
-        // Info *info = infoNew(cipherTypeNone, NULL);
-        //
-        // TEST_RESULT_VOID(
-        //     infoSave(info, storageTest, fileName, cipherTypeNone, NULL, testInfoSaveCallback, strNew("value1")), "save info");
-        //
-        // String *callbackContent = strNew("");
-        //
-        // TEST_RESULT_VOID(
-        //     infoNewLoad(storageTest, fileName, cipherTypeNone, NULL, harnessInfoLoadNewCallback, callbackContent), "    reload info");
-        // TEST_RESULT_STR(
-        //     strPtr(callbackContent),
-        //     "BEGIN\n"
-        //     "[backup] key=value1\n"
-        //     "END\n",
-        //     "    check callback content");
-        //
-        // TEST_RESULT_BOOL(storageExistsNP(storageTest, fileName), true, "check main exists");
-        // TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))), true, "check copy exists");
-        //
-        // TEST_ERROR(
-        //     infoSave(info, storageTest, fileName, cipherTypeAes256Cbc, cipherPass, testInfoSaveCallback, NULL), AssertError,
-        //     "assertion '!((cipherType != cipherTypeNone && this->cipherPass == NULL) || "
-        //     "(cipherType == cipherTypeNone && this->cipherPass != NULL))' failed");
-        //
-        // // Add encryption
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // info = infoNew(cipherTypeAes256Cbc, strNew("/hall-pass"));
-        // TEST_RESULT_VOID(
-        //     infoSave(info, storageTest, fileName, cipherTypeAes256Cbc, cipherPass, testInfoSaveCallback, strNew("value2")),
-        //     "save encrypted info");
-        //
-        // callbackContent = strNew("");
-        //
-        // TEST_RESULT_VOID(
-        //     infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, harnessInfoLoadNewCallback, callbackContent),
-        //     "    reload info");
-        // TEST_RESULT_STR(
-        //     strPtr(callbackContent),
-        //     "BEGIN\n"
-        //     "[backup] key=value2\n"
-        //     "END\n",
-        //     "    check callback content");
-        //
-        // TEST_ERROR(
-        //     infoSave(info, storageTest, fileName, cipherTypeNone, NULL, testInfoSaveCallback, NULL), AssertError,
-        //     "assertion '!((cipherType != cipherTypeNone && this->cipherPass == NULL) || "
-        //     "(cipherType == cipherTypeNone && this->cipherPass != NULL))' failed");
     }
 }
