@@ -101,7 +101,7 @@ typedef struct InfoPgLoadData
 } InfoPgLoadData;
 
 static void
-infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *section, const String *key, const String *value)
+infoPgLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
@@ -110,7 +110,6 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    ASSERT(type == infoCallbackTypeValue);;
     ASSERT(callbackData != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
@@ -155,7 +154,7 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
     }
     // Callback if set
     else if (data->callbackFunction != NULL)
-        data->callbackFunction(infoCallbackTypeValue, data->callbackData, section, key, value);
+        data->callbackFunction(data->callbackData, section, key, value);
 
     FUNCTION_TEST_RETURN_VOID();
 }

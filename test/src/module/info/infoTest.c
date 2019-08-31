@@ -209,8 +209,8 @@ testRun(void)
         TestInfoLoad testInfoLoad = {.errorTotal = 1};
 
         TEST_ERROR(
-            infoLoad(testInfoLoadCallback, &testInfoLoad), ChecksumError,
-            "unable to load info file(s):\n"
+            infoLoad(STRDEF("unable to load info file"), testInfoLoadCallback, &testInfoLoad), ChecksumError,
+            "unable to load info file:\n"
                 "ChecksumError: checksum error");
 
         // Two errors (same error)
@@ -218,7 +218,7 @@ testRun(void)
         testInfoLoad = (TestInfoLoad){.errorTotal = 2};
 
         TEST_ERROR(
-            infoLoad(testInfoLoadCallback, &testInfoLoad), FormatError,
+            infoLoad(STRDEF("unable to load info file(s)"), testInfoLoadCallback, &testInfoLoad), FormatError,
             "unable to load info file(s):\n"
                 "FormatError: format error\n"
                 "FormatError: format error");
@@ -228,7 +228,7 @@ testRun(void)
         testInfoLoad = (TestInfoLoad){.errorTotal = 3};
 
         TEST_ERROR(
-            infoLoad(testInfoLoadCallback, &testInfoLoad), FileOpenError,
+            infoLoad(STRDEF("unable to load info file(s)"), testInfoLoadCallback, &testInfoLoad), FileOpenError,
             "unable to load info file(s):\n"
                 "FormatError: format error\n"
                 "ChecksumError: checksum error\n"
@@ -239,6 +239,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         testInfoLoad = (TestInfoLoad){0};
 
-        infoLoad(testInfoLoadCallback, &testInfoLoad);
+        infoLoad(STRDEF("SHOULD BE NO ERROR"), testInfoLoadCallback, &testInfoLoad);
     }
 }

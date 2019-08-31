@@ -234,7 +234,7 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
     }
     // Else pass to callback for processing
     else
-        data->callbackFunction(infoCallbackTypeValue, data->callbackData, section, key, value);
+        data->callbackFunction(data->callbackData, section, key, value);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -455,13 +455,15 @@ infoCipherPass(const Info *this)
 Load info file(s) and throw error for each attempt if none are successful
 ***********************************************************************************************************************************/
 void
-infoLoad(InfoLoadCallback callbackFunction, void *callbackData)
+infoLoad(const String *error, InfoLoadCallback callbackFunction, void *callbackData)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, error);
         FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
 
+    ASSERT(error != NULL);
     ASSERT(callbackFunction != NULL);
     ASSERT(callbackData != NULL);
 
@@ -490,11 +492,16 @@ infoLoad(InfoLoadCallback callbackFunction, void *callbackData)
                 if (loadErrorType == NULL)
                 {
                     loadErrorType = errorType();
-                    loadErrorMessage = strNew("unable to load info file(s):");
+                    loadErrorMessage = strNewFmt("%s:", strPtr(error));
                 }
                 // Else if the error type is different then set a generic type
                 else if (loadErrorType != errorType())
-                    loadErrorType = &FileOpenError;
+                {
+                    if (loadErrorType == &FileMissingError && errorType() != &FileMissingError)
+                        loadErrorType = errorType();
+                    else if (loadErrorType != &FileMissingError && errorType() != &FileMissingError)
+                        loadErrorType = &FileOpenError;
+                }
 
                 // Append error
                 strCatFmt(loadErrorMessage, "\n%s: %s", errorTypeName(errorType()), errorMessage());

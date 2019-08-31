@@ -278,14 +278,12 @@ testRun(void)
     {
         TEST_ERROR_FMT(
             infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), FileMissingError,
-            "unable to load info file(s):\n"
+            "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
             "FileMissingError: unable to open missing file '%s/backup.info' for read\n"
-            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "HINT: has a stanza-create been performed?\n"
             "FileMissingError: unable to open missing file '%s/backup.info.copy' for read\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?",
-            testPath(), testPath());
+            testPath(), testPath(), testPath(), testPath());
 
         InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, 1002, 201707211, NULL);
         TEST_RESULT_VOID(

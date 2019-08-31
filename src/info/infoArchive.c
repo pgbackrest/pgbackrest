@@ -98,23 +98,7 @@ infoArchiveNewLoad(IoRead *read)
     MEM_CONTEXT_NEW_BEGIN("InfoArchive")
     {
         this = infoArchiveNewInternal();
-
-        TRY_BEGIN()
-        {
-            this->infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);
-        }
-        CATCH_ANY()
-        {
-            THROWP_FMT(
-                errorType(),
-                "%s\n"
-                "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-                "HINT: is archive_command configured correctly in postgresql.conf?\n"
-                "HINT: has a stanza-create been performed?\n"
-                "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-                errorMessage());
-        }
-        TRY_END();
+        this->infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -336,7 +320,30 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
         .cipherPass = cipherPass,
     };
 
-    infoLoad(infoArchiveLoadFileCallback, &data);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const char *fileNamePath = strPtr(storagePathNP(storage, fileName));
+
+        TRY_BEGIN()
+        {
+            infoLoad(
+                strNewFmt("unable to load info file '%s' or '%s.copy'", fileNamePath, fileNamePath), infoArchiveLoadFileCallback,
+                &data);
+        }
+        CATCH_ANY()
+        {
+            THROWP_FMT(
+                errorType(),
+                "%s\n"
+                "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+                "HINT: is archive_command configured correctly in postgresql.conf?\n"
+                "HINT: has a stanza-create been performed?\n"
+                "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
+                errorMessage());
+        }
+        TRY_END();
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, data.infoArchive);
 }

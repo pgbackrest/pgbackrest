@@ -106,7 +106,7 @@ infoBackupNew(
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 static void
-infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *section, const String *key, const String *value)
+infoPgLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
@@ -115,11 +115,10 @@ infoPgLoadCallback(InfoCallbackType type, void *callbackData, const String *sect
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    ASSERT(type == infoCallbackTypeValue);;
     ASSERT(callbackData != NULL);
-    ASSERT(type != infoCallbackTypeValue || section != NULL);
-    ASSERT(type != infoCallbackTypeValue || key != NULL);
-    ASSERT(type != infoCallbackTypeValue || value != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
 
     InfoBackup *infoBackup = (InfoBackup *)callbackData;
 
@@ -185,21 +184,7 @@ infoBackupNewLoad(IoRead *read)
     MEM_CONTEXT_NEW_BEGIN("InfoBackup")
     {
         this = infoBackupNewInternal();
-
-        TRY_BEGIN()
-        {
-            this->infoPg = infoPgNewLoad(read, infoPgBackup, infoPgLoadCallback, this);
-        }
-        CATCH_ANY()
-        {
-            THROWP_FMT(
-                errorType(),
-                "%s\n"
-                "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-                "HINT: has a stanza-create been performed?",
-                errorMessage());
-        }
-        TRY_END();
+        this->infoPg = infoPgNewLoad(read, infoPgBackup, infoPgLoadCallback, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -502,7 +487,28 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
         .cipherPass = cipherPass,
     };
 
-    infoLoad(infoBackupLoadFileCallback, &data);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const char *fileNamePath = strPtr(storagePathNP(storage, fileName));
+
+        TRY_BEGIN()
+        {
+            infoLoad(
+                strNewFmt("unable to load info file '%s' or '%s.copy'", fileNamePath, fileNamePath), infoBackupLoadFileCallback,
+                &data);
+        }
+        CATCH_ANY()
+        {
+            THROWP_FMT(
+                errorType(),
+                "%s\n"
+                "HINT: backup.info cannot be opened and is required to perform a backup.\n"
+                "HINT: has a stanza-create been performed?",
+                errorMessage());
+        }
+        TRY_END();
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, data.infoBackup);
 }

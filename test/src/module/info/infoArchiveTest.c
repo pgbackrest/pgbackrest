@@ -165,18 +165,14 @@ testRun(void)
     {
         TEST_ERROR_FMT(
             infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), FileMissingError,
-            "unable to load info file(s):\n"
+            "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
             "FileMissingError: unable to open missing file '%s/archive.info' for read\n"
-            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured correctly in postgresql.conf?\n"
-            "HINT: has a stanza-create been performed?\n"
-            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.\n"
             "FileMissingError: unable to open missing file '%s/archive.info.copy' for read\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            testPath(), testPath());
+            testPath(), testPath(), testPath(), testPath());
 
         InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_10, 6569239123849665999, NULL);
         TEST_RESULT_VOID(
