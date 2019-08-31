@@ -466,7 +466,7 @@ infoBackupLoadFileCallback(void *data, unsigned int try)
 
         // Attempt to load the file
         IoRead *read = storageReadIo(storageNewReadNP(loadData->storage, fileName));
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, BUFSTR(loadData->cipherPass));
+        cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
 
         MEM_CONTEXT_BEGIN(loadData->memContext)
         {
@@ -531,7 +531,7 @@ infoBackupSaveFile(
     {
         // Save the file
         IoWrite *write = storageWriteIo(storageNewWriteNP(storage, fileName));
-        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, BUFSTR(cipherPass));
+        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
         infoBackupSave(infoBackup, write);
 
         // Make a copy of the file

@@ -22,6 +22,6 @@ IoFilter *cipherBlockNewVar(const VariantList *paramList);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-IoFilterGroup *cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const Buffer *pass);
+IoFilterGroup *cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass);
 
 #endif
