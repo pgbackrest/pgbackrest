@@ -1,6 +1,9 @@
 /***********************************************************************************************************************************
 Test PostgreSQL Info Handler
 ***********************************************************************************************************************************/
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
+
 #include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
@@ -32,19 +35,19 @@ testRun(void)
     {
         InfoPg *infoPg = NULL;
 
-        TEST_ASSIGN(infoPg, infoPgNew(cipherTypeNone, NULL), "infoPgNew(cipherTypeNone, NULL)");
+        TEST_ASSIGN(infoPg, infoPgNew(infoPgBackup, NULL), "infoPgNew(cipherTypeNone, NULL)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
         TEST_RESULT_STR(strPtr(infoCipherPass(infoPgInfo(infoPg))), NULL, "  cipherPass NULL");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
-        TEST_ASSIGN(infoPg, infoPgNew(cipherTypeAes256Cbc, strNew("123xyz")), "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
+        TEST_ASSIGN(infoPg, infoPgNew(infoPgArchive, strNew("123xyz")), "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
         TEST_RESULT_STR(strPtr(infoCipherPass(infoPgInfo(infoPg))), "123xyz", "  cipherPass set");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPgNew(cipherTypeNone, NULL), infoPgArchive, PG_VERSION_94, 6569239123849665679, 0, 0),
+            infoPg, infoPgSet(infoPgNew(infoPgArchive, NULL), infoPgArchive, PG_VERSION_94, 6569239123849665679, 0, 0),
             "infoPgSet - infoPgArchive");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
@@ -70,7 +73,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPgNew(cipherTypeAes256Cbc, strNew("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679,
+            infoPg, infoPgSet(infoPgNew(infoPgBackup, strNew("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679,
             201409291, 942), "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
@@ -83,27 +86,17 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoCipherPass(infoPgInfo(infoPg))), "123xyz", "  cipherPass set");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(infoPg, infoPgNewInternal(), "infoPgNewInternal()");
-        TEST_RESULT_PTR(infoPgInfo(infoPg), NULL, "  info not set");
-
-        //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            infoPgSet(infoPgNew(cipherTypeNone, NULL), 1000, PG_VERSION_94, 6569239123849665679, 201409291, 942),
+            infoPgSet(infoPgNew(infoPgBackup, NULL), 1000, PG_VERSION_94, 6569239123849665679, 201409291, 942),
             AssertError, "invalid InfoPg type 1000");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("infoPgNewLoad(), infoPgFree(), infoPgDataCurrent(), infoPgDataToLog(), infoPgAdd(), infoPgIni(), infoPgSave()"))
+    if (testBegin("infoPgNewLoad(), infoPgFree(), infoPgDataCurrent(), infoPgDataToLog(), infoPgAdd(), infoPgSave()"))
     {
-        String *content = NULL;
-        String *fileName = strNewFmt("%s/test.ini", testPath());
-        String *fileNameCopy = strNewFmt("%s/test.ini.copy", testPath());
-        String *fileName2 = strNewFmt("%s/test2.ini", testPath());
-        String *fileName3 = strNewFmt("%s/test3.ini", testPath());
-
         // Archive info
         //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew(
+        const Buffer *contentLoad = harnessInfoChecksumZ(
             "[backup:current]\n"
             "20161219-212741F={}\n"
             "\n"
@@ -121,40 +114,19 @@ testRun(void)
             "[later]\n"
             "key=value\n");
 
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), harnessInfoChecksum(content)),
-            "put info to file");
-
         String *callbackContent = strNew("");
         InfoPg *infoPg = NULL;
 
         TEST_ASSIGN(
-            infoPg,
-            infoPgNewLoad(
-                storageLocal(), fileName, infoPgArchive, cipherTypeNone, NULL, harnessInfoLoadNewCallback, callbackContent),
+            infoPg, infoPgNewLoad(ioBufferReadNew(contentLoad), infoPgArchive, harnessInfoLoadNewCallback, callbackContent),
             "load file");
         TEST_RESULT_STR(
             strPtr(callbackContent),
-            "BEGIN\n"
-            "RESET\n"
-            "BEGIN\n"
-                "[backup:current] 20161219-212741F={}\n"
+            "[backup:current] 20161219-212741F={}\n"
                 "[db:backup] key=value\n"
-                "[later] key=value\n"
-                "END\n",
+                "[later] key=value\n",
             "    check callback content");
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
-
-        // Save the file and verify it
-        TEST_RESULT_VOID(
-            infoPgSave(
-                infoPg, storageLocalWrite(), fileName2, infoPgArchive, cipherTypeNone, NULL, testInfoBackupSaveCallback, (void *)1),
-            "infoPgSave - archive");
-        TEST_RESULT_BOOL(
-            bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileNameCopy)),
-                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
-            true, "    saved files are equal");
 
         InfoPgData pgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgData.id, 1, "    id set");
@@ -166,52 +138,40 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoPgArchiveId(infoPg, 0)), "9.4-1", "    check pg archive id");
         TEST_RESULT_PTR(infoPgCipherPass(infoPg), NULL, "    no cipher passphrase");
 
+        Buffer *contentSave = bufNew(0);
+
+        TEST_RESULT_VOID(infoPgSave(infoPg, ioBufferWriteNew(contentSave), testInfoBackupSaveCallback, (void *)1), "info save");
+        TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
+
         // Backup info
         //--------------------------------------------------------------------------------------------------------------------------
-        const char *contentDb =
-            "[db]\n"
-            "db-catalog-version=201510051\n"
-            "db-control-version=942\n"
-            "db-id=2\n"
-            "db-system-id=6365925855999999999\n"
-            "db-version=\"9.5\"\n";
+        #define CONTENT_DB                                                                                                         \
+            "[db]\n"                                                                                                               \
+            "db-catalog-version=201510051\n"                                                                                       \
+            "db-control-version=942\n"                                                                                             \
+            "db-id=2\n"                                                                                                            \
+            "db-system-id=6365925855999999999\n"                                                                                   \
+            "db-version=\"9.5\"\n"
 
-        const char *contentDbHistory =
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6365925855999999999,"
-                "\"db-version\":\"9.5\"}\n";
+        #define CONTENT_DB_HISTORY                                                                                                 \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"                 \
+                "\"db-version\":\"9.4\"}\n"                                                                                        \
+            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6365925855999999999,"                 \
+                "\"db-version\":\"9.5\"}\n"
 
-        content = strNew(contentDb);
-        strCat(content, contentDbHistory);
-
-        String *contentExtra = strNew(contentDb);
-        strCat(
-            contentExtra,
+        contentLoad = harnessInfoChecksumZ(
+            CONTENT_DB
             "\n"
             "[backup:current]\n"
-            "20161219-212741F={}\n");
-        strCat(contentExtra, contentDbHistory);
+            "20161219-212741F={}\n"
+            CONTENT_DB_HISTORY);
 
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), harnessInfoChecksum(contentExtra)),
-            "put info to file");
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName2), harnessInfoChecksum(content)),
-            "put check info to file");
-        TEST_ASSIGN(
-            infoPg, infoPgNewLoad(storageLocal(), fileName, infoPgBackup, cipherTypeNone, NULL, NULL, NULL), "load file");
+        callbackContent = strNew("");
 
-        // Save the file and verify it
-        TEST_RESULT_VOID(
-            infoPgSave(infoPg, storageLocalWrite(), fileName3, infoPgBackup, cipherTypeNone, NULL, NULL, NULL), "infoPgSave - backup");
-        TEST_RESULT_BOOL(
-            bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileName2)),
-                storageGetNP(storageNewReadNP(storageLocal(), fileName3))),
-            true, "    saved files are equal");
+        TEST_ASSIGN(infoPg, infoPgNewLoad(ioBufferReadNew(contentLoad), infoPgBackup, NULL, NULL), "load file");
+        TEST_RESULT_STR(strPtr(callbackContent), "", "    check callback content");
 
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 2, "    check pg data total");
 
@@ -229,6 +189,13 @@ testRun(void)
         TEST_RESULT_INT(pgData.catalogVersion, 201409291, "    catalog-version set");
         TEST_RESULT_INT(pgData.controlVersion, 942, "    control-version set");
 
+        contentSave = bufNew(0);
+
+        TEST_RESULT_VOID(infoPgSave(infoPg, ioBufferWriteNew(contentSave), NULL, NULL), "info save");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(harnessInfoChecksumZ(CONTENT_DB CONTENT_DB_HISTORY))),
+            "   check save");
+
         // infoPgAdd
         //--------------------------------------------------------------------------------------------------------------------------
         pgData.id = 3;
@@ -244,30 +211,6 @@ testRun(void)
         TEST_RESULT_INT(pgDataTest.systemId, 6399999999999999999, "    system-id set");
         TEST_RESULT_INT(pgDataTest.catalogVersion, 201608131, "    catalog-version set");
         TEST_RESULT_INT(pgDataTest.controlVersion, 960, "    control-version set");
-
-        // Errors
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            infoPgNewLoad(storageLocal(), fileName, 10, cipherTypeNone, NULL, NULL, NULL), AssertError,
-            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-            "FileMissingError: unable to open missing file '%s/test.ini' for read\n"
-            "AssertError: invalid InfoPg type 10",
-            testPath(), testPath(), testPath());
-        TEST_ERROR(
-            infoPgNewLoad(storageLocal(), NULL, infoPgBackup, cipherTypeNone, NULL, NULL, NULL), AssertError,
-            "assertion 'fileName != NULL' failed");
-
-        TEST_ERROR(infoPgDataCurrent(NULL), AssertError, "assertion 'this != NULL' failed");
-
-        TEST_ERROR(infoPgAdd(NULL, &pgData), AssertError, "assertion 'this != NULL' failed");
-        TEST_ERROR(infoPgAdd(infoPg, NULL), AssertError, "assertion 'infoPgData != NULL' failed");
-        TEST_ERROR(
-            infoPgSave(infoPg, storageLocalWrite(), fileName2, 10000, cipherTypeNone, NULL, NULL, NULL), AssertError,
-            "invalid InfoPg type 10000");
-
-        // infoPgFree
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(infoPgFree(infoPg), "infoPgFree() - free infoPg");
 
         // infoPgDataToLog
         //--------------------------------------------------------------------------------------------------------------------------

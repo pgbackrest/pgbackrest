@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Info Handler
 ***********************************************************************************************************************************/
+#include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
@@ -71,28 +72,15 @@ void
 testRun(void)
 {
     // *****************************************************************************************************************************
-    if (testBegin("infoNew()"))
+    if (testBegin("infoNew() and infoNewInternal()"))
     {
         Info *info = NULL;
 
-        TEST_ASSIGN(info, infoNew(cipherTypeAes256Cbc, strNew("123xyz")), "infoNew(cipher)");
+        TEST_ASSIGN(info, infoNew(strNew("123xyz")), "infoNew(cipher)");
         TEST_RESULT_STR(strPtr(infoCipherPass(info)), "123xyz", "    cipherPass is set");
 
-        TEST_ASSIGN(info, infoNew(cipherTypeNone, NULL), "infoNew(NULL)");
+        TEST_ASSIGN(info, infoNew(NULL), "infoNew(NULL)");
         TEST_RESULT_PTR(infoCipherPass(info), NULL, "    cipherPass is NULL");
-
-        TEST_ERROR(
-            infoNew(cipherTypeNone, strNew("")), AssertError,
-            "assertion '!((cipherType == cipherTypeNone && cipherPassSub != NULL) || (cipherType != cipherTypeNone && "
-            "(cipherPassSub == NULL || strSize(cipherPassSub) == 0)))' failed");
-        TEST_ERROR(
-            infoNew(cipherTypeAes256Cbc, strNew("")), AssertError,
-            "assertion '!((cipherType == cipherTypeNone && cipherPassSub != NULL) || (cipherType != cipherTypeNone && "
-            "(cipherPassSub == NULL || strSize(cipherPassSub) == 0)))' failed");
-        TEST_ERROR(
-            infoNew(cipherTypeAes256Cbc, NULL), AssertError,
-            "assertion '!((cipherType == cipherTypeNone && cipherPassSub != NULL) || (cipherType != cipherTypeNone && "
-            "(cipherPassSub == NULL || strSize(cipherPassSub) == 0)))' failed");
     }
 
     // *****************************************************************************************************************************
@@ -186,8 +174,6 @@ testRun(void)
 
         TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNew("1")), "info save");
         TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
-
-        TEST_RESULT_VOID(infoFree(info), "    free info");
 
         // File with content and cipher
         // --------------------------------------------------------------------------------------------------------------------------

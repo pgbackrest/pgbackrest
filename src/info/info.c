@@ -8,7 +8,6 @@ Info Handler
 #include <string.h>
 
 #include "common/type/convert.h"
-#include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/encode.h"
@@ -43,9 +42,6 @@ struct Info
     MemContext *memContext;                                         // Mem context
     const String *cipherPass;                                       // Cipher passphrase if set
 };
-
-OBJECT_DEFINE_MOVE(INFO);
-OBJECT_DEFINE_FREE(INFO);
 
 struct InfoSave
 {
@@ -119,42 +115,34 @@ Internal constructor
 static Info *
 infoNewInternal(void)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_TEST_VOID();
 
-    Info *this = NULL;
+    Info *this = memNew(sizeof(Info));
+    this->memContext = memContextCurrent();
 
-    MEM_CONTEXT_NEW_BEGIN("Info")
-    {
-        // Create object
-        this = memNew(sizeof(Info));
-        this->memContext = MEM_CONTEXT_NEW();
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(INFO, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
 Create new object
 ***********************************************************************************************************************************/
 Info *
-infoNew(CipherType cipherType, const String *cipherPassSub)
+infoNew(const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPassSub);                 // Use FUNCTION_TEST so cipher is not logged
+        FUNCTION_TEST_PARAM(STRING, cipherPass);                 // Use FUNCTION_TEST so cipher is not logged
     FUNCTION_LOG_END();
 
-    // Ensure cipherPassSub is set and not an empty string when cipherType is not NONE and is not set when cipherType is NONE
-    ASSERT(
-        !((cipherType == cipherTypeNone && cipherPassSub != NULL) ||
-          (cipherType != cipherTypeNone && (cipherPassSub == NULL || strSize(cipherPassSub) == 0))));
+    Info *this = NULL;
 
-    Info *this = infoNewInternal();
+    MEM_CONTEXT_NEW_BEGIN("Info")
+    {
+        this = infoNewInternal();
 
-    // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
-    if (cipherPassSub != NULL)
-        this->cipherPass = cipherPassSub;
+        // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
+        this->cipherPass = strDup(cipherPass);
+    }
+    MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO, this);
 }
@@ -269,49 +257,51 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
 
     Info *this = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    MEM_CONTEXT_NEW_BEGIN("Info")
     {
         this = infoNewInternal();
 
-        InfoLoadData data =
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            .memContext = MEM_CONTEXT_TEMP(),
-            .callbackFunction = callbackFunction,
-            .callbackData = callbackData,
-            .info = this,
-            .checksumActual = cryptoHashNew(HASH_TYPE_SHA1_STR),
-        };
+            InfoLoadData data =
+            {
+                .memContext = MEM_CONTEXT_TEMP(),
+                .callbackFunction = callbackFunction,
+                .callbackData = callbackData,
+                .info = this,
+                .checksumActual = cryptoHashNew(HASH_TYPE_SHA1_STR),
+            };
 
-        // Load and parse the info file
-        INFO_CHECKSUM_BEGIN(data.checksumActual);
+            // Load and parse the info file
+            INFO_CHECKSUM_BEGIN(data.checksumActual);
 
-        TRY_BEGIN()
-        {
-            iniLoad(read, infoLoadCallback, &data);
+            TRY_BEGIN()
+            {
+                iniLoad(read, infoLoadCallback, &data);
+            }
+            CATCH(CryptoError)
+            {
+                THROW_FMT(CryptoError, "%s\nHINT: is or was the repo encrypted?", errorMessage());
+            }
+            TRY_END();
+
+            INFO_CHECKSUM_END(data.checksumActual);
+
+            // Verify the checksum
+            const String *checksumActual = varStr(ioFilterResult(data.checksumActual));
+
+            if (data.checksumExpected == NULL)
+                THROW_FMT(ChecksumError, "invalid checksum, actual '%s' but no checksum found", strPtr(checksumActual));
+            else if (!strEq(data.checksumExpected, checksumActual))
+            {
+                THROW_FMT(
+                    ChecksumError, "invalid checksum, actual '%s' but expected '%s'", strPtr(checksumActual),
+                    strPtr(data.checksumExpected));
+            }
         }
-        CATCH(CryptoError)
-        {
-            THROW_FMT(CryptoError, "%s\nHINT: is or was the repo encrypted?", errorMessage());
-        }
-        TRY_END();
-
-        INFO_CHECKSUM_END(data.checksumActual);
-
-        // Verify the checksum
-        const String *checksumActual = varStr(ioFilterResult(data.checksumActual));
-
-        if (data.checksumExpected == NULL)
-            THROW_FMT(ChecksumError, "invalid checksum, actual '%s' but no checksum found", strPtr(checksumActual));
-        else if (!strEq(data.checksumExpected, checksumActual))
-        {
-            THROW_FMT(
-                ChecksumError, "invalid checksum, actual '%s' but expected '%s'", strPtr(checksumActual),
-                strPtr(data.checksumExpected));
-        }
-
-        infoMove(this, MEM_CONTEXT_OLD());
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
+    MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO, this);
 }
@@ -462,7 +452,7 @@ infoCipherPass(const Info *this)
 }
 
 /***********************************************************************************************************************************
-Load info file(s)
+Load info file(s) and throw error for each attempt if none are successful
 ***********************************************************************************************************************************/
 void
 infoLoad(InfoLoadCallback callbackFunction, void *callbackData)
@@ -475,78 +465,52 @@ infoLoad(InfoLoadCallback callbackFunction, void *callbackData)
     ASSERT(callbackFunction != NULL);
     ASSERT(callbackData != NULL);
 
-    unsigned int try = 0;
-    bool done = false;
-    bool loaded = false;
-    const ErrorType *loadErrorType = NULL;
-    String *loadErrorMessage = NULL;
-
-    do
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Attempt to load the file
-        TRY_BEGIN()
-        {
-            loaded = callbackFunction(callbackData, try);
-            done = true;
+        unsigned int try = 0;
+        bool done = false;
+        bool loaded = false;
+        const ErrorType *loadErrorType = NULL;
+        String *loadErrorMessage = NULL;
 
-            // There must be at least one attempt to the load file
-            ASSERT(done || try > 0);
-        }
-        CATCH_ANY()
+        do
         {
-            // Set error type if none has been set
-            if (loadErrorType == NULL)
+            // Attempt to load the file
+            TRY_BEGIN()
             {
-                loadErrorType = errorType();
-                loadErrorMessage = strNew("unable to load info file(s):");
+                loaded = callbackFunction(callbackData, try);
+                done = true;
+
+                // There must be at least one attempt to the load file
+                ASSERT(done || try > 0);
             }
-            // Else if the error type is different then set a generic type
-            else if (loadErrorType != errorType())
-                loadErrorType = &FileOpenError;
+            CATCH_ANY()
+            {
+                // Set error type if none has been set
+                if (loadErrorType == NULL)
+                {
+                    loadErrorType = errorType();
+                    loadErrorMessage = strNew("unable to load info file(s):");
+                }
+                // Else if the error type is different then set a generic type
+                else if (loadErrorType != errorType())
+                    loadErrorType = &FileOpenError;
 
-            // Append error
-            strCatFmt(loadErrorMessage, "\n%s: %s", errorTypeName(errorType()), errorMessage());
+                // Append error
+                strCatFmt(loadErrorMessage, "\n%s: %s", errorTypeName(errorType()), errorMessage());
 
-            // infoFree(this);
-            // this = infoNewInternal();
-            //
-            // // On error store the error and try to load the copy
-            // String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
-            // bool primaryMissing = errorType() == &FileMissingError;
-            // const ErrorType *primaryErrorType = errorType();
-            //
-            // // Notify callback of a reset
-            // callbackFunction(infoCallbackTypeReset, callbackData, NULL, NULL, NULL);
-            //
-            // TRY_BEGIN()
-            // {
-            //     infoLoad(this, storage, fileName, true, cipherType, cipherPass, callbackFunction, callbackData);
-            // }
-            // CATCH_ANY()
-            // {
-            //     // If both copies of the file have the same error then throw that error,
-            //     // else if one file is missing but the other is in error and it is not missing, throw that error
-            //     // else throw an open error
-            //     THROWP_FMT(
-            //         errorType() == primaryErrorType ? errorType() :
-            //             (errorType() == &FileMissingError ? primaryErrorType :
-            //             (primaryMissing ? errorType() : &FileOpenError)),
-            //         "unable to load info file '%s' or '%s" INFO_COPY_EXT "':\n%s\n%s: %s",
-            //         strPtr(storagePathNP(storage, fileName)), strPtr(storagePathNP(storage, fileName)),
-            //         strPtr(primaryError), errorTypeName(errorType()), errorMessage());
-            // }
-            // TRY_END();
-
-            // Try again
-            try++;
+                // Try again
+                try++;
+            }
+            TRY_END();
         }
-        TRY_END();
-    }
-    while (!done);
+        while (!done);
 
-    // Error when no file was loaded
-    if (!loaded)
-        THROWP(loadErrorType, strPtr(loadErrorMessage));
+        // Error when no file was loaded
+        if (!loaded)
+            THROWP(loadErrorType, strPtr(loadErrorMessage));
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

@@ -8,6 +8,7 @@ Archive Info Handler
 #include <string.h>
 #include <inttypes.h>
 
+#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/ini.h"
@@ -43,41 +44,39 @@ Internal constructor
 static InfoArchive *
 infoArchiveNewInternal(void)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_TEST_VOID();
 
-    InfoArchive *this = NULL;
+    InfoArchive *this = memNew(sizeof(InfoArchive));
+    this->memContext = memContextCurrent();
 
-    MEM_CONTEXT_NEW_BEGIN("InfoArchive")
-    {
-        // Create object
-        this = memNew(sizeof(InfoArchive));
-        this->memContext = MEM_CONTEXT_NEW();
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
 Create new object without loading it from a file
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, CipherType cipherType, const String *cipherPassSub)
+infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
     ASSERT(pgVersion > 0 && pgSystemId > 0);
 
-    InfoArchive *this = infoArchiveNewInternal();
+    InfoArchive *this = NULL;
 
-    // Initialize the pg data
-    this->infoPg = infoPgNew(cipherType, cipherPassSub);
-    infoArchivePgSet(this, pgVersion, pgSystemId);
+    MEM_CONTEXT_NEW_BEGIN("InfoArchive")
+    {
+        this = infoArchiveNewInternal();
+
+        // Initialize the pg data
+        this->infoPg = infoPgNew(infoPgArchive, cipherPassSub);
+        infoArchivePgSet(this, pgVersion, pgSystemId);
+    }
+    MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
@@ -86,29 +85,23 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, CipherType cipherTyp
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+infoArchiveNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(IO_READ, read);
     FUNCTION_LOG_END();
 
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT(read != NULL);
 
     InfoArchive *this = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    MEM_CONTEXT_NEW_BEGIN("InfoArchive")
     {
-        // Catch file missing error and add archive-specific hints before rethrowing
-        InfoPg *infoPg = NULL;
+        this = infoArchiveNewInternal();
 
         TRY_BEGIN()
         {
-            infoPg = infoPgNewLoad(storage, fileName, infoPgArchive, cipherType, cipherPass, NULL, NULL);
+            this->infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);
         }
         CATCH_ANY()
         {
@@ -122,14 +115,8 @@ infoArchiveNewLoad(const Storage *storage, const String *fileName, CipherType ci
                 errorMessage());
         }
         TRY_END();
-
-        // Store the archiveId for the current PG db-version db-id
-        this = infoArchiveNewInternal();
-        this->infoPg = infoPgMove(infoPg, this->memContext);
-
-        infoArchiveMove(this, MEM_CONTEXT_OLD());
     }
-    MEM_CONTEXT_TEMP_END();
+    MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
@@ -157,25 +144,19 @@ infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 Save to file
 ***********************************************************************************************************************************/
 void
-infoArchiveSave(
-    InfoArchive *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+infoArchiveSave(InfoArchive *this, IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(IO_WRITE, write);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT(write != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        infoPgSave(infoArchivePg(this), storage, fileName, infoPgArchive, cipherType, cipherPass, NULL, NULL);
+        infoPgSave(infoArchivePg(this), write, NULL, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -284,4 +265,114 @@ infoArchivePg(const InfoArchive *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->infoPg);
+}
+
+/***********************************************************************************************************************************
+Helper function to load archive info files
+***********************************************************************************************************************************/
+typedef struct InfoArchiveLoadFileData
+{
+    MemContext *memContext;                                         // Mem context
+    const Storage *storage;                                         // Storage to load from
+    const String *fileName;                                         // Base filename
+    CipherType cipherType;                                          // Cipher type
+    const String *cipherPass;                                       // Cipher passphrase
+    InfoArchive *infoArchive;                                       // Loaded infoArchive object
+} InfoArchiveLoadFileData;
+
+static bool
+infoArchiveLoadFileCallback(void *data, unsigned int try)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(UINT, try);
+    FUNCTION_LOG_END();
+
+    ASSERT(data != NULL);
+
+    InfoArchiveLoadFileData *loadData = (InfoArchiveLoadFileData *)data;
+    bool result = false;
+
+    if (try < 2)
+    {
+        // Construct filename based on try
+        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strPtr(loadData->fileName));
+
+        // Attempt to load the file
+        IoRead *read = storageReadIo(storageNewReadNP(loadData->storage, fileName));
+        cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, BUFSTR(loadData->cipherPass));
+
+        MEM_CONTEXT_BEGIN(loadData->memContext)
+        {
+            loadData->infoArchive = infoArchiveNewLoad(read);
+            result = true;
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+InfoArchive *
+infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+
+    InfoArchiveLoadFileData data =
+    {
+        .memContext = memContextCurrent(),
+        .storage = storage,
+        .fileName = fileName,
+        .cipherType = cipherType,
+        .cipherPass = cipherPass,
+    };
+
+    infoLoad(infoArchiveLoadFileCallback, &data);
+
+    FUNCTION_LOG_RETURN(INFO_ARCHIVE, data.infoArchive);
+}
+
+/***********************************************************************************************************************************
+Helper function to save archive info files
+***********************************************************************************************************************************/
+void
+infoArchiveSaveFile(
+    InfoArchive *infoArchive, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, infoArchive);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoArchive != NULL);
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Save the file
+        IoWrite *write = storageWriteIo(storageNewWriteNP(storage, fileName));
+        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, BUFSTR(cipherPass));
+        infoArchiveSave(infoArchive, write);
+
+        // Make a copy of the file
+        storageCopy(
+            storageNewReadNP(storage, fileName), storageNewWriteNP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }

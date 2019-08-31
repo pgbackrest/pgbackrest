@@ -460,3 +460,25 @@ cipherBlockNewVar(const VariantList *paramList)
         (CipherMode)varUIntForce(varLstGet(paramList, 0)), (CipherType)varUIntForce(varLstGet(paramList, 1)),
         BUFSTR(varStr(varLstGet(paramList, 2))), varLstGet(paramList, 3) == NULL ? NULL : varStr(varLstGet(paramList, 3)));
 }
+
+/***********************************************************************************************************************************
+Helper function to add a block cipher to an io object
+***********************************************************************************************************************************/
+IoFilterGroup *
+cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const Buffer *pass)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(ENUM, mode);
+        FUNCTION_LOG_PARAM(BUFFER, pass);
+    FUNCTION_LOG_END();
+
+    ASSERT(filterGroup != NULL);
+    ASSERT((type == cipherTypeNone && pass == NULL) || (type != cipherTypeNone && pass != NULL));
+
+    if (type != cipherTypeNone)
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(mode, type, pass, NULL));
+
+    FUNCTION_LOG_RETURN(IO_FILTER_GROUP, filterGroup);
+}

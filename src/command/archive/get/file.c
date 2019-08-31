@@ -50,7 +50,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
         PgControl controlInfo = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
 
         // Attempt to load the archive info file
-        InfoArchive *info = infoArchiveNewLoad(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
+        InfoArchive *info = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
 
         // Loop through the pg history in case the WAL we need is not in the most recent archive id
         String *archiveId = NULL;

@@ -13,7 +13,6 @@ Object type
 typedef struct Info Info;
 typedef struct InfoSave InfoSave;
 
-#include "common/crypto/common.h"
 #include "common/ini.h"
 #include "storage/storage.h"
 
@@ -48,13 +47,12 @@ typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *i
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Info *infoNew(CipherType cipherType, const String *cipherPassSub);
+Info *infoNew(const String *cipherPassSub);
 Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-Info *infoMove(Info *this, MemContext *parentNew);
 void infoSave(Info *this, IoWrite *write, InfoSaveCallback callbackFunction, void *callbackData);
 bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext);
 void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value);
@@ -65,9 +63,9 @@ Getters
 const String *infoCipherPass(const Info *this);
 
 /***********************************************************************************************************************************
-Destructor
+Helper functions
 ***********************************************************************************************************************************/
-void infoFree(Info *this);
+void infoLoad(InfoLoadCallback callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Macros for function logging
