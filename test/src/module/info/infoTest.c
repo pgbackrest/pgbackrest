@@ -8,6 +8,26 @@ Test Info Handler
 #include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
+Test load callbacks
+***********************************************************************************************************************************/
+typedef struct TestInfoLoad
+{
+    unsigned int errorTotal;
+    // bool errorSame;
+} TestInfoLoad;
+
+static bool
+testInfoLoadCallback(void *data, unsigned int try)
+{
+    TestInfoLoad *testInfoLoad = (TestInfoLoad *)data;
+
+    if (testInfoLoad->errorTotal == 1 && try == 0)
+        THROW(ChecksumError, "checksum error");
+
+    return true;
+}
+
+/***********************************************************************************************************************************
 Test save callbacks
 ***********************************************************************************************************************************/
 static void
@@ -196,6 +216,17 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoLoad()"))
     {
+        // One error
+        //--------------------------------------------------------------------------------------------------------------------------
+        TestInfoLoad testInfoLoad = {.errorTotal = 1};
+
+        infoLoad(testInfoLoadCallback, &testInfoLoad);
+
+        // Sucess
+        //--------------------------------------------------------------------------------------------------------------------------
+        testInfoLoad = (TestInfoLoad){0};
+
+        infoLoad(testInfoLoadCallback, &testInfoLoad);
         // Info *info = infoNew(cipherTypeNone, NULL);
         //
         // TEST_RESULT_VOID(

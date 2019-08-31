@@ -464,44 +464,87 @@ infoCipherPass(const Info *this)
 /***********************************************************************************************************************************
 Load info file(s)
 ***********************************************************************************************************************************/
-// Info *
-// infoLoad(CipherType cipherType, const String *cipherPass,
+void
+infoLoad(InfoLoadCallback callbackFunction, void *callbackData)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+    FUNCTION_LOG_END();
 
-            // // Attempt to load the primary file
+    ASSERT(callbackFunction != NULL);
+    ASSERT(callbackData != NULL);
+
+    unsigned int try = 0;
+    bool done = false;
+    const ErrorType *loadErrorType = NULL;
+    String *loadErrorMessage = NULL;
+
+    do
+    {
+        // Attempt to load the file
+        TRY_BEGIN()
+        {
+            done = callbackFunction(callbackData, try);
+
+            // There must be at least one attempt to the load file
+            ASSERT(done || try > 0);
+        }
+        CATCH_ANY()
+        {
+            // Set error type if none has been set
+            if (loadErrorType == NULL)
+            {
+                loadErrorType = errorType();
+                loadErrorMessage = strNew("unable to load info file(s):");
+            }
+            // Else if the error type is different then set a generic type
+            else if (loadErrorType != errorType())
+                loadErrorType = &FileOpenError;
+
+            // Append error
+            strCatFmt(loadErrorMessage, "\n%s: %s", errorTypeName(errorType()), errorMessage());
+
+            // infoFree(this);
+            // this = infoNewInternal();
+            //
+            // // On error store the error and try to load the copy
+            // String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
+            // bool primaryMissing = errorType() == &FileMissingError;
+            // const ErrorType *primaryErrorType = errorType();
+            //
+            // // Notify callback of a reset
+            // callbackFunction(infoCallbackTypeReset, callbackData, NULL, NULL, NULL);
+            //
             // TRY_BEGIN()
             // {
-            //     infoLoad(this, storage, fileName, false, cipherType, cipherPass, callbackFunction, callbackData);
+            //     infoLoad(this, storage, fileName, true, cipherType, cipherPass, callbackFunction, callbackData);
             // }
             // CATCH_ANY()
             // {
-            //     infoFree(this);
-            //     this = infoNewInternal();
-            //
-            //     // On error store the error and try to load the copy
-            //     String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
-            //     bool primaryMissing = errorType() == &FileMissingError;
-            //     const ErrorType *primaryErrorType = errorType();
-            //
-            //     // Notify callback of a reset
-            //     callbackFunction(infoCallbackTypeReset, callbackData, NULL, NULL, NULL);
-            //
-            //     TRY_BEGIN()
-            //     {
-            //         infoLoad(this, storage, fileName, true, cipherType, cipherPass, callbackFunction, callbackData);
-            //     }
-            //     CATCH_ANY()
-            //     {
-            //         // If both copies of the file have the same error then throw that error,
-            //         // else if one file is missing but the other is in error and it is not missing, throw that error
-            //         // else throw an open error
-            //         THROWP_FMT(
-            //             errorType() == primaryErrorType ? errorType() :
-            //                 (errorType() == &FileMissingError ? primaryErrorType :
-            //                 (primaryMissing ? errorType() : &FileOpenError)),
-            //             "unable to load info file '%s' or '%s" INFO_COPY_EXT "':\n%s\n%s: %s",
-            //             strPtr(storagePathNP(storage, fileName)), strPtr(storagePathNP(storage, fileName)),
-            //             strPtr(primaryError), errorTypeName(errorType()), errorMessage());
-            //     }
-            //     TRY_END();
+            //     // If both copies of the file have the same error then throw that error,
+            //     // else if one file is missing but the other is in error and it is not missing, throw that error
+            //     // else throw an open error
+            //     THROWP_FMT(
+            //         errorType() == primaryErrorType ? errorType() :
+            //             (errorType() == &FileMissingError ? primaryErrorType :
+            //             (primaryMissing ? errorType() : &FileOpenError)),
+            //         "unable to load info file '%s' or '%s" INFO_COPY_EXT "':\n%s\n%s: %s",
+            //         strPtr(storagePathNP(storage, fileName)), strPtr(storagePathNP(storage, fileName)),
+            //         strPtr(primaryError), errorTypeName(errorType()), errorMessage());
             // }
             // TRY_END();
+
+            // Try again
+            try++;
+        }
+        TRY_END();
+    }
+    while (!done);
+
+    // Error when no file was loaded
+    if (!done)
+        THROWP(loadErrorType, strPtr(loadErrorMessage));
+
+    FUNCTION_LOG_RETURN_VOID();
+}

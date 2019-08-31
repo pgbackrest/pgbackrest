@@ -41,6 +41,7 @@ typedef enum
 /***********************************************************************************************************************************
 Function types for loading and saving
 ***********************************************************************************************************************************/
+typedef bool InfoLoadCallback(void *data, unsigned int try);
 typedef void InfoLoadNewCallback(InfoCallbackType type, void *data, const String *section, const String *key, const String *value);
 typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
 
