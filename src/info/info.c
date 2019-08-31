@@ -497,9 +497,9 @@ infoLoad(const String *error, InfoLoadCallback callbackFunction, void *callbackD
                 // Else if the error type is different then set a generic type
                 else if (loadErrorType != errorType())
                 {
-                    if (loadErrorType == &FileMissingError && errorType() != &FileMissingError)
+                    if (loadErrorType == &FileMissingError)
                         loadErrorType = errorType();
-                    else if (loadErrorType != &FileMissingError && errorType() != &FileMissingError)
+                    else if (errorType() != &FileMissingError)
                         loadErrorType = &FileOpenError;
                 }
 

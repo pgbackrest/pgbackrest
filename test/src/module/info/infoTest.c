@@ -13,7 +13,7 @@ Test load callback
 ***********************************************************************************************************************************/
 typedef struct TestInfoLoad
 {
-    unsigned int errorTotal;
+    unsigned int test;
 } TestInfoLoad;
 
 static bool
@@ -21,7 +21,7 @@ testInfoLoadCallback(void *data, unsigned int try)
 {
     TestInfoLoad *testInfoLoad = (TestInfoLoad *)data;
 
-    if (testInfoLoad->errorTotal == 1)
+    if (testInfoLoad->test == 1)
     {
         if (try == 0)
             THROW(ChecksumError, "checksum error");
@@ -29,7 +29,7 @@ testInfoLoadCallback(void *data, unsigned int try)
             return false;
     }
 
-    if (testInfoLoad->errorTotal == 2)
+    if (testInfoLoad->test == 2)
     {
         if (try < 2)
             THROW(FormatError, "format error");
@@ -37,13 +37,15 @@ testInfoLoadCallback(void *data, unsigned int try)
             return false;
     }
 
-    if (testInfoLoad->errorTotal == 3)
+    if (testInfoLoad->test == 3)
     {
         if (try == 0)
-            THROW(FormatError, "format error");
+            THROW(FileMissingError, "file missing error");
         else if (try == 1)
             THROW(ChecksumError, "checksum error\nHINT: have you checked the thing?");
         else if (try == 2)
+            THROW(FormatError, "format error");
+        else if (try == 3)
             THROW(FileMissingError, "file missing error");
         else
             return false;
@@ -206,7 +208,7 @@ testRun(void)
     {
         // One error
         //--------------------------------------------------------------------------------------------------------------------------
-        TestInfoLoad testInfoLoad = {.errorTotal = 1};
+        TestInfoLoad testInfoLoad = {.test = 1};
 
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file"), testInfoLoadCallback, &testInfoLoad), ChecksumError,
@@ -215,7 +217,7 @@ testRun(void)
 
         // Two errors (same error)
         //--------------------------------------------------------------------------------------------------------------------------
-        testInfoLoad = (TestInfoLoad){.errorTotal = 2};
+        testInfoLoad = (TestInfoLoad){.test = 2};
 
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file(s)"), testInfoLoadCallback, &testInfoLoad), FormatError,
@@ -223,16 +225,17 @@ testRun(void)
                 "FormatError: format error\n"
                 "FormatError: format error");
 
-        // Three errors (mixed)
+        // Four errors (mixed)
         //--------------------------------------------------------------------------------------------------------------------------
-        testInfoLoad = (TestInfoLoad){.errorTotal = 3};
+        testInfoLoad = (TestInfoLoad){.test = 3};
 
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file(s)"), testInfoLoadCallback, &testInfoLoad), FileOpenError,
             "unable to load info file(s):\n"
-                "FormatError: format error\n"
+                "FileMissingError: file missing error\n"
                 "ChecksumError: checksum error\n"
                 "HINT: have you checked the thing?\n"
+                "FormatError: format error\n"
                 "FileMissingError: file missing error");
 
         // Success
