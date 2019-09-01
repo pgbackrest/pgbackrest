@@ -141,7 +141,6 @@ start-fast=y
 + supplemental file: /backup/db/[BACKUP-FULL-1]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -228,6 +227,9 @@ pg_data/pg_tblspc={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -323,12 +325,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-FULL-2]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -418,6 +423,9 @@ pg_data/pg_tblspc={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -614,12 +622,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-INCR-1]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -713,6 +724,9 @@ pg_tblspc/1/[TS_PATH-1]/16384={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -812,12 +826,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-INCR-2]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -922,6 +939,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
@@ -1020,12 +1040,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-DIFF-1]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1126,6 +1149,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
@@ -1224,12 +1250,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-DIFF-2]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1329,6 +1358,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -1449,12 +1481,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-INCR-3]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1551,6 +1586,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
@@ -1575,29 +1613,6 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
-
-stanza-create db - create required data for stanza (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online --force stanza-create
-------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [055]: backup information missing and repo is encrypted and info file(s) are missing, --force cannot be used
-
-+ supplemental file: /archive/db/archive.info
----------------------------------------------
-[backrest]
-backrest-checksum="[CHECKSUM]"
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[cipher]
-cipher-pass=[CIPHER-PASS-2]
-
-[db]
-db-id=1
-db-system-id=1000000000000000094
-db-version="9.4"
-
-[db:history]
-1={"db-id":1000000000000000094,"db-version":"9.4"}
 
 incr backup - update files (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
@@ -1673,12 +1688,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-INCR-4]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1774,6 +1792,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -1878,12 +1899,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-DIFF-3]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1979,6 +2003,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -2081,12 +2108,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-INCR-5]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2182,6 +2212,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -2288,12 +2321,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-DIFF-4]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2387,6 +2423,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -2488,12 +2527,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-FULL-3]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2587,6 +2629,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -3038,12 +3083,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-DIFF-5]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3139,6 +3187,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -3343,7 +3394,7 @@ info bogus stanza - bogus stanza (db-master host)
 diff backup - config file not validated on remote (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
@@ -3352,7 +3403,7 @@ P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: expire command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -3421,12 +3472,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-DIFF-6]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3523,6 +3577,9 @@ group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
@@ -3551,7 +3608,7 @@ db-version="9.4"
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the master
@@ -3561,7 +3618,7 @@ P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: expire command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -3629,12 +3686,15 @@ repo1-type=s3
 
 [global:backup]
 archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
 start-fast=y
 
 + supplemental file: /backup/db/[BACKUP-DIFF-7]/backup.manifest
 ---------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3730,6 +3790,9 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 group="[GROUP-1]"
 mode="0700"
 user="[USER-2]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------

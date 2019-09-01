@@ -30,6 +30,7 @@ struct ProtocolServer
     List *handlerList;
 };
 
+OBJECT_DEFINE_MOVE(PROTOCOL_SERVER);
 OBJECT_DEFINE_FREE(PROTOCOL_SERVER);
 
 /***********************************************************************************************************************************
@@ -214,25 +215,6 @@ protocolServerResponse(ProtocolServer *this, const Variant *output)
     ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Move the file object to a new context
-***********************************************************************************************************************************/
-ProtocolServer *
-protocolServerMove(ProtocolServer *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

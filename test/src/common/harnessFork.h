@@ -13,7 +13,7 @@ HARNESS_FORK_BEGIN()
     // The first parameter is the expected exit code.  If the child block does not have an explicit exit then it will automatically
     // exit on 0.
     //
-    // The second paramater specifies whether pipes should be setup between the parent and child processes.  These can be accessed
+    // The second parameter specifies whether pipes should be setup between the parent and child processes.  These can be accessed
     // with the HARNESS_FORK_*() macros;
     HARNESS_FORK_CHILD_BEGIN(0, true)
     {

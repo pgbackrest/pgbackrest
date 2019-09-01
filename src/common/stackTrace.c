@@ -330,7 +330,7 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
     {
         // If the function passed in was not at the top of the stack then some functions are missing
         if (stackIdx == stackSize - 1)
-            result += stackTraceFmt(buffer, bufferSize, result, "\n    ... function(s) ommitted ...");
+            result += stackTraceFmt(buffer, bufferSize, result, "\n    ... function(s) omitted ...");
 
         // Output the rest of the stack
         for (; stackIdx >= 0; stackIdx--)

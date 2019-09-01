@@ -33,10 +33,10 @@ static struct
 {
     MemContext *memContext;                                         // Mem context for protocol helper
 
-    unsigned int clientRemoteSize;                                 // Remote clients
+    unsigned int clientRemoteSize;                                  // Remote clients
     ProtocolHelperClient *clientRemote;
 
-    unsigned int clientLocalSize;                                  // Local clients
+    unsigned int clientLocalSize;                                   // Local clients
     ProtocolHelperClient *clientLocal;
 } protocolHelper;
 
@@ -66,6 +66,20 @@ repoIsLocal(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(!cfgOptionTest(cfgOptRepoHost));
+}
+
+/***********************************************************************************************************************************
+Error if the repository is not local
+***********************************************************************************************************************************/
+void
+repoIsLocalVerify(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (!repoIsLocal())
+        THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName(cfgCommand()));
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

@@ -261,7 +261,7 @@ sub run
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL . '/anything.tmp', 'IGNORE');
 
-            # Create pg_snaphots dir and file - only file will be ignored
+            # Create pg_snapshots dir and file - only file will be ignored
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS . '/anything.tmp', 'IGNORE');
 
@@ -297,6 +297,7 @@ sub run
             $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2');
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2/logfile', 'IGNORE');
 
+            executeTest('mkfifo ' . $oHostDbMaster->dbBasePath() . '/apipe');
         }
 
         # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.
@@ -364,7 +365,7 @@ sub run
         $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad',
                                               '../pg_config/postgresql.conf.link');
 
-        # Fail bacause two links point to the same place
+        # Fail because two links point to the same place
         $strFullBackup = $oHostBackup->backup(
             $strType, 'error on link to a link',
             {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
@@ -401,6 +402,11 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 4194304;
+
+        # Add pipe to exclusions
+        $oHostBackup->configUpdate(
+            {(CFGDEF_SECTION_GLOBAL . ':backup') =>
+                {cfgOptionName(CFGOPT_EXCLUDE) => ['postgresql.auto.conf', 'pg_log/', 'pg_log2', 'apipe']}});
 
         # Error on backup option to check logging
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1119,23 +1125,15 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
-        # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force. If backup.info is
-        # encrypted is cannot be deleted, so copy it to old instead.
+        # Delete the backup.info and make sure the backup fails.
         my $strBackupInfoFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO;
         my $strBackupInfoCopyFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT;
         my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
         my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
 
-        if ($bEncrypt)
-        {
+        # Save the backup.info and copy files so they can be restored later
             forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
-        }
-        else
-        {
-            forceStorageRemove(storageRepo(), $strBackupInfoFile);
-            forceStorageRemove(storageRepo(), $strBackupInfoCopyFile);
-        }
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT', '9a53d532e27785e681766c98516a5e93f096a501',
@@ -1152,17 +1150,9 @@ sub run
                 {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
         }
 
-        # Use force to create the stanza (this is expected to fail for encrypted repos)
-        $oHostBackup->stanzaCreate('create required data for stanza',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
-                iExpectedExitStatus => $bEncrypt ? ERROR_FILE_MISSING : undef});
-
-        # Copy encrypted backup info files back so testing can proceed
-        if ($bEncrypt)
-        {
-            forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
-            forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
-        }
+        # Copy backup info files back so testing can proceed
+        forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
+        forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
 
         # Perform the backup
         $strBackup =$oHostBackup->backup($strType, 'update files', {oExpectedManifest => \%oManifest});

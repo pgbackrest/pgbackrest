@@ -1125,7 +1125,7 @@ sub run
         $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTablespace, MANIFEST_SUBKEY_PATH, $self->{strDbPath} .
             "/tablespace/" . $strTablespaceName);
         $self->testResult(sub {$oManifest->repoPathGet($strTablespace)}, $strTablespace,
-            'repoPathGet() - tablespace - no tablepace-id nor subpath');
+            'repoPathGet() - tablespace - no tablespace-id nor subpath');
 
         # repoPathGet - fully qualified tablespace target
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1139,7 +1139,7 @@ sub run
         $self->testResult(sub {$oManifest->repoPathGet($strTablespace, BOGUS)}, $strTablespace . "/PG_" . PG_VERSION_94 . "_" .
             $self->dbCatalogVersion(PG_VERSION_94) . "/" . BOGUS, 'repoPathGet() - tablespace valid with subpath');
 
-        # Set the DB version to < 9.0 - there is no special sudirectory in earlier PG versions
+        # Set the DB version to < 9.0 - there is no special subdirectory in earlier PG versions
         $oManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84);
         $self->testResult(sub {$oManifest->repoPathGet($strTablespace, BOGUS)}, $strTablespace . "/" . BOGUS,
             'repoPathGet() - tablespace in 8.4 valid with subpath');
@@ -1530,7 +1530,7 @@ sub run
         $oManifestBase->{oStorage} = $oStorageTemp;
         $oManifestExpected->{oStorage} = $oStorageTemp;
 
-        # Add a bogus file - all traces to be removed after the manifest has been built to simulate an inital manifest and avoid
+        # Add a bogus file - all traces to be removed after the manifest has been built to simulate an initial manifest and avoid
         # missing files error
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . BOGUS,
             {strMode => MODE_0750, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');

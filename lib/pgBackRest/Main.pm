@@ -134,19 +134,9 @@ sub main
                 storageLocal(),
                 cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
 
-            # Process delete command
-            # ----------------------------------------------------------------------------------------------------------------------
-            if (cfgCommandTest(CFGCMD_STANZA_DELETE))
-            {
-                # Load module dynamically
-                require pgBackRest::Stanza;
-                pgBackRest::Stanza->import();
-
-                new pgBackRest::Stanza()->process();
-            }
             # Process restore command
             # ----------------------------------------------------------------------------------------------------------------------
-            elsif (cfgCommandTest(CFGCMD_RESTORE))
+            if (cfgCommandTest(CFGCMD_RESTORE))
             {
                 # Load module dynamically
                 require pgBackRest::Restore;
@@ -167,20 +157,9 @@ sub main
                         cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
                 }
 
-                # Process stanza-create and stanza-upgrade commands
-                # ------------------------------------------------------------------------------------------------------------------
-                if (cfgCommandTest(CFGCMD_STANZA_CREATE) || cfgCommandTest(CFGCMD_STANZA_UPGRADE))
-                {
-                    # Load module dynamically
-                    require pgBackRest::Stanza;
-                    pgBackRest::Stanza->import();
-
-                    $iResult = new pgBackRest::Stanza()->process();
-                }
-
                 # Process backup command
                 # ------------------------------------------------------------------------------------------------------------------
-                elsif (cfgCommandTest(CFGCMD_BACKUP))
+                if (cfgCommandTest(CFGCMD_BACKUP))
                 {
                     # Load module dynamically
                     require pgBackRest::Backup::Backup;
@@ -205,7 +184,7 @@ sub main
     # ------------------------------------------------------------------------------------------------------------------------------
     or do
     {
-        # Perl 5.10 seems to have a problem propogating errors up through a large call stack, so in the case that the error arrives
+        # Perl 5.10 seems to have a problem propagating errors up through a large call stack, so in the case that the error arrives
         # blank just use the last logged error instead.  Don't do this in all cases because newer Perls seem to work fine and there
         # are other errors that could be arriving in $EVAL_ERROR.
         my $oException = defined($EVAL_ERROR) && length($EVAL_ERROR) > 0 ? $EVAL_ERROR : logErrorLast();

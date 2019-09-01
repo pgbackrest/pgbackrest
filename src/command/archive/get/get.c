@@ -169,7 +169,7 @@ cmdArchiveGet(void)
                     // A move will be attempted but if the spool queue and the WAL path are on different file systems then a copy
                     // will be performed instead.
                     //
-                    // It looks scary that we are disabling syncs and atomicity (in case we need to copy intead of move) but this
+                    // It looks scary that we are disabling syncs and atomicity (in case we need to copy instead of move) but this
                     // is safe because if the system crashes Postgres will not try to reuse a restored WAL segment but will instead
                     // request it again using the restore_command. In the case of a move this hardly matters since path syncs are
                     // cheap but if a copy is required we could save a lot of writes.
@@ -204,7 +204,7 @@ cmdArchiveGet(void)
                     lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
                 {
                     // Get control info
-                    PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+                    PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
 
                     // Create the queue
                     storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);

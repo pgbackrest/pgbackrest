@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Archive Info Handler
 ***********************************************************************************************************************************/
+#include <stdio.h>
+
 #include "storage/storage.intern.h"
 
 #include "common/harnessInfo.h"
@@ -15,10 +17,14 @@ testRun(void)
     //--------------------------------------------------------------------------------------------------------------------------
     String *content = NULL;
     String *fileName = strNewFmt("%s/test.ini", testPath());
+    String *fileName2 = strNewFmt("%s/test2.ini", testPath());
     InfoArchive *info = NULL;
+    String *cipherPass = strNew("123xyz");
 
     // *****************************************************************************************************************************
-    if (testBegin("infoArchiveNewLoad() and infoArchiveFree()"))
+    if (testBegin(
+        "infoArchiveNewLoad(), infoArchiveNew(), infoArchiveNewInternal(), infoArchivePg(), infoArchiveCipherPass(), "
+        "infoArchiveSave(), infoArchiveFree()"))
     {
         TEST_ERROR_FMT(
             infoArchiveNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError,
@@ -48,10 +54,71 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put archive info to file");
 
-        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "    new archive info");
+        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "    load new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
-        TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher passphrase");
+        TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
+
+        TEST_RESULT_VOID(
+            infoArchiveSave(info, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "infoArchiveSave() - no cipher");
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
+            true, "    saved files are equal");
+
+        // Remove the file just written and recreate it from scratch
+        //--------------------------------------------------------------------------------------------------------------------------
+        storageRemoveP(storageLocalWrite(), fileName2, .errorOnMissing = true);
+
+        info = NULL;
+        TEST_ASSIGN(
+            info, infoArchiveNew(PG_VERSION_94, 6569239123849665679, cipherTypeNone, NULL), "infoArchiveNew() - no sub cipher");
+        TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
+        TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
+        TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
+        TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 1, "    history set");
+
+        TEST_RESULT_VOID(
+            infoArchiveSave(info, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "    save new");
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
+            true, "    saved files are equal");
+
+        // Remove both files and recreate from scratch with cipher
+        //--------------------------------------------------------------------------------------------------------------------------
+        storageRemoveP(storageLocalWrite(), fileName, .errorOnMissing = true);
+        storageRemoveP(storageLocalWrite(), fileName2, .errorOnMissing = true);
+
+        TEST_ASSIGN(
+            info, infoArchiveNew(PG_VERSION_10, 6569239123849665999, cipherTypeAes256Cbc,
+                strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+            "infoArchiveNew() - cipher sub");
+        TEST_RESULT_VOID(
+            infoArchiveSave(info, storageLocalWrite(), fileName, cipherTypeAes256Cbc, cipherPass), "    save new encrypted");
+
+        info = NULL;
+        TEST_ASSIGN(info, infoArchiveNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, cipherPass),
+            "    load encrypted archive info");
+        TEST_RESULT_STR(strPtr(infoArchiveId(info)), "10-1", "    archiveId set");
+        TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
+        TEST_RESULT_STR(strPtr(infoArchiveCipherPass(info)),
+            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "    cipher sub set");
+        TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 1, "    history set");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        InfoPgData infoPgData = {0};
+        TEST_RESULT_VOID(infoArchivePgSet(info, PG_VERSION_94, 6569239123849665679), "add another infoPg");
+        TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 2, "    history incremented");
+        TEST_ASSIGN(infoPgData, infoPgDataCurrent(info->infoPg), "    get current infoPgData");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
+        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    systemId set");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(info, infoArchiveNewInternal(), "infoArchiveNewInternal()");
+        TEST_RESULT_PTR(infoArchivePg(info), NULL, "    infoPg not set");
 
         // Free
         //--------------------------------------------------------------------------------------------------------------------------

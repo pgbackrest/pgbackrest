@@ -415,7 +415,7 @@ sub reconstruct
                 "\nHINT: Is or was the repo encrypted?", ERROR_CRYPTO);
         }
 
-        # If the file is encrypted, then the passprase from the info file is required, else getEncryptionKeySub returns undefined
+        # If the file is encrypted, then the passphrase from the info file is required, else getEncryptionKeySub returns undefined
         my $oFileIo = storageRepo()->openRead(
             $strArchiveFilePath,
             {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?

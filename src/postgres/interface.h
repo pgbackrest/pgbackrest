@@ -8,6 +8,7 @@ PostgreSQL Interface
 #include <sys/types.h>
 
 #include "common/type/string.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Defines for various Postgres paths and files
@@ -83,7 +84,7 @@ typedef struct PgWal
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-PgControl pgControlFromFile(const String *pgPath);
+PgControl pgControlFromFile(const Storage *storage, const String *pgPath);
 PgControl pgControlFromBuffer(const Buffer *controlFile);
 unsigned int pgVersionFromStr(const String *version);
 String *pgVersionToStr(unsigned int version);

@@ -29,6 +29,7 @@ struct Buffer
     MemContext *memContext;                                         // Mem context for dynamic buffers
 };
 
+OBJECT_DEFINE_MOVE(BUFFER);
 OBJECT_DEFINE_FREE(BUFFER);
 
 /***********************************************************************************************************************************
@@ -244,25 +245,6 @@ bufHex(const Buffer *this)
 }
 
 /***********************************************************************************************************************************
-Move buffer to a new mem context
-***********************************************************************************************************************************/
-Buffer *
-bufMove(Buffer *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
 Resize the buffer
 ***********************************************************************************************************************************/
 Buffer *
@@ -434,7 +416,7 @@ bufSize(const Buffer *this)
 Get/set the amount of the buffer actually used
 
 Tracks how much of the buffer has actually been used.  This will be updated automatically when possible but if the buffer is
-modified by using bufPtr() then the user is reponsible for updating the used size.
+modified by using bufPtr() then the user is responsible for updating the used size.
 ***********************************************************************************************************************************/
 size_t
 bufUsed(const Buffer *this)

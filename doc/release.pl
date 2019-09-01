@@ -208,7 +208,7 @@ eval
 
             $oStorageDoc->put("${strDocPath}/resource/git-history.cache", "[\n${strGitLog}\n]\n");
 
-            # Generate coverage summmary
+            # Generate coverage summary
             &log(INFO, "Generate Coverage Summary");
             executeTest(
                 "${strTestExe} --no-package --no-valgrind --no-optimize --vm-max=3 --coverage-summary",

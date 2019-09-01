@@ -746,7 +746,7 @@ sub log
                 # }
             }
 
-            # If in test mode and this is a test messsage then delay so the calling process has time to read the message
+            # If in test mode and this is a test message then delay so the calling process has time to read the message
             if ($bTest && $strLevel eq TEST && $fTestDelay > 0)
             {
                 usleep($fTestDelay * 1000000);

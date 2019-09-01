@@ -8,6 +8,7 @@ Storage Helper
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "config/define.h"
 #include "config/config.h"
 #include "protocol/helper.h"
 #include "storage/cifs/storage.h"
@@ -34,8 +35,8 @@ static struct
 
     Storage *storageLocal;                                          // Local read-only storage
     Storage *storageLocalWrite;                                     // Local write storage
-    Storage *storagePg;                                             // PostgreSQL read-only storage
-    Storage *storagePgWrite;                                        // PostgreSQL write storage
+    Storage **storagePg;                                            // PostgreSQL read-only storage
+    Storage **storagePgWrite;                                       // PostgreSQL write storage
     Storage *storageRepo;                                           // Repository read-only storage
     Storage *storageRepoWrite;                                      // Repository write storage
     Storage *storageSpool;                                          // Spool read-only storage
@@ -139,19 +140,17 @@ storageLocalWrite(void)
     FUNCTION_TEST_RETURN(storageHelper.storageLocalWrite);
 }
 /***********************************************************************************************************************************
-Get the pg storage
+Get pg storage for the specified host id
 ***********************************************************************************************************************************/
 static Storage *
-storagePgGet(bool write)
+storagePgGet(unsigned int hostId, bool write)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, hostId);
         FUNCTION_TEST_PARAM(BOOL, write);
     FUNCTION_TEST_END();
 
     Storage *result = NULL;
-
-    // Determine which host to use
-    unsigned int hostId = cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1;
 
     // Use remote storage
     if (!pgIsLocal(hostId))
@@ -171,47 +170,77 @@ storagePgGet(bool write)
 }
 
 /***********************************************************************************************************************************
-Get ready-only PostgreSQL storage
+Get ready-only PostgreSQL storage for a specific host id
+***********************************************************************************************************************************/
+const Storage *
+storagePgId(unsigned int hostId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, hostId);
+    FUNCTION_TEST_END();
+
+    if (storageHelper.storagePg == NULL || storageHelper.storagePg[hostId - 1] == NULL)
+    {
+        storageHelperInit();
+
+        MEM_CONTEXT_BEGIN(storageHelper.memContext)
+        {
+            if (storageHelper.storagePg == NULL)
+                storageHelper.storagePg = memNew(sizeof(Storage *) * cfgDefOptionIndexTotal(cfgDefOptPgPath));
+
+            storageHelper.storagePg[hostId - 1] = storagePgGet(hostId, false);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN(storageHelper.storagePg[hostId - 1]);
+}
+
+/***********************************************************************************************************************************
+Get ready-only PostgreSQL storage for the host-id or the default of 1
 ***********************************************************************************************************************************/
 const Storage *
 storagePg(void)
 {
     FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(storagePgId(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1));
+}
 
-    if (storageHelper.storagePg == NULL)
+/***********************************************************************************************************************************
+Get write PostgreSQL storage for a specific host id
+***********************************************************************************************************************************/
+const Storage *
+storagePgIdWrite(unsigned int hostId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, hostId);
+    FUNCTION_TEST_END();
+
+    if (storageHelper.storagePgWrite == NULL || storageHelper.storagePgWrite[hostId - 1] == NULL)
     {
         storageHelperInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storagePg = storagePgGet(false);
+            if (storageHelper.storagePgWrite == NULL)
+                storageHelper.storagePgWrite = memNew(sizeof(Storage *) * cfgDefOptionIndexTotal(cfgDefOptPgPath));
+
+            storageHelper.storagePgWrite[hostId - 1] = storagePgGet(hostId, true);
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePg);
+    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite[hostId - 1]);
 }
 
 /***********************************************************************************************************************************
-Get write PostgreSQL storage
+Get write PostgreSQL storage for the host-id or the default of 1
 ***********************************************************************************************************************************/
 const Storage *
 storagePgWrite(void)
 {
     FUNCTION_TEST_VOID();
-
-    if (storageHelper.storagePgWrite == NULL)
-    {
-        storageHelperInit();
-
-        MEM_CONTEXT_BEGIN(storageHelper.memContext)
-        {
-            storageHelper.storagePgWrite = storagePgGet(true);
-        }
-        MEM_CONTEXT_END();
-    }
-
-    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite);
+    FUNCTION_TEST_RETURN(storagePgIdWrite(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1));
 }
 
 /***********************************************************************************************************************************
@@ -251,7 +280,7 @@ storageRepoPathExpression(const String *expression, const String *path)
 
     if (strEqZ(expression, STORAGE_REPO_ARCHIVE))
     {
-        // Contruct the base path
+        // Construct the base path
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strPtr(storageHelper.stanza));
         else
@@ -271,7 +300,7 @@ storageRepoPathExpression(const String *expression, const String *path)
     }
     else if (strEqZ(expression, STORAGE_REPO_BACKUP))
     {
-        // Contruct the base path
+        // Construct the base path
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(storageHelper.stanza));
         else

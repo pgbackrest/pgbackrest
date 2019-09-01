@@ -385,7 +385,7 @@ sub cfgCommandWrite
             my $oValue;
             my $bMulti = false;
 
-            # If this is a hash then it will break up into multple command-line options
+            # If this is a hash then it will break up into multiple command-line options
             if (ref($oOption{$strOption}{value}) eq 'HASH')
             {
                 $oValue = $oOption{$strOption}{value};

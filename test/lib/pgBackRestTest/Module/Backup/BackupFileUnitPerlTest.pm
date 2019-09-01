@@ -394,7 +394,7 @@ sub run
             false, "    checksum not set since copy size 0");
 
         #---------------------------------------------------------------------------------------------------------------------------
-        # Checkum page exception
+        # Checksum page exception
         $iResultCopyResult = BACKUP_FILE_COPY;
 
         $self->testException(sub {backupManifestUpdate(

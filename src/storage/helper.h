@@ -35,7 +35,9 @@ Functions
 const Storage *storageLocal(void);
 const Storage *storageLocalWrite(void);
 const Storage *storagePg(void);
+const Storage *storagePgId(unsigned int hostId);
 const Storage *storagePgWrite(void);
+const Storage *storagePgIdWrite(unsigned int hostId);
 const Storage *storageRepo(void);
 const Storage *storageRepoWrite(void);
 const Storage *storageSpool(void);

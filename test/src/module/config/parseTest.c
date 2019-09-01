@@ -217,7 +217,7 @@ testRun(void)
             "recovery-option=c=d\n",
             "config default and doesn't exist, config-include-path passed read");
 
-        // config and config-include-path are "default" with files existing. Config file exists in both currrent default and old
+        // config and config-include-path are "default" with files existing. Config file exists in both current default and old
         // default location - old location ignored.
         //--------------------------------------------------------------------------------------------------------------------------
         parseOptionList[cfgOptConfig].found = false;
@@ -330,7 +330,7 @@ testRun(void)
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
-            "config new default exists with files, config-include-path passed, defualt config and config-include-path read");
+            "config new default exists with files, config-include-path passed, default config and config-include-path read");
 
         // config and config-include-path are "default".
         //--------------------------------------------------------------------------------------------------------------------------

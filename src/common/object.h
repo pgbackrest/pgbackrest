@@ -35,6 +35,30 @@ Create a local "this" variable of the correct type from a THIS_VOID parameter
 #define THIS(type)                                                  type *this = thisVoid
 
 /***********************************************************************************************************************************
+Define a function used by the caller to move an object from one context to another
+
+The object type is expected to have a memmber named "memContext" and the object must allocate *all* memory in that context.
+
+If "this" is NULL then no action is taken.
+***********************************************************************************************************************************/
+#define OBJECT_DEFINE_MOVE(objectMacro)                                                                                            \
+    objectMacro##_TYPE *                                                                                                           \
+    GLUE(objectMacro##_PREFIX, Move)(objectMacro##_TYPE *this, MemContext *parentNew)                                              \
+    {                                                                                                                              \
+        FUNCTION_TEST_BEGIN();                                                                                                     \
+            FUNCTION_TEST_PARAM(objectMacro, this);                                                                                \
+            FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);                                                                           \
+        FUNCTION_TEST_END();                                                                                                       \
+                                                                                                                                   \
+        ASSERT(parentNew != NULL);                                                                                                 \
+                                                                                                                                   \
+        if (this != NULL)                                                                                                          \
+            memContextMove(this->memContext, parentNew);                                                                           \
+                                                                                                                                   \
+        FUNCTION_TEST_RETURN(this);                                                                                                \
+    }
+
+/***********************************************************************************************************************************
 Free resource associated with an object that was not allocated by a mem context
 
 Create a callback function intended to be use with memContextCallbackSet() that frees a resource that was allocated by, e.g., a

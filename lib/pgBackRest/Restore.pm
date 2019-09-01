@@ -554,7 +554,7 @@ sub clean
                     next;
                 }
 
-                # The presense of any other file will cause an error (unless --force or --delta specified)
+                # The presence of any other file will cause an error (unless --force or --delta specified)
                 if (!$bDelta)
                 {
                     confess &log(ERROR, "cannot restore to path '${$self->{oTargetPath}}{$strTarget}' that contains files - " .

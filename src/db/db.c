@@ -28,6 +28,7 @@ struct Db
     const String *pgDataPath;                                       // Data directory reported by the database
 };
 
+OBJECT_DEFINE_MOVE(DB);
 OBJECT_DEFINE_FREE(DB);
 
 /***********************************************************************************************************************************
@@ -283,22 +284,33 @@ dbWalSwitch(Db *this)
 }
 
 /***********************************************************************************************************************************
-Move the object to a new context
+Get pg data path loaded from the data_directory GUC
 ***********************************************************************************************************************************/
-Db *
-dbMove(Db *this, MemContext *parentNew)
+const String *
+dbPgDataPath(const Db *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(DB, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
     FUNCTION_TEST_END();
 
-    ASSERT(parentNew != NULL);
+    ASSERT(this != NULL);
 
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
+    FUNCTION_TEST_RETURN(this->pgDataPath);
+}
 
-    FUNCTION_TEST_RETURN(this);
+/***********************************************************************************************************************************
+Get pg version loaded from the server_version_num GUC
+***********************************************************************************************************************************/
+unsigned int
+dbPgVersion(const Db *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->pgVersion);
 }
 
 /***********************************************************************************************************************************

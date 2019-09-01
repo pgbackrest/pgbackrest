@@ -143,7 +143,7 @@ storagePosixInfo(THIS_VOID, const String *file, bool followLink)
             result.linkDestination = strNewN(linkDestination, (size_t)linkDestinationSize);
         }
         else
-            THROW_FMT(FileInfoError, "invalid type for '%s'", strPtr(file));
+            result.type = storageTypeSpecial;
 
         result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
     }
@@ -182,8 +182,6 @@ storagePosixInfoListEntry(
             storageInfo.name = name;
             callback(callbackData, &storageInfo);
         }
-
-        strFree(pathInfo);
     }
 
     FUNCTION_TEST_RETURN_VOID();

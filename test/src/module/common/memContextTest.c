@@ -294,7 +294,7 @@ testRun(void)
 
         TEST_RESULT_STR(memContextName(memContextCurrent()), "TOP", "context is now top");
 
-        // Reset temp mem context after a single interation
+        // Reset temp mem context after a single interaction
         // -------------------------------------------------------------------------------------------------------------------------
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {

@@ -14,6 +14,7 @@ typedef enum
     storageTypeFile,
     storageTypePath,
     storageTypeLink,
+    storageTypeSpecial,
 } StorageType;
 
 /***********************************************************************************************************************************

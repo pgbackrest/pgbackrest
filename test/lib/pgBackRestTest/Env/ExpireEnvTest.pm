@@ -19,10 +19,10 @@ use pgBackRest::Backup::Info;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
-use pgBackRest::Stanza;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
@@ -97,40 +97,56 @@ sub stanzaSet
 
     # Assign variables
     my $oStanza = {};
+    my $oArchiveInfo = {};
+    my $oBackupInfo = {};
+    my $bEncrypted = defined($self->{oStorageRepo}->cipherType());
+    my $iArchiveDbId = 1;
+    my $iBackupDbId = 1;
 
-    my $oStanzaCreate = new pgBackRest::Stanza();
-
-    # If we're not upgrading, then create the stanza
+    # If we're not upgrading, then create the info files
     if (!$bStanzaUpgrade)
     {
-        $oStanzaCreate->stanzaCreate();
+        $oArchiveInfo =
+            new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE), false,
+            {bIgnoreMissing => true, strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_ARCHIVE : undef});
+        $oBackupInfo =
+            new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP), false, false,
+            {bIgnoreMissing => true, strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_MANIFEST : undef});
+    }
+    # Else get the info data from disk
+    else
+    {
+        $oArchiveInfo =
+            new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE),
+            {strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_ARCHIVE : undef});
+        $oBackupInfo =
+            new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP),
+            {strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_MANIFEST : undef});
+    }
+
+    my ($oDb) = dbObjectGet();
+    if (cfgOption(CFGOPT_ONLINE))
+    {
+        # If the pg-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
+        $oDb->configValidate();
     }
 
     # Get the database info for the stanza
+    (my $strVersion, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId}) = $oDb->info();
     $$oStanza{strDbVersion} = $strDbVersion;
-    $$oStanza{ullDbSysId} = $oStanzaCreate->{oDb}{ullDbSysId};
-    $$oStanza{iCatalogVersion} = $oStanzaCreate->{oDb}{iCatalogVersion};
-    $$oStanza{iControlVersion} = $oStanzaCreate->{oDb}{iControlVersion};
-
-    my $bEncrypted = defined($self->{oStorageRepo}->cipherType());
-
-    my $oArchiveInfo =
-        new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE),
-        {strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_ARCHIVE : undef});
-    my $oBackupInfo =
-        new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP),
-        {strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_MANIFEST : undef});
 
     if ($bStanzaUpgrade)
     {
-        # Upgrade the stanza
-        $oArchiveInfo->dbSectionSet($$oStanza{strDbVersion}, $$oStanza{ullDbSysId}, $oArchiveInfo->dbHistoryIdGet() + 1);
-        $oArchiveInfo->save();
-
-        $oBackupInfo->dbSectionSet($$oStanza{strDbVersion}, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion},
-            $$oStanza{ullDbSysId}, $oBackupInfo->dbHistoryIdGet() + 1);
-        $oBackupInfo->save();
+        $iArchiveDbId = $oArchiveInfo->dbHistoryIdGet() + 1;
+        $iBackupDbId = $oBackupInfo->dbHistoryIdGet() + 1;
     }
+
+    $oArchiveInfo->dbSectionSet($$oStanza{strDbVersion}, $$oStanza{ullDbSysId}, $iArchiveDbId);
+    $oArchiveInfo->save();
+
+    $oBackupInfo->dbSectionSet($$oStanza{strDbVersion}, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion},
+        $$oStanza{ullDbSysId}, $iBackupDbId);
+    $oBackupInfo->save();
 
     # Get the archive and directory paths for the stanza
     $$oStanza{strArchiveClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE) . '/' . ($oArchiveInfo->archiveId());
@@ -175,6 +191,15 @@ sub stanzaCreate
     # Generate pg_control for stanza-create
     $self->controlGenerate($strDbPath, $strDbVersion);
     executeTest('sudo chmod 600 ' . $strDbPath . '/' . DB_FILE_PGCONTROL);
+
+    # Create the stanza repo paths if they don't exist
+    if (!cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3))
+    {
+        storageTest()->pathCreate(
+            cfgOption(CFGOPT_REPO_PATH) . "/archive/$strStanza", {bIgnoreExists => true, bCreateParent => true});
+        storageTest()->pathCreate(
+            cfgOption(CFGOPT_REPO_PATH) . "/backup/$strStanza", {bIgnoreExists => true, bCreateParent => true});
+    }
 
     # Create the stanza and set the local stanza object
     $self->stanzaSet($strStanza, $strDbVersion, false);
