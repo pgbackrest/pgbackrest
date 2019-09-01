@@ -106,7 +106,7 @@ infoBackupNew(
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 static void
-infoPgLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
+infoBackupLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
@@ -184,7 +184,7 @@ infoBackupNewLoad(IoRead *read)
     MEM_CONTEXT_NEW_BEGIN("InfoBackup")
     {
         this = infoBackupNewInternal();
-        this->infoPg = infoPgNewLoad(read, infoPgBackup, infoPgLoadCallback, this);
+        this->infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -254,7 +254,7 @@ infoBackupSaveCallback(void *callbackData, const String *sectionNext, InfoSave *
         }
     }
 
-    FUNCTION_TEST_RETURN_VOID()
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 void
@@ -494,8 +494,8 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
         TRY_BEGIN()
         {
             infoLoad(
-                strNewFmt("unable to load info file '%s' or '%s.copy'", fileNamePath, fileNamePath), infoBackupLoadFileCallback,
-                &data);
+                strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
+                infoBackupLoadFileCallback, &data);
         }
         CATCH_ANY()
         {
