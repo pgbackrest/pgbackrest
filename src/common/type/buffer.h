@@ -108,11 +108,15 @@ By convention all buffer constant identifiers are appended with _BUF.
 /***********************************************************************************************************************************
 Constant buffers that are generally useful
 ***********************************************************************************************************************************/
+BUFFER_DECLARE(BRACEL_BUF);
+BUFFER_DECLARE(BRACER_BUF);
 BUFFER_DECLARE(BRACKETL_BUF);
 BUFFER_DECLARE(BRACKETR_BUF);
+BUFFER_DECLARE(COMMA_BUF);
 BUFFER_DECLARE(CR_BUF);
 BUFFER_DECLARE(EQ_BUF);
 BUFFER_DECLARE(LF_BUF);
+BUFFER_DECLARE(QUOTED_BUF);
 
 /***********************************************************************************************************************************
 Macros for function logging

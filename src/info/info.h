@@ -11,8 +11,8 @@ Object type
 #define INFO_PREFIX                                                 info
 
 typedef struct Info Info;
+typedef struct InfoSave InfoSave;
 
-#include "common/crypto/common.h"
 #include "common/ini.h"
 #include "storage/storage.h"
 
@@ -27,28 +27,34 @@ Constants
     STRING_DECLARE(INFO_KEY_FORMAT_STR);
 
 /***********************************************************************************************************************************
+Function types for loading and saving
+***********************************************************************************************************************************/
+typedef bool InfoLoadCallback(void *data, unsigned int try);
+typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, const String *value);
+typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Info *infoNew(CipherType cipherType, const String *cipherPassSub);
-Info *infoNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass, Ini **ini);
+Info *infoNew(const String *cipherPassSub);
+Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void infoSave(
-    Info *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+void infoSave(Info *this, IoWrite *write, InfoSaveCallback callbackFunction, void *callbackData);
+bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext);
+void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
 const String *infoCipherPass(const Info *this);
-String *infoHash(const Ini *ini);
-Ini *infoIni(const Info *this);
 
 /***********************************************************************************************************************************
-Destructor
+Helper functions
 ***********************************************************************************************************************************/
-void infoFree(Info *this);
+void infoLoad(const String *error, InfoLoadCallback callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -57,5 +63,10 @@ Macros for function logging
     Info *
 #define FUNCTION_LOG_INFO_FORMAT(value, buffer, bufferSize)                                                                        \
     objToLog(value, "Info", buffer, bufferSize)
+
+#define FUNCTION_LOG_INFO_SAVE_TYPE                                                                                                \
+    InfoSave *
+#define FUNCTION_LOG_INFO_SAVE_FORMAT(value, buffer, bufferSize)                                                                   \
+    objToLog(value, "InfoSave", buffer, bufferSize)
 
 #endif

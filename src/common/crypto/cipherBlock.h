@@ -4,7 +4,7 @@ Block Cipher Header
 #ifndef COMMON_CRYPTO_CIPHERBLOCK_H
 #define COMMON_CRYPTO_CIPHERBLOCK_H
 
-#include "common/io/filter/filter.h"
+#include "common/io/filter/group.h"
 #include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
@@ -18,5 +18,10 @@ Constructor
 ***********************************************************************************************************************************/
 IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName);
 IoFilter *cipherBlockNewVar(const VariantList *paramList);
+
+/***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
+IoFilterGroup *cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass);
 
 #endif

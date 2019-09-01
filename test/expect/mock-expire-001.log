@@ -307,7 +307,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -324,6 +323,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -911,7 +913,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -927,6 +928,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1274,7 +1278,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1291,6 +1294,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1928,7 +1934,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1946,6 +1951,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2047,7 +2055,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2064,6 +2071,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2156,7 +2166,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2174,6 +2183,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2299,7 +2311,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2316,6 +2327,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2434,7 +2448,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2454,6 +2467,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2589,7 +2605,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2611,6 +2626,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2756,7 +2774,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2773,6 +2790,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2925,7 +2945,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2945,6 +2964,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -3013,7 +3035,6 @@ db-version="9.2"
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3033,6 +3054,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -3110,7 +3134,6 @@ P00   INFO: expire command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3130,6 +3153,9 @@ db-version="9.2"
 
 [db:history]
 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------

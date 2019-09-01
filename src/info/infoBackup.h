@@ -61,9 +61,8 @@ Constructors
 ***********************************************************************************************************************************/
 InfoBackup *infoBackupNew(
     unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgControlVersion, const uint32_t pgCatalogVersion,
-    CipherType cipherType, const String *cipherPassSub);
-InfoBackup *infoBackupNewLoad(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+    const String *cipherPassSub);
+InfoBackup *infoBackupNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
 Functions
@@ -72,8 +71,7 @@ Functions
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 InfoBackup *infoBackupPgSet(
     InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion);
-void infoBackupSave(
-    InfoBackup *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+void infoBackupSave(InfoBackup *this, IoWrite *write);
 
 /***********************************************************************************************************************************
 infoBackupDataLabelList - get a list of current backup labels
@@ -92,6 +90,14 @@ const String *infoBackupCipherPass(const InfoBackup *this);
 Destructor
 ***********************************************************************************************************************************/
 void infoBackupFree(InfoBackup *this);
+
+/***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
+InfoBackup *infoBackupLoadFile(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+void infoBackupSaveFile(
+    InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging

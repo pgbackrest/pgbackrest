@@ -285,6 +285,18 @@ testRun(void)
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "unable to flush");
 
         ioFilterFree(blockDecryptFilter);
+
+        // Helper function
+        // -------------------------------------------------------------------------------------------------------------------------
+        IoFilterGroup *filterGroup = ioFilterGroupNew();
+
+        TEST_RESULT_PTR(
+            cipherBlockFilterGroupAdd(filterGroup, cipherTypeNone, cipherModeEncrypt, NULL), filterGroup, "   no filter add");
+        TEST_RESULT_UINT(ioFilterGroupSize(filterGroup), 0, "    check no filter add");
+
+        TEST_RESULT_VOID(
+            cipherBlockFilterGroupAdd(filterGroup, cipherTypeAes256Cbc, cipherModeEncrypt, STRDEF("X")), "   filter add");
+        TEST_RESULT_UINT(ioFilterGroupSize(filterGroup), 1, "    check filter add");
     }
 
     // *****************************************************************************************************************************
