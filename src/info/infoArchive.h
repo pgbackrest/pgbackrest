@@ -39,7 +39,6 @@ Functions
 ***********************************************************************************************************************************/
 const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
-InfoArchive *infoArchiveMove(InfoArchive *this, MemContext *parentNew);
 InfoArchive *infoArchivePgSet(
     InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 void infoArchiveSave(InfoArchive *this, IoWrite *write);
