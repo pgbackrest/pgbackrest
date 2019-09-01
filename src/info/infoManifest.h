@@ -68,16 +68,16 @@ typedef struct InfoManifestData
 
     bool backupOptionArchiveCheck;                                  // Will WAL segments be checked at the end of the backup?
     bool backupOptionArchiveCopy;                                   // Will WAL segments be copied to the backup?
-    bool backupOptionStandby;                                       // Will the backup be performed from a standby?
-    size_t backupOptionBufferSize;                                  // Buffer size used for file/protocol operations
-    bool backupOptionChecksumPage;                                  // Will page checksums be verified?
+    const Variant *backupOptionStandby;                             // Will the backup be performed from a standby?
+    const Variant *backupOptionBufferSize;                          // Buffer size used for file/protocol operations
+    const Variant *backupOptionChecksumPage;                        // Will page checksums be verified?
     bool backupOptionCompress;                                      // Will compression be used for backup?
-    unsigned int backupOptionCompressLevel;                         // Level to use for compression
-    unsigned int backupOptionCompressLevelNetwork;                  // Level to use for network compression
-    bool backupOptionDelta;                                         // Will a checksum delta be performed?
+    const Variant *backupOptionCompressLevel;                       // Level to use for compression
+    const Variant *backupOptionCompressLevelNetwork;                // Level to use for network compression
+    const Variant *backupOptionDelta;                               // Will a checksum delta be performed?
     bool backupOptionHardLink;                                      // Will hardlinks be created in the backup?
     bool backupOptionOnline;                                        // Will an online backup be performed?
-    unsigned int backupOptionProcessMax;                            // How many processes will be used for backup?
+    const Variant *backupOptionProcessMax;                          // How many processes will be used for backup?
 } InfoManifestData;
 
 /***********************************************************************************************************************************
@@ -116,7 +116,7 @@ File type
 typedef struct InfoManifestFile
 {
     const String *name;                                             // File name
-    bool master:1;                                                  // Should this file be copied from master?
+    bool primary:1;                                                 // Should this file be copied from the primary?
     bool checksumPage:1;                                            // Does this file have page checksums?
     mode_t mode;                                                    // File mode
     char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
