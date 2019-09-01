@@ -5,6 +5,7 @@ Manifest Info Handler
 
 #include <string.h>
 
+#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/type/json.h"
@@ -205,21 +206,280 @@ infoManifestOwnerCache(InfoManifest *this, const Variant *owner)
 }
 
 /***********************************************************************************************************************************
-Load from file
+Load manifest from IO
 ***********************************************************************************************************************************/
+static void
+infoManifestLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(callbackData != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
+
+    // // Load configuration
+    // // -------------------------------------------------------------------------------------------------------------------------
+    // this->data.backupLabel = jsonToStr(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LABEL_STR));
+    // this->data.backupTimestampCopyStart = (time_t)jsonToUInt64(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR));
+    // this->data.backupTimestampStart = (time_t)jsonToUInt64(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR));
+    // this->data.backupTimestampStop = (time_t)jsonToUInt64(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR));
+    // this->data.backupType = backupType(
+    //     jsonToStr(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TYPE_STR)));
+    //
+    // this->data.pgId = jsonToUInt(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_ID_STR));
+    // this->data.pgVersion = pgVersionFromStr(
+    //     jsonToStr(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_VERSION_STR)));
+    // this->data.pgSystemId = jsonToUInt64(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_SYSTEM_ID_STR));
+    // this->data.pgControlVersion = jsonToUInt(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CONTROL_VERSION_STR));
+    // this->data.pgCatalogVersion = jsonToUInt(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR));
+    //
+    // this->data.backupOptionArchiveCheck = jsonToBool(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR));
+    // this->data.backupOptionArchiveCopy = jsonToBool(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR));
+    // this->data.backupOptionStandby = jsonToBool(
+    //     iniGetDefault(
+    //         iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR, FALSE_STR));
+    // this->data.backupOptionBufferSize = (size_t)jsonToUInt64(
+    //     iniGetDefault(
+    //         iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE_STR, STRDEF("0")));
+    // this->data.backupOptionChecksumPage = jsonToBool(
+    //     iniGetDefault(
+    //         iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR, FALSE_STR));
+    // this->data.backupOptionCompress = jsonToBool(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_STR));
+    // this->data.backupOptionCompressLevel = jsonToUInt(
+    //     iniGetDefault(
+    //         iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR, STRDEF("6")));
+    // this->data.backupOptionCompressLevelNetwork = jsonToUInt(
+    //     iniGetDefault(
+    //         iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
+    //         STRDEF("3")));
+    // this->data.backupOptionDelta = jsonToBool(
+    //     iniGetDefault(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_DELTA_STR, FALSE_STR));
+    // this->data.backupOptionHardLink = jsonToBool(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_HARDLINK_STR));
+    // this->data.backupOptionOnline = jsonToBool(
+    //     iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ONLINE_STR));
+    // this->data.backupOptionProcessMax = jsonToUInt(
+    //     iniGetDefault(
+    //         iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_PROCESS_MAX_STR, STRDEF("1")));
+    //
+    // // Load targets
+    // // -------------------------------------------------------------------------------------------------------------------------
+    // bool linkPresent = false;
+    //
+    // MEM_CONTEXT_TEMP_BEGIN()
+    // {
+    //     // Load target list
+    //     StringList *targetKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR);
+    //
+    //     MEM_CONTEXT_TEMP_RESET_BEGIN()
+    //     {
+    //         for (unsigned int targetKeyIdx = 0; targetKeyIdx < strLstSize(targetKeyList); targetKeyIdx++)
+    //         {
+    //             const String *targetName = strLstGet(targetKeyList, targetKeyIdx);
+    //             KeyValue *targetData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR, targetName)));
+    //             const String *targetType = varStr(kvGet(targetData, INFO_MANIFEST_KEY_TYPE_VAR));
+    //
+    //             ASSERT(
+    //                 strEq(targetType, INFO_MANIFEST_TARGET_TYPE_LINK_STR) || strEq(targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR));
+    //
+    //             memContextSwitch(lstMemContext(this->targetList));
+    //
+    //             InfoManifestTarget target =
+    //             {
+    //                 .name = strDup(targetName),
+    //                 .type = strEq(
+    //                     targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR) ? manifestTargetTypePath : manifestTargetTypeLink,
+    //                 .path = strDup(varStr(kvGet(targetData, INFO_MANIFEST_KEY_PATH_VAR))),
+    //                 .file = strDup(varStr(kvGetDefault(targetData, INFO_MANIFEST_KEY_FILE_VAR, NULL))),
+    //             };
+    //
+    //             // Is a link present?  This is so we know links must be loaded later since they are optional.
+    //             if (target.type == manifestTargetTypeLink)
+    //                 linkPresent = true;
+    //
+    //             lstAdd(this->targetList, &target);
+    //
+    //             MEM_CONTEXT_TEMP_RESET(1000);
+    //         }
+    //     }
+    //     MEM_CONTEXT_TEMP_END();
+    // }
+    // MEM_CONTEXT_TEMP_END();
+    //
+    // // Load paths
+    // // ---------------------------------------------------------------------------------------------------------------------
+    // MEM_CONTEXT_TEMP_BEGIN()
+    // {
+    //     // Load path defaults
+    //     const Variant *userDefault = infoManifestOwnerDefaultGet(
+    //         iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
+    //     const Variant *groupDefault = infoManifestOwnerDefaultGet(
+    //         iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
+    //     const String *modeDefault = jsonToStr(
+    //         iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
+    //
+    //     // Load path list
+    //     StringList *pathKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR);
+    //
+    //     MEM_CONTEXT_TEMP_RESET_BEGIN()
+    //     {
+    //         for (unsigned int pathKeyIdx = 0; pathKeyIdx < strLstSize(pathKeyList); pathKeyIdx++)
+    //         {
+    //             memContextSwitch(lstMemContext(this->pathList));
+    //             InfoManifestPath path = {.name = strDup(strLstGet(pathKeyList, pathKeyIdx))};
+    //             memContextSwitch(MEM_CONTEXT_TEMP());
+    //
+    //             KeyValue *pathData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path.name)));
+    //
+    //             path.user = infoManifestOwnerCache(this, kvGetDefault(pathData, INFO_MANIFEST_KEY_USER_VAR, userDefault));
+    //             path.group = infoManifestOwnerCache(this, kvGetDefault(pathData, INFO_MANIFEST_KEY_GROUP_VAR, groupDefault));
+    //             path.mode = cvtZToMode(strPtr(varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(modeDefault)))));
+    //
+    //             lstAdd(this->pathList, &path);
+    //
+    //             MEM_CONTEXT_TEMP_RESET(1000);
+    //         }
+    //     }
+    //     MEM_CONTEXT_TEMP_END();
+    // }
+    // MEM_CONTEXT_TEMP_END();
+    //
+    // // Load files
+    // // -------------------------------------------------------------------------------------------------------------------------
+    // MEM_CONTEXT_TEMP_BEGIN()
+    // {
+    //     // Load file defaults
+    //     const Variant *userDefault = infoManifestOwnerDefaultGet(
+    //         iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
+    //     const Variant *groupDefault = infoManifestOwnerDefaultGet(
+    //         iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
+    //     const String *modeDefault = jsonToStr(
+    //         iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
+    //     const Variant *masterDefault = jsonToVar(
+    //         iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MASTER_STR));
+    //
+    //     // Load file list
+    //     StringList *fileKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR);
+    //
+    //     MEM_CONTEXT_TEMP_RESET_BEGIN()
+    //     {
+    //         for (unsigned int fileKeyIdx = 0; fileKeyIdx < strLstSize(fileKeyList); fileKeyIdx++)
+    //         {
+    //             memContextSwitch(lstMemContext(this->fileList));
+    //             InfoManifestFile file = {.name = strDup(strLstGet(fileKeyList, fileKeyIdx))};
+    //             memContextSwitch(MEM_CONTEXT_TEMP());
+    //
+    //             KeyValue *fileData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file.name)));
+    //
+    //             file.user = infoManifestOwnerCache(this, kvGetDefault(fileData, INFO_MANIFEST_KEY_USER_VAR, userDefault));
+    //             file.group = infoManifestOwnerCache(this, kvGetDefault(fileData, INFO_MANIFEST_KEY_GROUP_VAR, groupDefault));
+    //             file.mode = cvtZToMode(strPtr(varStr(kvGetDefault(fileData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(modeDefault)))));
+    //             file.master = varBool(kvGetDefault(fileData, INFO_MANIFEST_KEY_MASTER_VAR, masterDefault));
+    //             file.size = varUInt64(kvGet(fileData, INFO_MANIFEST_KEY_SIZE_VAR));
+    //             file.sizeRepo = varUInt64(kvGetDefault(fileData, INFO_MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.size)));
+    //             file.timestamp = (time_t)varUInt64(kvGet(fileData, INFO_MANIFEST_KEY_TIMESTAMP_VAR));
+    //
+    //             if (kvGetDefault(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, NULL) != NULL)
+    //             {
+    //                 file.checksumPage = true;
+    //
+    //                 const Variant *checksumPageError = kvGetDefault(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
+    //
+    //                 if (checksumPageError != NULL)
+    //                 {
+    //                     memContextSwitch(lstMemContext(this->fileList));
+    //                     file.checksumPageError = varLstDup(varVarLst(checksumPageError));
+    //                     memContextSwitch(MEM_CONTEXT_TEMP());
+    //                 }
+    //             }
+    //
+    //             if (file.size == 0)
+    //                 memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+    //             else
+    //             {
+    //                 memcpy(
+    //                     file.checksumSha1, strPtr(varStr(kvGet(fileData, INFO_MANIFEST_KEY_CHECKSUM_VAR))),
+    //                     HASH_TYPE_SHA1_SIZE_HEX + 1);
+    //             }
+    //
+    //             lstAdd(this->fileList, &file);
+    //
+    //             MEM_CONTEXT_TEMP_RESET(1000);
+    //         }
+    //     }
+    //     MEM_CONTEXT_TEMP_END();
+    // }
+    // MEM_CONTEXT_TEMP_END();
+    //
+    // // Load links
+    // // ---------------------------------------------------------------------------------------------------------------------
+    // if (linkPresent)
+    // {
+    //     MEM_CONTEXT_TEMP_BEGIN()
+    //     {
+    //         // Load link defaults
+    //         const Variant *userDefault = infoManifestOwnerDefaultGet(
+    //             iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
+    //         const Variant *groupDefault = infoManifestOwnerDefaultGet(
+    //             iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
+    //
+    //         // Load link list
+    //         StringList *linkKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_STR);
+    //
+    //         MEM_CONTEXT_TEMP_RESET_BEGIN()
+    //         {
+    //             for (unsigned int linkKeyIdx = 0; linkKeyIdx < strLstSize(linkKeyList); linkKeyIdx++)
+    //             {
+    //                 memContextSwitch(lstMemContext(this->linkList));
+    //                 InfoManifestLink link = {.name = strDup(strLstGet(linkKeyList, linkKeyIdx))};
+    //                 memContextSwitch(MEM_CONTEXT_TEMP());
+    //
+    //                 KeyValue *linkData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_STR, link.name)));
+    //
+    //                 memContextSwitch(lstMemContext(this->linkList));
+    //                 link.destination = strDup(varStr(kvGet(linkData, INFO_MANIFEST_KEY_DESTINATION_VAR)));
+    //                 memContextSwitch(MEM_CONTEXT_TEMP());
+    //
+    //                 link.user = infoManifestOwnerCache(this, kvGetDefault(linkData, INFO_MANIFEST_KEY_USER_VAR, userDefault));
+    //                 link.group = infoManifestOwnerCache(
+    //                     this, kvGetDefault(linkData, INFO_MANIFEST_KEY_GROUP_VAR, groupDefault));
+    //
+    //                 lstAdd(this->linkList, &link);
+    //
+    //                 MEM_CONTEXT_TEMP_RESET(1000);
+    //             }
+    //         }
+    //         MEM_CONTEXT_TEMP_END();
+    //     }
+    //     MEM_CONTEXT_TEMP_END();
+    // }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 InfoManifest *
-infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+infoManifestNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(IO_READ, read);
     FUNCTION_LOG_END();
 
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+    ASSERT(read != NULL);
 
     InfoManifest *this = NULL;
 
@@ -237,254 +497,7 @@ infoManifestNewLoad(const Storage *storage, const String *fileName, CipherType c
         this->linkList = lstNew(sizeof(InfoManifestLink));
 
         // Load the manifest
-        Ini *iniLocal = NULL;
-        this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, &iniLocal);
-
-        // Load configuration
-        // -------------------------------------------------------------------------------------------------------------------------
-        this->data.backupLabel = jsonToStr(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LABEL_STR));
-        this->data.backupTimestampCopyStart = (time_t)jsonToUInt64(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR));
-        this->data.backupTimestampStart = (time_t)jsonToUInt64(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR));
-        this->data.backupTimestampStop = (time_t)jsonToUInt64(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR));
-        this->data.backupType = backupType(
-            jsonToStr(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TYPE_STR)));
-
-        this->data.pgId = jsonToUInt(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_ID_STR));
-        this->data.pgVersion = pgVersionFromStr(
-            jsonToStr(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_VERSION_STR)));
-        this->data.pgSystemId = jsonToUInt64(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_SYSTEM_ID_STR));
-        this->data.pgControlVersion = jsonToUInt(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CONTROL_VERSION_STR));
-        this->data.pgCatalogVersion = jsonToUInt(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR));
-
-        this->data.backupOptionArchiveCheck = jsonToBool(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR));
-        this->data.backupOptionArchiveCopy = jsonToBool(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR));
-        this->data.backupOptionStandby = jsonToBool(
-            iniGetDefault(
-                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR, FALSE_STR));
-        this->data.backupOptionBufferSize = (size_t)jsonToUInt64(
-            iniGetDefault(
-                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE_STR, STRDEF("0")));
-        this->data.backupOptionChecksumPage = jsonToBool(
-            iniGetDefault(
-                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR, FALSE_STR));
-        this->data.backupOptionCompress = jsonToBool(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_STR));
-        this->data.backupOptionCompressLevel = jsonToUInt(
-            iniGetDefault(
-                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR, STRDEF("6")));
-        this->data.backupOptionCompressLevelNetwork = jsonToUInt(
-            iniGetDefault(
-                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
-                STRDEF("3")));
-        this->data.backupOptionDelta = jsonToBool(
-            iniGetDefault(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_DELTA_STR, FALSE_STR));
-        this->data.backupOptionHardLink = jsonToBool(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_HARDLINK_STR));
-        this->data.backupOptionOnline = jsonToBool(
-            iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ONLINE_STR));
-        this->data.backupOptionProcessMax = jsonToUInt(
-            iniGetDefault(
-                iniLocal, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_PROCESS_MAX_STR, STRDEF("1")));
-
-        // Load targets
-        // -------------------------------------------------------------------------------------------------------------------------
-        bool linkPresent = false;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Load target list
-            StringList *targetKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR);
-
-            MEM_CONTEXT_TEMP_RESET_BEGIN()
-            {
-                for (unsigned int targetKeyIdx = 0; targetKeyIdx < strLstSize(targetKeyList); targetKeyIdx++)
-                {
-                    const String *targetName = strLstGet(targetKeyList, targetKeyIdx);
-                    KeyValue *targetData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR, targetName)));
-                    const String *targetType = varStr(kvGet(targetData, INFO_MANIFEST_KEY_TYPE_VAR));
-
-                    ASSERT(
-                        strEq(targetType, INFO_MANIFEST_TARGET_TYPE_LINK_STR) || strEq(targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR));
-
-                    memContextSwitch(lstMemContext(this->targetList));
-
-                    InfoManifestTarget target =
-                    {
-                        .name = strDup(targetName),
-                        .type = strEq(
-                            targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR) ? manifestTargetTypePath : manifestTargetTypeLink,
-                        .path = strDup(varStr(kvGet(targetData, INFO_MANIFEST_KEY_PATH_VAR))),
-                        .file = strDup(varStr(kvGetDefault(targetData, INFO_MANIFEST_KEY_FILE_VAR, NULL))),
-                    };
-
-                    // Is a link present?  This is so we know links must be loaded later since they are optional.
-                    if (target.type == manifestTargetTypeLink)
-                        linkPresent = true;
-
-                    lstAdd(this->targetList, &target);
-
-                    MEM_CONTEXT_TEMP_RESET(1000);
-                }
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Load paths
-        // ---------------------------------------------------------------------------------------------------------------------
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Load path defaults
-            const Variant *userDefault = infoManifestOwnerDefaultGet(
-                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
-            const Variant *groupDefault = infoManifestOwnerDefaultGet(
-                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
-            const String *modeDefault = jsonToStr(
-                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
-
-            // Load path list
-            StringList *pathKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR);
-
-            MEM_CONTEXT_TEMP_RESET_BEGIN()
-            {
-                for (unsigned int pathKeyIdx = 0; pathKeyIdx < strLstSize(pathKeyList); pathKeyIdx++)
-                {
-                    memContextSwitch(lstMemContext(this->pathList));
-                    InfoManifestPath path = {.name = strDup(strLstGet(pathKeyList, pathKeyIdx))};
-                    memContextSwitch(MEM_CONTEXT_TEMP());
-
-                    KeyValue *pathData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path.name)));
-
-                    path.user = infoManifestOwnerCache(this, kvGetDefault(pathData, INFO_MANIFEST_KEY_USER_VAR, userDefault));
-                    path.group = infoManifestOwnerCache(this, kvGetDefault(pathData, INFO_MANIFEST_KEY_GROUP_VAR, groupDefault));
-                    path.mode = cvtZToMode(strPtr(varStr(kvGetDefault(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(modeDefault)))));
-
-                    lstAdd(this->pathList, &path);
-
-                    MEM_CONTEXT_TEMP_RESET(1000);
-                }
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Load files
-        // -------------------------------------------------------------------------------------------------------------------------
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Load file defaults
-            const Variant *userDefault = infoManifestOwnerDefaultGet(
-                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
-            const Variant *groupDefault = infoManifestOwnerDefaultGet(
-                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
-            const String *modeDefault = jsonToStr(
-                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR));
-            const Variant *masterDefault = jsonToVar(
-                iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MASTER_STR));
-
-            // Load file list
-            StringList *fileKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR);
-
-            MEM_CONTEXT_TEMP_RESET_BEGIN()
-            {
-                for (unsigned int fileKeyIdx = 0; fileKeyIdx < strLstSize(fileKeyList); fileKeyIdx++)
-                {
-                    memContextSwitch(lstMemContext(this->fileList));
-                    InfoManifestFile file = {.name = strDup(strLstGet(fileKeyList, fileKeyIdx))};
-                    memContextSwitch(MEM_CONTEXT_TEMP());
-
-                    KeyValue *fileData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file.name)));
-
-                    file.user = infoManifestOwnerCache(this, kvGetDefault(fileData, INFO_MANIFEST_KEY_USER_VAR, userDefault));
-                    file.group = infoManifestOwnerCache(this, kvGetDefault(fileData, INFO_MANIFEST_KEY_GROUP_VAR, groupDefault));
-                    file.mode = cvtZToMode(strPtr(varStr(kvGetDefault(fileData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(modeDefault)))));
-                    file.master = varBool(kvGetDefault(fileData, INFO_MANIFEST_KEY_MASTER_VAR, masterDefault));
-                    file.size = varUInt64(kvGet(fileData, INFO_MANIFEST_KEY_SIZE_VAR));
-                    file.sizeRepo = varUInt64(kvGetDefault(fileData, INFO_MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.size)));
-                    file.timestamp = (time_t)varUInt64(kvGet(fileData, INFO_MANIFEST_KEY_TIMESTAMP_VAR));
-
-                    if (kvGetDefault(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, NULL) != NULL)
-                    {
-                        file.checksumPage = true;
-
-                        const Variant *checksumPageError = kvGetDefault(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
-
-                        if (checksumPageError != NULL)
-                        {
-                            memContextSwitch(lstMemContext(this->fileList));
-                            file.checksumPageError = varLstDup(varVarLst(checksumPageError));
-                            memContextSwitch(MEM_CONTEXT_TEMP());
-                        }
-                    }
-
-                    if (file.size == 0)
-                        memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
-                    else
-                    {
-                        memcpy(
-                            file.checksumSha1, strPtr(varStr(kvGet(fileData, INFO_MANIFEST_KEY_CHECKSUM_VAR))),
-                            HASH_TYPE_SHA1_SIZE_HEX + 1);
-                    }
-
-                    lstAdd(this->fileList, &file);
-
-                    MEM_CONTEXT_TEMP_RESET(1000);
-                }
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Load links
-        // ---------------------------------------------------------------------------------------------------------------------
-        if (linkPresent)
-        {
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                // Load link defaults
-                const Variant *userDefault = infoManifestOwnerDefaultGet(
-                    iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
-                const Variant *groupDefault = infoManifestOwnerDefaultGet(
-                    iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
-
-                // Load link list
-                StringList *linkKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_STR);
-
-                MEM_CONTEXT_TEMP_RESET_BEGIN()
-                {
-                    for (unsigned int linkKeyIdx = 0; linkKeyIdx < strLstSize(linkKeyList); linkKeyIdx++)
-                    {
-                        memContextSwitch(lstMemContext(this->linkList));
-                        InfoManifestLink link = {.name = strDup(strLstGet(linkKeyList, linkKeyIdx))};
-                        memContextSwitch(MEM_CONTEXT_TEMP());
-
-                        KeyValue *linkData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_STR, link.name)));
-
-                        memContextSwitch(lstMemContext(this->linkList));
-                        link.destination = strDup(varStr(kvGet(linkData, INFO_MANIFEST_KEY_DESTINATION_VAR)));
-                        memContextSwitch(MEM_CONTEXT_TEMP());
-
-                        link.user = infoManifestOwnerCache(this, kvGetDefault(linkData, INFO_MANIFEST_KEY_USER_VAR, userDefault));
-                        link.group = infoManifestOwnerCache(
-                            this, kvGetDefault(linkData, INFO_MANIFEST_KEY_GROUP_VAR, groupDefault));
-
-                        lstAdd(this->linkList, &link);
-
-                        MEM_CONTEXT_TEMP_RESET(1000);
-                    }
-                }
-                MEM_CONTEXT_TEMP_END();
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
+        this->info = infoNewLoad(read, infoManifestLoadCallback, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -505,306 +518,313 @@ infoManifestOwnerGet(const String *ownerDefault)
     FUNCTION_TEST_RETURN(ownerDefault == NULL ? BOOL_FALSE_VAR : varNewStr(ownerDefault));
 }
 
+static void
+infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *infoSaveData)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STRING, sectionNext);
+        FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
+    FUNCTION_TEST_END();
+
+    ASSERT(callbackData != NULL);
+    ASSERT(infoSaveData != NULL);
+
+    // // Save configuration
+    // // -------------------------------------------------------------------------------------------------------------------------
+    // iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LABEL_STR, jsonFromStr(this->data.backupLabel));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,
+    //     jsonFromInt64(this->data.backupTimestampCopyStart));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,
+    //     jsonFromInt64(this->data.backupTimestampStart));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,
+    //     jsonFromInt64(this->data.backupTimestampStop));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TYPE_STR,
+    //     jsonFromStr(backupTypeStr(this->data.backupType)));
+    //
+    // iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_ID_STR, jsonFromUInt(this->data.pgId));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_VERSION_STR,
+    //     jsonFromStr(pgVersionToStr(this->data.pgVersion)));
+    // iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_SYSTEM_ID_STR, jsonFromUInt64(this->data.pgSystemId));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CONTROL_VERSION_STR,
+    //     jsonFromUInt(this->data.pgControlVersion));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR,
+    //     jsonFromUInt(this->data.pgCatalogVersion));
+    //
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR,
+    //     jsonFromBool(this->data.backupOptionArchiveCheck));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR,
+    //     jsonFromBool(this->data.backupOptionArchiveCopy));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR,
+    //     jsonFromBool(this->data.backupOptionStandby));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE_STR,
+    //     jsonFromUInt64(this->data.backupOptionBufferSize));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR,
+    //     jsonFromBool(this->data.backupOptionChecksumPage));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_STR,
+    //     jsonFromBool(this->data.backupOptionCompress));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR,
+    //     jsonFromUInt(this->data.backupOptionCompressLevel));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
+    //     jsonFromUInt(this->data.backupOptionCompressLevelNetwork));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_DELTA_STR,
+    //     jsonFromBool(this->data.backupOptionDelta));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_HARDLINK_STR,
+    //     jsonFromBool(this->data.backupOptionHardLink));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ONLINE_STR,
+    //     jsonFromBool(this->data.backupOptionOnline));
+    // iniSet(
+    //     ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_PROCESS_MAX_STR,
+    //     jsonFromUInt(this->data.backupOptionProcessMax));
+    //
+    // // Save targets
+    // // -------------------------------------------------------------------------------------------------------------------------
+    // MEM_CONTEXT_TEMP_BEGIN()
+    // {
+    //     // Save target list
+    //     for (unsigned int targetIdx = 0; targetIdx < lstSize(this->targetList); targetIdx++)
+    //     {
+    //         InfoManifestTarget *target = lstGet(this->targetList, targetIdx);
+    //         KeyValue *targetData = kvNew();
+    //
+    //         kvPut(
+    //             targetData, INFO_MANIFEST_KEY_TYPE_VAR,
+    //             VARSTR(
+    //                 target->type == manifestTargetTypePath ?
+    //                     INFO_MANIFEST_TARGET_TYPE_PATH_STR : INFO_MANIFEST_TARGET_TYPE_LINK_STR));
+    //
+    //         kvPut(targetData, INFO_MANIFEST_KEY_PATH_VAR, VARSTR(target->path));
+    //
+    //         if (target->file != NULL)
+    //             kvPut(targetData, INFO_MANIFEST_KEY_FILE_VAR, VARSTR(target->file));
+    //
+    //         iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonFromKv(targetData, 0));
+    //     }
+    // }
+    // MEM_CONTEXT_TEMP_END();
+    //
+    // // Save paths
+    // // -------------------------------------------------------------------------------------------------------------------------
+    // MEM_CONTEXT_TEMP_BEGIN()
+    // {
+    //     // Save default path values
+    //     MostCommonValue *userMcv = mcvNew();
+    //     MostCommonValue *groupMcv = mcvNew();
+    //     MostCommonValue *modeMcv = mcvNew();
+    //
+    //     for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+    //     {
+    //         InfoManifestPath *path = lstGet(this->pathList, pathIdx);
+    //
+    //         mcvUpdate(userMcv, VARSTR(path->user));
+    //         mcvUpdate(groupMcv, VARSTR(path->group));
+    //         mcvUpdate(modeMcv, VARUINT(path->mode));
+    //     }
+    //
+    //     const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
+    //     const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
+    //     const Variant *modeDefault = mcvResult(modeMcv);
+    //
+    //     iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
+    //     iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
+    //     iniSet(
+    //         ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
+    //         jsonFromStr(strNewFmt("%04o", varUInt(modeDefault))));
+    //
+    //     // Save path list
+    //     MEM_CONTEXT_TEMP_RESET_BEGIN()
+    //     {
+    //         for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+    //         {
+    //             InfoManifestPath *path = lstGet(this->pathList, pathIdx);
+    //             KeyValue *pathData = kvNew();
+    //
+    //             if (!varEq(infoManifestOwnerGet(path->user), userDefault))
+    //                 kvPut(pathData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(path->user));
+    //
+    //             if (!varEq(infoManifestOwnerGet(path->group), groupDefault))
+    //                 kvPut(pathData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(path->group));
+    //
+    //             if (!varEq(VARUINT(path->mode), modeDefault))
+    //                 kvPut(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
+    //
+    //             iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathData, 0));
+    //
+    //             MEM_CONTEXT_TEMP_RESET(1000);
+    //         }
+    //     }
+    //     MEM_CONTEXT_TEMP_END();
+    // }
+    // MEM_CONTEXT_TEMP_END();
+    //
+    // // Save files
+    // // -------------------------------------------------------------------------------------------------------------------------
+    // MEM_CONTEXT_TEMP_BEGIN()
+    // {
+    //     // Save default file values
+    //     MostCommonValue *userMcv = mcvNew();
+    //     MostCommonValue *groupMcv = mcvNew();
+    //     MostCommonValue *modeMcv = mcvNew();
+    //     MostCommonValue *masterMcv = mcvNew();
+    //
+    //     for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
+    //     {
+    //         InfoManifestFile *file = lstGet(this->fileList, fileIdx);
+    //
+    //         mcvUpdate(userMcv, VARSTR(file->user));
+    //         mcvUpdate(groupMcv, VARSTR(file->group));
+    //         mcvUpdate(modeMcv, VARUINT(file->mode));
+    //         mcvUpdate(masterMcv, VARBOOL(file->master));
+    //     }
+    //
+    //     const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
+    //     const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
+    //     const Variant *modeDefault = mcvResult(modeMcv);
+    //     const Variant *masterDefault = mcvResult(masterMcv);
+    //
+    //     iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
+    //     iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
+    //     iniSet(
+    //         ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
+    //         jsonFromStr(strNewFmt("%04o", varUInt(modeDefault))));
+    //     iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MASTER_STR, jsonFromVar(masterDefault, 0));
+    //
+    //     // Save file list
+    //     MEM_CONTEXT_TEMP_RESET_BEGIN()
+    //     {
+    //         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
+    //         {
+    //             InfoManifestFile *file = lstGet(this->fileList, fileIdx);
+    //             KeyValue *fileData = kvNew();
+    //
+    //             if (!varEq(infoManifestOwnerGet(file->user), userDefault))
+    //                 kvPut(fileData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(file->user));
+    //
+    //             if (!varEq(infoManifestOwnerGet(file->group), groupDefault))
+    //                 kvPut(fileData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(file->group));
+    //
+    //             if (!varEq(VARUINT(file->mode), modeDefault))
+    //                 kvPut(fileData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", file->mode)));
+    //
+    //             if (!varEq(VARBOOL(file->master), masterDefault))
+    //                 kvPut(fileData, INFO_MANIFEST_KEY_MASTER_VAR, VARBOOL(file->master));
+    //
+    //             kvPut(fileData, INFO_MANIFEST_KEY_SIZE_VAR, varNewUInt64(file->size));
+    //
+    //             if (file->sizeRepo != file->size)
+    //                 kvPut(fileData, INFO_MANIFEST_KEY_SIZE_REPO_VAR, varNewUInt64(file->sizeRepo));
+    //
+    //             kvPut(fileData, INFO_MANIFEST_KEY_TIMESTAMP_VAR, varNewUInt64((uint64_t)file->timestamp));
+    //
+    //             if (file->checksumPage)
+    //             {
+    //                 if (file->checksumPageError == NULL)
+    //                     kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_TRUE_VAR);
+    //                 else
+    //                 {
+    //                     kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_FALSE_VAR);
+    //                     kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, varNewVarLst(file->checksumPageError));
+    //                 }
+    //             }
+    //
+    //             if (file->size != 0)
+    //                 kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_VAR, VARSTRZ(file->checksumSha1));
+    //
+    //             iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file->name, jsonFromKv(fileData, 0));
+    //
+    //             MEM_CONTEXT_TEMP_RESET(1000);
+    //         }
+    //     }
+    //     MEM_CONTEXT_TEMP_END();
+    // }
+    // MEM_CONTEXT_TEMP_END();
+    //
+    // // Save links
+    // // -------------------------------------------------------------------------------------------------------------------------
+    // if (lstSize(this->linkList) > 0)
+    // {
+    //     MEM_CONTEXT_TEMP_BEGIN()
+    //     {
+    //         // Save default link values
+    //         MostCommonValue *userMcv = mcvNew();
+    //         MostCommonValue *groupMcv = mcvNew();
+    //
+    //         for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
+    //         {
+    //             InfoManifestLink *link = lstGet(this->linkList, linkIdx);
+    //
+    //             mcvUpdate(userMcv, VARSTR(link->user));
+    //             mcvUpdate(groupMcv, VARSTR(link->group));
+    //         }
+    //
+    //         const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
+    //         const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
+    //
+    //         iniSet(ini, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
+    //         iniSet(
+    //             ini, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
+    //
+    //         // Save link list
+    //         MEM_CONTEXT_TEMP_RESET_BEGIN()
+    //         {
+    //             for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
+    //             {
+    //                 InfoManifestLink *link = lstGet(this->linkList, linkIdx);
+    //                 KeyValue *linkData = kvNew();
+    //
+    //                 if (!varEq(infoManifestOwnerGet(link->user), userDefault))
+    //                     kvPut(linkData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(link->user));
+    //
+    //                 if (!varEq(infoManifestOwnerGet(link->group), groupDefault))
+    //                     kvPut(linkData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(link->group));
+    //
+    //                 kvPut(linkData, INFO_MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
+    //
+    //                 iniSet(ini, INFO_MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonFromKv(linkData, 0));
+    //
+    //                 MEM_CONTEXT_TEMP_RESET(1000);
+    //             }
+    //         }
+    //         MEM_CONTEXT_TEMP_END();
+    //     }
+    //     MEM_CONTEXT_TEMP_END();
+    // }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 void
-infoManifestSave(
-    InfoManifest *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+infoManifestSave(InfoManifest *this, IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_MANIFEST, this);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(IO_WRITE, write);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+    ASSERT(write != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Ini *ini = iniNew();
-
-        // Load configuration
-        // -------------------------------------------------------------------------------------------------------------------------
-        iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LABEL_STR, jsonFromStr(this->data.backupLabel));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,
-            jsonFromInt64(this->data.backupTimestampCopyStart));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,
-            jsonFromInt64(this->data.backupTimestampStart));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,
-            jsonFromInt64(this->data.backupTimestampStop));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TYPE_STR,
-            jsonFromStr(backupTypeStr(this->data.backupType)));
-
-        iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_ID_STR, jsonFromUInt(this->data.pgId));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_VERSION_STR,
-            jsonFromStr(pgVersionToStr(this->data.pgVersion)));
-        iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_SYSTEM_ID_STR, jsonFromUInt64(this->data.pgSystemId));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CONTROL_VERSION_STR,
-            jsonFromUInt(this->data.pgControlVersion));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_DB_STR, INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR,
-            jsonFromUInt(this->data.pgCatalogVersion));
-
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR,
-            jsonFromBool(this->data.backupOptionArchiveCheck));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR,
-            jsonFromBool(this->data.backupOptionArchiveCopy));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR,
-            jsonFromBool(this->data.backupOptionStandby));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE_STR,
-            jsonFromUInt64(this->data.backupOptionBufferSize));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR,
-            jsonFromBool(this->data.backupOptionChecksumPage));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_STR,
-            jsonFromBool(this->data.backupOptionCompress));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR,
-            jsonFromUInt(this->data.backupOptionCompressLevel));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
-            jsonFromUInt(this->data.backupOptionCompressLevelNetwork));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_DELTA_STR,
-            jsonFromBool(this->data.backupOptionDelta));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_HARDLINK_STR,
-            jsonFromBool(this->data.backupOptionHardLink));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_ONLINE_STR,
-            jsonFromBool(this->data.backupOptionOnline));
-        iniSet(
-            ini, INFO_MANIFEST_SECTION_BACKUP_OPTION_STR, INFO_MANIFEST_KEY_OPTION_PROCESS_MAX_STR,
-            jsonFromUInt(this->data.backupOptionProcessMax));
-
-        // Save targets
-        // -------------------------------------------------------------------------------------------------------------------------
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Save target list
-            for (unsigned int targetIdx = 0; targetIdx < lstSize(this->targetList); targetIdx++)
-            {
-                InfoManifestTarget *target = lstGet(this->targetList, targetIdx);
-                KeyValue *targetData = kvNew();
-
-                kvPut(
-                    targetData, INFO_MANIFEST_KEY_TYPE_VAR,
-                    VARSTR(
-                        target->type == manifestTargetTypePath ?
-                            INFO_MANIFEST_TARGET_TYPE_PATH_STR : INFO_MANIFEST_TARGET_TYPE_LINK_STR));
-
-                kvPut(targetData, INFO_MANIFEST_KEY_PATH_VAR, VARSTR(target->path));
-
-                if (target->file != NULL)
-                    kvPut(targetData, INFO_MANIFEST_KEY_FILE_VAR, VARSTR(target->file));
-
-                iniSet(ini, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonFromKv(targetData, 0));
-            }
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Save paths
-        // -------------------------------------------------------------------------------------------------------------------------
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Save default path values
-            MostCommonValue *userMcv = mcvNew();
-            MostCommonValue *groupMcv = mcvNew();
-            MostCommonValue *modeMcv = mcvNew();
-
-            for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
-            {
-                InfoManifestPath *path = lstGet(this->pathList, pathIdx);
-
-                mcvUpdate(userMcv, VARSTR(path->user));
-                mcvUpdate(groupMcv, VARSTR(path->group));
-                mcvUpdate(modeMcv, VARUINT(path->mode));
-            }
-
-            const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
-            const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
-            const Variant *modeDefault = mcvResult(modeMcv);
-
-            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
-            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
-            iniSet(
-                ini, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
-                jsonFromStr(strNewFmt("%04o", varUInt(modeDefault))));
-
-            // Save path list
-            MEM_CONTEXT_TEMP_RESET_BEGIN()
-            {
-                for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
-                {
-                    InfoManifestPath *path = lstGet(this->pathList, pathIdx);
-                    KeyValue *pathData = kvNew();
-
-                    if (!varEq(infoManifestOwnerGet(path->user), userDefault))
-                        kvPut(pathData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(path->user));
-
-                    if (!varEq(infoManifestOwnerGet(path->group), groupDefault))
-                        kvPut(pathData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(path->group));
-
-                    if (!varEq(VARUINT(path->mode), modeDefault))
-                        kvPut(pathData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
-
-                    iniSet(ini, INFO_MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathData, 0));
-
-                    MEM_CONTEXT_TEMP_RESET(1000);
-                }
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Save files
-        // -------------------------------------------------------------------------------------------------------------------------
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Save default file values
-            MostCommonValue *userMcv = mcvNew();
-            MostCommonValue *groupMcv = mcvNew();
-            MostCommonValue *modeMcv = mcvNew();
-            MostCommonValue *masterMcv = mcvNew();
-
-            for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
-            {
-                InfoManifestFile *file = lstGet(this->fileList, fileIdx);
-
-                mcvUpdate(userMcv, VARSTR(file->user));
-                mcvUpdate(groupMcv, VARSTR(file->group));
-                mcvUpdate(modeMcv, VARUINT(file->mode));
-                mcvUpdate(masterMcv, VARBOOL(file->master));
-            }
-
-            const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
-            const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
-            const Variant *modeDefault = mcvResult(modeMcv);
-            const Variant *masterDefault = mcvResult(masterMcv);
-
-            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
-            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
-            iniSet(
-                ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MODE_STR,
-                jsonFromStr(strNewFmt("%04o", varUInt(modeDefault))));
-            iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, INFO_MANIFEST_KEY_MASTER_STR, jsonFromVar(masterDefault, 0));
-
-            // Save file list
-            MEM_CONTEXT_TEMP_RESET_BEGIN()
-            {
-                for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
-                {
-                    InfoManifestFile *file = lstGet(this->fileList, fileIdx);
-                    KeyValue *fileData = kvNew();
-
-                    if (!varEq(infoManifestOwnerGet(file->user), userDefault))
-                        kvPut(fileData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(file->user));
-
-                    if (!varEq(infoManifestOwnerGet(file->group), groupDefault))
-                        kvPut(fileData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(file->group));
-
-                    if (!varEq(VARUINT(file->mode), modeDefault))
-                        kvPut(fileData, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", file->mode)));
-
-                    if (!varEq(VARBOOL(file->master), masterDefault))
-                        kvPut(fileData, INFO_MANIFEST_KEY_MASTER_VAR, VARBOOL(file->master));
-
-                    kvPut(fileData, INFO_MANIFEST_KEY_SIZE_VAR, varNewUInt64(file->size));
-
-                    if (file->sizeRepo != file->size)
-                        kvPut(fileData, INFO_MANIFEST_KEY_SIZE_REPO_VAR, varNewUInt64(file->sizeRepo));
-
-                    kvPut(fileData, INFO_MANIFEST_KEY_TIMESTAMP_VAR, varNewUInt64((uint64_t)file->timestamp));
-
-                    if (file->checksumPage)
-                    {
-                        if (file->checksumPageError == NULL)
-                            kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_TRUE_VAR);
-                        else
-                        {
-                            kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_FALSE_VAR);
-                            kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, varNewVarLst(file->checksumPageError));
-                        }
-                    }
-
-                    if (file->size != 0)
-                        kvPut(fileData, INFO_MANIFEST_KEY_CHECKSUM_VAR, VARSTRZ(file->checksumSha1));
-
-                    iniSet(ini, INFO_MANIFEST_SECTION_TARGET_FILE_STR, file->name, jsonFromKv(fileData, 0));
-
-                    MEM_CONTEXT_TEMP_RESET(1000);
-                }
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Save links
-        // -------------------------------------------------------------------------------------------------------------------------
-        if (lstSize(this->linkList) > 0)
-        {
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                // Save default link values
-                MostCommonValue *userMcv = mcvNew();
-                MostCommonValue *groupMcv = mcvNew();
-
-                for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
-                {
-                    InfoManifestLink *link = lstGet(this->linkList, linkIdx);
-
-                    mcvUpdate(userMcv, VARSTR(link->user));
-                    mcvUpdate(groupMcv, VARSTR(link->group));
-                }
-
-                const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
-                const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
-
-                iniSet(ini, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
-                iniSet(
-                    ini, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
-
-                // Save link list
-                MEM_CONTEXT_TEMP_RESET_BEGIN()
-                {
-                    for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
-                    {
-                        InfoManifestLink *link = lstGet(this->linkList, linkIdx);
-                        KeyValue *linkData = kvNew();
-
-                        if (!varEq(infoManifestOwnerGet(link->user), userDefault))
-                            kvPut(linkData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(link->user));
-
-                        if (!varEq(infoManifestOwnerGet(link->group), groupDefault))
-                            kvPut(linkData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(link->group));
-
-                        kvPut(linkData, INFO_MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
-
-                        iniSet(ini, INFO_MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonFromKv(linkData, 0));
-
-                        MEM_CONTEXT_TEMP_RESET(1000);
-                    }
-                }
-                MEM_CONTEXT_TEMP_END();
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-
-        infoSave(this->info, ini, storage, fileName, cipherType, cipherPass);
+        infoSave(this->info, write, infoManifestSaveCallback, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -824,4 +844,86 @@ infoManifestData(const InfoManifest *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(&this->data);
+}
+
+/***********************************************************************************************************************************
+Helper function to load manifest info files
+***********************************************************************************************************************************/
+typedef struct InfoManifestLoadFileData
+{
+    MemContext *memContext;                                         // Mem context
+    const Storage *storage;                                         // Storage to load from
+    const String *fileName;                                         // Base filename
+    CipherType cipherType;                                          // Cipher type
+    const String *cipherPass;                                       // Cipher passphrase
+    InfoManifest *infoManifest;                                     // Loaded infoManifest object
+} InfoManifestLoadFileData;
+
+static bool
+infoManifestLoadFileCallback(void *data, unsigned int try)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(UINT, try);
+    FUNCTION_LOG_END();
+
+    ASSERT(data != NULL);
+
+    InfoManifestLoadFileData *loadData = (InfoManifestLoadFileData *)data;
+    bool result = false;
+
+    if (try < 2)
+    {
+        // Construct filename based on try
+        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strPtr(loadData->fileName));
+
+        // Attempt to load the file
+        IoRead *read = storageReadIo(storageNewReadNP(loadData->storage, fileName));
+        cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
+
+        MEM_CONTEXT_BEGIN(loadData->memContext)
+        {
+            loadData->infoManifest = infoManifestNewLoad(read);
+            result = true;
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+InfoManifest *
+infoManifestLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+
+    InfoManifestLoadFileData data =
+    {
+        .memContext = memContextCurrent(),
+        .storage = storage,
+        .fileName = fileName,
+        .cipherType = cipherType,
+        .cipherPass = cipherPass,
+    };
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const char *fileNamePath = strPtr(storagePathNP(storage, fileName));
+
+        infoLoad(
+            strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
+            infoManifestLoadFileCallback, &data);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(INFO_MANIFEST, data.infoManifest);
 }

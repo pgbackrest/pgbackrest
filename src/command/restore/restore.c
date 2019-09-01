@@ -30,7 +30,7 @@ cmdRestore(void)
             THROW(HostInvalidError, CFGCMD_RESTORE " command must be run on the " PG_NAME " host");
 
         // The PGDATA directory must exist
-        // ??? We should also do this for the rest of the paths that backrest will not create
+        // ??? We should also do this for the rest of the paths that backrest will not create (but later after manifest load)
         if (!storagePathExistsNP(storagePg(), NULL))
             THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strPtr(cfgOptionStr(cfgOptPgPath)));
 
@@ -63,7 +63,7 @@ cmdRestore(void)
         storageRepo();
 
         // Load backup.info
-        InfoBackup *infoBackup = infoBackupNewLoad(
+        InfoBackup *infoBackup = infoBackupLoadFile(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
@@ -122,7 +122,7 @@ cmdRestore(void)
         }
 
         // Load manifest
-        InfoManifest *manifest = infoManifestNewLoad(storagePg(), INFO_MANIFEST_FILE_STR, cipherTypeNone, NULL);
+        InfoManifest *manifest = infoManifestLoadFile(storagePg(), INFO_MANIFEST_FILE_STR, cipherTypeNone, NULL);
 
         // Sanity check to ensure the manifest has not been moved to a new directory
         const InfoManifestData *manifestData = infoManifestData(manifest);
