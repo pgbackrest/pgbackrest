@@ -326,8 +326,8 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
         TRY_BEGIN()
         {
             infoLoad(
-                strNewFmt("unable to load info file '%s' or '%s.copy'", fileNamePath, fileNamePath), infoArchiveLoadFileCallback,
-                &data);
+                strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
+                infoArchiveLoadFileCallback, &data);
         }
         CATCH_ANY()
         {
