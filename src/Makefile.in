@@ -67,6 +67,7 @@ SRCS = \
 	command/local/local.c \
 	command/restore/file.c \
 	command/restore/protocol.c \
+	command/restore/restore.c \
 	command/remote/remote.c \
 	command/stanza/common.c \
 	command/stanza/create.c \
