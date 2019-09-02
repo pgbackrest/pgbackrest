@@ -102,6 +102,10 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_VAR,               INFO_MANIFEST_KEY_SIZE);
 #define INFO_MANIFEST_KEY_SIZE_REPO                                 "size-repo"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_REPO_VAR,          INFO_MANIFEST_KEY_SIZE_REPO);
+#define INFO_MANIFEST_KEY_TABLESPACE_ID                             "tablespace-id"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TABLESPACE_ID_VAR,      INFO_MANIFEST_KEY_TABLESPACE_ID);
+#define INFO_MANIFEST_KEY_TABLESPACE_NAME                           "tablespace-name"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TABLESPACE_NAME_VAR,    INFO_MANIFEST_KEY_TABLESPACE_NAME);
 #define INFO_MANIFEST_KEY_TIMESTAMP                                 "timestamp"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TIMESTAMP_VAR,          INFO_MANIFEST_KEY_TIMESTAMP);
 #define INFO_MANIFEST_KEY_TYPE                                      "type"
@@ -476,9 +480,12 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
             InfoManifestTarget target =
             {
                 .name = strDup(key),
-                .type = strEq(targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR) ? manifestTargetTypePath : manifestTargetTypeLink,
-                .path = strDup(varStr(kvGet(targetKv, INFO_MANIFEST_KEY_PATH_VAR))),
                 .file = strDup(varStr(kvGetDefault(targetKv, INFO_MANIFEST_KEY_FILE_VAR, NULL))),
+                .path = strDup(varStr(kvGet(targetKv, INFO_MANIFEST_KEY_PATH_VAR))),
+                .tablespaceId =
+                    cvtZToUInt(strPtr(varStr(kvGetDefault(targetKv, INFO_MANIFEST_KEY_TABLESPACE_ID_VAR, VARSTRDEF("0"))))),
+                .tablespaceName = strDup(varStr(kvGetDefault(targetKv, INFO_MANIFEST_KEY_TABLESPACE_NAME_VAR, NULL))),
+                .type = strEq(targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR) ? manifestTargetTypePath : manifestTargetTypeLink,
             };
 
             lstAdd(infoManifest->targetList, &target);
@@ -592,7 +599,7 @@ infoManifestNewLoad(IoRead *read)
         this->pathList = lstNew(sizeof(InfoManifestPath));
         this->ownerList = strLstNew();
         this->referenceList = strLstNew();
-        this->targetList = lstNew(sizeof(InfoManifestPath));
+        this->targetList = lstNew(sizeof(InfoManifestTarget));
 
         // Load the manifest
         InfoManifestLoadData loadData =
@@ -840,16 +847,22 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
                 InfoManifestTarget *target = lstGet(infoManifest->targetList, targetIdx);
                 KeyValue *targetKv = kvNew();
 
+                if (target->file != NULL)
+                    kvPut(targetKv, INFO_MANIFEST_KEY_FILE_VAR, VARSTR(target->file));
+
+                kvPut(targetKv, INFO_MANIFEST_KEY_PATH_VAR, VARSTR(target->path));
+
+                if (target->tablespaceId != 0)
+                    kvPut(targetKv, INFO_MANIFEST_KEY_TABLESPACE_ID_VAR, VARSTR(strNewFmt("%u", target->tablespaceId)));
+
+                if (target->tablespaceName != NULL)
+                    kvPut(targetKv, INFO_MANIFEST_KEY_TABLESPACE_NAME_VAR, VARSTR(target->tablespaceName));
+
                 kvPut(
                     targetKv, INFO_MANIFEST_KEY_TYPE_VAR,
                     VARSTR(
                         target->type == manifestTargetTypePath ?
                             INFO_MANIFEST_TARGET_TYPE_PATH_STR : INFO_MANIFEST_TARGET_TYPE_LINK_STR));
-
-                kvPut(targetKv, INFO_MANIFEST_KEY_PATH_VAR, VARSTR(target->path));
-
-                if (target->file != NULL)
-                    kvPut(targetKv, INFO_MANIFEST_KEY_FILE_VAR, VARSTR(target->file));
 
                 infoSaveValue(infoSaveData, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonFromKv(targetKv, 0));
 

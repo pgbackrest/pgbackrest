@@ -96,6 +96,8 @@ typedef struct InfoManifestTarget
     ManifestTargetType type;                                        // Target type
     const String *path;                                             // Target path (if path or link)
     const String *file;                                             // Target file (if file link)
+    unsigned int tablespaceId;                                      // Oid if this link is a tablespace
+    const String *tablespaceName;                                   // Name of the tablespace
 } InfoManifestTarget;
 
 /***********************************************************************************************************************************
