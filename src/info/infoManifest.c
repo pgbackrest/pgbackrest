@@ -23,7 +23,9 @@ Constants
 STRING_EXTERN(INFO_MANIFEST_FILE_STR,                               INFO_MANIFEST_FILE);
 
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_VAR,   INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START);
+STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR,           INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START);
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_VAR,    INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP);
+STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR,            INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP);
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_BACKUP_PRIOR_VAR,           INFO_MANIFEST_KEY_BACKUP_PRIOR);
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_VAR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START);
 VARIANT_STRDEF_EXTERN(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_VAR,  INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP);
@@ -44,6 +46,8 @@ STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_DB_STR,                  "backup:db")
 STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_OPTION_STR,              "backup:option");
 STRING_STATIC(INFO_MANIFEST_SECTION_BACKUP_TARGET_STR,              "backup:target");
 
+STRING_STATIC(INFO_MANIFEST_SECTION_DB_STR,                         "db");
+
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_STR,                "target:file");
 STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR,        "target:file:default");
 
@@ -55,6 +59,10 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
 
 #define INFO_MANIFEST_KEY_BACKUP_LABEL                              "backup-label"
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_LABEL_STR,               INFO_MANIFEST_KEY_BACKUP_LABEL);
+#define INFO_MANIFEST_KEY_BACKUP_LSN_START                          "backup-lsn-start"
+    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_LSN_START_STR,           INFO_MANIFEST_KEY_BACKUP_LSN_START);
+#define INFO_MANIFEST_KEY_BACKUP_LSN_STOP                           "backup-lsn-stop"
+    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_LSN_STOP_STR,            INFO_MANIFEST_KEY_BACKUP_LSN_STOP);
 #define INFO_MANIFEST_KEY_BACKUP_PRIOR                              "backup-prior"
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_PRIOR_STR,               INFO_MANIFEST_KEY_BACKUP_PRIOR);
 #define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START               "backup-timestamp-copy-start"
@@ -77,6 +85,9 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     STRING_STATIC(INFO_MANIFEST_KEY_DB_CONTROL_VERSION_STR,         INFO_MANIFEST_KEY_DB_CONTROL_VERSION);
 #define INFO_MANIFEST_KEY_DB_ID                                     "db-id"
     STRING_STATIC(INFO_MANIFEST_KEY_DB_ID_STR,                      INFO_MANIFEST_KEY_DB_ID);
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_DB_ID_VAR,              INFO_MANIFEST_KEY_DB_ID);
+#define INFO_MANIFEST_KEY_DB_LAST_SYSTEM_ID                         "db-last-system-id"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR,  INFO_MANIFEST_KEY_DB_LAST_SYSTEM_ID);
 #define INFO_MANIFEST_KEY_DB_SYSTEM_ID                              "db-system-id"
     STRING_STATIC(INFO_MANIFEST_KEY_DB_SYSTEM_ID_STR,               INFO_MANIFEST_KEY_DB_SYSTEM_ID);
 #define INFO_MANIFEST_KEY_DB_VERSION                                "db-version"
@@ -155,6 +166,7 @@ struct InfoManifest
     List *pathList;                                                 // List of paths
     List *fileList;                                                 // List of files
     List *linkList;                                                 // List of links
+    List *dbList;                                                   // List of databases
 };
 
 /***********************************************************************************************************************************
@@ -494,32 +506,51 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
+    else if (strEq(section, INFO_MANIFEST_SECTION_DB_STR))
+    {
+        KeyValue *dbKv = varKv(jsonToVar(value));
+
+        MEM_CONTEXT_BEGIN(lstMemContext(infoManifest->dbList))
+        {
+            InfoManifestDb db =
+            {
+                .name = strDup(key),
+                .id = varUIntForce(kvGet(dbKv, INFO_MANIFEST_KEY_DB_ID_VAR)),
+                .lastSystemId = varUIntForce(kvGet(dbKv, INFO_MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR)),
+            };
+
+            lstAdd(infoManifest->dbList, &db);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, INFO_MANIFEST_SECTION_BACKUP_STR))
     {
-        if (strEq(key, INFO_MANIFEST_KEY_BACKUP_LABEL_STR))
+        MEM_CONTEXT_BEGIN(infoManifest->memContext)
         {
-            MEM_CONTEXT_BEGIN(infoManifest->memContext)
-            {
+            if (strEq(key, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR))
+                infoManifest->data.archiveStart = jsonToStr(value);
+            else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR))
+                infoManifest->data.archiveStop = jsonToStr(value);
+            else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_LABEL_STR))
                 infoManifest->data.backupLabel = jsonToStr(value);
-            }
-            MEM_CONTEXT_END();
-        }
-        else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR))
-        {
-            MEM_CONTEXT_BEGIN(infoManifest->memContext)
-            {
+            else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_LSN_START_STR))
+                infoManifest->data.lsnStart = jsonToStr(value);
+            else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_LSN_STOP_STR))
+                infoManifest->data.lsnStop = jsonToStr(value);
+            else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR))
                 infoManifest->data.backupLabelPrior = jsonToStr(value);
-            }
-            MEM_CONTEXT_END();
+            else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR))
+                infoManifest->data.backupTimestampCopyStart = (time_t)jsonToUInt64(value);
+            else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR))
+                infoManifest->data.backupTimestampStart = (time_t)jsonToUInt64(value);
+            else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR))
+                infoManifest->data.backupTimestampStop = (time_t)jsonToUInt64(value);
+            else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TYPE_STR))
+                infoManifest->data.backupType = backupType(jsonToStr(value));
         }
-        else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR))
-            infoManifest->data.backupTimestampCopyStart = (time_t)jsonToUInt64(value);
-        else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR))
-            infoManifest->data.backupTimestampStart = (time_t)jsonToUInt64(value);
-        else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR))
-            infoManifest->data.backupTimestampStop = (time_t)jsonToUInt64(value);
-        else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TYPE_STR))
-            infoManifest->data.backupType = backupType(jsonToStr(value));
+        MEM_CONTEXT_END();
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -594,6 +625,7 @@ infoManifestNewLoad(IoRead *read)
         this->memContext = MEM_CONTEXT_NEW();
 
         // Create lists
+        this->dbList = lstNew(sizeof(InfoManifestDb));
         this->fileList = lstNew(sizeof(InfoManifestFile));
         this->linkList = lstNew(sizeof(InfoManifestLink));
         this->pathList = lstNew(sizeof(InfoManifestPath));
@@ -722,9 +754,37 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
     // -----------------------------------------------------------------------------------------------------------------------------
     if (infoSaveSection(infoSaveData, INFO_MANIFEST_SECTION_BACKUP_STR, sectionNext))
     {
+        if (infoManifest->data.archiveStart != NULL)
+        {
+            infoSaveValue(
+                infoSaveData, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR,
+                jsonFromStr(infoManifest->data.archiveStart));
+        }
+
+        if (infoManifest->data.archiveStop != NULL)
+        {
+            infoSaveValue(
+                infoSaveData, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR,
+                jsonFromStr(infoManifest->data.archiveStop));
+        }
+
         infoSaveValue(
             infoSaveData, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LABEL_STR,
             jsonFromStr(infoManifest->data.backupLabel));
+
+        if (infoManifest->data.lsnStart != NULL)
+        {
+            infoSaveValue(
+                infoSaveData, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LSN_START_STR,
+                jsonFromStr(infoManifest->data.lsnStart));
+        }
+
+        if (infoManifest->data.lsnStop != NULL)
+        {
+            infoSaveValue(
+                infoSaveData, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LSN_STOP_STR,
+                jsonFromStr(infoManifest->data.lsnStop));
+        }
 
         if (infoManifest->data.backupLabelPrior != NULL)
         {
@@ -865,6 +925,27 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
                             INFO_MANIFEST_TARGET_TYPE_PATH_STR : INFO_MANIFEST_TARGET_TYPE_LINK_STR));
 
                 infoSaveValue(infoSaveData, INFO_MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonFromKv(targetKv, 0));
+
+                MEM_CONTEXT_TEMP_RESET(1000);
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (infoSaveSection(infoSaveData, INFO_MANIFEST_SECTION_DB_STR, sectionNext))
+    {
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
+        {
+            for (unsigned int dbIdx = 0; dbIdx < lstSize(infoManifest->dbList); dbIdx++)
+            {
+                InfoManifestDb *db = lstGet(infoManifest->dbList, dbIdx);
+                KeyValue *dbKv = kvNew();
+
+                kvPut(dbKv, INFO_MANIFEST_KEY_DB_ID_VAR, VARUINT(db->id));
+                kvPut(dbKv, INFO_MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR, VARUINT(db->lastSystemId));
+
+                infoSaveValue(infoSaveData, INFO_MANIFEST_SECTION_DB_STR, db->name, jsonFromKv(dbKv, 0));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }

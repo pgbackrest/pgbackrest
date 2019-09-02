@@ -61,6 +61,13 @@ typedef struct InfoManifestData
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
 
+    // ??? Note that these fields are redundant and verbose since toring the start/stop lsn as a uint64 would be sufficient.
+    // However, we currently lack the functions to transform these values back and forth so this will do for now.
+    const String *archiveStart;                                     // First WAL file in the backup
+    const String *archiveStop;                                      // Last WAL file in the backup
+    const String *lsnStart;                                         // Start LSN for the backup
+    const String *lsnStop;                                          // Stop LSN for the backup
+
     unsigned int pgId;                                              // PostgreSQL id in backup.info
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system identifier
@@ -142,6 +149,16 @@ typedef struct InfoManifestLink
     const String *user;                                             // User name
     const String *group;                                            // Group name
 } InfoManifestLink;
+
+/***********************************************************************************************************************************
+Db type
+***********************************************************************************************************************************/
+typedef struct InfoManifestDb
+{
+    const String *name;                                             // Db name
+    unsigned int id;                                                // Db oid
+    unsigned int lastSystemId;                                      // Highest oid used by system objects in this database
+} InfoManifestDb;
 
 /***********************************************************************************************************************************
 Constructor
