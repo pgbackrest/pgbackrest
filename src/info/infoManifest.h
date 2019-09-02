@@ -128,9 +128,10 @@ typedef struct InfoManifestFile
     const String *name;                                             // File name
     bool primary:1;                                                 // Should this file be copied from the primary?
     bool checksumPage:1;                                            // Does this file have page checksums?
+    bool checksumPageError:1;                                       // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
     char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
-    const VariantList *checksumPageError;                           // List if page checksum errors if there are any
+    const VariantList *checksumPageErrorList;                       // List of page checksum errors if there are any
     const String *user;                                             // User name
     const String *group;                                            // Group name
     const String *reference;                                        // Reference to a prior backup

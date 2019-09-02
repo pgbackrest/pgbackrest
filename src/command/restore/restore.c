@@ -6,6 +6,7 @@ Restore Command
 #include "command/restore/restore.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/io/bufferWrite.h" // !!! REMOVE WITH MANIFEST TEST CODE
 #include "common/log.h"
 #include "config/config.h"
 #include "info/infoBackup.h"
@@ -101,6 +102,35 @@ cmdRestore(void)
         InfoManifest *manifest = infoManifestLoadFile(
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet)),
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+
+        // !!! THIS IS TEMPORARY TO DOUBLE-CHECK THE C MANIFEST CODE.  LOAD THE ORIGINAL MANIFEST AND COMPARE IT TO WHAT WE WOULD
+        // SAVE TO DISK IF WE SAVED NOW.  THE LATER SAVE MAY HAVE MADE MODIFICATIONS BASED ON USER INPUT SO WE CAN'T USE THAT.
+        // -------------------------------------------------------------------------------------------------------------------------
+        Buffer *manifestTestPerlBuffer = storageGetNP(
+            storageNewReadP(
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet)), .ignoreMissing = true));
+
+        if (manifestTestPerlBuffer == NULL)                                                         // {uncovered_branch - !!! TEST}
+        {
+            manifestTestPerlBuffer = storageGetNP(                                                  // {uncovered - !!! TEST}
+                storageNewReadNP(
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(backupSet))));
+        }
+
+        Buffer *manifestTestCBuffer = bufNew(0);
+        infoManifestSave(manifest, ioBufferWriteNew(manifestTestCBuffer));
+
+        if (!bufEq(manifestTestPerlBuffer, manifestTestCBuffer))                                    // {uncovered_branch - !!! TEST}
+        {
+            // Dump manifests to disk so we can check them with diff
+            storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF(INFO_MANIFEST_FILE ".expected")), manifestTestPerlBuffer);
+            storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF(INFO_MANIFEST_FILE ".actual")), manifestTestCBuffer);
+
+            THROW_FMT(                                                                              // {uncovered - !!! TEST}
+                AssertError, "C and Perl manifests are not equal, files saved to '%s'",
+                strPtr(storagePathNP(storagePgWrite(), NULL)));
+        }
+        // -------------------------------------------------------------------------------------------------------------------------
 
         // Sanity check to ensure the manifest has not been moved to a new directory
         const InfoManifestData *manifestData = infoManifestData(manifest);

@@ -108,6 +108,13 @@ mcvResult(const MostCommonValue *this)
     {
         MostCommonValueEntry *entry = (MostCommonValueEntry *)lstGet(this->list, listIdx);
 
+        // !!! NASTY HACK TO MAKE C CODE BEHAVE LIKE PERL FOR BOOL MCV
+        if (entry->total == resultTotal && entry->value != NULL && varType(entry->value) == varTypeBool)
+        {
+            result = BOOL_FALSE_VAR;
+            resultTotal = entry->total;
+        }
+
         if (entry->total > resultTotal)
         {
             result = entry->value;

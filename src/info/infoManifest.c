@@ -111,7 +111,7 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_REFERENCE_VAR,          INFO_MANIFEST_KEY_REFERENCE);
 #define INFO_MANIFEST_KEY_SIZE                                      "size"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_VAR,               INFO_MANIFEST_KEY_SIZE);
-#define INFO_MANIFEST_KEY_SIZE_REPO                                 "size-repo"
+#define INFO_MANIFEST_KEY_SIZE_REPO                                 "repo-size"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_REPO_VAR,          INFO_MANIFEST_KEY_SIZE_REPO);
 #define INFO_MANIFEST_KEY_TABLESPACE_ID                             "tablespace-id"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TABLESPACE_ID_VAR,      INFO_MANIFEST_KEY_TABLESPACE_ID);
@@ -299,14 +299,17 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
                     file.checksumSha1, strPtr(varStr(kvGet(fileKv, INFO_MANIFEST_KEY_CHECKSUM_VAR))), HASH_TYPE_SHA1_SIZE_HEX + 1);
             }
 
-            if (kvKeyExists(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR))
+            const Variant *checksumPage = kvGetDefault(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, NULL);
+
+            if (checksumPage != NULL)
             {
                 file.checksumPage = true;
+                file.checksumPageError = varBool(checksumPage);
 
-                const Variant *checksumPageError = kvGetDefault(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
+                const Variant *checksumPageErrorList = kvGetDefault(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
 
-                if (checksumPageError != NULL)
-                    file.checksumPageError = varLstDup(varVarLst(checksumPageError));
+                if (checksumPageErrorList != NULL)
+                    file.checksumPageErrorList = varLstDup(varVarLst(checksumPageErrorList));
             }
 
             if (kvKeyExists(fileKv, INFO_MANIFEST_KEY_GROUP_VAR))
@@ -968,13 +971,10 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
 
                 if (file->checksumPage)
                 {
-                    if (file->checksumPageError == NULL)
-                        kvPut(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_TRUE_VAR);
-                    else
-                    {
-                        kvPut(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, BOOL_FALSE_VAR);
-                        kvPut(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, varNewVarLst(file->checksumPageError));
-                    }
+                    kvPut(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR, VARBOOL(file->checksumPageError));
+
+                    if (file->checksumPageErrorList != NULL)
+                        kvPut(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, varNewVarLst(file->checksumPageErrorList));
                 }
 
                 if (!varEq(infoManifestOwnerGet(file->group), saveData->fileGroupDefault))
