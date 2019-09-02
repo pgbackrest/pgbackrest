@@ -167,16 +167,20 @@ typedef struct InfoManifestLoadData
     MemContext *memContext;                                         // Mem context for data needed only during load
     InfoManifest *infoManifest;                                     // Manifest info
 
-    List *pathFoundList;                                            // Values found in paths
-    const Variant *pathGroupDefault;                                // Path default group
-    mode_t pathModeDefault;                                         // Path default mode
-    const Variant *pathUserDefault;                                 // Path default user
-
     List *fileFoundList;                                            // Values found in files
     const Variant *fileGroupDefault;                                // File default group
     mode_t fileModeDefault;                                         // File default mode
     bool filePrimaryDefault;                                        // File default primary
     const Variant *fileUserDefault;                                 // File default user
+
+    List *linkFoundList;                                            // Values found in links
+    const Variant *linkGroupDefault;                                // Link default group
+    const Variant *linkUserDefault;                                 // Link default user
+
+    List *pathFoundList;                                            // Values found in paths
+    const Variant *pathGroupDefault;                                // Path default group
+    mode_t pathModeDefault;                                         // Path default mode
+    const Variant *pathUserDefault;                                 // Path default user
 } InfoManifestLoadData;
 
 // Helper to convert owner to a variant.  Input could be boolean false (meaning there is no owner) or a string (there is an owner).
@@ -354,6 +358,39 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
+    else if (strEq(section, INFO_MANIFEST_SECTION_TARGET_LINK_STR))
+    {
+        KeyValue *linkKv = varKv(jsonToVar(value));
+
+        MEM_CONTEXT_BEGIN(lstMemContext(infoManifest->linkList))
+        {
+            InfoManifestLoadFound valueFound = {0};
+
+            InfoManifestLink link =
+            {
+                .name = strDup(key),
+                .destination = strDup(varStr(kvGet(linkKv, INFO_MANIFEST_KEY_DESTINATION_VAR))),
+            };
+
+            if (kvKeyExists(linkKv, INFO_MANIFEST_KEY_GROUP_VAR))
+            {
+                valueFound.group = true;
+                link.group = infoManifestOwnerCache(infoManifest, kvGet(linkKv, INFO_MANIFEST_KEY_GROUP_VAR));
+            }
+
+            if (kvKeyExists(linkKv, INFO_MANIFEST_KEY_USER_VAR))
+            {
+                valueFound.user = true;
+                link.user = infoManifestOwnerCache(infoManifest, kvGet(linkKv, INFO_MANIFEST_KEY_USER_VAR));
+            }
+
+            lstAdd(loadData->linkFoundList, &valueFound);
+            lstAdd(infoManifest->linkList, &link);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, INFO_MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR))
     {
         MEM_CONTEXT_BEGIN(loadData->memContext)
@@ -381,6 +418,19 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
                 loadData->pathModeDefault = cvtZToMode(strPtr(jsonToStr(value)));
             else if (strEq(key, INFO_MANIFEST_KEY_USER_STR))
                 loadData->pathUserDefault = infoManifestOwnerDefaultGet(value);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    else if (strEq(section, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR))
+    {
+        MEM_CONTEXT_BEGIN(loadData->memContext)
+        {
+            if (strEq(key, INFO_MANIFEST_KEY_GROUP_STR))
+                loadData->linkGroupDefault = infoManifestOwnerDefaultGet(value);
+            else if (strEq(key, INFO_MANIFEST_KEY_USER_STR))
+                loadData->linkUserDefault = infoManifestOwnerDefaultGet(value);
         }
         MEM_CONTEXT_END();
     }
@@ -479,58 +529,6 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
         }
         MEM_CONTEXT_END();
     }
-    // // Load files
-    // // -------------------------------------------------------------------------------------------------------------------------
-    //
-    //             MEM_CONTEXT_TEMP_RESET(1000);
-    //         }
-    //     }
-    //     MEM_CONTEXT_TEMP_END();
-    // }
-    // MEM_CONTEXT_TEMP_END();
-    //
-    // // Load links
-    // // ---------------------------------------------------------------------------------------------------------------------
-    // if (linkPresent)
-    // {
-    //     MEM_CONTEXT_TEMP_BEGIN()
-    //     {
-    //         // Load link defaults
-    //         const Variant *userDefault = infoManifestOwnerDefaultGet(
-    //             iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR));
-    //         const Variant *groupDefault = infoManifestOwnerDefaultGet(
-    //             iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR));
-    //
-    //         // Load link list
-    //         StringList *linkKeyList = iniSectionKeyList(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_STR);
-    //
-    //         MEM_CONTEXT_TEMP_RESET_BEGIN()
-    //         {
-    //             for (unsigned int linkKeyIdx = 0; linkKeyIdx < strLstSize(linkKeyList); linkKeyIdx++)
-    //             {
-    //                 memContextSwitch(lstMemContext(infoManifest->linkList));
-    //                 InfoManifestLink link = {.name = strDup(strLstGet(linkKeyList, linkKeyIdx))};
-    //                 memContextSwitch(MEM_CONTEXT_TEMP());
-    //
-    //                 KeyValue *linkData = varKv(jsonToVar(iniGet(iniLocal, INFO_MANIFEST_SECTION_TARGET_LINK_STR, link.name)));
-    //
-    //                 memContextSwitch(lstMemContext(infoManifest->linkList));
-    //                 link.destination = strDup(varStr(kvGet(linkData, INFO_MANIFEST_KEY_DESTINATION_VAR)));
-    //                 memContextSwitch(MEM_CONTEXT_TEMP());
-    //
-    //                 link.user = infoManifestOwnerCache(this, kvGetDefault(linkData, INFO_MANIFEST_KEY_USER_VAR, userDefault));
-    //                 link.group = infoManifestOwnerCache(
-    //                     this, kvGetDefault(linkData, INFO_MANIFEST_KEY_GROUP_VAR, groupDefault));
-    //
-    //                 lstAdd(infoManifest->linkList, &link);
-    //
-    //                 MEM_CONTEXT_TEMP_RESET(1000);
-    //             }
-    //         }
-    //         MEM_CONTEXT_TEMP_END();
-    //     }
-    //     MEM_CONTEXT_TEMP_END();
-    // }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -553,11 +551,11 @@ infoManifestNewLoad(IoRead *read)
         this->memContext = MEM_CONTEXT_NEW();
 
         // Create lists
-        this->ownerList = strLstNew();
-        this->targetList = lstNew(sizeof(InfoManifestPath));
-        this->pathList = lstNew(sizeof(InfoManifestPath));
         this->fileList = lstNew(sizeof(InfoManifestFile));
         this->linkList = lstNew(sizeof(InfoManifestLink));
+        this->pathList = lstNew(sizeof(InfoManifestPath));
+        this->ownerList = strLstNew();
+        this->targetList = lstNew(sizeof(InfoManifestPath));
 
         // Load the manifest
         InfoManifestLoadData loadData =
@@ -569,6 +567,7 @@ infoManifestNewLoad(IoRead *read)
         MEM_CONTEXT_BEGIN(loadData.memContext)
         {
             loadData.fileFoundList = lstNew(sizeof(InfoManifestLoadFound));
+            loadData.linkFoundList = lstNew(sizeof(InfoManifestLoadFound));
             loadData.pathFoundList = lstNew(sizeof(InfoManifestLoadFound));
         }
         MEM_CONTEXT_END();
@@ -592,6 +591,19 @@ infoManifestNewLoad(IoRead *read)
 
             if (!found->user)
                 file->user = infoManifestOwnerCache(this, loadData.fileUserDefault);
+        }
+
+        // Process link defaults
+        for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
+        {
+            InfoManifestLink *link = lstGet(this->linkList, linkIdx);
+            InfoManifestLoadFound *found = lstGet(loadData.linkFoundList, linkIdx);
+
+            if (!found->group)
+                link->group = infoManifestOwnerCache(this, loadData.linkGroupDefault);
+
+            if (!found->user)
+                link->user = infoManifestOwnerCache(this, loadData.linkUserDefault);
         }
 
         // Process path defaults
@@ -624,14 +636,17 @@ typedef struct InfoManifestSaveData
 {
     InfoManifest *infoManifest;                                     // InfoManifest object to be saved
 
-    const Variant *pathGroupDefault;                                // Path default group
-    mode_t pathModeDefault;                                         // Path default mode
-    const Variant *pathUserDefault;                                 // Path default user
-
     const Variant *fileGroupDefault;                                // File default group
     mode_t fileModeDefault;                                         // File default mode
     bool filePrimaryDefault;                                        // File default primary
     const Variant *fileUserDefault;                                 // File default user
+
+    const Variant *linkGroupDefault;                                // Link default group
+    const Variant *linkUserDefault;                                 // Link default user
+
+    const Variant *pathGroupDefault;                                // Path default group
+    mode_t pathModeDefault;                                         // Path default mode
+    const Variant *pathUserDefault;                                 // Path default user
 } InfoManifestSaveData;
 
 // Helper to convert the owner MCV to a default.  If the input is NULL boolean false should be returned, else the owner string.
@@ -868,6 +883,46 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
+    if (infoSaveSection(infoSaveData, INFO_MANIFEST_SECTION_TARGET_LINK_STR, sectionNext))
+    {
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
+        {
+            for (unsigned int linkIdx = 0; linkIdx < lstSize(infoManifest->linkList); linkIdx++)
+            {
+                InfoManifestLink *link = lstGet(infoManifest->linkList, linkIdx);
+                KeyValue *linkKv = kvNew();
+
+                if (!varEq(infoManifestOwnerGet(link->user), saveData->linkUserDefault))
+                    kvPut(linkKv, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(link->user));
+
+                if (!varEq(infoManifestOwnerGet(link->group), saveData->linkGroupDefault))
+                    kvPut(linkKv, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(link->group));
+
+                kvPut(linkKv, INFO_MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
+
+                infoSaveValue(infoSaveData, INFO_MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonFromKv(linkKv, 0));
+
+                MEM_CONTEXT_TEMP_RESET(1000);
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (infoSaveSection(infoSaveData, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, sectionNext))
+    {
+        if (lstSize(infoManifest->linkList) > 0)
+        {
+            infoSaveValue(
+                infoSaveData, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR,
+                jsonFromVar(saveData->linkGroupDefault, 0));
+            infoSaveValue(
+                infoSaveData, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR,
+                jsonFromVar(saveData->linkUserDefault, 0));
+        }
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     if (infoSaveSection(infoSaveData, INFO_MANIFEST_SECTION_TARGET_PATH_STR, sectionNext))
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -907,65 +962,6 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
             infoSaveData, INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR,
             jsonFromVar(saveData->pathUserDefault, 0));
     }
-
-    // // Save files
-    // // -------------------------------------------------------------------------------------------------------------------------
-    // MEM_CONTEXT_TEMP_BEGIN()
-    // {
-    //     // Save file list
-    // }
-    // MEM_CONTEXT_TEMP_END();
-    //
-    // // Save links
-    // // -------------------------------------------------------------------------------------------------------------------------
-    // if (lstSize(infoManifest->linkList) > 0)
-    // {
-    //     MEM_CONTEXT_TEMP_BEGIN()
-    //     {
-    //         // Save default link values
-    //         MostCommonValue *userMcv = mcvNew();
-    //         MostCommonValue *groupMcv = mcvNew();
-    //
-    //         for (unsigned int linkIdx = 0; linkIdx < lstSize(infoManifest->linkList); linkIdx++)
-    //         {
-    //             InfoManifestLink *link = lstGet(infoManifest->linkList, linkIdx);
-    //
-    //             mcvUpdate(userMcv, VARSTR(link->user));
-    //             mcvUpdate(groupMcv, VARSTR(link->group));
-    //         }
-    //
-    //         const Variant *userDefault = infoManifestOwnerGet(varStr(mcvResult(userMcv)));
-    //         const Variant *groupDefault = infoManifestOwnerGet(varStr(mcvResult(groupMcv)));
-    //
-    //         iniSet(ini, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_USER_STR, jsonFromVar(userDefault, 0));
-    //         iniSet(
-    //             ini, INFO_MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, INFO_MANIFEST_KEY_GROUP_STR, jsonFromVar(groupDefault, 0));
-    //
-    //         // Save link list
-    //         MEM_CONTEXT_TEMP_RESET_BEGIN()
-    //         {
-    //             for (unsigned int linkIdx = 0; linkIdx < lstSize(infoManifest->linkList); linkIdx++)
-    //             {
-    //                 InfoManifestLink *link = lstGet(infoManifest->linkList, linkIdx);
-    //                 KeyValue *linkData = kvNew();
-    //
-    //                 if (!varEq(infoManifestOwnerGet(link->user), userDefault))
-    //                     kvPut(linkData, INFO_MANIFEST_KEY_USER_VAR, infoManifestOwnerGet(link->user));
-    //
-    //                 if (!varEq(infoManifestOwnerGet(link->group), groupDefault))
-    //                     kvPut(linkData, INFO_MANIFEST_KEY_GROUP_VAR, infoManifestOwnerGet(link->group));
-    //
-    //                 kvPut(linkData, INFO_MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
-    //
-    //                 iniSet(ini, INFO_MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonFromKv(linkData, 0));
-    //
-    //                 MEM_CONTEXT_TEMP_RESET(1000);
-    //             }
-    //         }
-    //         MEM_CONTEXT_TEMP_END();
-    //     }
-    //     MEM_CONTEXT_TEMP_END();
-    // }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1010,6 +1006,24 @@ infoManifestSave(InfoManifest *this, IoWrite *write)
         saveData.fileModeDefault = varUInt(mcvResult(fileModeMcv));
         saveData.filePrimaryDefault = varBool(mcvResult(filePrimaryMcv));
         saveData.fileUserDefault = infoManifestOwnerGet(varStr(mcvResult(fileUserMcv)));
+
+        // Get default link values
+        if (lstSize(this->linkList) > 0)
+        {
+            MostCommonValue *linkGroupMcv = mcvNew();
+            MostCommonValue *linkUserMcv = mcvNew();
+
+            for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
+            {
+                InfoManifestPath *link = lstGet(this->linkList, linkIdx);
+
+                mcvUpdate(linkGroupMcv, VARSTR(link->group));
+                mcvUpdate(linkUserMcv, VARSTR(link->user));
+            }
+
+            saveData.linkGroupDefault = infoManifestOwnerGet(varStr(mcvResult(linkGroupMcv)));
+            saveData.linkUserDefault = infoManifestOwnerGet(varStr(mcvResult(linkUserMcv)));
+        }
 
         // Get default path values
         MostCommonValue *pathGroupMcv = mcvNew();
