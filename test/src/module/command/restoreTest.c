@@ -375,7 +375,15 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR(cmdRestore(), FileMissingError, "backup '20161219-212741F_20161219-212803D' does not exist");
+        TEST_ERROR_FMT(
+            cmdRestore(), FileMissingError,
+            "unable to load backup manifest file '%s/repo/backup/test1/20161219-212741F_20161219-212803D/backup.manifest' or"
+                " '%s/repo/backup/test1/20161219-212741F_20161219-212803D/backup.manifest.copy':\n"
+            "FileMissingError: unable to open missing file"
+                " '%s/repo/backup/test1/20161219-212741F_20161219-212803D/backup.manifest' for read\n"
+            "FileMissingError: unable to open missing file"
+                " '%s/repo/backup/test1/20161219-212741F_20161219-212803D/backup.manifest.copy' for read",
+            testPath(), testPath(), testPath(), testPath());
 
         // Write a valid manifest
         String *manifestStr = strNew

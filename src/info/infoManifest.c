@@ -1116,7 +1116,7 @@ infoManifestData(const InfoManifest *this)
 }
 
 /***********************************************************************************************************************************
-Helper function to load manifest info files
+Helper function to load backup manifest files
 ***********************************************************************************************************************************/
 typedef struct InfoManifestLoadFileData
 {
@@ -1189,7 +1189,7 @@ infoManifestLoadFile(const Storage *storage, const String *fileName, CipherType 
         const char *fileNamePath = strPtr(storagePathNP(storage, fileName));
 
         infoLoad(
-            strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
+            strNewFmt("unable to load backup manifest file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
             infoManifestLoadFileCallback, &data);
     }
     MEM_CONTEXT_TEMP_END();

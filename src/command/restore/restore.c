@@ -97,32 +97,10 @@ cmdRestore(void)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strPtr(backupSet));
         }
 
-        // Open manifest file in the PGDATA path
-        StorageWrite *manifestFile = storageNewWriteP(
-            storagePgWrite(), INFO_MANIFEST_FILE_STR, .modeFile = 0600, .noCreatePath = true);
-
-        // Add decryption filter
-        if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) != cipherTypeNone)               // {uncovered_branch - !!! ADD}
-        {
-            ioFilterGroupAdd(                                                               // {uncovered - !!! ADD}
-                ioWriteFilterGroup(storageWriteIo(manifestFile)),                           // {uncovered - !!! ADD}
-                cipherBlockNew(                                                             // {uncovered - !!! ADD}
-                    cipherModeDecrypt, cipherType(cfgOptionStr(cfgOptRepoCipherType)),      // {uncovered - !!! ADD}
-                    BUFSTR(infoPgCipherPass(infoBackupPg(infoBackup))), NULL));             // {uncovered - !!! ADD}
-        }
-
-        // Copy manifest to the PGDATA path
-        if (!storageCopy(
-                storageNewReadP(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet)),
-                    .ignoreMissing = true),
-                manifestFile))
-        {
-            THROW_FMT(FileMissingError, "backup '%s' does not exist", strPtr(backupSet));
-        }
-
         // Load manifest
-        InfoManifest *manifest = infoManifestLoadFile(storagePg(), INFO_MANIFEST_FILE_STR, cipherTypeNone, NULL);
+        InfoManifest *manifest = infoManifestLoadFile(
+            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet)),
+            cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
 
         // Sanity check to ensure the manifest has not been moved to a new directory
         const InfoManifestData *manifestData = infoManifestData(manifest);
@@ -138,6 +116,9 @@ cmdRestore(void)
 
         // Log the backup set to restore
         LOG_INFO("restore backup set %s", strPtr(backupSet));
+
+        // Save manifest before any modifications are made to PGDATA
+        infoManifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), INFO_MANIFEST_FILE_STR)));
     }
     MEM_CONTEXT_TEMP_END();
 

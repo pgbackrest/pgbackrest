@@ -182,7 +182,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             infoManifestLoadFile(storageTest, INFO_MANIFEST_FILE_STR, cipherTypeNone, NULL), FileMissingError,
-            "unable to load info file '%s/backup.manifest' or '%s/backup.manifest.copy':\n"
+            "unable to load backup manifest file '%s/backup.manifest' or '%s/backup.manifest.copy':\n"
             "FileMissingError: unable to open missing file '%s/backup.manifest' for read\n"
             "FileMissingError: unable to open missing file '%s/backup.manifest.copy' for read",
             testPath(), testPath(), testPath(), testPath());
