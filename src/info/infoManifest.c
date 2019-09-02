@@ -513,17 +513,17 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
 
             // Options that were added after v1.00 and may not be present in every manifest
             else if (strEq(key, INFO_MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR))
-                infoManifest->data.backupOptionStandby = jsonToBool(value) ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
+                infoManifest->data.backupOptionStandby = varNewBool(jsonToBool(value));
             else if (strEq(key, INFO_MANIFEST_KEY_OPTION_BUFFER_SIZE_STR))
                 infoManifest->data.backupOptionBufferSize = varNewUInt(jsonToUInt(value));
             else if (strEq(key, INFO_MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR))
-                infoManifest->data.backupOptionChecksumPage = jsonToBool(value) ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
+                infoManifest->data.backupOptionChecksumPage = varNewBool(jsonToBool(value));
             else if (strEq(key, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR))
                 infoManifest->data.backupOptionCompressLevel = varNewUInt(jsonToUInt(value));
             else if (strEq(key, INFO_MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR))
                 infoManifest->data.backupOptionCompressLevelNetwork = varNewUInt(jsonToUInt(value));
             else if (strEq(key, INFO_MANIFEST_KEY_OPTION_DELTA_STR))
-                infoManifest->data.backupOptionDelta = jsonToBool(value) ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
+                infoManifest->data.backupOptionDelta = varNewBool(jsonToBool(value));
             else if (strEq(key, INFO_MANIFEST_KEY_OPTION_PROCESS_MAX_STR))
                 infoManifest->data.backupOptionProcessMax = varNewUInt(jsonToUInt(value));
         }
