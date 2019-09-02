@@ -68,8 +68,8 @@ sub run
         {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false},
         {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true},
         {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false},
-        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, delta => false},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false, delta =>  true},
+        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false},
+        {vm => VM4, remote =>  true, s3 =>  true, encrypt =>  true, delta =>  true},
     )
     {
         # Only run tests for this vm

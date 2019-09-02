@@ -989,10 +989,10 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
                 if (file->reference != NULL)
                     kvPut(fileKv, INFO_MANIFEST_KEY_REFERENCE_VAR, VARSTR(file->reference));
 
-                kvPut(fileKv, INFO_MANIFEST_KEY_SIZE_VAR, varNewUInt64(file->size));
-
                 if (file->sizeRepo != file->size)
                     kvPut(fileKv, INFO_MANIFEST_KEY_SIZE_REPO_VAR, varNewUInt64(file->sizeRepo));
+
+                kvPut(fileKv, INFO_MANIFEST_KEY_SIZE_VAR, varNewUInt64(file->size));
 
                 kvPut(fileKv, INFO_MANIFEST_KEY_TIMESTAMP_VAR, varNewUInt64((uint64_t)file->timestamp));
 
