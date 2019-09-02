@@ -55,6 +55,7 @@ Manifest data
 typedef struct InfoManifestData
 {
     const String *backupLabel;                                      // Backup label (unique identifier for the backup)
+    const String *backupLabelPrior;                                 // Backup label for backup this diff/incr is based on
     time_t backupTimestampCopyStart;                                // When did the file copy start?
     time_t backupTimestampStart;                                    // When did the backup start?
     time_t backupTimestampStop;                                     // When did the backup stop?
@@ -123,6 +124,7 @@ typedef struct InfoManifestFile
     const VariantList *checksumPageError;                           // List if page checksum errors if there are any
     const String *user;                                             // User name
     const String *group;                                            // Group name
+    const String *reference;                                        // Reference to a prior backup
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp

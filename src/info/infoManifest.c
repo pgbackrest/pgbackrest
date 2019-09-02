@@ -55,6 +55,8 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
 
 #define INFO_MANIFEST_KEY_BACKUP_LABEL                              "backup-label"
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_LABEL_STR,               INFO_MANIFEST_KEY_BACKUP_LABEL);
+#define INFO_MANIFEST_KEY_BACKUP_PRIOR                              "backup-prior"
+    STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_PRIOR_STR,               INFO_MANIFEST_KEY_BACKUP_PRIOR);
 #define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START               "backup-timestamp-copy-start"
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START);
 #define INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START                    "backup-timestamp-start"
@@ -63,6 +65,12 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,      INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP);
 #define INFO_MANIFEST_KEY_BACKUP_TYPE                               "backup-type"
     STRING_STATIC(INFO_MANIFEST_KEY_BACKUP_TYPE_STR,                INFO_MANIFEST_KEY_BACKUP_TYPE);
+#define INFO_MANIFEST_KEY_CHECKSUM                                  "checksum"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_VAR,           INFO_MANIFEST_KEY_CHECKSUM);
+#define INFO_MANIFEST_KEY_CHECKSUM_PAGE                             "checksum-page"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR,      INFO_MANIFEST_KEY_CHECKSUM_PAGE);
+#define INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR                       "checksum-page-error"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
 #define INFO_MANIFEST_KEY_DB_CATALOG_VERSION                        "db-catalog-version"
     STRING_STATIC(INFO_MANIFEST_KEY_DB_CATALOG_VERSION_STR,         INFO_MANIFEST_KEY_DB_CATALOG_VERSION);
 #define INFO_MANIFEST_KEY_DB_CONTROL_VERSION                        "db-control-version"
@@ -73,12 +81,6 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
     STRING_STATIC(INFO_MANIFEST_KEY_DB_SYSTEM_ID_STR,               INFO_MANIFEST_KEY_DB_SYSTEM_ID);
 #define INFO_MANIFEST_KEY_DB_VERSION                                "db-version"
     STRING_STATIC(INFO_MANIFEST_KEY_DB_VERSION_STR,                 INFO_MANIFEST_KEY_DB_VERSION);
-#define INFO_MANIFEST_KEY_CHECKSUM                                  "checksum"
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_VAR,           INFO_MANIFEST_KEY_CHECKSUM);
-#define INFO_MANIFEST_KEY_CHECKSUM_PAGE                             "checksum-page"
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_VAR,      INFO_MANIFEST_KEY_CHECKSUM_PAGE);
-#define INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR                       "checksum-page-error"
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
 #define INFO_MANIFEST_KEY_DESTINATION                               "destination"
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_DESTINATION_VAR,        INFO_MANIFEST_KEY_DESTINATION);
 #define INFO_MANIFEST_KEY_FILE                                      "file"
@@ -92,6 +94,21 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
 #define INFO_MANIFEST_KEY_MODE                                      "mode"
     STRING_STATIC(INFO_MANIFEST_KEY_MODE_STR,                       INFO_MANIFEST_KEY_MODE);
     VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_MODE_VAR,               INFO_MANIFEST_KEY_MODE);
+#define INFO_MANIFEST_KEY_PATH                                      "path"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_PATH_VAR,               INFO_MANIFEST_KEY_PATH);
+#define INFO_MANIFEST_KEY_REFERENCE                                 "reference"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_REFERENCE_VAR,          INFO_MANIFEST_KEY_REFERENCE);
+#define INFO_MANIFEST_KEY_SIZE                                      "size"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_VAR,               INFO_MANIFEST_KEY_SIZE);
+#define INFO_MANIFEST_KEY_SIZE_REPO                                 "size-repo"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_REPO_VAR,          INFO_MANIFEST_KEY_SIZE_REPO);
+#define INFO_MANIFEST_KEY_TIMESTAMP                                 "timestamp"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TIMESTAMP_VAR,          INFO_MANIFEST_KEY_TIMESTAMP);
+#define INFO_MANIFEST_KEY_TYPE                                      "type"
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TYPE_VAR,               INFO_MANIFEST_KEY_TYPE);
+#define INFO_MANIFEST_KEY_USER                                      "user"
+    STRING_STATIC(INFO_MANIFEST_KEY_USER_STR,                       INFO_MANIFEST_KEY_USER);
+    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_USER_VAR,               INFO_MANIFEST_KEY_USER);
 
 #define INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK                      "option-archive-check"
     STRING_STATIC(INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR,       INFO_MANIFEST_KEY_OPTION_ARCHIVE_CHECK);
@@ -118,20 +135,6 @@ STRING_STATIC(INFO_MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,        "target:path
 #define INFO_MANIFEST_KEY_OPTION_PROCESS_MAX                        "option-process-max"
     STRING_STATIC(INFO_MANIFEST_KEY_OPTION_PROCESS_MAX_STR,         INFO_MANIFEST_KEY_OPTION_PROCESS_MAX);
 
-#define INFO_MANIFEST_KEY_PATH                                      "path"
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_PATH_VAR,               INFO_MANIFEST_KEY_PATH);
-#define INFO_MANIFEST_KEY_SIZE                                      "size"
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_VAR,               INFO_MANIFEST_KEY_SIZE);
-#define INFO_MANIFEST_KEY_SIZE_REPO                                 "size-repo"
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_SIZE_REPO_VAR,          INFO_MANIFEST_KEY_SIZE_REPO);
-#define INFO_MANIFEST_KEY_TIMESTAMP                                 "timestamp"
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TIMESTAMP_VAR,          INFO_MANIFEST_KEY_TIMESTAMP);
-#define INFO_MANIFEST_KEY_TYPE                                      "type"
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_TYPE_VAR,               INFO_MANIFEST_KEY_TYPE);
-#define INFO_MANIFEST_KEY_USER                                      "user"
-    STRING_STATIC(INFO_MANIFEST_KEY_USER_STR,                       INFO_MANIFEST_KEY_USER);
-    VARIANT_STRDEF_STATIC(INFO_MANIFEST_KEY_USER_VAR,               INFO_MANIFEST_KEY_USER);
-
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -141,6 +144,7 @@ struct InfoManifest
 
     Info *info;                                                     // Base info object
     StringList *ownerList;                                          // List of users/groups
+    StringList *referenceList;                                      // List of file references
 
     InfoManifestData data;                                          // Manifest data and options
     List *targetList;                                               // List of paths
@@ -307,6 +311,30 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
                 file.primary = varBool(kvGet(fileKv, INFO_MANIFEST_KEY_PRIMARY_VAR));
             }
 
+            const Variant *reference = kvGetDefault(fileKv, INFO_MANIFEST_KEY_REFERENCE_VAR, NULL);
+
+            if (reference != NULL)
+            {
+                // Search for the reference in the list
+                for (unsigned int referenceIdx = 0; referenceIdx < strLstSize(infoManifest->referenceList); referenceIdx++)
+                {
+                    const String *found = strLstGet(infoManifest->referenceList, referenceIdx);
+
+                    if (strEq(varStr(reference), found))
+                    {
+                        file.reference = found;
+                        break;
+                    }
+                }
+
+                // If not found then add it
+                if (file.reference == NULL)
+                {
+                    strLstAdd(infoManifest->referenceList, varStr(reference));
+                    file.reference = strLstGet(infoManifest->referenceList, strLstSize(infoManifest->referenceList) - 1);
+                }
+            }
+
             if (kvKeyExists(fileKv, INFO_MANIFEST_KEY_USER_VAR))
             {
                 valueFound.user = true;
@@ -469,6 +497,14 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
             }
             MEM_CONTEXT_END();
         }
+        else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR))
+        {
+            MEM_CONTEXT_BEGIN(infoManifest->memContext)
+            {
+                infoManifest->data.backupLabelPrior = jsonToStr(value);
+            }
+            MEM_CONTEXT_END();
+        }
         else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR))
             infoManifest->data.backupTimestampCopyStart = (time_t)jsonToUInt64(value);
         else if (strEq(key, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR))
@@ -555,6 +591,7 @@ infoManifestNewLoad(IoRead *read)
         this->linkList = lstNew(sizeof(InfoManifestLink));
         this->pathList = lstNew(sizeof(InfoManifestPath));
         this->ownerList = strLstNew();
+        this->referenceList = strLstNew();
         this->targetList = lstNew(sizeof(InfoManifestPath));
 
         // Load the manifest
@@ -681,6 +718,14 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
         infoSaveValue(
             infoSaveData, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_LABEL_STR,
             jsonFromStr(infoManifest->data.backupLabel));
+
+        if (infoManifest->data.backupLabelPrior != NULL)
+        {
+            infoSaveValue(
+                infoSaveData, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR,
+                jsonFromStr(infoManifest->data.backupLabelPrior));
+        }
+
         infoSaveValue(
             infoSaveData, INFO_MANIFEST_SECTION_BACKUP_STR, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,
             jsonFromInt64(infoManifest->data.backupTimestampCopyStart));
@@ -846,6 +891,9 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
 
                 if (file->mode != saveData->fileModeDefault)
                     kvPut(fileKv, INFO_MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", file->mode)));
+
+                if (file->reference != NULL)
+                    kvPut(fileKv, INFO_MANIFEST_KEY_REFERENCE_VAR, VARSTR(file->reference));
 
                 kvPut(fileKv, INFO_MANIFEST_KEY_SIZE_VAR, varNewUInt64(file->size));
 
@@ -1015,7 +1063,7 @@ infoManifestSave(InfoManifest *this, IoWrite *write)
 
             for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
             {
-                InfoManifestPath *link = lstGet(this->linkList, linkIdx);
+                InfoManifestLink *link = lstGet(this->linkList, linkIdx);
 
                 mcvUpdate(linkGroupMcv, VARSTR(link->group));
                 mcvUpdate(linkUserMcv, VARSTR(link->user));

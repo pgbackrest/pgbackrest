@@ -24,7 +24,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(sizeof(InfoManifestLoadFound), TEST_64BIT() ? 1 : 1, "check size of InfoManifestLoadFound");
         TEST_RESULT_UINT(sizeof(InfoManifestPath), TEST_64BIT() ? 32 : 20, "check size of InfoManifestPath");
-        TEST_RESULT_UINT(sizeof(InfoManifestFile), TEST_64BIT() ? 112 : 88, "check size of InfoManifestFile");
+        TEST_RESULT_UINT(sizeof(InfoManifestFile), TEST_64BIT() ? 120 : 92, "check size of InfoManifestFile");
     }
 
     // *****************************************************************************************************************************
@@ -92,7 +92,8 @@ testRun(void)
         contentLoad = harnessInfoChecksumZ
         (
             "[backup]\n"
-            "backup-label=\"20190808-163540F\"\n"
+            "backup-label=\"20190818-084502F_20190820-084502D\"\n"
+            "backup-prior=\"20190818-084502F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
             "backup-timestamp-start=1565282140\n"
             "backup-timestamp-stop=1565282142\n"
@@ -125,16 +126,16 @@ testRun(void)
             "pg_data/pg_stat={\"path\":\"../pg_stat\",\"type\":\"link\"}\n"
             "\n"
             "[target:file]\n"
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true,\"size\":4"
-                ",\"timestamp\":1565282114}\n"
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"
+                ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"
             "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"
                 ",\"checksum-page-error\":[1],\"size\":8192,\"size-repo\":4096,\"timestamp\":1565282114}\n"
             "pg_data/base/16384/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"group\":false,\"size\":4"
                 ",\"timestamp\":1565282115}\n"
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"
-                ",\"size\":1073741824,\"timestamp\":1565282116}\n"
+                ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"
-                ",\"size\":32768,\"timestamp\":1565282114}\n"
+                ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"
             "pg_data/postgresql.conf={\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\",\"master\":true,\"size\":4457"
                 ",\"timestamp\":1565282114}\n"
             "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
@@ -269,7 +270,7 @@ testRun(void)
         (
             "[backup]\n"
             "backup-label=\"20190818-084502F_20190820-084502D\"\n"
-            // "backup-prior=\"20190818-084502F\"\n"
+            "backup-prior=\"20190818-084502F\"\n"
             "backup-timestamp-copy-start=1566290707\n"
             "backup-timestamp-start=1566290702\n"
             "backup-timestamp-stop=1566290710\n"
