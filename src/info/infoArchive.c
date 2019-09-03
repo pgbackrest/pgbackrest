@@ -105,48 +105,6 @@ infoArchiveNewLoad(IoRead *read)
 }
 
 /***********************************************************************************************************************************
-Set the infoPg data
-***********************************************************************************************************************************/
-InfoArchive *
-infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
-        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    this->infoPg = infoPgSet(this->infoPg, infoPgArchive, pgVersion, pgSystemId, 0, 0);
-
-    FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
-}
-
-/***********************************************************************************************************************************
-Save to file
-***********************************************************************************************************************************/
-void
-infoArchiveSave(InfoArchive *this, IoWrite *write)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
-        FUNCTION_LOG_PARAM(IO_WRITE, write);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(write != NULL);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        infoPgSave(infoArchivePg(this), write, NULL, NULL);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Given a backrest history id and postgres systemId and version, return the archiveId of the best match
 ***********************************************************************************************************************************/
 const String *
@@ -206,6 +164,29 @@ infoArchiveIdHistoryMatch(
 }
 
 /***********************************************************************************************************************************
+Save to file
+***********************************************************************************************************************************/
+void
+infoArchiveSave(InfoArchive *this, IoWrite *write)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_LOG_PARAM(IO_WRITE, write);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(write != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        infoPgSave(infoArchivePg(this), write, NULL, NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Get the current archive id
 ***********************************************************************************************************************************/
 const String *
@@ -248,6 +229,25 @@ infoArchivePg(const InfoArchive *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->infoPg);
+}
+
+/***********************************************************************************************************************************
+Set the infoPg data
+***********************************************************************************************************************************/
+InfoArchive *
+infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    this->infoPg = infoPgSet(this->infoPg, infoPgArchive, pgVersion, pgSystemId, 0, 0);
+
+    FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
 
 /***********************************************************************************************************************************

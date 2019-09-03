@@ -25,7 +25,7 @@ Info Handler
 Internal constants
 ***********************************************************************************************************************************/
 #define INFO_SECTION_BACKREST                                       "backrest"
-STRING_STATIC(INFO_SECTION_BACKREST_STR,                            INFO_SECTION_BACKREST);
+    STRING_STATIC(INFO_SECTION_BACKREST_STR,                            INFO_SECTION_BACKREST);
 STRING_STATIC(INFO_SECTION_CIPHER_STR,                              "cipher");
 
 STRING_STATIC(INFO_KEY_CIPHER_PASS_STR,                             "cipher-pass");
@@ -263,6 +263,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
+            // Load and parse the info file
             InfoLoadData data =
             {
                 .memContext = MEM_CONTEXT_TEMP(),
@@ -272,7 +273,6 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
                 .checksumActual = cryptoHashNew(HASH_TYPE_SHA1_STR),
             };
 
-            // Load and parse the info file
             INFO_CHECKSUM_BEGIN(data.checksumActual);
 
             TRY_BEGIN()
@@ -494,16 +494,20 @@ infoLoad(const String *error, InfoLoadCallback callbackFunction, void *callbackD
                     loadErrorType = errorType();
                     loadErrorMessage = strNewFmt("%s:", strPtr(error));
                 }
-                // Else if the error type is different then set a generic type
+                // Else if the error type is different
                 else if (loadErrorType != errorType())
                 {
+                    // Set type that is not file missing (which is likely the most common error)
                     if (loadErrorType == &FileMissingError)
+                    {
                         loadErrorType = errorType();
+                    }
+                    // Else set a generic error
                     else if (errorType() != &FileMissingError)
                         loadErrorType = &FileOpenError;
                 }
 
-                // Append error
+                // Append new error
                 strCatFmt(loadErrorMessage, "\n%s: %s", errorTypeName(errorType()), errorMessage());
 
                 // Try again

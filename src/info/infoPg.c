@@ -234,7 +234,7 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 }
 
 /***********************************************************************************************************************************
-Set the InfoPg object data based on values passed.
+Set the InfoPg object data based on values passed
 ***********************************************************************************************************************************/
 InfoPg *
 infoPgSet(
@@ -381,7 +381,6 @@ infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, voi
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Set callback data
         InfoPgSaveData saveData =
         {
             .callbackFunction = callbackFunction,
