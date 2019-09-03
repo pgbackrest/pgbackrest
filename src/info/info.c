@@ -162,42 +162,42 @@ typedef struct InfoLoadData
 } InfoLoadData;
 
 static void
-infoLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
+infoLoadCallback(void *data, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    ASSERT(callbackData != NULL);
+    ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    InfoLoadData *data = (InfoLoadData *)callbackData;
+    InfoLoadData *loadData = (InfoLoadData *)data;
 
     // Calculate checksum
     if (!(strEq(section, INFO_SECTION_BACKREST_STR) && strEq(key, INFO_KEY_CHECKSUM_STR)))
     {
-        if (data->sectionLast == NULL || !strEq(section, data->sectionLast))
+        if (loadData->sectionLast == NULL || !strEq(section, loadData->sectionLast))
         {
-            if (data->sectionLast != NULL)
-                INFO_CHECKSUM_SECTION_NEXT(data->checksumActual);
+            if (loadData->sectionLast != NULL)
+                INFO_CHECKSUM_SECTION_NEXT(loadData->checksumActual);
 
-            INFO_CHECKSUM_SECTION(data->checksumActual, section);
+            INFO_CHECKSUM_SECTION(loadData->checksumActual, section);
 
-            MEM_CONTEXT_BEGIN(data->memContext)
+            MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                data->sectionLast = strDup(section);
+                loadData->sectionLast = strDup(section);
             }
             MEM_CONTEXT_END();
         }
         else
-            INFO_CHECKSUM_KEY_VALUE_NEXT(data->checksumActual);
+            INFO_CHECKSUM_KEY_VALUE_NEXT(loadData->checksumActual);
 
-        INFO_CHECKSUM_KEY_VALUE(data->checksumActual, key, value);
+        INFO_CHECKSUM_KEY_VALUE(loadData->checksumActual, key, value);
     }
 
     // Process backrest section
@@ -212,9 +212,9 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
         // Store checksum to be validated later
         else if (strEq(key, INFO_KEY_CHECKSUM_STR))
         {
-            MEM_CONTEXT_BEGIN(data->memContext)
+            MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                data->checksumExpected = jsonToStr(value);
+                loadData->checksumExpected = jsonToStr(value);
             }
             MEM_CONTEXT_END();
         }
@@ -225,16 +225,16 @@ infoLoadCallback(void *callbackData, const String *section, const String *key, c
         // No validation needed for cipher-pass, just store it
         if (strEq(key, INFO_KEY_CIPHER_PASS_STR))
         {
-            MEM_CONTEXT_BEGIN(data->info->memContext)
+            MEM_CONTEXT_BEGIN(loadData->info->memContext)
             {
-                data->info->cipherPass = jsonToStr(value);
+                loadData->info->cipherPass = jsonToStr(value);
             }
             MEM_CONTEXT_END();
         }
     }
     // Else pass to callback for processing
     else
-        data->callbackFunction(data->callbackData, section, key, value);
+        loadData->callbackFunction(loadData->callbackData, section, key, value);
 
     FUNCTION_TEST_RETURN_VOID();
 }

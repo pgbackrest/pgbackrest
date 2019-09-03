@@ -33,11 +33,24 @@ Constants
 #define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
     STRING_STATIC(INFO_BACKUP_SECTION_BACKUP_CURRENT_STR,           INFO_BACKUP_SECTION_BACKUP_CURRENT);
 
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR,       "backup-info-repo-size");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR,     "backup-archive-start");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR,      "backup-archive-stop");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR,    "backup-info-repo-size");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR, "backup-info-repo-size-delta");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR,            "backup-info-size");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR,      "backup-info-size-delta");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR,            "backup-reference");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR,         "backup-info-size");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR,   "backup-info-size-delta");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_PRIOR_VAR,             "backup-prior");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR,         "backup-reference");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR,   "backup-timestamp-start");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR,    "backup-timestamp-stop");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TYPE_VAR,              "backup-type");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR,        "option-archive-check");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR,         "option-archive-copy");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR,       "option-backup-standby");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR,        "option-checksum-page");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_COMPRESS_VAR,             "option-compress");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_HARDLINK_VAR,             "option-hardlink");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ONLINE_VAR,               "option-online");
 
 STRING_EXTERN(INFO_BACKUP_PATH_FILE_STR,                            INFO_BACKUP_PATH_FILE);
 STRING_EXTERN(INFO_BACKUP_PATH_FILE_COPY_STR,                       INFO_BACKUP_PATH_FILE_COPY);
@@ -106,21 +119,21 @@ infoBackupNew(
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
 static void
-infoBackupLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
+infoBackupLoadCallback(void *data, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    ASSERT(callbackData != NULL);
+    ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    InfoBackup *infoBackup = (InfoBackup *)callbackData;
+    InfoBackup *infoBackup = (InfoBackup *)data;
 
     // Process current backup list
     if (strEq(section, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR))
@@ -139,26 +152,26 @@ infoBackupLoadCallback(void *callbackData, const String *section, const String *
                 .backupInfoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR)),
                 .backupLabel = strDup(key),
                 .backupPgId = cvtZToUInt(strPtr(varStrForce(kvGet(backupKv, INFO_KEY_DB_ID_VAR)))),
-                .backupTimestampStart = varUInt64(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_VAR)),
-                .backupTimestampStop= varUInt64(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_VAR)),
-                .backupType = varStrForce(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_TYPE_VAR)),
+                .backupTimestampStart = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR)),
+                .backupTimestampStop= varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR)),
+                .backupType = varStrForce(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR)),
 
                 // Possible NULL values
-                .backupArchiveStart = strDup(varStr(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_VAR))),
-                .backupArchiveStop = strDup(varStr(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_VAR))),
-                .backupPrior = strDup(varStr(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_PRIOR_VAR))),
+                .backupArchiveStart = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR))),
+                .backupArchiveStop = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR))),
+                .backupPrior = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR))),
                 .backupReference =
                     kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR) != NULL ?
                         strLstNewVarLst(varVarLst(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR))) : NULL,
 
                 // Options
-                .optionArchiveCheck = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_CHECK_VAR)),
-                .optionArchiveCopy = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_COPY_VAR)),
-                .optionBackupStandby = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_BACKUP_STANDBY_VAR)),
-                .optionChecksumPage = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_CHECKSUM_PAGE_VAR)),
-                .optionCompress = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_COMPRESS_VAR)),
-                .optionHardlink = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_HARDLINK_VAR)),
-                .optionOnline = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_ONLINE_VAR)),
+                .optionArchiveCheck = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR)),
+                .optionArchiveCopy = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR)),
+                .optionBackupStandby = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR)),
+                .optionChecksumPage = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR)),
+                .optionCompress = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_COMPRESS_VAR)),
+                .optionHardlink = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_HARDLINK_VAR)),
+                .optionOnline = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR)),
             };
 
             // Add the backup data to the list
@@ -195,18 +208,18 @@ infoBackupNewLoad(IoRead *read)
 Save to file
 ***********************************************************************************************************************************/
 static void
-infoBackupSaveCallback(void *callbackData, const String *sectionNext, InfoSave *infoSaveData)
+infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, sectionNext);
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
     FUNCTION_TEST_END();
 
-    ASSERT(callbackData != NULL);
+    ASSERT(data != NULL);
     ASSERT(infoSaveData != NULL);
 
-    InfoBackup *infoBackup = (InfoBackup *)callbackData;
+    InfoBackup *infoBackup = (InfoBackup *)data;
 
     if (infoSaveSection(infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, sectionNext))
     {
@@ -221,11 +234,11 @@ infoBackupSaveCallback(void *callbackData, const String *sectionNext, InfoSave *
 
             kvPut(backupDataKv, INFO_KEY_DB_ID_VAR, VARUINT(backupData.backupPgId));
 
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_VAR, VARSTR(backupData.backupArchiveStart));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_VAR, VARSTR(backupData.backupArchiveStop));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR, VARSTR(backupData.backupArchiveStart));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR, VARSTR(backupData.backupArchiveStop));
 
             if (backupData.backupPrior != NULL)
-                kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_PRIOR_VAR, VARSTR(backupData.backupPrior));
+                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR, VARSTR(backupData.backupPrior));
 
             if (backupData.backupReference != NULL)
             {
@@ -237,17 +250,17 @@ infoBackupSaveCallback(void *callbackData, const String *sectionNext, InfoSave *
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR, VARUINT64(backupData.backupInfoRepoSizeDelta));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR, VARUINT64(backupData.backupInfoSize));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR, VARUINT64(backupData.backupInfoSizeDelta));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_VAR, VARUINT64(backupData.backupTimestampStart));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARUINT64(backupData.backupTimestampStop));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_TYPE_VAR, VARSTR(backupData.backupType));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR, VARUINT64(backupData.backupTimestampStart));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARUINT64(backupData.backupTimestampStop));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR, VARSTR(backupData.backupType));
 
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_BACKUP_STANDBY_VAR, VARBOOL(backupData.optionBackupStandby));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_CHECKSUM_PAGE_VAR, VARBOOL(backupData.optionChecksumPage));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_COMPRESS_VAR, VARBOOL(backupData.optionCompress));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_HARDLINK_VAR, VARBOOL(backupData.optionHardlink));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ONLINE_VAR, VARBOOL(backupData.optionOnline));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR, VARBOOL(backupData.optionBackupStandby));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR, VARBOOL(backupData.optionChecksumPage));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_COMPRESS_VAR, VARBOOL(backupData.optionCompress));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_HARDLINK_VAR, VARBOOL(backupData.optionHardlink));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR, VARBOOL(backupData.optionOnline));
 
             infoSaveValue(
                 infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel, jsonFromKv(backupDataKv, 0));
