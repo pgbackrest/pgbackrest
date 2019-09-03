@@ -128,17 +128,16 @@ cmdRestore(void)
                     strPtr(storagePathNP(storagePgWrite(), NULL)));
             }
         }
-        // -------------------------------------------------------------------------------------------------------------------------
 
         // Sanity check to ensure the manifest has not been moved to a new directory
         const InfoManifestData *manifestData = infoManifestData(manifest);
 
-        if (!strEq(manifestData->backupLabel, backupSet))                               // {uncovered_branch - !!! ADD}
+        if (!strEq(manifestData->backupLabel, backupSet))
         {
-            THROW_FMT(                                                                  // {uncovered - !!! ADD}
+            THROW_FMT(
                 FormatError,
-                "requested backup '%s' and label '%s' do not match -- this indicates some sort of corruption (at the very least "
-                    "paths have been renamed",
+                "requested backup '%s' and manifest label '%s' do not match\n"
+                "HINT: this indicates some sort of corruption (at the very least paths have been renamed).",
                 strPtr(backupSet), strPtr(manifestData->backupLabel));
         }
 

@@ -693,6 +693,9 @@ unit:
           command/restore/protocol: full
           command/restore/restore: full
 
+        include:
+          - info/infoManifest
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stanza
         total: 5

@@ -386,7 +386,7 @@ testRun(void)
             testPath(), testPath(), testPath(), testPath());
 
         // Write a valid manifest
-        String *manifestStr = strNew
+        const Buffer *contentLoad = harnessInfoChecksumZ
         (
             "[backup]\n"
             "backup-label=\"20161219-212741F_20161219-212918I\"\n"
@@ -430,12 +430,12 @@ testRun(void)
             "user=\"user1\"\n"
         );
 
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(
-                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" INFO_MANIFEST_FILE)),
-                harnessInfoChecksum(manifestStr)),
-            "write manifest");
+        InfoManifest *manifest = infoManifestNewLoad(ioBufferReadNew(contentLoad));
+        infoManifestSave(
+            manifest,
+            storageWriteIo(
+                storageNewWriteNP(storageRepoWrite(),
+                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" INFO_MANIFEST_FILE))));
 
         // PGDATA directory does not look valid
         // -------------------------------------------------------------------------------------------------------------------------
@@ -490,6 +490,30 @@ testRun(void)
         TEST_RESULT_VOID(cmdRestore(), "restore --force with valid PGDATA");
         storageRemoveP(storagePgWrite(), strNew(PG_FILE_PGVERSION), .errorOnMissing = true);
         harnessLogResult("P00   INFO: restore backup set 20161219-212741F_20161219-212918I");
+
+        // Error on mismatched label
+        // -------------------------------------------------------------------------------------------------------------------------
+        const String *oldLabel = manifest->data.backupLabel;
+        manifest->data.backupLabel = STRDEF("20161219-212741F");
+
+        infoManifestSave(
+            manifest,
+            storageWriteIo(
+                storageNewWriteNP(storageRepoWrite(),
+                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" INFO_MANIFEST_FILE))));
+
+        TEST_ERROR(
+            cmdRestore(), FormatError,
+            "requested backup '20161219-212741F_20161219-212918I' and manifest label '20161219-212741F' do not match\n"
+            "HINT: this indicates some sort of corruption (at the very least paths have been renamed).");
+
+        manifest->data.backupLabel = oldLabel;
+
+        infoManifestSave(
+            manifest,
+            storageWriteIo(
+                storageNewWriteNP(storageRepoWrite(),
+                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" INFO_MANIFEST_FILE))));
 
         // SUCCESS TEST FOR COVERAGE -- WILL BE REMOVED / MODIFIED AT SOME POINT
         // -------------------------------------------------------------------------------------------------------------------------
