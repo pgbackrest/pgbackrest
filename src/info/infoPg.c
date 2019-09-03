@@ -101,32 +101,32 @@ typedef struct InfoPgLoadData
 } InfoPgLoadData;
 
 static void
-infoPgLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
+infoPgLoadCallback(void *data, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    ASSERT(callbackData != NULL);
+    ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    InfoPgLoadData *data = (InfoPgLoadData *)callbackData;
+    InfoPgLoadData *loadData = (InfoPgLoadData *)data;
 
     // Process db section
     if (strEq(section, INFO_SECTION_DB_STR))
     {
         if (strEq(key, INFO_KEY_DB_ID_STR))
-            data->currentId = jsonToUInt(value);
+            loadData->currentId = jsonToUInt(value);
     }
     // Process db:history section
     else if (strEq(section, INFO_SECTION_DB_HISTORY_STR))
     {
-        // Load JSON data into a KeyValue
+        // Load JSON loadData into a KeyValue
         const KeyValue *pgDataKv = jsonToKv(value);
 
         // Get db values that are common to all info files
@@ -137,24 +137,24 @@ infoPgLoadCallback(void *callbackData, const String *section, const String *key,
 
             // This is different in archive.info due to a typo that can't be fixed without a format version bump
             .systemId = varUInt64Force(
-                kvGet(pgDataKv, data->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
+                kvGet(pgDataKv, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
         };
 
         // Get values that are only in backup and manifest files.  These are really vestigial since stanza-create verifies
         // the control and catalog versions so there is no good reason to store them.  However, for backward compatibility
         // we must write them at least, even if we give up reading them.
-        if (data->infoPg->type == infoPgBackup)
+        if (loadData->infoPg->type == infoPgBackup)
         {
             infoPgData.catalogVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR));
             infoPgData.controlVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR));
         }
 
         // Using lstAdd because it is more efficient than lstInsert and loading this file is in critical code paths
-        lstInsert(data->infoPg->history, 0, &infoPgData);
+        lstInsert(loadData->infoPg->history, 0, &infoPgData);
     }
     // Callback if set
-    else if (data->callbackFunction != NULL)
-        data->callbackFunction(data->callbackData, section, key, value);
+    else if (loadData->callbackFunction != NULL)
+        loadData->callbackFunction(loadData->callbackData, section, key, value);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -183,25 +183,25 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
         this->historyCurrent = UINT_MAX;
 
         // Load
-        InfoPgLoadData data =
+        InfoPgLoadData loadData =
         {
             .callbackFunction = callbackFunction,
             .callbackData = callbackData,
             .infoPg = this,
         };
 
-        this->info = infoNewLoad(read, infoPgLoadCallback, &data);
+        this->info = infoNewLoad(read, infoPgLoadCallback, &loadData);
 
         // History must include at least one item or the file is corrupt
         CHECK(lstSize(this->history) > 0);
 
         // If the current id was not found then the file is corrupt
-        CHECK(data.currentId > 0);
+        CHECK(loadData.currentId > 0);
 
         // Find the current history item
         for (unsigned int historyIdx = 0; historyIdx < lstSize(this->history); historyIdx++)
         {
-            if (((InfoPgData *)lstGet(this->history, historyIdx))->id == data.currentId)
+            if (((InfoPgData *)lstGet(this->history, historyIdx))->id == loadData.currentId)
                 this->historyCurrent = historyIdx;
         }
 
@@ -298,27 +298,27 @@ typedef struct InfoPgSaveData
 } InfoPgSaveData;
 
 static void
-infoPgSaveCallback(void *callbackData, const String *sectionNext, InfoSave *infoSaveData)
+infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, sectionNext);
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
     FUNCTION_TEST_END();
 
-    ASSERT(callbackData != NULL);
+    ASSERT(data != NULL);
     ASSERT(infoSaveData != NULL);
 
-    InfoPgSaveData *data = (InfoPgSaveData *)callbackData;
+    InfoPgSaveData *saveData = (InfoPgSaveData *)data;
 
     if (infoSaveSection(infoSaveData, INFO_SECTION_DB_STR, sectionNext))
     {
-        if (data->callbackFunction != NULL)
-            data->callbackFunction(data->callbackData, INFO_SECTION_DB_STR, infoSaveData);
+        if (saveData->callbackFunction != NULL)
+            saveData->callbackFunction(saveData->callbackData, INFO_SECTION_DB_STR, infoSaveData);
 
-        InfoPgData pgData = infoPgDataCurrent(data->infoPg);
+        InfoPgData pgData = infoPgDataCurrent(saveData->infoPg);
 
-        if (data->infoPg->type == infoPgBackup)
+        if (saveData->infoPg->type == infoPgBackup)
         {
             infoSaveValue(
                 infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR), jsonFromUInt(pgData.catalogVersion));
@@ -334,18 +334,18 @@ infoPgSaveCallback(void *callbackData, const String *sectionNext, InfoSave *info
 
     if (infoSaveSection(infoSaveData, INFO_SECTION_DB_HISTORY_STR, sectionNext))
     {
-        if (data->callbackFunction != NULL)
-            data->callbackFunction(data->callbackData, INFO_SECTION_DB_HISTORY_STR, infoSaveData);
+        if (saveData->callbackFunction != NULL)
+            saveData->callbackFunction(saveData->callbackData, INFO_SECTION_DB_HISTORY_STR, infoSaveData);
 
         // Set the db history section in reverse so oldest history is first instead of last to be consistent with load
-        for (unsigned int pgDataIdx = infoPgDataTotal(data->infoPg) - 1; (int)pgDataIdx >= 0; pgDataIdx--)
+        for (unsigned int pgDataIdx = infoPgDataTotal(saveData->infoPg) - 1; (int)pgDataIdx >= 0; pgDataIdx--)
         {
-            InfoPgData pgData = infoPgData(data->infoPg, pgDataIdx);
+            InfoPgData pgData = infoPgData(saveData->infoPg, pgDataIdx);
 
             KeyValue *pgDataKv = kvNew();
             kvPut(pgDataKv, INFO_KEY_DB_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
 
-            if (data->infoPg->type == infoPgBackup)
+            if (saveData->infoPg->type == infoPgBackup)
             {
                 kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgData.catalogVersion));
                 kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgData.controlVersion));
@@ -359,8 +359,8 @@ infoPgSaveCallback(void *callbackData, const String *sectionNext, InfoSave *info
     }
 
     // Process the callback even if none of the sections above get executed
-    if (data->callbackFunction != NULL)
-        data->callbackFunction(data->callbackData, sectionNext, infoSaveData);
+    if (saveData->callbackFunction != NULL)
+        saveData->callbackFunction(saveData->callbackData, sectionNext, infoSaveData);
 
     FUNCTION_TEST_RETURN_VOID()
 }
@@ -382,14 +382,14 @@ infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, voi
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Set callback data
-        InfoPgSaveData data =
+        InfoPgSaveData saveData =
         {
             .callbackFunction = callbackFunction,
             .callbackData = callbackData,
             .infoPg = this,
         };
 
-        infoSave(infoPgInfo(this), write, infoPgSaveCallback, &data);
+        infoSave(infoPgInfo(this), write, infoPgSaveCallback, &saveData);
     }
     MEM_CONTEXT_TEMP_END();
 
