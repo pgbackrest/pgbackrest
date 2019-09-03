@@ -9,6 +9,8 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use JSON::PP;
+
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
@@ -41,6 +43,9 @@ sub new
 
     # Set variables
     $self->{oProtocol} = $oProtocol;
+
+    # Create JSON object
+    $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -163,7 +168,7 @@ sub manifest
             {name => 'rhParam', required => false},
         );
 
-    my $hManifest = $self->{oProtocol}->cmdExecute(OP_STORAGE_MANIFEST, [$strPathExp, $rhParam]);
+    my $hManifest = $self->{oJSON}->decode($self->{oProtocol}->cmdExecute(OP_STORAGE_MANIFEST, [$strPathExp, $rhParam]));
 
     # Return from function and log return values if any
     return logDebugReturn
