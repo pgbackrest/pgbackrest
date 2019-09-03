@@ -112,7 +112,7 @@ sub init
         &OP_STORAGE_CIPHER_PASS_USER => sub {$oStorage->cipherPassUser()},
         &OP_STORAGE_EXISTS => sub {$oStorage->exists(@{shift()})},
         &OP_STORAGE_LIST => sub {$oStorage->list(@{shift()})},
-        &OP_STORAGE_MANIFEST => sub {$oStorage->manifest(@{shift()})},
+        &OP_STORAGE_MANIFEST => sub {$oStorage->manifestJson(@{shift()})},
         &OP_STORAGE_MOVE => sub {$oStorage->move(@{shift()})},
         &OP_STORAGE_PATH_GET => sub {$oStorage->pathGet(@{shift()})},
         &OP_STORAGE_HASH_SIZE => sub {$oStorage->hashSize(@{shift()})},
