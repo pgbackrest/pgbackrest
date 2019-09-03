@@ -30,7 +30,7 @@
         <variable key="os-type-is-debian">'{[os-type]}' eq '{[os-debian]}'</variable>
         <variable key="os-type-is-centos6">'{[os-type]}' eq '{[os-centos6]}'</variable>
         <variable key="os-type-is-centos7">'{[os-type]}' eq '{[os-centos7]}'</variable>
-        <variable key="os-type-is-centos">{[os-type-is-centos6]} || {[os-type-is-centos7]}</variable>
+        <variable key="os-type-is-centos">({[os-type-is-centos6]} || {[os-type-is-centos7]})</variable>
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:16.04</variable>
