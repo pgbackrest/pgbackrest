@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.17dev" title="UNDER DEVELOPMENT">
+        <release date="2019-09-03" version="2.17" title="C Migrations and Bug Fixes">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -20,7 +20,7 @@
                             <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
-                        <p>Fix slow manifest build for very large quantities of tables/segments.</p>
+                        <p>Improve slow manifest build for very large quantities of tables/segments.</p>
                     </release-item>
 
                     <release-item>
