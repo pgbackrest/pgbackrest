@@ -109,7 +109,7 @@ cmdRestore(void)
         if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)                       // {uncovered_branch - !!! TEST}
         {
             Buffer *manifestTestPerlBuffer = storageGetNP(
-                storageNewReadP(
+                storageNewReadNP(
                     storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet))));
 
             Buffer *manifestTestCBuffer = bufNew(0);
