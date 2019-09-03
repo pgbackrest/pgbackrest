@@ -732,7 +732,7 @@
             <title>Download version <id>{[version]}</id> of <backrest/> to pre-created <path>/build</path> path</title>
 
             <!-- This is shown to the user but never actually run for the very good reason that the release is not available before the documentation is built -->
-            <execute user="root" skip="y">
+            <execute skip="y">
                 <exe-cmd>wget -q -O -
                     {[github-url-release]}/{[version]}.tar.gz |
                     tar zx -C /build</exe-cmd>
