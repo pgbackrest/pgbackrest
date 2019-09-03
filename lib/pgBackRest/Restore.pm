@@ -220,12 +220,12 @@ sub manifestLoad
     my $oManifest = new pgBackRest::Manifest(
         storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), {oStorage => storageDb()});
 
-    if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH))
-    {
-        &log(INFO, 'remap $PGDATA directory to ' . $self->{strDbClusterPath});
-
-        $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbClusterPath});
-    }
+    # if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH))
+    # {
+    #     &log(INFO, 'remap $PGDATA directory to ' . $self->{strDbClusterPath});
+    #
+    #     $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbClusterPath});
+    # }
 
     # Remap tablespaces when requested
     my $oTablespaceRemap;

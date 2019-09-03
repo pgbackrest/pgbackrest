@@ -17,6 +17,28 @@ Restore Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+Remap the manifest based on mappings provided by the user
+***********************************************************************************************************************************/
+static void
+restoreManifestRemap(InfoManifest *manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
+
+    // if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH))
+    // {
+    //     &log(INFO, 'remap $PGDATA directory to ' . $self->{strDbClusterPath});
+    //
+    //     $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbClusterPath});
+    // }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Restore a backup
 ***********************************************************************************************************************************/
 void
@@ -143,6 +165,9 @@ cmdRestore(void)
 
         // Log the backup set to restore
         LOG_INFO("restore backup set %s", strPtr(backupSet));
+
+        // Remap manifest
+        restoreManifestRemap(manifest);
 
         // Save manifest before any modifications are made to PGDATA
         infoManifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), INFO_MANIFEST_FILE_STR)));
