@@ -106,29 +106,27 @@ cmdRestore(void)
         // !!! THIS IS TEMPORARY TO DOUBLE-CHECK THE C MANIFEST CODE.  LOAD THE ORIGINAL MANIFEST AND COMPARE IT TO WHAT WE WOULD
         // SAVE TO DISK IF WE SAVED NOW.  THE LATER SAVE MAY HAVE MADE MODIFICATIONS BASED ON USER INPUT SO WE CAN'T USE THAT.
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *manifestTestPerlBuffer = storageGetNP(
-            storageNewReadP(
-                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet)), .ignoreMissing = true));
-
-        if (manifestTestPerlBuffer == NULL)                                                         // {uncovered_branch - !!! TEST}
+        if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)                       // {uncovered_branch - !!! TEST}
         {
-            manifestTestPerlBuffer = storageGetNP(                                                  // {uncovered - !!! TEST}
-                storageNewReadNP(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(backupSet))));
-        }
+            Buffer *manifestTestPerlBuffer = storageGetNP(
+                storageNewReadP(
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet))));
 
-        Buffer *manifestTestCBuffer = bufNew(0);
-        infoManifestSave(manifest, ioBufferWriteNew(manifestTestCBuffer));
+            Buffer *manifestTestCBuffer = bufNew(0);
+            infoManifestSave(manifest, ioBufferWriteNew(manifestTestCBuffer));
 
-        if (!bufEq(manifestTestPerlBuffer, manifestTestCBuffer))                                    // {uncovered_branch - !!! TEST}
-        {
-            // Dump manifests to disk so we can check them with diff
-            storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF(INFO_MANIFEST_FILE ".expected")), manifestTestPerlBuffer);
-            storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF(INFO_MANIFEST_FILE ".actual")), manifestTestCBuffer);
+            if (!bufEq(manifestTestPerlBuffer, manifestTestCBuffer))                                // {uncovered_branch - !!! TEST}
+            {
+                // Dump manifests to disk so we can check them with diff
+                storagePutNP(                                                                       // {uncovered - !!! TEST}
+                    storageNewWriteNP(storagePgWrite(), STRDEF(INFO_MANIFEST_FILE ".expected")), manifestTestPerlBuffer);
+                storagePutNP(                                                                       // {uncovered - !!! TEST}
+                    storageNewWriteNP(storagePgWrite(), STRDEF(INFO_MANIFEST_FILE ".actual")), manifestTestCBuffer);
 
-            THROW_FMT(                                                                              // {uncovered - !!! TEST}
-                AssertError, "C and Perl manifests are not equal, files saved to '%s'",
-                strPtr(storagePathNP(storagePgWrite(), NULL)));
+                THROW_FMT(                                                                          // {uncovered - !!! TEST}
+                    AssertError, "C and Perl manifests are not equal, files saved to '%s'",
+                    strPtr(storagePathNP(storagePgWrite(), NULL)));
+            }
         }
         // -------------------------------------------------------------------------------------------------------------------------
 
