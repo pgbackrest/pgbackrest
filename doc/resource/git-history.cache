@@ -1,5 +1,10 @@
 [
     {
+        "commit": "ce2bf2999892f689001b084af4d5feb63dc9b402",
+        "date": "2019-09-03 16:39:32 -0400",
+        "subject": "v2.17: C Migrations and Bug Fixes"
+    },
+    {
         "commit": "0b5720c642c040e16373f72a9058df094d05ca10",
         "date": "2019-09-03 14:34:49 -0400",
         "subject": "Fix yum.p.o package being installed when custom package specified.",
