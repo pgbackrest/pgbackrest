@@ -12,7 +12,10 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.17dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.18dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2019-09-03" version="2.17" title="C Migrations and Bug Fixes">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -20,7 +23,7 @@
                             <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
-                        <p>Fix slow manifest build for very large quantities of tables/segments.</p>
+                        <p>Improve slow manifest build for very large quantities of tables/segments.</p>
                     </release-item>
 
                     <release-item>
@@ -72,6 +75,17 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="joe.ayers"/>
+                            <release-item-ideator id="john.harvey"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <id>yum.p.o</id> package being installed when custom package specified.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>

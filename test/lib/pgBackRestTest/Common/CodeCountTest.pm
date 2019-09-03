@@ -43,6 +43,8 @@ sub codeCountScan
 
         # Only exclude these directories/files entirely
         next if ($strFile =~ '^\.' ||
+                 $strFile =~ '\.DS_Store$' ||
+                 $strFile =~ '\.gitignore$' ||
                  $strFile =~ '\.md$' ||
                  $strFile =~ '\.log$' ||
                  $strFile eq 'LICENSE' ||
@@ -55,6 +57,7 @@ sub codeCountScan
                  $strFile =~ '^doc/site/' ||
                  $strFile eq 'libc/typemap' ||
                  $strFile eq 'test/Vagrantfile' ||
+                 $strFile =~ '^test/\.vagrant/' ||
                  $strFile =~ '^test/certificate/' ||
                  $strFile =~ '^test/code-count/' ||
                  $strFile =~ '^test/coverage/' ||

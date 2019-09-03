@@ -39,7 +39,7 @@ test/test.pl --code-count
 ## Commit release branch and push to CI for testing
 ```
 git commit -m "Release test"
-git push release-ci
+git push origin release-ci
 ```
 
 ## Clone web documentation into `doc/site`
