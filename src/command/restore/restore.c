@@ -28,11 +28,14 @@ restoreManifestRemap(InfoManifest *manifest)
 
     ASSERT(manifest != NULL);
 
-    // if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH))
-    // {
-    //     &log(INFO, 'remap $PGDATA directory to ' . $self->{strDbClusterPath});
+    // Reassign the base path if specified
+    // const String *pgPath = cfgOptionStr(cfgOptPgPath);
+    // const InfoManifestTarget *targetBase = infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR);
     //
-    //     $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbClusterPath});
+    // if (!strEq(targetBase->path, pgPath))
+    // {
+    //     LOG_INFO("remap data directory to '%s'", strPtr(pgPath));
+    //     infoManifestTargetUpdate(manifest, targetBase->name, pgPath);
     // }
 
     FUNCTION_LOG_RETURN_VOID();

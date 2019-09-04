@@ -84,6 +84,15 @@ testRun(void)
             infoManifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
         TEST_RESULT_STR(strPtr(infoManifestData(manifest)->backupLabel), "20190808-163540F", "    check manifest data");
 
+        TEST_RESULT_VOID(
+            infoManifestTargetUpdate(manifest, INFO_MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    update target no change");
+        TEST_RESULT_VOID(
+            infoManifestTargetUpdate(manifest, INFO_MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2")), "    update target");
+        TEST_RESULT_STR(
+            strPtr(infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR)->path), "/path2", "    check target path");
+        TEST_RESULT_VOID(
+            infoManifestTargetUpdate(manifest, INFO_MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    fix target path");
+
         Buffer *contentSave = bufNew(0);
 
         TEST_RESULT_VOID(infoManifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");

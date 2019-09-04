@@ -160,6 +160,191 @@ struct InfoManifest
 };
 
 /***********************************************************************************************************************************
+Internal functions to add types to their lists
+***********************************************************************************************************************************/
+// Helper to add owner to the owner list if it is not there already and return the pointer.  This saves a lot of space.
+static const String *
+infoManifestOwnerCache(InfoManifest *this, const Variant *owner)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(VARIANT, owner);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    const String *result = NULL;
+
+    if (varType(owner) == varTypeString)
+    {
+        // Search for the owner in the list
+        for (unsigned int ownerIdx = 0; ownerIdx < strLstSize(this->ownerList); ownerIdx++)
+        {
+            const String *found = strLstGet(this->ownerList, ownerIdx);
+
+            if (strEq(varStr(owner), found))
+            {
+                result = found;
+                break;
+            }
+        }
+
+        // If not found then add it
+        if (result == NULL)
+        {
+            strLstAdd(this->ownerList, varStr(owner));
+            result = strLstGet(this->ownerList, strLstSize(this->ownerList) - 1);
+        }
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+static void
+infoManifestFileAdd(InfoManifest *this, const InfoManifestFile *file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(INFO_MANIFEST_PATH, file); // !!! FIX TYPE
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
+    ASSERT(file->name != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->fileList))
+    {
+        InfoManifestFile fileAdd =
+        {
+            .checksumPage = file->checksumPage,
+            .checksumPageError = file->checksumPageError,
+            .checksumPageErrorList = varLstDup(file->checksumPageErrorList),
+            .group = infoManifestOwnerCache(this, VARSTR(file->group)),
+            .mode = file->mode,
+            .name = strDup(file->name),
+            .primary = file->primary,
+            .size = file->size,
+            .sizeRepo = file->sizeRepo,
+            .timestamp = file->timestamp,
+            .user = infoManifestOwnerCache(this, VARSTR(file->user)),
+        };
+
+        memcpy(fileAdd.checksumSha1, file->checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+        if (file->reference != NULL)
+        {
+            // Search for the reference in the list
+            for (unsigned int referenceIdx = 0; referenceIdx < strLstSize(this->referenceList); referenceIdx++)
+            {
+                const String *found = strLstGet(this->referenceList, referenceIdx);
+
+                if (strEq(file->reference, found))
+                {
+                    fileAdd.reference = found;
+                    break;
+                }
+            }
+
+            // If not found then add it
+            if (fileAdd.reference == NULL)
+            {
+                strLstAdd(this->referenceList, file->reference);
+                fileAdd.reference = strLstGet(this->referenceList, strLstSize(this->referenceList) - 1);
+            }
+        }
+
+        lstAdd(this->fileList, &fileAdd);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+infoManifestTargetAdd(InfoManifest *this, const InfoManifestTarget *target)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(INFO_MANIFEST_TARGET, target);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+    ASSERT(target->path != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
+    {
+        InfoManifestTarget targetAdd =
+        {
+            .file = strDup(target->file),
+            .name = strDup(target->name),
+            .path = strDup(target->path),
+            .tablespaceId = target->tablespaceId,
+            .tablespaceName = strDup(target->tablespaceName),
+            .type = target->type,
+        };
+
+        lstAdd(this->targetList, &targetAdd);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+infoManifestPathAdd(InfoManifest *this, const InfoManifestPath *path)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(INFO_MANIFEST_PATH, path);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+    ASSERT(path->name != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pathList))
+    {
+        InfoManifestPath pathAdd =
+        {
+            .mode = path->mode,
+            .name = strDup(path->name),
+            .group = infoManifestOwnerCache(this, VARSTR(path->group)),
+            .user = infoManifestOwnerCache(this, VARSTR(path->user)),
+        };
+
+        lstAdd(this->pathList, &pathAdd);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Create new object
+***********************************************************************************************************************************/
+static InfoManifest *
+infoManifestNewInternal(void)
+{
+    FUNCTION_TEST_VOID();
+
+    // Create object
+    InfoManifest *this = memNew(sizeof(InfoManifest));
+    this->memContext = memContextCurrent();
+
+    // Create lists
+    this->dbList = lstNewParam(sizeof(InfoManifestDb), lstComparatorStr);
+    this->fileList = lstNewParam(sizeof(InfoManifestFile), lstComparatorStr);
+    this->linkList = lstNewParam(sizeof(InfoManifestLink), lstComparatorStr);
+    this->pathList = lstNewParam(sizeof(InfoManifestPath), lstComparatorStr);
+    this->ownerList = strLstNew();
+    this->referenceList = strLstNew();
+    this->targetList = lstNewParam(sizeof(InfoManifestTarget), lstComparatorStr);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
 Load manifest
 ***********************************************************************************************************************************/
 // Keep track of which values were found during load and which need to be loaded from defaults. There is no point in having
@@ -206,44 +391,6 @@ infoManifestOwnerDefaultGet(const String *ownerDefault)
     FUNCTION_TEST_RETURN(strEq(ownerDefault, FALSE_STR) ? BOOL_FALSE_VAR : varNewStr(jsonToStr(ownerDefault)));
 }
 
-// Helper to add owner to the owner list if it is not there already and return the pointer.  This saves a lot of space.
-static const String *
-infoManifestOwnerCache(InfoManifest *this, const Variant *owner)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
-        FUNCTION_TEST_PARAM(VARIANT, owner);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    const String *result = NULL;
-
-    if (varType(owner) == varTypeString)
-    {
-        // Search for the owner in the list
-        for (unsigned int ownerIdx = 0; ownerIdx < strLstSize(this->ownerList); ownerIdx++)
-        {
-            const String *found = strLstGet(this->ownerList, ownerIdx);
-
-            if (strEq(varStr(owner), found))
-            {
-                result = found;
-                break;
-            }
-        }
-
-        // If not found then add it
-        if (result == NULL)
-        {
-            strLstAdd(this->ownerList, varStr(owner));
-            result = strLstGet(this->ownerList, strLstSize(this->ownerList) - 1);
-        }
-    }
-
-    FUNCTION_TEST_RETURN(result);
-}
-
 static void
 infoManifestLoadCallback(void *callbackData, const String *section, const String *key, const String *value)
 {
@@ -262,7 +409,6 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
     InfoManifestLoadData *loadData = (InfoManifestLoadData *)callbackData;
     InfoManifest *infoManifest = loadData->infoManifest;
 
-
     // -----------------------------------------------------------------------------------------------------------------------------
     if (strEq(section, INFO_MANIFEST_SECTION_TARGET_FILE_STR))
     {
@@ -274,7 +420,8 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
 
             InfoManifestFile file =
             {
-                .name = strDup(key),
+                .name = key,
+                .reference = varStr(kvGetDefault(fileKv, INFO_MANIFEST_KEY_REFERENCE_VAR, NULL)),
                 .size = varUInt64(kvGet(fileKv, INFO_MANIFEST_KEY_SIZE_VAR)),
                 .timestamp = (time_t)varUInt64(kvGet(fileKv, INFO_MANIFEST_KEY_TIMESTAMP_VAR)),
             };
@@ -299,7 +446,7 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
                 const Variant *checksumPageErrorList = kvGetDefault(fileKv, INFO_MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
 
                 if (checksumPageErrorList != NULL)
-                    file.checksumPageErrorList = varLstDup(varVarLst(checksumPageErrorList));
+                    file.checksumPageErrorList = varVarLst(checksumPageErrorList);
             }
 
             if (kvKeyExists(fileKv, INFO_MANIFEST_KEY_GROUP_VAR))
@@ -320,30 +467,6 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
                 file.primary = varBool(kvGet(fileKv, INFO_MANIFEST_KEY_PRIMARY_VAR));
             }
 
-            const Variant *reference = kvGetDefault(fileKv, INFO_MANIFEST_KEY_REFERENCE_VAR, NULL);
-
-            if (reference != NULL)
-            {
-                // Search for the reference in the list
-                for (unsigned int referenceIdx = 0; referenceIdx < strLstSize(infoManifest->referenceList); referenceIdx++)
-                {
-                    const String *found = strLstGet(infoManifest->referenceList, referenceIdx);
-
-                    if (strEq(varStr(reference), found))
-                    {
-                        file.reference = found;
-                        break;
-                    }
-                }
-
-                // If not found then add it
-                if (file.reference == NULL)
-                {
-                    strLstAdd(infoManifest->referenceList, varStr(reference));
-                    file.reference = strLstGet(infoManifest->referenceList, strLstSize(infoManifest->referenceList) - 1);
-                }
-            }
-
             if (kvKeyExists(fileKv, INFO_MANIFEST_KEY_USER_VAR))
             {
                 valueFound.user = true;
@@ -351,7 +474,7 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
             }
 
             lstAdd(loadData->fileFoundList, &valueFound);
-            lstAdd(infoManifest->fileList, &file);
+            infoManifestFileAdd(infoManifest, &file);
         }
         MEM_CONTEXT_END();
     }
@@ -367,7 +490,7 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
 
             InfoManifestPath path =
             {
-                .name = strDup(key),
+                .name = key,
             };
 
             if (kvKeyExists(pathKv, INFO_MANIFEST_KEY_GROUP_VAR))
@@ -389,7 +512,7 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
             }
 
             lstAdd(loadData->pathFoundList, &valueFound);
-            lstAdd(infoManifest->pathList, &path);
+            infoManifestPathAdd(infoManifest, &path);
         }
         MEM_CONTEXT_END();
     }
@@ -480,22 +603,18 @@ infoManifestLoadCallback(void *callbackData, const String *section, const String
 
         ASSERT(strEq(targetType, INFO_MANIFEST_TARGET_TYPE_LINK_STR) || strEq(targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR));
 
-        MEM_CONTEXT_BEGIN(lstMemContext(infoManifest->targetList))
+        InfoManifestTarget target =
         {
-            InfoManifestTarget target =
-            {
-                .name = strDup(key),
-                .file = strDup(varStr(kvGetDefault(targetKv, INFO_MANIFEST_KEY_FILE_VAR, NULL))),
-                .path = strDup(varStr(kvGet(targetKv, INFO_MANIFEST_KEY_PATH_VAR))),
-                .tablespaceId =
-                    cvtZToUInt(strPtr(varStr(kvGetDefault(targetKv, INFO_MANIFEST_KEY_TABLESPACE_ID_VAR, VARSTRDEF("0"))))),
-                .tablespaceName = strDup(varStr(kvGetDefault(targetKv, INFO_MANIFEST_KEY_TABLESPACE_NAME_VAR, NULL))),
-                .type = strEq(targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR) ? manifestTargetTypePath : manifestTargetTypeLink,
-            };
+            .name = key,
+            .file = varStr(kvGetDefault(targetKv, INFO_MANIFEST_KEY_FILE_VAR, NULL)),
+            .path = varStr(kvGet(targetKv, INFO_MANIFEST_KEY_PATH_VAR)),
+            .tablespaceId =
+                cvtZToUInt(strPtr(varStr(kvGetDefault(targetKv, INFO_MANIFEST_KEY_TABLESPACE_ID_VAR, VARSTRDEF("0"))))),
+            .tablespaceName = varStr(kvGetDefault(targetKv, INFO_MANIFEST_KEY_TABLESPACE_NAME_VAR, NULL)),
+            .type = strEq(targetType, INFO_MANIFEST_TARGET_TYPE_PATH_STR) ? manifestTargetTypePath : manifestTargetTypeLink,
+        };
 
-            lstAdd(infoManifest->targetList, &target);
-        }
-        MEM_CONTEXT_END();
+        infoManifestTargetAdd(infoManifest, &target);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -613,18 +732,7 @@ infoManifestNewLoad(IoRead *read)
 
     MEM_CONTEXT_NEW_BEGIN("InfoManifest")
     {
-        // Create object
-        this = memNew(sizeof(InfoManifest));
-        this->memContext = MEM_CONTEXT_NEW();
-
-        // Create lists
-        this->dbList = lstNewParam(sizeof(InfoManifestDb), lstComparatorStr);
-        this->fileList = lstNewParam(sizeof(InfoManifestFile), lstComparatorStr);
-        this->linkList = lstNewParam(sizeof(InfoManifestLink), lstComparatorStr);
-        this->pathList = lstNewParam(sizeof(InfoManifestPath), lstComparatorStr);
-        this->ownerList = strLstNew();
-        this->referenceList = strLstNew();
-        this->targetList = lstNewParam(sizeof(InfoManifestTarget), lstComparatorStr);
+        this = infoManifestNewInternal();
 
         // Load the manifest
         InfoManifestLoadData loadData =
@@ -1263,6 +1371,31 @@ infoManifestTargetFind(const InfoManifest *this, const String *name)
         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strPtr(name));
 
     FUNCTION_TEST_RETURN(result);
+}
+
+void
+infoManifestTargetUpdate(const InfoManifest *this, const String *name, const String *path)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(STRING, path);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+    ASSERT(path != NULL);
+
+    InfoManifestTarget *target = (InfoManifestTarget *)infoManifestTargetFind(this, name);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
+    {
+        if (!strEq(target->path, path))
+            target->path = strDup(path);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

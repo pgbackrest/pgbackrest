@@ -89,8 +89,6 @@ Path type
 typedef struct InfoManifestPath
 {
     const String *name;                                             // Path name (must be first member in struct)
-    bool base:1;                                                    // Is this the base path?
-    bool db:1;                                                      // Does this path contain db relation files?
     mode_t mode;                                                    // Directory mode
     const String *user;                                             // User name
     const String *group;                                            // Group name
@@ -155,6 +153,7 @@ const InfoManifestTarget *infoManifestTargetFind(const InfoManifest *this, const
 const InfoManifestTarget *infoManifestTargetFindDefault(
     const InfoManifest *this, const String *name, const InfoManifestTarget *targetDefault);
 unsigned int infoManifestTargetTotal(const InfoManifest *this);
+void infoManifestTargetUpdate(const InfoManifest *this, const String *name, const String *path);
 
 /***********************************************************************************************************************************
 Getters
@@ -173,6 +172,16 @@ Macros for function logging
     InfoManifest *
 #define FUNCTION_LOG_INFO_MANIFEST_FORMAT(value, buffer, bufferSize)                                                               \
     objToLog(value, "InfoManifest", buffer, bufferSize)
+
+#define FUNCTION_LOG_INFO_MANIFEST_FILE_TYPE                                                                                       \
+    InfoManifestFile *
+#define FUNCTION_LOG_INFO_MANIFEST_FILE_FORMAT(value, buffer, bufferSize)                                                          \
+    objToLog(value, "InfoManifestFile", buffer, bufferSize)
+
+#define FUNCTION_LOG_INFO_MANIFEST_PATH_TYPE                                                                                       \
+    InfoManifestPath *
+#define FUNCTION_LOG_INFO_MANIFEST_PATH_FORMAT(value, buffer, bufferSize)                                                          \
+    objToLog(value, "InfoManifestPath", buffer, bufferSize)
 
 #define FUNCTION_LOG_INFO_MANIFEST_TARGET_TYPE                                                                                     \
     InfoManifestTarget *

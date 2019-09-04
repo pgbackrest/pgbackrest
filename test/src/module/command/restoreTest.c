@@ -246,13 +246,16 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdRestore()"))
     {
+        const String *pgPath = strNewFmt("%s/pg", testPath());
+        const String *repoPath = strNewFmt("%s/repo", testPath());
+
         // Locality error
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--pg1-host=pg1");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
@@ -264,8 +267,8 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -356,8 +359,8 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--set=BOGUS");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
@@ -369,8 +372,8 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--set=20161219-212741F_20161219-212803D");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
@@ -431,6 +434,15 @@ testRun(void)
         );
 
         InfoManifest *manifest = infoManifestNewLoad(ioBufferReadNew(contentLoad));
+
+        // InfoManifest *manifest = infoManifestNewInternal();
+        // InfoManifestTarget targetBase = {.name = INFO_MANIFEST_TARGET_PGDATA_STR, .path = pgPath};
+        // infoManifestTargetAdd(manifest, &targetBase);
+        // InfoManifestPath pathBase = {.name = pgPath};
+        // infoManifestPathAdd(manifest, &pathBase);
+        // InfoManifestFile fileVersion = {.name = STRDEF(INFO_MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .primary = false};
+        // infoManifestFileAdd(manifest, &fileVersion);
+
         infoManifestSave(
             manifest,
             storageWriteIo(
@@ -442,8 +454,8 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
@@ -520,8 +532,8 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--set=20161219-212741F_20161219-212918I");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
