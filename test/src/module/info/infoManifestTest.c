@@ -80,6 +80,8 @@ testRun(void)
 
         TEST_ASSIGN(manifest, infoManifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
 
+        TEST_ERROR(
+            infoManifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
         TEST_RESULT_STR(strPtr(infoManifestData(manifest)->backupLabel), "20190808-163540F", "    check manifest data");
 
         Buffer *contentSave = bufNew(0);

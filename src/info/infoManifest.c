@@ -22,6 +22,8 @@ Constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(INFO_MANIFEST_FILE_STR,                               INFO_MANIFEST_FILE);
 
+STRING_EXTERN(INFO_MANIFEST_TARGET_PGDATA_STR,                      INFO_MANIFEST_TARGET_PGDATA);
+
 STRING_STATIC(INFO_MANIFEST_TARGET_TYPE_LINK_STR,                   "link");
 STRING_STATIC(INFO_MANIFEST_TARGET_TYPE_PATH_STR,                   "path");
 
@@ -616,13 +618,13 @@ infoManifestNewLoad(IoRead *read)
         this->memContext = MEM_CONTEXT_NEW();
 
         // Create lists
-        this->dbList = lstNew(sizeof(InfoManifestDb));
-        this->fileList = lstNew(sizeof(InfoManifestFile));
-        this->linkList = lstNew(sizeof(InfoManifestLink));
-        this->pathList = lstNew(sizeof(InfoManifestPath));
+        this->dbList = lstNewParam(sizeof(InfoManifestDb), lstComparatorStr);
+        this->fileList = lstNewParam(sizeof(InfoManifestFile), lstComparatorStr);
+        this->linkList = lstNewParam(sizeof(InfoManifestLink), lstComparatorStr);
+        this->pathList = lstNewParam(sizeof(InfoManifestPath), lstComparatorStr);
         this->ownerList = strLstNew();
         this->referenceList = strLstNew();
-        this->targetList = lstNew(sizeof(InfoManifestTarget));
+        this->targetList = lstNewParam(sizeof(InfoManifestTarget), lstComparatorStr);
 
         // Load the manifest
         InfoManifestLoadData loadData =
@@ -689,6 +691,10 @@ infoManifestNewLoad(IoRead *read)
                 path->user = infoManifestOwnerCache(this, loadData.pathUserDefault);
         }
 
+        // Make sure the base path exists
+        infoManifestTargetFind(this, INFO_MANIFEST_TARGET_PGDATA_STR);
+
+        // Free the context holding temporary load data
         memContextFree(loadData.memContext);
     }
     MEM_CONTEXT_NEW_END();
@@ -893,9 +899,9 @@ infoManifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            for (unsigned int targetIdx = 0; targetIdx < lstSize(infoManifest->targetList); targetIdx++)
+            for (unsigned int targetIdx = 0; targetIdx < infoManifestTargetTotal(infoManifest); targetIdx++)
             {
-                InfoManifestTarget *target = lstGet(infoManifest->targetList, targetIdx);
+                const InfoManifestTarget *target = infoManifestTarget(infoManifest, targetIdx);
                 KeyValue *targetKv = kvNew();
 
                 if (target->file != NULL)
@@ -1195,6 +1201,68 @@ infoManifestData(const InfoManifest *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(&this->data);
+}
+
+/***********************************************************************************************************************************
+Return target total and target by index
+***********************************************************************************************************************************/
+unsigned int
+infoManifestTargetTotal(const InfoManifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstSize(this->targetList));
+}
+
+const InfoManifestTarget *
+infoManifestTarget(const InfoManifest *this, unsigned int targetIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(UINT, targetIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstGet(this->targetList, targetIdx));
+}
+
+const InfoManifestTarget *
+infoManifestTargetFindDefault(const InfoManifest *this, const String *name, const InfoManifestTarget *targetDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(INFO_MANIFEST_TARGET, targetDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->targetList, &name, (void *)targetDefault));
+}
+
+const InfoManifestTarget *
+infoManifestTargetFind(const InfoManifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    const InfoManifestTarget *result = infoManifestTargetFindDefault(this, name, NULL);
+
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strPtr(name));
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

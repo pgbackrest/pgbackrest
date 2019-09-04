@@ -14,6 +14,9 @@ Constants
 #define INFO_MANIFEST_FILE                                          "backup.manifest"
     STRING_DECLARE(INFO_MANIFEST_FILE_STR);
 
+#define INFO_MANIFEST_TARGET_PGDATA                                 "pg_data"
+    STRING_DECLARE(INFO_MANIFEST_TARGET_PGDATA_STR);
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -72,7 +75,7 @@ typedef enum
 
 typedef struct InfoManifestTarget
 {
-    const String *name;                                             // Target name
+    const String *name;                                             // Target name (must be first member in struct)
     ManifestTargetType type;                                        // Target type
     const String *path;                                             // Target path (if path or link)
     const String *file;                                             // Target file (if file link)
@@ -85,7 +88,7 @@ Path type
 ***********************************************************************************************************************************/
 typedef struct InfoManifestPath
 {
-    const String *name;                                             // Path name
+    const String *name;                                             // Path name (must be first member in struct)
     bool base:1;                                                    // Is this the base path?
     bool db:1;                                                      // Does this path contain db relation files?
     mode_t mode;                                                    // Directory mode
@@ -98,7 +101,7 @@ File type
 ***********************************************************************************************************************************/
 typedef struct InfoManifestFile
 {
-    const String *name;                                             // File name
+    const String *name;                                             // File name (must be first member in struct)
     bool primary:1;                                                 // Should this file be copied from the primary?
     bool checksumPage:1;                                            // Does this file have page checksums?
     bool checksumPageError:1;                                       // Is there an error in the page checksum?
@@ -118,7 +121,7 @@ Link type
 ***********************************************************************************************************************************/
 typedef struct InfoManifestLink
 {
-    const String *name;                                             // Link name
+    const String *name;                                             // Link name (must be first member in struct)
     const String *destination;                                      // Link destination
     const String *user;                                             // User name
     const String *group;                                            // Group name
@@ -129,7 +132,7 @@ Db type
 ***********************************************************************************************************************************/
 typedef struct InfoManifestDb
 {
-    const String *name;                                             // Db name
+    const String *name;                                             // Db name (must be first member in struct)
     unsigned int id;                                                // Db oid
     unsigned int lastSystemId;                                      // Highest oid used by system objects in this database
 } InfoManifestDb;
@@ -143,6 +146,15 @@ InfoManifest *infoManifestNewLoad(IoRead *read);
 Functions
 ***********************************************************************************************************************************/
 void infoManifestSave(InfoManifest *this, IoWrite *write);
+
+/***********************************************************************************************************************************
+Target functions and getters/setters
+***********************************************************************************************************************************/
+const InfoManifestTarget *infoManifestTarget(const InfoManifest *this, unsigned int targetIdx);
+const InfoManifestTarget *infoManifestTargetFind(const InfoManifest *this, const String *name);
+const InfoManifestTarget *infoManifestTargetFindDefault(
+    const InfoManifest *this, const String *name, const InfoManifestTarget *targetDefault);
+unsigned int infoManifestTargetTotal(const InfoManifest *this);
 
 /***********************************************************************************************************************************
 Getters
@@ -161,5 +173,10 @@ Macros for function logging
     InfoManifest *
 #define FUNCTION_LOG_INFO_MANIFEST_FORMAT(value, buffer, bufferSize)                                                               \
     objToLog(value, "InfoManifest", buffer, bufferSize)
+
+#define FUNCTION_LOG_INFO_MANIFEST_TARGET_TYPE                                                                                     \
+    InfoManifestTarget *
+#define FUNCTION_LOG_INFO_MANIFEST_TARGET_FORMAT(value, buffer, bufferSize)                                                        \
+    objToLog(value, "InfoManifestTarget", buffer, bufferSize)
 
 #endif

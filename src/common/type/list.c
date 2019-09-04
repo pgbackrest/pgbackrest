@@ -22,6 +22,7 @@ struct List
     unsigned int listSize;
     unsigned int listSizeMax;
     unsigned char *list;
+    ListComparator *comparator;
 };
 
 OBJECT_DEFINE_MOVE(LIST);
@@ -33,7 +34,9 @@ Create a new list
 List *
 lstNew(size_t itemSize)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, itemSize);
+    FUNCTION_TEST_END();
 
     List *this = NULL;
 
@@ -43,6 +46,32 @@ lstNew(size_t itemSize)
         this = memNew(sizeof(List));
         this->memContext = MEM_CONTEXT_NEW();
         this->itemSize = itemSize;
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Create a new list with parameters
+***********************************************************************************************************************************/
+List *
+lstNewParam(size_t itemSize, ListComparator *comparator)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, itemSize);
+        FUNCTION_TEST_PARAM(FUNCTIONP, comparator);
+    FUNCTION_TEST_END();
+
+    List *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("List")
+    {
+        // Create object
+        this = memNew(sizeof(List));
+        this->memContext = MEM_CONTEXT_NEW();
+        this->itemSize = itemSize;
+        this->comparator = comparator;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -96,6 +125,25 @@ lstClear(List *this)
 }
 
 /***********************************************************************************************************************************
+Compare Strings or structs with a String as the first member
+***********************************************************************************************************************************/
+int
+lstComparatorStr(const void *item1, const void *item2)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
+    FUNCTION_TEST_END();
+
+    ASSERT(item1 != NULL);
+    ASSERT(*(String **)item1 != NULL);
+    ASSERT(item2 != NULL);
+    ASSERT(*(String **)item2 != NULL);
+
+    FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
+}
+
+/***********************************************************************************************************************************
 Get an item from the list
 ***********************************************************************************************************************************/
 void *
@@ -114,6 +162,35 @@ lstGet(const List *this, unsigned int listIdx)
 
     // Return pointer to list item
     FUNCTION_TEST_RETURN(this->list + (listIdx * this->itemSize));
+}
+
+/***********************************************************************************************************************************
+Find an item in the list
+***********************************************************************************************************************************/
+void *
+lstFindDefault(const List *this, void *item, void *itemDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+        FUNCTION_TEST_PARAM_P(VOID, item);
+        FUNCTION_TEST_PARAM_P(VOID, itemDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(item != NULL);
+
+    void *result = NULL;
+
+    for (unsigned int listIdx = 0; listIdx < lstSize(this); listIdx++)
+    {
+        if (this->comparator(item, lstGet(this, listIdx)) == 0)
+        {
+            result = lstGet(this, listIdx);
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN(result == NULL ? itemDefault : result);
 }
 
 /***********************************************************************************************************************************

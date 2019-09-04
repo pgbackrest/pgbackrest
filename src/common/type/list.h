@@ -21,12 +21,24 @@ Define initial size of a list
 #define LIST_INITIAL_SIZE                                           8
 
 /***********************************************************************************************************************************
+Function type for comparing items in the list
+
+The return value should be -1 when item1 < item2, 0 when item1 == item2, and 1 when item2 > item1.
+***********************************************************************************************************************************/
+typedef int ListComparator(const void *item1, const void *item2);
+
+// General purpose list comparator for Strings structs with a String as the first member
+int lstComparatorStr(const void *item1, const void *item2);
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 List *lstNew(size_t itemSize);
+List *lstNewParam(size_t itemSize, ListComparator *comparator);
 List *lstAdd(List *this, const void *item);
 List *lstClear(List *this);
 void *lstGet(const List *this, unsigned int listIdx);
+void *lstFindDefault(const List *this, void *item, void *itemDefault);
 List *lstInsert(List *this, unsigned int listIdx, const void *item);
 List *lstRemove(List *this, unsigned int listIdx);
 MemContext *lstMemContext(const List *this);

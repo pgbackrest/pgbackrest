@@ -29,7 +29,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("lstNew(), lstMemContext(), lstToLog(), and lstFree()"))
+    if (testBegin("lstNew*(), lstMemContext(), lstToLog(), and lstFree()"))
     {
         List *list = lstNew(sizeof(void *));
 
@@ -49,6 +49,17 @@ testRun(void)
         TEST_RESULT_VOID(lstFree(list), "free list");
         TEST_RESULT_VOID(lstFree(lstNew(1)), "free empty list");
         TEST_RESULT_VOID(lstFree(NULL), "free null list");
+
+        TEST_ASSIGN(list, lstNewParam(sizeof(String *), lstComparatorStr), "new list with params");
+
+        String *string1 = strNew("string1");
+        TEST_RESULT_VOID(lstAdd(list, &string1), "    add string1");
+        String *string2 = strNew("string2");
+        TEST_RESULT_VOID(lstAdd(list, &string2), "    add string2");
+
+        String *string3 = strNew("string3");
+        TEST_RESULT_PTR(lstFindDefault(list, &string3, (void *)1), (void *)1, "    find string3 returns default");
+        TEST_RESULT_STR(strPtr(*(String **)lstFindDefault(list, &string2, NULL)), "string2", "    find string2");
     }
 
     // *****************************************************************************************************************************
