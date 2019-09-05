@@ -38,6 +38,71 @@ restoreManifestRemap(InfoManifest *manifest)
         infoManifestTargetUpdate(manifest, targetBase->name, pgPath);
     }
 
+    // Remap individual tablespaces
+    StringList *tablespaceRemapped = strLstNew();
+
+    if (cfgOptionTest(cfgOptTablespaceMap))
+    {
+        // Iterate the list of tablespaces to be remapped
+        KeyValue tablespaceMap = cfgOptionKv(cfgOptTablespaceMap);
+        StringList tablespaceList = kvKeyList(tablespaceMap);
+
+        for (unsigned int tablespaceIdx = 0; tablespaceIdx < varLstSize(tablespaceList); tablespaceIdx++)
+        {
+            // Get tablespace target
+            const InfoManifestTarget *target = infoManifestTargetFindDefault(
+                manifest, varStr(varLstGet(tablespaceList, tablespaceIdx)), NULL);
+
+            if (target == NULL)
+                THROW_FMT(ErrorTablespaceMap, "unable to remap invalid tablespace '%s'", , strPtr(tablespace));
+
+            // Error if this tablespace has already been remapped
+            if (strListExists(tablespaceRemapped))
+                THROW_FMT(ErrorTablespaceMap, "tablespace '%s' has already been remapped", strPtr(tablespace));
+
+            strLstAdd(tablespaceRemapped, tablespace);
+
+            // Remap tablespace
+            infoManifestTargetUpdate(manifest,
+            const String *tablespace = varStr(varLstGet(tablespaceList, tablespaceIdx));
+            const String *tablespacePath = kvGet(tablespaceMap, VARSTR(tablespace));
+        }
+        // my $oTablespaceRemapRequest = cfgOption(CFGOPT_TABLESPACE_MAP);
+        //
+        // for my $strKey (sort(keys(%{$oTablespaceRemapRequest})))
+        // {
+        //     my $bFound = false;
+        //
+        //     for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
+        //     {
+        //         if ($oManifest->test(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_TABLESPACE_ID, $strKey) ||
+        //             $oManifest->test(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_TABLESPACE_NAME, $strKey))
+        //         {
+        //             if (defined(${$oTablespaceRemap}{$strTarget}))
+        //             {
+        //                 confess &log(ERROR, "tablespace ${strKey} has already been remapped to ${$oTablespaceRemap}{$strTarget}",
+        //                              ERROR_TABLESPACE_MAP);
+        //             }
+        //
+        //             ${$oTablespaceRemap}{$strTarget} = ${$oTablespaceRemapRequest}{$strKey};
+        //             $bFound = true;
+        //         }
+        //     }
+        //
+        //     # Error if the tablespace was not found to be remapped
+        //     if (!$bFound)
+        //     {
+        //         confess &log(ERROR, "cannot remap invalid tablespace ${strKey} to ${$oTablespaceRemapRequest}{$strKey}",
+        //                      ERROR_TABLESPACE_MAP);
+        //     }
+        // }
+    }
+
+    // Remap all tablespaces except those already remapped individually
+        if (cfgOptionTest(cfgOptTablespaceMapAll))
+    {
+    }
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
