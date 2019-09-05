@@ -324,7 +324,7 @@ infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sec
 }
 
 /***********************************************************************************************************************************
-Save a value and update checksum
+Save a JSON formatted value and update checksum
 ***********************************************************************************************************************************/
 void
 infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value)
