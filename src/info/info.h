@@ -44,7 +44,7 @@ Functions
 ***********************************************************************************************************************************/
 void infoSave(Info *this, IoWrite *write, InfoSaveCallback callbackFunction, void *callbackData);
 bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext);
-void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value);
+void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue);
 
 /***********************************************************************************************************************************
 Getters

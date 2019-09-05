@@ -327,19 +327,19 @@ infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sec
 Save a JSON formatted value and update checksum
 ***********************************************************************************************************************************/
 void
-infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *value)
+infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, value);
+        FUNCTION_TEST_PARAM(STRING, jsonValue);
     FUNCTION_TEST_END();
 
     ASSERT(infoSaveData != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
-    ASSERT(value != NULL);
+    ASSERT(jsonValue != NULL);
 
     // Save section
     if (infoSaveData->sectionLast == NULL || !strEq(section, infoSaveData->sectionLast))
@@ -366,11 +366,11 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
         INFO_CHECKSUM_KEY_VALUE_NEXT(infoSaveData->checksum);
 
     // Save key/value
-    INFO_CHECKSUM_KEY_VALUE(infoSaveData->checksum, key, value);
+    INFO_CHECKSUM_KEY_VALUE(infoSaveData->checksum, key, jsonValue);
 
     ioWrite(infoSaveData->write, BUFSTR(key));
     ioWrite(infoSaveData->write, EQ_BUF);
-    ioWriteLine(infoSaveData->write, BUFSTR(value));
+    ioWriteLine(infoSaveData->write, BUFSTR(jsonValue));
 
     FUNCTION_TEST_RETURN_VOID();
 }
