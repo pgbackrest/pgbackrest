@@ -16,7 +16,7 @@ Test Restore Command
 /***********************************************************************************************************************************
 Build a simple manifest for testing
 ***********************************************************************************************************************************/
-static InfoManifest *
+static Manifest *
 testManifestMinimal(const String *label, unsigned int pgVersion, const String *pgPath)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -29,11 +29,11 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
     ASSERT(pgVersion != 0);
     ASSERT(pgPath != NULL);
 
-    InfoManifest *result = NULL;
+    Manifest *result = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("InfoManifest")
+    MEM_CONTEXT_NEW_BEGIN("Manifest")
     {
-        result = infoManifestNewInternal();
+        result = manifestNewInternal();
         result->info = infoNew(NULL);
 
         result->data.backupLabel = strDup(label);
@@ -46,16 +46,16 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
         else
             result->data.backupType = backupTypeFull;
 
-        InfoManifestTarget targetBase = {.name = INFO_MANIFEST_TARGET_PGDATA_STR, .path = pgPath};
-        infoManifestTargetAdd(result, &targetBase);
-        InfoManifestPath pathBase = {.name = pgPath};
-        infoManifestPathAdd(result, &pathBase);
-        InfoManifestFile fileVersion = {.name = STRDEF(INFO_MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .mode = 0600};
-        infoManifestFileAdd(result, &fileVersion);
+        ManifestTarget targetBase = {.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath};
+        manifestTargetAdd(result, &targetBase);
+        ManifestPath pathBase = {.name = pgPath};
+        manifestPathAdd(result, &pathBase);
+        ManifestFile fileVersion = {.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .mode = 0600};
+        manifestFileAdd(result, &fileVersion);
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_HARNESS_RESULT(INFO_MANIFEST, result);
+    FUNCTION_HARNESS_RESULT(MANIFEST, result);
 }
 
 /***********************************************************************************************************************************
@@ -294,7 +294,7 @@ testRun(void)
     {
         const String *pgPath = strNewFmt("%s/pg", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
-        InfoManifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_94, pgPath);
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_94, pgPath);
 
         // Remap data directory
         // -------------------------------------------------------------------------------------------------------------------------
@@ -309,7 +309,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestRemap(manifest), "base directory is not remapped");
         TEST_RESULT_STR(
-            strPtr(infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR)->path), strPtr(pgPath),
+            strPtr(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path), strPtr(pgPath),
             "base directory is not remapped");
 
         // Now change pg1-path so the data directory gets remapped
@@ -326,7 +326,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestRemap(manifest), "base directory is remapped");
         TEST_RESULT_STR(
-            strPtr(infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR)->path), strPtr(pgPath),
+            strPtr(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path), strPtr(pgPath),
             "base directory is remapped");
         harnessLogResult(strPtr(strNewFmt("P00   INFO: remap data directory to '%s/pg2'", testPath())));
     }
@@ -476,13 +476,13 @@ testRun(void)
                 " '%s/repo/backup/test1/20161219-212741F_20161219-212803D/backup.manifest.copy' for read",
             testPath(), testPath(), testPath(), testPath());
 
-        InfoManifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-212918I"), PG_VERSION_94, pgPath);
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-212918I"), PG_VERSION_94, pgPath);
 
-        infoManifestSave(
+        manifestSave(
             manifest,
             storageWriteIo(
                 storageNewWriteNP(storageRepoWrite(),
-                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" INFO_MANIFEST_FILE))));
+                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" MANIFEST_FILE))));
 
         // PGDATA directory does not look valid
         // -------------------------------------------------------------------------------------------------------------------------
@@ -543,11 +543,11 @@ testRun(void)
         const String *oldLabel = manifest->data.backupLabel;
         manifest->data.backupLabel = STRDEF("20161219-212741F");
 
-        infoManifestSave(
+        manifestSave(
             manifest,
             storageWriteIo(
                 storageNewWriteNP(storageRepoWrite(),
-                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" INFO_MANIFEST_FILE))));
+                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" MANIFEST_FILE))));
 
         TEST_ERROR(
             cmdRestore(), FormatError,
@@ -556,11 +556,11 @@ testRun(void)
 
         manifest->data.backupLabel = oldLabel;
 
-        infoManifestSave(
+        manifestSave(
             manifest,
             storageWriteIo(
                 storageNewWriteNP(storageRepoWrite(),
-                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" INFO_MANIFEST_FILE))));
+                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" MANIFEST_FILE))));
 
         // SUCCESS TEST FOR COVERAGE -- WILL BE REMOVED / MODIFIED AT SOME POINT
         // -------------------------------------------------------------------------------------------------------------------------

@@ -12,7 +12,7 @@ Expire Command
 #include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/infoManifest.h"
+#include "info/manifest.h"
 #include "storage/helper.h"
 
 #include <stdlib.h>
@@ -100,10 +100,10 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(backupExpired != NULL);
 
     storageRemoveNP(
-        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(removeBackupLabel)));
+        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(removeBackupLabel)));
 
     storageRemoveNP(
-        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
+        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
 
     // Remove the backup from the info file
     infoBackupDataDelete(infoBackup, removeBackupLabel);

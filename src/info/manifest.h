@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Manifest Info Handler
+Manifest Handler
 ***********************************************************************************************************************************/
 #ifndef INFO_INFOMANIFEST_H
 #define INFO_INFOMANIFEST_H
@@ -11,16 +11,16 @@ Manifest Info Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define INFO_MANIFEST_FILE                                          "backup.manifest"
-    STRING_DECLARE(INFO_MANIFEST_FILE_STR);
+#define MANIFEST_FILE                                               "backup.manifest"
+    STRING_DECLARE(MANIFEST_FILE_STR);
 
-#define INFO_MANIFEST_TARGET_PGDATA                                 "pg_data"
-    STRING_DECLARE(INFO_MANIFEST_TARGET_PGDATA_STR);
+#define MANIFEST_TARGET_PGDATA                                      "pg_data"
+    STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct InfoManifest InfoManifest;
+typedef struct Manifest Manifest;
 
 #include "common/crypto/hash.h"
 #include "storage/storage.h"
@@ -28,7 +28,7 @@ typedef struct InfoManifest InfoManifest;
 /***********************************************************************************************************************************
 Manifest data
 ***********************************************************************************************************************************/
-typedef struct InfoManifestData
+typedef struct ManifestData
 {
     const String *backupLabel;                                      // Backup label (unique identifier for the backup)
     const String *backupLabelPrior;                                 // Backup label for backup this diff/incr is based on
@@ -62,7 +62,7 @@ typedef struct InfoManifestData
     bool backupOptionHardLink;                                      // Will hardlinks be created in the backup?
     bool backupOptionOnline;                                        // Will an online backup be performed?
     const Variant *backupOptionProcessMax;                          // How many processes will be used for backup?
-} InfoManifestData;
+} ManifestData;
 
 /***********************************************************************************************************************************
 Target type
@@ -73,7 +73,7 @@ typedef enum
     manifestTargetTypeLink,
 } ManifestTargetType;
 
-typedef struct InfoManifestTarget
+typedef struct ManifestTarget
 {
     const String *name;                                             // Target name (must be first member in struct)
     ManifestTargetType type;                                        // Target type
@@ -81,23 +81,23 @@ typedef struct InfoManifestTarget
     const String *file;                                             // Target file (if file link)
     unsigned int tablespaceId;                                      // Oid if this link is a tablespace
     const String *tablespaceName;                                   // Name of the tablespace
-} InfoManifestTarget;
+} ManifestTarget;
 
 /***********************************************************************************************************************************
 Path type
 ***********************************************************************************************************************************/
-typedef struct InfoManifestPath
+typedef struct ManifestPath
 {
     const String *name;                                             // Path name (must be first member in struct)
     mode_t mode;                                                    // Directory mode
     const String *user;                                             // User name
     const String *group;                                            // Group name
-} InfoManifestPath;
+} ManifestPath;
 
 /***********************************************************************************************************************************
 File type
 ***********************************************************************************************************************************/
-typedef struct InfoManifestFile
+typedef struct ManifestFile
 {
     const String *name;                                             // File name (must be first member in struct)
     bool primary:1;                                                 // Should this file be copied from the primary?
@@ -112,80 +112,79 @@ typedef struct InfoManifestFile
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
-} InfoManifestFile;
+} ManifestFile;
 
 /***********************************************************************************************************************************
 Link type
 ***********************************************************************************************************************************/
-typedef struct InfoManifestLink
+typedef struct ManifestLink
 {
     const String *name;                                             // Link name (must be first member in struct)
     const String *destination;                                      // Link destination
     const String *user;                                             // User name
     const String *group;                                            // Group name
-} InfoManifestLink;
+} ManifestLink;
 
 /***********************************************************************************************************************************
 Db type
 ***********************************************************************************************************************************/
-typedef struct InfoManifestDb
+typedef struct ManifestDb
 {
     const String *name;                                             // Db name (must be first member in struct)
     unsigned int id;                                                // Db oid
     unsigned int lastSystemId;                                      // Highest oid used by system objects in this database
-} InfoManifestDb;
+} ManifestDb;
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoManifest *infoManifestNewLoad(IoRead *read);
+Manifest *manifestNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void infoManifestSave(InfoManifest *this, IoWrite *write);
+void manifestSave(Manifest *this, IoWrite *write);
 
 /***********************************************************************************************************************************
 Target functions and getters/setters
 ***********************************************************************************************************************************/
-const InfoManifestTarget *infoManifestTarget(const InfoManifest *this, unsigned int targetIdx);
-const InfoManifestTarget *infoManifestTargetFind(const InfoManifest *this, const String *name);
-const InfoManifestTarget *infoManifestTargetFindDefault(
-    const InfoManifest *this, const String *name, const InfoManifestTarget *targetDefault);
-unsigned int infoManifestTargetTotal(const InfoManifest *this);
-void infoManifestTargetUpdate(const InfoManifest *this, const String *name, const String *path);
+const ManifestTarget *manifestTarget(const Manifest *this, unsigned int targetIdx);
+const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
+const ManifestTarget *manifestTargetFindDefault(const Manifest *this, const String *name, const ManifestTarget *targetDefault);
+unsigned int manifestTargetTotal(const Manifest *this);
+void manifestTargetUpdate(const Manifest *this, const String *name, const String *path);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-const InfoManifestData *infoManifestData(const InfoManifest *this);
+const ManifestData *manifestData(const Manifest *this);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-InfoManifest *infoManifestLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+Manifest *manifestLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_INFO_MANIFEST_TYPE                                                                                            \
-    InfoManifest *
-#define FUNCTION_LOG_INFO_MANIFEST_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "InfoManifest", buffer, bufferSize)
+#define FUNCTION_LOG_MANIFEST_TYPE                                                                                                 \
+    Manifest *
+#define FUNCTION_LOG_MANIFEST_FORMAT(value, buffer, bufferSize)                                                                    \
+    objToLog(value, "Manifest", buffer, bufferSize)
 
-#define FUNCTION_LOG_INFO_MANIFEST_FILE_TYPE                                                                                       \
-    InfoManifestFile *
-#define FUNCTION_LOG_INFO_MANIFEST_FILE_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(value, "InfoManifestFile", buffer, bufferSize)
+#define FUNCTION_LOG_MANIFEST_FILE_TYPE                                                                                            \
+    ManifestFile *
+#define FUNCTION_LOG_MANIFEST_FILE_FORMAT(value, buffer, bufferSize)                                                               \
+    objToLog(value, "ManifestFile", buffer, bufferSize)
 
-#define FUNCTION_LOG_INFO_MANIFEST_PATH_TYPE                                                                                       \
-    InfoManifestPath *
-#define FUNCTION_LOG_INFO_MANIFEST_PATH_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(value, "InfoManifestPath", buffer, bufferSize)
+#define FUNCTION_LOG_MANIFEST_PATH_TYPE                                                                                            \
+    ManifestPath *
+#define FUNCTION_LOG_MANIFEST_PATH_FORMAT(value, buffer, bufferSize)                                                               \
+    objToLog(value, "ManifestPath", buffer, bufferSize)
 
-#define FUNCTION_LOG_INFO_MANIFEST_TARGET_TYPE                                                                                     \
-    InfoManifestTarget *
-#define FUNCTION_LOG_INFO_MANIFEST_TARGET_FORMAT(value, buffer, bufferSize)                                                        \
-    objToLog(value, "InfoManifestTarget", buffer, bufferSize)
+#define FUNCTION_LOG_MANIFEST_TARGET_TYPE                                                                                          \
+    ManifestTarget *
+#define FUNCTION_LOG_MANIFEST_TARGET_FORMAT(value, buffer, bufferSize)                                                             \
+    objToLog(value, "ManifestTarget", buffer, bufferSize)
 
 #endif

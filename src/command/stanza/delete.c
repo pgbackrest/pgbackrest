@@ -11,8 +11,8 @@ Stanza Delete Command
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/infoManifest.h"
 #include "info/infoPg.h"
+#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
@@ -40,10 +40,10 @@ manifestDelete(const Storage *storageRepoWriteStanza)
     {
         storageRemoveNP(
             storageRepoWriteStanza,
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
         storageRemoveNP(
             storageRepoWriteStanza,
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
     }
 
     FUNCTION_TEST_RETURN_VOID();

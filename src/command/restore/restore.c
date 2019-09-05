@@ -10,7 +10,7 @@ Restore Command
 #include "common/log.h"
 #include "config/config.h"
 #include "info/infoBackup.h"
-#include "info/infoManifest.h"
+#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
@@ -20,22 +20,22 @@ Restore Command
 Remap the manifest based on mappings provided by the user
 ***********************************************************************************************************************************/
 static void
-restoreManifestRemap(InfoManifest *manifest)
+restoreManifestRemap(Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
 
     // Reassign the base path if specified
     const String *pgPath = cfgOptionStr(cfgOptPgPath);
-    const InfoManifestTarget *targetBase = infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR);
+    const ManifestTarget *targetBase = manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR);
 
     if (!strEq(targetBase->path, pgPath))
     {
         LOG_INFO("remap data directory to '%s'", strPtr(pgPath));
-        infoManifestTargetUpdate(manifest, targetBase->name, pgPath);
+        manifestTargetUpdate(manifest, targetBase->name, pgPath);
     }
 
     // Remap tablespaces
@@ -44,9 +44,9 @@ restoreManifestRemap(InfoManifest *manifest)
     //
     // if (tablespaceMap != NULL || tablespaceMapAllPath != NULL)
     // {
-    //     for (unsigned int targetIdx = 0; targetIdx < infoManifestTargetTotal(manifest); targetIdx++)
+    //     for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
     //     {
-    //         const InfoManifestTarget *target = infoManifestTarget(manifest, targetIdx);
+    //         const ManifestTarget *target = manifestTarget(manifest, targetIdx);
     //
     //         // Is this a tablespace?
     //         if (target->tablespaceId != 0)
@@ -58,7 +58,7 @@ restoreManifestRemap(InfoManifest *manifest)
     //                 tablespacePath = strNewFmt("%s/%s", strPtr(tablespaceMapAllPath), strPtr(target->tablespaceName));
     //
     //             // Get tablespace target
-    //             // const InfoManifestTarget *target = infoManifestTargetFindDefault(
+    //             // const ManifestTarget *target = manifestTargetFindDefault(
     //             //     manifest, varStr(varLstGet(tablespaceList, tablespaceIdx)), NULL);
     //
     //             // if (target == NULL || target->tablespaceId == 0)
@@ -73,10 +73,10 @@ restoreManifestRemap(InfoManifest *manifest)
     //             // Remap tablespace if a mapping was found
     //             if (tablespacePath != NULL)
     //             {
-    //                 infoManifestTargetUpdate(manifest, target->name, tablespacePath);
+    //                 manifestTargetUpdate(manifest, target->name, tablespacePath);
     //
     //                 // !!! And do the same thing for the link
-    //                 // infoManifestLinkUpdate(manifest, strNewFmt(INFO_MANIFEST_TARGET_PGDATA "/%s", strPtr(target->name), );
+    //                 // manifestLinkUpdate(manifest, strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(target->name), );
     //             }
     //         }
     //     }
@@ -119,10 +119,10 @@ cmdRestore(void)
 
         // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
         if ((cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)) &&
-            !storageExistsNP(storagePg(), STRDEF(PG_FILE_PGVERSION)) && !storageExistsNP(storagePg(), STRDEF(INFO_MANIFEST_FILE)))
+            !storageExistsNP(storagePg(), STRDEF(PG_FILE_PGVERSION)) && !storageExistsNP(storagePg(), STRDEF(MANIFEST_FILE)))
         {
             LOG_WARN(
-                "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" INFO_MANIFEST_FILE "' in '%s' to"
+                "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" MANIFEST_FILE "' in '%s' to"
                     " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                     " exist in the destination directories the restore will be aborted.",
                strPtr(cfgOptionStr(cfgOptPgPath)));
@@ -170,8 +170,8 @@ cmdRestore(void)
         }
 
         // Load manifest
-        InfoManifest *manifest = infoManifestLoadFile(
-            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet)),
+        Manifest *manifest = manifestLoadFile(
+            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupSet)),
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
 
         // !!! THIS IS TEMPORARY TO DOUBLE-CHECK THE C MANIFEST CODE.  LOAD THE ORIGINAL MANIFEST AND COMPARE IT TO WHAT WE WOULD
@@ -181,18 +181,18 @@ cmdRestore(void)
         {
             Buffer *manifestTestPerlBuffer = storageGetNP(
                 storageNewReadNP(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(backupSet))));
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupSet))));
 
             Buffer *manifestTestCBuffer = bufNew(0);
-            infoManifestSave(manifest, ioBufferWriteNew(manifestTestCBuffer));
+            manifestSave(manifest, ioBufferWriteNew(manifestTestCBuffer));
 
             if (!bufEq(manifestTestPerlBuffer, manifestTestCBuffer))                                // {uncovered_branch - !!! TEST}
             {
                 // Dump manifests to disk so we can check them with diff
                 storagePutNP(                                                                       // {uncovered - !!! TEST}
-                    storageNewWriteNP(storagePgWrite(), STRDEF(INFO_MANIFEST_FILE ".expected")), manifestTestPerlBuffer);
+                    storageNewWriteNP(storagePgWrite(), STRDEF(MANIFEST_FILE ".expected")), manifestTestPerlBuffer);
                 storagePutNP(                                                                       // {uncovered - !!! TEST}
-                    storageNewWriteNP(storagePgWrite(), STRDEF(INFO_MANIFEST_FILE ".actual")), manifestTestCBuffer);
+                    storageNewWriteNP(storagePgWrite(), STRDEF(MANIFEST_FILE ".actual")), manifestTestCBuffer);
 
                 THROW_FMT(                                                                          // {uncovered - !!! TEST}
                     AssertError, "C and Perl manifests are not equal, files saved to '%s'",
@@ -201,15 +201,15 @@ cmdRestore(void)
         }
 
         // Sanity check to ensure the manifest has not been moved to a new directory
-        const InfoManifestData *manifestData = infoManifestData(manifest);
+        const ManifestData *data = manifestData(manifest);
 
-        if (!strEq(manifestData->backupLabel, backupSet))
+        if (!strEq(data->backupLabel, backupSet))
         {
             THROW_FMT(
                 FormatError,
                 "requested backup '%s' and manifest label '%s' do not match\n"
                 "HINT: this indicates some sort of corruption (at the very least paths have been renamed).",
-                strPtr(backupSet), strPtr(manifestData->backupLabel));
+                strPtr(backupSet), strPtr(data->backupLabel));
         }
 
         // Log the backup set to restore
@@ -219,7 +219,7 @@ cmdRestore(void)
         restoreManifestRemap(manifest);
 
         // Save manifest before any modifications are made to PGDATA
-        infoManifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), INFO_MANIFEST_FILE_STR)));
+        manifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));
     }
     MEM_CONTEXT_TEMP_END();
 

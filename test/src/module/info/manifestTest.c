@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Manifest Info Handler
+Test Manifest Handler
 ***********************************************************************************************************************************/
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -22,15 +22,15 @@ testRun(void)
     {
         // Make sure the size of structs doesn't change without us knowing about it
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_UINT(sizeof(InfoManifestLoadFound), TEST_64BIT() ? 1 : 1, "check size of InfoManifestLoadFound");
-        TEST_RESULT_UINT(sizeof(InfoManifestPath), TEST_64BIT() ? 32 : 16, "check size of InfoManifestPath");
-        TEST_RESULT_UINT(sizeof(InfoManifestFile), TEST_64BIT() ? 120 : 92, "check size of InfoManifestFile");
+        TEST_RESULT_UINT(sizeof(ManifestLoadFound), TEST_64BIT() ? 1 : 1, "check size of ManifestLoadFound");
+        TEST_RESULT_UINT(sizeof(ManifestPath), TEST_64BIT() ? 32 : 16, "check size of ManifestPath");
+        TEST_RESULT_UINT(sizeof(ManifestFile), TEST_64BIT() ? 120 : 92, "check size of ManifestFile");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("infoManifestNewLoad() and infoManifestSave()"))
+    if (testBegin("manifestNewLoad() and manifestSave()"))
     {
-        InfoManifest *manifest = NULL;
+        Manifest *manifest = NULL;
 
         // Manifest with minimal features
         // -------------------------------------------------------------------------------------------------------------------------
@@ -78,24 +78,24 @@ testRun(void)
             "user=\"user1\"\n"
         );
 
-        TEST_ASSIGN(manifest, infoManifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
+        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
 
         TEST_ERROR(
-            infoManifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
-        TEST_RESULT_STR(strPtr(infoManifestData(manifest)->backupLabel), "20190808-163540F", "    check manifest data");
+            manifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
+        TEST_RESULT_STR(strPtr(manifestData(manifest)->backupLabel), "20190808-163540F", "    check manifest data");
 
         TEST_RESULT_VOID(
-            infoManifestTargetUpdate(manifest, INFO_MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    update target no change");
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    update target no change");
         TEST_RESULT_VOID(
-            infoManifestTargetUpdate(manifest, INFO_MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2")), "    update target");
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2")), "    update target");
         TEST_RESULT_STR(
-            strPtr(infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR)->path), "/path2", "    check target path");
+            strPtr(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path), "/path2", "    check target path");
         TEST_RESULT_VOID(
-            infoManifestTargetUpdate(manifest, INFO_MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    fix target path");
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    fix target path");
 
         Buffer *contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoManifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
 
         // Manifest with all features
@@ -189,21 +189,21 @@ testRun(void)
             "user=\"user1\"\n"
         );
 
-        TEST_ASSIGN(manifest, infoManifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
+        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
 
         contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoManifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("infoBackupLoadFile() and infoBackupSaveFile()"))
     {
-        InfoManifest *manifest = NULL;
+        Manifest *manifest = NULL;
 
         TEST_ERROR_FMT(
-            infoManifestLoadFile(storageTest, INFO_MANIFEST_FILE_STR, cipherTypeNone, NULL), FileMissingError,
+            manifestLoadFile(storageTest, MANIFEST_FILE_STR, cipherTypeNone, NULL), FileMissingError,
             "unable to load backup manifest file '%s/backup.manifest' or '%s/backup.manifest.copy':\n"
             "FileMissingError: unable to open missing file '%s/backup.manifest' for read\n"
             "FileMissingError: unable to open missing file '%s/backup.manifest.copy' for read",
@@ -267,24 +267,24 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew(INFO_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
-        TEST_ASSIGN(manifest, infoManifestLoadFile(storageTest, STRDEF(INFO_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
-        TEST_RESULT_UINT(infoManifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
+            storagePutNP(storageNewWriteNP(storageTest, strNew(MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
+        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
+        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
 
-        storageRemoveP(storageTest, strNew(INFO_MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
+        storageRemoveP(storageTest, strNew(MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, INFO_MANIFEST_FILE_STR), content), "write main");
-        TEST_ASSIGN(manifest, infoManifestLoadFile(storageTest, STRDEF(INFO_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
-        TEST_RESULT_UINT(infoManifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
+            storagePutNP(storageNewWriteNP(storageTest, MANIFEST_FILE_STR), content), "write main");
+        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(MANIFEST_FILE), cipherTypeNone, NULL), "load main");
+        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
     }
 
     // Load/save a larger manifest to test performance and memory usage.  The default sizing is for a "typical" cluster but this can
     // be scaled to test larger cluster sizes.
     // *****************************************************************************************************************************
-    if (testBegin("infoManifestNewLoad()/infoManifestSave() performance"))
+    if (testBegin("manifestNewLoad()/manifestSave() performance"))
     {
-        InfoManifest *manifest = NULL;
+        Manifest *manifest = NULL;
 
         // Manifest with all features
         // -------------------------------------------------------------------------------------------------------------------------
@@ -390,20 +390,20 @@ testRun(void)
 
         const Buffer *contentLoad = harnessInfoChecksum(manifestStr);
 
-        TEST_ASSIGN(manifest, infoManifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
+        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
         (void)manifest;
 
         Buffer *contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoManifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
 
         if (!bufEq(contentSave, contentLoad))
         {
             TEST_RESULT_VOID(                                                               // {uncovered - only for debugging}
-                storagePutNP(storageNewWriteNP(storageTest, strNew(INFO_MANIFEST_FILE ".expected")), contentLoad),
+                storagePutNP(storageNewWriteNP(storageTest, strNew(MANIFEST_FILE ".expected")), contentLoad),
                 "write expected manifest");
             TEST_RESULT_VOID(                                                               // {uncovered - only for debugging}
-                storagePutNP(storageNewWriteNP(storageTest, strNew(INFO_MANIFEST_FILE ".actual")), contentSave),
+                storagePutNP(storageNewWriteNP(storageTest, strNew(MANIFEST_FILE ".actual")), contentSave),
                 "write actual manifest");
         }
 
