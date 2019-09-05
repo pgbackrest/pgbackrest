@@ -694,7 +694,7 @@ unit:
           command/restore/restore: full
 
         include:
-          - info/infoManifest
+          - info/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stanza

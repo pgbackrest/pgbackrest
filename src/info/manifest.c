@@ -261,30 +261,29 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
 }
 
 static void
-manifestTargetAdd(Manifest *this, const ManifestTarget *target)
+manifestLinkAdd(Manifest *this, const ManifestLink *link)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(MANIFEST_TARGET, target);
+        FUNCTION_TEST_PARAM(MANIFEST_PATH, link);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(target != NULL);
-    ASSERT(target->path != NULL);
+    ASSERT(link != NULL);
+    ASSERT(link->name != NULL);
+    ASSERT(link->destination != NULL);
 
-    MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
+    MEM_CONTEXT_BEGIN(lstMemContext(this->linkList))
     {
-        ManifestTarget targetAdd =
+        ManifestLink linkAdd =
         {
-            .file = strDup(target->file),
-            .name = strDup(target->name),
-            .path = strDup(target->path),
-            .tablespaceId = target->tablespaceId,
-            .tablespaceName = strDup(target->tablespaceName),
-            .type = target->type,
+            .destination = strDup(link->destination),
+            .name = strDup(link->name),
+            .group = manifestOwnerCache(this, VARSTR(link->group)),
+            .user = manifestOwnerCache(this, VARSTR(link->user)),
         };
 
-        lstAdd(this->targetList, &targetAdd);
+        lstAdd(this->linkList, &linkAdd);
     }
     MEM_CONTEXT_END();
 
@@ -314,6 +313,37 @@ manifestPathAdd(Manifest *this, const ManifestPath *path)
         };
 
         lstAdd(this->pathList, &pathAdd);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+manifestTargetAdd(Manifest *this, const ManifestTarget *target)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, target);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+    ASSERT(target->path != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
+    {
+        ManifestTarget targetAdd =
+        {
+            .file = strDup(target->file),
+            .name = strDup(target->name),
+            .path = strDup(target->path),
+            .tablespaceId = target->tablespaceId,
+            .tablespaceName = strDup(target->tablespaceName),
+            .type = target->type,
+        };
+
+        lstAdd(this->targetList, &targetAdd);
     }
     MEM_CONTEXT_END();
 
@@ -528,8 +558,8 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
 
             ManifestLink link =
             {
-                .name = strDup(key),
-                .destination = strDup(varStr(kvGet(linkKv, MANIFEST_KEY_DESTINATION_VAR))),
+                .name = key,
+                .destination = varStr(kvGet(linkKv, MANIFEST_KEY_DESTINATION_VAR)),
             };
 
             if (kvKeyExists(linkKv, MANIFEST_KEY_GROUP_VAR))
@@ -545,7 +575,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             }
 
             lstAdd(loadData->linkFoundList, &valueFound);
-            lstAdd(manifest->linkList, &link);
+            manifestLinkAdd(manifest, &link);
         }
         MEM_CONTEXT_END();
     }
@@ -1131,9 +1161,9 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            for (unsigned int linkIdx = 0; linkIdx < lstSize(manifest->linkList); linkIdx++)
+            for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
             {
-                ManifestLink *link = lstGet(manifest->linkList, linkIdx);
+                const ManifestLink *link = manifestLink(manifest, linkIdx);
                 KeyValue *linkKv = kvNew();
 
                 if (!varEq(manifestOwnerGet(link->user), saveData->linkUserDefault))
@@ -1312,7 +1342,94 @@ manifestData(const Manifest *this)
 }
 
 /***********************************************************************************************************************************
-Return target total and target by index
+Link functions and getters/setters
+***********************************************************************************************************************************/
+unsigned int
+manifestLinkTotal(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstSize(this->linkList));
+}
+
+const ManifestLink *
+manifestLink(const Manifest *this, unsigned int linkIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(UINT, linkIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstGet(this->linkList, linkIdx));
+}
+
+const ManifestLink *
+manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, linkDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->linkList, &name, (void *)linkDefault));
+}
+
+const ManifestLink *
+manifestLinkFind(const Manifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    const ManifestLink *result = manifestLinkFindDefault(this, name, NULL);
+
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to find '%s' in manifest link list", strPtr(name));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+void
+manifestLinkUpdate(const Manifest *this, const String *name, const String *destination)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(STRING, destination);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+    ASSERT(destination != NULL);
+
+    ManifestLink *link = (ManifestLink *)manifestLinkFind(this, name);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->linkList))
+    {
+        if (!strEq(link->destination, destination))
+            link->destination = strDup(destination);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Target functions and getters/setters
 ***********************************************************************************************************************************/
 unsigned int
 manifestTargetTotal(const Manifest *this)

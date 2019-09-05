@@ -146,6 +146,15 @@ Functions
 void manifestSave(Manifest *this, IoWrite *write);
 
 /***********************************************************************************************************************************
+Link functions and getters/setters
+***********************************************************************************************************************************/
+const ManifestLink *manifestLink(const Manifest *this, unsigned int linkIdx);
+const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
+const ManifestLink *manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault);
+unsigned int manifestLinkTotal(const Manifest *this);
+void manifestLinkUpdate(const Manifest *this, const String *name, const String *path);
+
+/***********************************************************************************************************************************
 Target functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestTarget *manifestTarget(const Manifest *this, unsigned int targetIdx);
