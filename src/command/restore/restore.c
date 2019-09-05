@@ -38,34 +38,45 @@ restoreManifestRemap(InfoManifest *manifest)
         infoManifestTargetUpdate(manifest, targetBase->name, pgPath);
     }
 
-    // Remap individual tablespaces
-    StringList *tablespaceRemapped = strLstNew();
+    // Remap tablespaces
+    KeyValue tablespaceMap = cfgOption(cfgOptTablespaceMap);
 
-    if (cfgOptionTest(cfgOptTablespaceMap))
+    if (cfgOptionTest(cfgOptTablespaceMap) || cfgOptionTest(cfgOptTablespaceMapAll))
     {
-        // Iterate the list of tablespaces to be remapped
-        KeyValue tablespaceMap = cfgOptionKv(cfgOptTablespaceMap);
-        StringList tablespaceList = kvKeyList(tablespaceMap);
 
-        for (unsigned int tablespaceIdx = 0; tablespaceIdx < varLstSize(tablespaceList); tablespaceIdx++)
+        const String tablespaceMapAll = cfgOptionStr(cfgOptTablespaceMapAll);
+
+        for (unsigned int targetIdx = 0; targetIdx < infoManifestTargetTotal(manifest); targetIdx++)
         {
-            // Get tablespace target
-            const InfoManifestTarget *target = infoManifestTargetFindDefault(
-                manifest, varStr(varLstGet(tablespaceList, tablespaceIdx)), NULL);
+            InfoManifestTarget *target = infoManifestTarget(manifest, targetIdx);
 
-            if (target == NULL)
-                THROW_FMT(ErrorTablespaceMap, "unable to remap invalid tablespace '%s'", , strPtr(tablespace));
+            // Is this a tablespace?
+            if (target->tablespaceId != 0)
+            {
+                // Check for an individual mapping for this tablespace
+                String *tablespacePath = VARSTR(kvGet(tablespaceMap, VARSTR(target->name)));
 
-            // Error if this tablespace has already been remapped
-            if (strListExists(tablespaceRemapped))
-                THROW_FMT(ErrorTablespaceMap, "tablespace '%s' has already been remapped", strPtr(tablespace));
+                if (tablespacePath == NULL &&
 
-            strLstAdd(tablespaceRemapped, tablespace);
+                // Get tablespace target
+                const InfoManifestTarget *target = infoManifestTargetFindDefault(
+                    manifest, varStr(varLstGet(tablespaceList, tablespaceIdx)), NULL);
 
-            // Remap tablespace
-            infoManifestTargetUpdate(manifest,
-            const String *tablespace = varStr(varLstGet(tablespaceList, tablespaceIdx));
-            const String *tablespacePath = kvGet(tablespaceMap, VARSTR(tablespace));
+                if (target == NULL || target->tablespaceId == 0)
+                    THROW_FMT(ErrorTablespaceMap, "unable to remap invalid tablespace '%s'", strPtr(target->name));
+
+                // Error if this tablespace has already been remapped
+                if (strListExists(tablespaceRemapped))
+                    THROW_FMT(ErrorTablespaceMap, "tablespace '%s' has already been remapped", strPtr(target->name));
+
+                strLstAdd(tablespaceRemapped, target->name);
+
+                // Remap tablespace
+                infoManifestTargetUpdate(manifest, target.name, kvGet(tablespaceMap, VARSTR(tablespace));
+                infoManifestLinkUpdate(manifest, strNewFmt(INFO_MANIFEST_TARGET_PGDATA "/%s", strPtr(target->name), );
+                const String *tablespace = varStr(varLstGet(tablespaceList, tablespaceIdx));
+                const String *tablespacePath = kvGet(tablespaceMap, VARSTR(tablespace));
+            }
         }
         // my $oTablespaceRemapRequest = cfgOption(CFGOPT_TABLESPACE_MAP);
         //
@@ -99,9 +110,9 @@ restoreManifestRemap(InfoManifest *manifest)
     }
 
     // Remap all tablespaces except those already remapped individually
-        if (cfgOptionTest(cfgOptTablespaceMapAll))
-    {
-    }
+    //     if (cfgOptionTest(cfgOptTablespaceMapAll))
+    // {
+    // }
 
     FUNCTION_LOG_RETURN_VOID();
 }
