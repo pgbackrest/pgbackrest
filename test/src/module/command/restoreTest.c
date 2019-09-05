@@ -6,11 +6,57 @@ Test Restore Command
 #include "common/io/io.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "postgres/version.h"
 #include "storage/posix/storage.h"
 #include "storage/helper.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+
+/***********************************************************************************************************************************
+Build a simple manifest for testing
+***********************************************************************************************************************************/
+static InfoManifest *
+testManifestMinimal(const String *label, unsigned int pgVersion, const String *pgPath)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING, label);
+        FUNCTION_HARNESS_PARAM(UINT, pgVersion);
+        FUNCTION_HARNESS_PARAM(STRING, pgPath);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(label != NULL);
+    ASSERT(pgVersion != 0);
+    ASSERT(pgPath != NULL);
+
+    InfoManifest *result = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("InfoManifest")
+    {
+        result = infoManifestNewInternal();
+        result->info = infoNew(NULL);
+
+        result->data.backupLabel = strDup(label);
+        result->data.pgVersion = pgVersion;
+
+        if (strEndsWithZ(label, "I"))
+            result->data.backupType = backupTypeIncr;
+        else if (strEndsWithZ(label, "D"))
+            result->data.backupType = backupTypeDiff;
+        else
+            result->data.backupType = backupTypeFull;
+
+        InfoManifestTarget targetBase = {.name = INFO_MANIFEST_TARGET_PGDATA_STR, .path = pgPath};
+        infoManifestTargetAdd(result, &targetBase);
+        InfoManifestPath pathBase = {.name = pgPath};
+        infoManifestPathAdd(result, &pathBase);
+        InfoManifestFile fileVersion = {.name = STRDEF(INFO_MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .mode = 0600};
+        infoManifestFileAdd(result, &fileVersion);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_HARNESS_RESULT(INFO_MANIFEST, result);
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -244,6 +290,48 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("restoreManifestRemap()"))
+    {
+        const String *pgPath = strNewFmt("%s/pg", testPath());
+        const String *repoPath = strNewFmt("%s/repo", testPath());
+        InfoManifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_94, pgPath);
+
+        // Remap data directory
+        // -------------------------------------------------------------------------------------------------------------------------
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--pg1-host=pg1");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(restoreManifestRemap(manifest), "base directory is not remapped");
+        TEST_RESULT_STR(
+            strPtr(infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR)->path), strPtr(pgPath),
+            "base directory is not remapped");
+
+        // Now change pg1-path so the data directory gets remapped
+        pgPath = strNewFmt("%s/pg2", testPath());
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--pg1-host=pg1");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(restoreManifestRemap(manifest), "base directory is remapped");
+        TEST_RESULT_STR(
+            strPtr(infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR)->path), strPtr(pgPath),
+            "base directory is remapped");
+        harnessLogResult(strPtr(strNewFmt("P00   INFO: remap data directory to '%s/pg2'", testPath())));
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdRestore()"))
     {
         const String *pgPath = strNewFmt("%s/pg", testPath());
@@ -388,60 +476,7 @@ testRun(void)
                 " '%s/repo/backup/test1/20161219-212741F_20161219-212803D/backup.manifest.copy' for read",
             testPath(), testPath(), testPath(), testPath());
 
-        // Write a valid manifest
-        const Buffer *contentLoad = harnessInfoChecksumZ
-        (
-            "[backup]\n"
-            "backup-label=\"20161219-212741F_20161219-212918I\"\n"
-            "backup-timestamp-copy-start=1565282141\n"
-            "backup-timestamp-start=1565282140\n"
-            "backup-timestamp-stop=1565282142\n"
-            "backup-type=\"incr\"\n"
-            "\n"
-            "[backup:db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=1000000000000000094\n"
-            "db-version=\"9.4\"\n"
-            "\n"
-            "[backup:option]\n"
-            "option-archive-check=true\n"
-            "option-archive-copy=true\n"
-            "option-compress=false\n"
-            "option-hardlink=false\n"
-            "option-online=false\n"
-            "\n"
-            "[backup:target]\n"
-            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
-            "\n"
-            "[target:file]\n"
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
-            "\n"
-            "[target:file:default]\n"
-            "group=\"group1\"\n"
-            "master=true\n"
-            "mode=\"0600\"\n"
-            "user=\"user1\"\n"
-            "\n"
-            "[target:path]\n"
-            "pg_data={}\n"
-            "\n"
-            "[target:path:default]\n"
-            "group=\"group1\"\n"
-            "mode=\"0700\"\n"
-            "user=\"user1\"\n"
-        );
-
-        InfoManifest *manifest = infoManifestNewLoad(ioBufferReadNew(contentLoad));
-
-        // InfoManifest *manifest = infoManifestNewInternal();
-        // InfoManifestTarget targetBase = {.name = INFO_MANIFEST_TARGET_PGDATA_STR, .path = pgPath};
-        // infoManifestTargetAdd(manifest, &targetBase);
-        // InfoManifestPath pathBase = {.name = pgPath};
-        // infoManifestPathAdd(manifest, &pathBase);
-        // InfoManifestFile fileVersion = {.name = STRDEF(INFO_MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .primary = false};
-        // infoManifestFileAdd(manifest, &fileVersion);
+        InfoManifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-212918I"), PG_VERSION_94, pgPath);
 
         infoManifestSave(
             manifest,

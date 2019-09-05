@@ -23,7 +23,7 @@ testRun(void)
         // Make sure the size of structs doesn't change without us knowing about it
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(sizeof(InfoManifestLoadFound), TEST_64BIT() ? 1 : 1, "check size of InfoManifestLoadFound");
-        TEST_RESULT_UINT(sizeof(InfoManifestPath), TEST_64BIT() ? 32 : 20, "check size of InfoManifestPath");
+        TEST_RESULT_UINT(sizeof(InfoManifestPath), TEST_64BIT() ? 32 : 16, "check size of InfoManifestPath");
         TEST_RESULT_UINT(sizeof(InfoManifestFile), TEST_64BIT() ? 120 : 92, "check size of InfoManifestFile");
     }
 

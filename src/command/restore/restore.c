@@ -29,14 +29,14 @@ restoreManifestRemap(InfoManifest *manifest)
     ASSERT(manifest != NULL);
 
     // Reassign the base path if specified
-    // const String *pgPath = cfgOptionStr(cfgOptPgPath);
-    // const InfoManifestTarget *targetBase = infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR);
-    //
-    // if (!strEq(targetBase->path, pgPath))
-    // {
-    //     LOG_INFO("remap data directory to '%s'", strPtr(pgPath));
-    //     infoManifestTargetUpdate(manifest, targetBase->name, pgPath);
-    // }
+    const String *pgPath = cfgOptionStr(cfgOptPgPath);
+    const InfoManifestTarget *targetBase = infoManifestTargetFind(manifest, INFO_MANIFEST_TARGET_PGDATA_STR);
+
+    if (!strEq(targetBase->path, pgPath))
+    {
+        LOG_INFO("remap data directory to '%s'", strPtr(pgPath));
+        infoManifestTargetUpdate(manifest, targetBase->name, pgPath);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
