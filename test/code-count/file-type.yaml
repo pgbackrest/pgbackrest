@@ -1251,15 +1251,15 @@ src/info/infoBackup.h:
   class: core
   type: c/h
 
-src/info/infoManifest.h:
-  class: core
-  type: c/h
-
 src/info/infoPg.c:
   class: core
   type: c
 
 src/info/infoPg.h:
+  class: core
+  type: c/h
+
+src/info/manifest.h:
   class: core
   type: c/h
 
