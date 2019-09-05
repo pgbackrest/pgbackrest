@@ -50,7 +50,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
         manifestTargetAdd(result, &targetBase);
         ManifestPath pathBase = {.name = pgPath};
         manifestPathAdd(result, &pathBase);
-        ManifestFile fileVersion = {.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .mode = 0600};
+        ManifestFile fileVersion = {.name = STRDEF("pg_data/" PG_FILE_PGVERSION), .mode = 0600};
         manifestFileAdd(result, &fileVersion);
     }
     MEM_CONTEXT_NEW_END();
@@ -303,14 +303,12 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
-        strLstAddZ(argList, "--pg1-host=pg1");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(restoreManifestRemap(manifest), "base directory is not remapped");
-        TEST_RESULT_STR(
-            strPtr(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path), strPtr(pgPath),
-            "base directory is not remapped");
+        TEST_RESULT_STRSTR(
+            manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is not remapped");
 
         // Now change pg1-path so the data directory gets remapped
         pgPath = strNewFmt("%s/pg2", testPath());
@@ -320,15 +318,124 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
-        strLstAddZ(argList, "--pg1-host=pg1");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(restoreManifestRemap(manifest), "base directory is remapped");
-        TEST_RESULT_STR(
-            strPtr(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path), strPtr(pgPath),
-            "base directory is remapped");
+        TEST_RESULT_STRSTR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is remapped");
         harnessLogResult(strPtr(strNewFmt("P00   INFO: remap data directory to '%s/pg2'", testPath())));
+
+        // Remap tablespaces
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--tablespace-map=bogus=/bogus");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(restoreManifestRemap(manifest), TablespaceMapError, "unable to remap invalid tablespace 'bogus'");
+
+        // Add some tablespaces
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+                .name = STRDEF("pg_tblspc/1"), .path = STRDEF("/1"), .tablespaceId = 1, .tablespaceName = STRDEF("1"),
+                .type = manifestTargetTypeLink});
+        manifestLinkAdd(
+            manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_tblspc/1"), .destination = STRDEF("/1")});
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+                .name = STRDEF("pg_tblspc/2"), .path = STRDEF("/2"), .tablespaceId = 2, .tablespaceName = STRDEF("ts2"),
+                .type = manifestTargetTypeLink});
+        manifestLinkAdd(
+            manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_tblspc/2"), .destination = STRDEF("/2")});
+
+        // Error on different paths
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--tablespace-map=2=/2");
+        strLstAddZ(argList, "--tablespace-map=ts2=/ts2");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(
+            restoreManifestRemap(manifest), TablespaceMapError, "tablespace remapped by name 'ts2' and id 2 with different paths");
+
+        // Remap one tablespace using the id and another with the name
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--tablespace-map=1=/1-2");
+        strLstAddZ(argList, "--tablespace-map=ts2=/2-2");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remap tablespaces");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/1-2", "    check tablespace 1 target");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/1-2", "    check tablespace 1 link");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-2", "    check tablespace 1 target");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-2", "    check tablespace 1 link");
+
+        harnessLogResult(
+            "P00   INFO: remap tablespace 'pg_tblspc/1' to '/1-2'\n"
+            "P00   INFO: remap tablespace 'pg_tblspc/2' to '/2-2'");
+
+        // Remap a tablespace using just the id and map the rest with tablespace-map-all
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--tablespace-map=2=/2-3");
+        strLstAddZ(argList, "--tablespace-map-all=/all");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remap tablespaces");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all/1", "    check tablespace 1 target");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all/1", "    check tablespace 1 link");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-3", "    check tablespace 1 target");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-3", "    check tablespace 1 link");
+
+        harnessLogResult(
+            "P00   INFO: remap tablespace 'pg_tblspc/1' to '/all/1'\n"
+            "P00   INFO: remap tablespace 'pg_tblspc/2' to '/2-3'");
+
+        // Remap all tablespaces with tablespace-map-all and update version to 9.2 to test warning
+        manifest->data.pgVersion = PG_VERSION_92;
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--tablespace-map-all=/all2");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remap tablespaces");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all2/1", "    check tablespace 1 target");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all2/1", "    check tablespace 1 link");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/all2/ts2", "    check tablespace 1 target");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/all2/ts2", "    check tablespace 1 link");
+
+        harnessLogResult(
+            "P00   INFO: remap tablespace 'pg_tblspc/1' to '/all2/1'\n"
+            "P00   INFO: remap tablespace 'pg_tblspc/2' to '/all2/ts2'\n"
+            "P00   WARN: update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= 9.2");
     }
 
     // *****************************************************************************************************************************

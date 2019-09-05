@@ -82,21 +82,21 @@ testRun(void)
 
         TEST_ERROR(
             manifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
-        TEST_RESULT_STR(strPtr(manifestData(manifest)->backupLabel), "20190808-163540F", "    check manifest data");
+        TEST_RESULT_STRZ(manifestData(manifest)->backupLabel, "20190808-163540F", "    check manifest data");
 
         TEST_RESULT_VOID(
             manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    update target no change");
         TEST_RESULT_VOID(
             manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2")), "    update target");
-        TEST_RESULT_STR(
-            strPtr(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path), "/path2", "    check target path");
+        TEST_RESULT_STRZ(
+            manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, "/path2", "    check target path");
         TEST_RESULT_VOID(
             manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    fix target path");
 
         Buffer *contentSave = bufNew(0);
 
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
+        TEST_RESULT_STRSTR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
 
         // Manifest with all features
         // -------------------------------------------------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ testRun(void)
         contentSave = bufNew(0);
 
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
+        TEST_RESULT_STRSTR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
     }
 
     // *****************************************************************************************************************************

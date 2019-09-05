@@ -404,9 +404,8 @@ sub run
                         ' -Wformat-signedness' : '') .
                     ($self->{oTest}->{&TEST_VM} eq VM_U18 ?
                         ' -Wduplicated-branches -Wduplicated-cond' : '') .
-                    # This warning appears to be broken on U12/CO6 even though the functionality is fine
-                    ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
-                        ' -Wno-missing-field-initializers' : '');
+                    # This is theoretically a portability issue but a compiler that does not treat NULL and false as 0 is crazy
+                        ' -Wno-missing-field-initializers';
 
                 # Flags that are common to all builds
                 my $strCommonFlags =

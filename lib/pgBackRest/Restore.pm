@@ -220,81 +220,6 @@ sub manifestLoad
     my $oManifest = new pgBackRest::Manifest(
         storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), {oStorage => storageDb()});
 
-    # Remap tablespaces when requested
-    my $oTablespaceRemap;
-
-    if (cfgOptionTest(CFGOPT_TABLESPACE_MAP))
-    {
-        my $oTablespaceRemapRequest = cfgOption(CFGOPT_TABLESPACE_MAP);
-
-        for my $strKey (sort(keys(%{$oTablespaceRemapRequest})))
-        {
-            my $bFound = false;
-
-            for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
-            {
-                if ($oManifest->test(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_TABLESPACE_ID, $strKey) ||
-                    $oManifest->test(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_TABLESPACE_NAME, $strKey))
-                {
-                    if (defined(${$oTablespaceRemap}{$strTarget}))
-                    {
-                        confess &log(ERROR, "tablespace ${strKey} has already been remapped to ${$oTablespaceRemap}{$strTarget}",
-                                     ERROR_TABLESPACE_MAP);
-                    }
-
-                    ${$oTablespaceRemap}{$strTarget} = ${$oTablespaceRemapRequest}{$strKey};
-                    $bFound = true;
-                }
-            }
-
-            # Error if the tablespace was not found to be remapped
-            if (!$bFound)
-            {
-                confess &log(ERROR, "cannot remap invalid tablespace ${strKey} to ${$oTablespaceRemapRequest}{$strKey}",
-                             ERROR_TABLESPACE_MAP);
-            }
-        }
-    }
-
-    # Remap all tablespaces (except ones that were done individually above)
-    if (cfgOptionTest(CFGOPT_TABLESPACE_MAP_ALL))
-    {
-        for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
-        {
-            if ($oManifest->isTargetTablespace($strTarget))
-            {
-                if (!defined(${$oTablespaceRemap}{$strTarget}))
-                {
-                    ${$oTablespaceRemap}{$strTarget} = cfgOption(CFGOPT_TABLESPACE_MAP_ALL) . '/' .
-                        $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_TABLESPACE_NAME);
-                }
-            }
-        }
-    }
-
-    # Issue a warning message when we remap tablespaces in postgre < 9.2
-    if ($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) < PG_VERSION_92 &&
-       (cfgOptionTest(CFGOPT_TABLESPACE_MAP) || cfgOptionTest(CFGOPT_TABLESPACE_MAP_ALL)))
-    {
-        &log(WARN, "update pg_tablespace.spclocation with new tablespace location in PostgreSQL < " . PG_VERSION_92);
-    }
-
-    # Alter manifest for remapped tablespaces
-    if (defined($oTablespaceRemap))
-    {
-        foreach my $strTarget (sort(keys(%{$oTablespaceRemap})))
-        {
-            my $strRemapPath = ${$oTablespaceRemap}{$strTarget};
-
-            # Remap the tablespace in the manifest
-            &log(INFO, "remap tablespace ${strTarget} directory to ${strRemapPath}");
-
-            $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH, $strRemapPath);
-            $oManifest->set(MANIFEST_SECTION_TARGET_LINK, MANIFEST_TARGET_PGDATA . "/${strTarget}", MANIFEST_SUBKEY_DESTINATION,
-                            $strRemapPath);
-        }
-    }
-
     $self->manifestOwnershipCheck($oManifest);
 
     # Remap links when requested
@@ -312,11 +237,11 @@ sub manifestLoad
             if ($oManifest->isTargetValid($strTarget, false) &&
                 $oManifest->isTargetLink($strTarget) && !$oManifest->isTargetTablespace($strTarget))
             {
-                if (defined(${$oTablespaceRemap}{$strTarget}))
-                {
-                    confess &log(ERROR, "tablespace ${strKey} has already been remapped to ${$oLinkRemap}{$strTarget}",
-                                 ERROR_LINK_MAP);
-                }
+                # if (defined(${$oTablespaceRemap}{$strTarget}))
+                # {
+                #     confess &log(ERROR, "tablespace ${strKey} has already been remapped to ${$oLinkRemap}{$strTarget}",
+                #                  ERROR_LINK_MAP);
+                # }
 
                 ${$oLinkRemap}{$strTarget} = ${$oLinkRemapRequest}{$strKey};
 

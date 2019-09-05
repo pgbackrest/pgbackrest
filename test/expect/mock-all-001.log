@@ -1831,8 +1831,8 @@ restore, backup '[BACKUP-DIFF-2]', remap - remap all paths (db-master host)
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2'
-P00   INFO: remap tablespace pg_tblspc/1 directory to [TEST_PATH]/db-master/db/tablespace/ts1-2
-P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: remap tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
+P00   INFO: remap tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
@@ -1871,8 +1871,8 @@ restore delta, backup '[BACKUP-DIFF-2]', remap - ensure file in tblspc root rema
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2'
-P00   INFO: remap tablespace pg_tblspc/1 directory to [TEST_PATH]/db-master/db/tablespace/ts1-2
-P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: remap tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
+P00   INFO: remap tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
@@ -3683,7 +3683,7 @@ restore delta, remap - selective restore 16384 (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
-P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: remap tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
@@ -3726,7 +3726,7 @@ restore delta, remap - selective restore 32768 (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
-P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: remap tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
@@ -3780,7 +3780,7 @@ restore, remap, expect exit 73 - no tablespace remap - error when tablespace dir
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
-P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
+P00   INFO: remap tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
 P00  ERROR: [073]: cannot restore to missing path [TEST_PATH]/db-master/db/base-2/tablespace
@@ -3792,7 +3792,7 @@ restore - no tablespace remap (db-master host)
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
-P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
+P00   INFO: remap tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
