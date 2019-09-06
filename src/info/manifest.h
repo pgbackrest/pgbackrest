@@ -150,7 +150,8 @@ Link functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestLink *manifestLink(const Manifest *this, unsigned int linkIdx);
 const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
-const ManifestLink *manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault);
+// const ManifestLink *manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault);
+void manifestLinkRemove(const Manifest *this, const String *name);
 unsigned int manifestLinkTotal(const Manifest *this);
 void manifestLinkUpdate(const Manifest *this, const String *name, const String *path);
 
@@ -159,7 +160,8 @@ Target functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestTarget *manifestTarget(const Manifest *this, unsigned int targetIdx);
 const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
-const ManifestTarget *manifestTargetFindDefault(const Manifest *this, const String *name, const ManifestTarget *targetDefault);
+// const ManifestTarget *manifestTargetFindDefault(const Manifest *this, const String *name, const ManifestTarget *targetDefault);
+void manifestTargetRemove(const Manifest *this, const String *name);
 unsigned int manifestTargetTotal(const Manifest *this);
 void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
 

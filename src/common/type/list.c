@@ -167,8 +167,33 @@ lstGet(const List *this, unsigned int listIdx)
 /***********************************************************************************************************************************
 Find an item in the list
 ***********************************************************************************************************************************/
+unsigned int
+lstFindIdx(const List *this, const void *item)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+        FUNCTION_TEST_PARAM_P(VOID, item);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(item != NULL);
+
+    unsigned int result = LIST_NOT_FOUND;
+
+    for (unsigned int listIdx = 0; listIdx < lstSize(this); listIdx++)
+    {
+        if (this->comparator(item, lstGet(this, listIdx)) == 0)
+        {
+            result = listIdx;
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 void *
-lstFindDefault(const List *this, void *item, void *itemDefault)
+lstFindDefault(const List *this, const void *item, void *itemDefault)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, this);
@@ -179,18 +204,23 @@ lstFindDefault(const List *this, void *item, void *itemDefault)
     ASSERT(this != NULL);
     ASSERT(item != NULL);
 
-    void *result = NULL;
+    unsigned int listIdx = lstFindIdx(this, item);
 
-    for (unsigned int listIdx = 0; listIdx < lstSize(this); listIdx++)
-    {
-        if (this->comparator(item, lstGet(this, listIdx)) == 0)
-        {
-            result = lstGet(this, listIdx);
-            break;
-        }
-    }
+    FUNCTION_TEST_RETURN(listIdx == LIST_NOT_FOUND ? itemDefault : lstGet(this, listIdx));
+}
 
-    FUNCTION_TEST_RETURN(result == NULL ? itemDefault : result);
+void *
+lstFind(const List *this, const void *item)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+        FUNCTION_TEST_PARAM_P(VOID, item);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(item != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this, item, NULL));
 }
 
 /***********************************************************************************************************************************
@@ -265,6 +295,28 @@ lstRemoveIdx(List *this, unsigned int listIdx)
         (lstSize(this) - listIdx) * this->itemSize);
 
     FUNCTION_TEST_RETURN(this);
+}
+
+bool
+lstRemove(List *this, const void *item)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+        FUNCTION_TEST_PARAM_P(VOID, item);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(item != NULL);
+
+    unsigned int listIdx = lstFindIdx(this, item);
+
+    if (listIdx != LIST_NOT_FOUND)
+    {
+        lstRemoveIdx(this, listIdx);
+        FUNCTION_TEST_RETURN(true);
+    }
+
+    FUNCTION_TEST_RETURN(false);
 }
 
 /***********************************************************************************************************************************

@@ -1344,18 +1344,6 @@ manifestData(const Manifest *this)
 /***********************************************************************************************************************************
 Link functions and getters/setters
 ***********************************************************************************************************************************/
-unsigned int
-manifestLinkTotal(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize(this->linkList));
-}
-
 const ManifestLink *
 manifestLink(const Manifest *this, unsigned int linkIdx)
 {
@@ -1370,21 +1358,6 @@ manifestLink(const Manifest *this, unsigned int linkIdx)
 }
 
 const ManifestLink *
-manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(MANIFEST_TARGET, linkDefault);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    FUNCTION_TEST_RETURN(lstFindDefault(this->linkList, &name, (void *)linkDefault));
-}
-
-const ManifestLink *
 manifestLinkFind(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -1395,12 +1368,56 @@ manifestLinkFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestLink *result = manifestLinkFindDefault(this, name, NULL);
+    const ManifestLink *result = lstFind(this->linkList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest link list", strPtr(name));
 
     FUNCTION_TEST_RETURN(result);
+}
+//
+// const ManifestLink *
+// manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM(MANIFEST, this);
+//         FUNCTION_TEST_PARAM(STRING, name);
+//         FUNCTION_TEST_PARAM(MANIFEST_TARGET, linkDefault);
+//     FUNCTION_TEST_END();
+//
+//     ASSERT(this != NULL);
+//     ASSERT(name != NULL);
+//
+//     FUNCTION_TEST_RETURN(lstFindDefault(this->linkList, &name, (void *)linkDefault));
+// }
+
+void
+manifestLinkRemove(const Manifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    if (!lstRemove(this->linkList, &name))
+        THROW_FMT(AssertError, "unable to remove '%s' from manifest list list", strPtr(name));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+unsigned int
+manifestLinkTotal(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstSize(this->linkList));
 }
 
 void
@@ -1431,18 +1448,6 @@ manifestLinkUpdate(const Manifest *this, const String *name, const String *desti
 /***********************************************************************************************************************************
 Target functions and getters/setters
 ***********************************************************************************************************************************/
-unsigned int
-manifestTargetTotal(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize(this->targetList));
-}
-
 const ManifestTarget *
 manifestTarget(const Manifest *this, unsigned int targetIdx)
 {
@@ -1457,21 +1462,6 @@ manifestTarget(const Manifest *this, unsigned int targetIdx)
 }
 
 const ManifestTarget *
-manifestTargetFindDefault(const Manifest *this, const String *name, const ManifestTarget *targetDefault)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(MANIFEST_TARGET, targetDefault);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    FUNCTION_TEST_RETURN(lstFindDefault(this->targetList, &name, (void *)targetDefault));
-}
-
-const ManifestTarget *
 manifestTargetFind(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -1482,32 +1472,57 @@ manifestTargetFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestTarget *result = manifestTargetFindDefault(this, name, NULL);
+    const ManifestTarget *result = lstFind(this->targetList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strPtr(name));
 
     FUNCTION_TEST_RETURN(result);
 }
-
-// void
-// manifestTargetRemove(const Manifest *this, const String *name)
+//
+// const ManifestTarget *
+// manifestTargetFindDefault(const Manifest *this, const String *name, const ManifestTarget *targetDefault)
 // {
 //     FUNCTION_TEST_BEGIN();
 //         FUNCTION_TEST_PARAM(MANIFEST, this);
 //         FUNCTION_TEST_PARAM(STRING, name);
+//         FUNCTION_TEST_PARAM(MANIFEST_TARGET, targetDefault);
 //     FUNCTION_TEST_END();
 //
 //     ASSERT(this != NULL);
 //     ASSERT(name != NULL);
 //
-//     unsigned int manifestIdx = manifestTargetFindDefault(this, name, NULL);
-//
-//     if (result == NULL)
-//         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strPtr(name));
-//
-//     FUNCTION_TEST_RETURN(result);
+//     FUNCTION_TEST_RETURN(lstFindDefault(this->targetList, &name, (void *)targetDefault));
 // }
+
+void
+manifestTargetRemove(const Manifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    if (!lstRemove(this->targetList, &name))
+        THROW_FMT(AssertError, "unable to remove '%s' from manifest target list", strPtr(name));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+unsigned int
+manifestTargetTotal(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstSize(this->targetList));
+}
 
 void
 manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file)

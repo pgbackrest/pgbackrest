@@ -174,8 +174,8 @@ restoreManifestRemap(Manifest *manifest)
                                 strPtr(target->name));
                         }
 
-                        // $oManifest->remove(MANIFEST_SECTION_BACKUP_TARGET, $strTarget);
-                        // $oManifest->remove(MANIFEST_SECTION_TARGET_LINK, $strTarget);
+                        manifestLinkRemove(manifest, target->name);
+                        manifestTargetRemove(manifest, target->name);
                     }
                 }
             }
