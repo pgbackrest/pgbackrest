@@ -248,7 +248,7 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
 Remove an item from the list
 ***********************************************************************************************************************************/
 List *
-lstRemove(List *this, unsigned int listIdx)
+lstRemoveIdx(List *this, unsigned int listIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, this);

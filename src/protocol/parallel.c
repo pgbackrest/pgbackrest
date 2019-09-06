@@ -253,7 +253,7 @@ protocolParallelResult(ProtocolParallel *this)
         if (protocolParallelJobState(job) == protocolParallelJobStateDone)
         {
             result = protocolParallelJobMove(job, memContextCurrent());
-            lstRemove(this->jobList, jobIdx);
+            lstRemoveIdx(this->jobList, jobIdx);
             break;
         }
     }

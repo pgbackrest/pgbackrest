@@ -94,7 +94,7 @@ testRun(void)
         }
 
         // Remove first item
-        TEST_RESULT_VOID(lstRemove(list, 0), "remove first item");
+        TEST_RESULT_VOID(lstRemoveIdx(list, 0), "remove first item");
 
         // Read them back and check values
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
@@ -104,7 +104,7 @@ testRun(void)
         }
 
         // Remove last item
-        TEST_RESULT_VOID(lstRemove(list, lstSize(list) - 1), "remove last item");
+        TEST_RESULT_VOID(lstRemoveIdx(list, lstSize(list) - 1), "remove last item");
 
         // Read them back and check values
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)

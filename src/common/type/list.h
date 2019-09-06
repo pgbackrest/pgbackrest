@@ -40,7 +40,7 @@ List *lstClear(List *this);
 void *lstGet(const List *this, unsigned int listIdx);
 void *lstFindDefault(const List *this, void *item, void *itemDefault);
 List *lstInsert(List *this, unsigned int listIdx, const void *item);
-List *lstRemove(List *this, unsigned int listIdx);
+List *lstRemoveIdx(List *this, unsigned int listIdx);
 MemContext *lstMemContext(const List *this);
 List *lstMove(List *this, MemContext *parentNew);
 unsigned int lstSize(const List *this);
