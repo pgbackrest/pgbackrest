@@ -20,6 +20,14 @@
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Improve performance of info file load/save.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Add helper function for adding <code>CipherBlock</code> filters to groups.</p>
                     </release-item>
                 </release-development-list>

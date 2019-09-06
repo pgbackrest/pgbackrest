@@ -571,13 +571,13 @@ testRun(void)
 
         InfoArchive *infoArchive = NULL;
         TEST_ASSIGN(
-            infoArchive, infoArchiveNewLoad(storageTest, archiveInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
+            infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
             "  load archive info");
         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
+            infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
             "  load backup info");
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
 

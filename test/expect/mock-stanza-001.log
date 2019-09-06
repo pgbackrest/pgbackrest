@@ -30,7 +30,6 @@ P00   INFO: stanza-create command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -44,10 +43,12 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -58,6 +59,9 @@ db-version="9.3"
 
 [db:history]
 1={"db-id":1000000000000000093,"db-version":"9.3"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 stanza-create db - do not fail on rerun of stanza-create - info files exist and DB section ok (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online stanza-create
@@ -69,7 +73,6 @@ P00   INFO: stanza-create command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -83,10 +86,12 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -97,6 +102,9 @@ db-version="9.3"
 
 [db:history]
 1={"db-id":1000000000000000093,"db-version":"9.3"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 stanza-create db - fail on database mismatch and warn force option deprecated (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online --force stanza-create
@@ -111,7 +119,6 @@ P00   INFO: stanza-create command end: aborted with exception [028]
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -125,10 +132,12 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -139,6 +148,9 @@ db-version="9.3"
 
 [db:history]
 1={"db-id":1000000000000000093,"db-version":"9.3"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 stanza-upgrade db - already up to date (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online stanza-upgrade
@@ -150,7 +162,6 @@ P00   INFO: stanza-upgrade command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -164,10 +175,12 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -178,6 +191,9 @@ db-version="9.3"
 
 [db:history]
 1={"db-id":1000000000000000093,"db-version":"9.3"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -196,7 +212,6 @@ P00   INFO: stanza-create command end: aborted with exception [055]
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -209,6 +224,9 @@ db-version="9.3"
 
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -230,7 +248,6 @@ P00   INFO: stanza-upgrade command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -245,10 +262,12 @@ db-version="9.4"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -260,6 +279,9 @@ db-version="9.4"
 [db:history]
 1={"db-id":1000000000000000093,"db-version":"9.3"}
 2={"db-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -320,7 +342,6 @@ P00   INFO: stanza-upgrade command end: completed successfully
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -339,10 +360,12 @@ db-version="9.5"
 2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -355,6 +378,9 @@ db-version="9.5"
 1={"db-id":1000000000000000093,"db-version":"9.3"}
 2={"db-id":1000000000000000094,"db-version":"9.4"}
 3={"db-id":1000000000000000095,"db-version":"9.5"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 stanza-upgrade db - upgrade fails with mismatched db-ids (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online stanza-upgrade
@@ -369,7 +395,6 @@ P00   INFO: stanza-upgrade command end: aborted with exception [028]
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -388,10 +413,12 @@ db-version="9.5"
 2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -402,6 +429,9 @@ db-version="9.3"
 
 [db:history]
 1={"db-id":1000000000000000093,"db-version":"9.3"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------

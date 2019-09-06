@@ -73,9 +73,8 @@ cmdStanzaCreate(void)
             String *cipherPassSub = cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType)));
 
             // Create and save archive info
-            infoArchive = infoArchiveNew(
-                pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
-            infoArchiveSave(
+            infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherPassSub);
+            infoArchiveSaveFile(
                 infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
 
@@ -84,21 +83,20 @@ cmdStanzaCreate(void)
 
             // Create and save backup info
             infoBackup = infoBackupNew(
-                pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion,
-                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
-            infoBackupSave(
+                pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion, cipherPassSub);
+            infoBackupSaveFile(
                 infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
         }
         // Else if at least one archive and one backup info file exists, then ensure both are valid
         else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
         {
-            infoArchive = infoArchiveNewLoad(
+            infoArchive = infoArchiveLoadFile(
                 storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
             InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
-            infoBackup = infoBackupNewLoad(
+            infoBackup = infoBackupLoadFile(
                 storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));

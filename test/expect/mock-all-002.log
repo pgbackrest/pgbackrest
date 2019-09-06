@@ -18,7 +18,6 @@ stanza-create db - create required data for stanza (backup host)
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -35,10 +34,12 @@ db-version="9.4"
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
 + supplemental file: /archive/db/archive.info
 ---------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -52,6 +53,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 full backup - error on identical link destinations (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
@@ -234,7 +238,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -253,6 +256,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 full backup - resume (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --force --checksum-page --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
@@ -430,7 +436,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -449,6 +454,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 full backup - invalid repo (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --repo1-path=/bogus_path --type=full --stanza=db backup
@@ -731,7 +739,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -751,6 +758,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 incr backup - resume and add tablespace 2 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
@@ -945,7 +955,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -965,6 +974,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 diff backup - cannot resume - new diff (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
@@ -1155,7 +1167,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1175,6 +1186,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 diff backup - cannot resume - disabled / no repo link (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --no-resume --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
@@ -1365,7 +1379,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1385,6 +1398,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 restore, backup '[BACKUP-DIFF-2]', expect exit 40 - fail on used path (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
@@ -1592,7 +1608,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1613,6 +1628,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 incr backup - update files (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
@@ -1799,7 +1817,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -1821,6 +1838,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 diff backup - updates since last full (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --type=diff --stanza=db backup
@@ -2010,7 +2030,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2033,6 +2052,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 incr backup - remove files - but won't affect manifest (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
@@ -2219,7 +2241,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2243,6 +2264,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 diff backup - remove files during backup (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --type=diff --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
@@ -2430,7 +2454,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2455,6 +2478,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 full backup - update file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
@@ -2636,7 +2662,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -2662,6 +2687,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 info db stanza - normal output (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db info
@@ -3194,7 +3222,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3214,6 +3241,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 restore delta, remap - selective restore 16384 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --db-include=16384  --stanza=db restore
@@ -3583,7 +3613,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3604,6 +3633,9 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
 
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
@@ -3797,7 +3829,6 @@ backrest-checksum="[CHECKSUM]"
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
 [backrest]
-backrest-checksum="[CHECKSUM]"
 backrest-format=5
 backrest-version="[VERSION-1]"
 
@@ -3819,3 +3850,6 @@ db-version="9.4"
 
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"

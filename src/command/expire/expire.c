@@ -306,7 +306,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
             if (strLstSize(globalBackupRetentionList) > 0)
             {
                 // Attempt to load the archive info file
-                InfoArchive *infoArchive = infoArchiveNewLoad(
+                InfoArchive *infoArchive = infoArchiveLoadFile(
                     storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                     cfgOptionStr(cfgOptRepoCipherPass));
 
@@ -670,14 +670,14 @@ cmdExpire(void)
         storageRepo();
 
         // Load the backup.info
-        InfoBackup *infoBackup = infoBackupNewLoad(
+        InfoBackup *infoBackup = infoBackupLoadFile(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
 
-        infoBackupSave(
+        infoBackupSaveFile(
             infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 

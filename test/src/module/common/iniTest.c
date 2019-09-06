@@ -1,7 +1,30 @@
 /***********************************************************************************************************************************
 Test Ini
 ***********************************************************************************************************************************/
+#include "common/io/bufferRead.h"
+#include "common/type/buffer.h"
 #include "storage/posix/storage.h"
+
+/***********************************************************************************************************************************
+Test callback to accumulate ini load results
+***********************************************************************************************************************************/
+static void
+testIniLoadCallback(void *data, const String *section, const String *key, const String *value)
+{
+    strCatFmt((String *)data, "%s:%s:%s\n", strPtr(section), strPtr(key), strPtr(value));
+}
+
+/***********************************************************************************************************************************
+Test callback to count ini load results
+***********************************************************************************************************************************/
+static void
+testIniLoadCountCallback(void *data, const String *section, const String *key, const String *value)
+{
+    (*(unsigned int *)data)++;
+    (void)section;
+    (void)key;
+    (void)value;
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -11,8 +34,94 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNew(
-        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    // *****************************************************************************************************************************
+    if (testBegin("iniLoad()"))
+    {
+        // Empty file
+        // -------------------------------------------------------------------------------------------------------------------------
+        const Buffer *iniBuf = bufNew(0);
+        String *result = strNew("");
+
+        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
+        TEST_RESULT_STR(strPtr(result), "", "    check ini");
+
+        // Invalid section
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "  [section  ");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "ini section should end with ] at line 1: [section");
+
+        // Key outside of section
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "key=value\n");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "key/value found outside of section at line 1: key=value");
+
+        // Key outside of section
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "[section]\n"
+            "key");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "missing '=' in key/value at line 2: key");
+
+        // Zero length key
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "[section]\n"
+            "=value");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "key is zero-length at line 1: =value");
+
+        // One section
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "# comment\n"
+            "[section1]\n"
+            "key1=value1\n"
+            "key2=value2");
+        result = strNew("");
+
+        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
+        TEST_RESULT_STR(
+            strPtr(result),
+            "section1:key1:value1\n"
+                "section1:key2:value2\n",
+            "    check ini");
+
+        // Two sections
+        // -------------------------------------------------------------------------------------------------------------------------
+        iniBuf = BUFSTRZ(
+            "# comment\n"
+            "[section1]\n"
+            "key1=value1\n"
+            "key2=value2\n"
+            "\n"
+            "[section2]\n"
+            "key1=\n"
+            "\n"
+            "key2=value2");
+        result = strNew("");
+
+        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
+        TEST_RESULT_STR(
+            strPtr(result),
+            "section1:key1:value1\n"
+                "section1:key2:value2\n"
+                "section2:key1:\n"
+                "section2:key2:value2\n",
+            "    check ini");
+    }
 
     // *****************************************************************************************************************************
     if (testBegin("iniNew() and iniFree()"))
@@ -102,25 +211,25 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("iniSave()"))
+    if (testBegin("iniLoad() performance"))
     {
-        Ini *ini = iniNew();
-        iniSet(ini, strNew("section2"), strNew("key1"), strNew("value1"));
-        iniSet(ini, strNew("section1"), strNew("key2"), strNew("value2"));
-        iniSet(ini, strNew("section1"), strNew("key1"), strNew("value1"));
+        String *iniStr = strNew("[section1]\n");
+        unsigned int iniMax = 1000;
 
-        StorageWrite *write = storageNewWriteNP(storageTest, strNew("test.ini"));
-        TEST_RESULT_VOID(iniSave(ini, storageWriteIo(write)), "save ini");
+        // /backrest/test/test.pl --vm=u18 --smart --no-package --module=common --test=ini --run=5 --no-cleanup --vm-out
+        // BASELINE PERF ON DESKTOP 50784ms
 
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("test.ini"))))),
-            "[section1]\n"
-                "key1=value1\n"
-                "key2=value2\n"
-                "\n"
-                "[section2]\n"
-                "key1=value1\n",
-            "check ini");
+        for (unsigned int keyIdx = 0; keyIdx < iniMax; keyIdx++)
+            strCatFmt(iniStr, "key%u=value%u\n", keyIdx, keyIdx);
+
+        TEST_LOG_FMT("ini size is %zu", strSize(iniStr));
+
+        TimeMSec timeBegin = timeMSec();
+        unsigned int iniTotal = 0;
+
+        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(BUFSTR(iniStr)), testIniLoadCountCallback, &iniTotal), "parse ini");
+        TEST_LOG_FMT("parse completed in %ums", (unsigned int)(timeMSec() - timeBegin));
+        TEST_RESULT_INT(iniTotal, iniMax, "    check ini total");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

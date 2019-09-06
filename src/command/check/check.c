@@ -27,7 +27,7 @@ cmdCheck(void)
         storageRepo();
 
         // Attempt to load the archive info file
-        InfoArchive *archiveInfo = infoArchiveNewLoad(
+        InfoArchive *archiveInfo = infoArchiveLoadFile(
             storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
         const String *archiveId = infoArchiveId(archiveInfo);
