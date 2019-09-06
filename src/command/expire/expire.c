@@ -98,9 +98,7 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
-    storageRemoveNP(
-        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(removeBackupLabel)));
-
+    storageRemoveNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(removeBackupLabel)));
     storageRemoveNP(
         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
 

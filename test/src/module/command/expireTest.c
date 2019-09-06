@@ -168,11 +168,14 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), MANIFEST_FILE)),
-                BUFSTRDEF(BOGUS_STR)), "full1 put manifest");
+            storagePutNP(
+                storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), MANIFEST_FILE)), BUFSTRDEF(BOGUS_STR)),
+                "full1 put manifest");
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), MANIFEST_FILE ".copy")),
-                BUFSTRDEF(BOGUS_STR)), "full1 put manifest copy");
+            storagePutNP(
+                storageNewWriteNP(
+                    storageTest, strNewFmt("%s/%s", strPtr(full1Path), MANIFEST_FILE ".copy")), BUFSTRDEF(BOGUS_STR)),
+            "full1 put manifest copy");
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), "bogus")),
                 BUFSTRDEF(BOGUS_STR)), "full1 put extra file");

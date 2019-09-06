@@ -38,8 +38,7 @@ manifestDelete(const Storage *storageRepoWriteStanza)
     for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
     {
         storageRemoveNP(
-            storageRepoWriteStanza,
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
+            storageRepoWriteStanza, strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
         storageRemoveNP(
             storageRepoWriteStanza,
             strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
