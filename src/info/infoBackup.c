@@ -371,7 +371,7 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
         InfoBackupData backupData = infoBackupData(this, idx);
 
         if (strCmp(backupData.backupLabel, backupDeleteLabel) == 0)
-            lstRemove(this->backup, idx);
+            lstRemoveIdx(this->backup, idx);
     }
 
     FUNCTION_LOG_RETURN_VOID();
