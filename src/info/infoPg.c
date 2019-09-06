@@ -140,16 +140,16 @@ infoPgLoadCallback(void *data, const String *section, const String *key, const S
                 kvGet(pgDataKv, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
         };
 
-        // Get values that are only in backup and manifest files.  These are really vestigial since stanza-create verifies
-        // the control and catalog versions so there is no good reason to store them.  However, for backward compatibility
-        // we must write them at least, even if we give up reading them.
+        // Get values that are only in backup info files.  These are really vestigial since stanza-create verifies the control and
+        // catalog versions so there is no good reason to store them.  However, for backward compatibility we must write them at
+        // least, even if we give up reading them.
         if (loadData->infoPg->type == infoPgBackup)
         {
             infoPgData.catalogVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR));
             infoPgData.controlVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR));
         }
 
-        // Using lstAdd because it is more efficient than lstInsert and loading this file is in critical code paths
+        // Insert at beginning of list so the history is reverse ordered
         lstInsert(loadData->infoPg->history, 0, &infoPgData);
     }
     // Callback if set

@@ -11,7 +11,6 @@ Stanza Delete Command
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/infoPg.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"

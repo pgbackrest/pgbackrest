@@ -379,7 +379,7 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
 Save to file
 ***********************************************************************************************************************************/
 void
-infoSave(Info *this, IoWrite *write, InfoSaveCallback callbackFunction, void *callbackData)
+infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO, this);
@@ -455,7 +455,7 @@ infoCipherPass(const Info *this)
 Load info file(s) and throw error for each attempt if none are successful
 ***********************************************************************************************************************************/
 void
-infoLoad(const String *error, InfoLoadCallback callbackFunction, void *callbackData)
+infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, error);
@@ -484,7 +484,7 @@ infoLoad(const String *error, InfoLoadCallback callbackFunction, void *callbackD
                 done = true;
 
                 // There must be at least one attempt to the load file
-                ASSERT(done || try > 0);
+                ASSERT(loaded || try > 0);
             }
             CATCH_ANY()
             {

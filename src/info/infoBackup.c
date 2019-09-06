@@ -17,7 +17,6 @@ Backup Info Handler
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
-#include "info/info.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -182,7 +181,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
     FUNCTION_TEST_RETURN_VOID();
 }
 
-InfoBackup *
+static InfoBackup *
 infoBackupNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -269,7 +268,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+static void
 infoBackupSave(InfoBackup *this, IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

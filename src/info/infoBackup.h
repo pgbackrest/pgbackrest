@@ -62,7 +62,6 @@ Constructors
 InfoBackup *infoBackupNew(
     unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgControlVersion, const uint32_t pgCatalogVersion,
     const String *cipherPassSub);
-InfoBackup *infoBackupNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
 Functions
@@ -71,16 +70,13 @@ Functions
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 InfoBackup *infoBackupPgSet(
     InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion);
-void infoBackupSave(InfoBackup *this, IoWrite *write);
-
-/***********************************************************************************************************************************
-infoBackupDataLabelList - get a list of current backup labels
-***********************************************************************************************************************************/
-StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Get a list of current backup labels
+StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
+
 InfoPg *infoBackupPg(const InfoBackup *this);
 InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 unsigned int infoBackupDataTotal(const InfoBackup *this);

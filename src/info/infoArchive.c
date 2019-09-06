@@ -83,7 +83,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
 /***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
-InfoArchive *
+static InfoArchive *
 infoArchiveNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -166,7 +166,7 @@ infoArchiveIdHistoryMatch(
 /***********************************************************************************************************************************
 Save to file
 ***********************************************************************************************************************************/
-void
+static void
 infoArchiveSave(InfoArchive *this, IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

@@ -13,6 +13,25 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.18dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve performance of info file load/save.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add helper function for adding <code>CipherBlock</code> filters to groups.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
         </release>
 
         <release date="2019-09-03" version="2.17" title="C Migrations and Bug Fixes">

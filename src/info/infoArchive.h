@@ -32,7 +32,6 @@ Archive info filename
 Constructors
 ***********************************************************************************************************************************/
 InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const String *cipherPassSub);
-InfoArchive *infoArchiveNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
 Functions
@@ -41,7 +40,6 @@ const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
 InfoArchive *infoArchivePgSet(
     InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
-void infoArchiveSave(InfoArchive *this, IoWrite *write);
 
 /***********************************************************************************************************************************
 Getters

@@ -32,9 +32,11 @@ Create a new Ini object
 Ini *
 iniNew(void)
 {
+    FUNCTION_TEST_VOID();
+
     Ini *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("ini")
+    MEM_CONTEXT_NEW_BEGIN("Ini")
     {
         // Create object
         this = memNew(sizeof(Ini));
@@ -45,8 +47,7 @@ iniNew(void)
     }
     MEM_CONTEXT_NEW_END();
 
-    // Return buffer
-    return this;
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -365,7 +366,7 @@ iniLoad(
         // Track the current section
         String *section = NULL;
 
-        // Keep track of the line numnber for error reporting
+        // Keep track of the line number for error reporting
         unsigned int lineIdx = 0;
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()

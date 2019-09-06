@@ -29,7 +29,11 @@ Constants
 /***********************************************************************************************************************************
 Function types for loading and saving
 ***********************************************************************************************************************************/
+// The purpose of this callback is to attempt a load (from file or otherwise).  Return true when the load is successful or throw an
+// error.  Return false when there are no more loads to try, but always make at least one load attempt.  The try parameter will
+// start at 0 and be incremented on each call.
 typedef bool InfoLoadCallback(void *data, unsigned int try);
+
 typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, const String *value);
 typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
 
@@ -42,7 +46,7 @@ Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *cal
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void infoSave(Info *this, IoWrite *write, InfoSaveCallback callbackFunction, void *callbackData);
+void infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
 bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext);
 void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue);
 
@@ -54,7 +58,7 @@ const String *infoCipherPass(const Info *this);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-void infoLoad(const String *error, InfoLoadCallback callbackFunction, void *callbackData);
+void infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Macros for function logging
