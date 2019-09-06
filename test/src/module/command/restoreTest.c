@@ -436,6 +436,9 @@ testRun(void)
             "P00   INFO: remap tablespace 'pg_tblspc/1' to '/all2/1'\n"
             "P00   INFO: remap tablespace 'pg_tblspc/2' to '/all2/ts2'\n"
             "P00   WARN: update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= 9.2");
+
+        // Remap links
+        // -------------------------------------------------------------------------------------------------------------------------
     }
 
     // *****************************************************************************************************************************

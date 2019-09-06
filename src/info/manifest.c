@@ -1490,13 +1490,33 @@ manifestTargetFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
+// void
+// manifestTargetRemove(const Manifest *this, const String *name)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM(MANIFEST, this);
+//         FUNCTION_TEST_PARAM(STRING, name);
+//     FUNCTION_TEST_END();
+//
+//     ASSERT(this != NULL);
+//     ASSERT(name != NULL);
+//
+//     unsigned int manifestIdx = manifestTargetFindDefault(this, name, NULL);
+//
+//     if (result == NULL)
+//         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strPtr(name));
+//
+//     FUNCTION_TEST_RETURN(result);
+// }
+
 void
-manifestTargetUpdate(const Manifest *this, const String *name, const String *path)
+manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
         FUNCTION_TEST_PARAM(STRING, name);
         FUNCTION_TEST_PARAM(STRING, path);
+        FUNCTION_TEST_PARAM(STRING, file);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -1505,10 +1525,15 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 
     ManifestTarget *target = (ManifestTarget *)manifestTargetFind(this, name);
 
+    ASSERT((target->file == NULL && file == NULL) || (target->file != NULL && file != NULL));
+
     MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
     {
         if (!strEq(target->path, path))
             target->path = strDup(path);
+
+        if (!strEq(target->file, file))
+            target->file = strDup(file);
     }
     MEM_CONTEXT_END();
 

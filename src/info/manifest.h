@@ -161,7 +161,7 @@ const ManifestTarget *manifestTarget(const Manifest *this, unsigned int targetId
 const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
 const ManifestTarget *manifestTargetFindDefault(const Manifest *this, const String *name, const ManifestTarget *targetDefault);
 unsigned int manifestTargetTotal(const Manifest *this);
-void manifestTargetUpdate(const Manifest *this, const String *name, const String *path);
+void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
 
 /***********************************************************************************************************************************
 Getters

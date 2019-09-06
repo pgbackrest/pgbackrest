@@ -28,100 +28,174 @@ restoreManifestRemap(Manifest *manifest)
 
     ASSERT(manifest != NULL);
 
-    // Reassign the base path if specified
-    const String *pgPath = cfgOptionStr(cfgOptPgPath);
-    const ManifestTarget *targetBase = manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR);
-
-    if (!strEq(targetBase->path, pgPath))
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        LOG_INFO("remap data directory to '%s'", strPtr(pgPath));
-        manifestTargetUpdate(manifest, targetBase->name, pgPath);
-    }
+        // Remap the data directory
+        // -------------------------------------------------------------------------------------------------------------------------
+        const String *pgPath = cfgOptionStr(cfgOptPgPath);
+        const ManifestTarget *targetBase = manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR);
 
-    // Remap tablespaces
-    KeyValue *tablespaceMap = varKv(cfgOption(cfgOptTablespaceMap));
-    const String *tablespaceMapAllPath = cfgOptionStr(cfgOptTablespaceMapAll);
-
-    if (tablespaceMap != NULL || tablespaceMapAllPath != NULL)
-    {
-        StringList *tablespaceRemapped = strLstNew();
-
-        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        if (!strEq(targetBase->path, pgPath))
         {
-            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+            LOG_INFO("remap data directory to '%s'", strPtr(pgPath));
+            manifestTargetUpdate(manifest, targetBase->name, pgPath, NULL);
+        }
 
-            // Is this a tablespace?
-            if (target->tablespaceId != 0)
+        // Remap tablespaces
+        // -------------------------------------------------------------------------------------------------------------------------
+        KeyValue *tablespaceMap = varKv(cfgOption(cfgOptTablespaceMap));
+        const String *tablespaceMapAllPath = cfgOptionStr(cfgOptTablespaceMapAll);
+
+        if (tablespaceMap != NULL || tablespaceMapAllPath != NULL)
+        {
+            StringList *tablespaceRemapped = strLstNew();
+
+            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
-                const String *tablespacePath = NULL;
+                const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
-                // Check for an individual mapping for this tablespace
-                if (tablespaceMap != NULL)
+                // Is this a tablespace?
+                if (target->tablespaceId != 0)
                 {
-                    // Attempt to get the tablespace by name
-                    const String *tablespacePathByName = varStr(kvGet(tablespaceMap, VARSTR(target->tablespaceName)));
+                    const String *tablespacePath = NULL;
 
-                    if (tablespacePathByName != NULL)
-                        strLstAdd(tablespaceRemapped, target->tablespaceName);
-
-                    // Attempt to get the tablespace by id
-                    const String *tablespacePathById = varStr(
-                        kvGet(tablespaceMap, VARSTR(varStrForce(VARUINT(target->tablespaceId)))));
-
-                    if (tablespacePathById != NULL)
-                        strLstAdd(tablespaceRemapped, varStrForce(VARUINT(target->tablespaceId)));
-
-                    // Error when both are set but the paths are different
-                    if (tablespacePathByName != NULL && tablespacePathById != NULL && !
-                        strEq(tablespacePathByName, tablespacePathById))
+                    // Check for an individual mapping for this tablespace
+                    if (tablespaceMap != NULL)
                     {
-                        THROW_FMT(
-                            TablespaceMapError, "tablespace remapped by name '%s' and id %u with different paths",
-                            strPtr(target->tablespaceName), target->tablespaceId);
+                        // Attempt to get the tablespace by name
+                        const String *tablespacePathByName = varStr(kvGet(tablespaceMap, VARSTR(target->tablespaceName)));
+
+                        if (tablespacePathByName != NULL)
+                            strLstAdd(tablespaceRemapped, target->tablespaceName);
+
+                        // Attempt to get the tablespace by id
+                        const String *tablespacePathById = varStr(
+                            kvGet(tablespaceMap, VARSTR(varStrForce(VARUINT(target->tablespaceId)))));
+
+                        if (tablespacePathById != NULL)
+                            strLstAdd(tablespaceRemapped, varStrForce(VARUINT(target->tablespaceId)));
+
+                        // Error when both are set but the paths are different
+                        if (tablespacePathByName != NULL && tablespacePathById != NULL && !
+                            strEq(tablespacePathByName, tablespacePathById))
+                        {
+                            THROW_FMT(
+                                TablespaceMapError, "tablespace remapped by name '%s' and id %u with different paths",
+                                strPtr(target->tablespaceName), target->tablespaceId);
+                        }
+                        // Else set the path by name
+                        else if (tablespacePathByName != NULL)
+                        {
+                            tablespacePath = tablespacePathByName;
+                        }
+                        // Else set the path by id
+                        else if (tablespacePathById != NULL)
+                            tablespacePath = tablespacePathById;
                     }
-                    // Else set the path by name
-                    else if (tablespacePathByName != NULL)
+
+                    // If not individual mapping check if all tablespaces are being remapped
+                    if (tablespacePath == NULL && tablespaceMapAllPath != NULL)
+                        tablespacePath = strNewFmt("%s/%s", strPtr(tablespaceMapAllPath), strPtr(target->tablespaceName));
+
+                    // Remap tablespace if a mapping was found
+                    if (tablespacePath != NULL)
                     {
-                        tablespacePath = tablespacePathByName;
+                        LOG_INFO("remap tablespace '%s' to '%s'", strPtr(target->name), strPtr(tablespacePath));
+
+                        manifestTargetUpdate(manifest, target->name, tablespacePath, NULL);
+                        manifestLinkUpdate(manifest, strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(target->name)), tablespacePath);
                     }
-                    // Else set the path by id
-                    else if (tablespacePathById != NULL)
-                        tablespacePath = tablespacePathById;
                 }
+            }
 
-                // If not individual mapping check if all tablespaces are being remapped
-                if (tablespacePath == NULL && tablespaceMapAllPath != NULL)
-                    tablespacePath = strNewFmt("%s/%s", strPtr(tablespaceMapAllPath), strPtr(target->tablespaceName));
+            // Error on invalid tablespaces
+            if (tablespaceMap != NULL)
+            {
+                const VariantList *tablespaceMapList = kvKeyList(tablespaceMap);
 
-                // Remap tablespace if a mapping was found
-                if (tablespacePath != NULL)
+                for (unsigned int tablespaceMapIdx = 0; tablespaceMapIdx < varLstSize(tablespaceMapList); tablespaceMapIdx++)
                 {
-                    LOG_INFO("remap tablespace '%s' to '%s'", strPtr(target->name), strPtr(tablespacePath));
+                    const String *tablespace = varStr(varLstGet(tablespaceMapList, tablespaceMapIdx));
 
-                    manifestTargetUpdate(manifest, target->name, tablespacePath);
-                    manifestLinkUpdate(manifest, strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(target->name)), tablespacePath);
+                    if (!strLstExists(tablespaceRemapped, tablespace))
+                        THROW_FMT(TablespaceMapError, "unable to remap invalid tablespace '%s'", strPtr(tablespace));
+                }
+            }
+
+            // Issue a warning message when remapping tablespaces in postgre < 9.2
+            if (manifestData(manifest)->pgVersion <= PG_VERSION_92)
+                LOG_WARN("update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= " PG_VERSION_92_STR);
+        }
+
+        // Remap links
+        // -------------------------------------------------------------------------------------------------------------------------
+        KeyValue *linkMap = varKv(cfgOption(cfgOptLinkMap));
+        bool linkAll = cfgOptionBool(cfgOptLinkAll);
+
+        if (linkMap != NULL || linkAll)
+        {
+            StringList *linkRemapped = strLstNew();
+
+            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+            {
+                const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+
+                // Is this a link?
+                if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
+                {
+                    const String *linkPath = linkMap == NULL ? NULL : varStr(kvGet(linkMap, VARSTR(target->name)));
+
+                    // Remap link if a mapping was found
+                    if (linkPath != NULL)
+                    {
+                        LOG_INFO("remap link '%s' to '%s'", strPtr(target->name), strPtr(linkPath));
+                        manifestLinkUpdate(manifest, target->name, linkPath);
+
+                        // If the link is a file separate the file name from the path to update the target
+                        const String *linkFile = NULL;
+
+                        if (target->file != NULL)
+                        {
+                            linkFile = strBase(linkPath);
+                            linkPath = strPath(linkPath);
+                        }
+
+                        manifestTargetUpdate(manifest, target->name, linkPath, linkFile);
+                    }
+                    // If all links are not being restored then remove the target and link
+                    else if (!linkAll)
+                    {
+                        if (target->file != NULL)
+                            LOG_WARN("file link '%s' will be restored as a file at the same location", strPtr(target->name));
+                        else
+                        {
+                            LOG_WARN(
+                                "contents of directory link '%s' will be restored in a directory at the same location",
+                                strPtr(target->name));
+                        }
+
+                        // $oManifest->remove(MANIFEST_SECTION_BACKUP_TARGET, $strTarget);
+                        // $oManifest->remove(MANIFEST_SECTION_TARGET_LINK, $strTarget);
+                    }
+                }
+            }
+
+            // Error on invalid links
+            if (linkMap != NULL)
+            {
+                const VariantList *linkMapList = kvKeyList(linkMap);
+
+                for (unsigned int linkMapIdx = 0; linkMapIdx < varLstSize(linkMapList); linkMapIdx++)
+                {
+                    const String *link = varStr(varLstGet(linkMapList, linkMapIdx));
+
+                    if (!strLstExists(linkRemapped, link))
+                        THROW_FMT(TablespaceMapError, "unable to remap invalid link '%s'", strPtr(link));
                 }
             }
         }
-
-        // Error on invalid tablespaces
-        if (tablespaceMap != NULL)
-        {
-            const VariantList *tablespaceMapList = kvKeyList(tablespaceMap);
-
-            for (unsigned int tablespaceMapIdx = 0; tablespaceMapIdx < varLstSize(tablespaceMapList); tablespaceMapIdx++)
-            {
-                const String *tablespace = varStr(varLstGet(tablespaceMapList, tablespaceMapIdx));
-
-                if (!strLstExists(tablespaceRemapped, tablespace))
-                    THROW_FMT(TablespaceMapError, "unable to remap invalid tablespace '%s'", strPtr(tablespace));
-            }
-        }
-
-        // Issue a warning message when remapping tablespaces in postgre < 9.2
-        if (manifestData(manifest)->pgVersion <= PG_VERSION_92)
-            LOG_WARN("update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= " PG_VERSION_92_STR);
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

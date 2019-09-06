@@ -85,13 +85,13 @@ testRun(void)
         TEST_RESULT_STRZ(manifestData(manifest)->backupLabel, "20190808-163540F", "    check manifest data");
 
         TEST_RESULT_VOID(
-            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    update target no change");
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "    update target no change");
         TEST_RESULT_VOID(
-            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2")), "    update target");
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2"), NULL), "    update target");
         TEST_RESULT_STRZ(
             manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, "/path2", "    check target path");
         TEST_RESULT_VOID(
-            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base")), "    fix target path");
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "    fix target path");
 
         Buffer *contentSave = bufNew(0);
 
