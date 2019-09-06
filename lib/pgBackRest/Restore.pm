@@ -198,158 +198,6 @@ sub manifestOwnershipCheck
 }
 
 ####################################################################################################################################
-# manifestLoad
-#
-# Loads the backup manifest and performs requested tablespace remaps.
-####################################################################################################################################
-sub manifestLoad
-{
-    my $self = shift;           # Class hash
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->manifestLoad', \@_,
-        );
-
-    # Load the manifest into a hash
-    my $oManifest = new pgBackRest::Manifest(
-        storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), {oStorage => storageDb()});
-
-    $self->manifestOwnershipCheck($oManifest);
-
-    # Remap links when requested
-    my $oLinkRemap;
-
-    if (cfgOptionTest(CFGOPT_LINK_MAP))
-    {
-        my $oLinkRemapRequest = cfgOption(CFGOPT_LINK_MAP);
-
-        for my $strKey (sort(keys(%{$oLinkRemapRequest})))
-        {
-            my $strTarget = MANIFEST_TARGET_PGDATA . "/${strKey}";
-
-            # Only remap if a valid target link but not a tablespace
-            if ($oManifest->isTargetValid($strTarget, false) &&
-                $oManifest->isTargetLink($strTarget) && !$oManifest->isTargetTablespace($strTarget))
-            {
-                # if (defined(${$oTablespaceRemap}{$strTarget}))
-                # {
-                #     confess &log(ERROR, "tablespace ${strKey} has already been remapped to ${$oLinkRemap}{$strTarget}",
-                #                  ERROR_LINK_MAP);
-                # }
-
-                ${$oLinkRemap}{$strTarget} = ${$oLinkRemapRequest}{$strKey};
-
-                &log(INFO, "remap link ${strTarget} destination to ${$oLinkRemap}{$strTarget}");
-            }
-            # Else error
-            else
-            {
-                confess &log(ERROR, "cannot remap invalid link ${strKey} to ${$oLinkRemapRequest}{$strKey}",
-                             ERROR_LINK_MAP);
-            }
-        }
-    }
-
-    # Remap all links (except ones that were done individually above)
-    if (cfgOption(CFGOPT_LINK_ALL))
-    {
-        for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
-        {
-            # If target is a link but not a tablespace and has not already been remapped when remap it
-            if ($oManifest->isTargetLink($strTarget) && !$oManifest->isTargetTablespace($strTarget) &&
-                !defined(${$oLinkRemap}{$strTarget}))
-            {
-                    ${$oLinkRemap}{$strTarget} =
-                        $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH);
-
-                    if ($oManifest->isTargetFile($strTarget))
-                    {
-                        ${$oLinkRemap}{$strTarget} .= '/' .
-                            $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE);
-                    }
-            }
-        }
-    }
-
-    # Alter manifest for remapped links
-    for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
-    {
-        if ($oManifest->isTargetLink($strTarget) && !$oManifest->isTargetTablespace($strTarget))
-        {
-            # If the link will be remapped
-            if (defined(${$oLinkRemap}{$strTarget}))
-            {
-                my $strTargetPath = ${$oLinkRemap}{$strTarget};
-
-                # If this link is to a file then the specified path must be split into file and path parts
-                if ($oManifest->isTargetFile($strTarget))
-                {
-                    $strTargetPath = dirname($strTargetPath);
-
-                    # Error when the path is not deep enough to be valid
-                    if (!defined($strTargetPath))
-                    {
-                        confess &log(ERROR, "${$oLinkRemap}{$strTarget} is not long enough to be target for ${strTarget}");
-                    }
-
-                    # Set the file part
-                    $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE,
-                                    substr(${$oLinkRemap}{$strTarget}, length($strTargetPath) + 1));
-
-                    # Set the link target
-                    $oManifest->set(
-                        MANIFEST_SECTION_TARGET_LINK, $strTarget, MANIFEST_SUBKEY_DESTINATION, ${$oLinkRemap}{$strTarget});
-                }
-                else
-                {
-                    # Set the link target
-                    $oManifest->set(MANIFEST_SECTION_TARGET_LINK, $strTarget, MANIFEST_SUBKEY_DESTINATION, $strTargetPath);
-
-                    # Since this will be a link remove the associated path (??? perhaps this should be in build like it is for ts?)
-                    $oManifest->remove(MANIFEST_SECTION_TARGET_PATH, $strTarget);
-                }
-
-                # Set the target path
-                $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH, $strTargetPath);
-            }
-            # Else the link will be restored directly into $PGDATA instead
-            else
-            {
-                if ($oManifest->test(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE))
-                {
-                    &log(WARN, 'file link ' . $oManifest->dbPathGet(undef, $strTarget) .
-                               ' will be restored as a file at the same location');
-                }
-                else
-                {
-                    &log(WARN, 'contents of directory link ' . $oManifest->dbPathGet(undef, $strTarget) .
-                               ' will be restored in a directory at the same location');
-                }
-
-                $oManifest->remove(MANIFEST_SECTION_BACKUP_TARGET, $strTarget);
-                $oManifest->remove(MANIFEST_SECTION_TARGET_LINK, $strTarget);
-            }
-        }
-    }
-
-    # Make sure links are still valid after remapping
-    $oManifest->linkCheck();
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oManifest', value => $oManifest, trace => true}
-    );
-}
-
-####################################################################################################################################
 # clean
 #
 # Checks that the restore paths are empty, or if --force was used then it cleans files/paths/links from the restore directories that
@@ -948,8 +796,14 @@ sub process
     # Db storage
     my $oStorageDb = storageDb();
 
-    # Load the manifest
-    my $oManifest = $self->manifestLoad();
+    # Load the manifest into a hash (already partially processed by C)
+    my $oManifest = new pgBackRest::Manifest(
+        storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), {oStorage => storageDb()});
+
+    $self->manifestOwnershipCheck($oManifest);
+
+    # Make sure links are still valid after remapping
+    $oManifest->linkCheck();
 
     # Delete pg_control file.  This will be copied from the backup at the very end to prevent a partially restored database
     # from being started by PostgreSQL.

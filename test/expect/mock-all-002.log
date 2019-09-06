@@ -487,19 +487,19 @@ restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '[TEST_PATH]/db-master/db/base' to confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files exist in the destination directories the restore will be aborted.
-P00   WARN: file link pg_hba.conf will be restored as a file at the same location
-P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
-P00   WARN: file link postgresql.conf will be restored as a file at the same location
+P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
+P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
+P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
 P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
 
 restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.manifest file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
+P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
+P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
+P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
 P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-2]
 P00   WARN: user bogus in manifest cannot be used for restore, set to [USER-2]
-P00   WARN: file link pg_hba.conf will be restored as a file at the same location
-P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
-P00   WARN: file link postgresql.conf will be restored as a file at the same location
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------

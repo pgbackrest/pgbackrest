@@ -100,7 +100,7 @@ restoreManifestRemap(Manifest *manifest)
                     // Remap tablespace if a mapping was found
                     if (tablespacePath != NULL)
                     {
-                        LOG_INFO("remap tablespace '%s' to '%s'", strPtr(target->name), strPtr(tablespacePath));
+                        LOG_INFO("map tablespace '%s' to '%s'", strPtr(target->name), strPtr(tablespacePath));
 
                         manifestTargetUpdate(manifest, target->name, tablespacePath, NULL);
                         manifestLinkUpdate(manifest, strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(target->name)), tablespacePath);
@@ -132,66 +132,68 @@ restoreManifestRemap(Manifest *manifest)
         KeyValue *linkMap = varKv(cfgOption(cfgOptLinkMap));
         bool linkAll = cfgOptionBool(cfgOptLinkAll);
 
-        if (linkMap != NULL || linkAll)
+        StringList *linkRemapped = strLstNew();
+
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
-            StringList *linkRemapped = strLstNew();
+            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
-            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+            // Is this a link?
+            if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
             {
-                const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+                const String *link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
+                const String *linkPath = linkMap == NULL ? NULL : varStr(kvGet(linkMap, VARSTR(link)));
 
-                // Is this a link?
-                if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
+                // Remap link if a mapping was found
+                if (linkPath != NULL)
                 {
-                    const String *linkPath = linkMap == NULL ? NULL : varStr(kvGet(linkMap, VARSTR(target->name)));
+                    LOG_INFO("map link '%s' to '%s'", strPtr(link), strPtr(linkPath));
+                    manifestLinkUpdate(manifest, target->name, linkPath);
 
-                    // Remap link if a mapping was found
-                    if (linkPath != NULL)
+                    // If the link is a file separate the file name from the path to update the target
+                    const String *linkFile = NULL;
+
+                    if (target->file != NULL)
                     {
-                        LOG_INFO("remap link '%s' to '%s'", strPtr(target->name), strPtr(linkPath));
-                        manifestLinkUpdate(manifest, target->name, linkPath);
-
-                        // If the link is a file separate the file name from the path to update the target
-                        const String *linkFile = NULL;
-
-                        if (target->file != NULL)
-                        {
-                            linkFile = strBase(linkPath);
-                            linkPath = strPath(linkPath);
-                        }
-
-                        manifestTargetUpdate(manifest, target->name, linkPath, linkFile);
+                        linkFile = strBase(linkPath);
+                        linkPath = strPath(linkPath);
                     }
-                    // If all links are not being restored then remove the target and link
-                    else if (!linkAll)
+
+                    manifestTargetUpdate(manifest, target->name, linkPath, linkFile);
+
+                    // Add to remapped list for later validation that all links were valid
+                    strLstAdd(linkRemapped, link);
+                }
+                // If all links are not being restored then remove the target and link
+                else if (!linkAll)
+                {
+                    if (target->file != NULL)
+                        LOG_WARN("file link '%s' will be restored as a file at the same location", strPtr(link));
+                    else
                     {
-                        if (target->file != NULL)
-                            LOG_WARN("file link '%s' will be restored as a file at the same location", strPtr(target->name));
-                        else
-                        {
-                            LOG_WARN(
-                                "contents of directory link '%s' will be restored in a directory at the same location",
-                                strPtr(target->name));
-                        }
-
-                        manifestLinkRemove(manifest, target->name);
-                        manifestTargetRemove(manifest, target->name);
+                        LOG_WARN(
+                            "contents of directory link '%s' will be restored in a directory at the same location",
+                            strPtr(link));
                     }
+
+                    manifestLinkRemove(manifest, target->name);
+                    manifestTargetRemove(manifest, target->name);
+                    targetIdx--;
                 }
             }
+        }
 
-            // Error on invalid links
-            if (linkMap != NULL)
+        // Error on invalid links
+        if (linkMap != NULL)
+        {
+            const VariantList *linkMapList = kvKeyList(linkMap);
+
+            for (unsigned int linkMapIdx = 0; linkMapIdx < varLstSize(linkMapList); linkMapIdx++)
             {
-                const VariantList *linkMapList = kvKeyList(linkMap);
+                const String *link = varStr(varLstGet(linkMapList, linkMapIdx));
 
-                for (unsigned int linkMapIdx = 0; linkMapIdx < varLstSize(linkMapList); linkMapIdx++)
-                {
-                    const String *link = varStr(varLstGet(linkMapList, linkMapIdx));
-
-                    if (!strLstExists(linkRemapped, link))
-                        THROW_FMT(TablespaceMapError, "unable to remap invalid link '%s'", strPtr(link));
-                }
+                if (!strLstExists(linkRemapped, link))
+                    THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strPtr(link));
             }
         }
     }

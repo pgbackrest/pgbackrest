@@ -720,11 +720,11 @@ restore delta, backup '[BACKUP-FULL-2]' - restore all links by mapping (db-maste
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf --link-map=pg_hba.conf=../pg_config/pg_hba.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
+P00   INFO: map link 'pg_hba.conf' to '../pg_config/pg_hba.conf'
+P00   INFO: map link 'pg_stat' to '../pg_stat'
+P00   INFO: map link 'postgresql.conf' to '../pg_config/postgresql.conf'
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
-P00   INFO: remap link pg_data/pg_hba.conf destination to ../pg_config/pg_hba.conf
-P00   INFO: remap link pg_data/pg_stat destination to ../pg_stat
-P00   INFO: remap link pg_data/postgresql.conf destination to ../pg_config/postgresql.conf
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -763,9 +763,9 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, backup '[BACKUP-FULL-2]', expect exit 70 - restore all links by mapping (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=warn --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_stat/postgresql.conf  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
+P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
-P00   WARN: file link pg_hba.conf will be restored as a file at the same location
 P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_stat) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_stat (../pg_stat)
 
 restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked file (db-master host)
@@ -794,9 +794,9 @@ restore delta, backup '[BACKUP-FULL-2]' - restore all links --link-all and mappi
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --link-all --link-map=pg_stat=../pg_stat --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
+P00   INFO: map link 'pg_stat' to '../pg_stat'
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
-P00   INFO: remap link pg_data/pg_stat destination to ../pg_stat
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -834,11 +834,11 @@ restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '[TEST_PATH]/db-master/db/base' to confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files exist in the destination directories the restore will be aborted.
 P00   INFO: restore backup set [BACKUP-FULL-2]
+P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
+P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
+P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
-P00   WARN: file link pg_hba.conf will be restored as a file at the same location
-P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
-P00   WARN: file link postgresql.conf will be restored as a file at the same location
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
 P00   INFO: restore command end: aborted with exception [040]
@@ -848,13 +848,13 @@ restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.ma
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
+P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
+P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
+P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
 P00   WARN: user bogus in manifest cannot be used for restore, set to [USER-1]
-P00   WARN: file link pg_hba.conf will be restored as a file at the same location
-P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
-P00   WARN: file link postgresql.conf will be restored as a file at the same location
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
@@ -1831,8 +1831,8 @@ restore, backup '[BACKUP-DIFF-2]', remap - remap all paths (db-master host)
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2'
-P00   INFO: remap tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
-P00   INFO: remap tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00   INFO: map tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
+P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
@@ -1871,8 +1871,8 @@ restore delta, backup '[BACKUP-DIFF-2]', remap - ensure file in tblspc root rema
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2'
-P00   INFO: remap tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
-P00   INFO: remap tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00   INFO: map tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
+P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
@@ -3683,7 +3683,7 @@ restore delta, remap - selective restore 16384 (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
-P00   INFO: remap tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
@@ -3726,7 +3726,7 @@ restore delta, remap - selective restore 32768 (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
-P00   INFO: remap tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
@@ -3780,7 +3780,7 @@ restore, remap, expect exit 73 - no tablespace remap - error when tablespace dir
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
-P00   INFO: remap tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
+P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
 P00  ERROR: [073]: cannot restore to missing path [TEST_PATH]/db-master/db/base-2/tablespace
@@ -3792,7 +3792,7 @@ restore - no tablespace remap (db-master host)
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
-P00   INFO: remap tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
+P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b

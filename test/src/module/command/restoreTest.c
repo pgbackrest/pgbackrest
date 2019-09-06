@@ -386,8 +386,8 @@ testRun(void)
             manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-2", "    check tablespace 1 link");
 
         harnessLogResult(
-            "P00   INFO: remap tablespace 'pg_tblspc/1' to '/1-2'\n"
-            "P00   INFO: remap tablespace 'pg_tblspc/2' to '/2-2'");
+            "P00   INFO: map tablespace 'pg_tblspc/1' to '/1-2'\n"
+            "P00   INFO: map tablespace 'pg_tblspc/2' to '/2-2'");
 
         // Remap a tablespace using just the id and map the rest with tablespace-map-all
         argList = strLstNew();
@@ -409,8 +409,8 @@ testRun(void)
             manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-3", "    check tablespace 1 link");
 
         harnessLogResult(
-            "P00   INFO: remap tablespace 'pg_tblspc/1' to '/all/1'\n"
-            "P00   INFO: remap tablespace 'pg_tblspc/2' to '/2-3'");
+            "P00   INFO: map tablespace 'pg_tblspc/1' to '/all/1'\n"
+            "P00   INFO: map tablespace 'pg_tblspc/2' to '/2-3'");
 
         // Remap all tablespaces with tablespace-map-all and update version to 9.2 to test warning
         manifest->data.pgVersion = PG_VERSION_92;
@@ -433,12 +433,104 @@ testRun(void)
             manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/all2/ts2", "    check tablespace 1 link");
 
         harnessLogResult(
-            "P00   INFO: remap tablespace 'pg_tblspc/1' to '/all2/1'\n"
-            "P00   INFO: remap tablespace 'pg_tblspc/2' to '/all2/ts2'\n"
+            "P00   INFO: map tablespace 'pg_tblspc/1' to '/all2/1'\n"
+            "P00   INFO: map tablespace 'pg_tblspc/2' to '/all2/ts2'\n"
             "P00   WARN: update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= 9.2");
 
         // Remap links
         // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--link-map=bogus=bogus");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(restoreManifestRemap(manifest), LinkMapError, "unable to remap invalid link 'bogus'");
+
+        // Add some links
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+                .name = STRDEF("pg_data/pg_hba.conf"), .path = STRDEF("../conf"), .file = STRDEF("pg_hba.conf"),
+                .type = manifestTargetTypeLink});
+        manifestLinkAdd(
+            manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_hba.conf"), .destination = STRDEF("../conf/pg_hba.conf")});
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){.name = STRDEF("pg_data/pg_wal"), .path = STRDEF("/wal"),  .type = manifestTargetTypeLink});
+        manifestLinkAdd(
+            manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_wal"), .destination = STRDEF("/wal")});
+
+        // Remap both links
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--link-map=pg_hba.conf=../conf2/pg_hba2.conf");
+        strLstAddZ(argList, "--link-map=pg_wal=/wal2");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remap links");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "    check link file");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "    check link dest");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "    check link path");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "    check link dest");
+
+        harnessLogResult(
+            "P00   INFO: map link 'pg_hba.conf' to '../conf2/pg_hba2.conf'\n"
+            "P00   INFO: map link 'pg_wal' to '/wal2'");
+
+        // Leave all links as they are
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--link-all");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(restoreManifestRemap(manifest), "leave links as they are");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "    check link file");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "    check link dest");
+        TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "    check link path");
+        TEST_RESULT_STRZ(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "    check link dest");
+
+        // Remove all links
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remove all links");
+        TEST_ERROR(
+            manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
+            "unable to find 'pg_data/pg_hba.conf' in manifest target list");
+        TEST_ERROR(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
+            "unable to find 'pg_data/pg_hba.conf' in manifest link list");
+        TEST_ERROR(
+            manifestTargetFind(manifest, STRDEF("pg_data/pg_wal")), AssertError,
+            "unable to find 'pg_data/pg_wal' in manifest target list");
+        TEST_ERROR(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_wal")), AssertError,
+            "unable to find 'pg_data/pg_wal' in manifest link list");
+
+        harnessLogResult(
+            "P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location\n"
+            "P00   WARN: contents of directory link 'pg_wal' will be restored in a directory at the same location");
     }
 
     // *****************************************************************************************************************************
