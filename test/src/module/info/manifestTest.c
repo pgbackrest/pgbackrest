@@ -201,10 +201,27 @@ testRun(void)
         TEST_RESULT_STRZ(link->destination, "../pg_stat2", "    check link");
         TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "    fix link destination");
 
+        const ManifestTarget *target = NULL;
+        TEST_ASSIGN(target, manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf")), "find target");
+        TEST_RESULT_VOID(
+            manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba2.conf")), "    update target file");
+        TEST_RESULT_STRZ(target->file, "pg_hba2.conf", "    check target file");
+        TEST_RESULT_VOID(manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba.conf")), "    fix target file");
+
         contentSave = bufNew(0);
 
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STRSTR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
+
+        TEST_RESULT_VOID(manifestLinkRemove(manifest, STRDEF("pg_data/pg_stat")), "remove link");
+        TEST_ERROR(
+            manifestLinkRemove(manifest, STRDEF("pg_data/pg_stat")), AssertError,
+            "unable to remove 'pg_data/pg_stat' from manifest link list");
+
+        TEST_RESULT_VOID(manifestTargetRemove(manifest, STRDEF("pg_data/pg_hba.conf")), "remove target");
+        TEST_ERROR(
+            manifestTargetRemove(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
+            "unable to remove 'pg_data/pg_hba.conf' from manifest target list");
     }
 
     // *****************************************************************************************************************************

@@ -1403,7 +1403,7 @@ manifestLinkRemove(const Manifest *this, const String *name)
     ASSERT(name != NULL);
 
     if (!lstRemove(this->linkList, &name))
-        THROW_FMT(AssertError, "unable to remove '%s' from manifest list list", strPtr(name));
+        THROW_FMT(AssertError, "unable to remove '%s' from manifest link list", strPtr(name));
 
     FUNCTION_TEST_RETURN_VOID();
 }
