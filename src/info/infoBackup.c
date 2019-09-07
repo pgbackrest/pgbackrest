@@ -84,19 +84,15 @@ infoBackupNewInternal(void)
 Create new object without loading it from a file
 ***********************************************************************************************************************************/
 InfoBackup *
-infoBackupNew(
-    unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgControlVersion, const uint32_t pgCatalogVersion,
-    const String *cipherPassSub)
+infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
-        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
-    ASSERT(pgVersion > 0 && pgSystemId > 0 && pgControlVersion > 0 && pgCatalogVersion > 0);
+    ASSERT(pgVersion > 0 && pgSystemId > 0);
 
     InfoBackup *this = NULL;
 
@@ -106,7 +102,7 @@ infoBackupNew(
 
         // Initialize the pg data
         this->infoPg = infoPgNew(infoPgBackup, cipherPassSub);
-        infoBackupPgSet(this, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
+        infoBackupPgSet(this, pgVersion, pgSystemId);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -307,17 +303,15 @@ infoBackupPg(const InfoBackup *this)
 Set the infoPg data
 ***********************************************************************************************************************************/
 InfoBackup *
-infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion)
+infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
-        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
     FUNCTION_LOG_END();
 
-    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
+    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId);
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }

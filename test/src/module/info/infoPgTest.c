@@ -47,7 +47,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPgNew(infoPgArchive, NULL), infoPgArchive, PG_VERSION_94, 6569239123849665679, 0, 0),
+            infoPg, infoPgSet(infoPgNew(infoPgArchive, NULL), infoPgArchive, PG_VERSION_94, 6569239123849665679),
             "infoPgSet - infoPgArchive");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
@@ -55,40 +55,28 @@ testRun(void)
         TEST_RESULT_INT(pgData.id, 1, "  id set");
         TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "  system-id set");
         TEST_RESULT_INT(pgData.version, PG_VERSION_94, "  version set");
-        TEST_RESULT_INT(pgData.catalogVersion, 0, "  catalog-version not set");
-        TEST_RESULT_INT(pgData.controlVersion, 0, "  control-version set");
 
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPg, infoPgArchive, PG_VERSION_95, 6569239123849665999, 0, 0),
-            "infoPgSet - infoPgArchive second db");
+            infoPg, infoPgSet(infoPg, infoPgArchive, PG_VERSION_95, 6569239123849665999), "infoPgSet - infoPgArchive second db");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 2, "  2 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
         pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
         TEST_RESULT_INT(pgData.id, 2, "  current id updated");
         TEST_RESULT_INT(pgData.systemId, 6569239123849665999, "  system-id updated");
         TEST_RESULT_INT(pgData.version, PG_VERSION_95, "  version updated");
-        TEST_RESULT_INT(pgData.catalogVersion, 0, "  catalog-version not set");
-        TEST_RESULT_INT(pgData.controlVersion, 0, "  control-version not set");
         TEST_RESULT_STR(strPtr(infoCipherPass(infoPgInfo(infoPg))), NULL, "  cipherPass not set");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPgNew(infoPgBackup, strNew("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679,
-            201409291, 942), "infoPgSet - infoPgBackup");
+            infoPg, infoPgSet(infoPgNew(infoPgBackup, strNew("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679),
+            "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
         pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
         TEST_RESULT_INT(pgData.id, 1, "  id set");
         TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "  system-id set");
         TEST_RESULT_INT(pgData.version, PG_VERSION_94, "  version set");
-        TEST_RESULT_INT(pgData.catalogVersion, 942, "  catalog-version set");
-        TEST_RESULT_INT(pgData.controlVersion, 201409291, "  control-version set");
         TEST_RESULT_STR(strPtr(infoCipherPass(infoPgInfo(infoPg))), "123xyz", "  cipherPass set");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
-            infoPgSet(infoPgNew(infoPgBackup, NULL), 1000, PG_VERSION_94, 6569239123849665679, 201409291, 942),
-            AssertError, "invalid InfoPg type 1000");
     }
 
     // *****************************************************************************************************************************
@@ -132,8 +120,6 @@ testRun(void)
         TEST_RESULT_INT(pgData.id, 1, "    id set");
         TEST_RESULT_INT(pgData.version, PG_VERSION_94, "    version set");
         TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "    system-id set");
-        TEST_RESULT_INT(pgData.catalogVersion, 0, "    catalog-version not set");
-        TEST_RESULT_INT(pgData.controlVersion, 0, "    control-version not set");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "    check pg data total");
         TEST_RESULT_STR(strPtr(infoPgArchiveId(infoPg, 0)), "9.4-1", "    check pg archive id");
         TEST_RESULT_PTR(infoPgCipherPass(infoPg), NULL, "    no cipher passphrase");
@@ -179,15 +165,11 @@ testRun(void)
         TEST_RESULT_INT(pgData.id, 2, "    id set");
         TEST_RESULT_INT(pgData.version, PG_VERSION_95, "    version set");
         TEST_RESULT_INT(pgData.systemId, 6365925855999999999, "    system-id set");
-        TEST_RESULT_INT(pgData.catalogVersion, 201510051, "    catalog-version set");
-        TEST_RESULT_INT(pgData.controlVersion, 942, "    control-version set");
 
         pgData = infoPgData(infoPg, 1);
         TEST_RESULT_INT(pgData.id, 1, "    id set");
         TEST_RESULT_INT(pgData.version, PG_VERSION_94, "    version set");
         TEST_RESULT_INT(pgData.systemId, 6569239123849665679, "    system-id set");
-        TEST_RESULT_INT(pgData.catalogVersion, 201409291, "    catalog-version set");
-        TEST_RESULT_INT(pgData.controlVersion, 942, "    control-version set");
 
         contentSave = bufNew(0);
 
@@ -201,16 +183,12 @@ testRun(void)
         pgData.id = 3;
         pgData.version = PG_VERSION_96;
         pgData.systemId = 6399999999999999999;
-        pgData.catalogVersion = 201608131;
-        pgData.controlVersion = 960;
         TEST_RESULT_VOID(infoPgAdd(infoPg, &pgData), "infoPgAdd");
 
         InfoPgData pgDataTest = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgDataTest.id, 3, "    id set");
         TEST_RESULT_INT(pgDataTest.version, PG_VERSION_96, "    version set");
         TEST_RESULT_INT(pgDataTest.systemId, 6399999999999999999, "    system-id set");
-        TEST_RESULT_INT(pgDataTest.catalogVersion, 201608131, "    catalog-version set");
-        TEST_RESULT_INT(pgDataTest.controlVersion, 960, "    control-version set");
 
         // infoPgDataToLog
         //--------------------------------------------------------------------------------------------------------------------------
@@ -218,12 +196,8 @@ testRun(void)
         pgDataTest.id = (unsigned int)4294967295;
         pgDataTest.version = (unsigned int)4294967295;
         pgDataTest.systemId = 18446744073709551615U;
-        pgDataTest.catalogVersion = (uint32_t)4294967295;
-        pgDataTest.controlVersion = (uint32_t)4294967295;
         TEST_RESULT_STR(
-            strPtr(infoPgDataToLog(&pgDataTest)),
-            "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615, catalogVersion: 4294967295, controlVersion:"
-                " 4294967295}",
+            strPtr(infoPgDataToLog(&pgDataTest)), "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615}",
             "    check max format");
     }
 }

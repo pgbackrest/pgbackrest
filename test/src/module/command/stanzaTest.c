@@ -734,7 +734,7 @@ testRun(void)
             "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.5\"}\n"
         );
         TEST_RESULT_VOID(
@@ -753,7 +753,7 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.5\"}\n"
             "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.6\"}\n"
@@ -784,7 +784,7 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665999,"
                 "\"db-version\":\"9.5\"}\n"
             "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.6\"}\n"

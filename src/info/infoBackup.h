@@ -59,17 +59,14 @@ typedef struct InfoBackupData
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-InfoBackup *infoBackupNew(
-    unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgControlVersion, const uint32_t pgCatalogVersion,
-    const String *cipherPassSub);
+InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Remove a backup from the current section
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
-InfoBackup *infoBackupPgSet(
-    InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion);
+InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Getters
