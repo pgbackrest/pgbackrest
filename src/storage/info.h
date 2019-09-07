@@ -26,8 +26,10 @@ typedef struct StorageInfo
     const String *linkDestination;                                  // Destination if this is a link
     StorageType type;                                               // Type file/path/link)
     bool exists;                                                    // Does the path/file/link exist?
-    const String *user;                                             // User that owns the file
-    const String *group;                                            // Group that owns the file
+    uid_t userId;                                                   // User that owns the file
+    const String *user;                                             // Name of user that owns the file
+    uid_t groupId;                                                  // Group that owns the file
+    const String *group;                                            // Name of group that owns the file
     mode_t mode;                                                    // Mode of path/file/link
     time_t timeModified;                                            // Time file was last modified
     uint64_t size;                                                  // Size (path/link is 0)
