@@ -90,7 +90,7 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
             stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(*param, buffer + 1, STACK_TRACE_PARAM_MAX - 1) + 1);        \
         }                                                                                                                          \
     }                                                                                                                              \
-    while(0)
+    while (0)
 
 #define FUNCTION_LOG_PARAM_PP(typeMacroPrefix, param)                                                                              \
     do                                                                                                                             \
@@ -108,7 +108,7 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
             stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(**param, buffer + 2, STACK_TRACE_PARAM_MAX - 2) + 2);       \
         }                                                                                                                          \
     }                                                                                                                              \
-    while(0)
+    while (0)
 
 /***********************************************************************************************************************************
 Functions and macros to render various data types
@@ -236,7 +236,7 @@ Macros to return function results (or void)
                                                                                                                                    \
         return FUNCTION_LOG_RETURN_result;                                                                                         \
     }                                                                                                                              \
-    while(0)
+    while (0)
 
 #define FUNCTION_LOG_RETURN(typeMacroPrefix, result)                                                                               \
     FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, , result)
@@ -263,7 +263,7 @@ Macros to return function results (or void)
                                                                                                                                    \
         LOG(FUNCTION_LOG_LEVEL(), 0, "=> void");                                                                                   \
     }                                                                                                                              \
-    while(0)
+    while (0)
 
 /***********************************************************************************************************************************
 Function Test Macros
@@ -302,10 +302,10 @@ test macros are compiled out (except for return statements).
             STACK_TRACE_POP(true);                                                                                                 \
             return result;                                                                                                         \
         }                                                                                                                          \
-        while(0);
+        while (0)
 
     #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
-        STACK_TRACE_POP(true);
+        STACK_TRACE_POP(true)
 #else
     #define FUNCTION_TEST_BEGIN()
     #define FUNCTION_TEST_PARAM(typeMacroPrefix, param)
