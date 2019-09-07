@@ -66,8 +66,7 @@ cmdStanzaUpgrade(void)
         // Update backup
         if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
         {
-            infoBackupPgSet(
-                infoBackup, pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion);
+            infoBackupPgSet(infoBackup, pgControl.version, pgControl.systemId);
             infoBackupUpgrade = true;
         }
 

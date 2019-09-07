@@ -70,10 +70,6 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_VAR,           MANIFEST_KEY_CHECKSUM_PAGE);
 #define MANIFEST_KEY_CHECKSUM_PAGE_ERROR                            "checksum-page-error"
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR,     MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
-#define MANIFEST_KEY_DB_CATALOG_VERSION                             "db-catalog-version"
-    STRING_STATIC(MANIFEST_KEY_DB_CATALOG_VERSION_STR,              MANIFEST_KEY_DB_CATALOG_VERSION);
-#define MANIFEST_KEY_DB_CONTROL_VERSION                             "db-control-version"
-    STRING_STATIC(MANIFEST_KEY_DB_CONTROL_VERSION_STR,              MANIFEST_KEY_DB_CONTROL_VERSION);
 #define MANIFEST_KEY_DB_ID                                          "db-id"
     STRING_STATIC(MANIFEST_KEY_DB_ID_STR,                           MANIFEST_KEY_DB_ID);
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_DB_ID_VAR,                   MANIFEST_KEY_DB_ID);
@@ -699,11 +695,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_BACKUP_DB_STR))
     {
-        if (strEq(key, MANIFEST_KEY_DB_CATALOG_VERSION_STR))
-            manifest->data.pgCatalogVersion = jsonToUInt(value);
-        else if (strEq(key, MANIFEST_KEY_DB_CONTROL_VERSION_STR))
-            manifest->data.pgControlVersion = jsonToUInt(value);
-        else if (strEq(key, MANIFEST_KEY_DB_ID_STR))
+        if (strEq(key, MANIFEST_KEY_DB_ID_STR))
             manifest->data.pgId = jsonToUInt(value);
         else if (strEq(key, MANIFEST_KEY_DB_SYSTEM_ID_STR))
             manifest->data.pgSystemId = jsonToUInt64(value);
@@ -947,11 +939,11 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, sectionNext))
     {
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_CATALOG_VERSION_STR,
-            jsonFromUInt(manifest->data.pgCatalogVersion));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-catalog-version"),
+            jsonFromUInt(pgCatalogVersion(manifest->data.pgVersion)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_CONTROL_VERSION_STR,
-            jsonFromUInt(manifest->data.pgControlVersion));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-control-version"),
+            jsonFromUInt(pgControlVersion(manifest->data.pgVersion)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_ID_STR, jsonFromUInt(manifest->data.pgId));
         infoSaveValue(

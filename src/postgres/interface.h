@@ -65,9 +65,6 @@ typedef struct PgControl
     unsigned int version;
     uint64_t systemId;
 
-    uint32_t controlVersion;
-    uint32_t catalogVersion;
-
     unsigned int pageSize;
     unsigned int walSegmentSize;
 
@@ -86,8 +83,10 @@ typedef struct PgWal
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+uint32_t pgCatalogVersion(unsigned int pgVersion);
 PgControl pgControlFromFile(const Storage *storage, const String *pgPath);
 PgControl pgControlFromBuffer(const Buffer *controlFile);
+uint32_t pgControlVersion(unsigned int pgVersion);
 unsigned int pgVersionFromStr(const String *version);
 String *pgVersionToStr(unsigned int version);
 

@@ -140,15 +140,6 @@ infoPgLoadCallback(void *data, const String *section, const String *key, const S
                 kvGet(pgDataKv, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
         };
 
-        // Get values that are only in backup info files.  These are really vestigial since stanza-create verifies the control and
-        // catalog versions so there is no good reason to store them.  However, for backward compatibility we must write them at
-        // least, even if we give up reading them.
-        if (loadData->infoPg->type == infoPgBackup)
-        {
-            infoPgData.catalogVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR));
-            infoPgData.controlVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR));
-        }
-
         // Insert at beginning of list so the history is reverse ordered
         lstInsert(loadData->infoPg->history, 0, &infoPgData);
     }
@@ -237,17 +228,13 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 Set the InfoPg object data based on values passed
 ***********************************************************************************************************************************/
 InfoPg *
-infoPgSet(
-    InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const uint32_t pgControlVersion,
-    const uint32_t pgCatalogVersion)
+infoPgSet(InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
         FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
-        FUNCTION_TEST_PARAM(UINT32, pgCatalogVersion);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -269,14 +256,6 @@ infoPgSet(
             // This is different in archive.info due to a typo that can't be fixed without a format version bump
             .systemId = pgSystemId,
         };
-
-        if (type == infoPgBackup)
-        {
-            infoPgData.catalogVersion = pgCatalogVersion;
-            infoPgData.controlVersion = pgControlVersion;
-        }
-        else if (type != infoPgArchive)
-            THROW_FMT(AssertError, "invalid InfoPg type %u", type);
 
         // Add the pg data to the history list
         infoPgAdd(this, &infoPgData);
@@ -318,12 +297,15 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
 
         InfoPgData pgData = infoPgDataCurrent(saveData->infoPg);
 
+        // These need to be saved because older Perl and C versions expect them
         if (saveData->infoPg->type == infoPgBackup)
         {
             infoSaveValue(
-                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR), jsonFromUInt(pgData.catalogVersion));
+                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR),
+                jsonFromUInt(pgCatalogVersion(pgData.version)));
             infoSaveValue(
-                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR), jsonFromUInt(pgData.controlVersion));
+                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR),
+                jsonFromUInt(pgControlVersion(pgData.version)));
         }
 
         infoSaveValue(infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR), jsonFromUInt(pgData.id));
@@ -347,9 +329,11 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
 
             if (saveData->infoPg->type == infoPgBackup)
             {
-                kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgData.catalogVersion));
-                kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgData.controlVersion));
                 kvPut(pgDataKv, INFO_KEY_DB_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
+
+                // These need to be saved because older Perl and C versions expect them
+                kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgCatalogVersion(pgData.version)));
+                kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgControlVersion(pgData.version)));
             }
             else
                 kvPut(pgDataKv, INFO_KEY_DB_ID_VAR, VARUINT64(pgData.systemId));
@@ -527,7 +511,5 @@ Render as string for logging
 String *
 infoPgDataToLog(const InfoPgData *this)
 {
-    return strNewFmt(
-        "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %" PRIu32 ", controlVersion: %" PRIu32 "}",
-        this->id, this->version, this->systemId, this->catalogVersion, this->controlVersion);
+    return strNewFmt("{id: %u, version: %u, systemId: %" PRIu64 "}", this->id, this->version, this->systemId);
 }

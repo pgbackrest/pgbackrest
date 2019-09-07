@@ -32,8 +32,6 @@ typedef struct InfoPgData
 {
     unsigned int id;
     uint64_t systemId;
-    uint32_t catalogVersion;
-    uint32_t controlVersion;
     unsigned int version;
 } InfoPgData;
 
@@ -56,9 +54,7 @@ InfoPg *infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callba
 Functions
 ***********************************************************************************************************************************/
 void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
-InfoPg *infoPgSet(
-    InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const uint32_t pgControlVersion,
-    const uint32_t pgCatalogVersion);
+InfoPg *infoPgSet(InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId);
 void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************

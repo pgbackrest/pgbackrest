@@ -49,8 +49,6 @@ typedef struct ManifestData
     unsigned int pgId;                                              // PostgreSQL id in backup.info
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system identifier
-    uint32_t pgControlVersion;                                      // PostgreSQL control version
-    uint32_t pgCatalogVersion;                                      // PostgreSQL catalog version
 
     bool backupOptionArchiveCheck;                                  // Will WAL segments be checked at the end of the backup?
     bool backupOptionArchiveCopy;                                   // Will WAL segments be copied to the backup?

@@ -53,7 +53,7 @@ testRun(void)
         Buffer *contentCompare = bufNew(0);
 
         TEST_ASSIGN(
-            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, 942, 201409291, NULL),
+            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, NULL),
             "infoBackupNew() - no cipher sub");
         TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "    save backup info from new");
         TEST_RESULT_STR(strPtr(strNewBuf(contentCompare)), strPtr(strNewBuf(contentSave)), "   check save");
@@ -68,8 +68,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupNew(
-                PG_VERSION_10, 6569239123849665999, 1002, 201707211,
-                strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+                PG_VERSION_10, 6569239123849665999, strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -86,13 +85,11 @@ testRun(void)
         // Add pg info
         // -------------------------------------------------------------------------------------------------------------------------
         InfoPgData infoPgData = {0};
-        TEST_RESULT_VOID(infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, 12345, 54321), "add another infoPg");
+        TEST_RESULT_VOID(infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679), "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 2, "    history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackup->infoPg), "    get current infoPgData");
         TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
         TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    systemId set");
-        TEST_RESULT_INT(infoPgData.controlVersion, 12345, "    catalog set");
-        TEST_RESULT_INT(infoPgData.catalogVersion, 54321, "    catalog set");
 
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
@@ -241,7 +238,7 @@ testRun(void)
             "HINT: has a stanza-create been performed?",
             testPath(), testPath(), testPath(), testPath());
 
-        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, 1002, 201707211, NULL);
+        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, NULL);
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "save backup info");
 
