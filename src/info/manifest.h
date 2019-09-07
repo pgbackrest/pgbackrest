@@ -16,6 +16,8 @@ Constants
 
 #define MANIFEST_TARGET_PGDATA                                      "pg_data"
     STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
+#define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"
+    STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
 
 /***********************************************************************************************************************************
 Object type
@@ -169,6 +171,7 @@ void manifestTargetUpdate(const Manifest *this, const String *name, const String
 Getters
 ***********************************************************************************************************************************/
 const ManifestData *manifestData(const Manifest *this);
+String *manifestPgPath(const Manifest *this, const String *manifestPath);
 
 /***********************************************************************************************************************************
 Helper functions

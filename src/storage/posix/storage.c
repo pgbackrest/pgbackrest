@@ -108,16 +108,18 @@ storagePosixInfo(THIS_VOID, const String *file, bool followLink)
     else
     {
         result.exists = true;
+        result.groupId = statFile.st_gid;
+        result.userId = statFile.st_uid;
         result.timeModified = statFile.st_mtime;
 
         // Get user name if it exists
-        struct passwd *userData = getpwuid(statFile.st_uid);
+        struct passwd *userData = getpwuid(result.userId);
 
         if (userData != NULL)
             result.user = strNew(userData->pw_name);
 
         // Get group name if it exists
-        struct group *groupData = getgrgid(statFile.st_gid);
+        struct group *groupData = getgrgid(result.groupId);
 
         if (groupData != NULL)
             result.group = strNew(groupData->gr_name);

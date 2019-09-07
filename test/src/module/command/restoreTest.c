@@ -290,7 +290,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("restoreManifestRemap()"))
+    if (testBegin("restoreManifestMap()"))
     {
         const String *pgPath = strNewFmt("%s/pg", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
@@ -306,7 +306,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreManifestRemap(manifest), "base directory is not remapped");
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is not remapped");
         TEST_RESULT_STRSTR(
             manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is not remapped");
 
@@ -321,7 +321,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreManifestRemap(manifest), "base directory is remapped");
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is remapped");
         TEST_RESULT_STRSTR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is remapped");
         harnessLogResult(strPtr(strNewFmt("P00   INFO: remap data directory to '%s/pg2'", testPath())));
 
@@ -336,7 +336,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR(restoreManifestRemap(manifest), TablespaceMapError, "unable to remap invalid tablespace 'bogus'");
+        TEST_ERROR(restoreManifestMap(manifest), TablespaceMapError, "unable to remap invalid tablespace 'bogus'");
 
         // Add some tablespaces
         manifestTargetAdd(
@@ -364,7 +364,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(
-            restoreManifestRemap(manifest), TablespaceMapError, "tablespace remapped by name 'ts2' and id 2 with different paths");
+            restoreManifestMap(manifest), TablespaceMapError, "tablespace remapped by name 'ts2' and id 2 with different paths");
 
         // Remap one tablespace using the id and another with the name
         argList = strLstNew();
@@ -377,7 +377,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remap tablespaces");
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
         TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/1-2", "    check tablespace 1 target");
         TEST_RESULT_STRZ(
             manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/1-2", "    check tablespace 1 link");
@@ -400,7 +400,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remap tablespaces");
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
         TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all/1", "    check tablespace 1 target");
         TEST_RESULT_STRZ(
             manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all/1", "    check tablespace 1 link");
@@ -424,7 +424,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remap tablespaces");
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
         TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all2/1", "    check tablespace 1 target");
         TEST_RESULT_STRZ(
             manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all2/1", "    check tablespace 1 link");
@@ -448,7 +448,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR(restoreManifestRemap(manifest), LinkMapError, "unable to remap invalid link 'bogus'");
+        TEST_ERROR(restoreManifestMap(manifest), LinkMapError, "unable to remap invalid link 'bogus'");
 
         // Add some links
         manifestTargetAdd(
@@ -473,7 +473,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remap links");
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remap links");
         TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
         TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "    check link file");
         TEST_RESULT_STRZ(
@@ -496,7 +496,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreManifestRemap(manifest), "leave links as they are");
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "leave links as they are");
         TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
         TEST_RESULT_STRZ(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "    check link file");
         TEST_RESULT_STRZ(
@@ -514,7 +514,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreManifestRemap(manifest), "remove all links");
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remove all links");
         TEST_ERROR(
             manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
             "unable to find 'pg_data/pg_hba.conf' in manifest target list");

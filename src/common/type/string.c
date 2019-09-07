@@ -20,6 +20,7 @@ Constant strings that are generally useful
 STRING_EXTERN(BRACKETL_STR,                                         "[");
 STRING_EXTERN(BRACKETR_STR,                                         "]");
 STRING_EXTERN(CR_STR,                                               "\r");
+STRING_EXTERN(DOT_STR,                                              ".");
 STRING_EXTERN(EMPTY_STR,                                            "");
 STRING_EXTERN(EQ_STR,                                               "=");
 STRING_EXTERN(FALSE_STR,                                            "false");

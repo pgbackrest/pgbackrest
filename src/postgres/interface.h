@@ -16,6 +16,8 @@ Defines for various Postgres paths and files
 #define PG_FILE_PGCONTROL                                           "pg_control"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
 #define PG_FILE_POSTMASTERPID                                       "postmaster.pid"
+#define PG_FILE_RECOVERYCONF                                        "recovery.conf"
+    STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
 
 #define PG_PATH_ARCHIVE_STATUS                                      "archive_status"
 #define PG_PATH_GLOBAL                                              "global"

@@ -23,6 +23,7 @@ Constants
 STRING_EXTERN(MANIFEST_FILE_STR,                                    MANIFEST_FILE);
 
 STRING_EXTERN(MANIFEST_TARGET_PGDATA_STR,                           MANIFEST_TARGET_PGDATA);
+STRING_EXTERN(MANIFEST_TARGET_PGTBLSPC_STR,                         MANIFEST_TARGET_PGTBLSPC);
 
 STRING_STATIC(MANIFEST_TARGET_TYPE_LINK_STR,                        "link");
 STRING_STATIC(MANIFEST_TARGET_TYPE_PATH_STR,                        "path");
@@ -1324,6 +1325,37 @@ manifestSave(Manifest *this, IoWrite *write)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Return the data directory relative path for any manifest file/link/path/target name
+***********************************************************************************************************************************/
+String *
+manifestPgPath(const Manifest *this, const String *manifestPath)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, manifestPath);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(manifestPath != NULL);
+
+    // If something in pg_data/
+    if (strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGDATA "/")))
+    {
+        FUNCTION_TEST_RETURN(strNew(strPtr(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
+    }
+    // Else not pg_data (this is faster since the length of everything else will be different than pg_data)
+    else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
+    {
+        // A tablespace target is the only valid option if not pg_data or pg_data/
+        ASSERT(strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGTBLSPC "/")));
+
+        FUNCTION_TEST_RETURN(strDup(manifestPath));
+    }
+
+    FUNCTION_TEST_RETURN(NULL);
 }
 
 /***********************************************************************************************************************************
