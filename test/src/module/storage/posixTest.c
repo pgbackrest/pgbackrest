@@ -190,7 +190,9 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0770, "    check mode");
         TEST_RESULT_UINT(info.timeModified, 1555160000, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
         TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -66,21 +66,25 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // Start a protocol server to test the protocol directly
-    Buffer *serverWrite = bufNew(8192);
-    IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
-    ioWriteOpen(serverWriteIo);
-
-    ProtocolServer *server = protocolServerNew(
-        strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-
-    bufUsedSet(serverWrite, 0);
+    // Create default storage object for testing
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
     if (testBegin("restoreFile()"))
     {
         const String *repoFileReferenceFull = strNew("20190509F");
         const String *repoFile1 = strNew("pg_data/testfile");
+
+        // Start a protocol server to test the protocol directly
+        Buffer *serverWrite = bufNew(8192);
+        IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
+        ioWriteOpen(serverWriteIo);
+
+        ProtocolServer *server = protocolServerNew(
+            strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
+
+        bufUsedSet(serverWrite, 0);
 
         // Load Parameters
         StringList *argList = strLstNew();
@@ -531,6 +535,108 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location\n"
             "P00   WARN: contents of directory link 'pg_wal' will be restored in a directory at the same location");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("restoreClean()"))
+    {
+        const String *pgPath = strNewFmt("%s/pg", testPath());
+        const String *repoPath = strNewFmt("%s/repo", testPath());
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+
+        // Missing data directory
+        // -------------------------------------------------------------------------------------------------------------------------
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR_FMT(restoreClean(manifest), PathMissingError, "unable to restore to missing path '%s/pg'", testPath());
+
+        // Directory with bad permissions/mode
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePathCreateP(storagePgWrite(), NULL, .mode = 0600);
+
+        restoreLocalData.userIdSet = true;
+        restoreLocalData.userId = getuid() + 1;
+
+        TEST_ERROR_FMT(
+            restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' not owned by current user", testPath());
+
+        restoreLocalData.userId = 0;
+
+        TEST_ERROR_FMT(
+            restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
+
+        restoreLocalData.userIdSet = false;
+
+        TEST_ERROR_FMT(
+            restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
+
+        storagePathRemoveNP(storagePgWrite(), NULL);
+        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
+
+        // Fail on restore with directory not empty
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
+
+        TEST_ERROR_FMT(
+            restoreClean(manifest), PathNotEmptyError,
+            "unable to restore to path '%s/pg' because it contains files\n"
+                "HINT: try using --delta if this is what you intended.",
+            testPath());
+
+        // Succeed when all directories empty
+        // -------------------------------------------------------------------------------------------------------------------------
+        storageRemoveNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR);
+
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+                .name = STRDEF("pg_data/pg_hba.conf"), .path = STRDEF("../conf"), .file = STRDEF("pg_hba.conf"),
+                .type = manifestTargetTypeLink});
+        manifestLinkAdd(
+            manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_hba.conf"), .destination = STRDEF("../conf/pg_hba.conf")});
+
+        storagePathCreateP(storageTest, STRDEF("conf"), .mode = 0700);
+
+        TEST_RESULT_VOID(restoreClean(manifest), "normal restore");
+
+        // Succeed when all directories empty and ignore recovery.conf
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--type=preserve");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(restoreClean(manifest), "normal restore no recovery.conf");
+
+        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
+        TEST_RESULT_VOID(restoreClean(manifest), "normal restore ignore recovery.conf");
+
+        // Delta restore allowed
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--delta");
+        strLstAddZ(argList, "--type=preserve");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        storagePathCreateP(storagePgWrite(), STRDEF("global"), .mode = 0700);
+        storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION)), NULL);
+        storagePutNP(storageNewWriteNP(storageTest, STRDEF("conf/pg_hba.conf")), NULL);
+
+        TEST_RESULT_VOID(restoreClean(manifest), "delta restore");
     }
 
     // *****************************************************************************************************************************

@@ -171,7 +171,7 @@ void manifestTargetUpdate(const Manifest *this, const String *name, const String
 Getters
 ***********************************************************************************************************************************/
 const ManifestData *manifestData(const Manifest *this);
-String *manifestPgPath(const Manifest *this, const String *manifestPath);
+String *manifestPgPath(const String *manifestPath);
 
 /***********************************************************************************************************************************
 Helper functions

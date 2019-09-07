@@ -3,6 +3,8 @@ Restore Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <unistd.h>
+
 #include "command/restore/restore.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
@@ -242,7 +244,6 @@ typedef struct RestoreCleanCallbackData
     bool basePath;                                                  // Is this the base path?
     bool delta;                                                     // Is this a delta restore?
     bool preserveRecoveryConf;                                      // Should the recovery.conf file be preserved?
-    bool modifyAllowed;                                             // Are we allowed to modify the directory on this pass?
 } RestoreCleanCallbackData;
 
 static void
@@ -262,9 +263,9 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         return;
     }
 
-    // Don't include the manifest or recovery.conf (when preserved) in the comparison or empty directory check
-    if (cleanData->basePath && info->type == storageTypeFile &&
-        (strEq(info->name, MANIFEST_FILE_STR) || (cleanData->preserveRecoveryConf && strEq(info->name, PG_FILE_RECOVERYCONF_STR))))
+    // Don't include recovery.conf (when preserved) in the comparison or empty directory check
+    if (cleanData->basePath && info->type == storageTypeFile && cleanData->preserveRecoveryConf &&
+        strEq(info->name, PG_FILE_RECOVERYCONF_STR))
     {
         FUNCTION_TEST_RETURN_VOID();
         return;
@@ -278,13 +279,6 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             "unable to restore to path '%s' because it contains files\n"
             "HINT: try using --delta if this is what you intended.",
             strPtr(cleanData->targetPath));
-    }
-
-    // If we are not allowed to modify any data in this pass then stop processing
-    if (!cleanData->modifyAllowed)
-    {
-        FUNCTION_TEST_RETURN_VOID();
-        return;
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -317,7 +311,7 @@ restoreClean(Manifest *manifest)
             cleanData->preserveRecoveryConf = strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR);
 
             // Check that the path exists
-            StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true);
+            StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true, .followLink = true);
 
             if (!info.exists)
                 THROW_FMT(PathMissingError, "unable to restore to missing path '%s'", strPtr(cleanData->targetPath));
@@ -328,9 +322,26 @@ restoreClean(Manifest *manifest)
 
             if ((info.mode & 0700) != 0700)
                 THROW_FMT(PathOpenError, "unable to restore to path '%s' without rwx permissions", strPtr(cleanData->targetPath));
+
+            // If not a delta restore then check that the directories are empty
+            if (!cleanData->delta)
+            {
+                storageInfoListP(
+                    storageLocal(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true);
+
+                // Now that we know there are no files in this target enable delta to process the next pass
+                cleanData->delta = true;
+            }
         }
 
-        (void)restoreCleanInfoListCallback;
+        // Clean target directories
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        {
+            RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
+
+            storageInfoListP(
+                storagePgWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true);
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -469,7 +480,7 @@ cmdRestore(void)
         restoreManifestMap(manifest);
 
         // Clean the data directory
-        restoreClean(manifest);
+        (void)restoreClean;
 
         // Save manifest before any modifications are made to PGDATA
         manifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));

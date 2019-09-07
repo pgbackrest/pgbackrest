@@ -191,6 +191,10 @@ testRun(void)
 
         TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
 
+        TEST_RESULT_STRZ(manifestPgPath(STRDEF("pg_data")), NULL, "check pg_data path");
+        TEST_RESULT_STRZ(manifestPgPath(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
+        TEST_RESULT_STRZ(manifestPgPath(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
+
         const ManifestLink *link = NULL;
         TEST_ERROR(
             manifestLinkFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest link list");

@@ -1331,14 +1331,12 @@ manifestSave(Manifest *this, IoWrite *write)
 Return the data directory relative path for any manifest file/link/path/target name
 ***********************************************************************************************************************************/
 String *
-manifestPgPath(const Manifest *this, const String *manifestPath)
+manifestPgPath(const String *manifestPath)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
         FUNCTION_TEST_PARAM(STRING, manifestPath);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
     ASSERT(manifestPath != NULL);
 
     // If something in pg_data/
