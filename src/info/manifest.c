@@ -387,7 +387,7 @@ typedef struct ManifestLoadFound
 typedef struct ManifestLoadData
 {
     MemContext *memContext;                                         // Mem context for data needed only during load
-    Manifest *manifest;                                     // Manifest info
+    Manifest *manifest;                                             // Manifest info
 
     List *fileFoundList;                                            // Values found in files
     const Variant *fileGroupDefault;                                // File default group
@@ -1086,9 +1086,9 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            for (unsigned int fileIdx = 0; fileIdx < lstSize(manifest->fileList); fileIdx++)
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
-                ManifestFile *file = lstGet(manifest->fileList, fileIdx);
+                const ManifestFile *file = manifestFile(manifest, fileIdx);
                 KeyValue *fileKv = kvNew();
 
                 if (file->size != 0)
@@ -1194,9 +1194,9 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            for (unsigned int pathIdx = 0; pathIdx < lstSize(manifest->pathList); pathIdx++)
+            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
             {
-                ManifestPath *path = lstGet(manifest->pathList, pathIdx);
+                const ManifestPath *path = manifestPath(manifest, pathIdx);
                 KeyValue *pathKv = kvNew();
 
                 if (!varEq(manifestOwnerGet(path->group), saveData->pathGroupDefault))
@@ -1364,6 +1364,53 @@ manifestData(const Manifest *this)
 }
 
 /***********************************************************************************************************************************
+File functions and getters/setters
+***********************************************************************************************************************************/
+const ManifestFile *
+manifestFile(const Manifest *this, unsigned int fileIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(UINT, fileIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstGet(this->fileList, fileIdx));
+}
+
+// const ManifestFile *
+// manifestFileFind(const Manifest *this, const String *name)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM(MANIFEST, this);
+//         FUNCTION_TEST_PARAM(STRING, name);
+//     FUNCTION_TEST_END();
+//
+//     ASSERT(this != NULL);
+//     ASSERT(name != NULL);
+//
+//     const ManifestFile *result = lstFind(this->fileList, &name);
+//
+//     if (result == NULL)
+//         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strPtr(name));
+//
+//     FUNCTION_TEST_RETURN(result);
+// }
+
+unsigned int
+manifestFileTotal(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstSize(this->fileList));
+}
+
+/***********************************************************************************************************************************
 Link functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestLink *
@@ -1465,6 +1512,53 @@ manifestLinkUpdate(const Manifest *this, const String *name, const String *desti
     MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Path functions and getters/setters
+***********************************************************************************************************************************/
+const ManifestPath *
+manifestPath(const Manifest *this, unsigned int pathIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(UINT, pathIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstGet(this->pathList, pathIdx));
+}
+
+// const ManifestPath *
+// manifestPathFind(const Manifest *this, const String *name)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM(MANIFEST, this);
+//         FUNCTION_TEST_PARAM(STRING, name);
+//     FUNCTION_TEST_END();
+//
+//     ASSERT(this != NULL);
+//     ASSERT(name != NULL);
+//
+//     const ManifestPath *result = lstFind(this->pathList, &name);
+//
+//     if (result == NULL)
+//         THROW_FMT(AssertError, "unable to find '%s' in manifest path list", strPtr(name));
+//
+//     FUNCTION_TEST_RETURN(result);
+// }
+
+unsigned int
+manifestPathTotal(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstSize(this->pathList));
 }
 
 /***********************************************************************************************************************************

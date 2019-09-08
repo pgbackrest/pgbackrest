@@ -3,6 +3,8 @@ Restore Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <grp.h>
+#include <pwd.h>
 #include <unistd.h>
 
 #include "command/restore/restore.h"
@@ -19,26 +21,74 @@ Restore Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
-User id cache
+Get user/group info
 ***********************************************************************************************************************************/
-static struct
+struct
 {
-    bool userIdSet;                                                 // Has the user id been fetched yet?
+    MemContext *memContext;                                         // Mem context to store data in this struct
     uid_t userId;                                                   // Real user id of the calling process from getuid()
-} restoreLocalData;
+    bool userRoot;                                                  // Is this the root user?
+    const String *userName;                                         // User name if it exists
+    gid_t groupId;                                                  // Real group id of the calling process from getgid()
+    const String *groupName;                                            // Group name if it exists
+} userLocalData;
+
+static void
+userInitInternal(void)
+{
+    FUNCTION_TEST_VOID();
+
+    MEM_CONTEXT_BEGIN(memContextTop())
+    {
+        userLocalData.memContext = memContextNew("UserGroupInfo");
+    }
+    MEM_CONTEXT_END();
+
+    MEM_CONTEXT_BEGIN(userLocalData.memContext)
+    {
+        userLocalData.userId = getuid();
+        userLocalData.userRoot = userLocalData.userId == 0;
+
+        // Get user name if it exists
+        struct passwd *userData = getpwuid(userLocalData.userId);
+
+        if (userData != NULL)
+            userLocalData.userName = strNew(userData->pw_name);
+
+        userLocalData.groupId = getgid();
+
+        // Get group name if it exists
+        struct group *groupData = getgrgid(userLocalData.groupId);
+
+        if (groupData != NULL)
+            userLocalData.groupName = strNew(groupData->gr_name);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+userInit(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (!userLocalData.memContext)
+        userInitInternal();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 static uid_t
 userId(void)
 {
-    FUNCTION_TEST_VOID();
+    return userLocalData.userId;
+}
 
-    if (restoreLocalData.userIdSet)
-        FUNCTION_TEST_RETURN(restoreLocalData.userId);
-
-    restoreLocalData.userId = getuid();
-    restoreLocalData.userIdSet = true;
-
-    FUNCTION_TEST_RETURN(restoreLocalData.userId);
+static bool
+userRoot(void)
+{
+    return userLocalData.userRoot;
 }
 
 /***********************************************************************************************************************************
@@ -233,7 +283,92 @@ restoreManifestMap(Manifest *manifest)
 }
 
 /***********************************************************************************************************************************
-Clean the data directory of any paths/files/links that are not in the manifest
+Check ownership of files in the manifest
+***********************************************************************************************************************************/
+static void
+restoreManifestOwner(Manifest *manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        bool userNull = false;
+        StringList *userList = strLstNew();
+        bool groupNull = false;
+        StringList *groupList = strLstNew();
+
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+        {
+            const ManifestFile *file = manifestFile(manifest, fileIdx);
+
+            if (file->user == NULL)
+                userNull = true;
+            else
+                strLstAddIfMissing(userList, file->user);
+
+            if (file->group == NULL)
+                groupNull = true;
+            else
+                strLstAddIfMissing(groupList, file->group);
+        }
+
+        for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
+        {
+            const ManifestLink *link = manifestLink(manifest, linkIdx);
+
+            if (link->user == NULL)
+                userNull = true;
+            else
+                strLstAddIfMissing(userList, link->user);
+
+            if (link->group == NULL)
+                groupNull = true;
+            else
+                strLstAddIfMissing(groupList, link->group);
+        }
+
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+        {
+            const ManifestPath *path = manifestPath(manifest, pathIdx);
+
+            if (path->user == NULL)
+                userNull = true;
+            else
+                strLstAddIfMissing(userList, path->user);
+
+            if (path->group == NULL)
+                groupNull = true;
+            else
+                strLstAddIfMissing(groupList, path->group);
+        }
+
+        if (userRoot())
+        {
+        }
+        else
+        {
+            if (userNull)
+                LOG_WARN("unknown user in backup manifest mapped to current user");
+
+            // for (unsigned int userIdx = 0; userIdx < strLstSize(userList); userIdx++)
+            // {
+            //     if (userName() == NULL ||  !strEq(userName(), strLstGet(userList, userIdx)))
+            //         LOG_WARN("user '%s' in backup manifest mapped to current user");
+            // }
+
+            if (groupNull)
+                LOG_WARN("unknown group in backup manifest mapped to current group");
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Clean the data directory of any paths/files/links that are not in the manifest and create missing links/paths
 ***********************************************************************************************************************************/
 typedef struct RestoreCleanCallbackData
 {
@@ -291,6 +426,8 @@ restoreClean(Manifest *manifest)
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
+    ASSERT(manifest != NULL);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Allocate data for each target
@@ -317,7 +454,7 @@ restoreClean(Manifest *manifest)
                 THROW_FMT(PathMissingError, "unable to restore to missing path '%s'", strPtr(cleanData->targetPath));
 
             // Make sure our uid will be able to write to this directory
-            if (userId() != 0 && userId() != info.userId)
+            if (!userRoot() && userId() != info.userId)
                 THROW_FMT(PathOpenError, "unable to restore to path '%s' not owned by current user", strPtr(cleanData->targetPath));
 
             if ((info.mode & 0700) != 0700)
@@ -358,6 +495,9 @@ cmdRestore(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Get information for the current user
+        userInit();
+
         // PostgreSQL must be local
         if (!pgIsLocal(1))
             THROW(HostInvalidError, CFGCMD_RESTORE " command must be run on the " PG_NAME " host");
@@ -478,6 +618,9 @@ cmdRestore(void)
 
         // Map manifest
         restoreManifestMap(manifest);
+
+        // Map manifest
+        (void)restoreManifestOwner;
 
         // Clean the data directory
         (void)restoreClean;

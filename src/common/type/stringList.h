@@ -35,6 +35,7 @@ StringList *strLstDup(const StringList *sourceList);
 
 StringList *strLstAdd(StringList *this, const String *string);
 StringList *strLstAddZ(StringList *this, const char *string);
+StringList *strLstAddIfMissing(StringList *this, const String *string);
 bool strLstExists(const StringList *this, const String *string);
 bool strLstExistsZ(const StringList *this, const char *cstring);
 StringList *strLstInsert(StringList *this, unsigned int listIdx, const String *string);

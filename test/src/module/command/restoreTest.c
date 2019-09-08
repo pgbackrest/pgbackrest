@@ -538,8 +538,32 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("restoreManifestOwner()"))
+    {
+        userInitInternal();
+
+        // const String *pgPath = strNewFmt("%s/pg", testPath());
+        // const String *repoPath = strNewFmt("%s/repo", testPath());
+        // Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        //
+        // // Missing data directory
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // StringList *argList = strLstNew();
+        // strLstAddZ(argList, "pgbackrest");
+        // strLstAddZ(argList, "--stanza=test1");
+        // strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        // strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        // strLstAddZ(argList, "restore");
+        // harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        //
+        // TEST_ERROR_FMT(restoreClean(manifest), PathMissingError, "unable to restore to missing path '%s/pg'", testPath());
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("restoreClean()"))
     {
+        userInitInternal();
+
         const String *pgPath = strNewFmt("%s/pg", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
@@ -560,18 +584,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0600);
 
-        restoreLocalData.userIdSet = true;
-        restoreLocalData.userId = getuid() + 1;
+        userLocalData.userId = getuid() + 1;
 
         TEST_ERROR_FMT(
             restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' not owned by current user", testPath());
 
-        restoreLocalData.userId = 0;
+        userLocalData.userRoot = true;
 
         TEST_ERROR_FMT(
             restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
 
-        restoreLocalData.userIdSet = false;
+        userInitInternal();
 
         TEST_ERROR_FMT(
             restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());

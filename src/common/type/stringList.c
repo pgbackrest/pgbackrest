@@ -334,6 +334,22 @@ strLstAdd(StringList *this, const String *string)
     FUNCTION_TEST_RETURN(result);
 }
 
+StringList *
+strLstAddIfMissing(StringList *this, const String *string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRING, string);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!strLstExists(this, string))
+        strLstAdd(this, string);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
 /***********************************************************************************************************************************
 Add a zero-terminated string to the list
 ***********************************************************************************************************************************/
