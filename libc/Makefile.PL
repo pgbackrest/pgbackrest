@@ -87,6 +87,7 @@ my @stryCFile =
     'common/type/variant.c',
     'common/type/variantList.c',
     'common/type/xml.c',
+    'common/user.c',
     'common/wait.c',
     'config/config.c',
     'config/define.c',
