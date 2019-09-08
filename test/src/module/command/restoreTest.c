@@ -572,8 +572,8 @@ testRun(void)
         harnessLogResult(
             strPtr(
                 strNewFmt(
-                    "P00   WARN: user '%s' in backup manifest mapped to current user\n"
-                    "P00   WARN: group '%s' in backup manifest mapped to current group",
+                    "P00   WARN: unknown user '%s' in backup manifest mapped to current user\n"
+                    "P00   WARN: unknown group '%s' in backup manifest mapped to current group",
                     testUser(), testUser())));
 
         userInitInternal();
@@ -591,9 +591,9 @@ testRun(void)
 
         harnessLogResult(
             "P00   WARN: unknown user in backup manifest mapped to current user\n"
-            "P00   WARN: user 'path-user-bogus' in backup manifest mapped to current user\n"
+            "P00   WARN: unknown user 'path-user-bogus' in backup manifest mapped to current user\n"
             "P00   WARN: unknown group in backup manifest mapped to current group\n"
-            "P00   WARN: group 'file-group-bogus' in backup manifest mapped to current group");
+            "P00   WARN: unknown group 'file-group-bogus' in backup manifest mapped to current group");
     }
 
     // *****************************************************************************************************************************

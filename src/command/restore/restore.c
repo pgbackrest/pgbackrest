@@ -30,7 +30,7 @@ struct
     bool userRoot;                                                  // Is this the root user?
     const String *userName;                                         // User name if it exists
     gid_t groupId;                                                  // Real group id of the calling process from getgid()
-    const String *groupName;                                            // Group name if it exists
+    const String *groupName;                                        // Group name if it exists
 } userLocalData;
 
 static void
@@ -295,22 +295,40 @@ restoreManifestMap(Manifest *manifest)
 }
 
 /***********************************************************************************************************************************
-Check ownership of files in the manifest
+Check ownership of items in the manifest
 ***********************************************************************************************************************************/
 #define RESTORE_MANIFEST_OWNER_GET(type)                                                                                           \
-    for (unsigned int fileIdx = 0; fileIdx < manifest##type##Total(manifest); fileIdx++)                                           \
+    for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
     {                                                                                                                              \
-        const Manifest##type *file = manifest##type(manifest, fileIdx);                                                            \
+        Manifest##type *item = (Manifest##type *)manifest##type(manifest, itemIdx);                                                \
                                                                                                                                    \
-        if (file->user == NULL)                                                                                                    \
+        if (item->user == NULL)                                                                                                    \
             userNull = true;                                                                                                       \
         else                                                                                                                       \
-            strLstAddIfMissing(userList, file->user);                                                                              \
+            strLstAddIfMissing(userList, item->user);                                                                              \
                                                                                                                                    \
-        if (file->group == NULL)                                                                                                   \
+        if (item->group == NULL)                                                                                                   \
             groupNull = true;                                                                                                      \
         else                                                                                                                       \
-            strLstAddIfMissing(groupList, file->group);                                                                            \
+            strLstAddIfMissing(groupList, item->group);                                                                            \
+                                                                                                                                   \
+        if (!userRoot())                                                                                                           \
+        {                                                                                                                          \
+            item->user = NULL;                                                                                                     \
+            item->group = NULL;                                                                                                    \
+        }                                                                                                                          \
+    }
+
+#define RESTORE_MANIFEST_OWNER_NULL_UPDATE(type, user, group)                                                                      \
+    for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
+    {                                                                                                                              \
+        Manifest##type *item = (Manifest##type *)manifest##type(manifest, itemIdx);                                                \
+                                                                                                                                   \
+        if (item->user == NULL)                                                                                                    \
+            item->user = user;                                                                                                     \
+                                                                                                                                   \
+        if (item->group == NULL)                                                                                                   \
+            item->group = group;                                                                                                   \
     }
 
 #define RESTORE_MANIFEST_OWNER_WARN(type)                                                                                          \
@@ -324,7 +342,7 @@ Check ownership of files in the manifest
             const String *owner = strLstGet(type##List, ownerIdx);                                                                 \
                                                                                                                                    \
             if (type##Name() == NULL ||  !strEq(type##Name(), owner))                                                              \
-                LOG_WARN(#type " '%s' in backup manifest mapped to current " #type, strPtr(owner));                                \
+                LOG_WARN("unknown " #type " '%s' in backup manifest mapped to current " #type, strPtr(owner));                     \
         }                                                                                                                          \
     }                                                                                                                              \
     while (0)
@@ -353,6 +371,35 @@ restoreManifestOwner(Manifest *manifest)
         // -------------------------------------------------------------------------------------------------------------------------
         if (userRoot())
         {
+            // Get user/group info from data directory to use for invalid user/groups
+            StorageInfo pathInfo = storageInfoNP(storagePg(), manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path);
+
+            // If user/group is null then set it to root
+            if (pathInfo.user == NULL)
+                pathInfo.user = userName();
+
+            if (pathInfo.group == NULL)
+                pathInfo.group = groupName();
+
+            if (userNull || groupNull)
+            {
+                if (userNull)
+                    LOG_WARN("unknown user in backup manifest mapped to '%s'", strPtr(pathInfo.user));
+
+                if (groupNull)
+                    LOG_WARN("unknown group in backup manifest mapped to '%s'", strPtr(pathInfo.group));
+
+                memContextSwitch(MEM_CONTEXT_OLD());
+
+                const String *user = strDup(pathInfo.user);
+                const String *group = strDup(pathInfo.group);
+
+                RESTORE_MANIFEST_OWNER_NULL_UPDATE(File, user, group)
+                RESTORE_MANIFEST_OWNER_NULL_UPDATE(Link, user, group)
+                RESTORE_MANIFEST_OWNER_NULL_UPDATE(Path, user, group)
+
+                memContextSwitch(MEM_CONTEXT_TEMP());
+            }
         }
         // Else map everything to the current user/group
         // -------------------------------------------------------------------------------------------------------------------------
@@ -619,8 +666,8 @@ cmdRestore(void)
         // Map manifest
         restoreManifestMap(manifest);
 
-        // Map manifest
-        (void)restoreManifestOwner;
+        // Update ownership
+        restoreManifestOwner(manifest);
 
         // Clean the data directory
         (void)restoreClean;

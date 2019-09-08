@@ -384,6 +384,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'HTTP-STATISTICS', 'http statistics\:.*$', '[^\:]+$', false);
 
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'strGroup = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
+    $strLine = $self->regExpReplace($strLine, 'GROUP', 'unknown group in backup manifest mapped to \'[^\']+', '[^\']+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'group=\"[^"]+', '[^"]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'group for .* was not mapped to a name\, set to .+$', '[^ ]+$');
@@ -391,6 +392,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'GROUP', TEST_USER . '\, ' . TEST_GROUP, '[^ ]+$');
 
     $strLine = $self->regExpReplace($strLine, 'USER', 'strRemoteHostUser = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
+    $strLine = $self->regExpReplace($strLine, 'USER', 'unknown user in backup manifest mapped to \'[^\']+', '[^\']+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'strUser = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'user=\"[^"]+', '[^"]+$');

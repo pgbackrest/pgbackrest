@@ -498,8 +498,8 @@ restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.ma
 P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
 P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
 P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
-P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-2]
-P00   WARN: user bogus in manifest cannot be used for restore, set to [USER-2]
+P00   WARN: unknown user 'bogus' in backup manifest mapped to current user
+P00   WARN: unknown group 'bogus' in backup manifest mapped to current group
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------

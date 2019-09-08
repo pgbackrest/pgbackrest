@@ -1515,37 +1515,6 @@ manifestLinkUpdate(const Manifest *this, const String *name, const String *desti
 }
 
 /***********************************************************************************************************************************
-Owner functions and getters/setters
-***********************************************************************************************************************************/
-#define MANIFEST_OWNER_REMOVE_ALL(Type, type)                                                                                      \
-    do                                                                                                                             \
-    {                                                                                                                              \
-        for (unsigned int ownerIdx = 0; ownerIdx < lstSize(this->type##List); ownerIdx++)                                          \
-        {                                                                                                                          \
-            Manifest##Type *owner = lstGet(this->type##List, ownerIdx);                                                            \
-            owner->user = NULL;                                                                                                    \
-            owner->group = NULL;                                                                                                   \
-        }                                                                                                                          \
-    }                                                                                                                              \
-    while (0)
-
-void
-manifestOwnerRemoveAll(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    MANIFEST_OWNER_REMOVE_ALL(File, file);
-    MANIFEST_OWNER_REMOVE_ALL(Link, link);
-    MANIFEST_OWNER_REMOVE_ALL(Path, path);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Path functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestPath *

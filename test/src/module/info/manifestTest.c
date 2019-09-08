@@ -142,6 +142,14 @@ testRun(void)
             "pg_data/pg_stat={\"path\":\"../pg_stat\",\"type\":\"link\"}\n"                                                        \
             "pg_tblspc/1={\"path\":\"/tblspc/ts1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
 
+        #define TEST_MANIFEST_DB                                                                                                   \
+            "\n"                                                                                                                   \
+            "[db]\n"                                                                                                               \
+            "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                                 \
+            "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
+            "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
+            "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
+
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
@@ -199,6 +207,7 @@ testRun(void)
         (
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
             TEST_MANIFEST_FILE
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK

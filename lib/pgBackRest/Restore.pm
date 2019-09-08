@@ -54,150 +54,6 @@ sub new
 }
 
 ####################################################################################################################################
-# manifestOwnershipCheck
-#
-# Checks the users and groups that exist in the manifest and emits warnings for ownership that cannot be set properly, either
-# because the current user does not have permissions or because the user/group does not exist.
-####################################################################################################################################
-sub manifestOwnershipCheck
-{
-    my $self = shift;               # Class hash
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $oManifest                                  # Backup manifest
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->manifestOwnershipCheck', \@_,
-            {name => 'oManifest'}
-        );
-
-    # Create hashes to track valid/invalid users/groups
-    my %oOwnerHash = ();
-
-    # Create hash for each type to be checked
-    my %oFileTypeHash =
-    (
-        &MANIFEST_SECTION_TARGET_PATH => true,
-        &MANIFEST_SECTION_TARGET_LINK => true,
-        &MANIFEST_SECTION_TARGET_FILE => true
-    );
-
-    # Create hash for default owners (user, group) for when the owner in the manifest cannot be used because it does not exist or
-    # was not mapped to a name during the original backup.  It's preferred to use the owner of the PGDATA directory but if that was
-    # not valid in the original backup then the current user/group will be used as a last resort.
-    my %oOwnerTypeHash;
-
-    if ($oManifest->test(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER) &&
-        !$oManifest->boolTest(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER, false))
-    {
-        $oOwnerTypeHash{&MANIFEST_SUBKEY_USER} =
-            $oManifest->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER);
-    }
-    else
-    {
-        $oOwnerTypeHash{&MANIFEST_SUBKEY_USER} = getpwuid($<);
-
-        if (!defined($oOwnerTypeHash{&MANIFEST_SUBKEY_USER}))
-        {
-            confess &log(ERROR_USER_MISSING, 'current user uid does not map to a name');
-        }
-    }
-
-    if ($oManifest->test(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP) &&
-        !$oManifest->boolTest(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP, false))
-    {
-        $oOwnerTypeHash{&MANIFEST_SUBKEY_GROUP} =
-            $oManifest->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP);
-    }
-    else
-    {
-        $oOwnerTypeHash{&MANIFEST_SUBKEY_GROUP} = getgrgid($();
-
-        if (!defined($oOwnerTypeHash{&MANIFEST_SUBKEY_GROUP}))
-        {
-            confess &log(ERROR_GROUP_MISSING, 'current user gid does not map to a name');
-        }
-    }
-
-    # Loop through owner types (user, group)
-    foreach my $strOwnerType (sort (keys %oOwnerTypeHash))
-    {
-        # Loop through types (path, link, file)
-        foreach my $strSection (sort (keys %oFileTypeHash))
-        {
-            foreach my $strName ($oManifest->keys($strSection))
-            {
-                my $strOwner = $oManifest->get($strSection, $strName, $strOwnerType);
-
-                # If the owner was invalid then set it to something valid
-                if ($oManifest->boolTest($strSection, $strName, $strOwnerType, false))
-                {
-                    $strOwner = $oOwnerTypeHash{$strOwnerType};
-
-                    &log(WARN, "backup ${strOwnerType} for ${strName} was not mapped to a name, set to ${strOwner}");
-                    $oManifest->set($strSection, $strName, $strOwnerType, $strOwner);
-                }
-
-                # If root then test to see if the user/group is valid
-                if ($< == 0)
-                {
-                    # If the owner has not been tested yet then test it
-                    if (!defined($oOwnerHash{$strOwnerType}{$strOwner}))
-                    {
-                        my $strOwnerId;
-
-                        if ($strOwnerType eq 'user')
-                        {
-                            $strOwnerId = getpwnam($strOwner);
-                        }
-                        else
-                        {
-                            $strOwnerId = getgrnam($strOwner);
-                        }
-
-                        $oOwnerHash{$strOwnerType}{$strOwner} = defined($strOwnerId) ? true : false;
-                    }
-
-                    if (!$oOwnerHash{$strOwnerType}{$strOwner})
-                    {
-                        $oManifest->set($strSection, $strName, $strOwnerType, $oOwnerTypeHash{$strOwnerType});
-                    }
-                }
-                # Else set user/group to current user/group
-                else
-                {
-                    if ($strOwner ne $oOwnerTypeHash{$strOwnerType})
-                    {
-                        $oOwnerHash{$strOwnerType}{$strOwner} = false;
-                        $oManifest->set($strSection, $strName, $strOwnerType, $oOwnerTypeHash{$strOwnerType});
-                    }
-                }
-           }
-        }
-
-        # Output warning for any invalid owners
-        if (defined($oOwnerHash{$strOwnerType}))
-        {
-            foreach my $strOwner (sort (keys(%{$oOwnerHash{$strOwnerType}})))
-            {
-                if (!$oOwnerHash{$strOwnerType}{$strOwner})
-                {
-                    &log(WARN, "${strOwnerType} ${strOwner} in manifest " . ($< == 0 ? 'does not exist locally ' : '') .
-                               "cannot be used for restore, set to $oOwnerTypeHash{$strOwnerType}");
-                }
-            }
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
 # clean
 #
 # Checks that the restore paths are empty, or if --force was used then it cleans files/paths/links from the restore directories that
@@ -800,7 +656,48 @@ sub process
     my $oManifest = new pgBackRest::Manifest(
         storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), {oStorage => storageDb()});
 
-    $self->manifestOwnershipCheck($oManifest);
+    # Substitute current user for false in user/group (code further expects false to be replaced already)
+    my %oOwnerHash = ();
+
+    my %oFileTypeHash =
+    (
+        &MANIFEST_SECTION_TARGET_PATH => true,
+        &MANIFEST_SECTION_TARGET_LINK => true,
+        &MANIFEST_SECTION_TARGET_FILE => true
+    );
+
+    my %oOwnerTypeHash;
+
+    $oOwnerTypeHash{&MANIFEST_SUBKEY_USER} = getpwuid($<);
+
+    if (!defined($oOwnerTypeHash{&MANIFEST_SUBKEY_USER}))
+    {
+        confess &log(ERROR_USER_MISSING, 'current user uid does not map to a name');
+    }
+
+    $oOwnerTypeHash{&MANIFEST_SUBKEY_GROUP} = getgrgid($();
+
+    if (!defined($oOwnerTypeHash{&MANIFEST_SUBKEY_GROUP}))
+    {
+        confess &log(ERROR_GROUP_MISSING, 'current user gid does not map to a name');
+    }
+
+    foreach my $strOwnerType (sort (keys %oOwnerTypeHash))
+    {
+        foreach my $strSection (sort (keys %oFileTypeHash))
+        {
+            foreach my $strName ($oManifest->keys($strSection))
+            {
+                my $strOwner = $oManifest->get($strSection, $strName, $strOwnerType);
+
+                if ($oManifest->boolTest($strSection, $strName, $strOwnerType, false))
+                {
+                    $strOwner = $oOwnerTypeHash{$strOwnerType};
+                    $oManifest->set($strSection, $strName, $strOwnerType, $strOwner);
+                }
+           }
+        }
+    }
 
     # Make sure links are still valid after remapping
     $oManifest->linkCheck();

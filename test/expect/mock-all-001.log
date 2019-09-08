@@ -561,10 +561,8 @@ restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-2]
-P00   WARN: backup group for pg_data was not mapped to a name, set to [GROUP-2]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-2]
-P00   WARN: backup user for pg_data was not mapped to a name, set to [USER-2]
+P00   WARN: unknown user in backup manifest mapped to '[USER-2]'
+P00   WARN: unknown group in backup manifest mapped to '[GROUP-2]'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -633,8 +631,8 @@ restore delta, backup '[BACKUP-FULL-2]' - fix permissions (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
+P00   WARN: unknown user in backup manifest mapped to '[USER-1]'
+P00   WARN: unknown group in backup manifest mapped to '[GROUP-1]'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -677,8 +675,8 @@ restore delta, backup '[BACKUP-FULL-2]' - fix broken symlink (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
+P00   WARN: unknown user in backup manifest mapped to current user
+P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -723,8 +721,8 @@ P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   INFO: map link 'pg_hba.conf' to '../pg_config/pg_hba.conf'
 P00   INFO: map link 'pg_stat' to '../pg_stat'
 P00   INFO: map link 'postgresql.conf' to '../pg_config/postgresql.conf'
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
+P00   WARN: unknown user in backup manifest mapped to current user
+P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -764,22 +762,22 @@ restore delta, backup '[BACKUP-FULL-2]', expect exit 70 - restore all links by m
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=warn --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_stat/postgresql.conf  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
+P00   WARN: unknown user in backup manifest mapped to current user
+P00   WARN: unknown group in backup manifest mapped to current group
 P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_stat) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_stat (../pg_stat)
 
 restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=warn --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
+P00   WARN: unknown user in backup manifest mapped to current user
+P00   WARN: unknown group in backup manifest mapped to current group
 P00  ERROR: [040]: cannot restore file '[TEST_PATH]/db-master/db/pg_config/pg_hba.conf' that already exists - try using --delta if this is what you intended
 
 restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked path (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=warn --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
+P00   WARN: unknown user in backup manifest mapped to current user
+P00   WARN: unknown group in backup manifest mapped to current group
 P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/pg_stat' that contains files - try using --delta if this is what you intended
 
 restore, backup '[BACKUP-FULL-2]', expect exit 38 - error on postmaster.pid exists (db-master host)
@@ -795,8 +793,8 @@ restore delta, backup '[BACKUP-FULL-2]' - restore all links --link-all and mappi
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --link-all --link-map=pg_stat=../pg_stat --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   INFO: map link 'pg_stat' to '../pg_stat'
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
+P00   WARN: unknown user in backup manifest mapped to current user
+P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -837,8 +835,8 @@ P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
 P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
 P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
+P00   WARN: unknown user in backup manifest mapped to current user
+P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
 P00   INFO: restore command end: aborted with exception [040]
@@ -851,10 +849,10 @@ P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
 P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
 P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
-P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
-P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-1]
-P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
-P00   WARN: user bogus in manifest cannot be used for restore, set to [USER-1]
+P00   WARN: unknown user in backup manifest mapped to current user
+P00   WARN: unknown user 'bogus' in backup manifest mapped to current user
+P00   WARN: unknown group in backup manifest mapped to current group
+P00   WARN: unknown group 'bogus' in backup manifest mapped to current group
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf

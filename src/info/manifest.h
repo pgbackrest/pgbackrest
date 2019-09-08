@@ -163,11 +163,6 @@ unsigned int manifestLinkTotal(const Manifest *this);
 void manifestLinkUpdate(const Manifest *this, const String *name, const String *path);
 
 /***********************************************************************************************************************************
-Owner functions and getters/setters
-***********************************************************************************************************************************/
-void manifestOwnerRemoveAll(const Manifest *this);
-
-/***********************************************************************************************************************************
 Path functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestPath *manifestPath(const Manifest *this, unsigned int pathIdx);
