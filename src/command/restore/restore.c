@@ -3,15 +3,12 @@ Restore Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <grp.h>
-#include <pwd.h>
-#include <unistd.h>
-
 #include "command/restore/restore.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/bufferWrite.h" // !!! REMOVE WITH MANIFEST TEST CODE
 #include "common/log.h"
+#include "common/user.h"
 #include "config/config.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
@@ -19,89 +16,6 @@ Restore Command
 #include "postgres/version.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
-
-/***********************************************************************************************************************************
-Get user/group info
-***********************************************************************************************************************************/
-struct
-{
-    MemContext *memContext;                                         // Mem context to store data in this struct
-    uid_t userId;                                                   // Real user id of the calling process from getuid()
-    bool userRoot;                                                  // Is this the root user?
-    const String *userName;                                         // User name if it exists
-    gid_t groupId;                                                  // Real group id of the calling process from getgid()
-    const String *groupName;                                        // Group name if it exists
-} userLocalData;
-
-static void
-userInitInternal(void)
-{
-    FUNCTION_TEST_VOID();
-
-    MEM_CONTEXT_BEGIN(memContextTop())
-    {
-        userLocalData.memContext = memContextNew("UserGroupInfo");
-    }
-    MEM_CONTEXT_END();
-
-    MEM_CONTEXT_BEGIN(userLocalData.memContext)
-    {
-        userLocalData.userId = getuid();
-        userLocalData.userRoot = userLocalData.userId == 0;
-
-        // Get user name if it exists
-        struct passwd *userData = getpwuid(userLocalData.userId);
-
-        if (userData != NULL)
-            userLocalData.userName = strNew(userData->pw_name);
-
-        userLocalData.groupId = getgid();
-
-        // Get group name if it exists
-        struct group *groupData = getgrgid(userLocalData.groupId);
-
-        if (groupData != NULL)
-            userLocalData.groupName = strNew(groupData->gr_name);
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-static const String *
-groupName(void)
-{
-    return userLocalData.groupName;
-}
-
-static void
-userInit(void)
-{
-    FUNCTION_TEST_VOID();
-
-    if (!userLocalData.memContext)
-        userInitInternal();
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-static uid_t
-userId(void)
-{
-    return userLocalData.userId;
-}
-
-static const String *
-userName(void)
-{
-    return userLocalData.userName;
-}
-
-static bool
-userRoot(void)
-{
-    return userLocalData.userRoot;
-}
 
 /***********************************************************************************************************************************
 Recovery type constants

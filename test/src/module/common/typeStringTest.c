@@ -287,6 +287,15 @@ testRun(void)
 
         TEST_RESULT_VOID(strLstFree(list), "free string list");
         TEST_RESULT_VOID(strLstFree(NULL), "free null string list");
+
+        // Add if missing
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(list, strLstNew(), "new list");
+        TEST_RESULT_VOID(strLstAddIfMissing(list, STRDEF("item1")), "add item 1");
+        TEST_RESULT_UINT(strLstSize(list), 1, "check size");
+        TEST_RESULT_BOOL(strLstExistsZ(list, "item1"), true, "check exists");
+        TEST_RESULT_VOID(strLstAddIfMissing(list, STRDEF("item1")), "add item 1 again");
+        TEST_RESULT_UINT(strLstSize(list), 1, "check size");
     }
 
     // *****************************************************************************************************************************

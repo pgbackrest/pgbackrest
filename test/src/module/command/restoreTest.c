@@ -544,19 +544,9 @@ testRun(void)
         userInitInternal();
 
         const String *pgPath = strNewFmt("%s/pg", testPath());
-        // const String *repoPath = strNewFmt("%s/repo", testPath());
-        //
+
         // Owner is not root and all ownership is good
         // -------------------------------------------------------------------------------------------------------------------------
-        // StringList *argList = strLstNew();
-        // strLstAddZ(argList, "pgbackrest");
-        // strLstAddZ(argList, "--stanza=test1");
-        // strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
-        // strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
-        // strLstAddZ(argList, "restore");
-        // harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-        //
-        // TEST_ERROR_FMT(restoreClean(manifest), PathMissingError, "unable to restore to missing path '%s/pg'", testPath());
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with good ownership");
 
@@ -586,6 +576,8 @@ testRun(void)
         manifestPathAdd(manifest, &path);
         ManifestFile file = {.name = STRDEF("pg_data/bogus_file"), .mode = 0600, .group = STRDEF("file-group-bogus")};
         manifestFileAdd(manifest, &file);
+        ManifestLink link = {.name = STRDEF("pg_data/bogus_link"), .destination = STRDEF("/"), .group = STRDEF("link-group-bogus")};
+        manifestLinkAdd(manifest, &link);
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with some bad ownership");
 
@@ -593,7 +585,62 @@ testRun(void)
             "P00   WARN: unknown user in backup manifest mapped to current user\n"
             "P00   WARN: unknown user 'path-user-bogus' in backup manifest mapped to current user\n"
             "P00   WARN: unknown group in backup manifest mapped to current group\n"
-            "P00   WARN: unknown group 'file-group-bogus' in backup manifest mapped to current group");
+            "P00   WARN: unknown group 'file-group-bogus' in backup manifest mapped to current group\n"
+            "P00   WARN: unknown group 'link-group-bogus' in backup manifest mapped to current group");
+
+        // Owner is root and ownership is good
+        // -------------------------------------------------------------------------------------------------------------------------
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAddZ(argList, "--repo1-path=/repo");
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        userLocalData.userRoot = true;
+
+        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
+
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with good ownership");
+
+        // Owner is root and user is bad
+        // -------------------------------------------------------------------------------------------------------------------------
+        manifestPathAdd(manifest, &path);
+        // manifestFileAdd(manifest, &file);
+
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad user");
+
+        harnessLogResult(strPtr(strNewFmt("P00   WARN: unknown group in backup manifest mapped to '%s'", testUser())));
+
+        // Owner is root and group is bad
+        // -------------------------------------------------------------------------------------------------------------------------
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        userLocalData.userRoot = true;
+
+        manifestFileAdd(manifest, &file);
+        manifestLinkAdd(manifest, &link);
+
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad user");
+
+        harnessLogResult(strPtr(strNewFmt("P00   WARN: unknown user in backup manifest mapped to '%s'", testUser())));
+
+        // Owner is root and ownership of pg_data is bad
+        // -------------------------------------------------------------------------------------------------------------------------
+        manifestPathAdd(manifest, &path);
+        manifestFileAdd(manifest, &file);
+
+        ASSERT(system(strPtr(strNewFmt("sudo chown 77777:77777 %s", strPtr(pgPath)))) == 0);
+
+        userLocalData.userName = STRDEF("root");
+        userLocalData.groupName = STRDEF("root");
+
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad ownership of pg_data");
+
+        harnessLogResult(
+            "P00   WARN: unknown user in backup manifest mapped to 'root'\n"
+            "P00   WARN: unknown group in backup manifest mapped to 'root'");
     }
 
     // *****************************************************************************************************************************
