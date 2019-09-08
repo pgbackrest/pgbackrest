@@ -404,66 +404,67 @@ restoreClean(Manifest *manifest)
 
             cleanData->target = manifestTarget(manifest, targetIdx);
             cleanData->targetPath = cleanData->target->path;
+            cleanData->basePath = targetIdx == 0;
+            cleanData->delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
+            cleanData->preserveRecoveryConf = strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR);
 
-            // If the path is relative
+            // If the target path is relative update it
             if (!strBeginsWith(cleanData->targetPath, FSLASH_STR))
             {
-                // The only path type is pg_data and it should never be relative
-                ASSERT(cleanData->target->type != manifestTargetTypePath);
-
                 cleanData->targetPath = strNewFmt(
                     "%s/%s/%s", strPtr(basePath), strPtr(strPath(manifestPgPath(cleanData->target->name))),
                     strPtr(cleanData->target->path));
             }
 
-            cleanData->basePath = targetIdx == 0;
-            cleanData->delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
-            cleanData->preserveRecoveryConf = strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR);
+            // If this is a tablespace append the tablespace identifier
+            if (cleanData->target->type == manifestTargetTypeLink && cleanData->target->tablespaceId != 0)
+            {
+                const String *tablespaceId = pgTablespaceId(manifestData(manifest)->pgVersion);
+
+                // Only PostgreSQL >= 9.0 has tablespace indentifiers
+                if (tablespaceId != NULL)
+                    cleanData->targetPath = strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(tablespaceId));
+            }
 
             // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
             StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true, .followLink = true);
 
             if (info.exists)
             {
-
-                // Does the path still exist after the tablespace check, if any?
-                if (info.exists)
+                // Make sure our uid will be able to write to this directory
+                if (!userRoot() && userId() != info.userId)
                 {
-                    // Make sure our uid will be able to write to this directory
-                    if (!userRoot() && userId() != info.userId)
-                    {
-                        THROW_FMT(
-                            PathOpenError, "unable to restore to path '%s' not owned by current user",
-                            strPtr(cleanData->targetPath));
-                    }
-
-                    if ((info.mode & 0700) != 0700)
-                    {
-                        THROW_FMT(
-                            PathOpenError, "unable to restore to path '%s' without rwx permissions", strPtr(cleanData->targetPath));
-                    }
-
-                    // If not a delta restore then check that the directories are empty
-                    if (!cleanData->delta)
-                    {
-                        if (cleanData->target->file == NULL)
-                        {
-                            storageInfoListP(
-                                storageLocal(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData,
-                                .errorOnMissing = true);
-                        }
-                        else
-                        {
-                            // !!! JUST CHECK TO SEE IF THE FILE IS PRESENT
-                        }
-
-                        // Now that we know there are no files in this target enable delta to process the next pass
-                        cleanData->delta = true;
-                    }
-
-                    // The target directory exists and is valid and will need to be cleaned
-                    cleanData->exists = true;
+                    THROW_FMT(
+                        PathOpenError, "unable to restore to path '%s' not owned by current user",
+                        strPtr(cleanData->targetPath));
                 }
+
+                if ((info.mode & 0700) != 0700)
+                {
+                    THROW_FMT(
+                        PathOpenError, "unable to restore to path '%s' without rwx permissions", strPtr(cleanData->targetPath));
+                }
+
+                // If not a delta restore then check that the directories are empty
+                if (!cleanData->delta)
+                {
+                    if (cleanData->target->file == NULL)
+                    {
+                        storageInfoListP(
+                            storageLocal(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData,
+                            .errorOnMissing = true);
+                    }
+                    else
+                    {
+                        // !!! JUST CHECK TO SEE IF THE FILE IS PRESENT
+                    }
+
+                    // Now that we know there are no files in this target enable delta to process the next pass
+                    cleanData->delta = true;
+                }
+
+                // The target directory exists and is valid and will need to be cleaned
+                cleanData->exists = true;
             }
         }
 

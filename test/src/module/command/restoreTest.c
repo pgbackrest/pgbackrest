@@ -662,7 +662,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR_FMT(restoreClean(manifest), PathMissingError, "unable to restore to missing path '%s/pg'", testPath());
+        TEST_RESULT_VOID(restoreClean(manifest), "data directory is missing");
 
         // Directory with bad permissions/mode
         // -------------------------------------------------------------------------------------------------------------------------

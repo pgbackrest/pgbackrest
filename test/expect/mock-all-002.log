@@ -490,7 +490,8 @@ P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'bac
 P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
 P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
 P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
-P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
+P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base' because it contains files
+            HINT: try using --delta if this is what you intended.
 
 restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.manifest file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --stanza=db restore
@@ -1405,7 +1406,8 @@ backrest-checksum="[CHECKSUM]"
 restore, backup '[BACKUP-DIFF-2]', expect exit 40 - fail on used path (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
+P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base' because it contains files
+            HINT: try using --delta if this is what you intended.
 
 restore, backup '[BACKUP-DIFF-2]', remap - remap all paths (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore

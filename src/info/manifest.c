@@ -328,6 +328,8 @@ manifestTargetAdd(Manifest *this, const ManifestTarget *target)
     ASSERT(target != NULL);
     ASSERT(target->path != NULL);
 
+    // !!! Check that only link types have relative paths
+
     MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
     {
         ManifestTarget targetAdd =
