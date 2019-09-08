@@ -48,9 +48,10 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 
         ManifestTarget targetBase = {.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath};
         manifestTargetAdd(result, &targetBase);
-        ManifestPath pathBase = {.name = pgPath};
+        ManifestPath pathBase = {.name = pgPath, .group = groupName(), .user = userName()};
         manifestPathAdd(result, &pathBase);
-        ManifestFile fileVersion = {.name = STRDEF("pg_data/" PG_FILE_PGVERSION), .mode = 0600};
+        ManifestFile fileVersion = {
+            .name = STRDEF("pg_data/" PG_FILE_PGVERSION), .mode = 0600, .group = groupName(), .user = userName()};
         manifestFileAdd(result, &fileVersion);
     }
     MEM_CONTEXT_NEW_END();
@@ -542,12 +543,11 @@ testRun(void)
     {
         userInitInternal();
 
-        // const String *pgPath = strNewFmt("%s/pg", testPath());
+        const String *pgPath = strNewFmt("%s/pg", testPath());
         // const String *repoPath = strNewFmt("%s/repo", testPath());
-        // Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
         //
-        // // Missing data directory
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // Owner is not root and all ownership is good
+        // -------------------------------------------------------------------------------------------------------------------------
         // StringList *argList = strLstNew();
         // strLstAddZ(argList, "pgbackrest");
         // strLstAddZ(argList, "--stanza=test1");
@@ -557,6 +557,43 @@ testRun(void)
         // harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         //
         // TEST_ERROR_FMT(restoreClean(manifest), PathMissingError, "unable to restore to missing path '%s/pg'", testPath());
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with good ownership");
+
+        // Owner is not root but has no user name
+        // -------------------------------------------------------------------------------------------------------------------------
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+
+        userLocalData.groupName = NULL;
+        userLocalData.userName = NULL;
+
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with no username");
+
+        harnessLogResult(
+            strPtr(
+                strNewFmt(
+                    "P00   WARN: user '%s' in backup manifest mapped to current user\n"
+                    "P00   WARN: group '%s' in backup manifest mapped to current group",
+                    testUser(), testUser())));
+
+        userInitInternal();
+
+        // Owner is not root and some ownership is bad
+        // -------------------------------------------------------------------------------------------------------------------------
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+
+        ManifestPath path = {.name = STRDEF("pg_data/bogus_path"), .user = STRDEF("path-user-bogus")};
+        manifestPathAdd(manifest, &path);
+        ManifestFile file = {.name = STRDEF("pg_data/bogus_file"), .mode = 0600, .group = STRDEF("file-group-bogus")};
+        manifestFileAdd(manifest, &file);
+
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with some bad ownership");
+
+        harnessLogResult(
+            "P00   WARN: unknown user in backup manifest mapped to current user\n"
+            "P00   WARN: user 'path-user-bogus' in backup manifest mapped to current user\n"
+            "P00   WARN: unknown group in backup manifest mapped to current group\n"
+            "P00   WARN: group 'file-group-bogus' in backup manifest mapped to current group");
     }
 
     // *****************************************************************************************************************************

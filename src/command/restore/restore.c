@@ -68,6 +68,12 @@ userInitInternal(void)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+static const String *
+groupName(void)
+{
+    return userLocalData.groupName;
+}
+
 static void
 userInit(void)
 {
@@ -83,6 +89,12 @@ static uid_t
 userId(void)
 {
     return userLocalData.userId;
+}
+
+static const String *
+userName(void)
+{
+    return userLocalData.userName;
 }
 
 static bool
@@ -285,6 +297,38 @@ restoreManifestMap(Manifest *manifest)
 /***********************************************************************************************************************************
 Check ownership of files in the manifest
 ***********************************************************************************************************************************/
+#define RESTORE_MANIFEST_OWNER_GET(type)                                                                                           \
+    for (unsigned int fileIdx = 0; fileIdx < manifest##type##Total(manifest); fileIdx++)                                           \
+    {                                                                                                                              \
+        const Manifest##type *file = manifest##type(manifest, fileIdx);                                                            \
+                                                                                                                                   \
+        if (file->user == NULL)                                                                                                    \
+            userNull = true;                                                                                                       \
+        else                                                                                                                       \
+            strLstAddIfMissing(userList, file->user);                                                                              \
+                                                                                                                                   \
+        if (file->group == NULL)                                                                                                   \
+            groupNull = true;                                                                                                      \
+        else                                                                                                                       \
+            strLstAddIfMissing(groupList, file->group);                                                                            \
+    }
+
+#define RESTORE_MANIFEST_OWNER_WARN(type)                                                                                          \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (type##Null)                                                                                                            \
+            LOG_WARN("unknown " #type " in backup manifest mapped to current " #type);                                             \
+                                                                                                                                   \
+        for (unsigned int ownerIdx = 0; ownerIdx < strLstSize(type##List); ownerIdx++)                                             \
+        {                                                                                                                          \
+            const String *owner = strLstGet(type##List, ownerIdx);                                                                 \
+                                                                                                                                   \
+            if (type##Name() == NULL ||  !strEq(type##Name(), owner))                                                              \
+                LOG_WARN(#type " '%s' in backup manifest mapped to current " #type, strPtr(owner));                                \
+        }                                                                                                                          \
+    }                                                                                                                              \
+    while (0)
+
 static void
 restoreManifestOwner(Manifest *manifest)
 {
@@ -294,72 +338,28 @@ restoreManifestOwner(Manifest *manifest)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Build a list of users and groups in the manifest
+        // -------------------------------------------------------------------------------------------------------------------------
         bool userNull = false;
         StringList *userList = strLstNew();
         bool groupNull = false;
         StringList *groupList = strLstNew();
 
-        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
-        {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
+        RESTORE_MANIFEST_OWNER_GET(File);
+        RESTORE_MANIFEST_OWNER_GET(Link);
+        RESTORE_MANIFEST_OWNER_GET(Path);
 
-            if (file->user == NULL)
-                userNull = true;
-            else
-                strLstAddIfMissing(userList, file->user);
-
-            if (file->group == NULL)
-                groupNull = true;
-            else
-                strLstAddIfMissing(groupList, file->group);
-        }
-
-        for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
-        {
-            const ManifestLink *link = manifestLink(manifest, linkIdx);
-
-            if (link->user == NULL)
-                userNull = true;
-            else
-                strLstAddIfMissing(userList, link->user);
-
-            if (link->group == NULL)
-                groupNull = true;
-            else
-                strLstAddIfMissing(groupList, link->group);
-        }
-
-        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
-        {
-            const ManifestPath *path = manifestPath(manifest, pathIdx);
-
-            if (path->user == NULL)
-                userNull = true;
-            else
-                strLstAddIfMissing(userList, path->user);
-
-            if (path->group == NULL)
-                groupNull = true;
-            else
-                strLstAddIfMissing(groupList, path->group);
-        }
-
+        // Build a list of users and groups in the manifest
+        // -------------------------------------------------------------------------------------------------------------------------
         if (userRoot())
         {
         }
+        // Else map everything to the current user/group
+        // -------------------------------------------------------------------------------------------------------------------------
         else
         {
-            if (userNull)
-                LOG_WARN("unknown user in backup manifest mapped to current user");
-
-            // for (unsigned int userIdx = 0; userIdx < strLstSize(userList); userIdx++)
-            // {
-            //     if (userName() == NULL ||  !strEq(userName(), strLstGet(userList, userIdx)))
-            //         LOG_WARN("user '%s' in backup manifest mapped to current user");
-            // }
-
-            if (groupNull)
-                LOG_WARN("unknown group in backup manifest mapped to current group");
+            RESTORE_MANIFEST_OWNER_WARN(user);
+            RESTORE_MANIFEST_OWNER_WARN(group);
         }
     }
     MEM_CONTEXT_TEMP_END();
