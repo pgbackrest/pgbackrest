@@ -513,6 +513,32 @@ pgWalFromFile(const String *walFile)
     FUNCTION_LOG_RETURN(PG_WAL, result);
 }
 
+/**********************************************************************************************************************************/
+String *
+pgTablespaceId(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    String *result = NULL;
+
+    if (pgVersion >= PG_VERSION_90)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            String *pgVersionStr = pgVersionToStr(pgVersion);
+
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result = strNewFmt("PG_%s_%u", strPtr(pgVersionStr), pgCatalogVersion(pgVersion));
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 /***********************************************************************************************************************************
 Get WAL name (wal/xlog) for a PostgreSQL version
 ***********************************************************************************************************************************/

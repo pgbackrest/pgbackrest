@@ -81,6 +81,9 @@ String *pgVersionToStr(unsigned int version);
 PgWal pgWalFromFile(const String *walFile);
 PgWal pgWalFromBuffer(const Buffer *walBuffer);
 
+// Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. XXX
+String *pgTablespaceId(unsigned int pgVersion);
+
 const String *pgWalName(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
