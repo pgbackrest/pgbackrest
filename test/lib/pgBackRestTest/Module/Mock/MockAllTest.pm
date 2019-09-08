@@ -725,6 +725,8 @@ sub run
             # testFileCreate(
             #     $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf', "CONTENTS2\n", $lTime - 100);
 
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'backup.manifest', '');
+
             $oHostDbMaster->restore(
                 'restore all links --link-all and mapping', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, bDelta => true,

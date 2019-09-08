@@ -778,7 +778,7 @@ testRun(void)
         TEST_ERROR_FMT(cmdRestore(), PathMissingError, "$PGDATA directory '%s/pg' does not exist", testPath());
 
         // Create PGDATA
-        storagePathCreateNP(storagePgWrite(), strNew("pg"));
+        storagePathCreateNP(storagePgWrite(), NULL);
 
         // postmaster.pid is present
         // -------------------------------------------------------------------------------------------------------------------------
@@ -985,6 +985,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--set=20161219-212741F_20161219-212918I");
+        strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 

@@ -338,6 +338,7 @@ typedef struct RestoreCleanCallbackData
     const String *targetPath;                                       // Path of target currently being compared
     const String *subPath;                                          // Subpath in target currently being compared
     bool basePath;                                                  // Is this the base path?
+    bool exists;                                                    // Does the target path exist?
     bool delta;                                                     // Is this a delta restore?
     bool preserveRecoveryConf;                                      // Should the recovery.conf file be preserved?
 } RestoreCleanCallbackData;
@@ -359,9 +360,9 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         return;
     }
 
-    // Don't include recovery.conf (when preserved) in the comparison or empty directory check
-    if (cleanData->basePath && info->type == storageTypeFile && cleanData->preserveRecoveryConf &&
-        strEq(info->name, PG_FILE_RECOVERYCONF_STR))
+    // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
+    if (cleanData->basePath && info->type == storageTypeFile &&
+        (strEq(info->name, MANIFEST_FILE_STR) || (cleanData->preserveRecoveryConf && strEq(info->name, PG_FILE_RECOVERYCONF_STR))))
     {
         FUNCTION_TEST_RETURN_VOID();
         return;
@@ -402,33 +403,67 @@ restoreClean(Manifest *manifest)
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
 
             cleanData->target = manifestTarget(manifest, targetIdx);
-            cleanData->targetPath = strBeginsWith(cleanData->target->path, FSLASH_STR) ?
-                cleanData->target->path : strNewFmt("%s/%s", strPtr(basePath), strPtr(cleanData->target->path));
+            cleanData->targetPath = cleanData->target->path;
+
+            // If the path is relative
+            if (!strBeginsWith(cleanData->targetPath, FSLASH_STR))
+            {
+                // The only path type is pg_data and it should never be relative
+                ASSERT(cleanData->target->type != manifestTargetTypePath);
+
+                cleanData->targetPath = strNewFmt(
+                    "%s/%s/%s", strPtr(basePath), strPtr(strPath(manifestPgPath(cleanData->target->name))),
+                    strPtr(cleanData->target->path));
+            }
+
             cleanData->basePath = targetIdx == 0;
-            cleanData->delta = cfgOptionBool(cfgOptDelta);
+            cleanData->delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
             cleanData->preserveRecoveryConf = strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR);
 
-            // Check that the path exists
+            // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
             StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true, .followLink = true);
 
-            if (!info.exists)
-                THROW_FMT(PathMissingError, "unable to restore to missing path '%s'", strPtr(cleanData->targetPath));
-
-            // Make sure our uid will be able to write to this directory
-            if (!userRoot() && userId() != info.userId)
-                THROW_FMT(PathOpenError, "unable to restore to path '%s' not owned by current user", strPtr(cleanData->targetPath));
-
-            if ((info.mode & 0700) != 0700)
-                THROW_FMT(PathOpenError, "unable to restore to path '%s' without rwx permissions", strPtr(cleanData->targetPath));
-
-            // If not a delta restore then check that the directories are empty
-            if (!cleanData->delta)
+            if (info.exists)
             {
-                storageInfoListP(
-                    storageLocal(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true);
 
-                // Now that we know there are no files in this target enable delta to process the next pass
-                cleanData->delta = true;
+                // Does the path still exist after the tablespace check, if any?
+                if (info.exists)
+                {
+                    // Make sure our uid will be able to write to this directory
+                    if (!userRoot() && userId() != info.userId)
+                    {
+                        THROW_FMT(
+                            PathOpenError, "unable to restore to path '%s' not owned by current user",
+                            strPtr(cleanData->targetPath));
+                    }
+
+                    if ((info.mode & 0700) != 0700)
+                    {
+                        THROW_FMT(
+                            PathOpenError, "unable to restore to path '%s' without rwx permissions", strPtr(cleanData->targetPath));
+                    }
+
+                    // If not a delta restore then check that the directories are empty
+                    if (!cleanData->delta)
+                    {
+                        if (cleanData->target->file == NULL)
+                        {
+                            storageInfoListP(
+                                storageLocal(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData,
+                                .errorOnMissing = true);
+                        }
+                        else
+                        {
+                            // !!! JUST CHECK TO SEE IF THE FILE IS PRESENT
+                        }
+
+                        // Now that we know there are no files in this target enable delta to process the next pass
+                        cleanData->delta = true;
+                    }
+
+                    // The target directory exists and is valid and will need to be cleaned
+                    cleanData->exists = true;
+                }
             }
         }
 
@@ -437,8 +472,11 @@ restoreClean(Manifest *manifest)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
 
-            storageInfoListP(
-                storagePgWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true);
+            if (cleanData->exists)
+            {
+                // storageInfoListP(
+                //     storagePgWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true);
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -584,7 +622,7 @@ cmdRestore(void)
         restoreManifestOwner(manifest);
 
         // Clean the data directory
-        (void)restoreClean;
+        restoreClean(manifest);
 
         // Save manifest before any modifications are made to PGDATA
         manifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));
