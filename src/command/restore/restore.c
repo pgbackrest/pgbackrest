@@ -23,6 +23,133 @@ Recovery type constants
 STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                           "preserve");
 
 /***********************************************************************************************************************************
+Validate restore path
+***********************************************************************************************************************************/
+static void
+restorePathValidate(void)
+{
+    FUNCTION_LOG_VOID(logLevelDebug);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // The PGDATA directory must exist
+        // ??? We should remove this require in a separate commit.  What's the harm in creating the dir assuming we have perms?
+        if (!storagePathExistsNP(storagePg(), NULL))
+            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strPtr(cfgOptionStr(cfgOptPgPath)));
+
+        // PostgreSQL must not be running
+        if (storageExistsNP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
+        {
+            THROW_FMT(
+                PostmasterRunningError,
+                "unable to restore while PostgreSQL is running\n"
+                    "HINT: presence of '" PG_FILE_POSTMASTERPID "' in '%s' indicates PostgreSQL is running.\n"
+                    "HINT: remove '" PG_FILE_POSTMASTERPID "' only if PostgreSQL is not running.",
+                strPtr(cfgOptionStr(cfgOptPgPath)));
+        }
+
+        // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
+        if ((cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)) &&
+            !storageExistsNP(storagePg(), STRDEF(PG_FILE_PGVERSION)) && !storageExistsNP(storagePg(), STRDEF(MANIFEST_FILE)))
+        {
+            LOG_WARN(
+                "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" MANIFEST_FILE "' in '%s' to"
+                    " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
+                    " exist in the destination directories the restore will be aborted.",
+               strPtr(cfgOptionStr(cfgOptPgPath)));
+
+            cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
+            cfgOptionSet(cfgOptForce, cfgSourceDefault, VARBOOL(false));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Get the backup set to restore
+***********************************************************************************************************************************/
+static String *
+restoreBackupSet(InfoBackup *infoBackup)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_END();
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If backup set to restore is default (i.e. latest) then get the actual set
+        const String *backupSet = NULL;
+
+        if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
+        {
+            if (infoBackupDataTotal(infoBackup) == 0)
+                THROW(BackupSetInvalidError, "no backup sets to restore");
+
+            backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+        }
+        // Otherwise check to make sure the specified backup set is valid
+        else
+        {
+            bool found = false;
+            backupSet = cfgOptionStr(cfgOptSet);
+
+            for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
+            {
+                if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSet))
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+                THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strPtr(backupSet));
+        }
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strDup(backupSet);
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
+Validate the manifest
+***********************************************************************************************************************************/
+static void
+restoreManifestValidate(Manifest *manifest, const String *backupSet)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STRING, backupSet);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Sanity check to ensure the manifest has not been moved to a new directory
+        const ManifestData *data = manifestData(manifest);
+
+        if (!strEq(data->backupLabel, backupSet))
+        {
+            THROW_FMT(
+                FormatError,
+                "requested backup '%s' and manifest label '%s' do not match\n"
+                "HINT: this indicates some sort of corruption (at the very least paths have been renamed).",
+                strPtr(backupSet), strPtr(data->backupLabel));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Remap the manifest based on mappings provided by the user
 ***********************************************************************************************************************************/
 static void
@@ -623,35 +750,8 @@ cmdRestore(void)
         if (!pgIsLocal(1))
             THROW(HostInvalidError, CFGCMD_RESTORE " command must be run on the " PG_NAME " host");
 
-        // The PGDATA directory must exist
-        // ??? We should also do this for the rest of the paths that backrest will not create (but later after manifest load)
-        if (!storagePathExistsNP(storagePg(), NULL))
-            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strPtr(cfgOptionStr(cfgOptPgPath)));
-
-        // PostgreSQL must not be running
-        if (storageExistsNP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
-        {
-            THROW_FMT(
-                PostmasterRunningError,
-                "unable to restore while PostgreSQL is running\n"
-                    "HINT: presence of '" PG_FILE_POSTMASTERPID "' in '%s' indicates PostgreSQL is running.\n"
-                    "HINT: remove '" PG_FILE_POSTMASTERPID "' only if PostgreSQL is not running.",
-                strPtr(cfgOptionStr(cfgOptPgPath)));
-        }
-
-        // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
-        if ((cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)) &&
-            !storageExistsNP(storagePg(), STRDEF(PG_FILE_PGVERSION)) && !storageExistsNP(storagePg(), STRDEF(MANIFEST_FILE)))
-        {
-            LOG_WARN(
-                "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" MANIFEST_FILE "' in '%s' to"
-                    " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                    " exist in the destination directories the restore will be aborted.",
-               strPtr(cfgOptionStr(cfgOptPgPath)));
-
-            cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
-            cfgOptionSet(cfgOptForce, cfgSourceDefault, VARBOOL(false));
-        }
+        // Validate restore path
+        restorePathValidate();
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
@@ -661,35 +761,8 @@ cmdRestore(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
-        // If backup set to restore is default (i.e. latest) then get the actual set
-        const String *backupSet = NULL;
-
-        if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
-        {
-            if (infoBackupDataTotal(infoBackup) == 0)
-                THROW(BackupSetInvalidError, "no backup sets to restore");
-
-            backupSet = strDup(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel);
-        }
-        // Otherwise check to make sure the specified backup set is valid
-        else
-        {
-            backupSet = strDup(cfgOptionStr(cfgOptSet));
-
-            bool found = false;
-
-            for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
-            {
-                if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSet))
-                {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found)
-                THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strPtr(backupSet));
-        }
+        // Get the backup set
+        const String *backupSet = restoreBackupSet(infoBackup);
 
         // Load manifest
         Manifest *manifest = manifestLoadFile(
@@ -722,17 +795,8 @@ cmdRestore(void)
             }
         }
 
-        // Sanity check to ensure the manifest has not been moved to a new directory
-        const ManifestData *data = manifestData(manifest);
-
-        if (!strEq(data->backupLabel, backupSet))
-        {
-            THROW_FMT(
-                FormatError,
-                "requested backup '%s' and manifest label '%s' do not match\n"
-                "HINT: this indicates some sort of corruption (at the very least paths have been renamed).",
-                strPtr(backupSet), strPtr(data->backupLabel));
-        }
+        // Validate the manifest
+        restoreManifestValidate(manifest, backupSet);
 
         // Log the backup set to restore
         LOG_INFO("restore backup set %s", strPtr(backupSet));
