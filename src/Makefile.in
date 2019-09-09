@@ -122,6 +122,7 @@ SRCS = \
 	common/type/variant.c \
 	common/type/variantList.c \
 	common/type/xml.c \
+	common/user.c \
 	common/wait.c \
 	config/config.c \
 	config/define.c \
@@ -443,6 +444,9 @@ common/type/variantList.o: common/type/variantList.c build.auto.h common/assert.
 common/type/xml.o: common/type/xml.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/list.h common/type/string.h common/type/xml.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/type/xml.c -o common/type/xml.o
 
+common/user.o: common/user.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h common/user.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/user.c -o common/user.o
+
 common/wait.o: common/wait.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/time.h common/type/convert.h common/wait.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/wait.c -o common/wait.o
 
@@ -563,7 +567,7 @@ storage/helper.o: storage/helper.c build.auto.h common/assert.h common/debug.h c
 storage/posix/read.o: storage/posix/read.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/read.intern.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h storage/info.h storage/posix/read.h storage/posix/storage.h storage/posix/storage.intern.h storage/read.h storage/read.intern.h storage/storage.h storage/storage.intern.h storage/write.h storage/write.intern.h version.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c storage/posix/read.c -o storage/posix/read.o
 
-storage/posix/storage.o: storage/posix/storage.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/read.intern.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h storage/info.h storage/posix/read.h storage/posix/storage.h storage/posix/storage.intern.h storage/posix/write.h storage/read.h storage/read.intern.h storage/storage.h storage/storage.intern.h storage/write.h storage/write.intern.h version.h
+storage/posix/storage.o: storage/posix/storage.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/read.intern.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/user.h storage/info.h storage/posix/read.h storage/posix/storage.h storage/posix/storage.intern.h storage/posix/write.h storage/read.h storage/read.intern.h storage/storage.h storage/storage.intern.h storage/write.h storage/write.intern.h version.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c storage/posix/storage.c -o storage/posix/storage.o
 
 storage/posix/write.o: storage/posix/write.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/read.intern.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h storage/info.h storage/posix/storage.h storage/posix/storage.intern.h storage/posix/write.h storage/read.h storage/read.intern.h storage/storage.h storage/storage.intern.h storage/write.h storage/write.intern.h version.h
