@@ -14,6 +14,7 @@ Sort orders
 ***********************************************************************************************************************************/
 typedef enum
 {
+    sortOrderNone,
     sortOrderAsc,
     sortOrderDesc,
 } SortOrder;

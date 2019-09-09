@@ -71,6 +71,9 @@ sortArchiveId(StringList *sortString, SortOrder sortOrder)
             lstSort((List *)sortString, archiveIdDescComparator);
             break;
         }
+
+        case sortOrderNone:
+            break;
     }
 
     FUNCTION_LOG_RETURN(STRING_LIST, sortString);

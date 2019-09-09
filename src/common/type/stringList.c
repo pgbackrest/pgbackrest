@@ -669,6 +669,9 @@ strLstSort(StringList *this, SortOrder sortOrder)
             lstSort((List *)this, sortDescComparator);
             break;
         }
+
+        case sortOrderNone:
+            break;
     }
 
     FUNCTION_TEST_RETURN(this);
