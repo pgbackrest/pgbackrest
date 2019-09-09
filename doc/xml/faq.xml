@@ -80,6 +80,12 @@ process-max=1
         <p>The <link url="https://apt.postgresql.org">apt.postgresql.org</link> repository maintains an <link url="https://atalia.postgresql.org/morgue/p/pgbackrest">archive of older versions</link>.  Debian also maintains <link url="https://snapshot.debian.org/binary/pgbackrest/">snapshots</link> of all test builds.</p>
     </section>
 
+    <section id="time-based-pitr">
+        <title>Time-based PITR does not appear to work, why?</title>
+
+        <p>The most common mistake when using time-based PITR is forgetting to choose the backup set that is before the target time. <backrest/> defaults to the latest backup and if it is after the target time, then --target= is not considered valid by <postgres/> and is therefore ignored, resulting in WAL restoration to the latest available. To choose the correct backup set, run the <cmd>info</cmd> command and find the backup with a timestamp stop that is before the target time. Then, when running the restore, use the option --set=BACKUP_LABEL where BACKUP_LABEL is the backup that was found with a timestamp stop that is before the target time. For more detailed information, see <link url="https://pgbackrest.org/user-guide.html#pitr">Point-in-Time Recovery</link> of the user guide.</p>
+    </section>
+
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 
