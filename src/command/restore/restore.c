@@ -3,6 +3,9 @@ Restore Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "command/restore/restore.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
@@ -507,7 +510,32 @@ restoreCleanOwnership(
     // Update ownership if not as expected
     if (info->userId != expectedUserId || info->groupId != expectedGroupId)
     {
+        LOG_DETAIL("update ownership for '%s'", strPtr(pgPath));
 
+        THROW_ON_SYS_ERROR_FMT(
+            chown(strPtr(pgPath), expectedUserId, expectedGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
+            strPtr(pgPath));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, pgPath);
+        FUNCTION_TEST_PARAM(MODE, manifestMode);
+        FUNCTION_TEST_PARAM(INFO, info);
+    FUNCTION_TEST_END();
+
+    // Update mode if not as expected
+    if (manifestMode != info->mode)
+    {
+        LOG_DETAIL("update mode for '%s' to %04o", strPtr(pgPath), manifestMode);
+
+        THROW_ON_SYS_ERROR_FMT(
+            chmod(strPtr(pgPath), manifestMode) == -1, FileOwnerError, "unable to set mode for '%s'", strPtr(pgPath));
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -561,13 +589,13 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             if (manifestFile != NULL)
             {
                 restoreCleanOwnership(pgPath, manifestFile->user, manifestFile->group, info);
-                //
-                // manifestUser = ;
-                // manifestGroup = ;
-                // manifestMode = manifestFile.mode;
+                restoreCleanMode(pgPath, manifestFile->mode, info);
             }
             else
+            {
+                LOG_DETAIL("remove invalid file '%s'", strPtr(pgPath));
                 storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+            }
 
             break;
         }
@@ -578,11 +606,19 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
             if (manifestLink != NULL)
             {
-                // manifestUser = manifestLink.user;
-                // manifestGroup = manifestLink.group;
+                if (!strEq(manifestLink->destination, info->linkDestination))
+                {
+                    LOG_DETAIL("remove link '%s' because destination changed", strPtr(pgPath));
+                    storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+                }
+                else
+                    restoreCleanOwnership(pgPath, manifestLink->user, manifestLink->group, info);
             }
             else
+            {
+                LOG_DETAIL("remove invalid link '%s'", strPtr(pgPath));
                 storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+            }
 
             break;
         }
@@ -593,12 +629,14 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
             if (manifestPath != NULL)
             {
-                // manifestUser = manifestPath.user;
-                // manifestGroup = manifestPath.group;
-                // manifestMode = manifestPath.mode;
+                restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info);
+                restoreCleanMode(pgPath, manifestPath->mode, info);
             }
             else
+            {
+                LOG_DETAIL("remove invalid file '%s'", strPtr(pgPath));
                 storagePathRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true, .recurse = true);
+            }
 
             break;
         }

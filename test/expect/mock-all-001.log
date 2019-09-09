@@ -1868,6 +1868,7 @@ P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2'
 P00   INFO: map tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
+P00 DETAIL: update mode for '[TEST_PATH]/db-master/db/base-2' to 0777
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
@@ -2081,7 +2082,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={}
+pg_data={"mode":"0777"}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -2098,7 +2099,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={}
+pg_tblspc={"mode":"0777"}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -2316,7 +2317,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={}
+pg_data={"mode":"0777"}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -2333,7 +2334,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={}
+pg_tblspc={"mode":"0777"}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -2519,7 +2520,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={}
+pg_data={"mode":"0777"}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -2536,7 +2537,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={}
+pg_tblspc={"mode":"0777"}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -2701,7 +2702,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={}
+pg_data={"mode":"0777"}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -2718,7 +2719,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={}
+pg_tblspc={"mode":"0777"}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -2905,7 +2906,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={}
+pg_data={"mode":"0777"}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -2922,7 +2923,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={}
+pg_tblspc={"mode":"0777"}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -3105,7 +3106,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={}
+pg_data={"mode":"0777"}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -3122,7 +3123,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={}
+pg_tblspc={"mode":"0777"}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -3669,7 +3670,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={}
+pg_data={"mode":"0777"}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -3686,7 +3687,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={}
+pg_tblspc={"mode":"0777"}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -3834,6 +3835,7 @@ P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
 P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base' exists
+P00 DETAIL: update mode for '[TEST_PATH]/db-master/db/base-2/base' to 0777
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/../../tablespace/ts2/[TS_PATH-1]' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2/base'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
@@ -4180,7 +4182,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={}
+pg_data={"mode":"0777"}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -4197,7 +4199,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={}
+pg_tblspc={"mode":"0777"}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -4358,7 +4360,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={}
+pg_data={"mode":"0777"}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -4375,7 +4377,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={}
+pg_tblspc={"mode":"0777"}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}

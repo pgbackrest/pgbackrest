@@ -88,7 +88,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 
         ManifestTarget targetBase = {.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath};
         manifestTargetAdd(result, &targetBase);
-        ManifestPath pathBase = {.name = MANIFEST_TARGET_PGDATA_STR, .group = groupName(), .user = userName()};
+        ManifestPath pathBase = {.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()};
         manifestPathAdd(result, &pathBase);
         ManifestFile fileVersion = {
             .name = STRDEF("pg_data/" PG_FILE_PGVERSION), .mode = 0600, .group = groupName(), .user = userName()};
@@ -947,33 +947,92 @@ testRun(void)
 
         TEST_ERROR(cmdRestore(), HostInvalidError, "restore command must be run on the PostgreSQL host");
 
-        // SUCCESS TEST FOR COVERAGE -- WILL BE REMOVED / MODIFIED AT SOME POINT
+        // Write backup info
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(
+            storageNewWriteNP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
+            harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB));
+
+        // Prepare manifest and backup directory for full restore
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
-        strLstAddZ(argList, "--set=20161219-212741F_20161219-212918I");
+        strLstAddZ(argList, "--set=20161219-212741F");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        // Write backup info
-        storagePutNP(
-            storageNewWriteNP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
-            harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB));
+        #define TEST_LABEL                                          "20161219-212741F"
+        #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
+        #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
+
+        Manifest *manifest = NULL;
+
+        MEM_CONTEXT_NEW_BEGIN("Manifest")
+        {
+            manifest = manifestNewInternal();
+            manifest->info = infoNew(NULL);
+            manifest->data.backupLabel = strNew(TEST_LABEL);
+            manifest->data.pgVersion = PG_VERSION_84;
+            manifest->data.backupType = backupTypeFull;
+            manifest->data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
+
+            // Data directory
+            manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath});
+            manifestPathAdd(
+                manifest,
+                &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
+            storagePathCreateNP(storagePgWrite(), NULL);
+
+            // PG_VERSION
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "797e375b924134687cbf9eacd37a4355f3d825e4"});
+            storagePutNP(
+                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_84_STR "\n"));
+        }
+        MEM_CONTEXT_NEW_END();
+
+        manifestSave(
+            manifest,
+            storageWriteIo(
+                storageNewWriteNP(storageRepoWrite(),
+                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_FILE))));
+
+        // Full Restore
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(cmdRestore(), "successful restore");
+
+        harnessLogResult(
+            strPtr(
+                strNewFmt(
+                    "P00   INFO: restore backup set 20161219-212741F\n"
+                    "P00   INFO: remove invalid files/links/paths from '%s/pg'",
+                    testPath())));
+
+        // Incremental Delta Restore
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Write manifest
-        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-212918I"), PG_VERSION_94, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-212918I"), PG_VERSION_94, pgPath);
 
         manifestSave(
             manifest,
             storageWriteIo(
                 storageNewWriteNP(storageRepoWrite(),
                 strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" MANIFEST_FILE))));
-
-        // Create data directory
-        storagePathCreateNP(storagePgWrite(), NULL);
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 

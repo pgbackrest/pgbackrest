@@ -1076,10 +1076,11 @@ sub run
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'} = $oHostDbMaster->tablespacePath(1, 2);
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'} = $oHostDbMaster->tablespacePath(2, 2);
 
-        # At this point the $PG_DATA permissions have been reset to 0600
+        # At this point the $PG_DATA permissions have been reset to 0700
         if (!$bRemote)
         {
-            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE});
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE} = '0777';
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGTBLSPC}{&MANIFEST_SUBKEY_MODE} = '0777';
         }
 
         $oHostDbMaster->restore(
