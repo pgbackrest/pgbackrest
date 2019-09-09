@@ -335,6 +335,7 @@ typedef struct RestoreCleanCallbackData
 {
     const Manifest *manifest;                                       // Manifest to compare against
     const ManifestTarget *target;                                   // Current target being compared
+    const String *targetName;                                       // Name to use when finding files/paths/links
     const String *targetPath;                                       // Path of target currently being compared
     const String *subPath;                                          // Subpath in target currently being compared
     bool basePath;                                                  // Is this the base path?
@@ -342,6 +343,48 @@ typedef struct RestoreCleanCallbackData
     bool delta;                                                     // Is this a delta restore?
     bool preserveRecoveryConf;                                      // Should the recovery.conf file be preserved?
 } RestoreCleanCallbackData;
+
+static void
+restoreCleanOwnership(
+    const String *pgPath, const String *manifestUserName, const String *manifestGroupName, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, pgPath);
+        FUNCTION_TEST_PARAM(STRING, manifestUserName);
+        FUNCTION_TEST_PARAM(STRING, manifestGroupName);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    // Get the expected user id
+    uid_t expectedUserId = userId();
+
+    if (manifestUserName != NULL)
+    {
+        uid_t manifestUserId = userIdFromName(manifestUserName);
+
+        if (manifestUserId != (uid_t)-1)
+            expectedUserId = manifestUserId;
+    }
+
+    // Get the expected group id
+    gid_t expectedGroupId = groupId();
+
+    if (manifestGroupName != NULL)
+    {
+        uid_t manifestGroupId = groupIdFromName(manifestGroupName);
+
+        if (manifestGroupId != (uid_t)-1)
+            expectedGroupId = manifestGroupId;
+    }
+
+    // Update ownership if not as expected
+    if (info->userId != expectedUserId || info->groupId != expectedGroupId)
+    {
+
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 static void
 restoreCleanInfoListCallback(void *data, const StorageInfo *info)
@@ -353,13 +396,6 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
     RestoreCleanCallbackData *cleanData = (RestoreCleanCallbackData *)data;
 
-    // Skip . path
-    if (info->type == storageTypePath && strEq(info->name, DOT_STR))
-    {
-        FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
-
     // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
     if (cleanData->basePath && info->type == storageTypeFile &&
         (strEq(info->name, MANIFEST_FILE_STR) || (cleanData->preserveRecoveryConf && strEq(info->name, PG_FILE_RECOVERYCONF_STR))))
@@ -368,14 +404,84 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         return;
     }
 
-    // If this is not a delta then error because the directory is expected to be empty
-    if (!cleanData->delta)
+    // Is this the . path, i.e. the root path for this list?
+    bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
+
+    // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
+    if (!cleanData->delta && !dotPath)
     {
         THROW_FMT(
             PathNotEmptyError,
             "unable to restore to path '%s' because it contains files\n"
             "HINT: try using --delta if this is what you intended.",
             strPtr(cleanData->targetPath));
+    }
+
+    // Construct the name used to find this file/link/path in the manifest
+    const String *manifestName = dotPath ?
+        cleanData->targetName : strNewFmt("%s/%s", strPtr(cleanData->targetName), strPtr(info->name));
+
+    // Construct the path of this file/link/path in the PostgreSQL data directory
+    const String *pgPath = dotPath ?
+        cleanData->targetPath : strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(info->name));
+
+    switch (info->type)
+    {
+        case storageTypeFile:
+        {
+            const ManifestFile *manifestFile = manifestFileFind(cleanData->manifest, manifestName);
+
+            if (manifestFile != NULL)
+            {
+                restoreCleanOwnership(pgPath, manifestFile->user, manifestFile->group, info);
+                //
+                // manifestUser = ;
+                // manifestGroup = ;
+                // manifestMode = manifestFile.mode;
+            }
+            else
+                storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+
+            break;
+        }
+
+        case storageTypeLink:
+        {
+            const ManifestLink *manifestLink = manifestLinkFind(cleanData->manifest, manifestName);
+
+            if (manifestLink != NULL)
+            {
+                // manifestUser = manifestLink.user;
+                // manifestGroup = manifestLink.group;
+            }
+            else
+                storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+
+            break;
+        }
+
+        case storageTypePath:
+        {
+            const ManifestPath *manifestPath = manifestPathFind(cleanData->manifest, manifestName);
+
+            if (manifestPath != NULL)
+            {
+                // manifestUser = manifestPath.user;
+                // manifestGroup = manifestPath.group;
+                // manifestMode = manifestPath.mode;
+            }
+            else
+                storagePathRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true, .recurse = true);
+
+            break;
+        }
+
+        // Special file types cannot exist in the manifest so just delete them
+        case storageTypeSpecial:
+        {
+            storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+            break;
+        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -402,7 +508,9 @@ restoreClean(Manifest *manifest)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
 
+            cleanData->manifest = manifest;
             cleanData->target = manifestTarget(manifest, targetIdx);
+            cleanData->targetName = cleanData->target->name;
             cleanData->targetPath = cleanData->target->path;
             cleanData->basePath = targetIdx == 0;
             cleanData->delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
@@ -427,7 +535,10 @@ restoreClean(Manifest *manifest)
 
                 // Only PostgreSQL >= 9.0 has tablespace indentifiers
                 if (tablespaceId != NULL)
+                {
+                    cleanData->targetName = strNewFmt("%s/%s", strPtr(cleanData->targetName), strPtr(tablespaceId));
                     cleanData->targetPath = strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(tablespaceId));
+                }
             }
 
             // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.

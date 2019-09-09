@@ -48,7 +48,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 
         ManifestTarget targetBase = {.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath};
         manifestTargetAdd(result, &targetBase);
-        ManifestPath pathBase = {.name = pgPath, .group = groupName(), .user = userName()};
+        ManifestPath pathBase = {.name = MANIFEST_TARGET_PGDATA_STR, .group = groupName(), .user = userName()};
         manifestPathAdd(result, &pathBase);
         ManifestFile fileVersion = {
             .name = STRDEF("pg_data/" PG_FILE_PGVERSION), .mode = 0600, .group = groupName(), .user = userName()};
@@ -711,6 +711,8 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore");
 
+        harnessLogResult(strPtr(strNewFmt("P00   INFO: remove invalid files/links/paths from '%s/pg'", testPath())));
+
         // Succeed when all directories empty and ignore recovery.conf
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -724,8 +726,12 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore no recovery.conf");
 
+        harnessLogResult(strPtr(strNewFmt("P00   INFO: remove invalid files/links/paths from '%s/pg'", testPath())));
+
         storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore ignore recovery.conf");
+
+        harnessLogResult(strPtr(strNewFmt("P00   INFO: remove invalid files/links/paths from '%s/pg'", testPath())));
 
         // Delta restore allowed
         // -------------------------------------------------------------------------------------------------------------------------
@@ -744,6 +750,7 @@ testRun(void)
         storagePutNP(storageNewWriteNP(storageTest, STRDEF("conf/pg_hba.conf")), NULL);
 
         TEST_RESULT_VOID(restoreClean(manifest), "delta restore");
+        harnessLogResult(strPtr(strNewFmt("P00   INFO: remove invalid files/links/paths from '%s/pg'", testPath())));
     }
 
     // *****************************************************************************************************************************

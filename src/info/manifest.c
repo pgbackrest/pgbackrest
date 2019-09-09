@@ -1381,24 +1381,24 @@ manifestFile(const Manifest *this, unsigned int fileIdx)
     FUNCTION_TEST_RETURN(lstGet(this->fileList, fileIdx));
 }
 
-// const ManifestFile *
-// manifestFileFind(const Manifest *this, const String *name)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(MANIFEST, this);
-//         FUNCTION_TEST_PARAM(STRING, name);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(name != NULL);
-//
-//     const ManifestFile *result = lstFind(this->fileList, &name);
-//
-//     if (result == NULL)
-//         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strPtr(name));
-//
-//     FUNCTION_TEST_RETURN(result);
-// }
+const ManifestFile *
+manifestFileFind(const Manifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    const ManifestFile *result = lstFind(this->fileList, &name);
+
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strPtr(name));
+
+    FUNCTION_TEST_RETURN(result);
+}
 
 unsigned int
 manifestFileTotal(const Manifest *this)
@@ -1532,24 +1532,24 @@ manifestPath(const Manifest *this, unsigned int pathIdx)
     FUNCTION_TEST_RETURN(lstGet(this->pathList, pathIdx));
 }
 
-// const ManifestPath *
-// manifestPathFind(const Manifest *this, const String *name)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(MANIFEST, this);
-//         FUNCTION_TEST_PARAM(STRING, name);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(name != NULL);
-//
-//     const ManifestPath *result = lstFind(this->pathList, &name);
-//
-//     if (result == NULL)
-//         THROW_FMT(AssertError, "unable to find '%s' in manifest path list", strPtr(name));
-//
-//     FUNCTION_TEST_RETURN(result);
-// }
+const ManifestPath *
+manifestPathFind(const Manifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    const ManifestPath *result = lstFind(this->pathList, &name);
+
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to find '%s' in manifest path list", strPtr(name));
+
+    FUNCTION_TEST_RETURN(result);
+}
 
 unsigned int
 manifestPathTotal(const Manifest *this)

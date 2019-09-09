@@ -149,7 +149,7 @@ void manifestSave(Manifest *this, IoWrite *write);
 File functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestFile *manifestFile(const Manifest *this, unsigned int fileIdx);
-// const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
+const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
 unsigned int manifestFileTotal(const Manifest *this);
 
 /***********************************************************************************************************************************
@@ -166,7 +166,7 @@ void manifestLinkUpdate(const Manifest *this, const String *name, const String *
 Path functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestPath *manifestPath(const Manifest *this, unsigned int pathIdx);
-// const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
+const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
 unsigned int manifestPathTotal(const Manifest *this);
 
 /***********************************************************************************************************************************
