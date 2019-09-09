@@ -740,7 +740,7 @@
             <config-section id="stanza" name="Stanza">
                 <text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.
 
-                <b>Indexing</b>: All <setting>pg-</setting> options are indexed to allow for configuring multiple <postgres/> hosts. For example, a single master is configured with the <setting>pg1-path</setting>, <setting>pg1-host</setting>, etc. options.  If a standby is configured then index the <setting>pg-</setting> options as <setting>pg2-</setting> (e.g. pg2-host, pg2-path, etc).</text>
+                <b>Indexing</b>: All <setting>pg-</setting> options are indexed to allow for configuring multiple <postgres/> hosts. For example, a single master is configured with the <setting>pg1-path</setting>, <setting>pg1-port</setting>, etc. options.  If a standby is configured then index the <setting>pg-</setting> options on the repository host as <setting>pg2-</setting> (e.g. pg2-host, pg2-path, etc).</text>
 
                 <config-key-list>
                     <!-- CONFIG - STANZA SECTION - PG-HOST-CMD KEY -->

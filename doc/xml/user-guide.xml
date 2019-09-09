@@ -2194,6 +2194,8 @@
 
         <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>repository</host> host where the backups and WAL archive files are stored.  This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact.  It is still a good idea to employ traditional backup software to backup the <host>repository</host> host.</p>
 
+        <p>On database hosts, <br-option>pg1-path</br-option> is required to be the path of the <postgres/> location on the local machine and no <br-option>pg1-host</br-option> would be configured. When configuring a repository host, the pgbackrest configuration file must have the <br-option>pg-host</br-option> option configured to connect to the primary and the standby databases. The repository host is the only pgbackrest configuration that can be aware of more than one <postgres/> database. Order does not matter, e.g. pg1-path/pg1-host, pg2-path/pg2-host can be primary or standby.</p>
+
         <section id="install">
             <title>Installation</title>
 

@@ -80,6 +80,12 @@ process-max=1
         <p>The <link url="https://apt.postgresql.org">apt.postgresql.org</link> repository maintains an <link url="https://atalia.postgresql.org/morgue/p/pgbackrest">archive of older versions</link>.  Debian also maintains <link url="https://snapshot.debian.org/binary/pgbackrest/">snapshots</link> of all test builds.</p>
     </section>
 
+    <section id="standby-repo">
+        <title>Should I setup my repository host to be on a standby host machine?</title>
+
+        <p>No. When primary and standby databases are configured, the pgbackrest configuration files must be symmetric in order to seamlessly handle failovers. If they are not, the configurations would need to be changed which can result in other problems. See the <link url="https://pgbackrest.org/user-guide.html#repo-host">repository host</link> section of the User Guide for more information.</p>
+    </section>
+
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 
