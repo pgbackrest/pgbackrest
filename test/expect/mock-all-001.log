@@ -563,6 +563,12 @@ P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-l
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: unknown user in backup manifest mapped to '[USER-2]'
 P00   WARN: unknown group in backup manifest mapped to '[GROUP-2]'
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -633,6 +639,12 @@ P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-l
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: unknown user in backup manifest mapped to '[USER-1]'
 P00   WARN: unknown group in backup manifest mapped to '[GROUP-1]'
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -677,6 +689,12 @@ P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-l
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -723,6 +741,12 @@ P00   INFO: map link 'pg_stat' to '../pg_stat'
 P00   INFO: map link 'postgresql.conf' to '../pg_config/postgresql.conf'
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -771,7 +795,7 @@ restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked fil
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
-P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base//../pg_stat' because it contains files
+P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base/../pg_stat' because it contains files
             HINT: try using --delta if this is what you intended.
 
 restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked path (db-master host)
@@ -779,7 +803,7 @@ restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked pat
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
-P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base//../pg_stat' because it contains files
+P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base/../pg_stat' because it contains files
             HINT: try using --delta if this is what you intended.
 
 restore, backup '[BACKUP-FULL-2]', expect exit 38 - error on postmaster.pid exists (db-master host)
@@ -797,6 +821,12 @@ P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   INFO: map link 'pg_stat' to '../pg_stat'
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -839,6 +869,7 @@ P00   WARN: contents of directory link 'pg_stat' will be restored in a directory
 P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
 P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base' because it contains files
             HINT: try using --delta if this is what you intended.
 P00   INFO: restore command end: aborted with exception [040]
@@ -855,6 +886,8 @@ P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown user 'bogus' in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
 P00   WARN: unknown group 'bogus' in backup manifest mapped to current group
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
@@ -1821,6 +1854,7 @@ restore, backup '[BACKUP-DIFF-2]', expect exit 40 - fail on used path (db-master
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-DIFF-2]
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
 P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base' because it contains files
             HINT: try using --delta if this is what you intended.
 P00   INFO: restore command end: aborted with exception [040]
@@ -1833,6 +1867,10 @@ P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2'
 P00   INFO: map tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
@@ -1873,6 +1911,12 @@ P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2'
 P00   INFO: map tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
@@ -3684,6 +3728,10 @@ restore delta, remap - selective restore 16384 (db-master host)
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
@@ -3727,6 +3775,10 @@ restore delta, remap - selective restore 32768 (db-master host)
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
@@ -3781,6 +3833,9 @@ P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-leve
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
 P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/../../tablespace/ts2/[TS_PATH-1]' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2/base'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
 P00  ERROR: [073]: cannot restore to missing path [TEST_PATH]/db-master/db/base-2/tablespace
@@ -3793,6 +3848,9 @@ P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-leve
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
 P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/../../tablespace/ts2/[TS_PATH-1]' exists
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2/base'
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b

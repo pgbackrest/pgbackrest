@@ -411,9 +411,13 @@ restoreClean(Manifest *manifest)
             // If the target path is relative update it
             if (!strBeginsWith(cleanData->targetPath, FSLASH_STR))
             {
+                const String *linkPath = strPath(manifestPgPath(cleanData->target->name));
+
                 cleanData->targetPath = strNewFmt(
-                    "%s/%s/%s", strPtr(basePath), strPtr(strPath(manifestPgPath(cleanData->target->name))),
-                    strPtr(cleanData->target->path));
+                    "%s/%s", strPtr(basePath),
+                    strSize(linkPath) > 0 ?
+                        strPtr(strNewFmt("%s/%s", strPtr(linkPath), strPtr(cleanData->target->path))) :
+                        strPtr(cleanData->target->path));
             }
 
             // If this is a tablespace append the tablespace identifier
@@ -427,6 +431,9 @@ restoreClean(Manifest *manifest)
             }
 
             // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
+            // ??? Note that a path may be checked multiple times if more than one file link points to the same path.  This is
+            // harmless but creates noise in the log so it may be worth de-duplicating.
+            LOG_DETAIL("check '%s' exists", strPtr(cleanData->targetPath));
             StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true, .followLink = true);
 
             if (info.exists)
@@ -473,8 +480,11 @@ restoreClean(Manifest *manifest)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
 
-            if (cleanData->exists)
+            // Only clean if the target exists and is not a file link.  It doesn't matter whether the file exists or not since we
+            // know it is in the manifest.
+            if (cleanData->exists && cleanData->target->file == NULL)
             {
+                LOG_INFO("remove invalid files/links/paths from '%s'", strPtr(cleanData->targetPath));
                 // storageInfoListP(
                 //     storagePgWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true);
             }
