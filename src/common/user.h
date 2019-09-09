@@ -15,6 +15,9 @@ void userInit(void);
 // Get the primary group id of the current user
 gid_t groupId(void);
 
+// Get the id of the specified group.  Returns (gid_t)-1 if not found.
+gid_t groupIdFromName(const String *groupName);
+
 // Get the primary group name of the current user.  Returns NULL if there is no mapping.
 const String *groupName(void);
 
@@ -23,6 +26,9 @@ String *groupNameFromId(gid_t groupId);
 
 // Get the id of the current user
 uid_t userId(void);
+
+// Get the id of the specified user.  Returns (uid_t)-1 if not found.
+uid_t userIdFromName(const String *userName);
 
 // Get the name of the current user.  Returns NULL if there is no mapping.
 const String *userName(void);
