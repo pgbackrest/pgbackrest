@@ -30,6 +30,14 @@
 
                         <p>Add helper function for adding <code>CipherBlock</code> filters to groups.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Rename parameter <code>processId</code> to <code>processIdx</code> in <file>harnessFork.h</file> for clarity.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>
