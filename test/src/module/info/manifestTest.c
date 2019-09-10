@@ -222,6 +222,10 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
 
+        TEST_ERROR(
+            manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
+        TEST_RESULT_STR_Z(manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION"))->name, "pg_data/PG_VERSION", "find file");
+
         const ManifestLink *link = NULL;
         TEST_ERROR(
             manifestLinkFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest link list");
@@ -231,6 +235,10 @@ testRun(void)
         TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat2")), "    update");
         TEST_RESULT_STR_Z(link->destination, "../pg_stat2", "    check link");
         TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "    fix link destination");
+
+        TEST_ERROR(
+            manifestPathFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest path list");
+        TEST_RESULT_STR_Z(manifestPathFind(manifest, STRDEF("pg_data"))->name, "pg_data", "find path");
 
         const ManifestTarget *target = NULL;
         TEST_ASSIGN(target, manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf")), "find target");
