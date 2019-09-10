@@ -8,6 +8,7 @@ Storage Interface
 
 #include "common/debug.h"
 #include "common/io/io.h"
+#include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
@@ -272,6 +273,39 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 /***********************************************************************************************************************************
 Info for all files/paths in a path
 ***********************************************************************************************************************************/
+typedef struct StorageInfoListData
+{
+    MemContext *memContext;                                         // Mem context to use for allocating data in this struct
+    // StringList *ownerList;                                          // List of users and groups to reduce memory usage
+    List *infoList;                                                 // List of info
+} StorageInfoListData;
+
+static void
+storageInfoListCallback(void *data, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    StorageInfoListData *infoData = data;
+
+    MEM_CONTEXT_BEGIN(infoData->memContext)
+    {
+        // Copy info and dup strings
+        StorageInfo infoCopy = *info;
+        infoCopy.name = strDup(info->name);
+        infoCopy.linkDestination = strDup(info->linkDestination);
+        infoCopy.user = strDup(info->user);
+        infoCopy.group = strDup(info->group);
+
+        lstAdd(infoData->infoList, &infoCopy);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 bool
 storageInfoList(
     const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param)
@@ -282,6 +316,7 @@ storageInfoList(
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -296,8 +331,36 @@ storageInfoList(
         // Build the path
         String *path = storagePathNP(this, pathExp);
 
-        // Call driver function
-        result = this->interface.infoList(this->driver, path, callback, callbackData);
+        // If no sort order then use the passed callback
+        if (param.sortOrder == sortOrderNone)
+        {
+            result = this->interface.infoList(this->driver, path, callback, callbackData);
+        }
+        // Else we'll need to build up a list locally so it can be returned to the caller in order
+        else
+        {
+            StorageInfoListData data =
+            {
+                .memContext = MEM_CONTEXT_TEMP(),
+                // .ownerList = strLstNew(),
+                .infoList = lstNewParam(sizeof(StorageInfo), lstComparatorStr),
+            };
+
+            result = this->interface.infoList(this->driver, path, storageInfoListCallback, &data);
+
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
+            {
+                for (unsigned int infoIdx = 0; infoIdx < lstSize(data.infoList); infoIdx++)
+                {
+                    // Pass info to the caller
+                    callback(callbackData, lstGet(data.infoList, infoIdx));
+
+                    // Reset the memory context occasionally
+                    MEM_CONTEXT_TEMP_RESET(1000);
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
 
         if (!result && param.errorOnMissing)
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));

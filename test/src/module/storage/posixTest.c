@@ -51,6 +51,9 @@ testStorageInfoListCallback(void *callbackData, const StorageInfo *info)
     {
         testStorageInfoList[testStorageInfoListSize] = *info;
         testStorageInfoList[testStorageInfoListSize].name = strDup(info->name);
+        testStorageInfoList[testStorageInfoListSize].linkDestination = strDup(info->linkDestination);
+        testStorageInfoList[testStorageInfoListSize].user = strDup(info->user);
+        testStorageInfoList[testStorageInfoListSize].group = strDup(info->group);
         testStorageInfoListSize++;
     }
     MEM_CONTEXT_END();
@@ -295,7 +298,21 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storageInfoListNP(storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent()),
-            "empty directory");
+            "directory with one dot file");
+        TEST_RESULT_UINT(testStorageInfoListSize, 2, "    two paths returned");
+        TEST_RESULT_STR(
+            strPtr(testStorageInfoList[0].name), strEqZ(testStorageInfoList[1].name, ".") ? ".include" : ".", "    check name");
+        TEST_RESULT_STR(
+            strPtr(testStorageInfoList[1].name), strEqZ(testStorageInfoList[0].name, ".") ? ".include" : ".", "    check name");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        testStorageInfoListSize = 0;
+        storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0766);
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent(), .sortOrder = sortOrderAsc),
+            "directory with one dot file sorted");
         TEST_RESULT_UINT(testStorageInfoListSize, 2, "    two paths returned");
         TEST_RESULT_STR(
             strPtr(testStorageInfoList[0].name), strEqZ(testStorageInfoList[1].name, ".") ? ".include" : ".", "    check name");

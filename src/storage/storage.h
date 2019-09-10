@@ -109,6 +109,7 @@ typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *i
 typedef struct StorageInfoListParam
 {
     bool errorOnMissing;
+    SortOrder sortOrder;
 } StorageInfoListParam;
 
 #define storageInfoListP(this, fileExp, callback, callbackData, ...)                                                               \
