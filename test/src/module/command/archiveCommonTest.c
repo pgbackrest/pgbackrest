@@ -182,7 +182,7 @@ testRun(void)
         TEST_ERROR(
             walPath(strNew("relative/path"), NULL, strNew("test")), OptionRequiredError,
             "option 'pg1-path' must be specified when relative wal paths are used\n"
-                "HINT: Is %f passed to test instead of %p?\n"
+                "HINT: is %f passed to test instead of %p?\n"
                 "HINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
     }
 

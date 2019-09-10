@@ -123,6 +123,12 @@ if (condition)
 }
 ```
 
+#### Hints, Warnings and Errors
+
+Hints are to be formatted with capitalized ```HINT:``` followed by a space and a sentence. The sentence shall only begin with a capital letter if the first work is an acronym (e.g. TLS) or a proper name (e.g. PostgreSQL). The sentence must end with a period, question mark or exclamation point as appropriate.
+
+Warning and errors shall be lowercase with the exceptions for proper names and acronyms and end without punctuation.
+
 ## Language Elements
 
 ### Data Types

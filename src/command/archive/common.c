@@ -251,7 +251,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
             THROW_FMT(
                 OptionRequiredError,
                 "option '" CFGOPT_PG1_PATH "' must be specified when relative wal paths are used\n"
-                    "HINT: Is %%f passed to %s instead of %%p?\n"
+                    "HINT: is %%f passed to %s instead of %%p?\n"
                     "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
                 strPtr(command));
         }

@@ -188,7 +188,7 @@ sub loadVersion
     else
     {
         confess &log(ERROR, "unable to parse '$self->{strFileName}" . ($bCopy ? INI_COPY_EXT : '') . "'" .
-            "\nHINT: Is or was the repo encrypted?", ERROR_CRYPTO);
+            "\nHINT: is or was the repo encrypted?", ERROR_CRYPTO);
     }
 
     return defined($self->{oContent});
