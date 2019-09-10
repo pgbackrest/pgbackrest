@@ -72,6 +72,25 @@ groupId(void)
 }
 
 /**********************************************************************************************************************************/
+gid_t
+groupIdFromName(const String *groupName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, groupName);
+    FUNCTION_TEST_END();
+
+    if (groupName != NULL)
+    {
+        struct group *groupData = getgrnam(strPtr(groupName));
+
+        if (groupData != NULL)
+            FUNCTION_TEST_RETURN(groupData->gr_gid);
+    }
+
+    FUNCTION_TEST_RETURN((gid_t)-1);
+}
+
+/**********************************************************************************************************************************/
 const String *
 groupName(void)
 {
@@ -101,6 +120,25 @@ userId(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(userLocalData.userId);
+}
+
+/**********************************************************************************************************************************/
+uid_t
+userIdFromName(const String *userName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, userName);
+    FUNCTION_TEST_END();
+
+    if (userName != NULL)
+    {
+        struct passwd *userData = getpwnam(strPtr(userName));
+
+        if (userData != NULL)
+            FUNCTION_TEST_RETURN(userData->pw_uid);
+    }
+
+    FUNCTION_TEST_RETURN((uid_t)-1);
 }
 
 /**********************************************************************************************************************************/

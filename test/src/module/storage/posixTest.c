@@ -639,12 +639,6 @@ testRun(void)
             ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN ": [13] Permission denied",
             strPtr(fileNoPerm));
 
-        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .user = strNew("bogus")), "new write file (bogus user)");
-        TEST_ERROR(ioWriteOpen(storageWriteIo(file)), UserMissingError, "unable to find user 'bogus'");
-
-        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .group = strNew("bogus")), "new write file (bogus group)");
-        TEST_ERROR(ioWriteOpen(storageWriteIo(file)), GroupMissingError, "unable to find group 'bogus'");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             file,
