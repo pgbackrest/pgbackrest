@@ -4,8 +4,6 @@ Posix Storage File write
 #include "build.auto.h"
 
 #include <fcntl.h>
-#include <grp.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <utime.h>
@@ -15,6 +13,7 @@ Posix Storage File write
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
+#include "common/user.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
 #include "storage/write.intern.h"
@@ -104,27 +103,8 @@ storageWritePosixOpen(THIS_VOID)
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
-        struct passwd *userData = NULL;
-        struct group *groupData = NULL;
-
-        if (this->interface.user != NULL)
-        {
-            THROW_ON_SYS_ERROR_FMT(
-                (userData = getpwnam(strPtr(this->interface.user))) == NULL, UserMissingError, "unable to find user '%s'",
-                strPtr(this->interface.user));
-        }
-
-        if (this->interface.group != NULL)
-        {
-            THROW_ON_SYS_ERROR_FMT(
-                (groupData = getgrnam(strPtr(this->interface.group))) == NULL, GroupMissingError, "unable to find group '%s'",
-                strPtr(this->interface.group));
-        }
-
         THROW_ON_SYS_ERROR_FMT(
-            chown(
-                strPtr(this->nameTmp), userData != NULL ? userData->pw_uid : (uid_t)-1,
-                groupData != NULL ? groupData->gr_gid : (gid_t)-1) == -1,
+            chown(strPtr(this->nameTmp), userIdFromName(this->interface.user), userIdFromName(this->interface.group)) == -1,
             FileOwnerError, "unable to set ownership for '%s'", strPtr(this->nameTmp));
     }
 

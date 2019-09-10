@@ -79,12 +79,13 @@ groupIdFromName(const String *groupName)
         FUNCTION_TEST_PARAM(STRING, groupName);
     FUNCTION_TEST_END();
 
-    ASSERT(groupName != NULL);
+    if (groupName != NULL)
+    {
+        struct group *groupData = getgrnam(strPtr(groupName));
 
-    struct group *groupData = getgrnam(strPtr(groupName));
-
-    if (groupData != NULL)
-        FUNCTION_TEST_RETURN(groupData->gr_gid);
+        if (groupData != NULL)
+            FUNCTION_TEST_RETURN(groupData->gr_gid);
+    }
 
     FUNCTION_TEST_RETURN((gid_t)-1);
 }
@@ -129,12 +130,13 @@ userIdFromName(const String *userName)
         FUNCTION_TEST_PARAM(STRING, userName);
     FUNCTION_TEST_END();
 
-    ASSERT(userName != NULL);
+    if (userName != NULL)
+    {
+        struct passwd *userData = getpwnam(strPtr(userName));
 
-    struct passwd *userData = getpwnam(strPtr(userName));
-
-    if (userData != NULL)
-        FUNCTION_TEST_RETURN(userData->pw_uid);
+        if (userData != NULL)
+            FUNCTION_TEST_RETURN(userData->pw_uid);
+    }
 
     FUNCTION_TEST_RETURN((uid_t)-1);
 }
