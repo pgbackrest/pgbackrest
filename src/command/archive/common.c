@@ -419,7 +419,8 @@ walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned i
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strLstAdd(strLstNew(), walSegmentBegin);
+        result = strLstNew();
+        strLstAdd(result, walSegmentBegin);
 
         if (range > 1)
         {

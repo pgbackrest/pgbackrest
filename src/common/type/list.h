@@ -67,13 +67,13 @@ List *lstNewParam(size_t itemSize, ListParam param);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-List *lstAdd(List *this, const void *item);
+void *lstAdd(List *this, const void *item);
 List *lstClear(List *this);
 void *lstGet(const List *this, unsigned int listIdx);
 void *lstFind(const List *this, const void *item);
 void *lstFindDefault(const List *this, const void *item, void *itemDefault);
 unsigned int lstFindIdx(const List *this, const void *item);
-List *lstInsert(List *this, unsigned int listIdx, const void *item);
+void *lstInsert(List *this, unsigned int listIdx, const void *item);
 bool lstRemove(List *this, const void *item);
 List *lstRemoveIdx(List *this, unsigned int listIdx);
 MemContext *lstMemContext(const List *this);

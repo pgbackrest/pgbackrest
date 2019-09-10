@@ -67,7 +67,7 @@ lstNewParam(size_t itemSize, ListParam param)
 /***********************************************************************************************************************************
 Add an item to the end of the list
 ***********************************************************************************************************************************/
-List *
+void *
 lstAdd(List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -78,9 +78,7 @@ lstAdd(List *this, const void *item)
     ASSERT(this != NULL);
     ASSERT(item != NULL);
 
-    lstInsert(this, lstSize(this), item);
-
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(lstInsert(this, lstSize(this), item));
 }
 
 /***********************************************************************************************************************************
@@ -212,7 +210,7 @@ lstFind(const List *this, const void *item)
 /***********************************************************************************************************************************
 Insert an item into the list
 ***********************************************************************************************************************************/
-List *
+void *
 lstInsert(List *this, unsigned int listIdx, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -246,18 +244,16 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     }
 
     // If not inserting at the end then move items down to make space
+    void *itemPtr = this->list + (listIdx * this->itemSize);
+
     if (listIdx != lstSize(this))
-    {
-        memmove(
-            this->list + ((listIdx + 1) * this->itemSize), this->list + (listIdx * this->itemSize),
-            (lstSize(this) - listIdx) * this->itemSize);
-    }
+        memmove(this->list + ((listIdx + 1) * this->itemSize), itemPtr, (lstSize(this) - listIdx) * this->itemSize);
 
     // Copy item into the list
-    memcpy(this->list + (listIdx * this->itemSize), item, this->itemSize);
+    memcpy(itemPtr, item, this->itemSize);
     this->listSize++;
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(itemPtr);
 }
 
 /***********************************************************************************************************************************

@@ -131,6 +131,9 @@ testRun(void)
         TEST_RESULT_INT(strCmp(STRDEF("equalstring"), STRDEF("equalstring")), 0, "strings equal");
         TEST_RESULT_INT(strCmp(STRDEF("a"), STRDEF("b")), -1, "a < b");
         TEST_RESULT_INT(strCmp(STRDEF("b"), STRDEF("a")), 1, "b > a");
+        TEST_RESULT_INT(strCmp(NULL, NULL), 0, "null == null");
+        TEST_RESULT_INT(strCmp(NULL, STRDEF("x")), -1, "null < not null");
+        TEST_RESULT_INT(strCmp(STRDEF("x"), NULL), 1, "not null > null");
 
         TEST_RESULT_BOOL(strEqZ(STRDEF("equalstring"), "equalstring"), true, "strings equal");
         TEST_RESULT_BOOL(strEqZ(STRDEF("astring"), "anotherstring"), false, "strings not equal");
@@ -139,6 +142,7 @@ testRun(void)
         TEST_RESULT_INT(strCmpZ(STRDEF("equalstring"), "equalstring"), 0, "strings equal");
         TEST_RESULT_INT(strCmpZ(STRDEF("a"), "b"), -1, "a < b");
         TEST_RESULT_INT(strCmpZ(STRDEF("b"), "a"), 1, "b > a");
+        TEST_RESULT_INT(strCmpZ(STRDEF("b"), NULL), 1, "b > null");
     }
 
     // *****************************************************************************************************************************
@@ -261,10 +265,13 @@ testRun(void)
             {
                 if (listIdx == 0)
                 {
-                    TEST_RESULT_PTR(strLstAdd(list, NULL), list, "add null item");
+                    TEST_RESULT_PTR(strLstAdd(list, NULL), NULL, "add null item");
                 }
                 else
-                    TEST_RESULT_PTR(strLstAdd(list, strNewFmt("STR%02d", listIdx)), list, "add item %d", listIdx);
+                {
+                    TEST_RESULT_STR_STR(
+                        strLstAdd(list, strNewFmt("STR%02d", listIdx)), strNewFmt("STR%02d", listIdx), "add item %d", listIdx);
+                }
             }
 
             strLstMove(list, MEM_CONTEXT_OLD());

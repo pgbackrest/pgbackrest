@@ -35,7 +35,7 @@ strLstNewParam(ListComparator *comparator)
 /***********************************************************************************************************************************
 Internal add -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
-static StringList *
+static String *
 strLstAddInternal(StringList *this, String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -45,13 +45,13 @@ strLstAddInternal(StringList *this, String *string)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN((StringList *)lstAdd((List *)this, &string));
+    FUNCTION_TEST_RETURN(*(String **)lstAdd((List *)this, &string));
 }
 
 /***********************************************************************************************************************************
 Internal insert -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
-static StringList *
+static String *
 strLstInsertInternal(StringList *this, unsigned int listIdx, String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -62,7 +62,7 @@ strLstInsertInternal(StringList *this, unsigned int listIdx, String *string)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN((StringList *)lstInsert((List *)this, listIdx, &string));
+    FUNCTION_TEST_RETURN(*(String **)lstInsert((List *)this, listIdx, &string));
 }
 
 /***********************************************************************************************************************************
@@ -322,7 +322,7 @@ strLstExistsZ(const StringList *this, const char *cstring)
 /***********************************************************************************************************************************
 Add String to the list
 ***********************************************************************************************************************************/
-StringList *
+String *
 strLstAdd(StringList *this, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -332,7 +332,7 @@ strLstAdd(StringList *this, const String *string)
 
     ASSERT(this != NULL);
 
-    StringList *result = NULL;
+    String *result = NULL;
 
     MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {
@@ -343,7 +343,7 @@ strLstAdd(StringList *this, const String *string)
     FUNCTION_TEST_RETURN(result);
 }
 
-StringList *
+String *
 strLstAddIfMissing(StringList *this, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -353,16 +353,18 @@ strLstAddIfMissing(StringList *this, const String *string)
 
     ASSERT(this != NULL);
 
-    if (!strLstExists(this, string))
-        strLstAdd(this, string);
+    String **result = lstFind((List *)this, &string);
 
-    FUNCTION_TEST_RETURN(this);
+    if (result == NULL)
+        FUNCTION_TEST_RETURN(strLstAdd(this, string));
+
+    FUNCTION_TEST_RETURN(*result);
 }
 
 /***********************************************************************************************************************************
 Add a zero-terminated string to the list
 ***********************************************************************************************************************************/
-StringList *
+String *
 strLstAddZ(StringList *this, const char *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -372,7 +374,7 @@ strLstAddZ(StringList *this, const char *string)
 
     ASSERT(this != NULL);
 
-    StringList *result = NULL;
+    String *result = NULL;
 
     MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {
@@ -402,7 +404,7 @@ strLstGet(const StringList *this, unsigned int listIdx)
 /***********************************************************************************************************************************
 Insert String into the list
 ***********************************************************************************************************************************/
-StringList *
+String *
 strLstInsert(StringList *this, unsigned int listIdx, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -413,7 +415,7 @@ strLstInsert(StringList *this, unsigned int listIdx, const String *string)
 
     ASSERT(this != NULL);
 
-    StringList *result = NULL;
+    String *result = NULL;
 
     MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {
@@ -427,7 +429,7 @@ strLstInsert(StringList *this, unsigned int listIdx, const String *string)
 /***********************************************************************************************************************************
 Insert zero-terminated string into the list
 ***********************************************************************************************************************************/
-StringList *
+String *
 strLstInsertZ(StringList *this, unsigned int listIdx, const char *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -438,7 +440,7 @@ strLstInsertZ(StringList *this, unsigned int listIdx, const char *string)
 
     ASSERT(this != NULL);
 
-    StringList *result = NULL;
+    String *result = NULL;
 
     MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {

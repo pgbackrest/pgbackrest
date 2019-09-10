@@ -40,7 +40,7 @@ testRun(void)
         TEST_RESULT_VOID(lstClear(list), "clear list");
 
         void *ptr = NULL;
-        TEST_RESULT_PTR(lstAdd(list, &ptr), list, "add item");
+        TEST_RESULT_VOID(lstAdd(list, &ptr), "add item");
         TEST_RESULT_STR(strPtr(lstToLog(list)), "{size: 1}", "check log");
 
         TEST_RESULT_VOID(lstClear(list), "clear list");
@@ -53,7 +53,7 @@ testRun(void)
         TEST_ASSIGN(list, lstNewP(sizeof(String *), .comparator = lstComparatorStr), "new list with params");
 
         String *string1 = strNew("string1");
-        TEST_RESULT_VOID(lstAdd(list, &string1), "    add string1");
+        TEST_RESULT_STR_Z(*(String **)lstAdd(list, &string1), "string1", "    add string1");
         String *string2 = strNew("string2");
         TEST_RESULT_VOID(lstAdd(list, &string2), "    add string2");
 
@@ -77,7 +77,7 @@ testRun(void)
 
             // Add ints to the list
             for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
-                TEST_RESULT_PTR(lstAdd(list, &listIdx), list, "add item %d", listIdx);
+                TEST_RESULT_VOID(lstAdd(list, &listIdx), "add item %d", listIdx);
 
             lstMove(list, MEM_CONTEXT_OLD());
         }
@@ -85,7 +85,7 @@ testRun(void)
 
         // Insert an int at the beginning
         int insertIdx = 0;
-        TEST_RESULT_PTR(lstInsert(list, 0, &insertIdx), list, "insert item %d", insertIdx);
+        TEST_RESULT_INT(*((int *)lstInsert(list, 0, &insertIdx)), 0, "insert item %d", insertIdx);
 
         // Check the size
         TEST_RESULT_INT(lstSize(list), 9, "list size");
