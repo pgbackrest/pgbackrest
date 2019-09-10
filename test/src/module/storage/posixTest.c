@@ -300,6 +300,8 @@ testRun(void)
             storageInfoListNP(storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent()),
             "directory with one dot file");
         TEST_RESULT_UINT(testStorageInfoListSize, 2, "    two paths returned");
+
+        // Since there is no sorting the paths could be in either order
         TEST_RESULT_STR(
             strPtr(testStorageInfoList[0].name), strEqZ(testStorageInfoList[1].name, ".") ? ".include" : ".", "    check name");
         TEST_RESULT_STR(
@@ -314,10 +316,10 @@ testRun(void)
                 storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent(), .sortOrder = sortOrderAsc),
             "directory with one dot file sorted");
         TEST_RESULT_UINT(testStorageInfoListSize, 2, "    two paths returned");
-        TEST_RESULT_STR(
-            strPtr(testStorageInfoList[0].name), strEqZ(testStorageInfoList[1].name, ".") ? ".include" : ".", "    check name");
-        TEST_RESULT_STR(
-            strPtr(testStorageInfoList[1].name), strEqZ(testStorageInfoList[0].name, ".") ? ".include" : ".", "    check name");
+
+        // Sorting means the paths can only be in one order (unless we are having collation problems)
+        TEST_RESULT_STR(strPtr(testStorageInfoList[0].name), ".", "    check name");
+        TEST_RESULT_STR(strPtr(testStorageInfoList[1].name), ".include", "    check name");
     }
 
     // *****************************************************************************************************************************

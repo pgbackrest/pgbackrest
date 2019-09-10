@@ -9,24 +9,16 @@ StringList object
 ***********************************************************************************************************************************/
 typedef struct StringList StringList;
 
-/***********************************************************************************************************************************
-Sort orders
-***********************************************************************************************************************************/
-typedef enum
-{
-    sortOrderNone,
-    sortOrderAsc,
-    sortOrderDesc,
-} SortOrder;
-
 #include "common/memContext.h"
+#include "common/type/list.h"
 #include "common/type/string.h"
 #include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
-Functions
+Constructors
 ***********************************************************************************************************************************/
 StringList *strLstNew(void);
+StringList *strLstNewParam(ListComparator *comparator);
 StringList *strLstNewSplit(const String *string, const String *delimiter);
 StringList *strLstNewSplitZ(const String *string, const char *delimiter);
 StringList *strLstNewSplitSize(const String *string, const String *delimiter, size_t size);
@@ -34,6 +26,9 @@ StringList *strLstNewSplitSizeZ(const String *string, const char *delimiter, siz
 StringList *strLstNewVarLst(const VariantList *sourceList);
 StringList *strLstDup(const StringList *sourceList);
 
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
 StringList *strLstAdd(StringList *this, const String *string);
 StringList *strLstAddZ(StringList *this, const char *string);
 StringList *strLstAddIfMissing(StringList *this, const String *string);
@@ -50,6 +45,14 @@ const char **strLstPtr(const StringList *this);
 unsigned int strLstSize(const StringList *this);
 StringList *strLstSort(StringList *this, SortOrder sortOrder);
 
+/***********************************************************************************************************************************
+Setters
+***********************************************************************************************************************************/
+StringList *strLstComparatorSet(StringList *this, ListComparator *comparator);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
 void strLstFree(StringList *this);
 
 /***********************************************************************************************************************************

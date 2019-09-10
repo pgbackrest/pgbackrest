@@ -50,7 +50,7 @@ testRun(void)
         TEST_RESULT_VOID(lstFree(lstNew(1)), "free empty list");
         TEST_RESULT_VOID(lstFree(NULL), "free null list");
 
-        TEST_ASSIGN(list, lstNewParam(sizeof(String *), lstComparatorStr), "new list with params");
+        TEST_ASSIGN(list, lstNewP(sizeof(String *), .comparator = lstComparatorStr), "new list with params");
 
         String *string1 = strNew("string1");
         TEST_RESULT_VOID(lstAdd(list, &string1), "    add string1");
@@ -125,6 +125,7 @@ testRun(void)
     if (testBegin("lstSort"))
     {
         List *list = lstNew(sizeof(int));
+        lstComparatorSet(list, testComparator);
         int value;
 
         value = 3; lstAdd(list, &value);
@@ -132,12 +133,26 @@ testRun(void)
         value = 3; lstAdd(list, &value);
         value = 2; lstAdd(list, &value);
 
-        TEST_RESULT_PTR(lstSort(list, testComparator), list, "list sort");
+        TEST_RESULT_PTR(lstSort(list, sortOrderNone), list, "list sort none");
+
+        TEST_RESULT_INT(*((int *)lstGet(list, 0)), 3, "sort value 0");
+        TEST_RESULT_INT(*((int *)lstGet(list, 1)), 5, "sort value 1");
+        TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
+        TEST_RESULT_INT(*((int *)lstGet(list, 3)), 2, "sort value 3");
+
+        TEST_RESULT_PTR(lstSort(list, sortOrderAsc), list, "list sort asc");
 
         TEST_RESULT_INT(*((int *)lstGet(list, 0)), 2, "sort value 0");
         TEST_RESULT_INT(*((int *)lstGet(list, 1)), 3, "sort value 1");
         TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
         TEST_RESULT_INT(*((int *)lstGet(list, 3)), 5, "sort value 3");
+
+        TEST_RESULT_PTR(lstSort(list, sortOrderDesc), list, "list sort desc");
+
+        TEST_RESULT_INT(*((int *)lstGet(list, 0)), 5, "sort value 0");
+        TEST_RESULT_INT(*((int *)lstGet(list, 1)), 3, "sort value 1");
+        TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
+        TEST_RESULT_INT(*((int *)lstGet(list, 3)), 2, "sort value 3");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

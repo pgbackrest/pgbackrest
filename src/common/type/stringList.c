@@ -10,17 +10,26 @@ String List Handler
 
 #include "common/debug.h"
 #include "common/memContext.h"
-#include "common/type/list.h"
 #include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
-Wrapper for lstNew()
+Wrapper for lstNew*()
 ***********************************************************************************************************************************/
 StringList *
 strLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN((StringList *)lstNew(sizeof(String *)));
+    FUNCTION_TEST_RETURN(strLstNewParam(lstComparatorStr));
+}
+
+StringList *
+strLstNewParam(ListComparator *comparator)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(FUNCTIONP, comparator);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN((StringList *)lstNewP(sizeof(String *), .comparator = comparator));
 }
 
 /***********************************************************************************************************************************
@@ -618,34 +627,6 @@ strLstSize(const StringList *this)
 /***********************************************************************************************************************************
 Sort strings in alphabetical order
 ***********************************************************************************************************************************/
-static int
-sortAscComparator(const void *item1, const void *item2)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, item1);
-        FUNCTION_TEST_PARAM_P(VOID, item2);
-    FUNCTION_TEST_END();
-
-    ASSERT(item1 != NULL);
-    ASSERT(item2 != NULL);
-
-    FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
-}
-
-static int
-sortDescComparator(const void *item1, const void *item2)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, item1);
-        FUNCTION_TEST_PARAM_P(VOID, item2);
-    FUNCTION_TEST_END();
-
-    ASSERT(item1 != NULL);
-    ASSERT(item2 != NULL);
-
-    FUNCTION_TEST_RETURN(strCmp(*(String **)item2, *(String **)item1));
-}
-
 StringList *
 strLstSort(StringList *this, SortOrder sortOrder)
 {
@@ -656,23 +637,23 @@ strLstSort(StringList *this, SortOrder sortOrder)
 
     ASSERT(this != NULL);
 
-    switch (sortOrder)
-    {
-        case sortOrderAsc:
-        {
-            lstSort((List *)this, sortAscComparator);
-            break;
-        }
+    lstSort((List *)this, sortOrder);
 
-        case sortOrderDesc:
-        {
-            lstSort((List *)this, sortDescComparator);
-            break;
-        }
+    FUNCTION_TEST_RETURN(this);
+}
 
-        case sortOrderNone:
-            break;
-    }
+/***********************************************************************************************************************************
+Set a new comparator
+***********************************************************************************************************************************/
+StringList *
+strLstComparatorSet(StringList *this, ListComparator *comparator)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(FUNCTIONP, comparator);
+    FUNCTION_TEST_END();
+
+    lstComparatorSet((List *)this, comparator);
 
     FUNCTION_TEST_RETURN(this);
 }

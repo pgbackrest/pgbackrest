@@ -38,29 +38,15 @@ lstNew(size_t itemSize)
         FUNCTION_TEST_PARAM(SIZE, itemSize);
     FUNCTION_TEST_END();
 
-    List *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("List")
-    {
-        // Create object
-        this = memNew(sizeof(List));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->itemSize = itemSize;
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(lstNewP(itemSize, .comparator = lstComparatorStr));
 }
 
-/***********************************************************************************************************************************
-Create a new list with parameters
-***********************************************************************************************************************************/
 List *
-lstNewParam(size_t itemSize, ListComparator *comparator)
+lstNewParam(size_t itemSize, ListParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, itemSize);
-        FUNCTION_TEST_PARAM(FUNCTIONP, comparator);
+        FUNCTION_TEST_PARAM(FUNCTIONP, param.comparator);
     FUNCTION_TEST_END();
 
     List *this = NULL;
@@ -71,7 +57,7 @@ lstNewParam(size_t itemSize, ListComparator *comparator)
         this = memNew(sizeof(List));
         this->memContext = MEM_CONTEXT_NEW();
         this->itemSize = itemSize;
-        this->comparator = comparator;
+        this->comparator = param.comparator;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -352,8 +338,53 @@ lstSize(const List *this)
 /***********************************************************************************************************************************
 List sort
 ***********************************************************************************************************************************/
+static List *lstSortList = NULL;
+
+static int
+lstSortDescComparator(const void *item1, const void *item2)
+{
+    return lstSortList->comparator(item2, item1);
+}
+
 List *
-lstSort(List *this, int (*comparator)(const void *, const void*))
+lstSort(List *this, SortOrder sortOrder)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+        FUNCTION_TEST_PARAM(ENUM, sortOrder);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    switch (sortOrder)
+    {
+        case sortOrderAsc:
+        {
+            qsort(this->list, this->listSize, this->itemSize, this->comparator);
+            break;
+        }
+
+        case sortOrderDesc:
+        {
+            // Assign the list that will be sorted for the comparator function to use
+            lstSortList = this;
+
+            qsort(this->list, this->listSize, this->itemSize, lstSortDescComparator);
+            break;
+        }
+
+        case sortOrderNone:
+            break;
+    }
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Set a new comparator
+***********************************************************************************************************************************/
+List *
+lstComparatorSet(List *this, ListComparator *comparator)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, this);
@@ -361,9 +392,8 @@ lstSort(List *this, int (*comparator)(const void *, const void*))
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(comparator != NULL);
 
-    qsort(this->list, this->listSize, this->itemSize, comparator);
+    this->comparator = comparator;
 
     FUNCTION_TEST_RETURN(this);
 }

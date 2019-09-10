@@ -362,13 +362,13 @@ manifestNewInternal(void)
     this->memContext = memContextCurrent();
 
     // Create lists
-    this->dbList = lstNewParam(sizeof(ManifestDb), lstComparatorStr);
-    this->fileList = lstNewParam(sizeof(ManifestFile), lstComparatorStr);
-    this->linkList = lstNewParam(sizeof(ManifestLink), lstComparatorStr);
-    this->pathList = lstNewParam(sizeof(ManifestPath), lstComparatorStr);
+    this->dbList = lstNewP(sizeof(ManifestDb), .comparator = lstComparatorStr);
+    this->fileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr);
+    this->linkList = lstNewP(sizeof(ManifestLink), .comparator =  lstComparatorStr);
+    this->pathList = lstNewP(sizeof(ManifestPath), .comparator =  lstComparatorStr);
     this->ownerList = strLstNew();
     this->referenceList = strLstNew();
-    this->targetList = lstNewParam(sizeof(ManifestTarget), lstComparatorStr);
+    this->targetList = lstNewP(sizeof(ManifestTarget), .comparator =  lstComparatorStr);
 
     FUNCTION_TEST_RETURN(this);
 }

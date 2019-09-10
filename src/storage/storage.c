@@ -343,10 +343,11 @@ storageInfoList(
             {
                 .memContext = MEM_CONTEXT_TEMP(),
                 // .ownerList = strLstNew(),
-                .infoList = lstNewParam(sizeof(StorageInfo), lstComparatorStr),
+                .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
             };
 
             result = this->interface.infoList(this->driver, path, storageInfoListCallback, &data);
+            lstSort(data.infoList, param.sortOrder);
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {

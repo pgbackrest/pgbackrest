@@ -18,6 +18,16 @@ typedef struct List List;
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
+Sort orders
+***********************************************************************************************************************************/
+typedef enum
+{
+    sortOrderNone,
+    sortOrderAsc,
+    sortOrderDesc,
+} SortOrder;
+
+/***********************************************************************************************************************************
 Define initial size of a list
 ***********************************************************************************************************************************/
 #define LIST_INITIAL_SIZE                                           8
@@ -41,7 +51,18 @@ int lstComparatorStr(const void *item1, const void *item2);
 Constructors
 ***********************************************************************************************************************************/
 List *lstNew(size_t itemSize);
-List *lstNewParam(size_t itemSize, ListComparator *comparator);
+
+typedef struct ListParam
+{
+    ListComparator *comparator;
+} ListParam;
+
+#define lstNewP(itemSize, ...)                                                                                                     \
+    lstNewParam(itemSize, (ListParam){__VA_ARGS__})
+/* #define storageExistsNP(this, pathExp)                                                                                          \
+     storageExists(this, pathExp, (StorageExistsParam){0})*/
+
+List *lstNewParam(size_t itemSize, ListParam param);
 
 /***********************************************************************************************************************************
 Functions
@@ -58,7 +79,12 @@ List *lstRemoveIdx(List *this, unsigned int listIdx);
 MemContext *lstMemContext(const List *this);
 List *lstMove(List *this, MemContext *parentNew);
 unsigned int lstSize(const List *this);
-List *lstSort(List *this, int (*comparator)(const void *, const void*));
+List *lstSort(List *this, SortOrder sortOrder);
+
+/***********************************************************************************************************************************
+Setters
+***********************************************************************************************************************************/
+List *lstComparatorSet(List *this, ListComparator *comparator);
 
 /***********************************************************************************************************************************
 Destructor
