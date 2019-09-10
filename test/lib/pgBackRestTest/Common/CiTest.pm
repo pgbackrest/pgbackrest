@@ -94,7 +94,7 @@ sub process
         $strConfig .= "  - PGB_CI=\"--vm=${strVm} test\"\n";
     }
 
-    $strConfig .= "  - PGB_CI=\"doc\"\n";
+    # $strConfig .= "  - PGB_CI=\"doc\"\n";
 
     # Configure install and script
     $strConfig .=
