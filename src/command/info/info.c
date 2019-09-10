@@ -25,6 +25,36 @@ Info Command
 #include "postgres/interface.h"
 #include "storage/helper.h"
 
+/* CSHANG
+
+get all type:link from [backup:target] and have a separate section for links and for tablespaces. For files, include the path and file name,
+so from the examples below, name=../pg_config/pg_hba.conf (path "/" file) for a file, name=../pg_stat for a link and for tablespaces
+the name=ts1 (tablespace-name)
+
+pg_data/pg_hba.conf={"file":"pg_hba.conf","path":"../pg_config","type":"link"}
+pg_data/pg_stat={"path":"../pg_stat","type":"link"}
+
+pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
+
+Must specify option: maybe --type or I think better is --set since that is used to specify a backup set.
+If a backup set, then can we get all the info from the diff or incr manifest? (I'm 99% sure we can)
+
+attempt to load set/backup.manifest - error if it doesn't exist
+
+FOREACH line in backup:target
+    IF type=link
+    THEN
+        IF tablespace-name is present
+        THEN
+            name = tablespace-name
+        ELSIF file is present
+        THEN
+            name = path "/" file
+        ELSE
+            name = path
+
+*/
+
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
@@ -404,6 +434,7 @@ Format the text output for each database of the stanza.
 static void
 formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
 {
+// CSHANG probably need to pass the backup label if we're dealing with getting more info for a single backup
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, stanzaInfo);
         FUNCTION_TEST_PARAM(STRING, resultStr);
@@ -457,6 +488,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
 
         for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
         {
+// CSHANG Id a backupLabel has been passed, then
             KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
             KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
             unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
@@ -545,6 +577,28 @@ infoRender(void)
     {
         // Get stanza if specified
         const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
+/* CSHANG
+    const String backupLabel = cfgOptionTest(cfgOptSet) ? cfgOptionStr(cfgOptSet) : NULL;
+    if backupLabel != NULL && stanza == NULL
+        WARN and ignore by resetting backupLabel = NULL and HINT that we've done so?  (or should we just error?)
+        OR maybe in the config can specify --set for INFO depends on --stanza being set? then would not have to check here
+I Data.pm for CFGOPT_SET I thought I could add the following but it errors with unable to find option 'set' for command 'info'
+at /backrest/doc/lib/BackRestDoc/Common/DocConfig.pm line 295
+,
+&CFGCMD_INFO =>
+{
+    &CFGDEF_REQUIRED => false,
+    &CFGDEF_DEPEND =>
+    {
+        &CFGDEF_DEPEND_OPTION => CFGOPT_STANZA,
+    },
+},
+
+    if backupLabel != NULL
+        just see if manifest file exists for the label and if not throw and error and HINT to check the backup label
+            if get here, then
+
+*/
 
         // Get a list of stanzas in the backup directory.
         StringList *stanzaList = storageListNP(storageRepo(), STORAGE_PATH_BACKUP_STR);
