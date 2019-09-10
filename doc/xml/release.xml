@@ -30,6 +30,14 @@
 
                         <p>Add helper function for adding <code>CipherBlock</code> filters to groups.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Update <code>HINT</code> messages to conform to new standard detailed in <file>CODING.md</file></p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>
