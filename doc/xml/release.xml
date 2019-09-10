@@ -33,7 +33,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Rename parameter <code>processId</code> to <code>processIdx</code> in <file>harnessFork.h</file> for clarity.</p>
