@@ -651,6 +651,183 @@ testRun(void)
             "        wal archive min/max (9.4-1): none present\n"
             , "text - multiple stanzas, one with valid backups, archives in latest DB");
 
+        // Backup set requested
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList2 = strLstDup(argListText);
+        strLstAddZ(argList2, "--stanza=stanza1");
+        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
+        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+
+        // CSHANG Will need to be changed to write a valid manifest
+        storagePutNP(
+            storageNewWriteNP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152152I/" MANIFEST_FILE)), BUFSTRDEF(BOGUS_STR));
+
+        // CSHANG Will need to be changed to display from a valid manifest
+        TEST_RESULT_STR(strPtr(infoRender()),
+            "stanza: stanza1\n"
+            "    status: ok\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+            "\n"
+            "        incr backup: 20181119-152138F_20181119-152152I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "            wal start/stop: n/a\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repository size: 2.3MB, repository backup size: 346B\n"
+            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+            "            link list: path/file, ../path\n"
+            "            tablespace list: ts1\n"
+            , "text - backup set requested");
+
+        // CSHANG Will need to be changed to display from a valid manifest
+        strLstAddZ(argList2, "--output=json");
+        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+
+        TEST_RESULT_STR(strPtr(infoRender()),
+            "[\n"
+            "    {\n"
+            "        \"archive\" : [\n"
+            "            {\n"
+            "                \"database\" : {\n"
+            "                    \"id\" : 1\n"
+            "                },\n"
+            "                \"id\" : \"9.4-1\",\n"
+            "                \"max\" : \"000000020000000000000003\",\n"
+            "                \"min\" : \"000000010000000000000002\"\n"
+            "            },\n"
+            "            {\n"
+            "                \"database\" : {\n"
+            "                    \"id\" : 2\n"
+            "                },\n"
+            "                \"id\" : \"9.5-2\",\n"
+            "                \"max\" : null,\n"
+            "                \"min\" : null\n"
+            "            }\n"
+            "        ],\n"
+            "        \"backup\" : [\n"
+            "            {\n"
+            "                \"archive\" : {\n"
+            "                    \"start\" : \"000000010000000000000002\",\n"
+            "                    \"stop\" : \"000000010000000000000002\"\n"
+            "                },\n"
+            "                \"backrest\" : {\n"
+            "                    \"format\" : 5,\n"
+            "                    \"version\" : \"2.08dev\"\n"
+            "                },\n"
+            "                \"database\" : {\n"
+            "                    \"id\" : 1\n"
+            "                },\n"
+            "                \"info\" : {\n"
+            "                    \"delta\" : 20162900,\n"
+            "                    \"repository\" : {\n"
+            "                        \"delta\" : 2369186,\n"
+            "                        \"size\" : 2369186\n"
+            "                    },\n"
+            "                    \"size\" : 20162900\n"
+            "                },\n"
+            "                \"label\" : \"20181119-152138F\",\n"
+            "                \"prior\" : null,\n"
+            "                \"reference\" : null,\n"
+            "                \"timestamp\" : {\n"
+            "                    \"start\" : 1542640898,\n"
+            "                    \"stop\" : 1542640911\n"
+            "                },\n"
+            "                \"type\" : \"full\"\n"
+            "            },\n"
+            "            {\n"
+            "                \"archive\" : {\n"
+            "                    \"start\" : \"000000010000000000000003\",\n"
+            "                    \"stop\" : \"000000010000000000000003\"\n"
+            "                },\n"
+            "                \"backrest\" : {\n"
+            "                    \"format\" : 5,\n"
+            "                    \"version\" : \"2.08dev\"\n"
+            "                },\n"
+            "                \"database\" : {\n"
+            "                    \"id\" : 1\n"
+            "                },\n"
+            "                \"info\" : {\n"
+            "                    \"delta\" : 8428,\n"
+            "                    \"repository\" : {\n"
+            "                        \"delta\" : 346,\n"
+            "                        \"size\" : 2369186\n"
+            "                    },\n"
+            "                    \"size\" : 20162900\n"
+            "                },\n"
+            "                \"label\" : \"20181119-152138F_20181119-152152D\",\n"
+            "                \"prior\" : \"20181119-152138F\",\n"
+            "                \"reference\" : [\n"
+            "                    \"20181119-152138F\"\n"
+            "                ],\n"
+            "                \"timestamp\" : {\n"
+            "                    \"start\" : 1542640912,\n"
+            "                    \"stop\" : 1542640915\n"
+            "                },\n"
+            "                \"type\" : \"diff\"\n"
+            "            },\n"
+            "            {\n"
+            "                \"archive\" : {\n"
+            "                    \"start\" : \"000000010000000000000003\",\n"
+            "                    \"stop\" : null\n"
+            "                },\n"
+            "                \"backrest\" : {\n"
+            "                    \"format\" : 5,\n"
+            "                    \"version\" : \"2.08dev\"\n"
+            "                },\n"
+            "                \"database\" : {\n"
+            "                    \"id\" : 1\n"
+            "                },\n"
+            "                \"info\" : {\n"
+            "                    \"delta\" : 8428,\n"
+            "                    \"repository\" : {\n"
+            "                        \"delta\" : 346,\n"
+            "                        \"size\" : 2369186\n"
+            "                    },\n"
+            "                    \"size\" : 20162900\n"
+            "                },\n"
+            "                \"label\" : \"20181119-152138F_20181119-152152I\",\n"
+            "                \"link\" : [\n"
+            "                    \"path/file\",\n"
+            "                    \"../path\"\n"
+            "                ],\n"
+            "                \"prior\" : \"20181119-152138F_20181119-152152D\",\n"
+            "                \"reference\" : [\n"
+            "                    \"20181119-152138F\",\n"
+            "                    \"20181119-152138F_20181119-152152D\"\n"
+            "                ],\n"
+            "                \"tablespace\" : [\n"
+            "                    \"ts1\"\n"
+            "                ],\n"
+            "                \"timestamp\" : {\n"
+            "                    \"start\" : 1542640912,\n"
+            "                    \"stop\" : 1542640915\n"
+            "                },\n"
+            "                \"type\" : \"incr\"\n"
+            "            }\n"
+            "        ],\n"
+            "        \"cipher\" : \"none\",\n"
+            "        \"db\" : [\n"
+            "            {\n"
+            "                \"id\" : 1,\n"
+            "                \"system-id\" : 6625592122879095702,\n"
+            "                \"version\" : \"9.4\"\n"
+            "            },\n"
+            "            {\n"
+            "                \"id\" : 2,\n"
+            "                \"system-id\" : 6626363367545678089,\n"
+            "                \"version\" : \"9.5\"\n"
+            "            }\n"
+            "        ],\n"
+            "        \"name\" : \"stanza1\",\n"
+            "        \"status\" : {\n"
+            "            \"code\" : 0,\n"
+            "            \"message\" : \"ok\"\n"
+            "        }\n"
+            "    }\n"
+            "]\n", "json - backup set requested");
+
         // Stanza not found
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argList);
@@ -790,7 +967,7 @@ testRun(void)
         kvPut(stanzaInfo, KEY_ARCHIVE_VAR, varNewVarLst(varLstNew()));
 
         String *result = strNew("");
-        formatTextDb(stanzaInfo, result);
+        formatTextDb(stanzaInfo, result, NULL);
 
         TEST_RESULT_STR(strPtr(result),
             "\n"
@@ -832,6 +1009,21 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), "No stanzas exist in the repository.\n",
             "    check text");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        strLstAddZ(argList, "--set=bogus");
+
+        TEST_ERROR_FMT(
+            harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
+            "option 'set' not valid without option 'stanza'");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        strLstAddZ(argList, "--stanza=stanza1");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR_FMT(
+                cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
+                "HINT: is the backup listed when running the info command with --stanza option only?");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

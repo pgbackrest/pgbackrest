@@ -1134,6 +1134,13 @@
 
                         <example>json</example>
                     </option>
+
+                    <option id="set" name="Set">
+                        <summary>Backup set to detail.</summary>
+
+                        <text>The backup set for which to provide more detail.</text>
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
                 </option-list>
 
                 <command-example-list>

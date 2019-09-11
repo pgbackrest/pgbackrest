@@ -21,6 +21,7 @@ Info Command
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
+#include "info/manifest.h"
 #include "perl/exec.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
@@ -68,8 +69,10 @@ VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_INFO_VAR,                          "info");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LABEL_VAR,                         "label");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_LINK_VAR,                          "link");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_PRIOR_VAR,                         "prior");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_REFERENCE_VAR,                     "reference");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_TABLESPACE_VAR,                    "tablespace");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_TIMESTAMP_VAR,                     "timestamp");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_TYPE_VAR,                          "type");
 VARIANT_STRDEF_STATIC(DB_KEY_ID_VAR,                                "id");
@@ -218,11 +221,12 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
 For each current backup in the backup.info file of the stanza, set the data for the backup section.
 ***********************************************************************************************************************************/
 static void
-backupList(VariantList *backupSection, InfoBackup *info)
+backupList(VariantList *backupSection, InfoBackup *info, const String *backupLabel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, backupSection);
         FUNCTION_TEST_PARAM(INFO_BACKUP, info);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
 
     ASSERT(backupSection != NULL);
@@ -285,6 +289,23 @@ backupList(VariantList *backupSection, InfoBackup *info)
         kvAdd(timeInfo, KEY_START_VAR, VARUINT64(backupData.backupTimestampStart));
         kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64(backupData.backupTimestampStop));
 
+        // if a backup label was specified and this is that label, then get the manifest
+        if (backupLabel != NULL && strCmp(backupData.backupLabel, backupLabel) == 0)
+        {
+            VariantList *linkList = varLstNew();
+            VariantList *tablespaceList = varLstNew();
+
+            // CSHANG dummy code as placeholder for reading and parsing the manifest
+            varLstAdd(linkList, varNewStr(strNew("path/file")));
+            varLstAdd(linkList, varNewStr(strNew("../path")));
+            varLstAdd(tablespaceList, varNewStr(strNew("ts1")));
+
+            kvPut(varKv(backupInfo), BACKUP_KEY_LINK_VAR, (varLstSize(linkList) > 0 ? varNewVarLst(linkList) : NULL));
+            kvPut(
+                varKv(backupInfo), BACKUP_KEY_TABLESPACE_VAR, (varLstSize(tablespaceList) > 0 ? varNewVarLst(tablespaceList) :
+                NULL));
+        }
+
         varLstAdd(backupSection, backupInfo);
     }
 
@@ -296,11 +317,12 @@ backupList(VariantList *backupSection, InfoBackup *info)
 Set the stanza data for each stanza found in the repo.
 ***********************************************************************************************************************************/
 static VariantList *
-stanzaInfoList(const String *stanza, StringList *stanzaList)
+stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backupLabel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
         FUNCTION_TEST_PARAM(STRING_LIST, stanzaList);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
 
     ASSERT(stanzaList != NULL);
@@ -389,7 +411,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
             }
 
             // Get data for all existing backups for this stanza
-            backupList(backupSection, info);
+            backupList(backupSection, info, backupLabel);
         }
 
         // Add the database history, backup and archive sections to the stanza info
@@ -432,12 +454,12 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 Format the text output for each database of the stanza.
 ***********************************************************************************************************************************/
 static void
-formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
+formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backupLabel)
 {
-// CSHANG probably need to pass the backup label if we're dealing with getting more info for a single backup
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, stanzaInfo);
         FUNCTION_TEST_PARAM(STRING, resultStr);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
 
     ASSERT(stanzaInfo != NULL);
@@ -451,6 +473,29 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
     {
         KeyValue *pgInfo = varKv(varLstGet(dbSection, dbIdx));
         unsigned int dbId = varUInt(kvGet(pgInfo, DB_KEY_ID_VAR));
+        bool backupInDb = false;
+
+        // If a backup label was specified then see if it exists for this database
+        if (backupLabel != NULL)
+        {
+            for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
+            {
+                KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
+                KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
+                unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
+
+                // If the backup requested is in this database then break from the loop
+                if (backupDbId == dbId)
+                {
+                    backupInDb = true;
+                    break;
+                }
+            }
+        }
+
+        // If backup label was requested but was not found in this database then continue to next database
+        if (backupLabel != NULL && !backupInDb)
+            continue;
 
         // List is ordered so 0 is always the current DB index
         if (dbIdx == varLstSize(dbSection) - 1)
@@ -488,10 +533,13 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
 
         for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
         {
-// CSHANG Id a backupLabel has been passed, then
             KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
             KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
             unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
+
+            // If a backup label was specified but this is not it then continue
+            if (backupLabel != NULL && strCmp(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)), backupLabel) != 0)
+                continue;
 
             if (backupDbId == dbId)
             {
@@ -544,6 +592,18 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
                     StringList *referenceList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_REFERENCE_VAR)));
                     strCatFmt(backupResult, "            backup reference list: %s\n", strPtr(strLstJoin(referenceList, ", ")));
                 }
+
+                if (kvGet(backupInfo, BACKUP_KEY_LINK_VAR) != NULL)
+                {
+                    StringList *linkList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_LINK_VAR)));
+                    strCatFmt(backupResult, "            link list: %s\n", strPtr(strLstJoin(linkList, ", ")));
+                }
+
+                if (kvGet(backupInfo, BACKUP_KEY_TABLESPACE_VAR) != NULL)
+                {
+                    StringList *tablespaceList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_TABLESPACE_VAR)));
+                    strCatFmt(backupResult, "            tablespace list: %s\n", strPtr(strLstJoin(tablespaceList, ", ")));
+                }
             }
         }
 
@@ -577,28 +637,18 @@ infoRender(void)
     {
         // Get stanza if specified
         const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
-/* CSHANG
-    const String backupLabel = cfgOptionTest(cfgOptSet) ? cfgOptionStr(cfgOptSet) : NULL;
-    if backupLabel != NULL && stanza == NULL
-        WARN and ignore by resetting backupLabel = NULL and HINT that we've done so?  (or should we just error?)
-        OR maybe in the config can specify --set for INFO depends on --stanza being set? then would not have to check here
-I Data.pm for CFGOPT_SET I thought I could add the following but it errors with unable to find option 'set' for command 'info'
-at /backrest/doc/lib/BackRestDoc/Common/DocConfig.pm line 295
-,
-&CFGCMD_INFO =>
-{
-    &CFGDEF_REQUIRED => false,
-    &CFGDEF_DEPEND =>
-    {
-        &CFGDEF_DEPEND_OPTION => CFGOPT_STANZA,
-    },
-},
 
-    if backupLabel != NULL
-        just see if manifest file exists for the label and if not throw and error and HINT to check the backup label
-            if get here, then
+        // Ge the backup label if specified
+        const String *backupLabel = cfgOptionTest(cfgOptSet) ? cfgOptionStr(cfgOptSet) : NULL;
 
-*/
+        // If a backup set was specified, see if the manifest exists
+        if (backupLabel != NULL &&
+            !storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupLabel))))
+        {
+            THROW_FMT(
+                FileMissingError, "manifest does not exist for backup '%s'\n"
+                "HINT: is the backup listed when running the info command with --stanza option only?", strPtr(backupLabel));
+        }
 
         // Get a list of stanzas in the backup directory.
         StringList *stanzaList = storageListNP(storageRepo(), STORAGE_PATH_BACKUP_STR);
@@ -607,7 +657,7 @@ at /backrest/doc/lib/BackRestDoc/Common/DocConfig.pm line 295
 
         // If the backup storage exists, then search for and process any stanzas
         if (strLstSize(stanzaList) > 0)
-            infoList = stanzaInfoList(stanza, stanzaList);
+            infoList = stanzaInfoList(stanza, stanzaList, backupLabel);
 
         // Format text output
         if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
@@ -645,7 +695,7 @@ at /backrest/doc/lib/BackRestDoc/Common/DocConfig.pm line 295
 
                             // If there is a backup.info file but no backups, then process the archive info
                             if (statusCode == INFO_STANZA_STATUS_CODE_NO_BACKUP)
-                                formatTextDb(stanzaInfo, resultStr);
+                                formatTextDb(stanzaInfo, resultStr, NULL);
                         }
 
                         continue;
@@ -657,7 +707,7 @@ at /backrest/doc/lib/BackRestDoc/Common/DocConfig.pm line 295
                     strCatFmt(resultStr, "    cipher: %s\n",
                         strPtr(varStr(kvGet(stanzaInfo, STANZA_KEY_CIPHER_VAR))));
 
-                    formatTextDb(stanzaInfo, resultStr);
+                    formatTextDb(stanzaInfo, resultStr, backupLabel);
                 }
             }
             else
