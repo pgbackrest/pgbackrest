@@ -163,6 +163,8 @@ use constant CFGOPT_HOST_ID                                         => 'host-id'
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_FILTER                                          => 'filter';
     push @EXPORT, qw(CFGOPT_FILTER);
+use constant CFGOPT_RECURSE                                         => 'recurse';
+    push @EXPORT, qw(CFGOPT_RECURSE);
 use constant CFGOPT_SORT                                            => 'sort';
     push @EXPORT, qw(CFGOPT_SORT);
 
@@ -1084,12 +1086,23 @@ my %hConfigDefine =
         }
     },
 
+    &CFGOPT_RECURSE =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_STORAGE_LIST => {},
+        }
+    },
+
     &CFGOPT_SORT =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => 'asc',
         &CFGDEF_ALLOW_LIST =>
         [
+            'none',
             'asc',
             'desc',
         ],

@@ -22,6 +22,7 @@ typedef struct StorageListRenderCallbackData
 {
     IoWrite *write;                                                 // Where to write output
     bool json;                                                      // Is this json output?
+    bool first;                                                     // Is this the first item?
 } StorageListRenderCallbackData;
 
 void
@@ -37,11 +38,29 @@ storageListRenderCallback(void *data, const StorageInfo *info)
 
     StorageListRenderCallbackData *listData = (StorageListRenderCallbackData *)data;
 
+    // Skip . path when output is text
+    if (info->type == storageTypePath && strEq(info->name, DOT_STR) && !listData->json)
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    // Add seperator character
+    if (!listData->first)
+    {
+        if (listData->json)
+            ioWrite(listData->write, COMMA_BUF);
+        else
+            ioWrite(listData->write, LF_BUF);
+    }
+    else
+        listData->first = false;
+
+    // Render in json
     if (listData->json)
     {
-        ioWrite(listData->write, BUFSTRDEF("{\"name\":"));
         ioWriteStr(listData->write, jsonFromStr(info->name));
-        ioWrite(listData->write, BUFSTRDEF(",\"type\":\""));
+        ioWrite(listData->write, BUFSTRDEF(":{\"type\":\""));
 
         switch (info->type)
         {
@@ -73,80 +92,66 @@ storageListRenderCallback(void *data, const StorageInfo *info)
         if (info->type == storageTypeFile)
             ioWriteStr(listData->write, strNewFmt(",\"size\":%" PRIu64, info->size));
 
-        if (info->mode != 0)
-            ioWriteStr(listData->write, strNewFmt(",\"mode\":%04o", info->mode));
-
-        if (info->user != NULL)
-        {
-            ioWrite(listData->write, BUFSTRDEF(",\"user\":"));
-            ioWriteStr(listData->write, jsonFromStr(info->user));
-        }
-
-        if (info->group != NULL)
-        {
-            ioWrite(listData->write, BUFSTRDEF(",\"group\":"));
-            ioWriteStr(listData->write, jsonFromStr(info->group));
-        }
+        if (info->type == storageTypeLink)
+            ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strPtr(jsonFromStr(info->linkDestination))));
 
         ioWrite(listData->write, BRACER_BUF);
     }
+    // Render in text
     else
     {
-        ioWriteLine(listData->write, BUFSTR(info->name));
+        ioWrite(listData->write, BUFSTR(info->name));
     }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 static void
-storageListRenderParam(IoWrite *write, const String *path, bool json, SortOrder sortOrder, const String *filter)
+storageListRender(IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(IO_WRITE, write);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, json);
-        FUNCTION_LOG_PARAM(ENUM, sortOrder);
-        FUNCTION_LOG_PARAM(STRING, filter);
+
     FUNCTION_LOG_END();
 
-    (void)filter;
+    // Get sort order
+    SortOrder sortOrder = sortOrderAsc;
 
-    // Get the list
+    if (strEqZ(cfgOptionStr(cfgOptSort), "desc"))
+        sortOrder = sortOrderDesc;
+    else if (!strEqZ(cfgOptionStr(cfgOptSort), "asc"))
+    {
+        ASSERT(strEqZ(cfgOptionStr(cfgOptSort), "none"));
+        sortOrder = sortOrderNone;
+    }
+
+    // Get path
+    const String *path = strLstSize(cfgCommandParam()) == 1 ? strLstGet(cfgCommandParam(), 0) : NULL;
+
+    // Get output
+    bool json = strEqZ(cfgOptionStr(cfgOptOutput), "json") ? true : false;
+
+    // Render the info list
     StorageListRenderCallbackData data =
     {
         .write = write,
         .json = json,
+        .first = true,
     };
 
     ioWriteOpen(data.write);
 
     if (data.json)
-        ioWrite(data.write, BRACKETL_BUF);
+        ioWrite(data.write, BRACEL_BUF);
 
-    storageInfoListP(storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder, .expression = filter);
+    storageInfoListP(
+        storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder, .expression = cfgOptionStr(cfgOptFilter),
+        .recurse = cfgOptionBool(cfgOptRecurse));
 
     if (data.json)
-        ioWrite(data.write, BRACKETR_BUF);
+        ioWrite(data.write, BRACER_BUF);
 
     ioWriteClose(data.write);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Call render with parameters passed by the user
-***********************************************************************************************************************************/
-static void
-storageListRender(IoWrite *write)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(IO_WRITE, write);
-    FUNCTION_LOG_END();
-
-    storageListRenderParam(
-        write, strLstSize(cfgCommandParam()) == 1 ? strLstGet(cfgCommandParam(), 0) : NULL,
-        strEqZ(cfgOptionStr(cfgOptOutput), "json") ? true : false,
-        strEqZ(cfgOptionStr(cfgOptSort), "asc") ? sortOrderAsc : sortOrderDesc, cfgOptionStr(cfgOptFilter));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -162,6 +167,7 @@ cmdStorageList(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         storageListRender(ioHandleWriteNew(STRDEF("stdout"), STDOUT_FILENO));
+        ioHandleWriteOneStr(STDOUT_FILENO, LF_STR);
     }
     MEM_CONTEXT_TEMP_END();
 

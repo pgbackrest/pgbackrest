@@ -25,6 +25,7 @@ sub libcAutoConstant
         CFGOPTVAL_REPO_TYPE_POSIX                                        => 'posix',
         CFGOPTVAL_REPO_TYPE_S3                                           => 's3',
 
+        CFGOPTVAL_SORT_NONE                                              => 'none',
         CFGOPTVAL_SORT_ASC                                               => 'asc',
         CFGOPTVAL_SORT_DESC                                              => 'desc',
 
@@ -88,6 +89,7 @@ sub libcAutoExportTag
             'CFGOPTVAL_REPO_TYPE_CIFS',
             'CFGOPTVAL_REPO_TYPE_POSIX',
             'CFGOPTVAL_REPO_TYPE_S3',
+            'CFGOPTVAL_SORT_NONE',
             'CFGOPTVAL_SORT_ASC',
             'CFGOPTVAL_SORT_DESC',
             'CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE',
@@ -249,6 +251,7 @@ sub libcAutoExportTag
             'CFGOPT_PROCESS_MAX',
             'CFGOPT_PROTOCOL_TIMEOUT',
             'CFGOPT_RECOVERY_OPTION',
+            'CFGOPT_RECURSE',
             'CFGOPT_REPO_CIPHER_PASS',
             'CFGOPT_REPO_CIPHER_TYPE',
             'CFGOPT_REPO_HARDLINK',

@@ -365,12 +365,14 @@ storageInfoListSort(
 
 typedef struct StorageInfoListData
 {
+    const Storage *storage;                                         // Storage object;
     StorageInfoListCallback callbackFunction;                       // Original callback function
     void *callbackData;                                             // Original callback data
     RegExp *expression;                                             // Filter for names
     bool recurse;                                                   // Should we recurse?
+    SortOrder sortOrder;                                            // Sort order
     const String *path;                                             // Top-level path for info
-    String *subPath;                                                // Path below the top-level path
+    const String *subPath;                                          // Path below the top-level path (starts as NULL)
 } StorageInfoListData;
 
 static void
@@ -383,6 +385,16 @@ storageInfoListCallback(void *data, const StorageInfo *info)
 
     StorageInfoListData *listData = data;
 
+    // Is this the . path?
+    bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
+
+    // Skip . paths when getting info for subpaths (since info was already reported in the parent path)
+    if (dotPath && listData->subPath != NULL)
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
     // Update the name in info with the subpath
     StorageInfo infoUpdate = *info;
 
@@ -392,7 +404,22 @@ storageInfoListCallback(void *data, const StorageInfo *info)
     // Only continue if there is no expression or the expression matches
     if (listData->expression == NULL || regExpMatch(listData->expression, infoUpdate.name))
     {
-        listData->callbackFunction(listData->callbackData, &infoUpdate);
+        if (listData->sortOrder != sortOrderDesc)
+            listData->callbackFunction(listData->callbackData, &infoUpdate);
+
+        // Recurse into paths
+        if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
+        {
+            StorageInfoListData data = *listData;
+            data.subPath = infoUpdate.name;
+
+            storageInfoListSort(
+                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), data.sortOrder, storageInfoListCallback,
+                &data);
+        }
+
+        if (listData->sortOrder == sortOrderDesc)
+            listData->callbackFunction(listData->callbackData, &infoUpdate);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -410,6 +437,7 @@ storageInfoList(
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
         FUNCTION_LOG_PARAM(STRING, param.expression);
+        FUNCTION_LOG_PARAM(BOOL, param.recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -425,23 +453,25 @@ storageInfoList(
         String *path = storagePathNP(this, pathExp);
 
         // If there is an expression or recursion then the info will need to be filtered through a local callback
-        if (param.expression != NULL)
+        if (param.expression != NULL || param.recurse)
         {
             StorageInfoListData data =
             {
+                .storage = this,
                 .callbackFunction = callback,
                 .callbackData = callbackData,
-                // bool recurse;                                                   // Should we recurse?
+                .sortOrder = param.sortOrder,
+                .recurse = param.recurse,
                 .path = path,
             };
 
             if (param.expression != NULL)
                 data.expression = regExpNew(param.expression);
 
-            storageInfoListSort(this, path, param.sortOrder, storageInfoListCallback, &data);
+            result = storageInfoListSort(this, path, param.sortOrder, storageInfoListCallback, &data);
         }
         else
-            storageInfoListSort(this, path, param.sortOrder, callback, callbackData);
+            result = storageInfoListSort(this, path, param.sortOrder, callback, callbackData);
 
         if (!result && param.errorOnMissing)
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));

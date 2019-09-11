@@ -111,6 +111,7 @@ typedef struct StorageInfoListParam
     bool errorOnMissing;
     SortOrder sortOrder;
     const String *expression;
+    bool recurse;
 } StorageInfoListParam;
 
 #define storageInfoListP(this, fileExp, callback, callbackData, ...)                                                               \

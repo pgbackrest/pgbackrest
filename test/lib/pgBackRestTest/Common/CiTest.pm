@@ -88,13 +88,13 @@ sub process
         "\n" .
         "env:\n";
 
+    $strConfig .= "  - PGB_CI=\"doc\"\n";
+
     # Iterate each OS
     foreach my $strVm (VM_LIST)
     {
         $strConfig .= "  - PGB_CI=\"--vm=${strVm} test\"\n";
     }
-
-    # $strConfig .= "  - PGB_CI=\"doc\"\n";
 
     # Configure install and script
     $strConfig .=

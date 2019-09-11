@@ -1256,6 +1256,15 @@
                         <example>json</example>
                     </option>
 
+                    <!-- OPERATION - LS COMMAND - RECURSE OPTION -->
+                    <option id="recurse" name="Recurse Subpaths">
+                        <summary>Include all subpaths in output.</summary>
+
+                        <text>All subpaths and their files will be included in the output.</text>
+
+                        <example>y</example>
+                    </option>
+
                     <!-- OPERATION - LS COMMAND - SORT OPTION -->
                     <option id="sort" name="Sort Output">
                         <summary>Sort output ascending/descending.</summary>

@@ -12,6 +12,7 @@ services:
   - docker
 
 env:
+  - PGB_CI="doc"
   - PGB_CI="--vm=u18 test"
   - PGB_CI="--vm=co6 test"
   - PGB_CI="--vm=co7 test"
