@@ -123,7 +123,7 @@ storageListRenderParam(IoWrite *write, const String *path, bool json, SortOrder 
     if (data.json)
         ioWrite(data.write, BRACKETL_BUF);
 
-    storageInfoListP(storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder);
+    storageInfoListP(storageRepo(), path, storageListRenderCallback, &data, .sortOrder = sortOrder, .expression = filter);
 
     if (data.json)
         ioWrite(data.write, BRACKETR_BUF);

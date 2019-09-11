@@ -25,6 +25,7 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s/repo", testPath()));
         strLstAddZ(argList, "--output=text");
+        strLstAddZ(argList, "--sort=asc");
         strLstAddZ(argList, "ls");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -35,14 +36,14 @@ testRun(void)
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (text)");
         TEST_RESULT_STR(strNewBuf(output), "", "    check output");
 
-        output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
-        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (json)");
-        TEST_RESULT_STR(strNewBuf(output), "[]", "    check output");
+        // output = bufNew(0);
+        // cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
+        // TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (json)");
+        // TEST_RESULT_STR(strNewBuf(output), "[]", "    check output");
 
         // Empty directory
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateNP(storageTest, strNew("repo"));
+        storagePathCreateP(storageTest, strNew("repo"), .mode = 0700);
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
@@ -55,13 +56,73 @@ testRun(void)
         TEST_RESULT_STR_STR(
             strNewBuf(output),
             strNewFmt(
-                "[{\"name\":\".\",\"type\":\"path\",\"mode\":0750,\"user\":\"%s\",\"group\":\"%s\"}]", testUser(), testGroup()),
+                "["
+                    "{\"name\":\".\",\"type\":\"path\",\"mode\":0700,\"user\":\"%s\",\"group\":\"%s\"}"
+                "]",
+                testUser(), testGroup()),
             "    check output");
-        //
-        // storagePathCreateNP(storageTest, strNew("repo/bbb"));
-        // storagePutNP(storageNewWriteNP(storageTest, strNew("repo/aaa")), NULL);
-        // TEST_RESULT_STR(strPtr(storageListRender()), "aaa\nbbb\n", "list files");
-        //
+
+        // Add path and file
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePathCreateNP(storageTest, strNew("repo/bbb"));
+        ASSERT(system(strPtr(strNewFmt("sudo chown :77777 %s/repo/bbb", testPath()))) == 0);
+        storagePutNP(storageNewWriteNP(storageTest, strNew("repo/aaa")), BUFSTRDEF("TESTDATA"));
+        ASSERT(system(strPtr(strNewFmt("sudo chown 77777 %s/repo/aaa", testPath()))) == 0);
+        ASSERT(system(strPtr(strNewFmt("sudo chmod 000 %s/repo/aaa", testPath()))) == 0);
+        storagePutNP(storageNewWriteNP(storageTest, strNew("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
+        TEST_RESULT_STR(strPtr(strNewBuf(output)), ".\naaa\nbbb\n", "    check output");
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
+        TEST_RESULT_STR_STR(
+            strNewBuf(output),
+            strNewFmt(
+                "["
+                    "{\"name\":\".\",\"type\":\"path\",\"mode\":0700,\"user\":\"%s\",\"group\":\"%s\"}"
+                    "{\"name\":\"aaa\",\"type\":\"file\",\"size\":8,\"group\":\"%s\"}"
+                    "{\"name\":\"bbb\",\"type\":\"path\",\"mode\":0750,\"user\":\"%s\"}"
+                "]",
+                testUser(), testGroup(), testGroup(), testUser()),
+            "    check output");
+
+        // Reverse sort
+        // -------------------------------------------------------------------------------------------------------------------------
+        cfgOptionSet(cfgOptSort, cfgSourceParam, VARSTRDEF("desc"));
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
+        TEST_RESULT_STR(strPtr(strNewBuf(output)), "bbb\naaa\n.\n", "    check output");
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
+        TEST_RESULT_STR_STR(
+            strNewBuf(output),
+            strNewFmt(
+                "["
+                    "{\"name\":\"bbb\",\"type\":\"path\",\"mode\":0750,\"user\":\"%s\"}"
+                    "{\"name\":\"aaa\",\"type\":\"file\",\"size\":8,\"group\":\"%s\"}"
+                    "{\"name\":\".\",\"type\":\"path\",\"mode\":0700,\"user\":\"%s\",\"group\":\"%s\"}"
+                "]",
+                testUser(), testGroup(), testGroup(), testUser()),
+            "    check output");
+
+        // Filter
+        // -------------------------------------------------------------------------------------------------------------------------
+        cfgOptionValidSet(cfgOptFilter, true);
+        cfgOptionSet(cfgOptFilter, cfgSourceParam, VARSTRDEF("^aaa$"));
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
+        TEST_RESULT_STR(strPtr(strNewBuf(output)), "aaa\n", "    check output");
+
         // StringList *argListTmp = strLstDup(argList);
         // strLstAddZ(argListTmp, "--filter=^aaa$");
         // harnessCfgLoad(strLstSize(argListTmp), strLstPtr(argListTmp));

@@ -120,9 +120,7 @@ lstComparatorStr(const void *item1, const void *item2)
     FUNCTION_TEST_END();
 
     ASSERT(item1 != NULL);
-    ASSERT(*(String **)item1 != NULL);
     ASSERT(item2 != NULL);
-    ASSERT(*(String **)item2 != NULL);
 
     FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
 }

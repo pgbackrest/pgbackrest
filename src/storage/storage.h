@@ -110,6 +110,7 @@ typedef struct StorageInfoListParam
 {
     bool errorOnMissing;
     SortOrder sortOrder;
+    const String *expression;
 } StorageInfoListParam;
 
 #define storageInfoListP(this, fileExp, callback, callbackData, ...)                                                               \
