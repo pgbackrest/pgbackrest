@@ -1901,21 +1901,22 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
+            (
+                "text",
+                "json"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("text")
+
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
-
-                CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
-                (
-                    "text",
-                    "json"
-                )
-
-                CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("text")
 
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Output format.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
@@ -1924,6 +1925,20 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     "\n"
                     "* text - Human-readable summary of backup information.\n"
                     "* json - Exhaustive machine-readable backup information in JSON format."
+                )
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Output format.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
+                (
+                    "The following output types are supported:\n"
+                    "\n"
+                    "* text - Simple list with one file/link/path name on each line.\n"
+                    "* json - Detailed file/link/path information in JSON format."
                 )
             )
         )

@@ -1243,6 +1243,19 @@
                         <example>(F|D|I)$</example>
                     </option>
 
+                    <!-- OPERATION - LS COMMAND - OUTPUT OPTION -->
+                    <option id="output" name="Output">
+                        <summary>Output format.</summary>
+
+                        <text>The following output types are supported:
+                        <ul>
+                            <li><id>text</id> - Simple list with one file/link/path name on each line.</li>
+                            <li><id>json</id> - Detailed file/link/path information in JSON format.</li>
+                        </ul></text>
+
+                        <example>json</example>
+                    </option>
+
                     <!-- OPERATION - LS COMMAND - SORT OPTION -->
                     <option id="sort" name="Sort Output">
                         <summary>Sort output ascending/descending.</summary>

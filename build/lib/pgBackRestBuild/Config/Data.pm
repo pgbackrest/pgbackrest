@@ -1009,17 +1009,16 @@ my %hConfigDefine =
     &CFGOPT_OUTPUT =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => CFGOPTVAL_INFO_OUTPUT_TEXT,
+        &CFGDEF_ALLOW_LIST =>
+        [
+            &CFGOPTVAL_INFO_OUTPUT_TEXT,
+            &CFGOPTVAL_INFO_OUTPUT_JSON,
+        ],
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_INFO =>
-            {
-                &CFGDEF_DEFAULT => CFGOPTVAL_INFO_OUTPUT_TEXT,
-                &CFGDEF_ALLOW_LIST =>
-                [
-                    &CFGOPTVAL_INFO_OUTPUT_TEXT,
-                    &CFGOPTVAL_INFO_OUTPUT_JSON,
-                ]
-            }
+            &CFGCMD_INFO => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 

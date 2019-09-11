@@ -276,7 +276,7 @@ Info for all files/paths in a path
 typedef struct StorageInfoListData
 {
     MemContext *memContext;                                         // Mem context to use for allocating data in this struct
-    // StringList *ownerList;                                          // List of users and groups to reduce memory usage
+    StringList *ownerList;                                          // List of users and groups to reduce memory usage
     List *infoList;                                                 // List of info
 } StorageInfoListData;
 
@@ -296,8 +296,8 @@ storageInfoListCallback(void *data, const StorageInfo *info)
         StorageInfo infoCopy = *info;
         infoCopy.name = strDup(info->name);
         infoCopy.linkDestination = strDup(info->linkDestination);
-        infoCopy.user = strDup(info->user);
-        infoCopy.group = strDup(info->group);
+        infoCopy.user = strLstAddIfMissing(infoData->ownerList, info->user);
+        infoCopy.group = strLstAddIfMissing(infoData->ownerList, info->group);
 
         lstAdd(infoData->infoList, &infoCopy);
     }
@@ -342,7 +342,7 @@ storageInfoList(
             StorageInfoListData data =
             {
                 .memContext = MEM_CONTEXT_TEMP(),
-                // .ownerList = strLstNew(),
+                .ownerList = strLstNew(),
                 .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
             };
 
