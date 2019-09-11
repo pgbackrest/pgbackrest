@@ -11,8 +11,11 @@ sub libcAutoConstant
 {
     return
     {
-        CFGOPTVAL_OUTPUT_TEXT                                            => 'text',
-        CFGOPTVAL_OUTPUT_JSON                                            => 'json',
+        CFGOPTVAL_INFO_OUTPUT_TEXT                                       => 'text',
+        CFGOPTVAL_INFO_OUTPUT_JSON                                       => 'json',
+
+        CFGOPTVAL_LS_OUTPUT_TEXT                                         => 'text',
+        CFGOPTVAL_LS_OUTPUT_JSON                                         => 'json',
 
         CFGOPTVAL_REPO_CIPHER_TYPE_NONE                                  => 'none',
         CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                           => 'aes-256-cbc',
@@ -79,8 +82,10 @@ sub libcAutoExportTag
 
         config =>
         [
-            'CFGOPTVAL_OUTPUT_TEXT',
-            'CFGOPTVAL_OUTPUT_JSON',
+            'CFGOPTVAL_INFO_OUTPUT_TEXT',
+            'CFGOPTVAL_INFO_OUTPUT_JSON',
+            'CFGOPTVAL_LS_OUTPUT_TEXT',
+            'CFGOPTVAL_LS_OUTPUT_JSON',
             'CFGOPTVAL_REPO_CIPHER_TYPE_NONE',
             'CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC',
             'CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL',

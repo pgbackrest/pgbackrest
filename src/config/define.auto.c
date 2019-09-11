@@ -1906,17 +1906,17 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
-            (
-                "text",
-                "json"
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("text")
-
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
+
+                CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
+                (
+                    "text",
+                    "json"
+                )
+
+                CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("text")
 
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Output format.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
@@ -1931,6 +1931,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+
+                CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
+                (
+                    "text",
+                    "json"
+                )
+
+                CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("text")
 
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Output format.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION

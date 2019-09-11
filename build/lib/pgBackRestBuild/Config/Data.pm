@@ -417,10 +417,10 @@ use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-
 
 # Info output
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPTVAL_INFO_OUTPUT_TEXT                             => 'text';
-    push @EXPORT, qw(CFGOPTVAL_INFO_OUTPUT_TEXT);
-use constant CFGOPTVAL_INFO_OUTPUT_JSON                             => 'json';
-    push @EXPORT, qw(CFGOPTVAL_INFO_OUTPUT_JSON);
+use constant CFGOPTVAL_OUTPUT_TEXT                                  => 'text';
+    push @EXPORT, qw(CFGOPTVAL_OUTPUT_TEXT);
+use constant CFGOPTVAL_OUTPUT_JSON                                  => 'json';
+    push @EXPORT, qw(CFGOPTVAL_OUTPUT_JSON);
 
 # Restore type
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1011,16 +1011,27 @@ my %hConfigDefine =
     &CFGOPT_OUTPUT =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => CFGOPTVAL_INFO_OUTPUT_TEXT,
-        &CFGDEF_ALLOW_LIST =>
-        [
-            &CFGOPTVAL_INFO_OUTPUT_TEXT,
-            &CFGOPTVAL_INFO_OUTPUT_JSON,
-        ],
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_INFO => {},
-            &CFGCMD_STORAGE_LIST => {},
+            &CFGCMD_INFO =>
+            {
+                &CFGDEF_DEFAULT => CFGOPTVAL_OUTPUT_TEXT,
+                &CFGDEF_ALLOW_LIST =>
+                [
+                    &CFGOPTVAL_OUTPUT_TEXT,
+                    &CFGOPTVAL_OUTPUT_JSON,
+                ]
+            },
+
+            &CFGCMD_STORAGE_LIST =>
+            {
+                &CFGDEF_DEFAULT => CFGOPTVAL_OUTPUT_TEXT,
+                &CFGDEF_ALLOW_LIST =>
+                [
+                    &CFGOPTVAL_OUTPUT_TEXT,
+                    &CFGOPTVAL_OUTPUT_JSON,
+                ]
+            }
         }
     },
 
