@@ -103,8 +103,18 @@ storageWritePosixOpen(THIS_VOID)
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
+        uid_t updateUserId = userIdFromName(this->interface.user);
+
+        if (updateUserId == userId())
+            updateUserId = (uid_t)-1;
+
+        gid_t updateGroupId = groupIdFromName(this->interface.group);
+
+        if (updateGroupId == groupId())
+            updateGroupId = (gid_t)-1;
+
         THROW_ON_SYS_ERROR_FMT(
-            chown(strPtr(this->nameTmp), userIdFromName(this->interface.user), userIdFromName(this->interface.group)) == -1,
+            chown(strPtr(this->nameTmp), updateUserId, updateGroupId) == -1,
             FileOwnerError, "unable to set ownership for '%s'", strPtr(this->nameTmp));
     }
 

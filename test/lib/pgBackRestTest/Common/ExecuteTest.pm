@@ -107,7 +107,8 @@ sub begin
         new pgBackRest::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
 
     # Record start time and set process timeout
-    $self->{iProcessTimeout} = 540;
+    $self->{iProcessTimeout} = 300;
+    $self->{iProcessTimeoutTotal} = 4;
     $self->{lTimeLast} = time();
 
     if (!defined($self->{hError}))
@@ -147,8 +148,16 @@ sub endRetry
         # Error if process has been running longer than timeout
         if (time() - $self->{lTimeLast} > $self->{iProcessTimeout})
         {
-            confess &log(ASSERT,
-                "timeout after $self->{iProcessTimeout} seconds waiting for process to complete: $self->{strCommand}");
+            if ($self->{iProcessTimeoutTotal} > 0)
+            {
+                &log(WARN, "process has been running for $self->{iProcessTimeout} seconds with no output");
+                $self->{iProcessTimeoutTotal}--;
+                $self->{lTimeLast} = time();
+            }
+            else
+            {
+                confess &log(ASSERT, "timeout waiting for process to complete: $self->{strCommand}");
+            }
         }
 
         # Drain the stdout stream and look for test points
