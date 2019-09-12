@@ -4,6 +4,8 @@ System User/Group Management
 #ifndef COMMON_USER_H
 #define COMMON_USER_H
 
+#include <sys/types.h>
+
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
