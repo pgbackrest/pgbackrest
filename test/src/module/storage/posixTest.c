@@ -40,27 +40,6 @@ Macro to create a path and file that cannot be accessed
         0, "create no perm path/file");
 
 /***********************************************************************************************************************************
-Callback and data for storageInfoList() tests
-***********************************************************************************************************************************/
-unsigned int testStorageInfoListSize = 0;
-StorageInfo testStorageInfoList[256];
-
-void
-testStorageInfoListCallback(void *callbackData, const StorageInfo *info)
-{
-    MEM_CONTEXT_BEGIN((MemContext *)callbackData)
-    {
-        testStorageInfoList[testStorageInfoListSize] = *info;
-        testStorageInfoList[testStorageInfoListSize].name = strDup(info->name);
-        testStorageInfoList[testStorageInfoListSize].linkDestination = strDup(info->linkDestination);
-        testStorageInfoList[testStorageInfoListSize].user = strDup(info->user);
-        testStorageInfoList[testStorageInfoListSize].group = strDup(info->group);
-        testStorageInfoListSize++;
-    }
-    MEM_CONTEXT_END();
-}
-
-/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -287,44 +266,99 @@ testRun(void)
             STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        testStorageInfoListSize = 0;
-        TEST_RESULT_VOID(
-            storagePosixInfoListEntry((StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"),
-                testStorageInfoListCallback, (void *)memContextCurrent()),
-            "missing file");
-        TEST_RESULT_UINT(testStorageInfoListSize, 0, "    no file found");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0766);
-
-        TEST_RESULT_VOID(
-            storageInfoListNP(storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent()),
-            "directory with one dot file");
-        TEST_RESULT_UINT(testStorageInfoListSize, 2, "    two paths returned");
-
-        // Since there is no sorting the paths could be in either order
-        TEST_RESULT_STR(
-            strPtr(testStorageInfoList[0].name), strEqZ(testStorageInfoList[1].name, ".") ? ".include" : ".", "    check name");
-        TEST_RESULT_STR(
-            strPtr(testStorageInfoList[1].name), strEqZ(testStorageInfoList[0].name, ".") ? ".include" : ".", "    check name");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0766);
-
-        String *content = strNew("");
-
         HarnessStorageInfoListCallbackData callbackData =
         {
-            .content = content,
+            .content = strNew(""),
+        };
+
+        TEST_RESULT_VOID(
+            storagePosixInfoListEntry(
+                (StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"),
+                hrnStorageInfoListCallback, &callbackData),
+            "missing path");
+        TEST_RESULT_STR_Z(callbackData.content, "", "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePathCreateP(storageTest, strNew("pg"), .mode = 0766);
+
+        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160777};
+        THROW_ON_SYS_ERROR_FMT(
+            utime(strPtr(strNewFmt("%s/pg", testPath())), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'/pg",
+            testPath());
+
+        callbackData.content = strNew("");
+
+        TEST_RESULT_VOID(
+            storageInfoListP(storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData),
+            "directory with one dot file sorted");
+        TEST_RESULT_STR_Z(
+            callbackData.content, strPtr(strNewFmt(". {path, m=0766, t=1555160777, u=%s, g=%s}", testUser(), testGroup())),
+            "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0755);
+        ASSERT(system(strPtr(strNewFmt("sudo chown 77777:77777 %s/pg/.include", testPath()))) == 0);
+
+        storagePutNP(storageNewWriteP(storageTest, strNew("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
+
+        ASSERT(system(strPtr(strNewFmt("ln -s ../file %s/pg/link", testPath()))) == 0);
+        ASSERT(system(strPtr(strNewFmt("mkfifo -m 777 %s/pg/pipe", testPath()))) == 0);
+
+        callbackData = (HarnessStorageInfoListCallbackData)
+        {
+            .content = strNew(""),
+            .timestampOmit = true,
+            .modeOmit = true,
+            .modePath = 0766,
+            .modeFile = 0600,
+            .userOmit = true,
+            .groupOmit = true,
         };
 
         TEST_RESULT_VOID(
             storageInfoListP(storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
             "directory with one dot file sorted");
         TEST_RESULT_STR_Z(
-            content,
-            ". {path, 0766\n"
-            ".include {path, 0766",
+            callbackData.content,
+            ". {path}\n"
+            ".include {path, m=0755, u=77777, g=77777}\n"
+            "file {file, s=8, m=0660}\n"
+            "link {link, d=../file}\n"
+            "pipe {special}",
+            "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        ASSERT(system(strPtr(strNewFmt("sudo rmdir %s/pg/.include", testPath()))) == 0);
+        storagePathCreateP(storageTest, strNew("pg/path"), .mode = 0700);
+        storagePutNP(storageNewWriteP(storageTest, strNew("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+
+        callbackData.content = strNew("");
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
+            "recurse descending");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "pipe {special}\n"
+            "path/file {file, s=8}\n"
+            "path {path, m=0700}\n"
+            "link {link, d=../file}\n"
+            "file {file, s=8, m=0660}\n"
+            ". {path}",
+            "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        callbackData.content = strNew("");
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc,
+                .expression = STRDEF("^path")),
+            "filter");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "path {path, m=0700}",
             "    check content");
     }
 
