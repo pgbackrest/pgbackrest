@@ -149,6 +149,14 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, stdoutFile)))), "ccc\n", "    check text");
+
+        // Too many paths
+        // -------------------------------------------------------------------------------------------------------------------------
+        strLstAddZ(argListTmp, "ccc");
+        harnessCfgLoad(strLstSize(argListTmp), strLstPtr(argListTmp));
+
+        output = bufNew(0);
+        TEST_ERROR(storageListRender(ioBufferWriteNew(output)), ParamInvalidError, "only one path may be specified");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -126,7 +126,12 @@ storageListRender(IoWrite *write)
     }
 
     // Get path
-    const String *path = strLstSize(cfgCommandParam()) == 1 ? strLstGet(cfgCommandParam(), 0) : NULL;
+    const String *path = NULL;
+
+    if (strLstSize(cfgCommandParam()) == 1)
+        path = strLstGet(cfgCommandParam(), 0);
+    else if (strLstSize(cfgCommandParam()) > 1)
+        THROW(ParamInvalidError, "only one path may be specified");
 
     // Get output
     bool json = strEqZ(cfgOptionStr(cfgOptOutput), "json") ? true : false;
