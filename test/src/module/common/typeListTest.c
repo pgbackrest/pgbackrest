@@ -29,7 +29,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("lstNew(), lstMemContext(), lstToLog(), and lstFree()"))
+    if (testBegin("lstNew*(), lstMemContext(), lstToLog(), and lstFree()"))
     {
         List *list = lstNew(sizeof(void *));
 
@@ -40,7 +40,7 @@ testRun(void)
         TEST_RESULT_VOID(lstClear(list), "clear list");
 
         void *ptr = NULL;
-        TEST_RESULT_PTR(lstAdd(list, &ptr), list, "add item");
+        TEST_RESULT_VOID(lstAdd(list, &ptr), "add item");
         TEST_RESULT_STR(strPtr(lstToLog(list)), "{size: 1}", "check log");
 
         TEST_RESULT_VOID(lstClear(list), "clear list");
@@ -49,6 +49,21 @@ testRun(void)
         TEST_RESULT_VOID(lstFree(list), "free list");
         TEST_RESULT_VOID(lstFree(lstNew(1)), "free empty list");
         TEST_RESULT_VOID(lstFree(NULL), "free null list");
+
+        TEST_ASSIGN(list, lstNewP(sizeof(String *), .comparator = lstComparatorStr), "new list with params");
+
+        String *string1 = strNew("string1");
+        TEST_RESULT_STR_Z(*(String **)lstAdd(list, &string1), "string1", "    add string1");
+        String *string2 = strNew("string2");
+        TEST_RESULT_VOID(lstAdd(list, &string2), "    add string2");
+
+        String *string3 = strNew("string3");
+        TEST_RESULT_PTR(lstFindDefault(list, &string3, (void *)1), (void *)1, "    find string3 returns default");
+        TEST_RESULT_STR(strPtr(*(String **)lstFind(list, &string2)), "string2", "    find string2");
+
+        TEST_RESULT_BOOL(lstRemove(list, &string2), true, "    remove string2");
+        TEST_RESULT_BOOL(lstRemove(list, &string2), false, "    unable to remove string2");
+        TEST_RESULT_PTR(lstFind(list, &string2), NULL, "    unable to find string2");
     }
 
     // *****************************************************************************************************************************
@@ -62,7 +77,7 @@ testRun(void)
 
             // Add ints to the list
             for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
-                TEST_RESULT_PTR(lstAdd(list, &listIdx), list, "add item %d", listIdx);
+                TEST_RESULT_VOID(lstAdd(list, &listIdx), "add item %d", listIdx);
 
             lstMove(list, MEM_CONTEXT_OLD());
         }
@@ -70,7 +85,7 @@ testRun(void)
 
         // Insert an int at the beginning
         int insertIdx = 0;
-        TEST_RESULT_PTR(lstInsert(list, 0, &insertIdx), list, "insert item %d", insertIdx);
+        TEST_RESULT_INT(*((int *)lstInsert(list, 0, &insertIdx)), 0, "insert item %d", insertIdx);
 
         // Check the size
         TEST_RESULT_INT(lstSize(list), 9, "list size");
@@ -110,6 +125,7 @@ testRun(void)
     if (testBegin("lstSort"))
     {
         List *list = lstNew(sizeof(int));
+        lstComparatorSet(list, testComparator);
         int value;
 
         value = 3; lstAdd(list, &value);
@@ -117,12 +133,26 @@ testRun(void)
         value = 3; lstAdd(list, &value);
         value = 2; lstAdd(list, &value);
 
-        TEST_RESULT_PTR(lstSort(list, testComparator), list, "list sort");
+        TEST_RESULT_PTR(lstSort(list, sortOrderNone), list, "list sort none");
+
+        TEST_RESULT_INT(*((int *)lstGet(list, 0)), 3, "sort value 0");
+        TEST_RESULT_INT(*((int *)lstGet(list, 1)), 5, "sort value 1");
+        TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
+        TEST_RESULT_INT(*((int *)lstGet(list, 3)), 2, "sort value 3");
+
+        TEST_RESULT_PTR(lstSort(list, sortOrderAsc), list, "list sort asc");
 
         TEST_RESULT_INT(*((int *)lstGet(list, 0)), 2, "sort value 0");
         TEST_RESULT_INT(*((int *)lstGet(list, 1)), 3, "sort value 1");
         TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
         TEST_RESULT_INT(*((int *)lstGet(list, 3)), 5, "sort value 3");
+
+        TEST_RESULT_PTR(lstSort(list, sortOrderDesc), list, "list sort desc");
+
+        TEST_RESULT_INT(*((int *)lstGet(list, 0)), 5, "sort value 0");
+        TEST_RESULT_INT(*((int *)lstGet(list, 1)), 3, "sort value 1");
+        TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
+        TEST_RESULT_INT(*((int *)lstGet(list, 3)), 2, "sort value 3");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

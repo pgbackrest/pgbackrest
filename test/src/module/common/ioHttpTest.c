@@ -342,7 +342,10 @@ testRun(void)
 
         // Redacted headers
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(header, httpHeaderNew(strLstAddZ(strLstNew(), "secret")), "new header with redaction");
+        StringList *redact = strLstNew();
+        strLstAddZ(redact, "secret");
+
+        TEST_ASSIGN(header, httpHeaderNew(redact), "new header with redaction");
         httpHeaderAdd(header, strNew("secret"), strNew("secret-value"));
         httpHeaderAdd(header, strNew("public"), strNew("public-value"));
 
@@ -350,12 +353,15 @@ testRun(void)
 
         // Duplicate
         // -------------------------------------------------------------------------------------------------------------------------
+        redact = strLstNew();
+        strLstAddZ(redact, "public");
+
         TEST_RESULT_STR(
             strPtr(httpHeaderToLog(httpHeaderDup(header, NULL))),
             "{public: 'public-value', secret: <redacted>}", "dup and keep redactions");
         TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpHeaderDup(header, strLstAddZ(strLstNew(), "public")))),
-            "{public: <redacted>, secret: 'secret-value'}", "dup and change redactions");
+            strPtr(httpHeaderToLog(httpHeaderDup(header, redact))), "{public: <redacted>, secret: 'secret-value'}",
+            "dup and change redactions");
         TEST_RESULT_PTR(httpHeaderDup(NULL, NULL), NULL, "dup null http header");
     }
 
