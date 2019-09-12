@@ -1243,14 +1243,37 @@
                         <example>(F|D|I)$</example>
                     </option>
 
+                    <!-- OPERATION - LS COMMAND - OUTPUT OPTION -->
+                    <option id="output" name="Output">
+                        <summary>Output format.</summary>
+
+                        <text>The following output types are supported:
+                        <ul>
+                            <li><id>text</id> - Simple list with one file/link/path name on each line.</li>
+                            <li><id>json</id> - Detailed file/link/path information in JSON format.</li>
+                        </ul></text>
+
+                        <example>json</example>
+                    </option>
+
+                    <!-- OPERATION - LS COMMAND - RECURSE OPTION -->
+                    <option id="recurse" name="Recurse Subpaths">
+                        <summary>Include all subpaths in output.</summary>
+
+                        <text>All subpaths and their files will be included in the output.</text>
+
+                        <example>y</example>
+                    </option>
+
                     <!-- OPERATION - LS COMMAND - SORT OPTION -->
                     <option id="sort" name="Sort Output">
-                        <summary>Sort output ascending/descending.</summary>
+                        <summary>Sort output ascending, descending, or none.</summary>
 
                         <text>The following sort types are supported:
                         <ul>
                             <li><id>asc</id> - sort ascending.</li>
                             <li><id>desc</id> - sort descending.</li>
+                            <li><id>none</id> - no sorting.</li>
                         </ul></text>
 
                         <example>desc</example>
