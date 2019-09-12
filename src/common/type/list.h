@@ -59,8 +59,6 @@ typedef struct ListParam
 
 #define lstNewP(itemSize, ...)                                                                                                     \
     lstNewParam(itemSize, (ListParam){__VA_ARGS__})
-/* #define storageExistsNP(this, pathExp)                                                                                          \
-     storageExists(this, pathExp, (StorageExistsParam){0})*/
 
 List *lstNewParam(size_t itemSize, ListParam param);
 

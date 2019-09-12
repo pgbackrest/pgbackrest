@@ -34,7 +34,6 @@ String *strLstAddZ(StringList *this, const char *string);
 String *strLstAddIfMissing(StringList *this, const String *string);
 bool strLstExists(const StringList *this, const String *string);
 bool strLstExistsZ(const StringList *this, const char *cstring);
-String *strLstFind(const StringList *this, const String *item);
 String *strLstInsert(StringList *this, unsigned int listIdx, const String *string);
 String *strLstInsertZ(StringList *this, unsigned int listIdx, const char *string);
 String *strLstGet(const StringList *this, unsigned int listIdx);

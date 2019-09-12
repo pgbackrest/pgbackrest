@@ -938,7 +938,7 @@
         "commit": "38f28bd52081405321939fec66046bd9ada35c23",
         "date": "2019-05-26 12:32:49 -0400",
         "subject": "Log TLS and HTTP statistics on exit.",
-        "body": "These stats measure how efficiently TLS and HTTP are reusing connections (i.e. pipelining)."
+        "body": "These stats measure how efficiently TLS and HTTP are reusing connections."
     },
     {
         "commit": "819eda0818669ea9cc45bcd65c57e3b4c7d29129",
@@ -1047,7 +1047,7 @@
         "commit": "1bc84c647490d6cf78975b5dde5b1937016d24c6",
         "date": "2019-05-20 17:07:37 -0400",
         "subject": "The local command for restore is implemented entirely in C.",
-        "body": "This is just the part of restore run by the local helper processes, not the entire command.\n\nEven so, various optimizations in the code (like pipelining and optimizations for zero-length files) should make the restore command faster on object stores."
+        "body": "This is just the part of restore run by the local helper processes, not the entire command.\n\nEven so, various optimizations in the code (like connection reuse and optimizations for zero-length files) should make the restore command faster on object stores."
     },
     {
         "commit": "a839830333490555800377ea095d756765f476e4",
@@ -3049,13 +3049,13 @@
         "commit": "72252ed2a102bf9c43d45500de1a29834d36721c",
         "date": "2018-11-21 19:11:45 -0500",
         "subject": "Add HttpClient object.",
-        "body": "A robust HTTP client with pipelining support and automatic retries.\n\nUsing a single object to make multiple requests is more efficient because requests are pipelined whenever possible. Requests are automatically retried when the connection has been closed by the server. Any 5xx response is also retried.\n\nOnly the HTTPS protocol is currently supported."
+        "body": "A robust HTTP client with connection reuse and automatic retries.\n\nUsing a single object to make multiple requests is more efficient because connections are reused whenever possible. Requests are automatically retried when the connection has been closed by the server. Any 5xx response is also retried.\n\nOnly the HTTPS protocol is currently supported."
     },
     {
         "commit": "1dd06a6e460049ff888e152f33697b1e49046c30",
         "date": "2018-11-21 18:43:25 -0500",
         "subject": "Add TlsClient object.",
-        "body": "A simple, secure TLS client intended to allow access to services that are exposed via HTTPS. We call it TLS instead of SSL because SSL methods are disabled so only TLS connections are allowed.\n\nThis object is intended to be used for multiple TLS connections against a service so tlsClientOpen() can be called each time a new connection is needed. By default, an open connection will be reused for pipelining so the user must be prepared to retry their transaction on a read/write error if the server closes the connection before it can be reused. If this behavior is not desirable then tlsClientClose() may be used to ensure that the next call to tlsClientOpen() will create a new TLS session.\n\nNote that tlsClientRead() is non-blocking unless there are *zero* bytes to be read from the session in which case it will raise an error after the defined timeout. In any case the tlsClientRead()/tlsClientWrite()/tlsClientEof() functions should not generally be called directly. Instead use the read/write interfaces available from tlsClientIoRead()/tlsClientIoWrite()."
+        "body": "A simple, secure TLS client intended to allow access to services that are exposed via HTTPS. We call it TLS instead of SSL because SSL methods are disabled so only TLS connections are allowed.\n\nThis object is intended to be used for multiple TLS connections against a service so tlsClientOpen() can be called each time a new connection is needed. By default, an open connection will be reused so the user must be prepared to retry their transaction on a read/write error if the server closes the connection before it can be reused. If this behavior is not desirable then tlsClientClose() may be used to ensure that the next call to tlsClientOpen() will create a new TLS session.\n\nNote that tlsClientRead() is non-blocking unless there are *zero* bytes to be read from the session in which case it will raise an error after the defined timeout. In any case the tlsClientRead()/tlsClientWrite()/tlsClientEof() functions should not generally be called directly. Instead use the read/write interfaces available from tlsClientIoRead()/tlsClientIoWrite()."
     },
     {
         "commit": "ac426bc456425d68e33a7facc8393f26b9d17bb1",
