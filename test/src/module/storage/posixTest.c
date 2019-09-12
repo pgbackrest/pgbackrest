@@ -11,6 +11,7 @@ Test Posix Storage
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test function for path expression
@@ -308,18 +309,23 @@ testRun(void)
             strPtr(testStorageInfoList[1].name), strEqZ(testStorageInfoList[0].name, ".") ? ".include" : ".", "    check name");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        testStorageInfoListSize = 0;
         storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0766);
 
-        TEST_RESULT_VOID(
-            storageInfoListP(
-                storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent(), .sortOrder = sortOrderAsc),
-            "directory with one dot file sorted");
-        TEST_RESULT_UINT(testStorageInfoListSize, 2, "    two paths returned");
+        String *content = strNew("");
 
-        // Sorting means the paths can only be in one order (unless we are having collation problems)
-        TEST_RESULT_STR(strPtr(testStorageInfoList[0].name), ".", "    check name");
-        TEST_RESULT_STR(strPtr(testStorageInfoList[1].name), ".include", "    check name");
+        HarnessStorageInfoListCallbackData callbackData =
+        {
+            .content = content,
+        };
+
+        TEST_RESULT_VOID(
+            storageInfoListP(storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+            "directory with one dot file sorted");
+        TEST_RESULT_STR_Z(
+            content,
+            ". {path, 0766\n"
+            ".include {path, 0766",
+            "    check content");
     }
 
     // *****************************************************************************************************************************
