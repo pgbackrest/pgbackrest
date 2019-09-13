@@ -288,17 +288,32 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
 
         kvAdd(timeInfo, KEY_START_VAR, VARUINT64(backupData.backupTimestampStart));
         kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64(backupData.backupTimestampStop));
-
-        // if a backup label was specified and this is that label, then get the manifest
+// CSHANG But for json, do we want to get tablespaces and links for ALL the backups?
+        // If a backup label was specified and this is that label, then get the manifest
         if (backupLabel != NULL && strCmp(backupData.backupLabel, backupLabel) == 0)
         {
+            // Load the manifest file
+            const Manifest *manifest = manifestLoadFile(
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupLabel)), cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                infoPgCipherPass(infoBackupPg(info)));
+
             VariantList *linkList = varLstNew();
             VariantList *tablespaceList = varLstNew();
 
-            // CSHANG dummy code as placeholder for reading and parsing the manifest
-            varLstAdd(linkList, varNewStr(strNew("path/file")));
-            varLstAdd(linkList, varNewStr(strNew("../path")));
-            varLstAdd(tablespaceList, varNewStr(strNew("ts1")));
+            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+            {
+                const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+// CSHANG Can the pg_data= be of type link??
+                if (target->type == manifestTargetTypeLink)
+                {
+                    if (target->tablespaceName != NULL)
+                        varLstAdd(tablespaceList, varNewStr(target->tablespaceName)); // CSHANG Maybe we want the tablespace path here? It includes the name - or is it possible it might not include the name?
+                    else if (target->file != NULL)
+                        varLstAdd(linkList, varNewStr(strNewFmt("%s/%s", strPtr(target->path), strPtr(target->file))));
+                    else
+                        varLstAdd(linkList, varNewStr(target->path));
+                }
+            }
 
             kvPut(varKv(backupInfo), BACKUP_KEY_LINK_VAR, (varLstSize(linkList) > 0 ? varNewVarLst(linkList) : NULL));
             kvPut(
@@ -377,7 +392,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
                 errorMessage());
         }
         TRY_END();
-
+// CSHANG I don't understand why we are not using the cfgOptionStr(cfgOptRepoCipherType) - is this because we could be doing more than one stanza? That makes no sense. if we have to load the infoBackup file with it above, then we should be able to set the cipher type
         // Set the stanza name and cipher
         kvPut(varKv(stanzaInfo), STANZA_KEY_NAME_VAR, VARSTR(stanzaListName));
         kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_NONE_STR));
@@ -385,6 +400,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
         if (info != NULL)
         {
+// CSHANG We should not need to do anything other than setting the cipherType above from the cfgOptRepoCipherType
             // Determine if encryption is enabled by checking for a cipher passphrase.  This is not ideal since it does not tell us
             // what type of encryption is in use, but to figure that out we need a way to query the (possibly) remote repo to find
             // out.  No such mechanism exists so this will have to do for now.  Probably the easiest thing to do is store the
@@ -638,8 +654,11 @@ infoRender(void)
         // Get stanza if specified
         const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
 
-        // Ge the backup label if specified
+        // Get the backup label if specified
         const String *backupLabel = cfgOptionTest(cfgOptSet) ? cfgOptionStr(cfgOptSet) : NULL;
+
+        // Get the repo storage in case it is remote and encryption settings need to be pulled down
+        storageRepo();
 
         // If a backup set was specified, see if the manifest exists
         if (backupLabel != NULL &&
