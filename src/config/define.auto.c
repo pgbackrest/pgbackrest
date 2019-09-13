@@ -1015,7 +1015,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Sets the timeout, in seconds, for queries against the database. This includes the pg_start_backup() and "
                 "pg_stop_backup() functions which can each take a substantial amount of time. Because of this the timeout should "
                 "be kept high unless you know that these functions will return quickly (i.e. if you have set startfast=y and you "
-                "know that the database cluster will not generate many WAL segments during the backup)."
+                "know that the database cluster will not generate many WAL segments during the backup). \n"
+            "NOTE: The db-timeout option must be less than the protocol-timeout option."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2574,8 +2575,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Sets the timeout, in seconds, that the local or remote process will wait for a new message to be received on the "
-                "protocol layer. This prevents processes from waiting indefinitely for a message. The protocol-timeout option must "
-                "be greater than the db-timeout option."
+                "protocol layer. This prevents processes from waiting indefinitely for a message. \n"
+            "NOTE: The protocol-timeout option must be greater than the db-timeout option."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
