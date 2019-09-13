@@ -100,8 +100,8 @@ sub process
     $strConfig .=
         "\n" .
         "before_install:\n" .
-        "  - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip" .
-            " lcov libperl-dev\n" .
+        "  - sudo apt-get -qq update || true\n" .
+        "  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip lcov libperl-dev\n" .
         "  - |\n" .
         "    # Install & Configure AWS CLI\n" .
         "    pip install --upgrade --user awscli\n" .

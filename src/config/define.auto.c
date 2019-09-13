@@ -4147,13 +4147,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
 
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Sort output ascending/descending.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Sort output ascending, descending, or none.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
                 (
                     "The following sort types are supported:\n"
                     "\n"
                     "* asc - sort ascending.\n"
-                    "* desc - sort descending."
+                    "* desc - sort descending.\n"
+                    "* none - no sorting."
                 )
             )
         )
