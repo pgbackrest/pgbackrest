@@ -284,6 +284,8 @@ Macros to ease the use of common data types
 #define TEST_RESULT_STR_NE(statement, resultExpected, ...)                                                                         \
     TEST_RESULT_STR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
+#define TEST_RESULT_STR_STR(statement, resultExpected, ...)                                                                        \
+    TEST_RESULT_STR(strPtr(statement), strPtr(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_STR(strPtr(statement), resultExpected, __VA_ARGS__);
 

@@ -531,7 +531,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                         // Only set the argument if the option requires one
                         if (optionList[optionListIdx].has_arg == required_argument)
-                            parseOptionList[optionId].valueList = strLstAdd(strLstNew(), STR(optarg));
+                        {
+                            parseOptionList[optionId].valueList = strLstNew();
+                            strLstAdd(parseOptionList[optionId].valueList, STR(optarg));
+                        }
                     }
                     else
                     {

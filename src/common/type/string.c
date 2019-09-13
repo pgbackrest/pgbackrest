@@ -20,6 +20,7 @@ Constant strings that are generally useful
 STRING_EXTERN(BRACKETL_STR,                                         "[");
 STRING_EXTERN(BRACKETR_STR,                                         "]");
 STRING_EXTERN(CR_STR,                                               "\r");
+STRING_EXTERN(DOT_STR,                                              ".");
 STRING_EXTERN(EMPTY_STR,                                            "");
 STRING_EXTERN(EQ_STR,                                               "=");
 STRING_EXTERN(FALSE_STR,                                            "false");
@@ -363,10 +364,17 @@ strCmp(const String *this, const String *compare)
         FUNCTION_TEST_PARAM(STRING, compare);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(compare != NULL);
+    if (this != NULL && compare != NULL)
+        FUNCTION_TEST_RETURN(strcmp(strPtr(this), strPtr(compare)));
+    else if (this == NULL)
+    {
+        if (compare == NULL)
+            FUNCTION_TEST_RETURN(0);
 
-    FUNCTION_TEST_RETURN(strcmp(strPtr(this), strPtr(compare)));
+        FUNCTION_TEST_RETURN(-1);
+    }
+
+    FUNCTION_TEST_RETURN(1);
 }
 
 int
@@ -377,10 +385,7 @@ strCmpZ(const String *this, const char *compare)
         FUNCTION_TEST_PARAM(STRINGZ, compare);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(compare != NULL);
-
-    FUNCTION_TEST_RETURN(strcmp(strPtr(this), compare));
+    FUNCTION_TEST_RETURN(strCmp(this, compare == NULL ? NULL : STRDEF(compare)));
 }
 
 /***********************************************************************************************************************************
