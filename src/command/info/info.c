@@ -321,7 +321,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
             THROW_FMT(
                 CryptoError,
                 "%s\n"
-                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
                 errorMessage());
         }
         TRY_END();
