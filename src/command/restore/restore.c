@@ -41,7 +41,7 @@ restorePathValidate(void)
             THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strPtr(cfgOptionStr(cfgOptPgPath)));
 
         // PostgreSQL must not be running
-        if (storageExistsNP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
+        if (storageExistsNP(storagePg(), PG_FILE_POSTMASTERPID_STR))
         {
             THROW_FMT(
                 PostmasterRunningError,
@@ -53,7 +53,7 @@ restorePathValidate(void)
 
         // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
         if ((cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)) &&
-            !storageExistsNP(storagePg(), STRDEF(PG_FILE_PGVERSION)) && !storageExistsNP(storagePg(), STRDEF(MANIFEST_FILE)))
+            !storageExistsNP(storagePg(), PG_FILE_PGVERSION_STR) && !storageExistsNP(storagePg(), MANIFEST_FILE_STR))
         {
             LOG_WARN(
                 "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" MANIFEST_FILE "' in '%s' to"
@@ -563,13 +563,19 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
     bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
 
     // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
-    if (!cleanData->delta && !dotPath)
+    if (!cleanData->delta)
     {
-        THROW_FMT(
-            PathNotEmptyError,
-            "unable to restore to path '%s' because it contains files\n"
-            "HINT: try using --delta if this is what you intended.",
-            strPtr(cleanData->targetPath));
+        if (!dotPath)
+        {
+            THROW_FMT(
+                PathNotEmptyError,
+                "unable to restore to path '%s' because it contains files\n"
+                "HINT: try using --delta if this is what you intended.",
+                strPtr(cleanData->targetPath));
+        }
+
+        FUNCTION_TEST_RETURN_VOID();
+        return;
     }
 
     // Construct the name used to find this file/link/path in the manifest
@@ -584,7 +590,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
     {
         case storageTypeFile:
         {
-            const ManifestFile *manifestFile = manifestFileFind(cleanData->manifest, manifestName);
+            const ManifestFile *manifestFile = manifestFileFindDefault(cleanData->manifest, manifestName, NULL);
 
             if (manifestFile != NULL)
             {
@@ -602,7 +608,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
         case storageTypeLink:
         {
-            const ManifestLink *manifestLink = manifestLinkFind(cleanData->manifest, manifestName);
+            const ManifestLink *manifestLink = manifestLinkFindDefault(cleanData->manifest, manifestName, NULL);
 
             if (manifestLink != NULL)
             {
@@ -625,16 +631,32 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
         case storageTypePath:
         {
-            const ManifestPath *manifestPath = manifestPathFind(cleanData->manifest, manifestName);
+            const ManifestPath *manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
 
             if (manifestPath != NULL)
             {
-                restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info);
-                restoreCleanMode(pgPath, manifestPath->mode, info);
+                // Check ownership/permissions
+                if (dotPath)
+                {
+                    restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info);
+                    restoreCleanMode(pgPath, manifestPath->mode, info);
+                }
+                // Recurse into the path
+                else
+                {
+                    RestoreCleanCallbackData cleanDataSub = *cleanData;
+                    cleanDataSub.targetName = strNewFmt("%s/%s", strPtr(cleanData->targetName), strPtr(info->name));
+                    cleanDataSub.targetPath = strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(info->name));
+                    cleanDataSub.basePath = false;
+
+                    storageInfoListP(
+                        storagePgWrite(), cleanDataSub.targetPath, restoreCleanInfoListCallback, &cleanDataSub,
+                        .errorOnMissing = true, .sortOrder = sortOrderAsc);
+                }
             }
             else
             {
-                LOG_DETAIL("remove invalid file '%s'", strPtr(pgPath));
+                LOG_DETAIL("remove invalid path '%s'", strPtr(pgPath));
                 storagePathRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true, .recurse = true);
             }
 
@@ -663,6 +685,9 @@ restoreClean(Manifest *manifest)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Is this a delta restore?
+        bool delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
+
         // Allocate data for each target
         RestoreCleanCallbackData *cleanDataList = memNew(sizeof(RestoreCleanCallbackData) * manifestTargetTotal(manifest));
 
@@ -677,8 +702,8 @@ restoreClean(Manifest *manifest)
             cleanData->target = manifestTarget(manifest, targetIdx);
             cleanData->targetName = cleanData->target->name;
             cleanData->targetPath = cleanData->target->path;
-            cleanData->basePath = targetIdx == 0;
-            cleanData->delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
+            cleanData->basePath = strEq(cleanData->targetName, MANIFEST_TARGET_PGDATA_STR);
+            cleanData->delta = delta;
             cleanData->preserveRecoveryConf = strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR);
 
             // If the target path is relative update it
@@ -756,13 +781,48 @@ restoreClean(Manifest *manifest)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
 
+            // If this target is a link then create if it does not already exist.  This link should always be created in a
+            // previously cleaned target since the base target is always a path.
+            if (cleanData->target->type == manifestTargetTypeLink)
+            {
+                const String *link = manifestPgPath(cleanData->target->name);
+                const String *linkDestination = cleanData->target->file == NULL ?
+                    cleanData->target->path : strNewFmt("%s/%s", strPtr(cleanData->target->path), strPtr(cleanData->target->file));
+
+                THROW_ON_SYS_ERROR_FMT(
+                    symlink(strPtr(linkDestination), strPtr(link)) == 1, FileOpenError,
+                    "unable to create symlink '%s' to '%s'", strPtr(link), strPtr(linkDestination));
+            }
+
             // Only clean if the target exists and is not a file link.  It doesn't matter whether the file exists or not since we
             // know it is in the manifest.
             if (cleanData->exists && cleanData->target->file == NULL)
             {
-                LOG_INFO("remove invalid files/links/paths from '%s'", strPtr(cleanData->targetPath));
-                // storageInfoListP(
-                //     storagePgWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true);
+                // Only log when doing a delta restore because otherwise the targets should be empty.  We'll still run the clean
+                // to fix permissions/ownership on the target paths.
+                if (delta)
+                    LOG_INFO("remove invalid files/links/paths from '%s'", strPtr(cleanData->targetPath));
+
+                // Clean the target
+                storageInfoListP(
+                    storagePgWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true,
+                    .sortOrder = sortOrderAsc);
+            }
+        }
+
+        // Create missing paths
+        // -------------------------------------------------------------------------------------------------------------------------
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+        {
+            const ManifestPath *path = manifestPath(manifest, pathIdx);
+            const String *pgPath = manifestPgPath(path->name);
+            StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
+
+            // Create the path if it is missing
+            if (!pathInfo.exists)
+            {
+                storagePathCreateP(storagePgWrite(), pgPath, .mode = path->mode, .noParentCreate = true, .errorOnExists = true);
+                restoreCleanOwnership(storagePathNP(storagePg(), pgPath), path->user, path->group, &pathInfo);
             }
         }
     }

@@ -1400,6 +1400,21 @@ manifestFileFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
+const ManifestFile *
+manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, fileDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->fileList, &name, (void *)fileDefault));
+}
+
 unsigned int
 manifestFileTotal(const Manifest *this)
 {
@@ -1446,21 +1461,21 @@ manifestLinkFind(const Manifest *this, const String *name)
 
     FUNCTION_TEST_RETURN(result);
 }
-//
-// const ManifestLink *
-// manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(MANIFEST, this);
-//         FUNCTION_TEST_PARAM(STRING, name);
-//         FUNCTION_TEST_PARAM(MANIFEST_TARGET, linkDefault);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(name != NULL);
-//
-//     FUNCTION_TEST_RETURN(lstFindDefault(this->linkList, &name, (void *)linkDefault));
-// }
+
+const ManifestLink *
+manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, linkDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->linkList, &name, (void *)linkDefault));
+}
 
 void
 manifestLinkRemove(const Manifest *this, const String *name)
@@ -1551,6 +1566,21 @@ manifestPathFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
+const ManifestPath *
+manifestPathFindDefault(const Manifest *this, const String *name, const ManifestPath *pathDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, pathDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->pathList, &name, (void *)pathDefault));
+}
+
 unsigned int
 manifestPathTotal(const Manifest *this)
 {
@@ -1597,21 +1627,6 @@ manifestTargetFind(const Manifest *this, const String *name)
 
     FUNCTION_TEST_RETURN(result);
 }
-//
-// const ManifestTarget *
-// manifestTargetFindDefault(const Manifest *this, const String *name, const ManifestTarget *targetDefault)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(MANIFEST, this);
-//         FUNCTION_TEST_PARAM(STRING, name);
-//         FUNCTION_TEST_PARAM(MANIFEST_TARGET, targetDefault);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(name != NULL);
-//
-//     FUNCTION_TEST_RETURN(lstFindDefault(this->targetList, &name, (void *)targetDefault));
-// }
 
 void
 manifestTargetRemove(const Manifest *this, const String *name)

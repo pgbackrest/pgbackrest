@@ -12,6 +12,7 @@ Test Restore Command
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test data for backup.info
@@ -52,6 +53,40 @@ Test data for backup.info
     "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"incr\",\"db-id\":1,"             \
     "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"                                 \
     "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+/***********************************************************************************************************************************
+Test restores to be sure they match the manifest
+***********************************************************************************************************************************/
+static void
+testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest *manifest, const char *compare)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE, storage);
+        FUNCTION_HARNESS_PARAM(STRING, pgPath);
+        FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
+        FUNCTION_HARNESS_PARAM(STRINGZ, compare);
+    FUNCTION_HARNESS_END();
+
+    // Get the pg-path as a string
+    HarnessStorageInfoListCallbackData callbackData =
+    {
+        .content = strNew(""),
+        .modeOmit = true,
+        .modePath = 0700,
+        .modeFile = 0600,
+        .userOmit = true,
+        .groupOmit = true,
+    };
+
+    TEST_RESULT_VOID(
+        storageInfoListP(storage, pgPath, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+        "pg path info list for restore compare");
+
+    // Compare
+    TEST_RESULT_STR_Z(callbackData.content, compare, "    compare result manifest");
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
 
 /***********************************************************************************************************************************
 Build a simple manifest for testing
@@ -986,6 +1021,12 @@ testRun(void)
                 &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
             storagePathCreateNP(storagePgWrite(), NULL);
 
+            // Global directory
+            manifestPathAdd(
+                manifest,
+                &(ManifestPath){
+                    .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL), .mode = 0700, .group = groupName(), .user = userName()});
+
             // PG_VERSION
             manifestFileAdd(
                 manifest,
@@ -1008,12 +1049,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
-        harnessLogResult(
-            strPtr(
-                strNewFmt(
-                    "P00   INFO: restore backup set 20161219-212741F\n"
-                    "P00   INFO: remove invalid files/links/paths from '%s/pg'",
-                    testPath())));
+        harnessLogResult("P00   INFO: restore backup set 20161219-212741F");
+
+        storageRemoveNP(storagePgWrite(), MANIFEST_FILE_STR);   // !!! TEMPORARY
+        testRestoreCompare(
+            storagePg(), NULL, manifest,
+            ". {path}\n"
+            "global {path}");
 
         // Incremental Delta Restore
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1022,8 +1064,11 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        storagePut(storageNewWriteNP(storagePgWrite(), PG_FILE_PGVERSION_STR), NULL);   // !!! TEMPORARY
 
         // Write manifest
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-212918I"), PG_VERSION_94, pgPath);
