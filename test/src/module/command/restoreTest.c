@@ -969,6 +969,9 @@ testRun(void)
         const String *pgPath = strNewFmt("%s/pg", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
 
+        // Set log level to detail
+        // !!! harnessLogLevelSet(logLevelDetail);
+
         // Locality error
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
