@@ -80,6 +80,14 @@ process-max=1
         <p>The <link url="https://apt.postgresql.org">apt.postgresql.org</link> repository maintains an <link url="https://atalia.postgresql.org/morgue/p/pgbackrest">archive of older versions</link>.  Debian also maintains <link url="https://snapshot.debian.org/binary/pgbackrest/">snapshots</link> of all test builds.</p>
     </section>
 
+    <section id="backup-standby">
+        <title>Why does a backup attempt fail when <br-option>backup-standby=y</br-option> and the standby database is down?</title>
+
+        <p>Configuring backup from standby is generally intended to reduce load on the primary, so switching backups to the  primary when the standby is down often defeats the point. Putting more load on the primary in a situation where there are already failures in the system is not recommended. Backups are not critical as long as you have one that is fairly recent -- the important thing is to keep up with WAL archiving. There is plenty of time to get a backup when the system is stable again.</p>
+
+        <p>If you really need a backup, the solution is to have more standbys or remove <br-option>backup-standby</br-option>. This can be overridden on the command line with <br-option>--no-backup-standby</br-option>, so there is no need to reconfigure for a one-off backup.</p>
+    </section>
+
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 
