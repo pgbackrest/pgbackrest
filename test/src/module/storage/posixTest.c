@@ -281,18 +281,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateP(storageTest, strNew("pg"), .mode = 0766);
 
-        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160777};
-        THROW_ON_SYS_ERROR_FMT(
-            utime(strPtr(strNewFmt("%s/pg", testPath())), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'/pg",
-            testPath());
-
         callbackData.content = strNew("");
 
         TEST_RESULT_VOID(
             storageInfoListP(storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData),
             "directory with one dot file sorted");
         TEST_RESULT_STR_Z(
-            callbackData.content, strPtr(strNewFmt(". {path, m=0766, t=1555160777, u=%s, g=%s}", testUser(), testGroup())),
+            callbackData.content, strPtr(strNewFmt(". {path, m=0766, u=%s, g=%s}", testUser(), testGroup())),
             "    check content");
 
         // -------------------------------------------------------------------------------------------------------------------------

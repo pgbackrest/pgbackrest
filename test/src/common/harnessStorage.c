@@ -60,7 +60,10 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
             {
                 strCatFmt(data->content, ", m=%04o", info->mode);
             }
+        }
 
+        if (info->type == storageTypeFile)
+        {
             if (!data->timestampOmit)
                 strCatFmt(data->content, ", t=%" PRIu64, (uint64_t)info->timeModified);
         }
