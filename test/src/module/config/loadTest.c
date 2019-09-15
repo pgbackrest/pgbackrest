@@ -280,9 +280,9 @@ testRun(void)
         TEST_ERROR(
             harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
             "'bogus.bucket' is not valid for option 'repo1-s3-bucket'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches"
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name"
-                "\nHINT: remove dots from the bucket name");
+                "\nHINT: RFC-2818 forbids dots in wildcard matches."
+                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
+                "\nHINT: remove dots from the bucket name.");
 
         // Invalid bucket name with verification disabled succeeds
         argList = strLstNew();

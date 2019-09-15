@@ -491,7 +491,7 @@ testRun(void)
         TEST_ERROR_FMT(
             pgValidate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
             " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
-            "HINT: the pg1-path and pg1-port settings likely reference different clusters",
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
             strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path), strPtr(pgVersionToStr(PG_VERSION_91)), strPtr(pg1Path),
             strPtr(pg1Path));
 
@@ -512,7 +512,7 @@ testRun(void)
         TEST_ERROR_FMT(
             pgValidate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
             " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
-            "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters",
+            "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters.",
             strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(strNewFmt("%s/pg2", testPath())), strPtr(pgVersionToStr(PG_VERSION_92)),
             strPtr(pg1Path), strPtr(pg1Path));
 
