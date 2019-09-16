@@ -3273,12 +3273,7 @@ restore delta, remap, expect exit 81 - error on system id (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [081]: system databases (template0, postgres, etc.) are included by default
 
-restore, remap, expect exit 73 - no tablespace remap - error when tablespace dir does not exist (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace  --stanza=db restore
-------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [073]: cannot restore to missing path [TEST_PATH]/db-master/db/base-2/tablespace
-
-restore - no tablespace remap (db-master host)
+restore, remap - no tablespace remap (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 

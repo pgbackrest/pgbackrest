@@ -568,44 +568,33 @@ P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
+P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/backup_label.old'
+P00 DETAIL: update mode for '[TEST_PATH]/db-master/db/base/base' to 0700
+P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base/base/1/PG_VERSION'
+P00 DETAIL: update mode for '[TEST_PATH]/db-master/db/base/base/1/PG_VERSION' to 0660
+P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base/base/16384/PG_VERSION'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/base/32768/44000'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/base/32768/t333_44000'
+P00 DETAIL: remove invalid path '[TEST_PATH]/db-master/db/base/base/pgsql_tmp'
+P00 DETAIL: remove invalid path '[TEST_PATH]/db-master/db/base/deleteme'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/global/pg_internal.init'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/pg_dynshmem/anything.tmp'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/pg_log/logfile'
+P00 DETAIL: remove invalid path '[TEST_PATH]/db-master/db/base/pg_log2'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/pg_notify/anything.tmp'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/pg_replslot/anything.tmp'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/pg_serial/anything.tmp'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/pg_snapshots/anything.tmp'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/pg_stat_tmp/anything.tmp'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/pg_subtrans/anything.tmp'
+P00 DETAIL: remove invalid link '[TEST_PATH]/db-master/db/base/postgresql.auto.conf'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/postgresql.auto.conf.tmp'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/postmaster.opts'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.done'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_config
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_stat
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_config
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/recovery.done
-P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/postmaster.opts
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/postgresql.auto.conf.tmp
-P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/postgresql.auto.conf
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_subtrans/anything.tmp
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_stat_tmp/anything.tmp
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_snapshots/anything.tmp
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_serial/anything.tmp
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_replslot/anything.tmp
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_notify/anything.tmp
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_log2/logfile
-P00 DETAIL: remove path [TEST_PATH]/db-master/db/base/pg_log2
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_log/logfile
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_dynshmem/anything.tmp
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/global/pg_internal.init
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
-P00 DETAIL: remove path [TEST_PATH]/db-master/db/base/deleteme
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/base/pgsql_tmp/pgsql_tmp.1
-P00 DETAIL: remove path [TEST_PATH]/db-master/db/base/base/pgsql_tmp
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/base/32768/t333_44000
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/base/32768/44000
-P00 DETAIL: set ownership [USER-1]:[GROUP-2] on [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION
-P00 DETAIL: set ownership [USER-2]:[GROUP-1] on [TEST_PATH]/db-master/db/base/base/1/PG_VERSION
-P00 DETAIL: set mode 0660 on [TEST_PATH]/db-master/db/base/base/1/PG_VERSION
-P00 DETAIL: set mode 0700 on [TEST_PATH]/db-master/db/base/base
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/backup_label.old
-P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/apipe
-P00   INFO: cleanup removed 19 files, 1 link, 3 paths
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_clog'
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -644,18 +633,10 @@ P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
+P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base/base/1/PG_VERSION'
+P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base/base/16384/PG_VERSION'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_config
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_stat
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_config
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
-P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
-P00 DETAIL: set ownership [USER-1]:[GROUP-1] on [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION
-P00 DETAIL: set ownership [USER-1]:[GROUP-1] on [TEST_PATH]/db-master/db/base/base/1/PG_VERSION
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -694,17 +675,10 @@ P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
+P00 DETAIL: remove link '[TEST_PATH]/db-master/db/base/pg_stat' because destination changed
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_config
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_stat
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_config
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
-P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
-P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/pg_stat - destination changed
+P00 DETAIL: create symlink '[TEST_PATH]/db-master/db/base/pg_stat' to '../pg_stat'
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -746,16 +720,8 @@ P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_config
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_stat
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_config
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
-P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -827,11 +793,24 @@ P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_config
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/base'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/base/1'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/base/16384'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/base/32768'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/global'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_clog'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_dynshmem'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_log'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_notify'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_replslot'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_serial'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_snapshots'
+P00 DETAIL: create symlink '[TEST_PATH]/db-master/db/base/pg_stat' to '../pg_stat'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_stat_tmp'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_subtrans'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_tblspc'
+P00 DETAIL: create symlink '[TEST_PATH]/db-master/db/base/pg_hba.conf' to '../pg_config/pg_hba.conf'
+P00 DETAIL: create symlink '[TEST_PATH]/db-master/db/base/postgresql.conf' to '../pg_config/postgresql.conf'
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -888,13 +867,11 @@ P00   WARN: unknown group in backup manifest mapped to current group
 P00   WARN: unknown group 'bogus' in backup manifest mapped to current group
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
-P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
-P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/postgresql.conf
-P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/pg_stat
-P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/pg_hba.conf
-P00   INFO: cleanup removed 3 links
+P00 DETAIL: remove invalid link '[TEST_PATH]/db-master/db/base/pg_hba.conf'
+P00 DETAIL: remove invalid link '[TEST_PATH]/db-master/db/base/pg_stat'
+P00 DETAIL: remove invalid link '[TEST_PATH]/db-master/db/base/postgresql.conf'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_stat'
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches size 65536 and modification time [MODIFICATION-TIME-1] (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1868,13 +1845,29 @@ P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2'
 P00   INFO: map tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
-P00 DETAIL: update mode for '[TEST_PATH]/db-master/db/base-2' to 0777
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
-P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
+P00 DETAIL: update mode for '[TEST_PATH]/db-master/db/base-2' to 0777
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/1'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/16384'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/32768'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/global'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_clog'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_dynshmem'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_log'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_notify'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_replslot'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_serial'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_snapshots'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_stat'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_stat_tmp'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_subtrans'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_tblspc'
+P00 DETAIL: create symlink '[TEST_PATH]/db-master/db/base-2/pg_tblspc/1' to '[TEST_PATH]/db-master/db/tablespace/ts1-2'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384'
+P00 DETAIL: create symlink '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1916,15 +1909,9 @@ P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base-2
-P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base-2/recovery.conf
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -3732,12 +3719,8 @@ P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base-2
-P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00 DETAIL: databases for include/exclude (1, 16384, 32768)
 P00 DETAIL: database filter: (^pg_data\/base\/32768\/)|(^pg_tblspc/2\/[TS_PATH-1]\/32768\/)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%)
@@ -3779,12 +3762,8 @@ P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
-P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base-2
-P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00 DETAIL: databases for include/exclude (1, 16384, 32768)
 P00 DETAIL: database filter: (^pg_data\/base\/16384\/)|(^pg_tblspc/2\/[TS_PATH-1]\/16384\/)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
@@ -3827,7 +3806,7 @@ restore delta, remap, expect exit 81 - error on system id (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [081]: system databases (template0, postgres, etc.) are included by default
 
-restore, remap, expect exit 73 - no tablespace remap - error when tablespace dir does not exist (db-master host)
+restore, remap - no tablespace remap (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
@@ -3835,26 +3814,25 @@ P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
 P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/../../tablespace/ts2/[TS_PATH-1]' exists
 P00 DETAIL: update mode for '[TEST_PATH]/db-master/db/base-2/base' to 0777
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/../../tablespace/ts2/[TS_PATH-1]' exists
-P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2/base'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
-P00  ERROR: [073]: cannot restore to missing path [TEST_PATH]/db-master/db/base-2/tablespace
-P00   INFO: restore command end: aborted with exception [073]
-
-restore - no tablespace remap (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace  --stanza=db restore
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
-P00   INFO: restore backup set [BACKUP-DIFF-5]
-P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
-P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/../../tablespace/ts2/[TS_PATH-1]' exists
-P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2/base'
-P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
-P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/base'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/base/1'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/base/16384'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/base/32768'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/global'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_clog'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_dynshmem'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_log'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_notify'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_replslot'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_serial'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_snapshots'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_stat'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_stat_tmp'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_subtrans'
+P00 DETAIL: create symlink '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2' to '../../tablespace/ts2'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768'
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e

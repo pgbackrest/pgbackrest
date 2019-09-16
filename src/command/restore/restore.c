@@ -476,14 +476,19 @@ typedef struct RestoreCleanCallbackData
 
 static void
 restoreCleanOwnership(
-    const String *pgPath, const String *manifestUserName, const String *manifestGroupName, const StorageInfo *info)
+    const String *pgPath, const String *manifestUserName, const String *manifestGroupName, uid_t actualUserId, gid_t actualGroupId,
+    bool new)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, pgPath);
         FUNCTION_TEST_PARAM(STRING, manifestUserName);
         FUNCTION_TEST_PARAM(STRING, manifestGroupName);
-        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+        FUNCTION_TEST_PARAM(UINT, actualUserId);
+        FUNCTION_TEST_PARAM(UINT, actualGroupId);
+        FUNCTION_TEST_PARAM(BOOL, new);
     FUNCTION_TEST_END();
+
+    ASSERT(pgPath != NULL);
 
     // Get the expected user id
     uid_t expectedUserId = userId();
@@ -508,9 +513,11 @@ restoreCleanOwnership(
     }
 
     // Update ownership if not as expected
-    if (info->userId != expectedUserId || info->groupId != expectedGroupId)
+    if (actualUserId != expectedUserId || actualGroupId != expectedGroupId)
     {
-        LOG_DETAIL("update ownership for '%s'", strPtr(pgPath));
+        // If this is a newly created file/link/path then there's no need to log updated permissions
+        if (!new)
+            LOG_DETAIL("update ownership for '%s'", strPtr(pgPath));
 
         THROW_ON_SYS_ERROR_FMT(
             lchown(strPtr(pgPath), expectedUserId, expectedGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
@@ -594,7 +601,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
             if (manifestFile != NULL)
             {
-                restoreCleanOwnership(pgPath, manifestFile->user, manifestFile->group, info);
+                restoreCleanOwnership(pgPath, manifestFile->user, manifestFile->group, info->userId, info->groupId, false);
                 restoreCleanMode(pgPath, manifestFile->mode, info);
             }
             else
@@ -618,7 +625,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
                     storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
                 }
                 else
-                    restoreCleanOwnership(pgPath, manifestLink->user, manifestLink->group, info);
+                    restoreCleanOwnership(pgPath, manifestLink->user, manifestLink->group, info->userId, info->groupId, false);
             }
             else
             {
@@ -638,7 +645,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
                 // Check ownership/permissions
                 if (dotPath)
                 {
-                    restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info);
+                    restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info->userId, info->groupId, false);
                     restoreCleanMode(pgPath, manifestPath->mode, info);
                 }
                 // Recurse into the path
@@ -691,7 +698,8 @@ restoreClean(Manifest *manifest)
         // Allocate data for each target
         RestoreCleanCallbackData *cleanDataList = memNew(sizeof(RestoreCleanCallbackData) * manifestTargetTotal(manifest));
 
-        // Check that each target directory exists
+        // Check permissions and validity (is the directory empty without delta?) if the target directory exists
+        // -------------------------------------------------------------------------------------------------------------------------
         const String *basePath = manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path;
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
@@ -781,85 +789,108 @@ restoreClean(Manifest *manifest)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
 
-            // If this target is a link then create if it does not already exist.  This link should always be created in a
-            // previously cleaned target since the base target is always a path.
-            if (cleanData->target->type == manifestTargetTypeLink)
+            // Only clean if the target exists
+            if (cleanData->exists)
             {
-                const ManifestLink *link = manifestLinkFind(
-                    manifest,
-                    cleanData->target->tablespaceId == 0 ?
-                        cleanData->target->name : strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(cleanData->target->name)));
+                // Don't clean file links.  It doesn't matter whether the file exists or not since we know it is in the manifest.
+                if (cleanData->target->file == NULL)
+                {
+                    // Only log when doing a delta restore because otherwise the targets should be empty.  We'll still run the clean
+                    // to fix permissions/ownership on the target paths.
+                    if (delta)
+                        LOG_INFO("remove invalid files/links/paths from '%s'", strPtr(cleanData->targetPath));
 
+                    // Clean the target
+                    storageInfoListP(
+                        storageLocalWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true,
+                        .sortOrder = sortOrderAsc);
+                }
+            }
+            // If the target does not exist we'll attempt to create it
+            else
+            {
+                const ManifestPath *path = NULL;
+
+                // There is no path information for a file link so we'll need to use the data directory
+                if (cleanData->target->file != NULL)
+                    path = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+                else
+                    path = manifestPathFind(manifest, cleanData->target->name);
+
+                storagePathCreateP(storageLocalWrite(), cleanData->targetPath, .mode = path->mode);
+                restoreCleanOwnership(cleanData->targetPath, path->user, path->group, userId(), groupId(), true);
+            }
+        }
+
+        // Create missing paths and path links
+        // -------------------------------------------------------------------------------------------------------------------------
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+        {
+            const ManifestPath *path = manifestPath(manifest, pathIdx);
+
+            // Skip the pg_tblspc path because it only maps to the manifest.  We should remove this in a future release but not much
+            // can be done about it for now.
+            if (strEqZ(path->name, MANIFEST_TARGET_PGTBLSPC))
+                continue;
+
+            // If this path has been mapped as a link then create a link
+            const ManifestLink *link = manifestLinkFindDefault(
+                manifest,
+                strBeginsWithZ(path->name, MANIFEST_TARGET_PGTBLSPC) ?
+                    strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(path->name)) : path->name,
+                NULL);
+
+            if (link != NULL)
+            {
                 const String *pgPath = storagePathNP(storagePg(), manifestPgPath(link->name));
                 StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-                // Create the link if it is missing.  If it exists it should already have the correct ownership and destination from
-                // a previous clean iteration.
+                // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
                 if (!linkInfo.exists)
                 {
-                    LOG_DETAIL("create link '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
+                    LOG_DETAIL("create symlink '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
 
                     THROW_ON_SYS_ERROR_FMT(
                         symlink(strPtr(link->destination), strPtr(pgPath)) == -1, FileOpenError,
                         "unable to create symlink '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
-                    restoreCleanOwnership(pgPath, link->user, link->group, &linkInfo);
+                    restoreCleanOwnership(pgPath, link->user, link->group, userId(), groupId(), true);
                 }
             }
-
-            // Only clean if the target exists and is not a file link.  It doesn't matter whether the file exists or not since we
-            // know it is in the manifest.
-            if (cleanData->exists && cleanData->target->file == NULL)
+            // Create the path normally
+            else
             {
-                // Only log when doing a delta restore because otherwise the targets should be empty.  We'll still run the clean
-                // to fix permissions/ownership on the target paths.
-                if (delta)
-                    LOG_INFO("remove invalid files/links/paths from '%s'", strPtr(cleanData->targetPath));
+                const String *pgPath = storagePathNP(storagePg(), manifestPgPath(path->name));
+                StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-                // Clean the target
-                storageInfoListP(
-                    storageLocalWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true,
-                    .sortOrder = sortOrderAsc);
+                // Create the path if it is missing  If it exists it should already have the correct ownership and mode.
+                if (!pathInfo.exists)
+                {
+                    LOG_DETAIL("create path '%s'", strPtr(pgPath));
+
+                    storagePathCreateP(storagePgWrite(), pgPath, .mode = path->mode, .noParentCreate = true, .errorOnExists = true);
+                    restoreCleanOwnership(storagePathNP(storagePg(), pgPath), path->user, path->group, userId(), groupId(), true);
+                }
             }
+        }
 
-            // Create missing paths
-            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+        // Create file links
+        // -------------------------------------------------------------------------------------------------------------------------
+        for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
+        {
+            const ManifestLink *link = manifestLink(manifest, linkIdx);
+
+            const String *pgPath = storagePathNP(storagePg(), manifestPgPath(link->name));
+            StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
+
+            // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
+            if (!linkInfo.exists)
             {
-                const ManifestPath *path = manifestPath(manifest, pathIdx);
+                LOG_DETAIL("create symlink '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
 
-                // Skip the pg_tblspc path
-                if (strEqZ(path->name, MANIFEST_TARGET_PGTBLSPC))
-                    continue;
-
-                // Find the target that this path lives in
-                const ManifestTarget *pathTarget = NULL;
-
-                for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
-                {
-                    const ManifestTarget *target = manifestTarget(manifest, targetIdx);
-
-                    // LOG_WARN("check path '%s' in '%s'", strPtr(path->name), strPtr(target->name));
-
-                    if (strEq(path->name, target->name) || strBeginsWith(path->name, strNewFmt("%s/", strPtr(target->name))))
-                        pathTarget = target;
-                }
-
-                ASSERT(pathTarget != NULL);
-
-                if (strEq(pathTarget->name, cleanData->target->name))
-                {
-                    const String *pgPath = manifestPgPath(path->name);
-                    StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
-
-                    // Create the path if it is missing
-                    if (!pathInfo.exists)
-                    {
-                        LOG_DETAIL("create path '%s'", strPtr(pgPath));
-
-                        storagePathCreateP(
-                            storagePgWrite(), pgPath, .mode = path->mode /*!!!, .noParentCreate = true, .errorOnExists = true*/);
-                        restoreCleanOwnership(storagePathNP(storagePg(), pgPath), path->user, path->group, &pathInfo);
-                    }
-                }
+                THROW_ON_SYS_ERROR_FMT(
+                    symlink(strPtr(link->destination), strPtr(pgPath)) == -1, FileOpenError,
+                    "unable to create symlink '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
+                restoreCleanOwnership(pgPath, link->user, link->group, userId(), groupId(), true);
             }
         }
     }

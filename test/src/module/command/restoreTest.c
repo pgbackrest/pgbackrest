@@ -871,8 +871,8 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-
-        TEST_RESULT_VOID(restoreClean(manifest), "data directory is missing");
+        //
+        // TEST_RESULT_VOID(restoreClean(manifest), "data directory is missing");
 
         // Directory with bad permissions/mode
         // -------------------------------------------------------------------------------------------------------------------------
@@ -920,8 +920,7 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("conf"), .mode = 0700);
 
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore");
-
-        harnessLogResult(strPtr(strNewFmt("P00   INFO: remove invalid files/links/paths from '%s/pg'", testPath())));
+        ASSERT(system(strPtr(strNewFmt("rm -rf %s/*", strPtr(pgPath)))) == 0);
 
         // Succeed when all directories empty and ignore recovery.conf
         // -------------------------------------------------------------------------------------------------------------------------
@@ -935,13 +934,10 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore no recovery.conf");
-
-        harnessLogResult(strPtr(strNewFmt("P00   INFO: remove invalid files/links/paths from '%s/pg'", testPath())));
+        ASSERT(system(strPtr(strNewFmt("rm -rf %s/*", strPtr(pgPath)))) == 0);
 
         storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore ignore recovery.conf");
-
-        harnessLogResult(strPtr(strNewFmt("P00   INFO: remove invalid files/links/paths from '%s/pg'", testPath())));
 
         // Delta restore allowed
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1062,7 +1058,7 @@ testRun(void)
                     "P00   INFO: restore backup set 20161219-212741F\n"
                     "P00 DETAIL: check '%s/pg' exists\n"
                     "P00 DETAIL: update mode for '%s/pg' to 0700\n"
-                    "P00 DETAIL: update ownership for '%s/pg/global'",
+                    "P00 DETAIL: create path '%s/pg/global'",
                     testPath(), testPath(), testPath())));
 
         storageRemoveNP(storagePgWrite(), MANIFEST_FILE_STR);   // !!! TEMPORARY

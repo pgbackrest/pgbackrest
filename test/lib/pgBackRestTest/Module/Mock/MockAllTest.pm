@@ -1347,15 +1347,8 @@ sub run
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
         $oHostDbMaster->restore(
-            'no tablespace remap - error when tablespace dir does not exist', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, iExpectedExitStatus => ERROR_PATH_MISSING,
-                bTablespace => false, strOptionalParam => '--tablespace-map-all=../../tablespace'});
-
-        storageTest()->pathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace', {strMode => '0700'});
-
-        $oHostDbMaster->restore(
             'no tablespace remap', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-            {rhExpectedManifest => \%oManifest, bTablespace => false,
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bTablespace => false,
                 strOptionalParam => '--tablespace-map-all=../../tablespace'});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';
