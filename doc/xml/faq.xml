@@ -88,6 +88,14 @@ process-max=1
         <p>If you really need a backup, the solution is to have more standbys or remove <br-option>backup-standby</br-option>. This can be overridden on the command line with <br-option>--no-backup-standby</br-option>, so there is no need to reconfigure for a one-off backup.</p>
     </section>
 
+    <section id="standby-repo">
+        <title>Should I setup my repository on a standby host?</title>
+
+        <p>No. When primary and standby databases are configured, the <backrest/> configuration files should be symmetric in order to seamlessly handle failovers. If they are not, the configurations will need to be changed on failover or further problems may result.</p>
+
+        <p>See the <link url="user-guide.html#repo-host">Dedicated Repository Host</link> section of the <proper>User Guide</proper> for more information.</p>
+    </section>
+
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 
