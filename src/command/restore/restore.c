@@ -513,7 +513,7 @@ restoreCleanOwnership(
         LOG_DETAIL("update ownership for '%s'", strPtr(pgPath));
 
         THROW_ON_SYS_ERROR_FMT(
-            chown(strPtr(pgPath), expectedUserId, expectedGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
+            lchown(strPtr(pgPath), expectedUserId, expectedGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
             strPtr(pgPath));
     }
 
@@ -600,7 +600,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             else
             {
                 LOG_DETAIL("remove invalid file '%s'", strPtr(pgPath));
-                storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+                storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
             }
 
             break;
@@ -615,7 +615,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
                 if (!strEq(manifestLink->destination, info->linkDestination))
                 {
                     LOG_DETAIL("remove link '%s' because destination changed", strPtr(pgPath));
-                    storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+                    storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
                 }
                 else
                     restoreCleanOwnership(pgPath, manifestLink->user, manifestLink->group, info);
@@ -623,7 +623,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             else
             {
                 LOG_DETAIL("remove invalid link '%s'", strPtr(pgPath));
-                storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+                storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
             }
 
             break;
@@ -650,14 +650,14 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
                     cleanDataSub.basePath = false;
 
                     storageInfoListP(
-                        storagePgWrite(), cleanDataSub.targetPath, restoreCleanInfoListCallback, &cleanDataSub,
+                        storageLocalWrite(), cleanDataSub.targetPath, restoreCleanInfoListCallback, &cleanDataSub,
                         .errorOnMissing = true, .sortOrder = sortOrderAsc);
                 }
             }
             else
             {
                 LOG_DETAIL("remove invalid path '%s'", strPtr(pgPath));
-                storagePathRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true, .recurse = true);
+                storagePathRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true, .recurse = true);
             }
 
             break;
@@ -666,7 +666,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         // Special file types cannot exist in the manifest so just delete them
         case storageTypeSpecial:
         {
-            storageRemoveP(storagePgWrite(), pgPath, .errorOnMissing = true);
+            storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
             break;
         }
     }
@@ -785,13 +785,25 @@ restoreClean(Manifest *manifest)
             // previously cleaned target since the base target is always a path.
             if (cleanData->target->type == manifestTargetTypeLink)
             {
-                const String *link = manifestPgPath(cleanData->target->name);
-                const String *linkDestination = cleanData->target->file == NULL ?
-                    cleanData->target->path : strNewFmt("%s/%s", strPtr(cleanData->target->path), strPtr(cleanData->target->file));
+                const ManifestLink *link = manifestLinkFind(
+                    manifest,
+                    cleanData->target->tablespaceId == 0 ?
+                        cleanData->target->name : strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(cleanData->target->name)));
 
-                THROW_ON_SYS_ERROR_FMT(
-                    symlink(strPtr(linkDestination), strPtr(link)) == 1, FileOpenError,
-                    "unable to create symlink '%s' to '%s'", strPtr(link), strPtr(linkDestination));
+                const String *pgPath = storagePathNP(storagePg(), manifestPgPath(link->name));
+                StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
+
+                // Create the link if it is missing.  If it exists it should already have the correct ownership and destination from
+                // a previous clean iteration.
+                if (!linkInfo.exists)
+                {
+                    LOG_DETAIL("create link '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
+
+                    THROW_ON_SYS_ERROR_FMT(
+                        symlink(strPtr(link->destination), strPtr(pgPath)) == -1, FileOpenError,
+                        "unable to create symlink '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
+                    restoreCleanOwnership(pgPath, link->user, link->group, &linkInfo);
+                }
             }
 
             // Only clean if the target exists and is not a file link.  It doesn't matter whether the file exists or not since we
@@ -805,24 +817,49 @@ restoreClean(Manifest *manifest)
 
                 // Clean the target
                 storageInfoListP(
-                    storagePgWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true,
+                    storageLocalWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true,
                     .sortOrder = sortOrderAsc);
             }
-        }
 
-        // Create missing paths
-        // -------------------------------------------------------------------------------------------------------------------------
-        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
-        {
-            const ManifestPath *path = manifestPath(manifest, pathIdx);
-            const String *pgPath = manifestPgPath(path->name);
-            StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
-
-            // Create the path if it is missing
-            if (!pathInfo.exists)
+            // Create missing paths
+            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
             {
-                storagePathCreateP(storagePgWrite(), pgPath, .mode = path->mode, .noParentCreate = true, .errorOnExists = true);
-                restoreCleanOwnership(storagePathNP(storagePg(), pgPath), path->user, path->group, &pathInfo);
+                const ManifestPath *path = manifestPath(manifest, pathIdx);
+
+                // Skip the pg_tblspc path
+                if (strEqZ(path->name, MANIFEST_TARGET_PGTBLSPC))
+                    continue;
+
+                // Find the target that this path lives in
+                const ManifestTarget *pathTarget = NULL;
+
+                for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+                {
+                    const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+
+                    // LOG_WARN("check path '%s' in '%s'", strPtr(path->name), strPtr(target->name));
+
+                    if (strEq(path->name, target->name) || strBeginsWith(path->name, strNewFmt("%s/", strPtr(target->name))))
+                        pathTarget = target;
+                }
+
+                ASSERT(pathTarget != NULL);
+
+                if (strEq(pathTarget->name, cleanData->target->name))
+                {
+                    const String *pgPath = manifestPgPath(path->name);
+                    StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
+
+                    // Create the path if it is missing
+                    if (!pathInfo.exists)
+                    {
+                        LOG_DETAIL("create path '%s'", strPtr(pgPath));
+
+                        storagePathCreateP(
+                            storagePgWrite(), pgPath, .mode = path->mode /*!!!, .noParentCreate = true, .errorOnExists = true*/);
+                        restoreCleanOwnership(storagePathNP(storagePg(), pgPath), path->user, path->group, &pathInfo);
+                    }
+                }
             }
         }
     }

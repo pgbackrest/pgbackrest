@@ -970,7 +970,7 @@ testRun(void)
         const String *repoPath = strNewFmt("%s/repo", testPath());
 
         // Set log level to detail
-        // !!! harnessLogLevelSet(logLevelDetail);
+        harnessLogLevelSet(logLevelDetail);
 
         // Locality error
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1048,11 +1048,22 @@ testRun(void)
                 storageNewWriteNP(storageRepoWrite(),
                 strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_FILE))));
 
+        #undef TEST_LABEL
+        #undef TEST_PGDATA
+        #undef TEST_REPO_PATH
+
         // Full Restore
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
-        harnessLogResult("P00   INFO: restore backup set 20161219-212741F");
+        harnessLogResult(
+            strPtr(
+                strNewFmt(
+                    "P00   INFO: restore backup set 20161219-212741F\n"
+                    "P00 DETAIL: check '%s/pg' exists\n"
+                    "P00 DETAIL: update mode for '%s/pg' to 0700\n"
+                    "P00 DETAIL: update ownership for '%s/pg/global'",
+                    testPath(), testPath(), testPath())));
 
         storageRemoveNP(storagePgWrite(), MANIFEST_FILE_STR);   // !!! TEMPORARY
         testRestoreCompare(
@@ -1060,7 +1071,7 @@ testRun(void)
             ". {path}\n"
             "global {path}");
 
-        // Incremental Delta Restore
+        // Prepare manifest and backup directory for incremental delta restore
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -1071,16 +1082,57 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        storagePut(storageNewWriteNP(storagePgWrite(), PG_FILE_PGVERSION_STR), NULL);   // !!! TEMPORARY
+        #define TEST_LABEL                                          "20161219-212741F_20161219-212918I"
+        #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
+        #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
 
-        // Write manifest
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-212918I"), PG_VERSION_94, pgPath);
+        MEM_CONTEXT_NEW_BEGIN("Manifest")
+        {
+            manifest = manifestNewInternal();
+            manifest->info = infoNew(NULL);
+            manifest->data.backupLabel = strNew(TEST_LABEL);
+            manifest->data.pgVersion = PG_VERSION_84;
+            manifest->data.backupType = backupTypeFull;
+            manifest->data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
+
+            // Data directory
+            manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath});
+            manifestPathAdd(
+                manifest,
+                &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
+            storagePathCreateNP(storagePgWrite(), NULL);
+
+            // Global directory
+            manifestPathAdd(
+                manifest,
+                &(ManifestPath){
+                    .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL), .mode = 0700, .group = groupName(), .user = userName()});
+
+            // PG_VERSION
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+            storagePutNP(
+                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_94_STR "\n"));
+        }
+        MEM_CONTEXT_NEW_END();
 
         manifestSave(
             manifest,
             storageWriteIo(
                 storageNewWriteNP(storageRepoWrite(),
-                strNew(STORAGE_REPO_BACKUP "/20161219-212741F_20161219-212918I/" MANIFEST_FILE))));
+                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_FILE))));
+
+        // Add a few bogus paths/files/links to be removed in delta
+        storagePathCreateNP(storagePgWrite(), STRDEF("bogus1/bogus2"));
+        storagePathCreateNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/bogus3"));
+
+        // Incremental Delta Restore
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePut(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .modeFile = 0600), NULL);   // !!! TEMPORARY
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
@@ -1088,8 +1140,11 @@ testRun(void)
             strPtr(
                 strNewFmt(
                     "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
-                    "P00   INFO: remove invalid files/links/paths from '%s/pg'",
-                    testPath())));
+                    "P00 DETAIL: check '%s/pg' exists\n"
+                    "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
+                    "P00 DETAIL: remove invalid path '%s/pg/bogus1'\n"
+                    "P00 DETAIL: remove invalid path '%s/pg/global/bogus3'",
+                    testPath(), testPath(), testPath(), testPath())));
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
