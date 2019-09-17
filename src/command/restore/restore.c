@@ -11,6 +11,7 @@ Restore Command
 #include "common/debug.h"
 #include "common/io/bufferWrite.h" // !!! REMOVE WITH MANIFEST TEST CODE
 #include "common/log.h"
+#include "common/regExp.h"
 #include "common/user.h"
 #include "config/config.h"
 #include "info/infoBackup.h"
@@ -900,6 +901,98 @@ restoreClean(Manifest *manifest)
 }
 
 /***********************************************************************************************************************************
+Generate the expression to zero files that are not needed for selective restore
+***********************************************************************************************************************************/
+static RegExp *
+restoreSelectiveExpression(Manifest *manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    RegExp *result = NULL;
+
+    // Continue if db-include is specified
+    if (cfgOptionTest(cfgOptDbInclude))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Generate base expression
+            RegExp *baseRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/[0-9]+/" PG_FILE_PGVERSION));
+
+            // Generate tablespace expression
+            RegExp *tablespaceRegExp = NULL;
+
+            if (pgTablespaceId(manifestData(manifest)->pgVersion) == NULL)
+                tablespaceRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/[0-9]+/" PG_FILE_PGVERSION));
+            else
+            {
+                tablespaceRegExp = regExpNew(
+                    strNewFmt(
+                        "^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION,
+                        strPtr(pgTablespaceId(manifestData(manifest)->pgVersion))));
+            }
+
+            // Generate a list of databases in base and or in a tablespace
+            StringList *dbList = strLstNew();
+
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+            {
+                const ManifestFile *file = manifestFile(manifest, fileIdx);
+
+                if (regExpMatch(baseRegExp, file->name) || regExpMatch(tablespaceRegExp, file->name))
+                    strLstAdd(dbList, strBase(strPath(file->name)));
+            }
+
+            // If no databases where found then this backup is not a valid cluster
+            if (strLstSize(dbList) == 0)
+            {
+                THROW(
+                    FormatError,
+                    "no databases found for selective restore\n"
+                    "HINT: is this a valid cluster?");
+            }
+
+            // Log databases found
+            LOG_DETAIL("databases found for selective restore (%s)", strPtr(strLstJoin(dbList, ",")));
+
+            // # Remove included databases from the list
+            // my $oDbInclude = cfgOption(CFGOPT_DB_INCLUDE);
+            //
+            // for my $strDbKey (sort(keys(%{$oDbInclude})))
+            // {
+            //     # To be included the db must exist - first treat the key as an id and check for a match
+            //     if (!defined($oDbList{$strDbKey}))
+            //     {
+            //         # If the key does not match as an id then check for a name mapping
+            //         my $lDbId = $oManifest->get(MANIFEST_SECTION_DB, $strDbKey, MANIFEST_KEY_DB_ID, false);
+            //
+            //         if (!defined($lDbId) || !defined($oDbList{$lDbId}))
+            //         {
+            //             confess &log(ERROR, "database to include '${strDbKey}' does not exist", ERROR_DB_MISSING);
+            //         }
+            //
+            //         # Set the key to the id if the name mapping was successful
+            //         $strDbKey = $lDbId;
+            //     }
+            //
+            //     # Error if the db is a built-in db
+            //     if ($strDbKey < DB_USER_OBJECT_MINIMUM_ID)
+            //     {
+            //         confess &log(ERROR, "system databases (template0, postgres, etc.) are included by default", ERROR_DB_INVALID);
+            //     }
+            //
+            //     # Otherwise remove from list of DBs to zero
+            //     delete($oDbList{$strDbKey});
+            // }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN(REGEXP, result);
+}
+
+/***********************************************************************************************************************************
 Restore a backup
 ***********************************************************************************************************************************/
 void
@@ -975,6 +1068,10 @@ cmdRestore(void)
 
         // Clean the data directory
         restoreClean(manifest);
+
+        // Generate the selective restore expression
+        RegExp *excludeExp = restoreSelectiveExpression(manifest);
+        (void)excludeExp; // !!! REMOVE
 
         // Save manifest before any modifications are made to PGDATA
         manifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));

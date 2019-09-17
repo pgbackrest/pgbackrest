@@ -22,6 +22,7 @@ Defines for various Postgres paths and files
     STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
 
 #define PG_PATH_ARCHIVE_STATUS                                      "archive_status"
+#define PG_PATH_BASE                                                "base"
 #define PG_PATH_GLOBAL                                              "global"
 #define PG_PATH_PGDYNSHMEM                                          "pg_dynshmem"
 #define PG_PATH_PGNOTIFY                                            "pg_notify"

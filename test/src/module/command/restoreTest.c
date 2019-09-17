@@ -862,7 +862,7 @@ testRun(void)
         const String *repoPath = strNewFmt("%s/repo", testPath());
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
 
-        // Missing data directory
+        // Directory with bad permissions/mode
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -871,11 +871,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-        //
-        // TEST_RESULT_VOID(restoreClean(manifest), "data directory is missing");
 
-        // Directory with bad permissions/mode
-        // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0600);
 
         userLocalData.userId = getuid() + 1;
@@ -938,25 +934,53 @@ testRun(void)
 
         storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore ignore recovery.conf");
+    }
 
-        // Delta restore allowed
+    // *****************************************************************************************************************************
+    if (testBegin("restoreSelectiveExpression()"))
+    {
+        // Set log level to detail
+        harnessLogLevelSet(logLevelDetail);
+
+        // No valid databases
         // -------------------------------------------------------------------------------------------------------------------------
-        // argList = strLstNew();
-        // strLstAddZ(argList, "pgbackrest");
-        // strLstAddZ(argList, "--stanza=test1");
-        // strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
-        // strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
-        // strLstAddZ(argList, "--delta");
-        // strLstAddZ(argList, "--type=preserve");
-        // strLstAddZ(argList, "restore");
-        // harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-        //
-        // storagePathCreateP(storagePgWrite(), STRDEF("global"), .mode = 0700);
-        // storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION)), NULL);
-        // storagePutNP(storageNewWriteNP(storageTest, STRDEF("conf/pg_hba.conf")), NULL);
-        //
-        // TEST_RESULT_VOID(restoreClean(manifest), "delta restore");
-        // harnessLogResult(strPtr(strNewFmt("P00   INFO: remove invalid files/links/paths from '%s/pg'", testPath())));
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAddZ(argList, "--repo1-path=/repo");
+        strLstAddZ(argList, "--pg1-path=/pg");
+        strLstAddZ(argList, "--db-include=test1");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        Manifest *manifest = NULL;
+
+        MEM_CONTEXT_NEW_BEGIN("Manifest")
+        {
+            manifest = manifestNewInternal();
+            manifest->data.pgVersion = PG_VERSION_84;
+
+            manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION)});
+        }
+        MEM_CONTEXT_NEW_END();
+
+        TEST_ERROR(
+            restoreSelectiveExpression(manifest), FormatError,
+            "no databases found for selective restore\n"
+            "HINT: is this a valid cluster?");
+
+        // Valid databases
+        // -------------------------------------------------------------------------------------------------------------------------
+        MEM_CONTEXT_BEGIN(manifest->memContext)
+        {
+            manifestFileAdd(
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/" PG_FILE_PGVERSION)});
+        }
+        MEM_CONTEXT_END();
+
+        TEST_RESULT_VOID(restoreSelectiveExpression(manifest), "valid databases");
+
+        harnessLogResult("P00 DETAIL: databases found for selective restore (1)");
     }
 
     // *****************************************************************************************************************************
