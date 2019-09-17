@@ -389,8 +389,10 @@ Option constants
     STRING_DECLARE(CFGOPT_TEST_POINT_STR);
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
+#define CFGOPT_DRY_RUN                                              "dry-run"
+    STRING_DECLARE(CFGOPT_DRY_RUN_STR);
 
-#define CFG_OPTION_TOTAL                                            168
+#define CFG_OPTION_TOTAL                                            169
 
 /***********************************************************************************************************************************
 Command enum
@@ -592,6 +594,7 @@ typedef enum
     cfgOptTestDelay,
     cfgOptTestPoint,
     cfgOptType,
+    cfgOptDryRun,
 } ConfigOption;
 
 #endif

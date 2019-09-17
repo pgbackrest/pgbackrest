@@ -2270,6 +2270,12 @@ static const struct option optionList[] =
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptType,
     },
+    // dry-run option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+     .name = CFGOPT_DRY_RUN,
+     .val = PARSE_OPTION_FLAG | cfgOptDryRun,
+    },
     // Terminate option list
     {
         .name = NULL
@@ -2449,4 +2455,5 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTargetAction,
     cfgOptTargetExclusive,
     cfgOptTargetTimeline,
+    cfgOptDryRun,
 };

@@ -150,6 +150,7 @@ typedef enum
     cfgDefOptTestDelay,
     cfgDefOptTestPoint,
     cfgDefOptType,
+    cfgDefOptDryRun,
 } ConfigDefineOption;
 
 #endif

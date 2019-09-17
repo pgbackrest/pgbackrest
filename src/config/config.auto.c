@@ -470,7 +470,7 @@ STRING_EXTERN(CFGOPT_TEST_STR,                                      CFGOPT_TEST)
 STRING_EXTERN(CFGOPT_TEST_DELAY_STR,                                CFGOPT_TEST_DELAY);
 STRING_EXTERN(CFGOPT_TEST_POINT_STR,                                CFGOPT_TEST_POINT);
 STRING_EXTERN(CFGOPT_TYPE_STR,                                      CFGOPT_TYPE);
-
+STRING_EXTERN(CFGOPT_DRY_RUN_STR,                                   CFGOPT_DRY_RUN);
 /***********************************************************************************************************************************
 Option data
 ***********************************************************************************************************************************/
@@ -1819,4 +1819,12 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptType)
     )
+
+
+    CONFIG_OPTION
+    (
+     CONFIG_OPTION_NAME(CFGOPT_DRY_RUN)
+     CONFIG_OPTION_INDEX(0)
+     CONFIG_OPTION_DEFINE_ID(cfgDefOptDryRun)
+     )
 )
