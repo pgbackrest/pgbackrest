@@ -43,6 +43,22 @@
 
                         <p>Document the relationship between <br-option>db-timeout</br-option> and <br-option>protocol-timeout</br-option>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add documentation clarifications regarding standby repositories.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add FAQ for time-based Point-in-Time Recovery.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-doc-list>
         </release>
