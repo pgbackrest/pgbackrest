@@ -82,12 +82,14 @@ VARIANT_STRDEF_STATIC(INFO_KEY_REPOSITORY_VAR,                      "repository"
 VARIANT_STRDEF_STATIC(KEY_ARCHIVE_VAR,                              "archive");
 VARIANT_STRDEF_STATIC(KEY_DATABASE_VAR,                             "database");
 VARIANT_STRDEF_STATIC(KEY_DELTA_VAR,                                "delta");
+VARIANT_STRDEF_STATIC(KEY_DESTINATION_VAR,                          "destination");
+VARIANT_STRDEF_STATIC(KEY_NAME_VAR,                                 "name");
+VARIANT_STRDEF_STATIC(KEY_OID_VAR,                                  "oid");
 VARIANT_STRDEF_STATIC(KEY_SIZE_VAR,                                 "size");
 VARIANT_STRDEF_STATIC(KEY_START_VAR,                                "start");
 VARIANT_STRDEF_STATIC(KEY_STOP_VAR,                                 "stop");
 VARIANT_STRDEF_STATIC(STANZA_KEY_BACKUP_VAR,                        "backup");
 VARIANT_STRDEF_STATIC(STANZA_KEY_CIPHER_VAR,                        "cipher");
-VARIANT_STRDEF_STATIC(STANZA_KEY_NAME_VAR,                          "name");
 VARIANT_STRDEF_STATIC(STANZA_KEY_STATUS_VAR,                        "status");
 VARIANT_STRDEF_STATIC(STANZA_KEY_DB_VAR,                            "db");
 VARIANT_STRDEF_STATIC(STATUS_KEY_CODE_VAR,                          "code");
@@ -288,42 +290,72 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
 
         kvAdd(timeInfo, KEY_START_VAR, VARUINT64(backupData.backupTimestampStart));
         kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64(backupData.backupTimestampStop));
-// CSHANG But for json, do we want to get tablespaces and links for ALL the backups?
+
         // If a backup label was specified and this is that label, then get the manifest
         if (backupLabel != NULL && strCmp(backupData.backupLabel, backupLabel) == 0)
         {
             // Load the manifest file
             const Manifest *manifest = manifestLoadFile(
-                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupLabel)), cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                infoPgCipherPass(infoBackupPg(info)));
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupLabel)),
+                cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(info)));
 
-            VariantList *linkList = varLstNew();
-            VariantList *tablespaceList = varLstNew();
+            VariantList *databaseSection = varLstNew();
+
+            for (unsigned int dbIdx = 0; dbIdx < lstSize(manifest->dbList); dbIdx++)
+            {
+                ManifestDb *db = lstGet(manifest->dbList, dbIdx);
+
+                if (db->id > db->lastSystemId)
+                {
+                    Variant *database = varNewKv(kvNew());
+                    kvPut(varKv(database), KEY_NAME_VAR, varNewStr((db->name));
+                    kvPut(varKv(tablespace), KEY_OID_VAR, varNewStr(db->id));
+                    varLstAdd(databaseSection, database);
+                }
+            }
+
+            VariantList *linkSection = varLstNew();
+            VariantList *tablespaceSection = varLstNew();
 
             for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
                 const ManifestTarget *target = manifestTarget(manifest, targetIdx);
-// CSHANG Can the pg_data= be of type link??
+                Variant *link = varNewKv(kvNew());
+                Variant *tablespace = varNewKv(kvNew());
+
                 if (target->type == manifestTargetTypeLink)
                 {
                     if (target->tablespaceName != NULL)
-                        varLstAdd(tablespaceList, varNewStr(target->tablespaceName)); // CSHANG Maybe we want the tablespace path here? It includes the name - or is it possible it might not include the name?
+                    {
+                        kvPut(varKv(tablespace), KEY_NAME_VAR, varNewStr(target->tablespaceName));
+                        kvPut(varKv(tablespace), KEY_DESTINATION_VAR, varNewStr(target->path));
+                        kvPut(varKv(tablespace), KEY_OID_VAR, varNewStr(target->tablespaceId));
+                        varLstAdd(tablespaceSection, tablespace);
+                    }
                     else if (target->file != NULL)
-                        varLstAdd(linkList, varNewStr(strNewFmt("%s/%s", strPtr(target->path), strPtr(target->file))));
+                    {
+                        kvPut(varKv(link), KEY_NAME_VAR, varNewStr(target->file)));
+                        kvPut(
+                            varKv(link), KEY_DESTINATION_VAR, varNewStr(strNewFmt("%s/%s", strPtr(target->path),
+                            strPtr(target->file))));
+                        varLstAdd(linkSection, link);
+                    }
                     else
-                        varLstAdd(linkList, varNewStr(target->path));
+                    {
+                        kvPut(varKv(link), KEY_NAME_VAR, varNewStr(manifestPgPath(target->name)));
+                        kvPut(varKv(link), KEY_DESTINATION_VAR, varNewStr(target->path));
+                        varLstAdd(linkSection, link);
+                    }
                 }
             }
 
-            kvPut(varKv(backupInfo), BACKUP_KEY_LINK_VAR, (varLstSize(linkList) > 0 ? varNewVarLst(linkList) : NULL));
-            kvPut(
-                varKv(backupInfo), BACKUP_KEY_TABLESPACE_VAR, (varLstSize(tablespaceList) > 0 ? varNewVarLst(tablespaceList) :
-                NULL));
+            kvPut(varKv(backupInfo), BACKUP_KEY_LINK_VAR, (varLstSize(linkSection) > 0 ? varNewVarLst(linkSection) : NULL));
+            kvPut(varKv(backupInfo), BACKUP_KEY_TABLESPACE_VAR, (varLstSize(tablespaceSection) > 0 ? varNewVarLst(tablespaceSection)
+                : NULL));
         }
 
         varLstAdd(backupSection, backupInfo);
     }
-
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -392,15 +424,14 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
                 errorMessage());
         }
         TRY_END();
-// CSHANG I don't understand why we are not using the cfgOptionStr(cfgOptRepoCipherType) - is this because we could be doing more than one stanza? That makes no sense. if we have to load the infoBackup file with it above, then we should be able to set the cipher type
-        // Set the stanza name and cipher
-        kvPut(varKv(stanzaInfo), STANZA_KEY_NAME_VAR, VARSTR(stanzaListName));
+
+        // Set the stanza name and cipher. Since we may not be going through the cofig parsing system, default the cipher to NONE.
+        kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaListName));
         kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_NONE_STR));
 
         // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
         if (info != NULL)
         {
-// CSHANG We should not need to do anything other than setting the cipherType above from the cfgOptRepoCipherType
             // Determine if encryption is enabled by checking for a cipher passphrase.  This is not ideal since it does not tell us
             // what type of encryption is in use, but to figure that out we need a way to query the (possibly) remote repo to find
             // out.  No such mechanism exists so this will have to do for now.  Probably the easiest thing to do is store the
@@ -454,7 +485,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
     {
         Variant *stanzaInfo = varNewKv(kvNew());
 
-        kvPut(varKv(stanzaInfo), STANZA_KEY_NAME_VAR, VARSTR(stanza));
+        kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanza));
 
         kvPut(varKv(stanzaInfo), STANZA_KEY_DB_VAR, varNewVarLst(varLstNew()));
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(varLstNew()));
@@ -661,12 +692,17 @@ infoRender(void)
         storageRepo();
 
         // If a backup set was specified, see if the manifest exists
-        if (backupLabel != NULL &&
-            !storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupLabel))))
+        if (backupLabel != NULL)
         {
-            THROW_FMT(
-                FileMissingError, "manifest does not exist for backup '%s'\n"
-                "HINT: is the backup listed when running the info command with --stanza option only?", strPtr(backupLabel));
+            if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
+                THROW(ConfigError, "option 'set' is currently only valid for text output");
+
+            if !storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupLabel))))
+            {
+                THROW_FMT(
+                    FileMissingError, "manifest does not exist for backup '%s'\n"
+                    "HINT: is the backup listed when running the info command with --stanza option only?", strPtr(backupLabel));
+            }
         }
 
         // Get a list of stanzas in the backup directory.
@@ -694,7 +730,7 @@ infoRender(void)
 
                     // Stanza name and status
                     strCatFmt(
-                        resultStr, "stanza: %s\n    status: ", strPtr(varStr(kvGet(stanzaInfo, STANZA_KEY_NAME_VAR))));
+                        resultStr, "stanza: %s\n    status: ", strPtr(varStr(kvGet(stanzaInfo, KEY_NAME_VAR))));
 
                     // If an error has occurred, provide the information that is available and move onto next stanza
                     KeyValue *stanzaStatus = varKv(kvGet(stanzaInfo, STANZA_KEY_STATUS_VAR));

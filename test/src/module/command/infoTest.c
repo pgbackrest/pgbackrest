@@ -780,6 +780,7 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152152I/" MANIFEST_FILE)), contentLoad), "write manifest");
 
         TEST_RESULT_STR(strPtr(infoRender()),
+
             "stanza: stanza1\n"
             "    status: ok\n"
             "    cipher: none\n"
@@ -793,8 +794,14 @@ testRun(void)
             "            database size: 19.2MB, backup size: 8.2KB\n"
             "            repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
-            "            link list: ../pg_config/pg_hba.conf, ../pg_stat\n"
-            "            tablespace list: ts1\n"
+            "            database list: mail (OID), test (OID), test2 (OID)"
+            "            symlinks: "
+            "                pg_hba.conf => ../pg_config/pg_hba.conf, "
+            "                pg_stat => ../pg_stat\n"
+            "            tablespaces:  "
+            "                ts1 (OID) => /db-master/db/tablespace/ts1\n"
+
+
             , "text - backup set requested");
 
         strLstAddZ(argList2, "--output=json");
