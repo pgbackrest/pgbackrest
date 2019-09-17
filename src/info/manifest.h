@@ -146,10 +146,19 @@ Functions
 void manifestSave(Manifest *this, IoWrite *write);
 
 /***********************************************************************************************************************************
+Db functions and getters/setters
+***********************************************************************************************************************************/
+const ManifestDb *manifestDb(const Manifest *this, unsigned int dbIdx);
+const ManifestDb *manifestDbFind(const Manifest *this, const String *name);
+const ManifestDb *manifestDbFindDefault(const Manifest *this, const String *name, const ManifestDb *dbDefault);
+unsigned int manifestDbTotal(const Manifest *this);
+
+/***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestFile *manifestFile(const Manifest *this, unsigned int fileIdx);
 const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
+const ManifestFile *manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault);
 unsigned int manifestFileTotal(const Manifest *this);
 
 /***********************************************************************************************************************************
@@ -157,7 +166,7 @@ Link functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestLink *manifestLink(const Manifest *this, unsigned int linkIdx);
 const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
-// const ManifestLink *manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault);
+const ManifestLink *manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault);
 void manifestLinkRemove(const Manifest *this, const String *name);
 unsigned int manifestLinkTotal(const Manifest *this);
 void manifestLinkUpdate(const Manifest *this, const String *name, const String *path);
@@ -167,6 +176,7 @@ Path functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestPath *manifestPath(const Manifest *this, unsigned int pathIdx);
 const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
+const ManifestPath *manifestPathFindDefault(const Manifest *this, const String *name, const ManifestPath *pathDefault);
 unsigned int manifestPathTotal(const Manifest *this);
 
 /***********************************************************************************************************************************
@@ -174,7 +184,6 @@ Target functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestTarget *manifestTarget(const Manifest *this, unsigned int targetIdx);
 const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
-// const ManifestTarget *manifestTargetFindDefault(const Manifest *this, const String *name, const ManifestTarget *targetDefault);
 void manifestTargetRemove(const Manifest *this, const String *name);
 unsigned int manifestTargetTotal(const Manifest *this);
 void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
@@ -198,10 +207,20 @@ Macros for function logging
 #define FUNCTION_LOG_MANIFEST_FORMAT(value, buffer, bufferSize)                                                                    \
     objToLog(value, "Manifest", buffer, bufferSize)
 
+#define FUNCTION_LOG_MANIFEST_DB_TYPE                                                                                              \
+    ManifestDb *
+#define FUNCTION_LOG_MANIFEST_DB_FORMAT(value, buffer, bufferSize)                                                                 \
+    objToLog(value, "ManifestDb", buffer, bufferSize)
+
 #define FUNCTION_LOG_MANIFEST_FILE_TYPE                                                                                            \
     ManifestFile *
 #define FUNCTION_LOG_MANIFEST_FILE_FORMAT(value, buffer, bufferSize)                                                               \
     objToLog(value, "ManifestFile", buffer, bufferSize)
+
+#define FUNCTION_LOG_MANIFEST_LINK_TYPE                                                                                            \
+    ManifestLink *
+#define FUNCTION_LOG_MANIFEST_LINK_FORMAT(value, buffer, bufferSize)                                                               \
+    objToLog(value, "ManifestLink", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_PATH_TYPE                                                                                            \
     ManifestPath *
