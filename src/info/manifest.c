@@ -198,11 +198,39 @@ manifestOwnerCache(Manifest *this, const Variant *owner)
 }
 
 static void
+manifestDbAdd(Manifest *this, const ManifestDb *db)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(MANIFEST_DB, db);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(db != NULL);
+    ASSERT(db->name != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->dbList))
+    {
+        ManifestDb dbAdd =
+        {
+            .id = db->id,
+            .lastSystemId = db->lastSystemId,
+            .name = strDup(db->name),
+        };
+
+        lstAdd(this->dbList, &dbAdd);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
 manifestFileAdd(Manifest *this, const ManifestFile *file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(MANIFEST_PATH, file); // !!! FIX TYPE
+        FUNCTION_TEST_PARAM(MANIFEST_PATH, file); // !!! FIX THIS
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -262,7 +290,7 @@ manifestLinkAdd(Manifest *this, const ManifestLink *link)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(MANIFEST_PATH, link);
+        FUNCTION_TEST_PARAM(MANIFEST_LINK, link);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -660,7 +688,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 .lastSystemId = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR)),
             };
 
-            lstAdd(manifest->dbList, &db);
+            manifestDbAdd(manifest, &db);
         }
         MEM_CONTEXT_END();
     }
@@ -1067,9 +1095,9 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            for (unsigned int dbIdx = 0; dbIdx < lstSize(manifest->dbList); dbIdx++)
+            for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(manifest); dbIdx++)
             {
-                ManifestDb *db = lstGet(manifest->dbList, dbIdx);
+                const ManifestDb *db = manifestDb(manifest, dbIdx);
                 KeyValue *dbKv = kvNew();
 
                 kvPut(dbKv, MANIFEST_KEY_DB_ID_VAR, VARUINT(db->id));
@@ -1366,6 +1394,71 @@ manifestData(const Manifest *this)
 }
 
 /***********************************************************************************************************************************
+Db functions and getters/setters
+***********************************************************************************************************************************/
+const ManifestDb *
+manifestDb(const Manifest *this, unsigned int dbIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(UINT, dbIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstGet(this->dbList, dbIdx));
+}
+
+const ManifestDb *
+manifestDbFind(const Manifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    const ManifestDb *result = lstFind(this->dbList, &name);
+
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to find '%s' in manifest db list", strPtr(name));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+If the database requested is not found in the list, return the Default passed rather than throwing an error.
+***********************************************************************************************************************************/
+const ManifestDb *
+manifestDbFindDefault(const Manifest *this, const String *name, const ManifestDb *dbDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(MANIFEST_DB, dbDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->dbList, &name, (void *)dbDefault));
+}
+
+unsigned int
+manifestDbTotal(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstSize(this->dbList));
+}
+
+/***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestFile *
@@ -1398,6 +1491,24 @@ manifestFileFind(const Manifest *this, const String *name)
         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strPtr(name));
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+If the file requested is not found in the list, return the Default passed rather than throwing an error.
+***********************************************************************************************************************************/
+const ManifestFile *
+manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, fileDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->fileList, &name, (void *)fileDefault));
 }
 
 unsigned int
@@ -1446,21 +1557,24 @@ manifestLinkFind(const Manifest *this, const String *name)
 
     FUNCTION_TEST_RETURN(result);
 }
-//
-// const ManifestLink *
-// manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(MANIFEST, this);
-//         FUNCTION_TEST_PARAM(STRING, name);
-//         FUNCTION_TEST_PARAM(MANIFEST_TARGET, linkDefault);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(name != NULL);
-//
-//     FUNCTION_TEST_RETURN(lstFindDefault(this->linkList, &name, (void *)linkDefault));
-// }
+
+/***********************************************************************************************************************************
+If the link requested is not found in the list, return the Default passed rather than throwing an error.
+***********************************************************************************************************************************/
+const ManifestLink *
+manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, linkDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->linkList, &name, (void *)linkDefault));
+}
 
 void
 manifestLinkRemove(const Manifest *this, const String *name)
@@ -1551,6 +1665,25 @@ manifestPathFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
+
+/***********************************************************************************************************************************
+If the path requested is not found in the list, return the Default passed rather than throwing an error.
+***********************************************************************************************************************************/
+const ManifestPath *
+manifestPathFindDefault(const Manifest *this, const String *name, const ManifestPath *pathDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, pathDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->pathList, &name, (void *)pathDefault));
+}
+
 unsigned int
 manifestPathTotal(const Manifest *this)
 {
@@ -1597,21 +1730,6 @@ manifestTargetFind(const Manifest *this, const String *name)
 
     FUNCTION_TEST_RETURN(result);
 }
-//
-// const ManifestTarget *
-// manifestTargetFindDefault(const Manifest *this, const String *name, const ManifestTarget *targetDefault)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(MANIFEST, this);
-//         FUNCTION_TEST_PARAM(STRING, name);
-//         FUNCTION_TEST_PARAM(MANIFEST_TARGET, targetDefault);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(name != NULL);
-//
-//     FUNCTION_TEST_RETURN(lstFindDefault(this->targetList, &name, (void *)targetDefault));
-// }
 
 void
 manifestTargetRemove(const Manifest *this, const String *name)
