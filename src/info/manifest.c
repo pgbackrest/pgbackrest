@@ -1428,13 +1428,16 @@ manifestDbFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
+/***********************************************************************************************************************************
+If the database requested is not found in the list, return the Default passed rather than throwing an error.
+***********************************************************************************************************************************/
 const ManifestDb *
 manifestDbFindDefault(const Manifest *this, const String *name, const ManifestDb *dbDefault)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
         FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(MANIFEST_TARGET, dbDefault);
+        FUNCTION_TEST_PARAM(MANIFEST_DB, dbDefault);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -1490,6 +1493,9 @@ manifestFileFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
+/***********************************************************************************************************************************
+If the file requested is not found in the list, return the Default passed rather than throwing an error.
+***********************************************************************************************************************************/
 const ManifestFile *
 manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault)
 {
@@ -1552,6 +1558,9 @@ manifestLinkFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
+/***********************************************************************************************************************************
+If the link requested is not found in the list, return the Default passed rather than throwing an error.
+***********************************************************************************************************************************/
 const ManifestLink *
 manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
 {
@@ -1656,6 +1665,10 @@ manifestPathFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
+
+/***********************************************************************************************************************************
+If the path requested is not found in the list, return the Default passed rather than throwing an error.
+***********************************************************************************************************************************/
 const ManifestPath *
 manifestPathFindDefault(const Manifest *this, const String *name, const ManifestPath *pathDefault)
 {
