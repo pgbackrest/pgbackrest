@@ -17,15 +17,21 @@ typedef struct ProtocolParallel ProtocolParallel;
 #include "protocol/parallelJob.h"
 
 /***********************************************************************************************************************************
+Job add callback
+
+Called whenever a new job is required for processing.  If no more jobs are available then NULL is returned.
+***********************************************************************************************************************************/
+typedef ProtocolParallelJob *ParallelJobCallback(void *data, unsigned int clientIdx);
+
+/***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-ProtocolParallel *protocolParallelNew(TimeMSec timeout);
+ProtocolParallel *protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 void protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client);
-void protocolParallelJobAdd(ProtocolParallel *this, ProtocolParallelJob *job);
 unsigned int protocolParallelProcess(ProtocolParallel *this);
 
 /***********************************************************************************************************************************
