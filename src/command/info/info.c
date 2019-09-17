@@ -67,6 +67,7 @@ VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_DATABASE_REF_VAR,                  "database-ref");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_INFO_VAR,                          "info");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LABEL_VAR,                         "label");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LINK_VAR,                          "link");
@@ -299,24 +300,29 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
                 storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupLabel)),
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(info)));
 
+            // Get the list of databases in this backup
             VariantList *databaseSection = varLstNew();
-
-            for (unsigned int dbIdx = 0; dbIdx < lstSize(manifest->dbList); dbIdx++)
+            for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(manifest); dbIdx++)
             {
-                ManifestDb *db = lstGet(manifest->dbList, dbIdx);
-
+                const ManifestDb *db = manifestDb(manifest, dbIdx);
+// CSHANG Is it possible that there will not be at least one DB that satisfies this condition?
                 if (db->id > db->lastSystemId)
                 {
                     Variant *database = varNewKv(kvNew());
-                    kvPut(varKv(database), KEY_NAME_VAR, varNewStr((db->name));
-                    kvPut(varKv(tablespace), KEY_OID_VAR, varNewStr(db->id));
+                    kvPut(varKv(database), KEY_NAME_VAR, VARSTR(db->name));
+// CSHANG are OIDs VARUINT or VARUINT64?
+                    kvPut(varKv(database), KEY_OID_VAR, VARUINT(db->id));
                     varLstAdd(databaseSection, database);
                 }
             }
 
+            kvPut(
+                varKv(backupInfo), BACKUP_KEY_DATABASE_REF_VAR, (varLstSize(databaseSection) > 0 ? varNewVarLst(databaseSection) :
+                 NULL));
+
+            // Get symlinks and tablespaces
             VariantList *linkSection = varLstNew();
             VariantList *tablespaceSection = varLstNew();
-
             for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
                 const ManifestTarget *target = manifestTarget(manifest, targetIdx);
@@ -327,14 +333,15 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
                 {
                     if (target->tablespaceName != NULL)
                     {
-                        kvPut(varKv(tablespace), KEY_NAME_VAR, varNewStr(target->tablespaceName));
-                        kvPut(varKv(tablespace), KEY_DESTINATION_VAR, varNewStr(target->path));
-                        kvPut(varKv(tablespace), KEY_OID_VAR, varNewStr(target->tablespaceId));
+                        kvPut(varKv(tablespace), KEY_NAME_VAR, VARSTR(target->tablespaceName));
+                        kvPut(varKv(tablespace), KEY_DESTINATION_VAR, VARSTR(target->path));
+// CSHANG are OIDs VARUINT or VARUINT64?
+                        kvPut(varKv(tablespace), KEY_OID_VAR, VARUINT(target->tablespaceId));
                         varLstAdd(tablespaceSection, tablespace);
                     }
                     else if (target->file != NULL)
                     {
-                        kvPut(varKv(link), KEY_NAME_VAR, varNewStr(target->file)));
+                        kvPut(varKv(link), KEY_NAME_VAR, varNewStr(target->file));
                         kvPut(
                             varKv(link), KEY_DESTINATION_VAR, varNewStr(strNewFmt("%s/%s", strPtr(target->path),
                             strPtr(target->file))));
@@ -342,8 +349,8 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
                     }
                     else
                     {
-                        kvPut(varKv(link), KEY_NAME_VAR, varNewStr(manifestPgPath(target->name)));
-                        kvPut(varKv(link), KEY_DESTINATION_VAR, varNewStr(target->path));
+                        kvPut(varKv(link), KEY_NAME_VAR, VARSTR(manifestPgPath(target->name)));
+                        kvPut(varKv(link), KEY_DESTINATION_VAR, VARSTR(target->path));
                         varLstAdd(linkSection, link);
                     }
                 }
@@ -640,16 +647,56 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                     strCatFmt(backupResult, "            backup reference list: %s\n", strPtr(strLstJoin(referenceList, ", ")));
                 }
 
+                if (kvGet(backupInfo, BACKUP_KEY_DATABASE_REF_VAR) != NULL)
+                {
+                    VariantList *dbSection = kvGetList(backupInfo, BACKUP_KEY_DATABASE_REF_VAR);
+                    strCat(backupResult, "            database list:");
+                    for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
+                    {
+                        KeyValue *db = varKv(varLstGet(dbSection, dbIdx));
+                        strCatFmt(
+                            backupResult, " %s (%s)", strPtr(varStr(kvGet(db, KEY_NAME_VAR))),
+                            strPtr(varStrForce(kvGet(db, KEY_OID_VAR))));
+
+                        if (dbIdx != varLstSize(dbSection) - 1)
+                            strCat(backupResult, ",");
+                    }
+                    strCat(backupResult, "\n");
+                }
+
                 if (kvGet(backupInfo, BACKUP_KEY_LINK_VAR) != NULL)
                 {
-                    StringList *linkList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_LINK_VAR)));
-                    strCatFmt(backupResult, "            link list: %s\n", strPtr(strLstJoin(linkList, ", ")));
+                    VariantList *linkSection = kvGetList(backupInfo, BACKUP_KEY_LINK_VAR);
+                    strCat(backupResult, "            symlinks:\n");
+                    for (unsigned int linkIdx = 0; linkIdx < varLstSize(linkSection); linkIdx++)
+                    {
+                        KeyValue *link = varKv(varLstGet(linkSection, linkIdx));
+                        strCatFmt(
+                            backupResult, "                %s => %s", strPtr(varStr(kvGet(link, KEY_NAME_VAR))),
+                            strPtr(varStr(kvGet(link, KEY_DESTINATION_VAR))));
+
+                        if (linkIdx != varLstSize(linkSection) - 1)
+                            strCat(backupResult, ",\n");
+                    }
+                    strCat(backupResult, "\n");
                 }
 
                 if (kvGet(backupInfo, BACKUP_KEY_TABLESPACE_VAR) != NULL)
                 {
-                    StringList *tablespaceList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_TABLESPACE_VAR)));
-                    strCatFmt(backupResult, "            tablespace list: %s\n", strPtr(strLstJoin(tablespaceList, ", ")));
+                    VariantList *tablespaceSection = kvGetList(backupInfo, BACKUP_KEY_TABLESPACE_VAR);
+                    strCat(backupResult, "            tablespaces:\n");
+                    for (unsigned int tblIdx = 0; tblIdx < varLstSize(tablespaceSection); tblIdx++)
+                    {
+                        KeyValue *tablespace = varKv(varLstGet(tablespaceSection, tblIdx));
+                        strCatFmt(
+                            backupResult, "                %s (%s) => %s", strPtr(varStr(kvGet(tablespace, KEY_NAME_VAR))),
+                            strPtr(varStrForce(kvGet(tablespace, KEY_OID_VAR))),
+                            strPtr(varStr(kvGet(tablespace, KEY_DESTINATION_VAR))));
+
+                        if (tblIdx != varLstSize(tablespaceSection) - 1)
+                            strCat(backupResult, ",\n");
+                    }
+                    strCat(backupResult, "\n");
                 }
             }
         }
@@ -697,7 +744,7 @@ infoRender(void)
             if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
                 THROW(ConfigError, "option 'set' is currently only valid for text output");
 
-            if !storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupLabel))))
+            if (!storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupLabel))))
             {
                 THROW_FMT(
                     FileMissingError, "manifest does not exist for backup '%s'\n"
