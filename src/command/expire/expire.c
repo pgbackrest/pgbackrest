@@ -59,12 +59,15 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
-    storageRemoveNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(removeBackupLabel)));
-    storageRemoveNP(
-        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
+    if ( ! cfgOptionBool(cfgOptDryRun) ){
+      storageRemoveNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(removeBackupLabel)));
+      storageRemoveNP(
+                      storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
 
-    // Remove the backup from the info file
-    infoBackupDataDelete(infoBackup, removeBackupLabel);
+
+      // Remove the backup from the info file
+      infoBackupDataDelete(infoBackup, removeBackupLabel);
+    }
 
     if (strSize(backupExpired) == 0)
         strCat(backupExpired, strPtr(removeBackupLabel));
@@ -650,3 +653,4 @@ cmdExpire(void)
 
     FUNCTION_LOG_RETURN_VOID();
 }
+
