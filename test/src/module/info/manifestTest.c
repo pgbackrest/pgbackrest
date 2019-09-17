@@ -222,10 +222,35 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
 
+        // ManifestFile getters
+        const ManifestFile *file = NULL;
         TEST_ERROR(
             manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
-        TEST_RESULT_STR_Z(manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION"))->name, "pg_data/PG_VERSION", "find file");
+        TEST_ASSIGN(file, manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION")), "manifestFileFind()");
+        TEST_RESULT_STR_Z(file->name, "pg_data/PG_VERSION", "    find file");
+        TEST_RESULT_STR_Z(
+            manifestFileFindDefault(manifest, STRDEF("bogus"), file)->name, "pg_data/PG_VERSION",
+            "manifestFileFindDefault() - return default");
+        TEST_RESULT_STR_Z(
+            manifestFileFindDefault(manifest, STRDEF("pg_data/special"), file)->name, "pg_data/special",
+            "manifestFileFindDefault() - return found");
+        TEST_ASSIGN(file, manifestFileFindDefault(manifest, STRDEF("bogus"), NULL), "manifestFileFindDefault()");
+        TEST_RESULT_PTR(file, NULL, "    return default NULL");
 
+        // ManifestDb getters
+        const ManifestDb *db = NULL;
+        TEST_ERROR(
+            manifestDbFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest db list");
+        TEST_ASSIGN(db, manifestDbFind(manifest, STRDEF("postgres")), "manifestDbFind()");
+        TEST_RESULT_STR_Z(db->name, "postgres", "    check name");
+        TEST_RESULT_STR_Z(
+            manifestDbFindDefault(manifest, STRDEF("bogus"), db)->name, "postgres", "manifestDbFindDefault() - return default");
+        TEST_RESULT_UINT(
+            manifestDbFindDefault(manifest, STRDEF("template0"), db)->id, 12168, "manifestDbFindDefault() - return found");
+        TEST_ASSIGN(db, manifestDbFindDefault(manifest, STRDEF("bogus"), NULL), "manifestDbFindDefault()");
+        TEST_RESULT_PTR(db, NULL, "    return default NULL");
+
+        // ManifestLink getters
         const ManifestLink *link = NULL;
         TEST_ERROR(
             manifestLinkFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest link list");
@@ -235,10 +260,29 @@ testRun(void)
         TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat2")), "    update");
         TEST_RESULT_STR_Z(link->destination, "../pg_stat2", "    check link");
         TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "    fix link destination");
+        TEST_RESULT_STR_Z(
+            manifestLinkFindDefault(manifest, STRDEF("bogus"), link)->name, "pg_data/pg_stat",
+            "manifestLinkFindDefault() - return default");
+        TEST_RESULT_STR_Z(
+            manifestLinkFindDefault(manifest, STRDEF("pg_data/postgresql.conf"), link)->destination, "../pg_config/postgresql.conf",
+            "manifestLinkFindDefault() - return found");
+        TEST_ASSIGN(link, manifestLinkFindDefault(manifest, STRDEF("bogus"), NULL), "manifestLinkFindDefault()");
+        TEST_RESULT_PTR(link, NULL, "    return default NULL");
 
+        // ManifestPath getters
+        const ManifestPath *path = NULL;
         TEST_ERROR(
             manifestPathFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest path list");
-        TEST_RESULT_STR_Z(manifestPathFind(manifest, STRDEF("pg_data"))->name, "pg_data", "find path");
+        TEST_ASSIGN(path, manifestPathFind(manifest, STRDEF("pg_data")), "manifestPathFind()");
+        TEST_RESULT_STR_Z(path->name, "pg_data", "    check path");
+        TEST_RESULT_STR_Z(
+            manifestPathFindDefault(manifest, STRDEF("bogus"), path)->name, "pg_data",
+            "manifestPathFindDefault() - return default");
+        TEST_RESULT_STR_Z(
+            manifestPathFindDefault(manifest, STRDEF("pg_data/base"), path)->group, "group2",
+            "manifestPathFindDefault() - return found");
+        TEST_ASSIGN(path, manifestPathFindDefault(manifest, STRDEF("bogus"), NULL), "manifestPathFindDefault()");
+        TEST_RESULT_PTR(path, NULL, "    return default NULL");
 
         const ManifestTarget *target = NULL;
         TEST_ASSIGN(target, manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf")), "find target");
