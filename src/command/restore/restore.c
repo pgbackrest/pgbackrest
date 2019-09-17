@@ -1034,8 +1034,68 @@ restoreSelectiveExpression(Manifest *manifest)
 }
 
 /***********************************************************************************************************************************
+Generate a list of queues that determine the order of file processing
+***********************************************************************************************************************************/
+static List *
+restoreProcessQueue(Manifest *manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    List *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Create list of process queue
+        result = lstNew(sizeof(List *));
+
+        // Generate the list of processing queues (there is always at least one)
+        StringList *targetList = strLstNew();
+        strLstAdd(targetList, MANIFEST_TARGET_PGDATA_STR);
+
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        {
+            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+
+            if (target->tablespaceId != 0)
+                strLstAdd(targetList, target->name);
+        }
+
+        // Generate the processing queues
+        for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
+        {
+            List *queue = lstNew(sizeof(ManifestFile *));
+            lstAdd(result, &queue);
+        }
+
+        // Now put all files into the processing queues
+        // for (unsigned int fileIdx = 0; fileIdx < manifestTargetTotal(manifest); fileIdx++)
+        // {
+        //     const ManifestFile *file = manifestFile(manifest, fileIdx);
+        //
+        //     for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
+        //     {
+        //         if (
+        //         String *target =
+        //
+        //         const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+        //
+        // }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(LIST, result);
+}
+
+/***********************************************************************************************************************************
 Restore a backup
 ***********************************************************************************************************************************/
+typedef struct RestoreData
+{
+    List *queueList;                                                // List of processing queues
+} RestoreData;
+
 void
 cmdRestore(void)
 {
@@ -1107,16 +1167,19 @@ cmdRestore(void)
         // Update ownership
         restoreManifestOwner(manifest);
 
-        // Clean the data directory
-        restoreClean(manifest);
-
         // Generate the selective restore expression
         String *expression = restoreSelectiveExpression(manifest);
         RegExp *excludeExp = expression == NULL ? NULL : regExpNew(expression);
         (void)excludeExp; // !!! REMOVE
 
+        // Clean the data directory
+        restoreClean(manifest);
+
         // Save manifest before any modifications are made to PGDATA
         manifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));
+
+        // Generate processing queues
+        (void)restoreProcessQueue;
     }
     MEM_CONTEXT_TEMP_END();
 
