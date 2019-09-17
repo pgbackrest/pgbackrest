@@ -1052,14 +1052,14 @@ restoreProcessQueue(Manifest *manifest)
 
         // Generate the list of processing queues (there is always at least one)
         StringList *targetList = strLstNew();
-        strLstAdd(targetList, MANIFEST_TARGET_PGDATA_STR);
+        strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
             const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
             if (target->tablespaceId != 0)
-                strLstAdd(targetList, target->name);
+                strLstAdd(targetList, strNewFmt("%s/", strPtr(target->name)));
         }
 
         // Generate the processing queues
@@ -1070,18 +1070,28 @@ restoreProcessQueue(Manifest *manifest)
         }
 
         // Now put all files into the processing queues
-        // for (unsigned int fileIdx = 0; fileIdx < manifestTargetTotal(manifest); fileIdx++)
-        // {
-        //     const ManifestFile *file = manifestFile(manifest, fileIdx);
-        //
-        //     for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
-        //     {
-        //         if (
-        //         String *target =
-        //
-        //         const ManifestTarget *target = manifestTarget(manifest, targetIdx);
-        //
-        // }
+        for (unsigned int fileIdx = 0; fileIdx < manifestTargetTotal(manifest); fileIdx++)
+        {
+            const ManifestFile *file = manifestFile(manifest, fileIdx);
+
+            // Find the target that contains this file
+            unsigned int targetIdx = 0;
+
+            for (; targetIdx < strLstSize(targetList); targetIdx++)
+            {
+                if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
+                    break;
+            }
+
+            // A target should always be found
+            ASSERT(targetIdx < strLstSize(targetList));
+
+            // Add file to queue
+            lstAdd(lstGet(result, targetIdx), &file);
+        }
+
+        // Sort the queues
+        // !!! for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
     }
     MEM_CONTEXT_TEMP_END();
 
