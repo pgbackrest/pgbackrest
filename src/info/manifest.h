@@ -146,6 +146,14 @@ Functions
 void manifestSave(Manifest *this, IoWrite *write);
 
 /***********************************************************************************************************************************
+Db functions and getters/setters
+***********************************************************************************************************************************/
+const ManifestDb *manifestDb(const Manifest *this, unsigned int dbIdx);
+const ManifestDb *manifestDbFind(const Manifest *this, const String *name);
+const ManifestDb *manifestDbFindDefault(const Manifest *this, const String *name, const ManifestDb *dbDefault);
+unsigned int manifestDbTotal(const Manifest *this);
+
+/***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestFile *manifestFile(const Manifest *this, unsigned int fileIdx);
@@ -199,10 +207,20 @@ Macros for function logging
 #define FUNCTION_LOG_MANIFEST_FORMAT(value, buffer, bufferSize)                                                                    \
     objToLog(value, "Manifest", buffer, bufferSize)
 
+#define FUNCTION_LOG_MANIFEST_DB_TYPE                                                                                              \
+    ManifestDb *
+#define FUNCTION_LOG_MANIFEST_DB_FORMAT(value, buffer, bufferSize)                                                                 \
+    objToLog(value, "ManifestDb", buffer, bufferSize)
+
 #define FUNCTION_LOG_MANIFEST_FILE_TYPE                                                                                            \
     ManifestFile *
 #define FUNCTION_LOG_MANIFEST_FILE_FORMAT(value, buffer, bufferSize)                                                               \
     objToLog(value, "ManifestFile", buffer, bufferSize)
+
+#define FUNCTION_LOG_MANIFEST_LINK_TYPE                                                                                            \
+    ManifestLink *
+#define FUNCTION_LOG_MANIFEST_LINK_FORMAT(value, buffer, bufferSize)                                                               \
+    objToLog(value, "ManifestLink", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_PATH_TYPE                                                                                            \
     ManifestPath *

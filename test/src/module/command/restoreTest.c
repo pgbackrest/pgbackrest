@@ -969,18 +969,76 @@ testRun(void)
             "no databases found for selective restore\n"
             "HINT: is this a valid cluster?");
 
-        // Valid databases
+        // Database id is missing on disk
         // -------------------------------------------------------------------------------------------------------------------------
         MEM_CONTEXT_BEGIN(manifest->memContext)
         {
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("postgres"), .id = 12173, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template0"), .id = 12168, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test1"), .id = 16384, .lastSystemId = 12168});
             manifestFileAdd(
                 manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
-        TEST_RESULT_VOID(restoreSelectiveExpression(manifest), "valid databases");
+        TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include 'test1' does not exist");
 
         harnessLogResult("P00 DETAIL: databases found for selective restore (1)");
+
+        // All databases selected
+        // -------------------------------------------------------------------------------------------------------------------------
+        MEM_CONTEXT_BEGIN(manifest->memContext)
+        {
+            manifestFileAdd(
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16384/" PG_FILE_PGVERSION)});
+        }
+        MEM_CONTEXT_END();
+
+        TEST_RESULT_PTR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
+
+        harnessLogResult(
+            "P00 DETAIL: databases found for selective restore (1, 16384)\n"
+            "P00   INFO: nothing to filter - all user databases have been selected");
+
+        // One database selected without tablespace id
+        // -------------------------------------------------------------------------------------------------------------------------
+        MEM_CONTEXT_BEGIN(manifest->memContext)
+        {
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
+            manifestTargetAdd(
+                manifest, &(ManifestTarget){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/16387"), .tablespaceId = 16387, .tablespaceName = STRDEF("ts1"),
+                    .path = STRDEF("/ts1")});
+            manifestFileAdd(
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
+        }
+        MEM_CONTEXT_END();
+
+        TEST_RESULT_STR_Z(
+            restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/32768/)", "one database selected");
+
+        harnessLogResult("P00 DETAIL: databases found for selective restore (1, 16384, 32768)");
+
+        // One database selected with tablespace id
+        // -------------------------------------------------------------------------------------------------------------------------
+        manifest->data.pgVersion = PG_VERSION_94;
+
+        MEM_CONTEXT_BEGIN(manifest->memContext)
+        {
+            manifestFileAdd(
+                manifest, &(ManifestFile){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/16387/PG_9.4_201409291/65536/" PG_FILE_PGVERSION)});
+        }
+        MEM_CONTEXT_END();
+
+        TEST_RESULT_STR_Z(
+            restoreSelectiveExpression(manifest),
+            "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_9.4_201409291/32768/)|(^pg_data/base/65536/)"
+                "|(^pg_tblspc/16387/PG_9.4_201409291/65536/)",
+            "one database selected");
+
+        harnessLogResult("P00 DETAIL: databases found for selective restore (1, 16384, 32768, 65536)");
     }
 
     // *****************************************************************************************************************************

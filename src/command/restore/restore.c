@@ -37,7 +37,7 @@ restorePathValidate(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // The PGDATA directory must exist
-        // ??? We should remove this require in a separate commit.  What's the harm in creating the dir assuming we have perms?
+        // ??? We should remove this requirement in a separate commit.  What's the harm in creating the dir assuming we have perms?
         if (!storagePathExistsNP(storagePg(), NULL))
             THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strPtr(cfgOptionStr(cfgOptPgPath)));
 
@@ -903,14 +903,14 @@ restoreClean(Manifest *manifest)
 /***********************************************************************************************************************************
 Generate the expression to zero files that are not needed for selective restore
 ***********************************************************************************************************************************/
-static RegExp *
+static String *
 restoreSelectiveExpression(Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
-    RegExp *result = NULL;
+    String *result = NULL;
 
     // Continue if db-include is specified
     if (cfgOptionTest(cfgOptDbInclude))
@@ -922,15 +922,14 @@ restoreSelectiveExpression(Manifest *manifest)
 
             // Generate tablespace expression
             RegExp *tablespaceRegExp = NULL;
+            const String *tablespaceId = pgTablespaceId(manifestData(manifest)->pgVersion);
 
-            if (pgTablespaceId(manifestData(manifest)->pgVersion) == NULL)
+            if (tablespaceId == NULL)
                 tablespaceRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/[0-9]+/" PG_FILE_PGVERSION));
             else
             {
                 tablespaceRegExp = regExpNew(
-                    strNewFmt(
-                        "^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION,
-                        strPtr(pgTablespaceId(manifestData(manifest)->pgVersion))));
+                    strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strPtr(tablespaceId)));
             }
 
             // Generate a list of databases in base and or in a tablespace
@@ -954,42 +953,84 @@ restoreSelectiveExpression(Manifest *manifest)
             }
 
             // Log databases found
-            LOG_DETAIL("databases found for selective restore (%s)", strPtr(strLstJoin(dbList, ",")));
+            LOG_DETAIL("databases found for selective restore (%s)", strPtr(strLstJoin(dbList, ", ")));
 
-            // # Remove included databases from the list
-            // my $oDbInclude = cfgOption(CFGOPT_DB_INCLUDE);
-            //
-            // for my $strDbKey (sort(keys(%{$oDbInclude})))
-            // {
-            //     # To be included the db must exist - first treat the key as an id and check for a match
-            //     if (!defined($oDbList{$strDbKey}))
-            //     {
-            //         # If the key does not match as an id then check for a name mapping
-            //         my $lDbId = $oManifest->get(MANIFEST_SECTION_DB, $strDbKey, MANIFEST_KEY_DB_ID, false);
-            //
-            //         if (!defined($lDbId) || !defined($oDbList{$lDbId}))
-            //         {
-            //             confess &log(ERROR, "database to include '${strDbKey}' does not exist", ERROR_DB_MISSING);
-            //         }
-            //
-            //         # Set the key to the id if the name mapping was successful
-            //         $strDbKey = $lDbId;
-            //     }
-            //
-            //     # Error if the db is a built-in db
-            //     if ($strDbKey < DB_USER_OBJECT_MINIMUM_ID)
-            //     {
-            //         confess &log(ERROR, "system databases (template0, postgres, etc.) are included by default", ERROR_DB_INVALID);
-            //     }
-            //
-            //     # Otherwise remove from list of DBs to zero
-            //     delete($oDbList{$strDbKey});
-            // }
+            // Remove included databases from the list
+            const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
+
+            for (unsigned int includeIdx = 0; includeIdx < strLstSize(includeList); includeIdx++)
+            {
+                const String *includeDb = strLstGet(includeList, includeIdx);
+
+                // If the db to include is not in the list as an id then search by name
+                if (!strLstExists(dbList, includeDb))
+                {
+                    const ManifestDb *db = manifestDbFindDefault(manifest, includeDb, NULL);
+
+                    if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
+                        THROW_FMT(DbMissingError, "database to include '%s' does not exist", strPtr(includeDb));
+
+                    // Set the include db to the id if the name mapping was successful
+                    includeDb = varStrForce(VARUINT(db->id));
+                }
+
+                // Error if the db is a built-in db
+                // if (cvtZToUInt64(strPtr(includeDb)) < PG_USER_OBJECT_MIN_ID)
+                //     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
+
+                // Remove from list of DBs to zero
+                strLstRemove(dbList, includeDb);
+            }
+
+            // Build regular expression to identify files that will be zeroed
+            strLstSort(dbList, sortOrderAsc);
+            String *expression = NULL;
+
+            for (unsigned int dbIdx = 0; dbIdx < strLstSize(dbList); dbIdx++)
+            {
+                const String *db = strLstGet(dbList, dbIdx);
+
+                // Only user created databases can be zeroed, never built-in databases
+                if (cvtZToUInt64(strPtr(db)) >= PG_USER_OBJECT_MIN_ID)
+                {
+                    // Create expression string or add |
+                    if (expression == NULL)
+                        expression = strNew("");
+                    else
+                        strCat(expression, "|");
+
+                    // Filter files in base directory
+                    strCatFmt(expression, "(^" MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/%s/)", strPtr(db));
+
+                    // Filter files in tablespace directories
+                    for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+                    {
+                        const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+
+                        if (target->tablespaceId != 0)
+                        {
+                            if (tablespaceId == NULL)
+                                strCatFmt(expression, "|(^%s/%s/)", strPtr(target->name), strPtr(db));
+                            else
+                                strCatFmt(expression, "|(^%s/%s/%s/)", strPtr(target->name), strPtr(tablespaceId), strPtr(db));
+                        }
+                    }
+                }
+            }
+
+            if (expression == NULL)
+                LOG_INFO("nothing to filter - all user databases have been selected");
+            else
+            {
+                memContextSwitch(MEM_CONTEXT_OLD());
+                result = strDup(expression);
+                memContextSwitch(MEM_CONTEXT_TEMP());
+            }
         }
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN(REGEXP, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -1070,7 +1111,8 @@ cmdRestore(void)
         restoreClean(manifest);
 
         // Generate the selective restore expression
-        RegExp *excludeExp = restoreSelectiveExpression(manifest);
+        String *expression = restoreSelectiveExpression(manifest);
+        RegExp *excludeExp = expression == NULL ? NULL : regExpNew(expression);
         (void)excludeExp; // !!! REMOVE
 
         // Save manifest before any modifications are made to PGDATA

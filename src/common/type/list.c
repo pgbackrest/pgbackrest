@@ -288,7 +288,7 @@ lstRemove(List *this, const void *item)
     ASSERT(this != NULL);
     ASSERT(item != NULL);
 
-    unsigned int listIdx = lstFindIdx(this, item);
+    unsigned int listIdx = lstFindIdx(this, &item);
 
     if (listIdx != LIST_NOT_FOUND)
     {

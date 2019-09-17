@@ -198,11 +198,39 @@ manifestOwnerCache(Manifest *this, const Variant *owner)
 }
 
 static void
+manifestDbAdd(Manifest *this, const ManifestDb *db)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(MANIFEST_DB, db);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(db != NULL);
+    ASSERT(db->name != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->dbList))
+    {
+        ManifestDb dbAdd =
+        {
+            .id = db->id,
+            .lastSystemId = db->lastSystemId,
+            .name = strDup(db->name),
+        };
+
+        lstAdd(this->dbList, &dbAdd);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
 manifestFileAdd(Manifest *this, const ManifestFile *file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(MANIFEST_PATH, file); // !!! FIX TYPE
+        FUNCTION_TEST_PARAM(MANIFEST_PATH, file); // !!! FIX THIS
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -262,7 +290,7 @@ manifestLinkAdd(Manifest *this, const ManifestLink *link)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(MANIFEST_PATH, link);
+        FUNCTION_TEST_PARAM(MANIFEST_LINK, link);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -660,7 +688,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 .lastSystemId = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR)),
             };
 
-            lstAdd(manifest->dbList, &db);
+            manifestDbAdd(manifest, &db);
         }
         MEM_CONTEXT_END();
     }
@@ -1067,9 +1095,9 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            for (unsigned int dbIdx = 0; dbIdx < lstSize(manifest->dbList); dbIdx++)
+            for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(manifest); dbIdx++)
             {
-                ManifestDb *db = lstGet(manifest->dbList, dbIdx);
+                const ManifestDb *db = manifestDb(manifest, dbIdx);
                 KeyValue *dbKv = kvNew();
 
                 kvPut(dbKv, MANIFEST_KEY_DB_ID_VAR, VARUINT(db->id));
@@ -1363,6 +1391,68 @@ manifestData(const Manifest *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(&this->data);
+}
+
+/***********************************************************************************************************************************
+Db functions and getters/setters
+***********************************************************************************************************************************/
+const ManifestDb *
+manifestDb(const Manifest *this, unsigned int dbIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(UINT, dbIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstGet(this->dbList, dbIdx));
+}
+
+const ManifestDb *
+manifestDbFind(const Manifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    const ManifestDb *result = lstFind(this->dbList, &name);
+
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to find '%s' in manifest db list", strPtr(name));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+const ManifestDb *
+manifestDbFindDefault(const Manifest *this, const String *name, const ManifestDb *dbDefault)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, dbDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(lstFindDefault(this->dbList, &name, (void *)dbDefault));
+}
+
+unsigned int
+manifestDbTotal(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(lstSize(this->dbList));
 }
 
 /***********************************************************************************************************************************
