@@ -625,7 +625,7 @@ strLstRemove(StringList *this, const String *item)
     ASSERT(this != NULL);
     ASSERT(item != NULL);
 
-    FUNCTION_TEST_RETURN(lstRemove((List *)this, item));
+    FUNCTION_TEST_RETURN(lstRemove((List *)this, &item));
 }
 
 /***********************************************************************************************************************************
