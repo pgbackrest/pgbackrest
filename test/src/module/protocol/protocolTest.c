@@ -55,6 +55,40 @@ testServerProtocol(const String *command, const VariantList *paramList, Protocol
 }
 
 /***********************************************************************************************************************************
+Test ParallelJobCallback
+***********************************************************************************************************************************/
+typedef struct TestParallelJobCallback
+{
+    List *jobList;                                                  // List of jobs to process
+    unsigned int jobIdx;                                            // Current index in the list to be processed
+    bool clientSeen[2];                                             // Make sure the client idx was seen
+} TestParallelJobCallback;
+
+static ProtocolParallelJob *testParallelJobCallback(void *data, unsigned int clientIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+    FUNCTION_TEST_END();
+
+    TestParallelJobCallback *listData = data;
+
+    // Mark the client idx as seen
+    listData->clientSeen[clientIdx] = true;
+
+    // Get a new job if there are any left
+    if (listData->jobIdx < lstSize(listData->jobList))
+    {
+        ProtocolParallelJob *job = *(ProtocolParallelJob **)lstGet(listData->jobList, listData->jobIdx);
+        listData->jobIdx++;
+
+        FUNCTION_TEST_RETURN(protocolParallelJobMove(job, memContextCurrent()));
+    }
+
+    FUNCTION_TEST_RETURN(NULL);
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -633,8 +667,9 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 // -----------------------------------------------------------------------------------------------------------------
+                TestParallelJobCallback data = {.jobList = lstNew(sizeof(ProtocolParallelJob *))};
                 ProtocolParallel *parallel = NULL;
-                TEST_ASSIGN(parallel, protocolParallelNew(2000), "create parallel");
+                TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
                 TEST_RESULT_STR(
                     strPtr(protocolParallelToLog(parallel)), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
 
@@ -676,18 +711,18 @@ testRun(void)
                 ProtocolCommand *command = protocolCommandNew(strNew("command1"));
                 protocolCommandParamAdd(command, varNewStr(strNew("param1")));
                 protocolCommandParamAdd(command, varNewStr(strNew("param2")));
-                TEST_RESULT_VOID(
-                    protocolParallelJobAdd(parallel, protocolParallelJobNew(varNewStr(strNew("job1")), command)), "add job");
+                ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(strNew("job1")), command);
+                TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNew(strNew("command2"));
                 protocolCommandParamAdd(command, varNewStr(strNew("param1")));
-                TEST_RESULT_VOID(
-                    protocolParallelJobAdd(parallel, protocolParallelJobNew(varNewStr(strNew("job2")), command)), "add job");
+                job = protocolParallelJobNew(varNewStr(strNew("job2")), command);
+                TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNew(strNew("command3"));
                 protocolCommandParamAdd(command, varNewStr(strNew("param1")));
-                TEST_RESULT_VOID(
-                    protocolParallelJobAdd(parallel, protocolParallelJobNew(varNewStr(strNew("job3")), command)), "add job");
+                job = protocolParallelJobNew(varNewStr(strNew("job3")), command);
+                TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 // Process jobs
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");

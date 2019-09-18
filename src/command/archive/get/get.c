@@ -286,6 +286,39 @@ cmdArchiveGet(void)
 /***********************************************************************************************************************************
 Async version of archive get that runs in parallel for performance
 ***********************************************************************************************************************************/
+typedef struct ArchiveGetAsyncData
+{
+    const StringList *walSegmentList;                               // List of wal segments to process
+    unsigned int walSegmentIdx;                                     // Current index in the list to be processed
+} ArchiveGetAsyncData;
+
+static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int clientIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+    FUNCTION_TEST_END();
+
+    // No special logic based on the client, we'll just get the next job
+    (void)clientIdx;
+
+    // Get a new job if there are any left
+    ArchiveGetAsyncData *jobData = data;
+
+    if (jobData->walSegmentIdx < strLstSize(jobData->walSegmentList))
+    {
+        const String *walSegment = strLstGet(jobData->walSegmentList, jobData->walSegmentIdx);
+        jobData->walSegmentIdx++;
+
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
+        protocolCommandParamAdd(command, VARSTR(walSegment));
+
+        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walSegment), command));
+    }
+
+    FUNCTION_TEST_RETURN(NULL);
+}
+
 void
 cmdArchiveGetAsync(void)
 {
@@ -296,33 +329,24 @@ cmdArchiveGetAsync(void)
         TRY_BEGIN()
         {
             // Check the parameters
-            const StringList *walSegmentList = cfgCommandParam();
+            ArchiveGetAsyncData jobData = {.walSegmentList = cfgCommandParam()};
 
-            if (strLstSize(walSegmentList) < 1)
+            if (strLstSize(jobData.walSegmentList) < 1)
                 THROW(ParamInvalidError, "at least one wal segment is required");
 
             LOG_INFO(
-                "get %u WAL file(s) from archive: %s%s", strLstSize(walSegmentList), strPtr(strLstGet(walSegmentList, 0)),
-                strLstSize(walSegmentList) == 1 ?
-                    "" : strPtr(strNewFmt("...%s", strPtr(strLstGet(walSegmentList, strLstSize(walSegmentList) - 1)))));
+                "get %u WAL file(s) from archive: %s%s",
+                strLstSize(jobData.walSegmentList), strPtr(strLstGet(jobData.walSegmentList, 0)),
+                strLstSize(jobData.walSegmentList) == 1 ?
+                    "" :
+                    strPtr(strNewFmt("...%s", strPtr(strLstGet(jobData.walSegmentList, strLstSize(jobData.walSegmentList) - 1)))));
 
             // Create the parallel executor
             ProtocolParallel *parallelExec = protocolParallelNew(
-                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2);
+                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, archiveGetAsyncCallback, &jobData);
 
             for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                 protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));
-
-            // Queue jobs in executor
-            for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
-            {
-                const String *walSegment = strLstGet(walSegmentList, walSegmentIdx);
-
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
-                protocolCommandParamAdd(command, VARSTR(walSegment));
-
-                protocolParallelJobAdd(parallelExec, protocolParallelJobNew(VARSTR(walSegment), command));
-            }
 
             // Process jobs
             do
@@ -362,6 +386,8 @@ cmdArchiveGetAsync(void)
                         archiveAsyncStatusErrorWrite(
                             archiveModeGet, walSegment, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
                     }
+
+                    protocolParallelJobFree(job);
                 }
             }
             while (!protocolParallelDone(parallelExec));
