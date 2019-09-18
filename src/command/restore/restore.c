@@ -1036,6 +1036,28 @@ restoreSelectiveExpression(Manifest *manifest)
 /***********************************************************************************************************************************
 Generate a list of queues that determine the order of file processing
 ***********************************************************************************************************************************/
+// Comparator to order ManifestFile objects by size
+static int
+restoreProcessQueueComparator(const void *item1, const void *item2)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
+    FUNCTION_TEST_END();
+
+    ASSERT(item1 != NULL);
+    ASSERT(item2 != NULL);
+
+    // It would be simpler to return size1 - size2 here but since the sizes are uint64 they might overflow the int even if we cast.
+    // This seems safer at least until we can test out the overflow behaviors.
+    if ((*(ManifestFile **)item1)->size < (*(ManifestFile **)item2)->size)
+        FUNCTION_TEST_RETURN(-1);
+    else if ((*(ManifestFile **)item1)->size > (*(ManifestFile **)item2)->size)
+        FUNCTION_TEST_RETURN(1);
+
+    FUNCTION_TEST_RETURN(0);
+}
+
 static List *
 restoreProcessQueue(Manifest *manifest)
 {
@@ -1065,7 +1087,7 @@ restoreProcessQueue(Manifest *manifest)
         // Generate the processing queues
         for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
         {
-            List *queue = lstNew(sizeof(ManifestFile *));
+            List *queue = lstNewP(sizeof(ManifestFile *), .comparator = restoreProcessQueueComparator);
             lstAdd(result, &queue);
         }
 
@@ -1087,11 +1109,15 @@ restoreProcessQueue(Manifest *manifest)
             ASSERT(targetIdx < strLstSize(targetList));
 
             // Add file to queue
-            lstAdd(lstGet(result, targetIdx), &file);
+            lstAdd(*(List **)lstGet(result, targetIdx), &file);
         }
 
         // Sort the queues
-        // !!! for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
+        for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
+            lstSort(*(List **)lstGet(result, targetIdx), sortOrderDesc);
+
+        // Move process queues to calling context
+        lstMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1185,11 +1211,11 @@ cmdRestore(void)
         // Clean the data directory
         restoreClean(manifest);
 
+        // Generate processing queues
+        restoreProcessQueue(manifest);
+
         // Save manifest before any modifications are made to PGDATA
         manifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));
-
-        // Generate processing queues
-        (void)restoreProcessQueue;
     }
     MEM_CONTEXT_TEMP_END();
 
