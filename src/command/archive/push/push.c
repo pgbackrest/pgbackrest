@@ -447,7 +447,6 @@ cmdArchivePushAsync(void)
         ArchivePushAsyncData jobData =
         {
             .walPath = strLstGet(commandParam, 0),
-            .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             .compress = cfgOptionBool(cfgOptCompress),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
         };
@@ -486,6 +485,9 @@ cmdArchivePushAsync(void)
             {
                 // Get the repo storage in case it is remote and encryption settings need to be pulled down
                 storageRepo();
+
+                // Get cipher type
+                jobData.cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
 
                 // Get archive info
                 jobData.archiveInfo = archivePushCheck(
@@ -529,6 +531,8 @@ cmdArchivePushAsync(void)
                             archiveAsyncStatusErrorWrite(
                                 archiveModePush, walFile, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
                         }
+
+                        protocolParallelJobFree(job);
                     }
                 }
                 while (!protocolParallelDone(parallelExec));

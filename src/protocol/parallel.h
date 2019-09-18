@@ -17,9 +17,10 @@ typedef struct ProtocolParallel ProtocolParallel;
 #include "protocol/parallelJob.h"
 
 /***********************************************************************************************************************************
-Job add callback
+Job request callback
 
-Called whenever a new job is required for processing.  If no more jobs are available then NULL is returned.
+Called whenever a new job is required for processing.  If no more jobs are available then NULL is returned.  Note that NULL must be
+returned to each clientIdx in case job distribution varies by clientIdx.
 ***********************************************************************************************************************************/
 typedef ProtocolParallelJob *ParallelJobCallback(void *data, unsigned int clientIdx);
 

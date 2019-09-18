@@ -386,6 +386,8 @@ cmdArchiveGetAsync(void)
                         archiveAsyncStatusErrorWrite(
                             archiveModeGet, walSegment, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
                     }
+
+                    protocolParallelJobFree(job);
                 }
             }
             while (!protocolParallelDone(parallelExec));
