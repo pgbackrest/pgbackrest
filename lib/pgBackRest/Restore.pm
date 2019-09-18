@@ -307,7 +307,7 @@ sub process
         }
 
         # Log databases found
-        &log(DETAIL, 'databases for include/exclude (' . join(', ', sort(keys(%oDbList))) . ')');
+        # &log(DETAIL, 'databases for include/exclude (' . join(', ', sort(keys(%oDbList))) . ')');
 
         # Remove included databases from the list
         my $oDbInclude = cfgOption(CFGOPT_DB_INCLUDE);
@@ -369,7 +369,7 @@ sub process
         }
 
         # Output the generated filter for debugging
-        &log(DETAIL, "database filter: " . (defined($strDbFilter) ? "${strDbFilter}" : ''));
+        # &log(DETAIL, "database filter: " . (defined($strDbFilter) ? "${strDbFilter}" : ''));
     }
 
     # Initialize the restore process

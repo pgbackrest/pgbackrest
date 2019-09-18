@@ -3716,13 +3716,12 @@ restore delta, remap - selective restore 16384 (db-master host)
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00 DETAIL: databases found for selective restore (1, 16384, 32768)
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'
-P00 DETAIL: databases for include/exclude (1, 16384, 32768)
-P00 DETAIL: database filter: (^pg_data\/base\/32768\/)|(^pg_tblspc/2\/[TS_PATH-1]\/32768\/)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%)
@@ -3759,13 +3758,12 @@ restore delta, remap - selective restore 32768 (db-master host)
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
+P00 DETAIL: databases found for selective restore (1, 16384, 32768)
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'
-P00 DETAIL: databases for include/exclude (1, 16384, 32768)
-P00 DETAIL: database filter: (^pg_data\/base\/16384\/)|(^pg_tblspc/2\/[TS_PATH-1]\/16384\/)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
