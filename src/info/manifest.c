@@ -1473,6 +1473,21 @@ manifestPgPath(const String *manifestPath)
 }
 
 /***********************************************************************************************************************************
+Get the cipher sub-passphrase if any
+***********************************************************************************************************************************/
+const String *
+manifestCipherSubPass(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(infoCipherPass(this->info));
+}
+
+/***********************************************************************************************************************************
 Return manifest configuration and options
 ***********************************************************************************************************************************/
 const ManifestData *

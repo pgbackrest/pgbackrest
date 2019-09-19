@@ -1176,6 +1176,8 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
     // !!! PUT SPECIAL LOGIC HERE
     (void)clientIdx;
 
+    ProtocolParallelJob *result = NULL;
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get a new job if there are any left
@@ -1226,14 +1228,13 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
                 lstRemoveIdx(queue, 0);
 
-                FUNCTION_TEST_RETURN(
-                    protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), MEM_CONTEXT_OLD()));
+                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), MEM_CONTEXT_OLD());
             }
         }
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(result);
 }
 
 void
@@ -1261,15 +1262,17 @@ cmdRestore(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
-        RestoreJobData jobData = {.cipherSubPass = infoPgCipherPass(infoBackupPg(infoBackup))};
-
         // Get the backup set
         const String *backupSet = restoreBackupSet(infoBackup);
 
         // Load manifest
+        RestoreJobData jobData = {0};
+
         jobData.manifest = manifestLoadFile(
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupSet)),
-            cipherType(cfgOptionStr(cfgOptRepoCipherType)), jobData.cipherSubPass);
+            cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+
+        jobData.cipherSubPass = manifestCipherSubPass(jobData.manifest);
 
         // If there are no files in the manifest then something has gone horribly wrong
         CHECK(manifestFileTotal(jobData.manifest) > 0);
@@ -1350,9 +1353,16 @@ cmdRestore(void)
             {
                 ProtocolParallelJob *job = protocolParallelResult(parallelExec);
 
-                sizeRestored = restoreLogFileResult(
-                    manifestFileFind(jobData.manifest, varStr(protocolParallelJobKey(job))), protocolParallelJobProcessId(job),
-                    jobData.zeroExp, sizeTotal, sizeRestored);
+                // The job was successful
+                if (protocolParallelJobErrorCode(job) == 0)
+                {
+                    sizeRestored = restoreLogFileResult(
+                        manifestFileFind(jobData.manifest, varStr(protocolParallelJobKey(job))), protocolParallelJobProcessId(job),
+                        jobData.zeroExp, sizeTotal, sizeRestored);
+                }
+                // Else the job errored
+                else
+                    THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
 
                 protocolParallelJobFree(job);
             }

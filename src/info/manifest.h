@@ -192,6 +192,7 @@ void manifestTargetUpdate(const Manifest *this, const String *name, const String
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+const String *manifestCipherSubPass(const Manifest *this);
 const ManifestData *manifestData(const Manifest *this);
 String *manifestPgPath(const String *manifestPath);
 const ManifestTarget *manifestTargetBase(const Manifest *this);
