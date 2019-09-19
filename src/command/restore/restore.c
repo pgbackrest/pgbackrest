@@ -3,9 +3,11 @@ Restore Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "command/restore/protocol.h"
 #include "command/restore/restore.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
@@ -19,7 +21,9 @@ Restore Command
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
+#include "protocol/parallel.h"
 #include "storage/helper.h"
+#include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
 Recovery type constants
@@ -1058,19 +1062,20 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     FUNCTION_TEST_RETURN(0);
 }
 
-static List *
-restoreProcessQueue(Manifest *manifest)
+static uint64_t
+restoreProcessQueue(Manifest *manifest, List **queueList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM_P(LIST, queueList);
     FUNCTION_LOG_END();
 
-    List *result = NULL;
+    uint64_t result = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create list of process queue
-        result = lstNew(sizeof(List *));
+        *queueList = lstNew(sizeof(List *));
 
         // Generate the list of processing queues (there is always at least one)
         StringList *targetList = strLstNew();
@@ -1085,14 +1090,18 @@ restoreProcessQueue(Manifest *manifest)
         }
 
         // Generate the processing queues
-        for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
+        MEM_CONTEXT_BEGIN(lstMemContext(*queueList))
         {
-            List *queue = lstNewP(sizeof(ManifestFile *), .comparator = restoreProcessQueueComparator);
-            lstAdd(result, &queue);
+            for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
+            {
+                List *queue = lstNewP(sizeof(ManifestFile *), .comparator = restoreProcessQueueComparator);
+                lstAdd(*queueList, &queue);
+            }
         }
+        MEM_CONTEXT_END();
 
         // Now put all files into the processing queues
-        for (unsigned int fileIdx = 0; fileIdx < manifestTargetTotal(manifest); fileIdx++)
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFile *file = manifestFile(manifest, fileIdx);
 
@@ -1109,28 +1118,123 @@ restoreProcessQueue(Manifest *manifest)
             ASSERT(targetIdx < strLstSize(targetList));
 
             // Add file to queue
-            lstAdd(*(List **)lstGet(result, targetIdx), &file);
+            lstAdd(*(List **)lstGet(*queueList, targetIdx), &file);
+
+            // Add size to total
+            result += file->size;
         }
 
         // Sort the queues
         for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
-            lstSort(*(List **)lstGet(result, targetIdx), sortOrderDesc);
+            lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
 
         // Move process queues to calling context
-        lstMove(result, MEM_CONTEXT_OLD());
+        lstMove(*queueList, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(LIST, result);
+    FUNCTION_LOG_RETURN(UINT64, result);
+}
+
+/***********************************************************************************************************************************
+Log the results of the file restore
+***********************************************************************************************************************************/
+static uint64_t
+restoreLogFileResult(const ManifestFile *file, unsigned int processId, RegExp *zeroExp, uint64_t sizeTotal, uint64_t sizeRestored)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST_PATH, file);  // !!! FIX TYPE
+        FUNCTION_LOG_PARAM(UINT, processId);
+        FUNCTION_LOG_PARAM(REGEXP, zeroExp);
+        FUNCTION_LOG_PARAM(UINT64, sizeTotal);
+        FUNCTION_LOG_PARAM(UINT64, sizeRestored);
+    FUNCTION_LOG_END();
+
+    uint64_t result = sizeRestored;
+
+    FUNCTION_LOG_RETURN(UINT64, result);
 }
 
 /***********************************************************************************************************************************
 Restore a backup
 ***********************************************************************************************************************************/
-typedef struct RestoreData
+typedef struct RestoreJobData
 {
+    Manifest *manifest;                                             // Backup manifest
     List *queueList;                                                // List of processing queues
-} RestoreData;
+    RegExp *zeroExp;                                                // Identify files that should be sparse zeroed
+    const String *cipherSubPass;                                    // Passphrase used to decrypt files in the backup
+} RestoreJobData;
+
+static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+    FUNCTION_TEST_END();
+
+    // !!! PUT SPECIAL LOGIC HERE
+    (void)clientIdx;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get a new job if there are any left
+        RestoreJobData *jobData = data;
+
+        // unsigned int posBegin = clientIdx % lstSize(jobData->queueList);
+        // unsigned int posCurrent = posBegin;
+
+        for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
+        {
+            List *queue = *(List **)lstGet(jobData->queueList, queueIdx);
+
+            if (lstSize(queue) > 0)
+            {
+                const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
+                const String *pgFile = manifestPgPath(file->name);
+
+                // Copy pg_control with a temp extension so PostreSQL will not start if the restore does not complete
+                if (strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
+                    pgFile = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(pgFile));
+
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
+
+                protocolCommandParamAdd(command, VARSTR(pgFile));
+                protocolCommandParamAdd(command, VARUINT64(file->size));
+                protocolCommandParamAdd(command, VARUINT64((uint64_t)file->timestamp));
+                protocolCommandParamAdd(command, VARSTRZ(file->checksumSha1));
+
+                if (jobData->zeroExp && regExpMatch(jobData->zeroExp, file->name) &&
+                    !strEndsWith(file->name, STRDEF("/" PG_FILE_PGVERSION)))
+                {
+                    protocolCommandParamAdd(command, BOOL_TRUE_VAR);
+                }
+                else
+                    protocolCommandParamAdd(command, BOOL_FALSE_VAR);
+
+                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptForce)));
+                protocolCommandParamAdd(command, VARSTR(file->name));
+                protocolCommandParamAdd(command, VARSTR(file->reference));
+                protocolCommandParamAdd(command, VARSTR(strNewFmt("%04o", file->mode)));
+                protocolCommandParamAdd(command, VARSTR(file->user));
+                protocolCommandParamAdd(command, VARSTR(file->group));
+                protocolCommandParamAdd(command, VARUINT64((uint64_t)manifestData(jobData->manifest)->backupTimestampCopyStart));
+                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta)));
+                protocolCommandParamAdd(command, VARSTR(manifestData(jobData->manifest)->backupLabel));
+                protocolCommandParamAdd(command, VARBOOL(manifestData(jobData->manifest)->backupOptionCompress));
+                protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
+
+                lstRemoveIdx(queue, 0);
+
+                FUNCTION_TEST_RETURN(
+                    protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), MEM_CONTEXT_OLD()));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(NULL);
+}
 
 void
 cmdRestore(void)
@@ -1157,13 +1261,18 @@ cmdRestore(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
+        RestoreJobData jobData = {.cipherSubPass = infoPgCipherPass(infoBackupPg(infoBackup))};
+
         // Get the backup set
         const String *backupSet = restoreBackupSet(infoBackup);
 
         // Load manifest
-        Manifest *manifest = manifestLoadFile(
+        jobData.manifest = manifestLoadFile(
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupSet)),
-            cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+            cipherType(cfgOptionStr(cfgOptRepoCipherType)), jobData.cipherSubPass);
+
+        // If there are no files in the manifest then something has gone horribly wrong
+        CHECK(manifestFileTotal(jobData.manifest) > 0);
 
         // !!! THIS IS TEMPORARY TO DOUBLE-CHECK THE C MANIFEST CODE.  LOAD THE ORIGINAL MANIFEST AND COMPARE IT TO WHAT WE WOULD
         // SAVE TO DISK IF WE SAVED NOW.  THE LATER SAVE MAY HAVE MADE MODIFICATIONS BASED ON USER INPUT SO WE CAN'T USE THAT.
@@ -1175,7 +1284,7 @@ cmdRestore(void)
                     storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupSet))));
 
             Buffer *manifestTestCBuffer = bufNew(0);
-            manifestSave(manifest, ioBufferWriteNew(manifestTestCBuffer));
+            manifestSave(jobData.manifest, ioBufferWriteNew(manifestTestCBuffer));
 
             if (!bufEq(manifestTestPerlBuffer, manifestTestCBuffer))                                // {uncovered_branch - !!! TEST}
             {
@@ -1192,30 +1301,60 @@ cmdRestore(void)
         }
 
         // Validate the manifest
-        restoreManifestValidate(manifest, backupSet);
+        restoreManifestValidate(jobData.manifest, backupSet);
 
         // Log the backup set to restore
         LOG_INFO("restore backup set %s", strPtr(backupSet));
 
         // Map manifest
-        restoreManifestMap(manifest);
+        restoreManifestMap(jobData.manifest);
 
         // Update ownership
-        restoreManifestOwner(manifest);
+        restoreManifestOwner(jobData.manifest);
 
         // Generate the selective restore expression
-        String *expression = restoreSelectiveExpression(manifest);
-        RegExp *excludeExp = expression == NULL ? NULL : regExpNew(expression);
-        (void)excludeExp; // !!! REMOVE
+        String *expression = restoreSelectiveExpression(jobData.manifest);
+        jobData.zeroExp = expression == NULL ? NULL : regExpNew(expression);
 
         // Clean the data directory
-        restoreClean(manifest);
+        restoreClean(jobData.manifest);
 
         // Generate processing queues
-        restoreProcessQueue(manifest);
+        uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
 
-        // Save manifest before any modifications are made to PGDATA
-        manifestSave(manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));
+        // Save manifest to the data directory so we can restart a delta restore even if the PG_VERSION file is missing
+        manifestSave(jobData.manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));
+
+        // Delete pg_control file.  !!! FIX COMMENT This will be copied from the backup at the very end to prevent a partially restored database
+        // from being started by PostgreSQL.
+        // !!! DO THIS
+
+        // Create the parallel executor
+        ProtocolParallel *parallelExec = protocolParallelNew(
+            (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, restoreJobCallback, &jobData);
+
+        for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
+            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));
+
+        // Process jobs
+        uint64_t sizeRestored = 0;
+
+        do
+        {
+            unsigned int completed = protocolParallelProcess(parallelExec);
+
+            for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+            {
+                ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+
+                sizeRestored = restoreLogFileResult(
+                    manifestFileFind(jobData.manifest, varStr(protocolParallelJobKey(job))), protocolParallelJobProcessId(job),
+                    jobData.zeroExp, sizeTotal, sizeRestored);
+
+                protocolParallelJobFree(job);
+            }
+        }
+        while (!protocolParallelDone(parallelExec));
     }
     MEM_CONTEXT_TEMP_END();
 

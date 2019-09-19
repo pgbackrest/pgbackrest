@@ -1147,6 +1147,7 @@ testRun(void)
         testRestoreCompare(
             storagePg(), NULL, manifest,
             ". {path}\n"
+            "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}");
 
         // Prepare manifest and backup directory for incremental delta restore
