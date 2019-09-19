@@ -290,14 +290,14 @@ sub run
 
         $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CRYPTO,
             "unable to parse '$strTestFileCopy'" .
-            "\nHINT: Is or was the repo encrypted?");
+            "\nHINT: is or was the repo encrypted?");
 
         # Prepend encryption Magic signature to main to simulate encryption
         executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strTestFile . ')" > ' . $strTestFile);
 
         $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CRYPTO,
             "unable to parse '$strTestFile'" .
-            "\nHINT: Is or was the repo encrypted?");
+            "\nHINT: is or was the repo encrypted?");
     }
 
     ################################################################################################################################

@@ -383,6 +383,52 @@ cmdArchivePush(void)
 /***********************************************************************************************************************************
 Async version of archive push that runs in parallel for performance
 ***********************************************************************************************************************************/
+typedef struct ArchivePushAsyncData
+{
+    const String *walPath;                                          // Path to pg_wal/pg_xlog
+    const StringList *walFileList;                                  // List of wal files to process
+    unsigned int walFileIdx;                                        // Current index in the list to be processed
+    CipherType cipherType;                                          // Cipher type
+    bool compress;                                                  // Compress wal files
+    int compressLevel;                                              // Compression level for wal files
+    ArchivePushCheckResult archiveInfo;                             // Archive info
+} ArchivePushAsyncData;
+
+static ProtocolParallelJob *archivePushAsyncCallback(void *data, unsigned int clientIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+    FUNCTION_TEST_END();
+
+    // No special logic based on the client, we'll just get the next job
+    (void)clientIdx;
+
+    // Get a new job if there are any left
+    ArchivePushAsyncData *jobData = data;
+
+    if (jobData->walFileIdx < strLstSize(jobData->walFileList))
+    {
+        const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
+        jobData->walFileIdx++;
+
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
+        protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strPtr(jobData->walPath), strPtr(walFile))));
+        protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.archiveId));
+        protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.pgVersion));
+        protocolCommandParamAdd(command, VARUINT64(jobData->archiveInfo.pgSystemId));
+        protocolCommandParamAdd(command, VARSTR(walFile));
+        protocolCommandParamAdd(command, VARUINT(jobData->cipherType));
+        protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.archiveCipherPass));
+        protocolCommandParamAdd(command, VARBOOL(jobData->compress));
+        protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
+
+        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));
+    }
+
+    FUNCTION_TEST_RETURN(NULL);
+}
+
 void
 cmdArchivePushAsync(void)
 {
@@ -398,7 +444,12 @@ cmdArchivePushAsync(void)
         if (strLstSize(commandParam) != 1)
             THROW(ParamRequiredError, "WAL path to push required");
 
-        const String *walPath = strLstGet(commandParam, 0);
+        ArchivePushAsyncData jobData =
+        {
+            .walPath = strLstGet(commandParam, 0),
+            .compress = cfgOptionBool(cfgOptCompress),
+            .compressLevel = cfgOptionInt(cfgOptCompressLevel),
+        };
 
         TRY_BEGIN()
         {
@@ -406,23 +457,23 @@ cmdArchivePushAsync(void)
             lockStopTest();
 
             // Get a list of WAL files that are ready for processing
-            StringList *walFileList = archivePushProcessList(walPath);
+            jobData.walFileList = archivePushProcessList(jobData.walPath);
 
             // The archive-push-async command should not have been called unless there are WAL files to process
-            if (strLstSize(walFileList) == 0)
+            if (strLstSize(jobData.walFileList) == 0)
                 THROW(AssertError, "no WAL files to process");
 
             LOG_INFO(
-                "push %u WAL file(s) to archive: %s%s", strLstSize(walFileList), strPtr(strLstGet(walFileList, 0)),
-                strLstSize(walFileList) == 1 ?
-                    "" : strPtr(strNewFmt("...%s", strPtr(strLstGet(walFileList, strLstSize(walFileList) - 1)))));
+                "push %u WAL file(s) to archive: %s%s", strLstSize(jobData.walFileList), strPtr(strLstGet(jobData.walFileList, 0)),
+                strLstSize(jobData.walFileList) == 1 ?
+                    "" : strPtr(strNewFmt("...%s", strPtr(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1)))));
 
             // Drop files if queue max has been exceeded
-            if (cfgOptionTest(cfgOptArchivePushQueueMax) && archivePushDrop(walPath, walFileList))
+            if (cfgOptionTest(cfgOptArchivePushQueueMax) && archivePushDrop(jobData.walPath, jobData.walFileList))
             {
-                for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(walFileList); walFileIdx++)
+                for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(jobData.walFileList); walFileIdx++)
                 {
-                    const String *walFile = strLstGet(walFileList, walFileIdx);
+                    const String *walFile = strLstGet(jobData.walFileList, walFileIdx);
                     const String *warning = archivePushDropWarning(walFile, cfgOptionUInt64(cfgOptArchivePushQueueMax));
 
                     archiveAsyncStatusOkWrite(archiveModePush, walFile, warning);
@@ -435,37 +486,19 @@ cmdArchivePushAsync(void)
                 // Get the repo storage in case it is remote and encryption settings need to be pulled down
                 storageRepo();
 
+                // Get cipher type
+                jobData.cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
+
                 // Get archive info
-                ArchivePushCheckResult archiveInfo = archivePushCheck(
+                jobData.archiveInfo = archivePushCheck(
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
-                    (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2);
+                    (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, archivePushAsyncCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));
-
-                // Queue jobs in executor
-                for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(walFileList); walFileIdx++)
-                {
-                    protocolKeepAlive();
-
-                    const String *walFile = strLstGet(walFileList, walFileIdx);
-
-                    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
-                    protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strPtr(walPath), strPtr(walFile))));
-                    protocolCommandParamAdd(command, VARSTR(archiveInfo.archiveId));
-                    protocolCommandParamAdd(command, VARUINT(archiveInfo.pgVersion));
-                    protocolCommandParamAdd(command, VARUINT64(archiveInfo.pgSystemId));
-                    protocolCommandParamAdd(command, VARSTR(walFile));
-                    protocolCommandParamAdd(command, VARUINT(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
-                    protocolCommandParamAdd(command, VARSTR(archiveInfo.archiveCipherPass));
-                    protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptCompress)));
-                    protocolCommandParamAdd(command, VARINT(cfgOptionInt(cfgOptCompressLevel)));
-
-                    protocolParallelJobAdd(parallelExec, protocolParallelJobNew(VARSTR(walFile), command));
-                }
 
                 // Process jobs
                 do
@@ -498,6 +531,8 @@ cmdArchivePushAsync(void)
                             archiveAsyncStatusErrorWrite(
                                 archiveModePush, walFile, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
                         }
+
+                        protocolParallelJobFree(job);
                     }
                 }
                 while (!protocolParallelDone(parallelExec));

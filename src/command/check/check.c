@@ -62,8 +62,8 @@ cmdCheck(void)
                 THROW_FMT(
                     ArchiveTimeoutError,
                     "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
-                        "HINT: Check the archive_command to ensure that all options are correct (especially --stanza).\n"
-                        "HINT: Check the PostgreSQL server log for errors.",
+                        "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+                        "HINT: check the PostgreSQL server log for errors.",
                     strPtr(walSegment), archiveTimeout);
             }
         }

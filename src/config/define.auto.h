@@ -105,6 +105,7 @@ typedef enum
     cfgDefOptProcessMax,
     cfgDefOptProtocolTimeout,
     cfgDefOptRecoveryOption,
+    cfgDefOptRecurse,
     cfgDefOptRepoCipherPass,
     cfgDefOptRepoCipherType,
     cfgDefOptRepoHardlink,

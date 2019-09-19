@@ -1638,6 +1638,13 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRecoveryOption,
     },
 
+    // recurse option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_RECURSE,
+        .val = PARSE_OPTION_FLAG | cfgOptRecurse,
+    },
+
     // repo-cipher-pass option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2394,6 +2401,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
+    cfgOptRecurse,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
     cfgOptRepoHost,

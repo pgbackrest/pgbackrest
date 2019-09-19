@@ -997,7 +997,7 @@ testRun(void)
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?\n"
-            "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+            "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
             strPtr(backupStanza2Path), strPtr(backupStanza2Path),  strPtr(strNewFmt("%s/backup.info.copy",
             strPtr(backupStanza2Path))));
     }

@@ -226,9 +226,9 @@ cfgLoadUpdateOption(void)
         THROW_FMT(
             OptionInvalidValueError,
             "'%s' is not valid for option '" CFGOPT_REPO1_S3_BUCKET "'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches"
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name"
-                "\nHINT: remove dots from the bucket name",
+                "\nHINT: RFC-2818 forbids dots in wildcard matches."
+                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
+                "\nHINT: remove dots from the bucket name.",
             strPtr(cfgOptionStr(cfgOptRepoS3Bucket)));
     }
 

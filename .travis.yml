@@ -19,7 +19,8 @@ env:
   - PGB_CI="--vm=u12 test"
 
 before_install:
-  - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip lcov libperl-dev
+  - sudo apt-get -qq update || true
+  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip lcov libperl-dev
   - |
     # Install & Configure AWS CLI
     pip install --upgrade --user awscli
