@@ -143,6 +143,7 @@ Manifest *manifestNewLoad(IoRead *read);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+void manifestLinkCheck(const Manifest *this);
 void manifestSave(Manifest *this, IoWrite *write);
 
 /***********************************************************************************************************************************
@@ -193,6 +194,8 @@ Getters
 ***********************************************************************************************************************************/
 const ManifestData *manifestData(const Manifest *this);
 String *manifestPgPath(const String *manifestPath);
+const ManifestTarget *manifestTargetBase(const Manifest *this);
+String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
 
 /***********************************************************************************************************************************
 Helper functions

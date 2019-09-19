@@ -138,7 +138,9 @@ testRun(void)
             "\n"                                                                                                                   \
             "[backup:target]\n"                                                                                                    \
             "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"                                                                  \
+            "pg_data/base/1={\"path\":\"../../base-1\",\"type\":\"link\"}\n"                                                       \
             "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"                         \
+            "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"                 \
             "pg_data/pg_stat={\"path\":\"../pg_stat\",\"type\":\"link\"}\n"                                                        \
             "pg_tblspc/1={\"path\":\"/tblspc/ts1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
 
@@ -221,6 +223,29 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_data")), NULL, "check pg_data path");
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
+
+        // Absolute target paths
+        TEST_RESULT_STR_Z(manifestTargetPath(manifest, manifestTargetBase(manifest)), "/pg/base", "base target path");
+        TEST_RESULT_STR_Z(
+            manifestTargetPath(manifest, manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))), "/pg/pg_config",
+            "relative file link target path");
+        TEST_RESULT_STR_Z(
+            manifestTargetPath(manifest, manifestTargetFind(manifest, STRDEF("pg_data/pg_stat"))), "/pg/pg_stat",
+            "relative path link target path");
+        TEST_RESULT_STR_Z(
+            manifestTargetPath(manifest, manifestTargetFind(manifest, STRDEF("pg_data/base/1"))), "/pg/base-1",
+            "relative path link target path");
+
+        // Link check
+        TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+                .name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/base-2")});
+        TEST_ERROR(
+            manifestLinkCheck(manifest), LinkDestinationError,
+            "link 'base/2' (/pg/base-1/base-2) destination is a subdirectory of or the same directory as"
+                " link 'base/1' (/pg/base-1)");
+        manifestTargetRemove(manifest, STRDEF("pg_data/base/2"));
 
         // ManifestFile getters
         const ManifestFile *file = NULL;

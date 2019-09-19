@@ -1350,6 +1350,100 @@ manifestSave(Manifest *this, IoWrite *write)
 }
 
 /***********************************************************************************************************************************
+Ensure that symlinks do not point to the same directory or a subdirectory of another link
+***********************************************************************************************************************************/
+void
+manifestLinkCheck(const Manifest *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+    FUNCTION_LOG_END();
+
+    for (unsigned int linkIdx1 = 0; linkIdx1 < manifestTargetTotal(this); linkIdx1++)
+    {
+        const ManifestTarget *link1 = manifestTarget(this, linkIdx1);
+
+        if (link1->type == manifestTargetTypeLink)
+        {
+            for (unsigned int linkIdx2 = 0; linkIdx2 < manifestTargetTotal(this); linkIdx2++)
+            {
+                const ManifestTarget *link2 = manifestTarget(this, linkIdx2);
+
+                if (link2->type == manifestTargetTypeLink && link1 != link2)
+                {
+                    if (!(link1->file != NULL && link2->file != NULL) &&
+                        strBeginsWith(
+                            strNewFmt("%s/", strPtr(manifestTargetPath(this, link1))),
+                            strNewFmt("%s/", strPtr(manifestTargetPath(this, link2)))))
+                    {
+                        THROW_FMT(
+                            LinkDestinationError,
+                            "link '%s' (%s) destination is a subdirectory of or the same directory as link '%s' (%s)",
+                            strPtr(manifestPgPath(link1->name)), strPtr(manifestTargetPath(this, link1)),
+                            strPtr(manifestPgPath(link2->name)), strPtr(manifestTargetPath(this, link2)));
+                    }
+                }
+            }
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Return the base target, i.e. the target that is the data directory
+***********************************************************************************************************************************/
+const ManifestTarget *
+manifestTargetBase(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR));
+}
+
+/***********************************************************************************************************************************
+Return an absolute path to the target
+***********************************************************************************************************************************/
+String *
+manifestTargetPath(const Manifest *this, const ManifestTarget *target)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, target);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+
+    // If the target path is already absolute then just return it
+    if (strBeginsWith(target->path, FSLASH_STR))
+        FUNCTION_TEST_RETURN(strDup(target->path));
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *pgPath = strPath(manifestPgPath(target->name));
+
+        if (strSize(pgPath) != 0)
+            strCat(pgPath, "/");
+
+        strCat(pgPath, strPtr(target->path));
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strPathAbsolute(pgPath, manifestTargetBase(this)->path);
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Return the data directory relative path for any manifest file/link/path/target name
 ***********************************************************************************************************************************/
 String *
@@ -1429,7 +1523,7 @@ manifestDbFind(const Manifest *this, const String *name)
 }
 
 /***********************************************************************************************************************************
-If the database requested is not found in the list, return the Default passed rather than throwing an error.
+If the database requested is not found in the list, return the default passed rather than throw an error
 ***********************************************************************************************************************************/
 const ManifestDb *
 manifestDbFindDefault(const Manifest *this, const String *name, const ManifestDb *dbDefault)
@@ -1494,7 +1588,7 @@ manifestFileFind(const Manifest *this, const String *name)
 }
 
 /***********************************************************************************************************************************
-If the file requested is not found in the list, return the Default passed rather than throwing an error.
+If the file requested is not found in the list, return the default passed rather than throw an error
 ***********************************************************************************************************************************/
 const ManifestFile *
 manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault)
@@ -1559,7 +1653,7 @@ manifestLinkFind(const Manifest *this, const String *name)
 }
 
 /***********************************************************************************************************************************
-If the link requested is not found in the list, return the Default passed rather than throwing an error.
+If the link requested is not found in the list, return the default passed rather than throw an error
 ***********************************************************************************************************************************/
 const ManifestLink *
 manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
@@ -1665,9 +1759,8 @@ manifestPathFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
-
 /***********************************************************************************************************************************
-If the path requested is not found in the list, return the Default passed rather than throwing an error.
+If the path requested is not found in the list, return the default passed rather than throw an error
 ***********************************************************************************************************************************/
 const ManifestPath *
 manifestPathFindDefault(const Manifest *this, const String *name, const ManifestPath *pathDefault)
