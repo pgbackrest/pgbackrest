@@ -42,6 +42,7 @@ String *strLstJoinQuote(const StringList *this, const char *separator, const cha
 StringList *strLstMergeAnti(const StringList *this, const StringList *anti);
 StringList *strLstMove(StringList *this, MemContext *parentNew);
 const char **strLstPtr(const StringList *this);
+bool strLstRemove(StringList *this, const String *item);
 unsigned int strLstSize(const StringList *this);
 StringList *strLstSort(StringList *this, SortOrder sortOrder);
 
