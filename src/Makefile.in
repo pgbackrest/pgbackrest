@@ -137,6 +137,7 @@ SRCS = \
 	info/infoArchive.c \
 	info/infoBackup.c \
 	info/infoPg.c \
+	info/manifest.c \
 	perl/config.c \
 	perl/exec.c \
 	postgres/client.c \

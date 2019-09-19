@@ -4053,7 +4053,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Backup set to detail.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
                 (
-                    "The backup set for which to provide more detail."
+                    "The backup set for which to provide more detail. Details include the databases backed up in the backup set "
+                        "(excludes template databases) along with the database OID. Symlinks and tablespaces (if any) and the "
+                        "destination in which they will be restored unless overridden by a restore option. The tablespace list "
+                        "will also include the OID."
                 )
             )
 

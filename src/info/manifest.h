@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Manifest Handler
 ***********************************************************************************************************************************/
-#ifndef INFO_INFOMANIFEST_H
-#define INFO_INFOMANIFEST_H
+#ifndef INFO_MANIFEST_H
+#define INFO_MANIFEST_H
 
 #include "command/backup/common.h"
 #include "common/crypto/common.h"

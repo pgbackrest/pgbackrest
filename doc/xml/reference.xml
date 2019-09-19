@@ -1138,7 +1138,7 @@
                     <option id="set" name="Set">
                         <summary>Backup set to detail.</summary>
 
-                        <text>The backup set for which to provide more detail.</text>
+                        <text>The backup set for which to provide more detail. Details include the databases backed up in the backup set (excludes template databases) along with the database OID. Symlinks and tablespaces (if any) and the destination in which they will be restored unless overridden by a restore option. The tablespace list will also include the OID.</text>
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
                 </option-list>

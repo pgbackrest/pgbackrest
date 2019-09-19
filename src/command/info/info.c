@@ -26,36 +26,6 @@ Info Command
 #include "postgres/interface.h"
 #include "storage/helper.h"
 
-/* CSHANG
-
-get all type:link from [backup:target] and have a separate section for links and for tablespaces. For files, include the path and file name,
-so from the examples below, name=../pg_config/pg_hba.conf (path "/" file) for a file, name=../pg_stat for a link and for tablespaces
-the name=ts1 (tablespace-name)
-
-pg_data/pg_hba.conf={"file":"pg_hba.conf","path":"../pg_config","type":"link"}
-pg_data/pg_stat={"path":"../pg_stat","type":"link"}
-
-pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
-
-Must specify option: maybe --type or I think better is --set since that is used to specify a backup set.
-If a backup set, then can we get all the info from the diff or incr manifest? (I'm 99% sure we can)
-
-attempt to load set/backup.manifest - error if it doesn't exist
-
-FOREACH line in backup:target
-    IF type=link
-    THEN
-        IF tablespace-name is present
-        THEN
-            name = tablespace-name
-        ELSIF file is present
-        THEN
-            name = path "/" file
-        ELSE
-            name = path
-
-*/
-
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
@@ -305,20 +275,19 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
             for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(manifest); dbIdx++)
             {
                 const ManifestDb *db = manifestDb(manifest, dbIdx);
-// CSHANG Is it possible that there will not be at least one DB that satisfies this condition?
+
+                // Do not display template databases
                 if (db->id > db->lastSystemId)
                 {
                     Variant *database = varNewKv(kvNew());
                     kvPut(varKv(database), KEY_NAME_VAR, VARSTR(db->name));
-// CSHANG are OIDs VARUINT or VARUINT64?
-                    kvPut(varKv(database), KEY_OID_VAR, VARUINT(db->id));
+                    kvPut(varKv(database), KEY_OID_VAR, VARUINT64(db->id));
                     varLstAdd(databaseSection, database);
                 }
             }
 
-            kvPut(
-                varKv(backupInfo), BACKUP_KEY_DATABASE_REF_VAR, (varLstSize(databaseSection) > 0 ? varNewVarLst(databaseSection) :
-                 NULL));
+            // Add the database section even if none found
+            kvPut(varKv(backupInfo), BACKUP_KEY_DATABASE_REF_VAR, varNewVarLst(databaseSection));
 
             // Get symlinks and tablespaces
             VariantList *linkSection = varLstNew();
@@ -335,8 +304,7 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
                     {
                         kvPut(varKv(tablespace), KEY_NAME_VAR, VARSTR(target->tablespaceName));
                         kvPut(varKv(tablespace), KEY_DESTINATION_VAR, VARSTR(target->path));
-// CSHANG are OIDs VARUINT or VARUINT64?
-                        kvPut(varKv(tablespace), KEY_OID_VAR, VARUINT(target->tablespaceId));
+                        kvPut(varKv(tablespace), KEY_OID_VAR, VARUINT64(target->tablespaceId));
                         varLstAdd(tablespaceSection, tablespace);
                     }
                     else if (target->file != NULL)
@@ -651,17 +619,23 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                 {
                     VariantList *dbSection = kvGetList(backupInfo, BACKUP_KEY_DATABASE_REF_VAR);
                     strCat(backupResult, "            database list:");
-                    for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
-                    {
-                        KeyValue *db = varKv(varLstGet(dbSection, dbIdx));
-                        strCatFmt(
-                            backupResult, " %s (%s)", strPtr(varStr(kvGet(db, KEY_NAME_VAR))),
-                            strPtr(varStrForce(kvGet(db, KEY_OID_VAR))));
 
-                        if (dbIdx != varLstSize(dbSection) - 1)
-                            strCat(backupResult, ",");
+                    if (varLstSize(dbSection) == 0)
+                        strCat(backupResult, " none\n");
+                    else
+                    {
+                        for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
+                        {
+                            KeyValue *db = varKv(varLstGet(dbSection, dbIdx));
+                            strCatFmt(
+                                backupResult, " %s (%s)", strPtr(varStr(kvGet(db, KEY_NAME_VAR))),
+                                strPtr(varStrForce(kvGet(db, KEY_OID_VAR))));
+
+                            if (dbIdx != varLstSize(dbSection) - 1)
+                                strCat(backupResult, ",");
+                        }
+                        strCat(backupResult, "\n");
                     }
-                    strCat(backupResult, "\n");
                 }
 
                 if (kvGet(backupInfo, BACKUP_KEY_LINK_VAR) != NULL)
