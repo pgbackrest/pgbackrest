@@ -1201,7 +1201,8 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
 
-                protocolCommandParamAdd(command, VARSTR(pgFile));
+                protocolCommandParamAdd(
+                    command, VARSTR(strNewFmt("%s/%s", strPtr(manifestTargetBase(jobData->manifest)->path), strPtr(pgFile))));
                 protocolCommandParamAdd(command, VARUINT64(file->size));
                 protocolCommandParamAdd(command, VARUINT64((uint64_t)file->timestamp));
                 protocolCommandParamAdd(command, VARSTRZ(file->checksumSha1));
@@ -1226,9 +1227,14 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 protocolCommandParamAdd(command, VARBOOL(manifestData(jobData->manifest)->backupOptionCompress));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
 
+                // Remove job from the queue
                 lstRemoveIdx(queue, 0);
 
+                // Assign job to result
                 result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), MEM_CONTEXT_OLD());
+
+                // Break out of the loop since we found a job
+                break;
             }
         }
     }

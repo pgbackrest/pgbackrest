@@ -67,8 +67,13 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
                     value = cfgOption(optionId);
             }
 
-            // Format the value if found
-            if (value != NULL)
+            // If the option was reset
+            if (cfgOptionReset(optionId))
+            {
+                strLstAdd(result, strNewFmt("--reset-%s", cfgOptionName(optionId)));
+            }
+            // Else format the value if found
+            else if (value != NULL)
             {
                 if (varType(value) == varTypeBool)
                 {
