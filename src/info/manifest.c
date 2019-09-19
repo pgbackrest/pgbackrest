@@ -148,7 +148,7 @@ struct Manifest
     StringList *ownerList;                                          // List of users/groups
     StringList *referenceList;                                      // List of file references
 
-    ManifestData data;                                          // Manifest data and options
+    ManifestData data;                                              // Manifest data and options
     List *targetList;                                               // List of paths
     List *pathList;                                                 // List of paths
     List *fileList;                                                 // List of files
