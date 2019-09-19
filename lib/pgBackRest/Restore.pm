@@ -212,9 +212,6 @@ sub process
     my $oManifest = new pgBackRest::Manifest(
         storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), {oStorage => storageDb()});
 
-    # Make sure links are still valid after remapping
-    $oManifest->linkCheck();
-
     # Create recovery.conf file
     $self->recovery($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION));
 

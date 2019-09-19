@@ -752,9 +752,7 @@ restore delta, backup '[BACKUP-FULL-2]', expect exit 70 - restore all links by m
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=warn --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_stat/postgresql.conf  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
-P00   WARN: unknown user in backup manifest mapped to current user
-P00   WARN: unknown group in backup manifest mapped to current group
-P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_stat) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_stat (../pg_stat)
+P00  ERROR: [070]: link 'pg_stat' ([TEST_PATH]/db-master/db/pg_stat) destination is a subdirectory of or the same directory as link 'postgresql.conf' ([TEST_PATH]/db-master/db/pg_stat)
 
 restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=warn --link-all  --stanza=db restore

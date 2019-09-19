@@ -979,8 +979,8 @@ restoreSelectiveExpression(Manifest *manifest)
                 }
 
                 // Error if the db is a built-in db
-                // if (cvtZToUInt64(strPtr(includeDb)) < PG_USER_OBJECT_MIN_ID)
-                //     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
+                if (cvtZToUInt64(strPtr(includeDb)) < PG_USER_OBJECT_MIN_ID)
+                    THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
 
                 // Remove from list of DBs to zero
                 strLstRemove(dbList, includeDb);
@@ -1308,6 +1308,9 @@ cmdRestore(void)
 
         // Map manifest
         restoreManifestMap(jobData.manifest);
+
+        // Check that links are sane
+        manifestLinkCheck(jobData.manifest);
 
         // Update ownership
         restoreManifestOwner(jobData.manifest);

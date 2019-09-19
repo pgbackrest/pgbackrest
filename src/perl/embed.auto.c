@@ -12270,8 +12270,6 @@ static const EmbeddedModule embeddedModule[] =
             "my $oManifest = new pgBackRest::Manifest(\n"
             "storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), {oStorage => storageDb()});\n"
             "\n\n"
-            "$oManifest->linkCheck();\n"
-            "\n\n"
             "$self->recovery($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION));\n"
             "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
             "&log(INFO,\n"
