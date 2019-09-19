@@ -18,7 +18,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
-use pgBackRest::RestoreFile;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Local::Process;
 use pgBackRest::Protocol::Storage::Helper;

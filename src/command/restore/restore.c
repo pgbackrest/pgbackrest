@@ -1145,7 +1145,7 @@ restoreFileZeroed(const String *manifestName, RegExp *zeroExp)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, manifestName);
-        FUNCTION_TEST_PARAM(REG_EXP, zeroExp);
+        FUNCTION_TEST_PARAM(REGEXP, zeroExp);
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
@@ -1159,7 +1159,6 @@ restoreFilePgPath(const Manifest *manifest, const String *manifestName)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, manifest);
         FUNCTION_TEST_PARAM(STRING, manifestName);
-        FUNCTION_TEST_PARAM(REG_EXP, zeroExp);
     FUNCTION_TEST_END();
 
     String *result = strNewFmt("%s/%s", strPtr(manifestTargetBase(manifest)->path), strPtr(manifestPgPath(manifestName)));
@@ -1424,9 +1423,8 @@ cmdRestore(void)
         // Save manifest to the data directory so we can restart a delta restore even if the PG_VERSION file is missing
         manifestSave(jobData.manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));
 
-        // Delete pg_control file.  !!! FIX COMMENT This will be copied from the backup at the very end to prevent a partially restored database
-        // from being started by PostgreSQL.
-        // !!! DO THIS
+        // Delete the pg_control file so the cluster cannot be started if restore does not complete
+        storageRemoveNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
