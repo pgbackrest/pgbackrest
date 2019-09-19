@@ -20,6 +20,7 @@ Defines for various Postgres paths and files
     STRING_DECLARE(PG_FILE_POSTMASTERPID_STR);
 #define PG_FILE_RECOVERYCONF                                        "recovery.conf"
     STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
+#define PG_FILE_TABLESPACEMAP                                       "tablespace_map"
 
 #define PG_PATH_ARCHIVE_STATUS                                      "archive_status"
 #define PG_PATH_BASE                                                "base"

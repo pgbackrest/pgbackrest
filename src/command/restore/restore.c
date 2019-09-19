@@ -1052,14 +1052,14 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    // It would be simpler to return size1 - size2 here but since the sizes are uint64 they might overflow the int even if we cast.
-    // This seems safer at least until we can test out the overflow behaviors.
+    // If the size differs then that's enough to determine order
     if ((*(ManifestFile **)item1)->size < (*(ManifestFile **)item2)->size)
         FUNCTION_TEST_RETURN(-1);
     else if ((*(ManifestFile **)item1)->size > (*(ManifestFile **)item2)->size)
         FUNCTION_TEST_RETURN(1);
 
-    FUNCTION_TEST_RETURN(0);
+    // If size is the same then use name to generate a deterministic ordering (names must be unique)
+    FUNCTION_TEST_RETURN(strCmp((*(ManifestFile **)item1)->name, (*(ManifestFile **)item2)->name));
 }
 
 static uint64_t
@@ -1137,22 +1137,115 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
 }
 
 /***********************************************************************************************************************************
-Log the results of the file restore
+Log the results of a job and throw errors
 ***********************************************************************************************************************************/
+// Helper function to determine if a file should be zeroed
+static bool
+restoreFileZeroed(const String *manifestName, RegExp *zeroExp)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, manifestName);
+        FUNCTION_TEST_PARAM(REG_EXP, zeroExp);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(
+        zeroExp == NULL ? false : regExpMatch(zeroExp, manifestName) && !strEndsWith(manifestName, STRDEF("/" PG_FILE_PGVERSION)));
+}
+
+// Helper function to construct the absolute pg path for any file
+static String *
+restoreFilePgPath(const Manifest *manifest, const String *manifestName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, manifest);
+        FUNCTION_TEST_PARAM(STRING, manifestName);
+        FUNCTION_TEST_PARAM(REG_EXP, zeroExp);
+    FUNCTION_TEST_END();
+
+    String *result = strNewFmt("%s/%s", strPtr(manifestTargetBase(manifest)->path), strPtr(manifestPgPath(manifestName)));
+
+    if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
+        result = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(result));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 static uint64_t
-restoreLogFileResult(const ManifestFile *file, unsigned int processId, RegExp *zeroExp, uint64_t sizeTotal, uint64_t sizeRestored)
+restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zeroExp, uint64_t sizeTotal, uint64_t sizeRestored)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST_PATH, file);  // !!! FIX TYPE
-        FUNCTION_LOG_PARAM(UINT, processId);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(REGEXP, zeroExp);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM(UINT64, sizeRestored);
     FUNCTION_LOG_END();
 
-    uint64_t result = sizeRestored;
+    // The job was successful
+    if (protocolParallelJobErrorCode(job) == 0)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            const ManifestFile *file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
+            bool zeroed = restoreFileZeroed(file->name, zeroExp);
+            bool copy = varBool(protocolParallelJobResult(job));
 
-    FUNCTION_LOG_RETURN(UINT64, result);
+            String *log = strNew("restore");
+
+            // Note if file was zeroed (i.e. selective restore)
+            if (zeroed)
+                strCat(log, " zeroed");
+
+            // Add filename
+            strCatFmt(log, " file %s", strPtr(restoreFilePgPath(manifest, file->name)));
+
+            // If not copied and not zeroed add details to explain why it was not copied
+            if (!copy && !zeroed)
+            {
+                strCat(log, " - ");
+
+                // On force we match on size and modification time
+                if (cfgOptionBool(cfgOptForce))
+                {
+                    strCatFmt(
+                        log, "exists and matches size %" PRIu64 " and modification time %" PRId64, file->size, file->timestamp);
+                }
+                // Else a checksum delta or file is zero-length
+                else
+                {
+                    strCat(log, "exists and ");
+
+                    // No need to copy zero-length files
+                    if (file->size == 0)
+                    {
+                        strCat(log, "is zero size");
+                    }
+                    // The file matched the manifest checksum so did not need to be copied
+                    else
+                        strCat(log, "matches backup");
+                }
+            }
+
+            // Add size and percent complete
+            sizeRestored += file->size;
+            strCatFmt(log, " (%s, %" PRIu64 "%%)", strPtr(strSizeFormat(file->size)), sizeRestored * 100 / sizeTotal);
+
+            // If not zero-length add the checksum
+            if (file->size != 0 && !zeroed)
+                strCatFmt(log, " checksum %s", file->checksumSha1);
+
+            LOG_PID(copy ? logLevelInfo : logLevelDetail, protocolParallelJobProcessId(job), 0, strPtr(log));
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Free the job
+        protocolParallelJobFree(job);
+    }
+    // Else the job errored
+    else
+        THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+
+    FUNCTION_LOG_RETURN(UINT64, sizeRestored);
 }
 
 /***********************************************************************************************************************************
@@ -1193,28 +1286,22 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
             if (lstSize(queue) > 0)
             {
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
-                const String *pgFile = manifestPgPath(file->name);
 
-                // Copy pg_control with a temp extension so PostreSQL will not start if the restore does not complete
-                if (strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
-                    pgFile = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(pgFile));
+                // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links
+                // have already been created by restoreClean().
+                if (strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)) &&
+                    manifestData(jobData->manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
+                {
+                    continue;
+                }
 
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
 
-                protocolCommandParamAdd(
-                    command, VARSTR(strNewFmt("%s/%s", strPtr(manifestTargetBase(jobData->manifest)->path), strPtr(pgFile))));
+                protocolCommandParamAdd(command, VARSTR(restoreFilePgPath(jobData->manifest, file->name)));
                 protocolCommandParamAdd(command, VARUINT64(file->size));
                 protocolCommandParamAdd(command, VARUINT64((uint64_t)file->timestamp));
                 protocolCommandParamAdd(command, VARSTRZ(file->checksumSha1));
-
-                if (jobData->zeroExp && regExpMatch(jobData->zeroExp, file->name) &&
-                    !strEndsWith(file->name, STRDEF("/" PG_FILE_PGVERSION)))
-                {
-                    protocolCommandParamAdd(command, BOOL_TRUE_VAR);
-                }
-                else
-                    protocolCommandParamAdd(command, BOOL_FALSE_VAR);
-
+                protocolCommandParamAdd(command, VARBOOL(restoreFileZeroed(file->name, jobData->zeroExp)));
                 protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptForce)));
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARSTR(file->reference));
@@ -1357,20 +1444,8 @@ cmdRestore(void)
 
             for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
             {
-                ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-
-                // The job was successful
-                if (protocolParallelJobErrorCode(job) == 0)
-                {
-                    sizeRestored = restoreLogFileResult(
-                        manifestFileFind(jobData.manifest, varStr(protocolParallelJobKey(job))), protocolParallelJobProcessId(job),
-                        jobData.zeroExp, sizeTotal, sizeRestored);
-                }
-                // Else the job errored
-                else
-                    THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
-
-                protocolParallelJobFree(job);
+                sizeRestored = restoreJobResult(
+                    jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored);
             }
         }
         while (!protocolParallelDone(parallelExec));

@@ -38,6 +38,9 @@ Version where various PostgreSQL capabilities were introduced
 // pg_create_restore_point() supported
 #define PG_VERSION_RESTORE_POINT                                    PG_VERSION_91
 
+// tablespace_map is created during backup
+#define PG_VERSION_TABLESPACE_MAP                                   PG_VERSION_95
+
 // xlog was renamed to wal
 #define PG_VERSION_WAL_RENAME                                       PG_VERSION_10
 

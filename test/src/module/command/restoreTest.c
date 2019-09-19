@@ -1140,8 +1140,9 @@ testRun(void)
                     "P00   INFO: restore backup set 20161219-212741F\n"
                     "P00 DETAIL: check '%s/pg' exists\n"
                     "P00 DETAIL: update mode for '%s/pg' to 0700\n"
-                    "P00 DETAIL: create path '%s/pg/global'",
-                    testPath(), testPath(), testPath())));
+                    "P00 DETAIL: create path '%s/pg/global'\n"
+                    "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4",
+                    testPath(), testPath(), testPath(), testPath())));
 
         storageRemoveNP(storagePgWrite(), MANIFEST_FILE_STR);   // !!! TEMPORARY
         testRestoreCompare(
@@ -1211,8 +1212,6 @@ testRun(void)
 
         // Incremental Delta Restore
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePut(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .modeFile = 0600), NULL);   // !!! TEMPORARY
-
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         harnessLogResult(
@@ -1222,8 +1221,9 @@ testRun(void)
                     "P00 DETAIL: check '%s/pg' exists\n"
                     "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
                     "P00 DETAIL: remove invalid path '%s/pg/bogus1'\n"
-                    "P00 DETAIL: remove invalid path '%s/pg/global/bogus3'",
-                    testPath(), testPath(), testPath(), testPath())));
+                    "P00 DETAIL: remove invalid path '%s/pg/global/bogus3'\n"
+                    "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1",
+                    testPath(), testPath(), testPath(), testPath(), testPath())));
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

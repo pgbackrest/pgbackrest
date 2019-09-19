@@ -1885,8 +1885,8 @@ P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 99%) ch
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/zerosize.txt (0B, 99%)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/zero_from_start (0B, 99%)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/special-!_.*'()&!@;:+,? (0B, 99%)
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00   INFO: restore command end: completed successfully
@@ -1929,8 +1929,8 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/zerosize.txt - exists and is zero size (0B, 99%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/zero_from_start - exists and is zero size (0B, 99%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt - exists and matches backup (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt - exists and matches backup (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00   INFO: restore command end: completed successfully
