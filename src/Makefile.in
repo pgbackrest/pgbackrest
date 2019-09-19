@@ -136,6 +136,7 @@ SRCS = \
 	info/info.c \
 	info/infoArchive.c \
 	info/infoBackup.c \
+	info/manifest.c \
 	info/infoPg.c \
 	perl/config.c \
 	perl/exec.c \
