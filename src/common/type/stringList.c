@@ -628,6 +628,19 @@ strLstRemove(StringList *this, const String *item)
     FUNCTION_TEST_RETURN(lstRemove((List *)this, &item));
 }
 
+StringList *
+strLstRemoveIdx(StringList *this, unsigned int listIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(UINT, listIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN((StringList *)lstRemoveIdx((List *)this, listIdx));
+}
+
 /***********************************************************************************************************************************
 Wrapper for lstSize()
 ***********************************************************************************************************************************/
