@@ -175,7 +175,7 @@ restoreManifestMap(Manifest *manifest)
         // Remap the data directory
         // -------------------------------------------------------------------------------------------------------------------------
         const String *pgPath = cfgOptionStr(cfgOptPgPath);
-        const ManifestTarget *targetBase = manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+        const ManifestTarget *targetBase = manifestTargetBase(manifest);
 
         if (!strEq(targetBase->path, pgPath))
         {
@@ -422,7 +422,7 @@ restoreManifestOwner(Manifest *manifest)
         if (userRoot())
         {
             // Get user/group info from data directory to use for invalid user/groups
-            StorageInfo pathInfo = storageInfoNP(storagePg(), manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path);
+            StorageInfo pathInfo = storageInfoNP(storagePg(), manifestTargetBase(manifest)->path);
 
             // If user/group is null then set it to root
             if (pathInfo.user == NULL)
@@ -707,7 +707,7 @@ restoreClean(Manifest *manifest)
 
         // Check permissions and validity (is the directory empty without delta?) if the target directory exists
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *basePath = manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path;
+        const String *basePath = manifestTargetBase(manifest)->path;
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
@@ -1181,7 +1181,8 @@ restoreRecoveryConf(unsigned int pgVersion)
             {
                 // Option replacements
                 KeyValue *optionReplace = kvNew();
-                // !!! Add replacements process-max, log-level-*, at least
+                // !!! Add replacements process-max, log-level-console, log-level-file, log-level-stderr, log-path, log-subprocess
+                // log-timestamp
 
                 strCatFmt(
                     result, "restore_command = '%s \"%%f\" \"%%p\"'\n",

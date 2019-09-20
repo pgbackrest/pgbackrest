@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Manifest Handler
+Test Backup Manifest Handler
 ***********************************************************************************************************************************/
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -60,6 +60,9 @@ testRun(void)
             "[backup:target]\n"
             "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
             "\n"
+            "[cipher]\n"
+            "cipher-pass=\"somepass\"\n"
+            "\n"
             "[target:file]\n"
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
             "\n"
@@ -83,6 +86,8 @@ testRun(void)
         TEST_ERROR(
             manifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
         TEST_RESULT_STR_Z(manifestData(manifest)->backupLabel, "20190808-163540F", "    check manifest data");
+
+        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "somepass", "    check cipher subpass");
 
         TEST_RESULT_VOID(
             manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "    update target no change");
@@ -140,8 +145,8 @@ testRun(void)
             "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"                                                                  \
             "pg_data/base/1={\"path\":\"../../base-1\",\"type\":\"link\"}\n"                                                       \
             "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"                         \
-            "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"                 \
             "pg_data/pg_stat={\"path\":\"../pg_stat\",\"type\":\"link\"}\n"                                                        \
+            "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"                 \
             "pg_tblspc/1={\"path\":\"/tblspc/ts1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
 
         #define TEST_MANIFEST_DB                                                                                                   \
@@ -223,6 +228,8 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_data")), NULL, "check pg_data path");
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
         TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
+
+        TEST_RESULT_PTR(manifestCipherSubPass(manifest), NULL, "    check cipher subpass");
 
         // Absolute target paths
         TEST_RESULT_STR_Z(manifestTargetPath(manifest, manifestTargetBase(manifest)), "/pg/base", "base target path");

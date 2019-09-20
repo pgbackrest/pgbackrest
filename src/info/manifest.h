@@ -1,8 +1,14 @@
 /***********************************************************************************************************************************
-Manifest Handler
+Backup Manifest Handler
+
+The backup manifest stores a complete list of all files, links, and paths in a backup along with metadata such as checksums, sizes,
+timestamps, etc.  A list of databases is also included for selective restore.
+
+The purpose of the manifest is to allow the restore command to confidently reconstruct the PostgreSQL data directory and ensure that
+nothing is missing or corrupt.  It is also useful for reporting, e.g. size of backup, backup time, etc.
 ***********************************************************************************************************************************/
-#ifndef INFO_INFOMANIFEST_H
-#define INFO_INFOMANIFEST_H
+#ifndef INFO_MANIFEST_H
+#define INFO_MANIFEST_H
 
 #include "command/backup/common.h"
 #include "common/crypto/common.h"
@@ -39,7 +45,7 @@ typedef struct ManifestData
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
 
-    // ??? Note that these fields are redundant and verbose since toring the start/stop lsn as a uint64 would be sufficient.
+    // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
     const String *archiveStart;                                     // First WAL file in the backup
     const String *archiveStop;                                      // Last WAL file in the backup
@@ -65,34 +71,14 @@ typedef struct ManifestData
 } ManifestData;
 
 /***********************************************************************************************************************************
-Target type
+Db type
 ***********************************************************************************************************************************/
-typedef enum
+typedef struct ManifestDb
 {
-    manifestTargetTypePath,
-    manifestTargetTypeLink,
-} ManifestTargetType;
-
-typedef struct ManifestTarget
-{
-    const String *name;                                             // Target name (must be first member in struct)
-    ManifestTargetType type;                                        // Target type
-    const String *path;                                             // Target path (if path or link)
-    const String *file;                                             // Target file (if file link)
-    unsigned int tablespaceId;                                      // Oid if this link is a tablespace
-    const String *tablespaceName;                                   // Name of the tablespace
-} ManifestTarget;
-
-/***********************************************************************************************************************************
-Path type
-***********************************************************************************************************************************/
-typedef struct ManifestPath
-{
-    const String *name;                                             // Path name (must be first member in struct)
-    mode_t mode;                                                    // Directory mode
-    const String *user;                                             // User name
-    const String *group;                                            // Group name
-} ManifestPath;
+    const String *name;                                             // Db name (must be first member in struct)
+    unsigned int id;                                                // Db oid
+    unsigned int lastSystemId;                                      // Highest oid used by system objects in this database
+} ManifestDb;
 
 /***********************************************************************************************************************************
 File type
@@ -126,14 +112,34 @@ typedef struct ManifestLink
 } ManifestLink;
 
 /***********************************************************************************************************************************
-Db type
+Path type
 ***********************************************************************************************************************************/
-typedef struct ManifestDb
+typedef struct ManifestPath
 {
-    const String *name;                                             // Db name (must be first member in struct)
-    unsigned int id;                                                // Db oid
-    unsigned int lastSystemId;                                      // Highest oid used by system objects in this database
-} ManifestDb;
+    const String *name;                                             // Path name (must be first member in struct)
+    mode_t mode;                                                    // Directory mode
+    const String *user;                                             // User name
+    const String *group;                                            // Group name
+} ManifestPath;
+
+/***********************************************************************************************************************************
+Target type
+***********************************************************************************************************************************/
+typedef enum
+{
+    manifestTargetTypePath,
+    manifestTargetTypeLink,
+} ManifestTargetType;
+
+typedef struct ManifestTarget
+{
+    const String *name;                                             // Target name (must be first member in struct)
+    ManifestTargetType type;                                        // Target type
+    const String *path;                                             // Target path (if path or link)
+    const String *file;                                             // Target file (if file link)
+    unsigned int tablespaceId;                                      // Oid if this link is a tablespace
+    const String *tablespaceName;                                   // Name of the tablespace
+} ManifestTarget;
 
 /***********************************************************************************************************************************
 Constructor
