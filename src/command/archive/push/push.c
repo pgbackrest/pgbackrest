@@ -299,7 +299,7 @@ cmdArchivePush(void)
                     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
 
                     // Generate command options
-                    StringList *commandExec = cfgExecParam(cfgCmdArchivePushAsync, optionReplace);
+                    StringList *commandExec = cfgExecParam(cfgCmdArchivePushAsync, optionReplace, true);
                     strLstInsert(commandExec, 0, cfgExe());
                     strLstAdd(commandExec, strPath(walFile));
 
