@@ -1913,7 +1913,7 @@ typedef struct ManifestLoadFileData
     const String *fileName;                                         // Base filename
     CipherType cipherType;                                          // Cipher type
     const String *cipherPass;                                       // Cipher passphrase
-    Manifest *manifest;                                     // Loaded manifest object
+    Manifest *manifest;                                             // Loaded manifest object
 } ManifestLoadFileData;
 
 static bool
