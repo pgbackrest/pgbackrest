@@ -1108,6 +1108,14 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         {
             const ManifestFile *file = manifestFile(manifest, fileIdx);
 
+            // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links
+            // have already been created by restoreClean().
+            if (strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)) &&
+                manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
+            {
+                continue;
+            }
+
             // Find the target that contains this file
             unsigned int targetIdx = 0;
 
@@ -1203,10 +1211,8 @@ restoreRecoveryConf(unsigned int pgVersion)
                     result, "recovery_target_%s = '%s'\n", strPtr(cfgOptionStr(cfgOptType)), strPtr(cfgOptionStr(cfgOptTarget)));
 
                 // Write recovery_target_inclusive
-                if (!cfgOptionBool(cfgOptTargetExclusive))
-                {
+                if (cfgOptionTest(cfgOptTargetExclusive) && cfgOptionBool(cfgOptTargetExclusive))
                     strCatFmt(result, "recovery_target_inclusive = 'false'\n");
-                }
             }
 
             // Write pause_at_recovery_target/recovery_target_action
@@ -1403,14 +1409,6 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
             if (lstSize(queue) > 0)
             {
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
-
-                // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links
-                // have already been created by restoreClean().
-                if (strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)) &&
-                    manifestData(jobData->manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
-                {
-                    continue;
-                }
 
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
 
