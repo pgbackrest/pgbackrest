@@ -43,6 +43,7 @@ StringList *strLstMergeAnti(const StringList *this, const StringList *anti);
 StringList *strLstMove(StringList *this, MemContext *parentNew);
 const char **strLstPtr(const StringList *this);
 bool strLstRemove(StringList *this, const String *item);
+StringList *strLstRemoveIdx(StringList *this, unsigned int listIdx);
 unsigned int strLstSize(const StringList *this);
 StringList *strLstSort(StringList *this, SortOrder sortOrder);
 

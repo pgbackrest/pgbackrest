@@ -13,6 +13,7 @@ String Handler
 #include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/string.h"
+#include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful
@@ -21,6 +22,7 @@ STRING_EXTERN(BRACKETL_STR,                                         "[");
 STRING_EXTERN(BRACKETR_STR,                                         "]");
 STRING_EXTERN(CR_STR,                                               "\r");
 STRING_EXTERN(DOT_STR,                                              ".");
+STRING_EXTERN(DOTDOT_STR,                                           "..");
 STRING_EXTERN(EMPTY_STR,                                            "");
 STRING_EXTERN(EQ_STR,                                               "=");
 STRING_EXTERN(FALSE_STR,                                            "false");
@@ -592,6 +594,85 @@ strPath(const String *this)
         strNewN(
             this->buffer,
             end - this->buffer <= 1 ? (size_t)(end - this->buffer) : (size_t)(end - this->buffer - 1)));
+}
+
+/***********************************************************************************************************************************
+Combine with a base path to get an absolute path
+***********************************************************************************************************************************/
+String *
+strPathAbsolute(const String *this, const String *base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRING, base);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *result = NULL;
+
+    // Path is already absolute so just return it
+    if (strBeginsWith(this, FSLASH_STR))
+    {
+        result = strDup(this);
+    }
+    // Else we'll need to construct the absolute path.  You would hope we could use realpath() here but it is so broken in the
+    // Posix spec that is seems best avoided.
+    else
+    {
+        ASSERT(base != NULL);
+
+        // Base must be absolute to start
+        if (!strBeginsWith(base, FSLASH_STR))
+            THROW_FMT(AssertError, "base path '%s' is not absolute", strPtr(base));
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            StringList *baseList = strLstNewSplit(base, FSLASH_STR);
+            StringList *pathList = strLstNewSplit(this, FSLASH_STR);
+
+            while (strLstSize(pathList) > 0)
+            {
+                const String *pathPart = strLstGet(pathList, 0);
+
+                if (strSize(pathPart) == 0)
+                    THROW_FMT(AssertError, "'%s' is not a valid relative path", strPtr(this));
+
+                if (strEq(pathPart, DOTDOT_STR))
+                {
+                    const String *basePart = strLstGet(baseList, strLstSize(baseList) - 1);
+
+                    if (strSize(basePart) == 0)
+                    {
+                        THROW_FMT(
+                            AssertError, "relative path '%s' goes back too far in base path '%s'", strPtr(this), strPtr(base));
+                    }
+
+                    strLstRemoveIdx(baseList, strLstSize(baseList) - 1);
+                }
+                else
+                    strLstAdd(baseList, pathPart);
+
+                strLstRemoveIdx(pathList, 0);
+            }
+
+            memContextSwitch(MEM_CONTEXT_OLD());
+
+            if (strLstSize(baseList) == 1)
+                result = strDup(FSLASH_STR);
+            else
+                result = strLstJoin(baseList, "/");
+
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    // There should not be any stray .. or // in the final result
+    if (strstr(strPtr(result), "/..") != NULL || strstr(strPtr(result), "//") != NULL)
+        THROW_FMT(AssertError, "result path '%s' is not absolute", strPtr(result));
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
