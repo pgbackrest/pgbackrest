@@ -1125,6 +1125,42 @@ testRun(void)
             "restore_command = 'my_restore_command'\n"
             "recovery_target_time = 'TIME'\n",
             "recovery target time inclusive");
+
+        // Recovery target action = shutdown
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=immediate");
+        strLstAddZ(argList, "--target-action=shutdown");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_95),
+            "restore_command = 'my_restore_command'\n"
+            "recovery_target = 'immediate'\n"
+            "recovery_target_action = 'shutdown'\n",
+            "recovery target action shutdown");
+
+        TEST_ERROR(
+            restoreRecoveryConf(PG_VERSION_94), OptionInvalidError,
+            "target-action=shutdown is only available in PostgreSQL >= 9.5");
+
+        // Recovery target action = pause
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=immediate");
+        strLstAddZ(argList, "--target-action=promote");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94),
+            "restore_command = 'my_restore_command'\n"
+            "recovery_target = 'immediate'\n"
+            "pause_at_recovery_target = 'false'\n",
+            "recovery target action pause");
+
+        TEST_ERROR(
+            restoreRecoveryConf(PG_VERSION_90), OptionInvalidError,
+            "target-action option is only available in PostgreSQL >= 9.1");
     }
 
     // *****************************************************************************************************************************
@@ -1163,6 +1199,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--set=20161219-212741F");
+        strLstAddZ(argList, "--type=preserve");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -1227,10 +1264,12 @@ testRun(void)
                     "P00 DETAIL: check '%s/pg' exists\n"
                     "P00 DETAIL: update mode for '%s/pg' to 0700\n"
                     "P00 DETAIL: create path '%s/pg/global'\n"
-                    "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4",
-                    testPath(), testPath(), testPath(), testPath())));
+                    "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+                    "P00   WARN: recovery type is preserve but recovery file does not exist at '%s/pg/recovery.conf\n"
+                    "P00 DETAIL: sync '%s/pg'\n"
+                    "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
+                    testPath(), testPath(), testPath(), testPath(), testPath(), testPath())));
 
-        storageRemoveNP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);   // !!! TEMPORARY
         testRestoreCompare(
             storagePg(), NULL, manifest,
             ". {path}\n"
@@ -1245,6 +1284,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--delta");
+        strLstAddZ(argList, "--type=none");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -1308,8 +1348,10 @@ testRun(void)
                     "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
                     "P00 DETAIL: remove invalid path '%s/pg/bogus1'\n"
                     "P00 DETAIL: remove invalid path '%s/pg/global/bogus3'\n"
-                    "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1",
-                    testPath(), testPath(), testPath(), testPath(), testPath())));
+                    "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+                    "P00 DETAIL: sync '%s/pg'\n"
+                    "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
+                    testPath(), testPath(), testPath(), testPath(), testPath(), testPath())));
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

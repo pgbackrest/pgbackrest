@@ -191,9 +191,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRestore:
                 {
-                    // Functionality is currently split between Perl and C
                     cmdRestore();
-                    perlExec();
                     break;
                 }
 

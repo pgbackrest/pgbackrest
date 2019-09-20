@@ -134,46 +134,32 @@ sub main
                 storageLocal(),
                 cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
 
-            # Process restore command
+            # Check if processes have been stopped
+            lockStopTest();
+
+            # Check locality
+            if (!isRepoLocal())
+            {
+                confess &log(ERROR,
+                    cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
+            }
+
+            # Process backup command
             # ----------------------------------------------------------------------------------------------------------------------
-            if (cfgCommandTest(CFGCMD_RESTORE))
+            if (cfgCommandTest(CFGCMD_BACKUP))
             {
                 # Load module dynamically
-                require pgBackRest::Restore;
-                pgBackRest::Restore->import();
+                require pgBackRest::Backup::Backup;
+                pgBackRest::Backup::Backup->import();
 
-                # Do the restore
-                new pgBackRest::Restore()->process();
+                new pgBackRest::Backup::Backup()->process();
             }
-            else
+
+            # Process expire command
+            # ----------------------------------------------------------------------------------------------------------------------
+            elsif (cfgCommandTest(CFGCMD_EXPIRE))
             {
-                # Check if processes have been stopped
-                lockStopTest();
-
-                # Check locality
-                if (!isRepoLocal())
-                {
-                    confess &log(ERROR,
-                        cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
-                }
-
-                # Process backup command
-                # ------------------------------------------------------------------------------------------------------------------
-                if (cfgCommandTest(CFGCMD_BACKUP))
-                {
-                    # Load module dynamically
-                    require pgBackRest::Backup::Backup;
-                    pgBackRest::Backup::Backup->import();
-
-                    new pgBackRest::Backup::Backup()->process();
-                }
-
-                # Process expire command
-                # --------------------------------------------------------------------------------------------------------------
-                elsif (cfgCommandTest(CFGCMD_EXPIRE))
-                {
-                    new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
-                }
+                new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
             }
         }
 

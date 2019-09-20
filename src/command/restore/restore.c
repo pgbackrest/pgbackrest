@@ -29,7 +29,8 @@ Restore Command
 /***********************************************************************************************************************************
 Recovery type constants
 ***********************************************************************************************************************************/
-STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                           "preserve");
+#define RECOVERY_TYPE_PRESERVE                                      "preserve"
+    STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                       RECOVERY_TYPE_PRESERVE);
 
 /***********************************************************************************************************************************
 Validate restore path
@@ -1160,20 +1161,20 @@ restoreRecoveryConf(unsigned int pgVersion)
 
             if (cfgOptionTest(cfgOptRecoveryOption))
             {
-                const KeyValue *recoveryOption = cfgOptionKv(cfgOptRecoveryOption);
-                recoveryOptionKey = strLstSort(strLstNewVarLst(kvKeyList(recoveryOption)), sortOrderAsc);
+            const KeyValue *recoveryOption = cfgOptionKv(cfgOptRecoveryOption);
+            recoveryOptionKey = strLstSort(strLstNewVarLst(kvKeyList(recoveryOption)), sortOrderAsc);
 
-                for (unsigned int keyIdx = 0; keyIdx < strLstSize(recoveryOptionKey); keyIdx++)
-                {
-                    // Get the key and value
-                    String *key = strLstGet(recoveryOptionKey, keyIdx);
-                    const String *value = varStr(kvGet(recoveryOption, VARSTR(key)));
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(recoveryOptionKey); keyIdx++)
+            {
+                // Get the key and value
+                String *key = strLstGet(recoveryOptionKey, keyIdx);
+                const String *value = varStr(kvGet(recoveryOption, VARSTR(key)));
 
-                    // Replace - in key with _.  Since we use - users naturally will as well.
-                    strReplaceChr(key, '-', '_');
+                // Replace - in key with _.  Since we use - users naturally will as well.
+                strReplaceChr(key, '-', '_');
 
-                    strCatFmt(result, "%s = '%s'\n", strPtr(key), strPtr(value));
-                }
+                strCatFmt(result, "%s = '%s'\n", strPtr(key), strPtr(value));
+            }
             }
 
             // Write restore_command
@@ -1185,7 +1186,7 @@ restoreRecoveryConf(unsigned int pgVersion)
                 // log-timestamp
 
                 strCatFmt(
-                    result, "restore_command = '%s \"%%f\" \"%%p\"'\n",
+                    result, "restore_command = '%s %s \"%%f\" \"%%p\"'\n", strPtr(cfgExe()),
                     strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, optionReplace), " ")));
             }
 
@@ -1211,31 +1212,32 @@ restoreRecoveryConf(unsigned int pgVersion)
             // Write pause_at_recovery_target/recovery_target_action
             if (cfgOptionTest(cfgOptTargetAction))
             {
-                // const String *targetAction = cfgOptionStr(cfgOptTargetAction);
-                //
-                // if (!strEqZ(targetAction, cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptTargetAction)))
-                // {
-                //     if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
-                //     {
-                //         strCat(result, "recovery_target_action = '%s'\n", strPtr(targetAction));
-                //     }
-                //     else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
-                //     {
-                //         if (strEq(targetAction, STRDEF("shutdown)))
-                //         {
-                //             THROW_FMT(
-                //                 OptionInvalidError, "%s=shutdown is only available in PostgreSQL >= %s",
-                //                 cfgOptionName(cfgOptTargetAction), strPtr(pgVersionStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
-                //         }
-                //
-                //         strCat(result, "pause_at_recovery_target = 'false'\n");
-                //     }
-                //     else
-                //     {
-                //         confess &log(ERROR,
-                //             cfgOptionName(CFGOPT_TARGET_ACTION) .  ' option is only available in PostgreSQL >= ' . PG_VERSION_91)
-                //     }
-                // }
+                const String *targetAction = cfgOptionStr(cfgOptTargetAction);
+
+                if (!strEqZ(targetAction, cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptTargetAction)))
+                {
+                    if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
+                    {
+                        strCatFmt(result, "recovery_target_action = '%s'\n", strPtr(targetAction));
+                    }
+                    else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
+                    {
+                        if (strEq(targetAction, STRDEF("shutdown")))
+                        {
+                            THROW_FMT(
+                                OptionInvalidError, CFGOPT_TARGET_ACTION "=shutdown is only available in PostgreSQL >= %s",
+                                strPtr(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
+                        }
+
+                        strCat(result, "pause_at_recovery_target = 'false'\n");
+                    }
+                    else
+                    {
+                        THROW_FMT(
+                            OptionInvalidError, CFGOPT_TARGET_ACTION " option is only available in PostgreSQL >= %s",
+                            strPtr(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_PAUSE)));
+                    }
+                }
             }
 
             // Write recovery_target_timeline
@@ -1541,6 +1543,7 @@ cmdRestore(void)
 
         // Delete the pg_control file so the cluster cannot be started if restore does not complete
         storageRemoveNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
+        storagePathSyncNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL));
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
@@ -1564,8 +1567,78 @@ cmdRestore(void)
         }
         while (!protocolParallelDone(parallelExec));
 
-        // Write recovery.conf
-        (void)restoreRecoveryConf;
+        // If preserve then leave recovery.conf as it is
+        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+        {
+            if (!storageExistsNP(storagePg(), PG_FILE_RECOVERYCONF_STR))
+            {
+                LOG_WARN(
+                    "recovery type is " RECOVERY_TYPE_PRESERVE " but recovery file does not exist at '%s",
+                    strPtr(storagePathNP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
+            }
+        }
+        // Else write recovery.conf if requested
+        else
+        {
+            String *recoveryConf = restoreRecoveryConf(manifestData(jobData.manifest)->pgVersion);
+
+            if (recoveryConf != NULL)
+            {
+                // Use the data directory to set permissions and ownership
+                const ManifestPath *dataPath = manifestPathFind(jobData.manifest, MANIFEST_TARGET_PGDATA_STR);
+
+                storagePutNP(
+                    storageNewWriteP(
+                        storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true,
+                        .modeFile = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), .noAtomic = true, .noSyncPath = true,
+                        .user = dataPath->user, .group = dataPath->group),
+                    BUFSTR(recoveryConf));
+            }
+        }
+
+        // Remove backup.manifest
+        storageRemoveNP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);
+
+        // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(jobData.manifest); targetIdx++)
+        {
+            const ManifestTarget *target = manifestTarget(jobData.manifest, targetIdx);
+
+            if (target->type == manifestTargetTypeLink && target->file != NULL)
+            {
+                const String *path = manifestTargetPath(jobData.manifest, target);
+
+                LOG_DETAIL("sync path '%s'", strPtr(path));
+                storagePathSyncNP(storageLocalWrite(), path);
+            }
+        }
+
+        // Sync paths in the data directory
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(jobData.manifest); pathIdx++)
+        {
+            if (strEq(manifestPath(jobData.manifest, pathIdx)->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
+                continue;
+
+            const String *path = storagePathNP(storagePg(), manifestPgPath(manifestPath(jobData.manifest, pathIdx)->name));
+
+            LOG_DETAIL("sync path '%s'", strPtr(path));
+            storagePathSyncNP(storagePgWrite(), path);
+        }
+
+        // Rename pg_control
+        if (storageExistsNP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)))
+        {
+            LOG_INFO(
+                "rename " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT " to " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
+                    " and sync '" PG_PATH_GLOBAL "' path");
+
+            storageMoveNP(
+                storagePgWrite(),
+                storageNewReadNP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)),
+                storageNewWriteNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
+        }
+        else
+            LOG_WARN("backup does not contain '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' -- cluster will not start");
     }
     MEM_CONTEXT_TEMP_END();
 
