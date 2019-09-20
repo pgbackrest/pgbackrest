@@ -1657,7 +1657,7 @@
                 <execute user="postgres" output="y" filter="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
                         --log-level-console=detail restore</exe-cmd>
-                    <exe-highlight>demo\/PG_VERSION - exists and matches backup|check\/clean db path|restore global\/pg_control</exe-highlight>
+                    <exe-highlight>demo\/PG_VERSION - exists and matches backup|remove invalid files|rename global\/pg_control</exe-highlight>
                 </execute>
             </execute-list>
 
