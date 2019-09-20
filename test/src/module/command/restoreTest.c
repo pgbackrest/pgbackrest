@@ -1070,7 +1070,7 @@ testRun(void)
             restoreRecoveryConf(PG_VERSION_94),
             "a_setting = 'a'\n"
                 "b_setting = 'b'\n"
-                "restore_command = 'pgbackrest --pg1-path=/pg --repo1-path=/repo --stanza=test1 archive-get \"%f\" \"%p\"'\n",
+                "restore_command = 'pgbackrest --pg1-path=/pg --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
             "user-specified options");
 
         // Override restore_command

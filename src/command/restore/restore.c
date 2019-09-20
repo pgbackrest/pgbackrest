@@ -1331,7 +1331,8 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                 if (cfgOptionBool(cfgOptForce))
                 {
                     strCatFmt(
-                        log, "exists and matches size %" PRIu64 " and modification time %" PRId64, file->size, file->timestamp);
+                        log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file->size,
+                        (uint64_t)file->timestamp);
                 }
                 // Else a checksum delta or file is zero-length
                 else
