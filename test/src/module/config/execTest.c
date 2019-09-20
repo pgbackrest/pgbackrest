@@ -50,14 +50,17 @@ testRun(void)
         strLstAddZ(argList, "--recovery-option=a=b");
         strLstAddZ(argList, "--recovery-option=c=d");
         strLstAddZ(argList, "restore");
+
+        setenv("PGBACKREST_REPO1_HOST", "bogus", true);
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        unsetenv("PGBACKREST_REPO1_HOST");
 
         KeyValue *optionReplace = kvNew();
         kvPut(optionReplace, varNewStr(strNew("repo1-path")), varNewStr(strNew("/replace/path")));
         kvPut(optionReplace, varNewStr(strNew("stanza")), NULL);
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(cfgExecParam(cfgCmdRestore, optionReplace, false), "|")),
+            strPtr(strLstJoin(cfgExecParam(cfgCmdRestore, optionReplace, true), "|")),
             strPtr(
                 strNewFmt(
                     "--db-include=1|--db-include=2|--pg1-path=%s/db|--recovery-option=a=b|--recovery-option=c=d"
