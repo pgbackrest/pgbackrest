@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Manifest Handler
+Backup Manifest Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -20,7 +20,7 @@ Manifest Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_EXTERN(MANIFEST_FILE_STR,                                    MANIFEST_FILE);
+STRING_EXTERN(BACKUP_MANIFEST_FILE_STR,                             BACKUP_MANIFEST_FILE);
 
 STRING_EXTERN(MANIFEST_TARGET_PGDATA_STR,                           MANIFEST_TARGET_PGDATA);
 STRING_EXTERN(MANIFEST_TARGET_PGTBLSPC_STR,                         MANIFEST_TARGET_PGTBLSPC);
@@ -148,7 +148,7 @@ struct Manifest
     StringList *ownerList;                                          // List of users/groups
     StringList *referenceList;                                      // List of file references
 
-    ManifestData data;                                          // Manifest data and options
+    ManifestData data;                                              // Manifest data and options
     List *targetList;                                               // List of paths
     List *pathList;                                                 // List of paths
     List *fileList;                                                 // List of files
@@ -161,40 +161,19 @@ Internal functions to add types to their lists
 ***********************************************************************************************************************************/
 // Helper to add owner to the owner list if it is not there already and return the pointer.  This saves a lot of space.
 static const String *
-manifestOwnerCache(Manifest *this, const Variant *owner)
+manifestOwnerCache(Manifest *this, const String *owner)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(VARIANT, owner);
+        FUNCTION_TEST_PARAM(STRING, owner);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    const String *result = NULL;
+    if (owner != NULL)
+        FUNCTION_TEST_RETURN(strLstAddIfMissing(this->ownerList, owner));
 
-    if (varType(owner) == varTypeString)
-    {
-        // Search for the owner in the list
-        for (unsigned int ownerIdx = 0; ownerIdx < strLstSize(this->ownerList); ownerIdx++)
-        {
-            const String *found = strLstGet(this->ownerList, ownerIdx);
-
-            if (strEq(varStr(owner), found))
-            {
-                result = found;
-                break;
-            }
-        }
-
-        // If not found then add it
-        if (result == NULL)
-        {
-            strLstAdd(this->ownerList, varStr(owner));
-            result = strLstGet(this->ownerList, strLstSize(this->ownerList) - 1);
-        }
-    }
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(NULL);
 }
 
 static void
@@ -230,7 +209,7 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(MANIFEST_PATH, file); // !!! FIX THIS
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -244,14 +223,14 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
             .checksumPage = file->checksumPage,
             .checksumPageError = file->checksumPageError,
             .checksumPageErrorList = varLstDup(file->checksumPageErrorList),
-            .group = manifestOwnerCache(this, VARSTR(file->group)),
+            .group = manifestOwnerCache(this, file->group),
             .mode = file->mode,
             .name = strDup(file->name),
             .primary = file->primary,
             .size = file->size,
             .sizeRepo = file->sizeRepo,
             .timestamp = file->timestamp,
-            .user = manifestOwnerCache(this, VARSTR(file->user)),
+            .user = manifestOwnerCache(this, file->user),
         };
 
         memcpy(fileAdd.checksumSha1, file->checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
@@ -304,8 +283,8 @@ manifestLinkAdd(Manifest *this, const ManifestLink *link)
         {
             .destination = strDup(link->destination),
             .name = strDup(link->name),
-            .group = manifestOwnerCache(this, VARSTR(link->group)),
-            .user = manifestOwnerCache(this, VARSTR(link->user)),
+            .group = manifestOwnerCache(this, link->group),
+            .user = manifestOwnerCache(this, link->user),
         };
 
         lstAdd(this->linkList, &linkAdd);
@@ -333,8 +312,8 @@ manifestPathAdd(Manifest *this, const ManifestPath *path)
         {
             .mode = path->mode,
             .name = strDup(path->name),
-            .group = manifestOwnerCache(this, VARSTR(path->group)),
-            .user = manifestOwnerCache(this, VARSTR(path->user)),
+            .group = manifestOwnerCache(this, path->group),
+            .user = manifestOwnerCache(this, path->user),
         };
 
         lstAdd(this->pathList, &pathAdd);
@@ -355,8 +334,6 @@ manifestTargetAdd(Manifest *this, const ManifestTarget *target)
     ASSERT(this != NULL);
     ASSERT(target != NULL);
     ASSERT(target->path != NULL);
-
-    // !!! Check that only link types have relative paths
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
     {
@@ -435,7 +412,29 @@ typedef struct ManifestLoadData
     const Variant *pathUserDefault;                                 // Path default user
 } ManifestLoadData;
 
-// Helper to convert owner to a variant.  Input could be boolean false (meaning there is no owner) or a string (there is an owner).
+// Helper to transform a variant that could be boolean or string into a string.  If the boolean is false return NULL else return
+// the string.  The boolean cannot be true.
+static const String *
+manifestOwnerGet(const Variant *owner)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT, owner);
+    FUNCTION_TEST_END();
+
+    ASSERT(owner != NULL);
+
+    // If bool then it should be false.  This indicates that the owner could not be mapped to a name during the backup.
+    if (varType(owner) == varTypeBool)
+    {
+        CHECK(!varBool(owner));
+        FUNCTION_TEST_RETURN(NULL);
+    }
+
+    FUNCTION_TEST_RETURN(varStr(owner));
+}
+
+// Helper to convert default owner to a variant.  Input could be boolean false (meaning there is no owner) or a string (there is an
+// owner).
 static const Variant *
 manifestOwnerDefaultGet(const String *ownerDefault)
 {
@@ -509,7 +508,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             if (kvKeyExists(fileKv, MANIFEST_KEY_GROUP_VAR))
             {
                 valueFound.group = true;
-                file.group = manifestOwnerCache(manifest, kvGet(fileKv, MANIFEST_KEY_GROUP_VAR));
+                file.group = manifestOwnerGet(kvGet(fileKv, MANIFEST_KEY_GROUP_VAR));
             }
 
             if (kvKeyExists(fileKv, MANIFEST_KEY_MODE_VAR))
@@ -527,7 +526,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             if (kvKeyExists(fileKv, MANIFEST_KEY_USER_VAR))
             {
                 valueFound.user = true;
-                file.user = manifestOwnerCache(manifest, kvGet(fileKv, MANIFEST_KEY_USER_VAR));
+                file.user = manifestOwnerGet(kvGet(fileKv, MANIFEST_KEY_USER_VAR));
             }
 
             lstAdd(loadData->fileFoundList, &valueFound);
@@ -553,7 +552,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             if (kvKeyExists(pathKv, MANIFEST_KEY_GROUP_VAR))
             {
                 valueFound.group = true;
-                path.group = manifestOwnerCache(manifest, kvGet(pathKv, MANIFEST_KEY_GROUP_VAR));
+                path.group = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_GROUP_VAR));
             }
 
             if (kvKeyExists(pathKv, MANIFEST_KEY_MODE_VAR))
@@ -565,7 +564,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             if (kvKeyExists(pathKv, MANIFEST_KEY_USER_VAR))
             {
                 valueFound.user = true;
-                path.user = manifestOwnerCache(manifest, kvGet(pathKv, MANIFEST_KEY_USER_VAR));
+                path.user = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_USER_VAR));
             }
 
             lstAdd(loadData->pathFoundList, &valueFound);
@@ -592,13 +591,13 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             if (kvKeyExists(linkKv, MANIFEST_KEY_GROUP_VAR))
             {
                 valueFound.group = true;
-                link.group = manifestOwnerCache(manifest, kvGet(linkKv, MANIFEST_KEY_GROUP_VAR));
+                link.group = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_GROUP_VAR));
             }
 
             if (kvKeyExists(linkKv, MANIFEST_KEY_USER_VAR))
             {
                 valueFound.user = true;
-                link.user = manifestOwnerCache(manifest, kvGet(linkKv, MANIFEST_KEY_USER_VAR));
+                link.user = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_USER_VAR));
             }
 
             lstAdd(loadData->linkFoundList, &valueFound);
@@ -811,7 +810,7 @@ manifestNewLoad(IoRead *read)
             ManifestLoadFound *found = lstGet(loadData.fileFoundList, fileIdx);
 
             if (!found->group)
-                file->group = manifestOwnerCache(this, loadData.fileGroupDefault);
+                file->group = manifestOwnerCache(this, manifestOwnerGet(loadData.fileGroupDefault));
 
             if (!found->mode)
                 file->mode = loadData.fileModeDefault;
@@ -820,7 +819,7 @@ manifestNewLoad(IoRead *read)
                 file->primary = loadData.filePrimaryDefault;
 
             if (!found->user)
-                file->user = manifestOwnerCache(this, loadData.fileUserDefault);
+                file->user = manifestOwnerCache(this, manifestOwnerGet(loadData.fileUserDefault));
         }
 
         // Process link defaults
@@ -830,10 +829,10 @@ manifestNewLoad(IoRead *read)
             ManifestLoadFound *found = lstGet(loadData.linkFoundList, linkIdx);
 
             if (!found->group)
-                link->group = manifestOwnerCache(this, loadData.linkGroupDefault);
+                link->group = manifestOwnerCache(this, manifestOwnerGet(loadData.linkGroupDefault));
 
             if (!found->user)
-                link->user = manifestOwnerCache(this, loadData.linkUserDefault);
+                link->user = manifestOwnerCache(this, manifestOwnerGet(loadData.linkUserDefault));
         }
 
         // Process path defaults
@@ -843,17 +842,28 @@ manifestNewLoad(IoRead *read)
             ManifestLoadFound *found = lstGet(loadData.pathFoundList, pathIdx);
 
             if (!found->group)
-                path->group = manifestOwnerCache(this, loadData.pathGroupDefault);
+                path->group = manifestOwnerCache(this, manifestOwnerGet(loadData.pathGroupDefault));
 
             if (!found->mode)
                 path->mode = loadData.pathModeDefault;
 
             if (!found->user)
-                path->user = manifestOwnerCache(this, loadData.pathUserDefault);
+                path->user = manifestOwnerCache(this, manifestOwnerGet(loadData.pathUserDefault));
         }
 
+        // Sort the lists.  They should already be sorted in the file but it is possible that this system has a different collation
+        // that renders that sort useless.
+        //
+        // This must happen *after* the default processing because found lists are in natural file order and it is not worth writing
+        // comparator routines for them.
+        lstSort(this->dbList, sortOrderAsc);
+        lstSort(this->fileList, sortOrderAsc);
+        lstSort(this->linkList, sortOrderAsc);
+        lstSort(this->pathList, sortOrderAsc);
+        lstSort(this->targetList, sortOrderAsc);
+
         // Make sure the base path exists
-        manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR);
+        manifestTargetBase(this);
 
         // Free the context holding temporary load data
         memContextFree(loadData.memContext);
@@ -864,11 +874,11 @@ manifestNewLoad(IoRead *read)
 }
 
 /***********************************************************************************************************************************
-Save to file
+Save manifest
 ***********************************************************************************************************************************/
 typedef struct ManifestSaveData
 {
-    Manifest *manifest;                                     // Manifest object to be saved
+    Manifest *manifest;                                             // Manifest object to be saved
 
     const Variant *fileGroupDefault;                                // File default group
     mode_t fileModeDefault;                                         // File default mode
@@ -885,7 +895,7 @@ typedef struct ManifestSaveData
 
 // Helper to convert the owner MCV to a default.  If the input is NULL boolean false should be returned, else the owner string.
 static const Variant *
-manifestOwnerGet(const String *ownerDefault)
+manifestOwnerVar(const String *ownerDefault)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, ownerDefault);
@@ -1132,8 +1142,8 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                         kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, varNewVarLst(file->checksumPageErrorList));
                 }
 
-                if (!varEq(manifestOwnerGet(file->group), saveData->fileGroupDefault))
-                    kvPut(fileKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerGet(file->group));
+                if (!varEq(manifestOwnerVar(file->group), saveData->fileGroupDefault))
+                    kvPut(fileKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(file->group));
 
                 if (file->primary != saveData->filePrimaryDefault)
                     kvPut(fileKv, MANIFEST_KEY_PRIMARY_VAR, VARBOOL(file->primary));
@@ -1151,8 +1161,8 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
 
                 kvPut(fileKv, MANIFEST_KEY_TIMESTAMP_VAR, varNewUInt64((uint64_t)file->timestamp));
 
-                if (!varEq(manifestOwnerGet(file->user), saveData->fileUserDefault))
-                    kvPut(fileKv, MANIFEST_KEY_USER_VAR, manifestOwnerGet(file->user));
+                if (!varEq(manifestOwnerVar(file->user), saveData->fileUserDefault))
+                    kvPut(fileKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(file->user));
 
                 infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, file->name, jsonFromKv(fileKv, 0));
 
@@ -1189,11 +1199,11 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 const ManifestLink *link = manifestLink(manifest, linkIdx);
                 KeyValue *linkKv = kvNew();
 
-                if (!varEq(manifestOwnerGet(link->user), saveData->linkUserDefault))
-                    kvPut(linkKv, MANIFEST_KEY_USER_VAR, manifestOwnerGet(link->user));
+                if (!varEq(manifestOwnerVar(link->user), saveData->linkUserDefault))
+                    kvPut(linkKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(link->user));
 
-                if (!varEq(manifestOwnerGet(link->group), saveData->linkGroupDefault))
-                    kvPut(linkKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerGet(link->group));
+                if (!varEq(manifestOwnerVar(link->group), saveData->linkGroupDefault))
+                    kvPut(linkKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(link->group));
 
                 kvPut(linkKv, MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
 
@@ -1229,14 +1239,14 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 const ManifestPath *path = manifestPath(manifest, pathIdx);
                 KeyValue *pathKv = kvNew();
 
-                if (!varEq(manifestOwnerGet(path->group), saveData->pathGroupDefault))
-                    kvPut(pathKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerGet(path->group));
+                if (!varEq(manifestOwnerVar(path->group), saveData->pathGroupDefault))
+                    kvPut(pathKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(path->group));
 
                 if (path->mode != saveData->pathModeDefault)
                     kvPut(pathKv, MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
 
-                if (!varEq(manifestOwnerGet(path->user), saveData->pathUserDefault))
-                    kvPut(pathKv, MANIFEST_KEY_USER_VAR, manifestOwnerGet(path->user));
+                if (!varEq(manifestOwnerVar(path->user), saveData->pathUserDefault))
+                    kvPut(pathKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(path->user));
 
                 infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathKv, 0));
 
@@ -1299,10 +1309,10 @@ manifestSave(Manifest *this, IoWrite *write)
             mcvUpdate(fileUserMcv, VARSTR(file->user));
         }
 
-        saveData.fileGroupDefault = manifestOwnerGet(varStr(mcvResult(fileGroupMcv)));
+        saveData.fileGroupDefault = manifestOwnerVar(varStr(mcvResult(fileGroupMcv)));
         saveData.fileModeDefault = varUInt(mcvResult(fileModeMcv));
         saveData.filePrimaryDefault = varBool(mcvResult(filePrimaryMcv));
-        saveData.fileUserDefault = manifestOwnerGet(varStr(mcvResult(fileUserMcv)));
+        saveData.fileUserDefault = manifestOwnerVar(varStr(mcvResult(fileUserMcv)));
 
         // Get default link values
         if (lstSize(this->linkList) > 0)
@@ -1318,8 +1328,8 @@ manifestSave(Manifest *this, IoWrite *write)
                 mcvUpdate(linkUserMcv, VARSTR(link->user));
             }
 
-            saveData.linkGroupDefault = manifestOwnerGet(varStr(mcvResult(linkGroupMcv)));
-            saveData.linkUserDefault = manifestOwnerGet(varStr(mcvResult(linkUserMcv)));
+            saveData.linkGroupDefault = manifestOwnerVar(varStr(mcvResult(linkGroupMcv)));
+            saveData.linkUserDefault = manifestOwnerVar(varStr(mcvResult(linkUserMcv)));
         }
 
         // Get default path values
@@ -1338,15 +1348,111 @@ manifestSave(Manifest *this, IoWrite *write)
             mcvUpdate(pathUserMcv, VARSTR(path->user));
         }
 
-        saveData.pathGroupDefault = manifestOwnerGet(varStr(mcvResult(pathGroupMcv)));
+        saveData.pathGroupDefault = manifestOwnerVar(varStr(mcvResult(pathGroupMcv)));
         saveData.pathModeDefault = varUInt(mcvResult(pathModeMcv));
-        saveData.pathUserDefault = manifestOwnerGet(varStr(mcvResult(pathUserMcv)));
+        saveData.pathUserDefault = manifestOwnerVar(varStr(mcvResult(pathUserMcv)));
 
+        // Save manifest
         infoSave(this->info, write, manifestSaveCallback, &saveData);
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Ensure that symlinks do not point to the same directory or a subdirectory of another link
+***********************************************************************************************************************************/
+void
+manifestLinkCheck(const Manifest *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+    FUNCTION_LOG_END();
+
+    for (unsigned int linkIdx1 = 0; linkIdx1 < manifestTargetTotal(this); linkIdx1++)
+    {
+        const ManifestTarget *link1 = manifestTarget(this, linkIdx1);
+
+        if (link1->type == manifestTargetTypeLink)
+        {
+            for (unsigned int linkIdx2 = 0; linkIdx2 < manifestTargetTotal(this); linkIdx2++)
+            {
+                const ManifestTarget *link2 = manifestTarget(this, linkIdx2);
+
+                if (link2->type == manifestTargetTypeLink && link1 != link2)
+                {
+                    if (!(link1->file != NULL && link2->file != NULL) &&
+                        strBeginsWith(
+                            strNewFmt("%s/", strPtr(manifestTargetPath(this, link1))),
+                            strNewFmt("%s/", strPtr(manifestTargetPath(this, link2)))))
+                    {
+                        THROW_FMT(
+                            LinkDestinationError,
+                            "link '%s' (%s) destination is a subdirectory of or the same directory as link '%s' (%s)",
+                            strPtr(manifestPgPath(link1->name)), strPtr(manifestTargetPath(this, link1)),
+                            strPtr(manifestPgPath(link2->name)), strPtr(manifestTargetPath(this, link2)));
+                    }
+                }
+            }
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Return the base target, i.e. the target that is the data directory
+***********************************************************************************************************************************/
+const ManifestTarget *
+manifestTargetBase(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR));
+}
+
+/***********************************************************************************************************************************
+Return an absolute path to the target
+***********************************************************************************************************************************/
+String *
+manifestTargetPath(const Manifest *this, const ManifestTarget *target)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, target);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+
+    // If the target path is already absolute then just return it
+    if (strBeginsWith(target->path, FSLASH_STR))
+        FUNCTION_TEST_RETURN(strDup(target->path));
+
+    // Construct it from the base pg path and a relative path
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *pgPath = strPath(manifestPgPath(target->name));
+
+        if (strSize(pgPath) != 0)
+            strCat(pgPath, "/");
+
+        strCat(pgPath, strPtr(target->path));
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strPathAbsolute(pgPath, manifestTargetBase(this)->path);
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -1376,6 +1482,21 @@ manifestPgPath(const String *manifestPath)
     }
 
     FUNCTION_TEST_RETURN(NULL);
+}
+
+/***********************************************************************************************************************************
+Get the cipher sub-passphrase
+***********************************************************************************************************************************/
+const String *
+manifestCipherSubPass(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(infoCipherPass(this->info));
 }
 
 /***********************************************************************************************************************************
@@ -1428,9 +1549,7 @@ manifestDbFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-If the database requested is not found in the list, return the Default passed rather than throwing an error.
-***********************************************************************************************************************************/
+// If the database requested is not found in the list, return the default passed rather than throw an error
 const ManifestDb *
 manifestDbFindDefault(const Manifest *this, const String *name, const ManifestDb *dbDefault)
 {
@@ -1493,9 +1612,7 @@ manifestFileFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-If the file requested is not found in the list, return the Default passed rather than throwing an error.
-***********************************************************************************************************************************/
+// If the file requested is not found in the list, return the default passed rather than throw an error
 const ManifestFile *
 manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault)
 {
@@ -1558,9 +1675,7 @@ manifestLinkFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-If the link requested is not found in the list, return the Default passed rather than throwing an error.
-***********************************************************************************************************************************/
+// If the link requested is not found in the list, return the default passed rather than throw an error
 const ManifestLink *
 manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
 {
@@ -1665,10 +1780,7 @@ manifestPathFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
-
-/***********************************************************************************************************************************
-If the path requested is not found in the list, return the Default passed rather than throwing an error.
-***********************************************************************************************************************************/
+// If the path requested is not found in the list, return the default passed rather than throw an error
 const ManifestPath *
 manifestPathFindDefault(const Manifest *this, const String *name, const ManifestPath *pathDefault)
 {
