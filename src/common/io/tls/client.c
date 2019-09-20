@@ -12,6 +12,10 @@ TLS Client
 #include <sys/socket.h>
 #include <unistd.h>
 
+#ifdef __FreeBSD__
+#include <netinet/in.h>
+#endif
+
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>

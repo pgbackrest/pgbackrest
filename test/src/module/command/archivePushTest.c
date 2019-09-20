@@ -195,7 +195,7 @@ testRun(void)
         TEST_ERROR(
             cmdArchivePush(), OptionRequiredError,
             "option 'pg1-path' must be specified when relative wal paths are used"
-            "\nHINT: Is %f passed to archive-push instead of %p?"
+            "\nHINT: is %f passed to archive-push instead of %p?"
             "\nHINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
 
         // Create pg_control and archive.info

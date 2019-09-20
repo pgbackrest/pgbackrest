@@ -707,7 +707,7 @@ sub configValidate
                 " '${strDbVersion}' and " . cfgOptionName(CFGOPT_PG_PATH) . " '$self->{strDbPath}' read from" .
                 " '$self->{strDbPath}/" . DB_FILE_PGCONTROL . "'\n" .
             "HINT: the " . cfgOptionName(CFGOPT_PG_PATH) . " and " . cfgOptionName(CFGOPT_PG_PORT) .
-                " settings likely reference different clusters",
+                " settings likely reference different clusters.",
             ERROR_DB_MISMATCH);
     }
 

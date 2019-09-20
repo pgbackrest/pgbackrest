@@ -23,6 +23,8 @@ struct ProtocolParallel
 {
     MemContext *memContext;
     TimeMSec timeout;                                               // Max time to wait for jobs before returning
+    ParallelJobCallback *callbackFunction;                          // Function to get new jobs
+    void *callbackData;                                             // Data to pass to callback function
 
     List *clientList;                                               // List of clients to process jobs
     List *jobList;                                                  // List of jobs to be processed
@@ -38,11 +40,16 @@ OBJECT_DEFINE_FREE(PROTOCOL_PARALLEL);
 Create object
 ***********************************************************************************************************************************/
 ProtocolParallel *
-protocolParallelNew(TimeMSec timeout)
+protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT64, timeout);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
+
+    ASSERT(callbackFunction != NULL);
+    ASSERT(callbackData != NULL);
 
     ProtocolParallel *this = NULL;
 
@@ -51,6 +58,9 @@ protocolParallelNew(TimeMSec timeout)
         this = memNew(sizeof(ProtocolParallel));
         this->memContext = memContextCurrent();
         this->timeout = timeout;
+
+        this->callbackFunction = callbackFunction;
+        this->callbackData = callbackData;
 
         this->clientList = lstNew(sizeof(ProtocolClient *));
         this->jobList = lstNew(sizeof(ProtocolParallelJob *));
@@ -80,27 +90,6 @@ protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
         THROW(AssertError, "client with read handle is required");
 
     lstAdd(this->clientList, &client);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Add job
-***********************************************************************************************************************************/
-void
-protocolParallelJobAdd(ProtocolParallel *this, ProtocolParallelJob *job)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
-        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(job != NULL);
-    ASSERT(this->state == protocolParallelJobStatePending);
-
-    protocolParallelJobMove(job, lstMemContext(this->jobList));
-    lstAdd(this->jobList, &job);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -208,21 +197,29 @@ protocolParallelProcess(ProtocolParallel *this)
         // If nothing is running for this client
         if (this->clientJobList[clientIdx] == NULL)
         {
-            for (unsigned int jobIdx = 0; jobIdx < lstSize(this->jobList); jobIdx++)
+            // Get a new job
+            ProtocolParallelJob *job = NULL;
+
+            MEM_CONTEXT_BEGIN(lstMemContext(this->jobList))
             {
-                ProtocolParallelJob *job = *(ProtocolParallelJob **)lstGet(this->jobList, jobIdx);
+                job = this->callbackFunction(this->callbackData, clientIdx);
+            }
+            MEM_CONTEXT_END();
 
-                if (protocolParallelJobState(job) == protocolParallelJobStatePending)
-                {
-                    protocolClientWriteCommand(
-                        *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
+            // If a new job was found
+            if (job != NULL)
+            {
+                // Add to the job list
+                lstAdd(this->jobList, &job);
 
-                    protocolParallelJobProcessIdSet(job, clientIdx + 1);
-                    protocolParallelJobStateSet(job, protocolParallelJobStateRunning);
-                    this->clientJobList[clientIdx] = job;
+                // Send the job to the client
+                protocolClientWriteCommand(
+                    *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
 
-                    break;
-                }
+                // Set client id and running state
+                protocolParallelJobProcessIdSet(job, clientIdx + 1);
+                protocolParallelJobStateSet(job, protocolParallelJobStateRunning);
+                this->clientJobList[clientIdx] = job;
             }
         }
     }
