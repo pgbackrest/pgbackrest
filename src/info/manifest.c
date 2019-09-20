@@ -1476,7 +1476,8 @@ manifestPgPath(const String *manifestPath)
     else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
     {
         // A tablespace target is the only valid option if not pg_data or pg_data/
-        ASSERT(strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGTBLSPC "/")));
+        ASSERT(
+            strEq(manifestPath, MANIFEST_TARGET_PGTBLSPC_STR) || strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGTBLSPC "/")));
 
         FUNCTION_TEST_RETURN(strDup(manifestPath));
     }

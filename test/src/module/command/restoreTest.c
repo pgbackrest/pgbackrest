@@ -1070,7 +1070,7 @@ testRun(void)
             restoreRecoveryConf(PG_VERSION_94),
             "a_setting = 'a'\n"
                 "b_setting = 'b'\n"
-                "restore_command = '--pg1-path=/pg --repo1-path=/repo --stanza=test1 archive-get \"%f\" \"%p\"'\n",
+                "restore_command = 'pgbackrest --pg1-path=/pg --repo1-path=/repo --stanza=test1 archive-get \"%f\" \"%p\"'\n",
             "user-specified options");
 
         // Override restore_command
@@ -1265,8 +1265,8 @@ testRun(void)
                     "P00 DETAIL: update mode for '%s/pg' to 0700\n"
                     "P00 DETAIL: create path '%s/pg/global'\n"
                     "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-                    "P00   WARN: recovery type is preserve but recovery file does not exist at '%s/pg/recovery.conf\n"
-                    "P00 DETAIL: sync '%s/pg'\n"
+                    "P00   WARN: recovery type is preserve but recovery file does not exist at '%s/pg/recovery.conf'\n"
+                    "P00 DETAIL: sync path '%s/pg'\n"
                     "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
                     testPath(), testPath(), testPath(), testPath(), testPath(), testPath())));
 
@@ -1349,7 +1349,7 @@ testRun(void)
                     "P00 DETAIL: remove invalid path '%s/pg/bogus1'\n"
                     "P00 DETAIL: remove invalid path '%s/pg/global/bogus3'\n"
                     "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-                    "P00 DETAIL: sync '%s/pg'\n"
+                    "P00 DETAIL: sync path '%s/pg'\n"
                     "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
                     testPath(), testPath(), testPath(), testPath(), testPath(), testPath())));
     }

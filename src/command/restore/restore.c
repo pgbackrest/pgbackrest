@@ -1573,7 +1573,7 @@ cmdRestore(void)
             if (!storageExistsNP(storagePg(), PG_FILE_RECOVERYCONF_STR))
             {
                 LOG_WARN(
-                    "recovery type is " RECOVERY_TYPE_PRESERVE " but recovery file does not exist at '%s",
+                    "recovery type is " RECOVERY_TYPE_PRESERVE " but recovery file does not exist at '%s'",
                     strPtr(storagePathNP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
             }
         }
