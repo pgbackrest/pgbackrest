@@ -6,6 +6,7 @@ This documentation is intended to assist contributors to pgBackRest by outlining
 ```
 /backrest/test/test.pl --dry-run
 ```
+If using a RHEL system, the CPAN XML parser is required for running `test.pl` and `doc.pl`. Instructions for installing Docker and the XML parse can be found in the `README.md` file of the pgBackRest [doc](https://github.com/cmwshang/pgbackrest/tree/master/doc) directory in the section "The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation". NOTE that the `Install latex (for building PDF)` is not required since testing of the docus need only be run for HTML output.
 
 ## Adding an Option
 
@@ -69,4 +70,15 @@ Note that `CFGDEF_SECTION` is not present thereby making this a command-line onl
 
 ### reference.xml
 
-All options must be documented or the system will error during the build. To add an option, find the command section identified by `config-section id="COMMAND"` section where COMMAND is the name of the command (e.g. `expire`) or, if the option is used by more than one command, the `config-section id="general" name="General"` section.
+All options must be documented or the system will error during the build. To add an option, find the command section identified by `command id="COMMAND"` section where COMMAND is the name of the command (e.g. `expire`) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the `operation-general title="General Options"` section.
+
+To add an option, add the following to the `<option-list>` section; if it does not exist, then wrap the following in `<option-list>` `</option-list>`. Note that his example uses the boolean option `force` of the `restore` command. Simply replace that with your new option and the appropriate `summary`, `text` and `example`.
+```
+<option id="force" name="Force">
+    <summary>Force a restore.</summary>
+
+    <text>By itself this option forces the <postgres/> data and tablespace paths to be completely overwritten.  In combination with <br-option>--delta</br-option> a timestamp/size delta will be performed instead of using checksums.</text>
+
+    <example>y</example>
+</option>
+```

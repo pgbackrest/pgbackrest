@@ -11,10 +11,7 @@
             /backrest/test/test.pl --dry-run
         </code-block>
 
-<!-- TODO:
-1) Add the information on RHEL for testing since the XML parser is needed (see doc/README)
-2) Also that readme explains building the docs so it may be usefull (if that info is not somewhere else) -->
-
+        <p>If using a RHEL system, the CPAN XML parser is required for running <code>test.pl</code> and <code>doc.pl</code>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="https://github.com/cmwshang/pgbackrest/tree/master/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docus need only be run for HTML output.</p>
     </section>
 
     <section id="option">
@@ -86,8 +83,20 @@
 
         <section id="reference-file">
             <title>reference.xml</title>
-<!-- TODO: This info may be wrong - there are config- and option- sections so need to check. Also need to complete this sectino with examples-->
-            <p>All options must be documented or the system will error during the build.  To add an option, find the command section identified by <code>config-section id="COMMAND"</code> section where COMMAND is the name of the command (e.g. <code>expire</code>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>config-section id="general"</code> section.</p>
+
+            <p>All options must be documented or the system will error during the build.  To add an option, find the command section identified by <code>command id="COMMAND"</code> section where COMMAND is the name of the command (e.g. <code>expire</code>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>operation-general title="General Options"</code> section.</p>
+
+            <p>To add an option, add the following to the <code>&lt;option-list&gt;</code> section; if it does not exist, then wrap the following in <code>&lt;option-list&gt;</code> <code>&lt;/option-list&gt;</code>. Note that his example uses the boolean option <code>force</code> of the <code>restore</code> command. Simply replace that with your new option and the appropriate <code>summary</code>, <code>text</code> and <code>example</code>.</p>
+
+            <code-block>
+&lt;option id="force" name="Force"&gt;
+    &lt;summary&gt;Force a restore.&lt;/summary&gt;
+
+    &lt;text&gt;By itself this option forces the &lt;postgres/&gt; data and tablespace paths to be completely overwritten.  In combination with &lt;br-option&gt;--delta&lt;/br-option&gt; a timestamp/size delta will be performed instead of using checksums.&lt;/text&gt;
+
+    &lt;example>y&lt;/example&gt;
+&lt;/option&gt;
+            </code-block>
         </section>
     </section>
 </doc>
