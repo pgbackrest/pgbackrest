@@ -34,8 +34,9 @@ testRun(void)
             strPtr(strLstJoin(cfgExecParam(cfgCmdLocal, NULL), "|")),
             strPtr(
                 strNewFmt(
-                    "--no-config|--log-subprocess|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo|--stanza=test1|local", testPath(),
-                    testPath())),
+                    "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo"
+                    "|--stanza=test1|local",
+                    testPath(), testPath())),
             "exec archive-get -> local");
 
         // -------------------------------------------------------------------------------------------------------------------------
