@@ -1209,31 +1209,31 @@ restoreRecoveryConf(unsigned int pgVersion)
             // Write pause_at_recovery_target/recovery_target_action
             if (cfgOptionTest(cfgOptTargetAction))
             {
-                const String *targetAction = cfgOptionStr(cfgOptTargetAction);
-
-                if (!strEqZ(targetAction, cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptTargetAction)))
-                {
-                    if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
-                    {
-                        strCat(result, "recovery_target_action = '%s'\n", strPtr(targetAction));
-                    }
-                    else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
-                    {
-                        if (strEq(targetAction, STRDEF("shutdown)))
-                        {
-                            THROW_FMT(
-                                OptionInvalidError, "%s=shutdown is only available in PostgreSQL >= %s",
-                                cfgOptionName(cfgOptTargetAction), strPtr(pgVersionStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
-                        }
-
-                        strCat(result, "pause_at_recovery_target = 'false'\n");
-                    }
-                    else
-                    {
-                        confess &log(ERROR,
-                            cfgOptionName(CFGOPT_TARGET_ACTION) .  ' option is only available in PostgreSQL >= ' . PG_VERSION_91)
-                    }
-                }
+                // const String *targetAction = cfgOptionStr(cfgOptTargetAction);
+                //
+                // if (!strEqZ(targetAction, cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptTargetAction)))
+                // {
+                //     if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
+                //     {
+                //         strCat(result, "recovery_target_action = '%s'\n", strPtr(targetAction));
+                //     }
+                //     else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
+                //     {
+                //         if (strEq(targetAction, STRDEF("shutdown)))
+                //         {
+                //             THROW_FMT(
+                //                 OptionInvalidError, "%s=shutdown is only available in PostgreSQL >= %s",
+                //                 cfgOptionName(cfgOptTargetAction), strPtr(pgVersionStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
+                //         }
+                //
+                //         strCat(result, "pause_at_recovery_target = 'false'\n");
+                //     }
+                //     else
+                //     {
+                //         confess &log(ERROR,
+                //             cfgOptionName(CFGOPT_TARGET_ACTION) .  ' option is only available in PostgreSQL >= ' . PG_VERSION_91)
+                //     }
+                // }
             }
 
             // Write recovery_target_timeline
