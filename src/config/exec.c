@@ -13,11 +13,12 @@ Exec Configuration
 Generate a list of options required for execution of a new command, replacing options as specified in optionReplace
 ***********************************************************************************************************************************/
 StringList *
-cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
+cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace, bool local)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, commandId);
         FUNCTION_LOG_PARAM(KEY_VALUE, optionReplace);
+        FUNCTION_LOG_PARAM(BOOL, local);                            // Will the new process be running on the same host?
     FUNCTION_LOG_END();
 
     StringList *result = NULL;
@@ -73,7 +74,7 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
                 strLstAdd(result, strNewFmt("--reset-%s", cfgOptionName(optionId)));
             }
             // Else format the value if found
-            else if (value != NULL)
+            else if (value != NULL && (!local || exists || cfgOptionSource(optionId) == cfgSourceParam))
             {
                 if (varType(value) == varTypeBool)
                 {

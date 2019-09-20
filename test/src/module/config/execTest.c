@@ -31,7 +31,7 @@ testRun(void)
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(cfgExecParam(cfgCmdLocal, NULL), "|")),
+            strPtr(strLstJoin(cfgExecParam(cfgCmdLocal, NULL, false), "|")),
             strPtr(
                 strNewFmt(
                     "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo"
@@ -57,7 +57,7 @@ testRun(void)
         kvPut(optionReplace, varNewStr(strNew("stanza")), NULL);
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(cfgExecParam(cfgCmdRestore, optionReplace), "|")),
+            strPtr(strLstJoin(cfgExecParam(cfgCmdRestore, optionReplace, false), "|")),
             strPtr(
                 strNewFmt(
                     "--db-include=1|--db-include=2|--pg1-path=%s/db|--recovery-option=a=b|--recovery-option=c=d"
