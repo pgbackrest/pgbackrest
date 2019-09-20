@@ -564,9 +564,8 @@ P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: unknown user in backup manifest mapped to '[USER-2]'
 P00   WARN: unknown group in backup manifest mapped to '[GROUP-2]'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_stat' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/backup_label.old'
@@ -593,7 +592,7 @@ P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/postgresql.auto.c
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/postmaster.opts'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.done'
-P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/pg_stat'
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/pg_clog'
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
@@ -613,7 +612,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/zero_from_start - exists and is zero size (0B, 100%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
-P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -646,14 +644,13 @@ P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: unknown user in backup manifest mapped to '[USER-1]'
 P00   WARN: unknown group in backup manifest mapped to '[GROUP-1]'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_stat' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base/base/1/PG_VERSION'
 P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base/base/16384/PG_VERSION'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
-P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/pg_stat'
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -672,7 +669,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/zero_from_start - exists and is zero size (0B, 100%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
-P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -705,13 +701,12 @@ P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_stat' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: remove link '[TEST_PATH]/db-master/db/base/pg_stat' because destination changed
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
-P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/pg_stat'
 P00 DETAIL: create symlink '[TEST_PATH]/db-master/db/base/pg_stat' to '../pg_stat'
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
@@ -731,7 +726,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/zero_from_start - exists and is zero size (0B, 100%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
-P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -767,12 +761,11 @@ P00   INFO: map link 'postgresql.conf' to '../pg_config/postgresql.conf'
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_stat' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
-P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/pg_stat'
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -791,7 +784,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/zero_from_start - exists and is zero size (0B, 100%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
-P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -827,7 +819,7 @@ restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked fil
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
-P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base/../pg_stat' because it contains files
+P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/pg_stat' because it contains files
             HINT: try using --delta if this is what you intended.
 
 restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked path (db-master host)
@@ -835,7 +827,7 @@ restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked pat
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
-P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/base/../pg_stat' because it contains files
+P00  ERROR: [040]: unable to restore to path '[TEST_PATH]/db-master/db/pg_stat' because it contains files
             HINT: try using --delta if this is what you intended.
 
 restore, backup '[BACKUP-FULL-2]', expect exit 38 - error on postmaster.pid exists (db-master host)
@@ -854,11 +846,10 @@ P00   INFO: map link 'pg_stat' to '../pg_stat'
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_stat' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base/../pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_config' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_stat' exists
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
-P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base/../pg_stat'
+P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/pg_stat'
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/base'
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/base/1'
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base/base/16384'
@@ -895,7 +886,6 @@ P01   INFO: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/zero_from_start (0B, 100%)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? (0B, 100%)
-P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -3992,7 +3982,7 @@ P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
 P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base' exists
-P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/../../tablespace/ts2/[TS_PATH-1]' exists
+P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/tablespace/ts2/[TS_PATH-1]' exists
 P00 DETAIL: update mode for '[TEST_PATH]/db-master/db/base-2/base' to 0777
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/base'
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/base/1'
@@ -4009,6 +3999,7 @@ P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_snapshots'
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_stat'
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_stat_tmp'
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_subtrans'
+P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc'
 P00 DETAIL: create symlink '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: create path '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768'
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b

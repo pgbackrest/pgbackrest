@@ -708,7 +708,7 @@ restoreClean(Manifest *manifest)
 
         // Check permissions and validity (is the directory empty without delta?) if the target directory exists
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *basePath = manifestTargetBase(manifest)->path;
+        StringList *pathChecked = strLstNew();
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
@@ -717,22 +717,10 @@ restoreClean(Manifest *manifest)
             cleanData->manifest = manifest;
             cleanData->target = manifestTarget(manifest, targetIdx);
             cleanData->targetName = cleanData->target->name;
-            cleanData->targetPath = cleanData->target->path;
+            cleanData->targetPath = manifestTargetPath(manifest, cleanData->target);
             cleanData->basePath = strEq(cleanData->targetName, MANIFEST_TARGET_PGDATA_STR);
             cleanData->delta = delta;
             cleanData->preserveRecoveryConf = strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR);
-
-            // If the target path is relative update it
-            if (!strBeginsWith(cleanData->targetPath, FSLASH_STR))
-            {
-                const String *linkPath = strPath(manifestPgPath(cleanData->target->name));
-
-                cleanData->targetPath = strNewFmt(
-                    "%s/%s", strPtr(basePath),
-                    strSize(linkPath) > 0 ?
-                        strPtr(strNewFmt("%s/%s", strPtr(linkPath), strPtr(cleanData->target->path))) :
-                        strPtr(cleanData->target->path));
-            }
 
             // If this is a tablespace append the tablespace identifier
             if (cleanData->target->type == manifestTargetTypeLink && cleanData->target->tablespaceId != 0)
@@ -748,8 +736,14 @@ restoreClean(Manifest *manifest)
             }
 
             // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
-            // ??? Note that a path may be checked multiple times if more than one file link points to the same path.  This is
-            // harmless but creates noise in the log so it may be worth de-duplicating.
+            // Don't check the same path twice.  There can be multiple links to files in the same path, but syncing it more than
+            // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
+            // performance.
+            if (strLstExists(pathChecked, cleanData->targetPath))
+                continue;
+            else
+                strLstAdd(pathChecked, cleanData->targetPath);
+
             LOG_DETAIL("check '%s' exists", strPtr(cleanData->targetPath));
             StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true, .followLink = true);
 
@@ -1599,6 +1593,8 @@ cmdRestore(void)
         storageRemoveNP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);
 
         // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
+        StringList *pathSynced = strLstNew();
+
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(jobData.manifest); targetIdx++)
         {
             const ManifestTarget *target = manifestTarget(jobData.manifest, targetIdx);
@@ -1607,6 +1603,15 @@ cmdRestore(void)
             {
                 const String *path = manifestTargetPath(jobData.manifest, target);
 
+                // Don't sync the same path twice.  There can be multiple links to files in the same path, but syncing it more than
+                // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
+                // performance.
+                if (strLstExists(pathSynced, path))
+                    continue;
+                else
+                    strLstAdd(pathSynced, path);
+
+                // Sync the path
                 LOG_DETAIL("sync path '%s'", strPtr(path));
                 storagePathSyncNP(storageLocalWrite(), path);
             }
