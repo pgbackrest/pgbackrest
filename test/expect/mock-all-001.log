@@ -636,7 +636,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, backup '[BACKUP-FULL-2]' - fix permissions (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --log-level-console=detail  --stanza=db restore
@@ -695,7 +695,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-get %f "%p"'
 
 restore delta, backup '[BACKUP-FULL-2]' - fix broken symlink (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all  --stanza=db restore
@@ -754,7 +754,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, backup '[BACKUP-FULL-2]' - restore all links by mapping (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf --link-map=pg_hba.conf=../pg_config/pg_hba.conf  --stanza=db restore
@@ -814,7 +814,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, backup '[BACKUP-FULL-2]', expect exit 70 - restore all links by mapping (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=warn --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_stat/postgresql.conf  --stanza=db restore
@@ -918,7 +918,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing PG_VERSION (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --stanza=db restore
@@ -994,7 +994,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 incr backup - invalid database version (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -2015,7 +2015,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
 ------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, backup '[BACKUP-DIFF-2]', remap - ensure file in tblspc root remains after --delta (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-DIFF-2] --stanza=db restore
@@ -2081,7 +2081,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
 ------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 incr backup - add files and remove tablespace 2 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --process-max=1 --stanza=db backup
@@ -3911,7 +3911,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
 ------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, remap - selective restore 32768 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --db-include=32768  --stanza=db restore
@@ -3972,7 +3972,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
 ------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, remap, expect exit 80 - error on invalid id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=warn --db-include=7777  --stanza=db restore
@@ -4058,7 +4058,7 @@ P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/base/recovery.conf
 -----------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db archive-get "%f" "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 info all stanzas - normal output (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn info

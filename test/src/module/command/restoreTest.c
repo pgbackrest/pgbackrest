@@ -1108,7 +1108,6 @@ testRun(void)
             restoreRecoveryConf(PG_VERSION_94),
             "restore_command = 'my_restore_command'\n"
             "recovery_target_time = 'TIME'\n"
-            "recovery_target_inclusive = 'false'\n"
             "recovery_target_timeline = '3'\n",
             "recovery target time with timeline");
 
@@ -1123,7 +1122,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94),
             "restore_command = 'my_restore_command'\n"
-            "recovery_target_time = 'TIME'\n",
+            "recovery_target_time = 'TIME'\n"
+            "recovery_target_inclusive = 'false'\n",
             "recovery target time inclusive");
 
         // Recovery target action = shutdown

@@ -1194,8 +1194,8 @@ restoreRecoveryConf(unsigned int pgVersion)
                 // log-timestamp
 
                 strCatFmt(
-                    result, "restore_command = '%s %s \"%%f\" \"%%p\"'\n", strPtr(cfgExe()),
-                    strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, optionReplace), " ")));
+                    result, "restore_command = '%s %s %%f \"%%p\"'\n", strPtr(cfgExe()),
+                    strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, optionReplace, true), " ")));
             }
 
             // If type is immediate
