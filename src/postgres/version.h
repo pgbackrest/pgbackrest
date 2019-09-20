@@ -38,8 +38,14 @@ Version where various PostgreSQL capabilities were introduced
 // pg_create_restore_point() supported
 #define PG_VERSION_RESTORE_POINT                                    PG_VERSION_91
 
+// pause_at_recovery_target is supported
+#define PG_VERSION_RECOVERY_TARGET_PAUSE                            PG_VERSION_91
+
 // tablespace_map is created during backup
 #define PG_VERSION_TABLESPACE_MAP                                   PG_VERSION_95
+
+// recovery target action supported
+#define PG_VERSION_RECOVERY_TARGET_ACTION                           PG_VERSION_95
 
 // xlog was renamed to wal
 #define PG_VERSION_WAL_RENAME                                       PG_VERSION_10

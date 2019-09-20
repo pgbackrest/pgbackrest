@@ -1042,6 +1042,92 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("restoreRecoveryConf()"))
+    {
+        StringList *argBaseList = strLstNew();
+        strLstAddZ(argBaseList, "pgbackrest");
+        strLstAddZ(argBaseList, "--stanza=test1");
+        strLstAddZ(argBaseList, "--repo1-path=/repo");
+        strLstAddZ(argBaseList, "--pg1-path=/pg");
+        strLstAddZ(argBaseList, "restore");
+
+        // No recovery conf
+        // -------------------------------------------------------------------------------------------------------------------------
+        StringList *argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=none");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_PTR(restoreRecoveryConf(PG_VERSION_94), NULL, "recovery type is none");
+
+        // User-specified options
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--recovery-option=a-setting=a");
+        strLstAddZ(argList, "--recovery-option=b_setting=b");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94),
+            "a_setting = 'a'\n"
+                "b_setting = 'b'\n"
+                "restore_command = '--pg1-path=/pg --repo1-path=/repo --stanza=test1 archive-get \"%f\" \"%p\"'\n",
+            "user-specified options");
+
+        // Override restore_command
+        // -------------------------------------------------------------------------------------------------------------------------
+        strLstAddZ(argBaseList, "--recovery-option=restore-command=my_restore_command");
+        argList = strLstDup(argBaseList);
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94),
+            "restore_command = 'my_restore_command'\n",
+            "override restore command");
+
+        // Recovery target immediate
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=immediate");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94),
+            "restore_command = 'my_restore_command'\n"
+            "recovery_target = 'immediate'\n",
+            "recovery target immediate");
+
+        // Recovery target time with timeline
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=time");
+        strLstAddZ(argList, "--target=TIME");
+        strLstAddZ(argList, "--target-timeline=3");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94),
+            "restore_command = 'my_restore_command'\n"
+            "recovery_target_time = 'TIME'\n"
+            "recovery_target_inclusive = 'false'\n"
+            "recovery_target_timeline = '3'\n",
+            "recovery target time with timeline");
+
+        // Recovery target inclusive
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=time");
+        strLstAddZ(argList, "--target=TIME");
+        strLstAddZ(argList, "--target-exclusive");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94),
+            "restore_command = 'my_restore_command'\n"
+            "recovery_target_time = 'TIME'\n",
+            "recovery target time inclusive");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdRestore()"))
     {
         const String *pgPath = strNewFmt("%s/pg", testPath());

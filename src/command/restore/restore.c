@@ -16,6 +16,7 @@ Restore Command
 #include "common/regExp.h"
 #include "common/user.h"
 #include "config/config.h"
+#include "config/exec.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -1137,6 +1138,119 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
 }
 
 /***********************************************************************************************************************************
+Generate the recovery.conf file
+***********************************************************************************************************************************/
+static String *
+restoreRecoveryConf(unsigned int pgVersion)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_END();
+
+    String *result = NULL;
+
+    // Only generate recovery.conf if recovery type is not none
+    if (!strEq(cfgOptionStr(cfgOptType), STRDEF("none")))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            result = strNew("");
+            StringList *recoveryOptionKey = strLstNew();
+
+            if (cfgOptionTest(cfgOptRecoveryOption))
+            {
+                const KeyValue *recoveryOption = cfgOptionKv(cfgOptRecoveryOption);
+                recoveryOptionKey = strLstSort(strLstNewVarLst(kvKeyList(recoveryOption)), sortOrderAsc);
+
+                for (unsigned int keyIdx = 0; keyIdx < strLstSize(recoveryOptionKey); keyIdx++)
+                {
+                    // Get the key and value
+                    String *key = strLstGet(recoveryOptionKey, keyIdx);
+                    const String *value = varStr(kvGet(recoveryOption, VARSTR(key)));
+
+                    // Replace - in key with _.  Since we use - users naturally will as well.
+                    strReplaceChr(key, '-', '_');
+
+                    strCatFmt(result, "%s = '%s'\n", strPtr(key), strPtr(value));
+                }
+            }
+
+            // Write restore_command
+            if (!strLstExists(recoveryOptionKey, STRDEF("restore_command")))
+            {
+                // Option replacements
+                KeyValue *optionReplace = kvNew();
+                // !!! Add replacements process-max, log-level-*, at least
+
+                strCatFmt(
+                    result, "restore_command = '%s \"%%f\" \"%%p\"'\n",
+                    strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, optionReplace), " ")));
+            }
+
+            // If type is immediate
+            if (strEq(cfgOptionStr(cfgOptType), STRDEF("immediate")))
+            {
+                strCat(result, "recovery_target = 'immediate'\n");
+            }
+            // Else type is not default so write target options
+            else if (!strEq(cfgOptionStr(cfgOptType), STRDEF("default")))
+            {
+                // Write the recovery target
+                strCatFmt(
+                    result, "recovery_target_%s = '%s'\n", strPtr(cfgOptionStr(cfgOptType)), strPtr(cfgOptionStr(cfgOptTarget)));
+
+                // Write recovery_target_inclusive
+                if (!cfgOptionBool(cfgOptTargetExclusive))
+                {
+                    strCatFmt(result, "recovery_target_inclusive = 'false'\n");
+                }
+            }
+
+            // Write pause_at_recovery_target/recovery_target_action
+            if (cfgOptionTest(cfgOptTargetAction))
+            {
+                const String *targetAction = cfgOptionStr(cfgOptTargetAction);
+
+                if (!strEqZ(targetAction, cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptTargetAction)))
+                {
+                    if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
+                    {
+                        strCat(result, "recovery_target_action = '%s'\n", strPtr(targetAction));
+                    }
+                    else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
+                    {
+                        if (strEq(targetAction, STRDEF("shutdown)))
+                        {
+                            THROW_FMT(
+                                OptionInvalidError, "%s=shutdown is only available in PostgreSQL >= %s",
+                                cfgOptionName(cfgOptTargetAction), strPtr(pgVersionStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
+                        }
+
+                        strCat(result, "pause_at_recovery_target = 'false'\n");
+                    }
+                    else
+                    {
+                        confess &log(ERROR,
+                            cfgOptionName(CFGOPT_TARGET_ACTION) .  ' option is only available in PostgreSQL >= ' . PG_VERSION_91)
+                    }
+                }
+            }
+
+            // Write recovery_target_timeline
+            if (cfgOptionTest(cfgOptTargetTimeline))
+                strCatFmt(result, "recovery_target_timeline = '%s'\n", strPtr(cfgOptionStr(cfgOptTargetTimeline)));
+
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result = strDup(result);
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Log the results of a job and throw errors
 ***********************************************************************************************************************************/
 // Helper function to determine if a file should be zeroed
@@ -1447,6 +1561,9 @@ cmdRestore(void)
             }
         }
         while (!protocolParallelDone(parallelExec));
+
+        // Write recovery.conf
+        (void)restoreRecoveryConf;
     }
     MEM_CONTEXT_TEMP_END();
 
