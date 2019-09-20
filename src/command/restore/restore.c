@@ -59,10 +59,10 @@ restorePathValidate(void)
 
         // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
         if ((cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)) &&
-            !storageExistsNP(storagePg(), PG_FILE_PGVERSION_STR) && !storageExistsNP(storagePg(), MANIFEST_FILE_STR))
+            !storageExistsNP(storagePg(), PG_FILE_PGVERSION_STR) && !storageExistsNP(storagePg(), BACKUP_MANIFEST_FILE_STR))
         {
             LOG_WARN(
-                "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" MANIFEST_FILE "' in '%s' to"
+                "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" BACKUP_MANIFEST_FILE "' in '%s' to"
                     " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                     " exist in the destination directories the restore will be aborted.",
                strPtr(cfgOptionStr(cfgOptPgPath)));
@@ -566,7 +566,8 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
     // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
     if (cleanData->basePath && info->type == storageTypeFile &&
-        (strEq(info->name, MANIFEST_FILE_STR) || (cleanData->preserveRecoveryConf && strEq(info->name, PG_FILE_RECOVERYCONF_STR))))
+        (strEq(info->name, BACKUP_MANIFEST_FILE_STR) ||
+            (cleanData->preserveRecoveryConf && strEq(info->name, PG_FILE_RECOVERYCONF_STR))))
     {
         FUNCTION_TEST_RETURN_VOID();
         return;
@@ -1475,7 +1476,7 @@ cmdRestore(void)
         RestoreJobData jobData = {0};
 
         jobData.manifest = manifestLoadFile(
-            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupSet)),
+            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupSet)),
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
 
         jobData.cipherSubPass = manifestCipherSubPass(jobData.manifest);
@@ -1490,7 +1491,7 @@ cmdRestore(void)
         {
             Buffer *manifestTestPerlBuffer = storageGetNP(
                 storageNewReadNP(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_FILE, strPtr(backupSet))));
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupSet))));
 
             Buffer *manifestTestCBuffer = bufNew(0);
             manifestSave(jobData.manifest, ioBufferWriteNew(manifestTestCBuffer));
@@ -1499,9 +1500,9 @@ cmdRestore(void)
             {
                 // Dump manifests to disk so we can check them with diff
                 storagePutNP(                                                                       // {uncovered - !!! TEST}
-                    storageNewWriteNP(storagePgWrite(), STRDEF(MANIFEST_FILE ".expected")), manifestTestPerlBuffer);
+                    storageNewWriteNP(storagePgWrite(), STRDEF(BACKUP_MANIFEST_FILE ".expected")), manifestTestPerlBuffer);
                 storagePutNP(                                                                       // {uncovered - !!! TEST}
-                    storageNewWriteNP(storagePgWrite(), STRDEF(MANIFEST_FILE ".actual")), manifestTestCBuffer);
+                    storageNewWriteNP(storagePgWrite(), STRDEF(BACKUP_MANIFEST_FILE ".actual")), manifestTestCBuffer);
 
                 THROW_FMT(                                                                          // {uncovered - !!! TEST}
                     AssertError, "C and Perl manifests are not equal, files saved to '%s'",
@@ -1535,7 +1536,7 @@ cmdRestore(void)
         uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
 
         // Save manifest to the data directory so we can restart a delta restore even if the PG_VERSION file is missing
-        manifestSave(jobData.manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), MANIFEST_FILE_STR)));
+        manifestSave(jobData.manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR)));
 
         // Delete the pg_control file so the cluster cannot be started if restore does not complete
         storageRemoveNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));

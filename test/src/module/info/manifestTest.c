@@ -338,7 +338,7 @@ testRun(void)
         Manifest *manifest = NULL;
 
         TEST_ERROR_FMT(
-            manifestLoadFile(storageTest, MANIFEST_FILE_STR, cipherTypeNone, NULL), FileMissingError,
+            manifestLoadFile(storageTest, BACKUP_MANIFEST_FILE_STR, cipherTypeNone, NULL), FileMissingError,
             "unable to load backup manifest file '%s/backup.manifest' or '%s/backup.manifest.copy':\n"
             "FileMissingError: unable to open missing file '%s/backup.manifest' for read\n"
             "FileMissingError: unable to open missing file '%s/backup.manifest.copy' for read",
@@ -402,15 +402,15 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew(MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
-        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
+            storagePutNP(storageNewWriteNP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
+        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
 
-        storageRemoveP(storageTest, strNew(MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
+        storageRemoveP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, MANIFEST_FILE_STR), content), "write main");
-        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(MANIFEST_FILE), cipherTypeNone, NULL), "load main");
+            storagePutNP(storageNewWriteNP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");
+        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
     }
 
@@ -535,10 +535,10 @@ testRun(void)
         if (!bufEq(contentSave, contentLoad))
         {
             TEST_RESULT_VOID(                                                               // {uncovered - only for debugging}
-                storagePutNP(storageNewWriteNP(storageTest, strNew(MANIFEST_FILE ".expected")), contentLoad),
+                storagePutNP(storageNewWriteNP(storageTest, strNew(BACKUP_MANIFEST_FILE ".expected")), contentLoad),
                 "write expected manifest");
             TEST_RESULT_VOID(                                                               // {uncovered - only for debugging}
-                storagePutNP(storageNewWriteNP(storageTest, strNew(MANIFEST_FILE ".actual")), contentSave),
+                storagePutNP(storageNewWriteNP(storageTest, strNew(BACKUP_MANIFEST_FILE ".actual")), contentSave),
                 "write actual manifest");
         }
 

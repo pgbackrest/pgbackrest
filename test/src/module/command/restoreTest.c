@@ -1210,7 +1210,7 @@ testRun(void)
             manifest,
             storageWriteIo(
                 storageNewWriteNP(storageRepoWrite(),
-                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_FILE))));
+                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         #undef TEST_LABEL
         #undef TEST_PGDATA
@@ -1230,7 +1230,7 @@ testRun(void)
                     "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4",
                     testPath(), testPath(), testPath(), testPath())));
 
-        storageRemoveNP(storagePgWrite(), MANIFEST_FILE_STR);   // !!! TEMPORARY
+        storageRemoveNP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);   // !!! TEMPORARY
         testRestoreCompare(
             storagePg(), NULL, manifest,
             ". {path}\n"
@@ -1290,7 +1290,7 @@ testRun(void)
             manifest,
             storageWriteIo(
                 storageNewWriteNP(storageRepoWrite(),
-                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_FILE))));
+                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         // Add a few bogus paths/files/links to be removed in delta
         storagePathCreateNP(storagePgWrite(), STRDEF("bogus1/bogus2"));
