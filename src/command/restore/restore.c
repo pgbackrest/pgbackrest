@@ -646,6 +646,10 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
         case storageTypePath:
         {
+            // Tablepspaces are mapped under pg_tblspc
+            if (strBeginsWith(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/")))
+                manifestName = strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA));
+
             const ManifestPath *manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
 
             if (manifestPath != NULL)
@@ -681,6 +685,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         // Special file types cannot exist in the manifest so just delete them
         case storageTypeSpecial:
         {
+            LOG_DETAIL("remove special file '%s'", strPtr(pgPath));
             storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
             break;
         }
@@ -1419,7 +1424,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 protocolCommandParamAdd(command, VARSTR(file->user));
                 protocolCommandParamAdd(command, VARSTR(file->group));
                 protocolCommandParamAdd(command, VARUINT64((uint64_t)manifestData(jobData->manifest)->backupTimestampCopyStart));
-                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta)));
+                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)));
                 protocolCommandParamAdd(command, VARSTR(manifestData(jobData->manifest)->backupLabel));
                 protocolCommandParamAdd(command, VARBOOL(manifestData(jobData->manifest)->backupOptionCompress));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
@@ -1601,32 +1606,40 @@ cmdRestore(void)
 
             if (target->type == manifestTargetTypeLink && target->file != NULL)
             {
-                const String *path = manifestTargetPath(jobData.manifest, target);
+                const String *pgPath = manifestTargetPath(jobData.manifest, target);
 
                 // Don't sync the same path twice.  There can be multiple links to files in the same path, but syncing it more than
                 // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
                 // performance.
-                if (strLstExists(pathSynced, path))
+                if (strLstExists(pathSynced, pgPath))
                     continue;
                 else
-                    strLstAdd(pathSynced, path);
+                    strLstAdd(pathSynced, pgPath);
 
                 // Sync the path
-                LOG_DETAIL("sync path '%s'", strPtr(path));
-                storagePathSyncNP(storageLocalWrite(), path);
+                LOG_DETAIL("sync path '%s'", strPtr(pgPath));
+                storagePathSyncNP(storageLocalWrite(), pgPath);
             }
         }
 
         // Sync paths in the data directory
         for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(jobData.manifest); pathIdx++)
         {
-            if (strEq(manifestPath(jobData.manifest, pathIdx)->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
+            const String *manifestName = manifestPath(jobData.manifest, pathIdx)->name;
+
+            // Skip the pg_tblspc path because it only maps to the manifest.  We should remove this in a future release but not much
+            // can be done about it for now.
+            if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
                 continue;
 
-            const String *path = storagePathNP(storagePg(), manifestPgPath(manifestPath(jobData.manifest, pathIdx)->name));
+            // We'll sync global after pg_control is written
+            if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
+                continue;
 
-            LOG_DETAIL("sync path '%s'", strPtr(path));
-            storagePathSyncNP(storagePgWrite(), path);
+            const String *pgPath = storagePathNP(storagePg(), manifestPgPath(manifestName));
+
+            LOG_DETAIL("sync path '%s'", strPtr(pgPath));
+            storagePathSyncNP(storagePgWrite(), pgPath);
         }
 
         // Rename pg_control

@@ -79,7 +79,7 @@ testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest 
     };
 
     TEST_RESULT_VOID(
-        storageInfoListP(storage, pgPath, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+        storageInfoListP(storage, pgPath, hrnStorageInfoListCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc),
         "pg path info list for restore compare");
 
     // Compare
@@ -1244,7 +1244,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--set=20161219-212741F");
-        strLstAddZ(argList, "--type=preserve");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -1285,6 +1284,32 @@ testRun(void)
                     .checksumSha1 = "797e375b924134687cbf9eacd37a4355f3d825e4"});
             storagePutNP(
                 storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_84_STR "\n"));
+
+            // pg_tblspc/1
+            manifestTargetAdd(
+                manifest, &(ManifestTarget){
+                    .type = manifestTargetTypeLink, .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"),
+                    .path = strNewFmt("%s/ts/1", testPath()), .tablespaceId = 1, .tablespaceName = STRDEF("ts1")});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC), .mode = 0700, .group = groupName(),
+                    .user = userName()});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC), .mode = 0700, .group = groupName(), .user = userName()});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"), .mode = 0700, .group = groupName(), .user = userName()});
+            manifestLinkAdd(
+                manifest, &(ManifestLink){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"), .destination = strNewFmt("%s/ts/1", testPath()),
+                    .group = groupName(), .user = userName()});
+
+            // Always sort
+            lstSort(manifest->targetList, sortOrderAsc);
+            lstSort(manifest->fileList, sortOrderAsc);
+            lstSort(manifest->linkList, sortOrderAsc);
+            lstSort(manifest->pathList, sortOrderAsc);
         }
         MEM_CONTEXT_NEW_END();
 
@@ -1299,19 +1324,28 @@ testRun(void)
         TEST_RESULT_LOG_FMT(
             "P00   INFO: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '%s/pg' exists\n"
+            "P00 DETAIL: check '%s/ts/1' exists\n"
             "P00 DETAIL: update mode for '%s/pg' to 0700\n"
             "P00 DETAIL: create path '%s/pg/global'\n"
+            "P00 DETAIL: create path '%s/pg/pg_tblspc'\n"
+            "P00 DETAIL: create path '%s/pg/pg_tblspc/1'\n"
             "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P00   WARN: recovery type is preserve but recovery file does not exist at '%s/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '%s/pg'\n"
+            "P00 DETAIL: sync path '%s/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '%s/pg/pg_tblspc/1'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
-            testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
+            testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
+
+        // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
+        storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .errorOnMissing = true);
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
             ". {path}\n"
             "PG_VERSION {file, s=4, t=1482182860}\n"
-            "global {path}");
+            "global {path}\n"
+            "pg_tblspc {path}\n"
+            "pg_tblspc/1 {path}");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with force");
@@ -1321,10 +1355,20 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--type=preserve");
         strLstAddZ(argList, "--set=20161219-212741F");
-        strLstAddZ(argList, "--delta");
+        strLstAddZ(argList, "--force");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Make sure existing backup.manifest file is ignored
+        storagePutNP(storageNewWriteNP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR), NULL);
+
+        // Add a bogus file that will be removed
+        storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF("bogus-file")), NULL);
+
+        // Add a special file that will be removed
+        TEST_SYSTEM_FMT("mkfifo %s/pipe", strPtr(pgPath));
 
         // MEM_CONTEXT_BEGIN(manifest->memContext)
         // {
@@ -1343,21 +1387,27 @@ testRun(void)
         TEST_RESULT_LOG_FMT(
             "P00   INFO: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '%s/pg' exists\n"
+            "P00 DETAIL: check '%s/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
-            "P01 DETAIL: restore file %s/pg/PG_VERSION - exists and matches backup (4B, 100%%)"
+            "P00 DETAIL: remove invalid file '%s/pg/bogus-file'\n"
+            "P00 DETAIL: remove special file '/home/vagrant/test/test-0/pg/pipe'\n"
+            "P00   INFO: remove invalid files/links/paths from '%s/ts/1'\n"
+            "P01 DETAIL: restore file %s/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860 (4B, 100%%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P00   WARN: recovery type is preserve but recovery file does not exist at '%s/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '%s/pg'\n"
+            "P00 DETAIL: sync path '%s/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '%s/pg/pg_tblspc/1'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
-            testPath(), testPath(), testPath(), testPath());
-
-        // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
-        storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .errorOnMissing = true);
+            testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
             ". {path}\n"
             "PG_VERSION {file, s=4, t=1482182860}\n"
-            "global {path}");
+            "global {path}\n"
+            "pg_tblspc {path}\n"
+            "pg_tblspc/1 {path}");
 
         // Prepare manifest and backup directory for incremental delta restore
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1406,6 +1456,12 @@ testRun(void)
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
             storagePutNP(
                 storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_94_STR "\n"));
+
+            // Always sort
+            lstSort(manifest->targetList, sortOrderAsc);
+            lstSort(manifest->fileList, sortOrderAsc);
+            lstSort(manifest->linkList, sortOrderAsc);
+            lstSort(manifest->pathList, sortOrderAsc);
         }
         MEM_CONTEXT_NEW_END();
 
@@ -1429,10 +1485,11 @@ testRun(void)
             "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
             "P00 DETAIL: remove invalid path '%s/pg/bogus1'\n"
             "P00 DETAIL: remove invalid path '%s/pg/global/bogus3'\n"
+            "P00 DETAIL: remove invalid path '%s/pg/pg_tblspc'\n"
             "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P00 DETAIL: sync path '%s/pg'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
-            testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
+            testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
