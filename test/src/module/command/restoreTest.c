@@ -416,13 +416,11 @@ testRun(void)
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with invalid PGDATA");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "--delta set to false");
-        harnessLogResult(
-            strPtr(
-                strNewFmt(
-                    "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
-                        " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                        " exist in the destination directories the restore will be aborted.",
-                testPath())));
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
+                " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
+                " exist in the destination directories the restore will be aborted.",
+            testPath());
 
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("backup.manifest")), NULL);
@@ -440,13 +438,11 @@ testRun(void)
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with invalid PGDATA");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "--force set to false");
-        harnessLogResult(
-            strPtr(
-                strNewFmt(
-                    "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
-                        " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                        " exist in the destination directories the restore will be aborted.",
-                testPath())));
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
+                " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
+                " exist in the destination directories the restore will be aborted.",
+            testPath());
 
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew(PG_FILE_PGVERSION)), NULL);
@@ -538,7 +534,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is remapped");
         TEST_RESULT_STR_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is remapped");
-        harnessLogResult(strPtr(strNewFmt("P00   INFO: remap data directory to '%s/pg2'", testPath())));
+        TEST_RESULT_LOG_FMT("P00   INFO: remap data directory to '%s/pg2'", testPath());
 
         // Remap tablespaces
         // -------------------------------------------------------------------------------------------------------------------------
@@ -600,7 +596,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-2", "    check tablespace 1 link");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/1-2'\n"
             "P00   INFO: map tablespace 'pg_tblspc/2' to '/2-2'");
 
@@ -623,7 +619,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-3", "    check tablespace 1 link");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/all/1'\n"
             "P00   INFO: map tablespace 'pg_tblspc/2' to '/2-3'");
 
@@ -647,7 +643,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/all2/ts2", "    check tablespace 1 link");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/all2/1'\n"
             "P00   INFO: map tablespace 'pg_tblspc/2' to '/all2/ts2'\n"
             "P00   WARN: update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= 9.2");
@@ -697,7 +693,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "    check link dest");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: map link 'pg_hba.conf' to '../conf2/pg_hba2.conf'\n"
             "P00   INFO: map link 'pg_wal' to '/wal2'");
 
@@ -743,7 +739,7 @@ testRun(void)
             manifestLinkFind(manifest, STRDEF("pg_data/pg_wal")), AssertError,
             "unable to find 'pg_data/pg_wal' in manifest link list");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location\n"
             "P00   WARN: contents of directory link 'pg_wal' will be restored in a directory at the same location");
     }
@@ -769,12 +765,10 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with no username");
 
-        harnessLogResult(
-            strPtr(
-                strNewFmt(
-                    "P00   WARN: unknown user '%s' in backup manifest mapped to current user\n"
-                    "P00   WARN: unknown group '%s' in backup manifest mapped to current group",
-                    testUser(), testUser())));
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: unknown user '%s' in backup manifest mapped to current user\n"
+            "P00   WARN: unknown group '%s' in backup manifest mapped to current group",
+            testUser(), testUser());
 
         userInitInternal();
 
@@ -791,7 +785,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with some bad ownership");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to current user\n"
             "P00   WARN: unknown user 'path-user-bogus' in backup manifest mapped to current user\n"
             "P00   WARN: unknown group in backup manifest mapped to current group\n"
@@ -822,7 +816,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad user");
 
-        harnessLogResult(strPtr(strNewFmt("P00   WARN: unknown group in backup manifest mapped to '%s'", testUser())));
+        TEST_RESULT_LOG_FMT("P00   WARN: unknown group in backup manifest mapped to '%s'", testUser());
 
         // Owner is root and group is bad
         // -------------------------------------------------------------------------------------------------------------------------
@@ -834,36 +828,58 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad user");
 
-        harnessLogResult(strPtr(strNewFmt("P00   WARN: unknown user in backup manifest mapped to '%s'", testUser())));
+        TEST_RESULT_LOG_FMT("P00   WARN: unknown user in backup manifest mapped to '%s'", testUser());
 
         // Owner is root and ownership of pg_data is bad
         // -------------------------------------------------------------------------------------------------------------------------
         manifestPathAdd(manifest, &path);
         manifestFileAdd(manifest, &file);
 
-        ASSERT(system(strPtr(strNewFmt("sudo chown 77777:77777 %s", strPtr(pgPath)))) == 0);
+        TEST_SYSTEM_FMT("sudo chown 77777:77777 %s", strPtr(pgPath));
 
         userLocalData.userName = STRDEF("root");
         userLocalData.groupName = STRDEF("root");
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad ownership of pg_data");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to 'root'\n"
             "P00   WARN: unknown group in backup manifest mapped to 'root'");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("restoreClean()"))
+    if (testBegin("restoreClean*()"))
     {
         userInitInternal();
 
+        // Set log level to detail
+        harnessLogLevelSet(logLevelDetail);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restoreCleanOwnership() update to root (existing)");
+
+        // Expect an error here since we can't really set ownership to root
+        TEST_ERROR_FMT(
+            restoreCleanOwnership(STR(testPath()), STRDEF("root"), STRDEF("root"), userId(), groupId(), false), FileOwnerError,
+            "unable to set ownership for '%s': [1] Operation not permitted", testPath());
+
+        TEST_RESULT_LOG_FMT("P00 DETAIL: update ownership for '%s'", testPath());
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restoreCleanOwnership() update to bogus (new)");
+
+        // Will succeed because bogus will be remapped to the current user/group
+        restoreCleanOwnership(STR(testPath()), STRDEF("bogus"), STRDEF("bogus"), 0, 0, true);
+
+        // Test again with only group for coverage
+        restoreCleanOwnership(STR(testPath()), STRDEF("bogus"), STRDEF("bogus"), userId(), 0, true);
+
+        // Directory with bad permissions/mode
+        // -------------------------------------------------------------------------------------------------------------------------
         const String *pgPath = strNewFmt("%s/pg", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
 
-        // Directory with bad permissions/mode
-        // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -879,15 +895,21 @@ testRun(void)
         TEST_ERROR_FMT(
             restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' not owned by current user", testPath());
 
+        TEST_RESULT_LOG_FMT("P00 DETAIL: check '%s/pg' exists", testPath());
+
         userLocalData.userRoot = true;
 
         TEST_ERROR_FMT(
             restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
 
+        TEST_RESULT_LOG_FMT("P00 DETAIL: check '%s/pg' exists", testPath());
+
         userInitInternal();
 
         TEST_ERROR_FMT(
             restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
+
+        TEST_RESULT_LOG_FMT("P00 DETAIL: check '%s/pg' exists", testPath());
 
         storagePathRemoveNP(storagePgWrite(), NULL);
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
@@ -901,6 +923,8 @@ testRun(void)
             "unable to restore to path '%s/pg' because it contains files\n"
                 "HINT: try using --delta if this is what you intended.",
             testPath());
+
+        TEST_RESULT_LOG_FMT("P00 DETAIL: check '%s/pg' exists", testPath());
 
         // Succeed when all directories empty
         // -------------------------------------------------------------------------------------------------------------------------
@@ -916,7 +940,14 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("conf"), .mode = 0700);
 
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore");
-        ASSERT(system(strPtr(strNewFmt("rm -rf %s/*", strPtr(pgPath)))) == 0);
+
+        TEST_RESULT_LOG_FMT(
+            "P00 DETAIL: check '%s/pg' exists\n"
+            "P00 DETAIL: check '%s/conf' exists\n"
+            "P00 DETAIL: create symlink '%s/pg/pg_hba.conf' to '../conf/pg_hba.conf'",
+            testPath(), testPath(), testPath());
+
+        TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
         // Succeed when all directories empty and ignore recovery.conf
         // -------------------------------------------------------------------------------------------------------------------------
@@ -930,10 +961,23 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore no recovery.conf");
-        ASSERT(system(strPtr(strNewFmt("rm -rf %s/*", strPtr(pgPath)))) == 0);
+
+        TEST_RESULT_LOG_FMT(
+            "P00 DETAIL: check '%s/pg' exists\n"
+            "P00 DETAIL: check '%s/conf' exists\n"
+            "P00 DETAIL: create symlink '%s/pg/pg_hba.conf' to '../conf/pg_hba.conf'",
+            testPath(), testPath(), testPath());
+
+        TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
         storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore ignore recovery.conf");
+
+        TEST_RESULT_LOG_FMT(
+            "P00 DETAIL: check '%s/pg' exists\n"
+            "P00 DETAIL: check '%s/conf' exists\n"
+            "P00 DETAIL: create symlink '%s/pg/pg_hba.conf' to '../conf/pg_hba.conf'",
+            testPath(), testPath(), testPath());
     }
 
     // *****************************************************************************************************************************
@@ -984,7 +1028,7 @@ testRun(void)
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include 'test1' does not exist");
 
-        harnessLogResult("P00 DETAIL: databases found for selective restore (1)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1)");
 
         // All databases selected
         // -------------------------------------------------------------------------------------------------------------------------
@@ -997,7 +1041,7 @@ testRun(void)
 
         TEST_RESULT_PTR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00 DETAIL: databases found for selective restore (1, 16384)\n"
             "P00   INFO: nothing to filter - all user databases have been selected");
 
@@ -1018,7 +1062,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/32768/)", "one database selected");
 
-        harnessLogResult("P00 DETAIL: databases found for selective restore (1, 16384, 32768)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384, 32768)");
 
         // One database selected with tablespace id
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1038,7 +1082,7 @@ testRun(void)
                 "|(^pg_tblspc/16387/PG_9.4_201409291/65536/)",
             "one database selected");
 
-        harnessLogResult("P00 DETAIL: databases found for selective restore (1, 16384, 32768, 65536)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384, 32768, 65536)");
     }
 
     // *****************************************************************************************************************************
@@ -1191,8 +1235,9 @@ testRun(void)
             storageNewWriteNP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
             harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB));
 
-        // Prepare manifest and backup directory for full restore
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full restore without delta");
+
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -1249,26 +1294,64 @@ testRun(void)
                 storageNewWriteNP(storageRepoWrite(),
                 strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
+        TEST_RESULT_VOID(cmdRestore(), "successful restore");
+
+        TEST_RESULT_LOG_FMT(
+            "P00   INFO: restore backup set 20161219-212741F\n"
+            "P00 DETAIL: check '%s/pg' exists\n"
+            "P00 DETAIL: update mode for '%s/pg' to 0700\n"
+            "P00 DETAIL: create path '%s/pg/global'\n"
+            "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P00   WARN: recovery type is preserve but recovery file does not exist at '%s/pg/recovery.conf'\n"
+            "P00 DETAIL: sync path '%s/pg'\n"
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
+            testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
+
+        testRestoreCompare(
+            storagePg(), NULL, manifest,
+            ". {path}\n"
+            "PG_VERSION {file, s=4, t=1482182860}\n"
+            "global {path}");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full restore with force");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--set=20161219-212741F");
+        strLstAddZ(argList, "--delta");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // MEM_CONTEXT_BEGIN(manifest->memContext)
+        // {
+        //     ManifestFile *file = (ManifestFile *)manifestFileFind(manifest, STRDEF(TEST_PGDATA PG_FILE_PGVERSION));
+        //     file->user = strNew("bogus");
+        //     file->group = strNew("root");
+        // }
+        // MEM_CONTEXT_END();
+
         #undef TEST_LABEL
         #undef TEST_PGDATA
         #undef TEST_REPO_PATH
 
-        // Full Restore
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cmdRestore(), "successful restore");
+        cmdRestore();
 
-        harnessLogResult(
-            strPtr(
-                strNewFmt(
-                    "P00   INFO: restore backup set 20161219-212741F\n"
-                    "P00 DETAIL: check '%s/pg' exists\n"
-                    "P00 DETAIL: update mode for '%s/pg' to 0700\n"
-                    "P00 DETAIL: create path '%s/pg/global'\n"
-                    "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-                    "P00   WARN: recovery type is preserve but recovery file does not exist at '%s/pg/recovery.conf'\n"
-                    "P00 DETAIL: sync path '%s/pg'\n"
-                    "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
-                    testPath(), testPath(), testPath(), testPath(), testPath(), testPath())));
+        TEST_RESULT_LOG_FMT(
+            "P00   INFO: restore backup set 20161219-212741F\n"
+            "P00 DETAIL: check '%s/pg' exists\n"
+            "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
+            "P01 DETAIL: restore file %s/pg/PG_VERSION - exists and matches backup (4B, 100%%)"
+                " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P00 DETAIL: sync path '%s/pg'\n"
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
+            testPath(), testPath(), testPath(), testPath());
+
+        // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
+        storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .errorOnMissing = true);
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -1340,18 +1423,16 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
-        harnessLogResult(
-            strPtr(
-                strNewFmt(
-                    "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
-                    "P00 DETAIL: check '%s/pg' exists\n"
-                    "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
-                    "P00 DETAIL: remove invalid path '%s/pg/bogus1'\n"
-                    "P00 DETAIL: remove invalid path '%s/pg/global/bogus3'\n"
-                    "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-                    "P00 DETAIL: sync path '%s/pg'\n"
-                    "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
-                    testPath(), testPath(), testPath(), testPath(), testPath(), testPath())));
+        TEST_RESULT_LOG_FMT(
+            "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
+            "P00 DETAIL: check '%s/pg' exists\n"
+            "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
+            "P00 DETAIL: remove invalid path '%s/pg/bogus1'\n"
+            "P00 DETAIL: remove invalid path '%s/pg/global/bogus3'\n"
+            "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P00 DETAIL: sync path '%s/pg'\n"
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
+            testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
