@@ -37,6 +37,12 @@ void testRepoPathSet(const char *testRepoPath);
 const char *testUser(void);
 const char *testGroup(void);
 
+// Read a file (max 256k) into a buffer
+void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize);
+
+// Write a buffer to a file
+void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize);
+
 // Replace common test values in a string and return a buffer with the replacements.
 //
 // Note that the returned buffer will be overwritten with each call.  Values that can be replaced are:
@@ -45,6 +51,9 @@ const char *testGroup(void);
 // {[user]} - the current test user
 // {[group]} - the current test group
 const char *hrnReplaceKey(const char *string);
+
+// Diff two strings using command-line diff tool
+const char *hrnDiff(const char *actual, const char *expected);
 
 /***********************************************************************************************************************************
 Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies
@@ -182,7 +191,7 @@ parameters.
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \
-   /* Test the type operator */                                                                                                    \
+    /* Test the type operator */                                                                                                   \
     bool TEST_RESULT_resultOp = false;                                                                                             \
     compareMacro(TEST_RESULT_resultOp, TEST_RESULT_result, typeOp, TEST_RESULT_resultExpected);                                    \
                                                                                                                                    \
@@ -192,10 +201,20 @@ parameters.
         /* Format the actual result */                                                                                             \
         formatMacro(type, format, TEST_RESULT_result);                                                                             \
                                                                                                                                    \
+        /* Throw diff error */                                                                                                     \
+        if (strcmp(#type, "char *") == 0 && strstr(TEST_RESULT_resultStr, "\n") != NULL)                                           \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF:\n%s\n\n",                                           \
+                #statement, TEST_RESULT_resultStr, hrnDiff(TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr));                 \
+        }                                                                                                                          \
         /* Throw error */                                                                                                          \
-        THROW_FMT(                                                                                                                 \
-            AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s\n\n",                                           \
-            #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                     \
+        else                                                                                                                       \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s\n\n",                                       \
+                #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                 \
+        }                                                                                                                          \
     }                                                                                                                              \
 }
 
@@ -347,7 +366,7 @@ Test log result
         }                                                                                                                          \
         CATCH_ANY()                                                                                                                \
         {                                                                                                                          \
-            THROW_FMT(AssertError, "LOG RESULT FAILED WITH:\n%s\n\nTHROWN AT:\n%s", errorMessage(), errorStackTrace());            \
+            THROW_FMT(AssertError, "LOG RESULT FAILED WITH:\n%s", errorMessage());                                                 \
         }                                                                                                                          \
         TRY_END();                                                                                                                 \
     } while(0)
