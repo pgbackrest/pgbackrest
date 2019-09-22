@@ -303,3 +303,65 @@ testComplete(void)
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
+
+/***********************************************************************************************************************************
+Replace a substring with another string
+***********************************************************************************************************************************/
+static void
+hrnReplaceStr(char *string, size_t bufferSize, const char *substring, const char *replace)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, string);
+        FUNCTION_HARNESS_PARAM(SIZE, bufferSize);
+        FUNCTION_HARNESS_PARAM(STRINGZ, substring);
+        FUNCTION_HARNESS_PARAM(STRINGZ, replace);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(string != NULL);
+    ASSERT(substring != NULL);
+
+    // Find substring
+    char *begin = strstr(string, substring);
+
+    while (begin != NULL)
+    {
+        // Find end of substring and calculate replace size difference
+        char *end = begin + strlen(substring);
+        int diff = (int)strlen(replace) - (int)strlen(substring);
+
+        // Make sure we won't overflow the buffer
+        ASSERT((size_t)((int)strlen(string) + diff) < bufferSize - 1);
+
+        // Move data from end of string enough to make room for the replacement and copy replacement
+        memmove(end + diff, end, strlen(end) + 1);
+        memcpy(begin, replace, strlen(replace));
+
+        // Find next substring
+        begin = strstr(begin + strlen(replace), substring);
+    }
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/**********************************************************************************************************************************/
+char harnessReplaceBuffer[256 * 1024];
+
+const char *
+hrnReplaceKey(const char *string)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, string);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(string != NULL);
+
+    // Make sure we won't overflow the buffer
+    ASSERT(strlen(string) < sizeof(harnessReplaceBuffer) - 1);
+
+    strcpy(harnessReplaceBuffer, string);
+    hrnReplaceStr(harnessReplaceBuffer, sizeof(harnessReplaceBuffer), "{[path]}", testPath());
+    hrnReplaceStr(harnessReplaceBuffer, sizeof(harnessReplaceBuffer), "{[user]}", testUser());
+    hrnReplaceStr(harnessReplaceBuffer, sizeof(harnessReplaceBuffer), "{[group]}", testGroup());
+
+    FUNCTION_HARNESS_RESULT(STRINGZ, harnessReplaceBuffer);
+}

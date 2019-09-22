@@ -416,11 +416,10 @@ testRun(void)
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with invalid PGDATA");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "--delta set to false");
-        TEST_RESULT_LOG_FMT(
-            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
+        TEST_RESULT_LOG(
+            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '{[path]}/pg' to"
                 " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                " exist in the destination directories the restore will be aborted.",
-            testPath());
+                " exist in the destination directories the restore will be aborted.");
 
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("backup.manifest")), NULL);
@@ -438,11 +437,10 @@ testRun(void)
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with invalid PGDATA");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "--force set to false");
-        TEST_RESULT_LOG_FMT(
-            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '%s/pg' to"
+        TEST_RESULT_LOG(
+            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '{[path]}/pg' to"
                 " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                " exist in the destination directories the restore will be aborted.",
-            testPath());
+                " exist in the destination directories the restore will be aborted.");
 
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew(PG_FILE_PGVERSION)), NULL);
@@ -534,7 +532,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is remapped");
         TEST_RESULT_STR_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is remapped");
-        TEST_RESULT_LOG_FMT("P00   INFO: remap data directory to '%s/pg2'", testPath());
+        TEST_RESULT_LOG("P00   INFO: remap data directory to '{[path]}/pg2'");
 
         // Remap tablespaces
         // -------------------------------------------------------------------------------------------------------------------------
@@ -765,10 +763,9 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with no username");
 
-        TEST_RESULT_LOG_FMT(
-            "P00   WARN: unknown user '%s' in backup manifest mapped to current user\n"
-            "P00   WARN: unknown group '%s' in backup manifest mapped to current group",
-            testUser(), testUser());
+        TEST_RESULT_LOG(
+            "P00   WARN: unknown user '{[user]}' in backup manifest mapped to current user\n"
+            "P00   WARN: unknown group '{[user]}' in backup manifest mapped to current group");
 
         userInitInternal();
 
@@ -812,11 +809,10 @@ testRun(void)
         // Owner is root and user is bad
         // -------------------------------------------------------------------------------------------------------------------------
         manifestPathAdd(manifest, &path);
-        // manifestFileAdd(manifest, &file);
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad user");
 
-        TEST_RESULT_LOG_FMT("P00   WARN: unknown group in backup manifest mapped to '%s'", testUser());
+        TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '{[user]}'");
 
         // Owner is root and group is bad
         // -------------------------------------------------------------------------------------------------------------------------
@@ -828,7 +824,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad user");
 
-        TEST_RESULT_LOG_FMT("P00   WARN: unknown user in backup manifest mapped to '%s'", testUser());
+        TEST_RESULT_LOG("P00   WARN: unknown user in backup manifest mapped to '{[user]}'");
 
         // Owner is root and ownership of pg_data is bad
         // -------------------------------------------------------------------------------------------------------------------------
@@ -863,7 +859,7 @@ testRun(void)
             restoreCleanOwnership(STR(testPath()), STRDEF("root"), STRDEF("root"), userId(), groupId(), false), FileOwnerError,
             "unable to set ownership for '%s': [1] Operation not permitted", testPath());
 
-        TEST_RESULT_LOG_FMT("P00 DETAIL: update ownership for '%s'", testPath());
+        TEST_RESULT_LOG("P00 DETAIL: update ownership for '{[path]}'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restoreCleanOwnership() update to bogus (new)");
@@ -895,21 +891,21 @@ testRun(void)
         TEST_ERROR_FMT(
             restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' not owned by current user", testPath());
 
-        TEST_RESULT_LOG_FMT("P00 DETAIL: check '%s/pg' exists", testPath());
+        TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
 
         userLocalData.userRoot = true;
 
         TEST_ERROR_FMT(
             restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
 
-        TEST_RESULT_LOG_FMT("P00 DETAIL: check '%s/pg' exists", testPath());
+        TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
 
         userInitInternal();
 
         TEST_ERROR_FMT(
             restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
 
-        TEST_RESULT_LOG_FMT("P00 DETAIL: check '%s/pg' exists", testPath());
+        TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
 
         storagePathRemoveNP(storagePgWrite(), NULL);
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
@@ -924,7 +920,7 @@ testRun(void)
                 "HINT: try using --delta if this is what you intended.",
             testPath());
 
-        TEST_RESULT_LOG_FMT("P00 DETAIL: check '%s/pg' exists", testPath());
+        TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
 
         // Succeed when all directories empty
         // -------------------------------------------------------------------------------------------------------------------------
@@ -941,11 +937,10 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore");
 
-        TEST_RESULT_LOG_FMT(
-            "P00 DETAIL: check '%s/pg' exists\n"
-            "P00 DETAIL: check '%s/conf' exists\n"
-            "P00 DETAIL: create symlink '%s/pg/pg_hba.conf' to '../conf/pg_hba.conf'",
-            testPath(), testPath(), testPath());
+        TEST_RESULT_LOG(
+            "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/conf' exists\n"
+            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
 
         TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
@@ -962,22 +957,20 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore no recovery.conf");
 
-        TEST_RESULT_LOG_FMT(
-            "P00 DETAIL: check '%s/pg' exists\n"
-            "P00 DETAIL: check '%s/conf' exists\n"
-            "P00 DETAIL: create symlink '%s/pg/pg_hba.conf' to '../conf/pg_hba.conf'",
-            testPath(), testPath(), testPath());
+        TEST_RESULT_LOG(
+            "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/conf' exists\n"
+            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
 
         TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
         storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
         TEST_RESULT_VOID(restoreClean(manifest), "normal restore ignore recovery.conf");
 
-        TEST_RESULT_LOG_FMT(
-            "P00 DETAIL: check '%s/pg' exists\n"
-            "P00 DETAIL: check '%s/conf' exists\n"
-            "P00 DETAIL: create symlink '%s/pg/pg_hba.conf' to '../conf/pg_hba.conf'",
-            testPath(), testPath(), testPath());
+        TEST_RESULT_LOG(
+            "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/conf' exists\n"
+            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
     }
 
     // *****************************************************************************************************************************
@@ -1321,20 +1314,19 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
-        TEST_RESULT_LOG_FMT(
+        TEST_RESULT_LOG(
             "P00   INFO: restore backup set 20161219-212741F\n"
-            "P00 DETAIL: check '%s/pg' exists\n"
-            "P00 DETAIL: check '%s/ts/1' exists\n"
-            "P00 DETAIL: update mode for '%s/pg' to 0700\n"
-            "P00 DETAIL: create path '%s/pg/global'\n"
-            "P00 DETAIL: create path '%s/pg/pg_tblspc'\n"
-            "P00 DETAIL: create path '%s/pg/pg_tblspc/1'\n"
-            "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P00 DETAIL: sync path '%s/pg'\n"
-            "P00 DETAIL: sync path '%s/pg/pg_tblspc'\n"
-            "P00 DETAIL: sync path '%s/pg/pg_tblspc/1'\n"
-            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
-            testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
+            "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/ts/1' exists\n"
+            "P00 DETAIL: update mode for '{[path]}/pg' to 0700\n"
+            "P00 DETAIL: create path '{[path]}/pg/global'\n"
+            "P00 DETAIL: create path '{[path]}/pg/pg_tblspc'\n"
+            "P00 DETAIL: create path '{[path]}/pg/pg_tblspc/1'\n"
+            "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P00 DETAIL: sync path '{[path]}/pg'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
 
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
         storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .errorOnMissing = true);
@@ -1384,22 +1376,21 @@ testRun(void)
 
         cmdRestore();
 
-        TEST_RESULT_LOG_FMT(
+        TEST_RESULT_LOG(
             "P00   INFO: restore backup set 20161219-212741F\n"
-            "P00 DETAIL: check '%s/pg' exists\n"
-            "P00 DETAIL: check '%s/ts/1' exists\n"
-            "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
-            "P00 DETAIL: remove invalid file '%s/pg/bogus-file'\n"
+            "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/ts/1' exists\n"
+            "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
+            "P00 DETAIL: remove invalid file '{[path]}/pg/bogus-file'\n"
             "P00 DETAIL: remove special file '/home/vagrant/test/test-0/pg/pipe'\n"
-            "P00   INFO: remove invalid files/links/paths from '%s/ts/1'\n"
-            "P01 DETAIL: restore file %s/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860 (4B, 100%%)"
+            "P00   INFO: remove invalid files/links/paths from '{[path]}/ts/1'\n"
+            "P01 DETAIL: restore file {[path]}/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860 (4B, 100%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P00   WARN: recovery type is preserve but recovery file does not exist at '%s/pg/recovery.conf'\n"
-            "P00 DETAIL: sync path '%s/pg'\n"
-            "P00 DETAIL: sync path '%s/pg/pg_tblspc'\n"
-            "P00 DETAIL: sync path '%s/pg/pg_tblspc/1'\n"
-            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
-            testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
+            "P00   WARN: recovery type is preserve but recovery file does not exist at '{[path]}/pg/recovery.conf'\n"
+            "P00 DETAIL: sync path '{[path]}/pg'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -1479,17 +1470,16 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
-        TEST_RESULT_LOG_FMT(
+        TEST_RESULT_LOG(
             "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
-            "P00 DETAIL: check '%s/pg' exists\n"
-            "P00   INFO: remove invalid files/links/paths from '%s/pg'\n"
-            "P00 DETAIL: remove invalid path '%s/pg/bogus1'\n"
-            "P00 DETAIL: remove invalid path '%s/pg/global/bogus3'\n"
-            "P00 DETAIL: remove invalid path '%s/pg/pg_tblspc'\n"
-            "P01   INFO: restore file %s/pg/PG_VERSION (4B, 100%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P00 DETAIL: sync path '%s/pg'\n"
-            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start",
-            testPath(), testPath(), testPath(), testPath(), testPath(), testPath(), testPath());
+            "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
+            "P00 DETAIL: remove invalid path '{[path]}/pg/bogus1'\n"
+            "P00 DETAIL: remove invalid path '{[path]}/pg/global/bogus3'\n"
+            "P00 DETAIL: remove invalid path '{[path]}/pg/pg_tblspc'\n"
+            "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P00 DETAIL: sync path '{[path]}/pg'\n"
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

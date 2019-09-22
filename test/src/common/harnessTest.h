@@ -37,6 +37,15 @@ void testRepoPathSet(const char *testRepoPath);
 const char *testUser(void);
 const char *testGroup(void);
 
+// Replace common test values in a string and return a buffer with the replacements.
+//
+// Note that the returned buffer will be overwritten with each call.  Values that can be replaced are:
+//
+// {[path]} - the current test path
+// {[user]} - the current test user
+// {[group]} - the current test group
+const char *hrnReplaceKey(const char *string);
+
 /***********************************************************************************************************************************
 Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies
 to the formatting of bools, ints, floats, etc.  This should be plenty of room for any of those types.
@@ -305,13 +314,13 @@ Test system calls
 #define TEST_SYSTEM(command)                                                                                                       \
     do                                                                                                                             \
     {                                                                                                                              \
-        int TEST_SYSTEM_FMT_result = system(command);                                                                              \
+        int TEST_SYSTEM_FMT_result = system(hrnReplaceKey(command));                                                               \
                                                                                                                                    \
         if (TEST_SYSTEM_FMT_result != 0)                                                                                           \
         {                                                                                                                          \
             THROW_FMT(                                                                                                             \
-                AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", command, TEST_SYSTEM_FMT_result,       \
-                errorStackTrace());                                                                                                \
+                AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", hrnReplaceKey(command),                \
+                TEST_SYSTEM_FMT_result, errorStackTrace());                                                                        \
         }                                                                                                                          \
     } while(0)
 

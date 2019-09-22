@@ -166,6 +166,8 @@ harnessLogResult(const char *expected)
 
     harnessLogLoad(logFile);
 
+    expected = hrnReplaceKey(expected);
+
     if (strcmp(harnessLogBuffer, expected) != 0)
         THROW_FMT(AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, harnessLogBuffer);
 
