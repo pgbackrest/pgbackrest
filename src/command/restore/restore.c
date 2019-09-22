@@ -949,7 +949,7 @@ restoreSelectiveExpression(Manifest *manifest)
                     strLstAdd(dbList, strBase(strPath(file->name)));
             }
 
-            // If no databases where found then this backup is not a valid cluster
+            // If no databases were found then this backup is not a valid cluster
             if (strLstSize(dbList) == 0)
             {
                 THROW(

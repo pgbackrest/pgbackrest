@@ -83,7 +83,7 @@ testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest 
         "pg path info list for restore compare");
 
     // Compare
-    TEST_RESULT_STR_Z(callbackData.content, compare, "    compare result manifest");
+    TEST_RESULT_STR_Z(callbackData.content, hrnReplaceKey(compare), "    compare result manifest");
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -1295,7 +1295,13 @@ testRun(void)
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"), .mode = 0700, .group = groupName(), .user = userName()});
             manifestLinkAdd(
                 manifest, &(ManifestLink){
-                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"), .destination = strNewFmt("%s/ts/1", testPath()),
+                    .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/1"),
+                    .destination = strNewFmt("%s/ts/1", testPath()), .group = groupName(), .user = userName()});
+
+            // pg_tblspc/1/16384 path
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384"), .mode = 0700,
                     .group = groupName(), .user = userName()});
 
             // Always sort
@@ -1321,11 +1327,13 @@ testRun(void)
             "P00 DETAIL: update mode for '{[path]}/pg' to 0700\n"
             "P00 DETAIL: create path '{[path]}/pg/global'\n"
             "P00 DETAIL: create path '{[path]}/pg/pg_tblspc'\n"
-            "P00 DETAIL: create path '{[path]}/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
+            "P00 DETAIL: create path '{[path]}/pg/pg_tblspc/1/16384'\n"
             "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
 
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
@@ -1337,7 +1345,7 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
             "pg_tblspc {path}\n"
-            "pg_tblspc/1 {path}");
+            "pg_tblspc/1 {link, d={[path]}/ts/1}");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with force");
@@ -1362,6 +1370,12 @@ testRun(void)
         // Add a special file that will be removed
         TEST_SYSTEM_FMT("mkfifo %s/pipe", strPtr(pgPath));
 
+        // Change destination of tablespace link
+        storageRemoveP(storagePgWrite(), STRDEF("pg_tblspc/1"), .errorOnMissing = true);
+        THROW_ON_SYS_ERROR(
+            symlink("/bogus", strPtr(strNewFmt("%s/pg_tblspc/1", strPtr(pgPath)))) == -1, FileOpenError,
+            "unable to create symlink");
+
         // MEM_CONTEXT_BEGIN(manifest->memContext)
         // {
         //     ManifestFile *file = (ManifestFile *)manifestFileFind(manifest, STRDEF(TEST_PGDATA PG_FILE_PGVERSION));
@@ -1382,14 +1396,17 @@ testRun(void)
             "P00 DETAIL: check '{[path]}/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
             "P00 DETAIL: remove invalid file '{[path]}/pg/bogus-file'\n"
-            "P00 DETAIL: remove special file '/home/vagrant/test/test-0/pg/pipe'\n"
+            "P00 DETAIL: remove link '{[path]}/pg/pg_tblspc/1' because destination changed\n"
+            "P00 DETAIL: remove special file '{[path]}/pg/pipe'\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/ts/1'\n"
+            "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
             "P01 DETAIL: restore file {[path]}/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860 (4B, 100%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '{[path]}/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
 
         testRestoreCompare(
@@ -1398,7 +1415,7 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
             "pg_tblspc {path}\n"
-            "pg_tblspc/1 {path}");
+            "pg_tblspc/1 {link, d={[path]}/ts/1}");
 
         // Prepare manifest and backup directory for incremental delta restore
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1409,6 +1426,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "--type=none");
+        strLstAddZ(argList, "--link-map=pg_wal=../wal");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -1421,7 +1439,7 @@ testRun(void)
             manifest = manifestNewInternal();
             manifest->info = infoNew(NULL);
             manifest->data.backupLabel = strNew(TEST_LABEL);
-            manifest->data.pgVersion = PG_VERSION_84;
+            manifest->data.pgVersion = PG_VERSION_10;
             manifest->data.backupType = backupTypeFull;
             manifest->data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
@@ -1448,6 +1466,18 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_94_STR "\n"));
 
+            // Path link to pg_wal
+            const String *name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_wal");
+            const String *destination = STRDEF("../wal");
+
+            manifestTargetAdd(manifest, &(ManifestTarget){.type = manifestTargetTypeLink, .name = name, .path = destination});
+            manifestPathAdd(manifest, &(ManifestPath){.name = name, .mode = 0700, .group = groupName(), .user = userName()});
+            manifestLinkAdd(
+                manifest, &(ManifestLink){.name = name, .destination = destination, .group = groupName(), .user = userName()});
+            THROW_ON_SYS_ERROR(
+                symlink("../wal", strPtr(strNewFmt("%s/pg_wal", strPtr(pgPath)))) == -1, FileOpenError,
+                "unable to create symlink");
+
             // Always sort
             lstSort(manifest->targetList, sortOrderAsc);
             lstSort(manifest->fileList, sortOrderAsc);
@@ -1466,19 +1496,26 @@ testRun(void)
         storagePathCreateNP(storagePgWrite(), STRDEF("bogus1/bogus2"));
         storagePathCreateNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/bogus3"));
 
-        // Incremental Delta Restore
-        // -------------------------------------------------------------------------------------------------------------------------
+        // Add a few bogus link to be deleted
+        THROW_ON_SYS_ERROR(
+            symlink("../wal", strPtr(strNewFmt("%s/pg_wal2", strPtr(pgPath)))) == -1, FileOpenError,
+            "unable to create symlink");
+
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
             "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
+            "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/wal' exists\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
             "P00 DETAIL: remove invalid path '{[path]}/pg/bogus1'\n"
             "P00 DETAIL: remove invalid path '{[path]}/pg/global/bogus3'\n"
             "P00 DETAIL: remove invalid path '{[path]}/pg/pg_tblspc'\n"
+            "P00 DETAIL: remove invalid link '{[path]}/pg/pg_wal2'\n"
             "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
     }
 

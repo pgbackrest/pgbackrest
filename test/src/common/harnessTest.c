@@ -331,7 +331,7 @@ hrnReplaceStr(char *string, size_t bufferSize, const char *substring, const char
         int diff = (int)strlen(replace) - (int)strlen(substring);
 
         // Make sure we won't overflow the buffer
-        ASSERT((size_t)((int)strlen(string) + diff) < bufferSize - 1);
+        CHECK((size_t)((int)strlen(string) + diff) < bufferSize - 1);
 
         // Move data from end of string enough to make room for the replacement and copy replacement
         memmove(end + diff, end, strlen(end) + 1);
