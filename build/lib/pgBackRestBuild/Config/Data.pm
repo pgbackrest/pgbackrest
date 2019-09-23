@@ -127,6 +127,8 @@ use constant CFGOPT_CONFIG_INCLUDE_PATH                             => 'config-i
     push @EXPORT, qw(CFGOPT_CONFIG_INCLUDE_PATH);
 use constant CFGOPT_DELTA                                           => 'delta';
     push @EXPORT, qw(CFGOPT_DELTA);
+use constant CFGOPT_DRYRUN                                          => 'dry-run';
+    push @EXPORT, qw(CFGOPT_DRYRUN);
 use constant CFGOPT_FORCE                                           => 'force';
     push @EXPORT, qw(CFGOPT_FORCE);
 use constant CFGOPT_ONLINE                                          => 'online';
@@ -1249,6 +1251,16 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
         },
+    },
+
+    &CFGOPT_DRYRUN =>
+    {
+       &CFGDEF_TYPE    => CFGDEF_TYPE_BOOLEAN,
+       &CFGDEF_DEFAULT => false,
+       &CFGDEF_COMMAND =>
+       {
+         &CFGCMD_expire => {},
+      },
     },
 
     &CFGOPT_COMPRESS =>
