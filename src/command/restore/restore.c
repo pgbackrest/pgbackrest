@@ -1115,14 +1115,17 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
             // Find the target that contains this file
             unsigned int targetIdx = 0;
 
-            for (; targetIdx < strLstSize(targetList); targetIdx++)
+            do
             {
+                // A target should always be found
+                CHECK(targetIdx < strLstSize(targetList));
+
                 if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
                     break;
-            }
 
-            // A target should always be found
-            ASSERT(targetIdx < strLstSize(targetList));
+                targetIdx++;
+            }
+            while (1);
 
             // Add file to queue
             lstAdd(*(List **)lstGet(*queueList, targetIdx), &file);
@@ -1207,7 +1210,7 @@ restoreRecoveryConf(unsigned int pgVersion)
                     result, "recovery_target_%s = '%s'\n", strPtr(cfgOptionStr(cfgOptType)), strPtr(cfgOptionStr(cfgOptTarget)));
 
                 // Write recovery_target_inclusive
-                if (cfgOptionTest(cfgOptTargetExclusive) && cfgOptionBool(cfgOptTargetExclusive))
+                if (cfgOptionBool(cfgOptTargetExclusive))
                     strCatFmt(result, "recovery_target_inclusive = 'false'\n");
             }
 

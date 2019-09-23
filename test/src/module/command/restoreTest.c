@@ -1507,7 +1507,7 @@ testRun(void)
             "16384 {path}\n"
             "16384/PG_VERSION {file, s=4, t=1482182860}\n");
 
-        // Prepare manifest and backup directory for incremental delta restore
+        // Incremental delta restore
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -1542,11 +1542,31 @@ testRun(void)
                 &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
             storagePathCreateNP(storagePgWrite(), NULL);
 
-            // Global directory
+            // global directory
             manifestPathAdd(
                 manifest,
                 &(ManifestPath){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL), .mode = 0700, .group = groupName(), .user = userName()});
+
+            // global/pg_control
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .size = 8192, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "539c9955c84222de5bf2b94099958b011df81f34"});
+            storagePutNP(
+                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+                pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+
+            // global/999
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/999"), .size = 0, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/999")), NULL);
 
             // PG_VERSION
             manifestFileAdd(
@@ -1580,6 +1600,79 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION)),
                 BUFSTRDEF(PG_VERSION_94_STR "\n"));
+
+            // base/1/2
+            Buffer *fileBuffer = bufNew(8192);
+            memset(bufPtr(fileBuffer), 1, bufSize(fileBuffer));
+            bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/2"), .size = 8192, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
+            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/2")), fileBuffer);
+
+            // base/16384 directory
+            manifestPathAdd(
+                manifest,
+                &(ManifestPath){
+                    .name = STRDEF(TEST_PGDATA PG_PATH_BASE "/16384"), .mode = 0700, .group = groupName(), .user = userName()});
+
+            // base/16384/PG_VERSION
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/16384/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+            storagePutNP(
+                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION)),
+                BUFSTRDEF(PG_VERSION_94_STR "\n"));
+
+            // base/16384/16385
+            fileBuffer = bufNew(16384);
+            memset(bufPtr(fileBuffer), 2, bufSize(fileBuffer));
+            bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/16384/16385"), .size = 16384, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f"});
+            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/16385")), fileBuffer);
+
+            // base/32768 directory
+            manifestPathAdd(
+                manifest,
+                &(ManifestPath){
+                    .name = STRDEF(TEST_PGDATA PG_PATH_BASE "/32768"), .mode = 0700, .group = groupName(), .user = userName()});
+
+            // base/32768/PG_VERSION
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/32768/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+            storagePutNP(
+                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION)),
+                BUFSTRDEF(PG_VERSION_94_STR "\n"));
+
+            // base/32768/32769
+            fileBuffer = bufNew(32768);
+            memset(bufPtr(fileBuffer), 2, bufSize(fileBuffer));
+            bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/32768/32769"), .size = 32768, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "a40f0986acb1531ce0cc75a23dcf8aa406ae9081"});
+            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/32769")), fileBuffer);
 
             // File link to postgresql.conf
             const String *name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.conf");
@@ -1703,21 +1796,35 @@ testRun(void)
             "P00 DETAIL: remove invalid file '{[path]}/pg/tablespace_map'\n"
             "P00 DETAIL: create path '{[path]}/pg/base'\n"
             "P00 DETAIL: create path '{[path]}/pg/base/1'\n"
+            "P00 DETAIL: create path '{[path]}/pg/base/16384'\n"
+            "P00 DETAIL: create path '{[path]}/pg/base/32768'\n"
             "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '{[path]}/pg/postgresql.conf' to '../config/postgresql.conf'\n"
-            "P01   INFO: restore file {[path]}/pg/postgresql.conf (15B, 44%) checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
-            "P01   INFO: restore file {[path]}/pg/pg_hba.conf (11B, 76%) checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01   INFO: restore file {[path]}/pg/base/1/PG_VERSION (4B, 88%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01   INFO: restore file {[path]}/pg/base/32768/32769 (32KB, 49%) checksum a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
+            "P01   INFO: restore file {[path]}/pg/base/16384/16385 (16KB, 74%) checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
+            "P01   INFO: restore file {[path]}/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
+                " checksum 539c9955c84222de5bf2b94099958b011df81f34\n"
+            "P01   INFO: restore file {[path]}/pg/base/1/2 (8KB, 99%) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
+            "P01   INFO: restore file {[path]}/pg/postgresql.conf (15B, 99%) checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
+            "P01   INFO: restore file {[path]}/pg/pg_hba.conf (11B, 99%) checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
+            "P01   INFO: restore file {[path]}/pg/base/32768/PG_VERSION (4B, 99%)"
+                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01   INFO: restore file {[path]}/pg/base/16384/PG_VERSION (4B, 99%)"
+                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01   INFO: restore file {[path]}/pg/base/1/PG_VERSION (4B, 99%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01   INFO: restore file /home/vagrant/test/test-0/pg/global/999 (0B, 100%)\n"
             "P00 DETAIL: sync path '{[path]}/config'\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/base'\n"
             "P00 DETAIL: sync path '{[path]}/pg/base/1'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/base/16384'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/base/32768'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/PG_10_201707211'\n"
-            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
+            "P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -1725,8 +1832,17 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "base {path}\n"
             "base/1 {path}\n"
+            "base/1/2 {file, s=8192, t=1482182860}\n"
             "base/1/PG_VERSION {file, s=4, t=1482182860}\n"
+            "base/16384 {path}\n"
+            "base/16384/16385 {file, s=16384, t=1482182860}\n"
+            "base/16384/PG_VERSION {file, s=4, t=1482182860}\n"
+            "base/32768 {path}\n"
+            "base/32768/32769 {file, s=32768, t=1482182860}\n"
+            "base/32768/PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
+            "global/999 {file, s=0, t=1482182860}\n"
+            "global/pg_control {file, s=8192, t=1482182860}\n"
             "pg_hba.conf {link, d=../config/pg_hba.conf}\n"
             "pg_tblspc {path}\n"
             "pg_tblspc/1 {link, d={[path]}/ts/1}\n"
@@ -1743,6 +1859,89 @@ testRun(void)
         testRestoreCompare(
             storagePg(), STRDEF("../wal"), manifest,
             ". {path}\n");
+
+        // Incremental delta selective restore
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--delta");
+        strLstAddZ(argList, "--type=preserve");
+        strLstAddZ(argList, "--link-map=pg_wal=../wal");
+        strLstAddZ(argList, "--link-map=postgresql.conf=../config/postgresql.conf");
+        strLstAddZ(argList, "--link-map=pg_hba.conf=../config/pg_hba.conf");
+        strLstAddZ(argList, "--db-include=16384");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Write recovery.conf so we don't get a preserve warning
+        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), BUFSTRDEF("Some Settings"));
+
+        TEST_RESULT_VOID(cmdRestore(), "successful restore");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
+            "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
+            "P00   INFO: map link 'pg_wal' to '../wal'\n"
+            "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
+            "P00 DETAIL: databases found for selective restore (1, 16384, 32768)\n"
+            "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/config' exists\n"
+            "P00 DETAIL: check '{[path]}/wal' exists\n"
+            "P00 DETAIL: check '{[path]}/ts/1/PG_10_201707211' exists\n"
+            "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
+            "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
+            "P00   INFO: remove invalid files/links/paths from '{[path]}/wal'\n"
+            "P00   INFO: remove invalid files/links/paths from '{[path]}/ts/1/PG_10_201707211'\n"
+            "P01 DETAIL: restore zeroed file {[path]}/pg/base/32768/32769 (32KB, 49%)\n"
+            "P01 DETAIL: restore file {[path]}/pg/base/16384/16385 - exists and matches backup (16KB, 74%)"
+                " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
+            "P01   INFO: restore file {[path]}/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
+                " checksum 539c9955c84222de5bf2b94099958b011df81f34\n"
+            "P01 DETAIL: restore file {[path]}/pg/base/1/2 - exists and matches backup (8KB, 99%)"
+                " checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
+            "P01 DETAIL: restore file {[path]}/pg/postgresql.conf - exists and matches backup (15B, 99%)"
+                " checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
+            "P01 DETAIL: restore file {[path]}/pg/pg_hba.conf - exists and matches backup (11B, 99%)"
+                " checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
+            "P01 DETAIL: restore file {[path]}/pg/base/32768/PG_VERSION - exists and matches backup (4B, 99%)"
+                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file {[path]}/pg/base/16384/PG_VERSION - exists and matches backup (4B, 99%)"
+                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file {[path]}/pg/base/1/PG_VERSION - exists and matches backup (4B, 99%)"
+                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file {[path]}/pg/PG_VERSION - exists and matches backup (4B, 100%)"
+                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file {[path]}/pg/global/999 - exists and is zero size (0B, 100%)\n"
+            "P00 DETAIL: sync path '{[path]}/config'\n"
+            "P00 DETAIL: sync path '{[path]}/pg'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/base'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/base/1'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/base/16384'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/base/32768'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/PG_10_201707211'\n"
+            "P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Keep this test at the end since is corrupts the repo
+        TEST_TITLE("remove a repo file so a restore job errors");
+
+        storageRemoveP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .errorOnMissing = true);
+        storageRemoveP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .errorOnMissing = true);
+
+        // Set log level to warn
+        harnessLogLevelSet(logLevelWarn);
+
+        TEST_ERROR_FMT(
+            cmdRestore(), FileMissingError,
+            "raised from local-1 protocol: unable to open missing file"
+                " '%s/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read",
+            testPath());
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

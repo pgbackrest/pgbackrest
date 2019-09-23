@@ -699,13 +699,12 @@ unit:
         coverage:
           command/restore/file: full
           command/restore/protocol: full
-          # command/restore/restore: full
+          command/restore/restore: full
 
         include:
           - common/user
           - info/infoBackup
           - info/manifest
-          - command/restore/restore
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stanza
