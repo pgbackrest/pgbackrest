@@ -702,7 +702,7 @@ sub run
 
             $oHostDbMaster->restore(
                 'error on existing linked file', $strFullBackup,
-                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
+                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_EXISTS,
                     strOptionalParam => '--log-level-console=warn --link-all'});
 
             executeTest('rm ' . $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf');

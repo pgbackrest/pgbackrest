@@ -375,8 +375,9 @@ testRun(void)
         const String *pgPath = strNewFmt("%s/pg", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
 
-        // Path missing
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on data directory missing");
+
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -390,8 +391,9 @@ testRun(void)
         // Create PGDATA
         storagePathCreateNP(storagePgWrite(), NULL);
 
-        // postmaster.pid is present
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on postmaster.pid is present");
+
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("postmaster.pid")), NULL);
 
         TEST_ERROR_FMT(
@@ -403,8 +405,9 @@ testRun(void)
 
         storageRemoveP(storagePgWrite(), strNew("postmaster.pid"), .errorOnMissing = true);
 
-        // PGDATA directory does not look valid
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on data directory does not look valid");
+
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -462,14 +465,15 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        // Error when no backups are present then add backups to backup.info
         // -------------------------------------------------------------------------------------------------------------------------
-        InfoBackup *infoBackup = infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO_DB)));
+        TEST_TITLE("error when no backups are present");
 
+        InfoBackup *infoBackup = infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO_DB)));
         TEST_ERROR_FMT(restoreBackupSet(infoBackup), BackupSetInvalidError, "no backup sets to restore");
 
-        // Error on invalid backup set
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid backup set");
+
         infoBackup = infoBackupNewLoad(
             ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB)));
 
@@ -488,8 +492,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("restoreManifestValidate()"))
     {
-        // Error on mismatched label
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on mismatched label");
+
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_94, STRDEF("/pg"));
 
         TEST_ERROR(
@@ -505,8 +510,9 @@ testRun(void)
         const String *repoPath = strNewFmt("%s/repo", testPath());
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_94, pgPath);
 
-        // Remap data directory
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remap data directory");
+
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -534,8 +540,9 @@ testRun(void)
         TEST_RESULT_STR_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is remapped");
         TEST_RESULT_LOG("P00   INFO: remap data directory to '{[path]}/pg2'");
 
-        // Remap tablespaces
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remap tablespaces");
+
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -646,8 +653,9 @@ testRun(void)
             "P00   INFO: map tablespace 'pg_tblspc/2' to '/all2/ts2'\n"
             "P00   WARN: update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= 9.2");
 
-        // Remap links
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remap links");
+
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -749,19 +757,21 @@ testRun(void)
 
         const String *pgPath = strNewFmt("%s/pg", testPath());
 
-        // Owner is not root and all ownership is good
         // -------------------------------------------------------------------------------------------------------------------------
-        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with good ownership");
+        TEST_TITLE("owner is not root and all ownership is good");
 
-        // Owner is not root but has no user name
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("owner is not root but has no user name");
+
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275I"), PG_VERSION_96, pgPath);
 
         userLocalData.groupName = NULL;
         userLocalData.userName = NULL;
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with no username");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user '{[user]}' in backup manifest mapped to current user\n"
@@ -769,8 +779,9 @@ testRun(void)
 
         userInitInternal();
 
-        // Owner is not root and some ownership is bad
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("owner is not root and some ownership is bad");
+
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
 
         ManifestPath path = {.name = STRDEF("pg_data/bogus_path"), .user = STRDEF("path-user-bogus")};
@@ -780,7 +791,7 @@ testRun(void)
         ManifestLink link = {.name = STRDEF("pg_data/bogus_link"), .destination = STRDEF("/"), .group = STRDEF("link-group-bogus")};
         manifestLinkAdd(manifest, &link);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "non-root user with some bad ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to current user\n"
@@ -789,8 +800,9 @@ testRun(void)
             "P00   WARN: unknown group 'file-group-bogus' in backup manifest mapped to current group\n"
             "P00   WARN: unknown group 'link-group-bogus' in backup manifest mapped to current group");
 
-        // Owner is root and ownership is good
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("owner is root and ownership is good");
+
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -804,30 +816,33 @@ testRun(void)
 
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with good ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
-        // Owner is root and user is bad
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("owner is root and user is bad");
+
         manifestPathAdd(manifest, &path);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad user");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
         TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '{[user]}'");
 
-        // Owner is root and group is bad
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("owner is root and group is bad");
+
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
         userLocalData.userRoot = true;
 
         manifestFileAdd(manifest, &file);
         manifestLinkAdd(manifest, &link);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad user");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
         TEST_RESULT_LOG("P00   WARN: unknown user in backup manifest mapped to '{[user]}'");
 
-        // Owner is root and ownership of pg_data is bad
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("owner is root and ownership of pg_data is bad");
+
         manifestPathAdd(manifest, &path);
         manifestFileAdd(manifest, &file);
 
@@ -836,7 +851,7 @@ testRun(void)
         userLocalData.userName = STRDEF("root");
         userLocalData.groupName = STRDEF("root");
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "root user with bad ownership of pg_data");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to 'root'\n"
@@ -870,8 +885,9 @@ testRun(void)
         // Test again with only group for coverage
         restoreCleanOwnership(STR(testPath()), STRDEF("bogus"), STRDEF("bogus"), userId(), 0, true);
 
-        // Directory with bad permissions/mode
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("directory with bad permissions/mode");
+
         const String *pgPath = strNewFmt("%s/pg", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
@@ -910,8 +926,9 @@ testRun(void)
         storagePathRemoveNP(storagePgWrite(), NULL);
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
 
-        // Fail on restore with directory not empty
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fail on restore with directory not empty");
+
         storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
 
         TEST_ERROR_FMT(
@@ -922,8 +939,9 @@ testRun(void)
 
         TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
 
-        // Succeed when all directories empty
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("succeed when all directories empty");
+
         storageRemoveNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR);
 
         manifestTargetAdd(
@@ -935,7 +953,7 @@ testRun(void)
 
         storagePathCreateP(storageTest, STRDEF("conf"), .mode = 0700);
 
-        TEST_RESULT_VOID(restoreClean(manifest), "normal restore");
+        TEST_RESULT_VOID(restoreClean(manifest), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '{[path]}/pg' exists\n"
@@ -960,8 +978,9 @@ testRun(void)
 
         storageRemoveP(storagePgWrite(), STRDEF("../conf/pg_hba.conf"), .errorOnMissing = true);
 
-        // Succeed when all directories empty and ignore recovery.conf
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("succeed when all directories empty and ignore recovery.conf");
+
         TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
         argList = strLstNew();
@@ -973,7 +992,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreClean(manifest), "normal restore no recovery.conf");
+        TEST_RESULT_VOID(restoreClean(manifest), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '{[path]}/pg' exists\n"
@@ -997,8 +1016,9 @@ testRun(void)
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
 
-        // No valid databases
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no valid databases");
+
         StringList *argListClean = strLstNew();
         strLstAddZ(argListClean, "pgbackrest");
         strLstAddZ(argListClean, "--stanza=test1");
@@ -1027,8 +1047,9 @@ testRun(void)
             "no databases found for selective restore\n"
             "HINT: is this a valid cluster?");
 
-        // Database id is missing on disk
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("database id is missing on disk");
+
         MEM_CONTEXT_BEGIN(manifest->memContext)
         {
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("postgres"), .id = 12173, .lastSystemId = 12168});
@@ -1044,8 +1065,9 @@ testRun(void)
 
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1)");
 
-        // All databases selected
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("all databases selected");
+
         MEM_CONTEXT_BEGIN(manifest->memContext)
         {
             manifestFileAdd(
@@ -1103,8 +1125,9 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: databases found for selective restore (1, 16384, 32768)");
 
-        // One database selected without tablespace id
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("one database selected without tablespace id");
+
         MEM_CONTEXT_BEGIN(manifest->memContext)
         {
             manifestTargetAdd(
@@ -1117,12 +1140,13 @@ testRun(void)
         MEM_CONTEXT_END();
 
         TEST_RESULT_STR_Z(
-            restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/32768/)", "one database selected");
+            restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/32768/)", "check expression");
 
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384, 32768)");
 
-        // One database selected with tablespace id
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("one database selected with tablespace id");
+
         manifest->data.pgVersion = PG_VERSION_94;
 
         MEM_CONTEXT_BEGIN(manifest->memContext)
@@ -1137,7 +1161,7 @@ testRun(void)
             restoreSelectiveExpression(manifest),
             "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_9.4_201409291/32768/)|(^pg_data/base/65536/)"
                 "|(^pg_tblspc/16387/PG_9.4_201409291/65536/)",
-            "one database selected");
+            "check expression");
 
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384, 32768, 65536)");
     }
@@ -1152,16 +1176,18 @@ testRun(void)
         strLstAddZ(argBaseList, "--pg1-path=/pg");
         strLstAddZ(argBaseList, "restore");
 
-        // No recovery conf
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no recovery conf");
+
         StringList *argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=none");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_PTR(restoreRecoveryConf(PG_VERSION_94), NULL, "recovery type is none");
+        TEST_RESULT_PTR(restoreRecoveryConf(PG_VERSION_94), NULL, "check recovery options");
 
-        // User-specified options
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("user-specified options");
+
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--recovery-option=a-setting=a");
         strLstAddZ(argList, "--recovery-option=b_setting=b");
@@ -1172,10 +1198,11 @@ testRun(void)
             "a_setting = 'a'\n"
                 "b_setting = 'b'\n"
                 "restore_command = 'pgbackrest --pg1-path=/pg --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
-            "user-specified options");
+            "check recovery options");
 
-        // Override restore_command
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("override restore_command");
+
         strLstAddZ(argBaseList, "--recovery-option=restore-command=my_restore_command");
         argList = strLstDup(argBaseList);
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
@@ -1183,10 +1210,11 @@ testRun(void)
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94),
             "restore_command = 'my_restore_command'\n",
-            "override restore command");
+            "check recovery options");
 
-        // Recovery target immediate
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery target immediate");
+
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=immediate");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
@@ -1195,10 +1223,11 @@ testRun(void)
             restoreRecoveryConf(PG_VERSION_94),
             "restore_command = 'my_restore_command'\n"
             "recovery_target = 'immediate'\n",
-            "recovery target immediate");
+            "check recovery options");
 
-        // Recovery target time with timeline
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery target time with timeline");
+
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=TIME");
@@ -1210,10 +1239,11 @@ testRun(void)
             "restore_command = 'my_restore_command'\n"
             "recovery_target_time = 'TIME'\n"
             "recovery_target_timeline = '3'\n",
-            "recovery target time with timeline");
+            "check recovery options");
 
-        // Recovery target inclusive
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery target inclusive");
+
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=TIME");
@@ -1225,7 +1255,7 @@ testRun(void)
             "restore_command = 'my_restore_command'\n"
             "recovery_target_time = 'TIME'\n"
             "recovery_target_inclusive = 'false'\n",
-            "recovery target time inclusive");
+            "check recovery options");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no recovery_target_inclusive for target=name");
@@ -1300,7 +1330,7 @@ testRun(void)
 
         // Locality error
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verify locality");
+        TEST_TITLE("incorrect locality");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
