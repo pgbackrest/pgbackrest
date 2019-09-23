@@ -26,8 +26,27 @@ Restore Command
 #include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
-Recovery type constants
+Recovery constants
 ***********************************************************************************************************************************/
+#define RESTORE_COMMAND                                             "restore_command"
+    STRING_STATIC(RESTORE_COMMAND_STR,                              RESTORE_COMMAND);
+
+#define RECOVERY_TARGET                                             "recovery_target"
+
+#define RECOVERY_TARGET_ACTION                                      "recovery_target_action"
+#define RECOVERY_TARGET_ACTION_SHUTDOWN                             "shutdown"
+    STRING_STATIC(RECOVERY_TARGET_ACTION_SHUTDOWN_STR,              RECOVERY_TARGET_ACTION_SHUTDOWN);
+
+#define RECOVERY_TARGET_INCLUSIVE                                   "recovery_target_inclusive"
+#define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
+#define PAUSE_AT_RECOVERY_TARGET                                    "pause_at_recovery_target"
+
+#define RECOVERY_TYPE_DEFAULT                                       "default"
+    STRING_STATIC(RECOVERY_TYPE_DEFAULT_STR,                        RECOVERY_TYPE_DEFAULT);
+#define RECOVERY_TYPE_IMMEDIATE                                     "immediate"
+    STRING_STATIC(RECOVERY_TYPE_IMMEDIATE_STR,                      RECOVERY_TYPE_IMMEDIATE);
+#define RECOVERY_TYPE_NONE                                          "none"
+    STRING_STATIC(RECOVERY_TYPE_NONE_STR,                           RECOVERY_TYPE_NONE);
 #define RECOVERY_TYPE_PRESERVE                                      "preserve"
     STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                       RECOVERY_TYPE_PRESERVE);
 
@@ -1164,7 +1183,7 @@ restoreRecoveryConf(unsigned int pgVersion)
     String *result = NULL;
 
     // Only generate recovery.conf if recovery type is not none
-    if (!strEq(cfgOptionStr(cfgOptType), STRDEF("none")))
+    if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1190,7 +1209,7 @@ restoreRecoveryConf(unsigned int pgVersion)
             }
 
             // Write restore_command
-            if (!strLstExists(recoveryOptionKey, STRDEF("restore_command")))
+            if (!strLstExists(recoveryOptionKey, RESTORE_COMMAND_STR))
             {
                 // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
                 // reasonable defaults so there is no danger of a error -- they just might not be optimal.  In any case, it seems
@@ -1205,25 +1224,25 @@ restoreRecoveryConf(unsigned int pgVersion)
                 kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_MAX_STR), NULL);
 
                 strCatFmt(
-                    result, "restore_command = '%s %s %%f \"%%p\"'\n", strPtr(cfgExe()),
+                    result, RESTORE_COMMAND " = '%s %s %%f \"%%p\"'\n", strPtr(cfgExe()),
                     strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, optionReplace, true), " ")));
             }
 
             // If type is immediate
-            if (strEq(cfgOptionStr(cfgOptType), STRDEF("immediate")))
+            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_IMMEDIATE_STR))
             {
-                strCat(result, "recovery_target = 'immediate'\n");
+                strCat(result, RECOVERY_TARGET " = '" RECOVERY_TYPE_IMMEDIATE "'\n");
             }
             // Else type is not default so write target options
-            else if (!strEq(cfgOptionStr(cfgOptType), STRDEF("default")))
+            else if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_DEFAULT_STR))
             {
                 // Write the recovery target
                 strCatFmt(
-                    result, "recovery_target_%s = '%s'\n", strPtr(cfgOptionStr(cfgOptType)), strPtr(cfgOptionStr(cfgOptTarget)));
+                    result, RECOVERY_TARGET "_%s = '%s'\n", strPtr(cfgOptionStr(cfgOptType)), strPtr(cfgOptionStr(cfgOptTarget)));
 
                 // Write recovery_target_inclusive
                 if (cfgOptionTest(cfgOptTargetExclusive) && cfgOptionBool(cfgOptTargetExclusive))
-                    strCatFmt(result, "recovery_target_inclusive = 'false'\n");
+                    strCatFmt(result, RECOVERY_TARGET_INCLUSIVE " = 'false'\n");
             }
 
             // Write pause_at_recovery_target/recovery_target_action
@@ -1235,18 +1254,19 @@ restoreRecoveryConf(unsigned int pgVersion)
                 {
                     if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
                     {
-                        strCatFmt(result, "recovery_target_action = '%s'\n", strPtr(targetAction));
+                        strCatFmt(result, RECOVERY_TARGET_ACTION " = '%s'\n", strPtr(targetAction));
                     }
                     else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
                     {
-                        if (strEq(targetAction, STRDEF("shutdown")))
+                        if (strEq(targetAction, RECOVERY_TARGET_ACTION_SHUTDOWN_STR))
                         {
                             THROW_FMT(
-                                OptionInvalidError, CFGOPT_TARGET_ACTION "=shutdown is only available in PostgreSQL >= %s",
+                                OptionInvalidError,
+                                CFGOPT_TARGET_ACTION "=" RECOVERY_TARGET_ACTION_SHUTDOWN " is only available in PostgreSQL >= %s",
                                 strPtr(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
                         }
 
-                        strCat(result, "pause_at_recovery_target = 'false'\n");
+                        strCat(result, PAUSE_AT_RECOVERY_TARGET " = 'false'\n");
                     }
                     else
                     {
@@ -1259,7 +1279,7 @@ restoreRecoveryConf(unsigned int pgVersion)
 
             // Write recovery_target_timeline
             if (cfgOptionTest(cfgOptTargetTimeline))
-                strCatFmt(result, "recovery_target_timeline = '%s'\n", strPtr(cfgOptionStr(cfgOptTargetTimeline)));
+                strCatFmt(result, RECOVERY_TARGET_TIMELINE " = '%s'\n", strPtr(cfgOptionStr(cfgOptTargetTimeline)));
 
             memContextSwitch(MEM_CONTEXT_OLD());
             result = strDup(result);
