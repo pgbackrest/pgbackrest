@@ -328,6 +328,11 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
 
+        TEST_RESULT_VOID(manifestFileRemove(manifest, STRDEF("pg_data/PG_VERSION")), "remove file");
+        TEST_ERROR(
+            manifestFileRemove(manifest, STRDEF("pg_data/PG_VERSION")), AssertError,
+            "unable to remove 'pg_data/PG_VERSION' from manifest file list");
+
         TEST_RESULT_VOID(manifestLinkRemove(manifest, STRDEF("pg_data/pg_stat")), "remove link");
         TEST_ERROR(
             manifestLinkRemove(manifest, STRDEF("pg_data/pg_stat")), AssertError,

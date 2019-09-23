@@ -149,7 +149,7 @@ struct Manifest
     StringList *referenceList;                                      // List of file references
 
     ManifestData data;                                              // Manifest data and options
-    List *targetList;                                               // List of paths
+    List *targetList;                                               // List of targets
     List *pathList;                                                 // List of paths
     List *fileList;                                                 // List of files
     List *linkList;                                                 // List of links
@@ -804,7 +804,7 @@ manifestNewLoad(IoRead *read)
         this->info = infoNewLoad(read, manifestLoadCallback, &loadData);
 
         // Process file defaults
-        for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
         {
             ManifestFile *file = lstGet(this->fileList, fileIdx);
             ManifestLoadFound *found = lstGet(loadData.fileFoundList, fileIdx);
@@ -823,7 +823,7 @@ manifestNewLoad(IoRead *read)
         }
 
         // Process link defaults
-        for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
+        for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(this); linkIdx++)
         {
             ManifestLink *link = lstGet(this->linkList, linkIdx);
             ManifestLoadFound *found = lstGet(loadData.linkFoundList, linkIdx);
@@ -836,7 +836,7 @@ manifestNewLoad(IoRead *read)
         }
 
         // Process path defaults
-        for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(this); pathIdx++)
         {
             ManifestPath *path = lstGet(this->pathList, pathIdx);
             ManifestLoadFound *found = lstGet(loadData.pathFoundList, pathIdx);
@@ -1218,7 +1218,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     // -----------------------------------------------------------------------------------------------------------------------------
     if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, sectionNext))
     {
-        if (lstSize(manifest->linkList) > 0)
+        if (manifestLinkTotal(manifest) > 0)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
@@ -1297,11 +1297,11 @@ manifestSave(Manifest *this, IoWrite *write)
         MostCommonValue *filePrimaryMcv = mcvNew();
         MostCommonValue *fileUserMcv = mcvNew();
 
-        ASSERT(lstSize(this->fileList) > 0);
+        ASSERT(manifestFileTotal(this) > 0);
 
-        for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
         {
-            ManifestFile *file = lstGet(this->fileList, fileIdx);
+            const ManifestFile *file = manifestFile(this, fileIdx);
 
             mcvUpdate(fileGroupMcv, VARSTR(file->group));
             mcvUpdate(fileModeMcv, VARUINT(file->mode));
@@ -1315,14 +1315,14 @@ manifestSave(Manifest *this, IoWrite *write)
         saveData.fileUserDefault = manifestOwnerVar(varStr(mcvResult(fileUserMcv)));
 
         // Get default link values
-        if (lstSize(this->linkList) > 0)
+        if (manifestLinkTotal(this) > 0)
         {
             MostCommonValue *linkGroupMcv = mcvNew();
             MostCommonValue *linkUserMcv = mcvNew();
 
-            for (unsigned int linkIdx = 0; linkIdx < lstSize(this->linkList); linkIdx++)
+            for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(this); linkIdx++)
             {
-                ManifestLink *link = lstGet(this->linkList, linkIdx);
+                const ManifestLink *link = manifestLink(this, linkIdx);
 
                 mcvUpdate(linkGroupMcv, VARSTR(link->group));
                 mcvUpdate(linkUserMcv, VARSTR(link->user));
@@ -1337,11 +1337,11 @@ manifestSave(Manifest *this, IoWrite *write)
         MostCommonValue *pathModeMcv = mcvNew();
         MostCommonValue *pathUserMcv = mcvNew();
 
-        ASSERT(lstSize(this->pathList) > 0);
+        ASSERT(manifestPathTotal(this) > 0);
 
-        for (unsigned int pathIdx = 0; pathIdx < lstSize(this->pathList); pathIdx++)
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(this); pathIdx++)
         {
-            ManifestPath *path = lstGet(this->pathList, pathIdx);
+            const ManifestPath *path = manifestPath(this, pathIdx);
 
             mcvUpdate(pathGroupMcv, VARSTR(path->group));
             mcvUpdate(pathModeMcv, VARUINT(path->mode));
@@ -1476,7 +1476,8 @@ manifestPgPath(const String *manifestPath)
     else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
     {
         // A tablespace target is the only valid option if not pg_data or pg_data/
-        ASSERT(strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGTBLSPC "/")));
+        ASSERT(
+            strEq(manifestPath, MANIFEST_TARGET_PGTBLSPC_STR) || strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGTBLSPC "/")));
 
         FUNCTION_TEST_RETURN(strDup(manifestPath));
     }
@@ -1626,6 +1627,23 @@ manifestFileFindDefault(const Manifest *this, const String *name, const Manifest
     ASSERT(name != NULL);
 
     FUNCTION_TEST_RETURN(lstFindDefault(this->fileList, &name, (void *)fileDefault));
+}
+
+void
+manifestFileRemove(const Manifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    if (!lstRemove(this->fileList, &name))
+        THROW_FMT(AssertError, "unable to remove '%s' from manifest file list", strPtr(name));
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 unsigned int
