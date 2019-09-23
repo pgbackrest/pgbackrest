@@ -1223,8 +1223,9 @@ testRun(void)
             "recovery_target_name = 'NAME'\n",
             "check recovery options");
 
-        // Recovery target action = shutdown
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery target action = shutdown");
+
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=immediate");
         strLstAddZ(argList, "--target-action=shutdown");
@@ -1235,14 +1236,15 @@ testRun(void)
             "restore_command = 'my_restore_command'\n"
             "recovery_target = 'immediate'\n"
             "recovery_target_action = 'shutdown'\n",
-            "recovery target action shutdown");
+            "check recovery options");
 
         TEST_ERROR(
             restoreRecoveryConf(PG_VERSION_94), OptionInvalidError,
             "target-action=shutdown is only available in PostgreSQL >= 9.5");
 
-        // Recovery target action = pause
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery target action = pause");
+
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=immediate");
         strLstAddZ(argList, "--target-action=promote");
@@ -1253,7 +1255,7 @@ testRun(void)
             "restore_command = 'my_restore_command'\n"
             "recovery_target = 'immediate'\n"
             "pause_at_recovery_target = 'false'\n",
-            "recovery target action pause");
+            "check recovery options");
 
         TEST_ERROR(
             restoreRecoveryConf(PG_VERSION_90), OptionInvalidError,
@@ -1521,8 +1523,9 @@ testRun(void)
             "16384 {path}\n"
             "16384/PG_VERSION {file, s=4, t=1482182860}\n");
 
-        // Incremental delta restore
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("incremental delta selective restore");
+
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -1563,15 +1566,18 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL), .mode = 0700, .group = groupName(), .user = userName()});
 
             // global/pg_control
+            Buffer *fileBuffer = bufNew(8192);
+            memset(bufPtr(fileBuffer), 255, bufSize(fileBuffer));
+            bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "539c9955c84222de5bf2b94099958b011df81f34"});
+                    .checksumSha1 = "5e2b96c19c4f5c63a5afa2de504d29fe64a4c908"});
             storagePutNP(
-                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
-                pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), fileBuffer);
 
             // global/999
             manifestFileAdd(
@@ -1616,7 +1622,7 @@ testRun(void)
                 BUFSTRDEF(PG_VERSION_94_STR "\n"));
 
             // base/1/2
-            Buffer *fileBuffer = bufNew(8192);
+            fileBuffer = bufNew(8192);
             memset(bufPtr(fileBuffer), 1, bufSize(fileBuffer));
             bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
@@ -1817,7 +1823,7 @@ testRun(void)
             "P01   INFO: restore file {[path]}/pg/base/32768/32769 (32KB, 49%) checksum a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
             "P01   INFO: restore file {[path]}/pg/base/16384/16385 (16KB, 74%) checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01   INFO: restore file {[path]}/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
-                " checksum 539c9955c84222de5bf2b94099958b011df81f34\n"
+                " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
             "P01   INFO: restore file {[path]}/pg/base/1/2 (8KB, 99%) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
             "P01   INFO: restore file {[path]}/pg/postgresql.conf (15B, 99%) checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
             "P01   INFO: restore file {[path]}/pg/pg_hba.conf (11B, 99%) checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
@@ -1874,8 +1880,9 @@ testRun(void)
             storagePg(), STRDEF("../wal"), manifest,
             ". {path}\n");
 
-        // Incremental delta selective restore
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("incremental delta selective restore");
+
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
@@ -1913,7 +1920,7 @@ testRun(void)
             "P01 DETAIL: restore file {[path]}/pg/base/16384/16385 - exists and matches backup (16KB, 74%)"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01   INFO: restore file {[path]}/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
-                " checksum 539c9955c84222de5bf2b94099958b011df81f34\n"
+                " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
             "P01 DETAIL: restore file {[path]}/pg/base/1/2 - exists and matches backup (8KB, 99%)"
                 " checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
             "P01 DETAIL: restore file {[path]}/pg/postgresql.conf - exists and matches backup (15B, 99%)"
