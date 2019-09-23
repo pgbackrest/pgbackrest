@@ -951,7 +951,7 @@ restoreSelectiveExpression(Manifest *manifest)
                 const ManifestFile *file = manifestFile(manifest, fileIdx);
 
                 if (regExpMatch(baseRegExp, file->name) || regExpMatch(tablespaceRegExp, file->name))
-                    strLstAdd(dbList, strBase(strPath(file->name)));
+                    strLstAddIfMissing(dbList, strBase(strPath(file->name)));
             }
 
             // If no databases were found then this backup is not a valid cluster

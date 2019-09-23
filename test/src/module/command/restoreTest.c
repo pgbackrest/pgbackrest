@@ -756,7 +756,7 @@ testRun(void)
 
         // Owner is not root but has no user name
         // -------------------------------------------------------------------------------------------------------------------------
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275I"), PG_VERSION_96, pgPath);
 
         userLocalData.groupName = NULL;
         userLocalData.userName = NULL;
@@ -981,13 +981,15 @@ testRun(void)
 
         // No valid databases
         // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=/repo");
-        strLstAddZ(argList, "--pg1-path=/pg");
+        StringList *argListClean = strLstNew();
+        strLstAddZ(argListClean, "pgbackrest");
+        strLstAddZ(argListClean, "--stanza=test1");
+        strLstAddZ(argListClean, "--repo1-path=/repo");
+        strLstAddZ(argListClean, "--pg1-path=/pg");
+        strLstAddZ(argListClean, "restore");
+
+        StringList *argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-include=test1");
-        strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         Manifest *manifest = NULL;
@@ -997,6 +999,7 @@ testRun(void)
             manifest = manifestNewInternal();
             manifest->data.pgVersion = PG_VERSION_84;
 
+            manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
             manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_NEW_END();
@@ -1038,11 +1041,54 @@ testRun(void)
             "P00 DETAIL: databases found for selective restore (1, 16384)\n"
             "P00   INFO: nothing to filter - all user databases have been selected");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on system database selected");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=1");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(
+            restoreSelectiveExpression(manifest), DbInvalidError,
+            "system databases (template0, postgres, etc.) are included by default");
+
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on missing database selected");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=7777777");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include '7777777' does not exist");
+
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("select database by id");
+
+        MEM_CONTEXT_BEGIN(manifest->memContext)
+        {
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
+            manifestFileAdd(
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
+        }
+        MEM_CONTEXT_END();
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=16384");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)", "check expression");
+
+        TEST_RESULT_LOG(
+            "P00 DETAIL: databases found for selective restore (1, 16384, 32768)");
+
         // One database selected without tablespace id
         // -------------------------------------------------------------------------------------------------------------------------
         MEM_CONTEXT_BEGIN(manifest->memContext)
         {
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
             manifestTargetAdd(
                 manifest, &(ManifestTarget){
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/16387"), .tablespaceId = 16387, .tablespaceName = STRDEF("ts1"),
@@ -1391,6 +1437,19 @@ testRun(void)
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
             storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
 
+            // pg_tblspc/1/16384/PG_VERSION
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION), .size = 4,
+                    .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "797e375b924134687cbf9eacd37a4355f3d825e4"});
+            storagePutNP(
+                storageNewWriteNP(
+                    storageRepoWrite(),
+                    STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION)),
+                BUFSTRDEF(PG_VERSION_84_STR "\n"));
+
             // Always sort
             lstSort(manifest->targetList, sortOrderAsc);
             lstSort(manifest->fileList, sortOrderAsc);
@@ -1421,9 +1480,11 @@ testRun(void)
             "P00 DETAIL: remove special file '{[path]}/pg/pipe'\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/ts/1'\n"
             "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
-            "P01 DETAIL: restore file {[path]}/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860 (4B, 100%)"
+            "P01 DETAIL: restore file {[path]}/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860 (4B, 50%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P01   INFO: restore file {[path]}/pg/tablespace_map (0B, 100%)\n"
+            "P01   INFO: restore file {[path]}/pg/tablespace_map (0B, 50%)\n"
+            "P01   INFO: restore file {[path]}/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
+                " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '{[path]}/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
@@ -1443,7 +1504,8 @@ testRun(void)
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
             ". {link, d={[path]}/ts/1}\n"
-            "16384 {path}\n");
+            "16384 {path}\n"
+            "16384/PG_VERSION {file, s=4, t=1482182860}\n");
 
         // Prepare manifest and backup directory for incremental delta restore
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1495,6 +1557,29 @@ testRun(void)
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
             storagePutNP(
                 storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_94_STR "\n"));
+
+            // base directory
+            manifestPathAdd(
+                manifest,
+                &(ManifestPath){
+                    .name = STRDEF(TEST_PGDATA PG_PATH_BASE), .mode = 0700, .group = groupName(), .user = userName()});
+
+            // base/1 directory
+            manifestPathAdd(
+                manifest,
+                &(ManifestPath){
+                    .name = STRDEF(TEST_PGDATA PG_PATH_BASE "/1"), .mode = 0700, .group = groupName(), .user = userName()});
+
+            // base/1/PG_VERSION
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+            storagePutNP(
+                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION)),
+                BUFSTRDEF(PG_VERSION_94_STR "\n"));
 
             // File link to postgresql.conf
             const String *name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.conf");
@@ -1616,13 +1701,18 @@ testRun(void)
             "P00 DETAIL: remove invalid path '{[path]}/pg/global/bogus3'\n"
             "P00 DETAIL: remove invalid link '{[path]}/pg/pg_wal2'\n"
             "P00 DETAIL: remove invalid file '{[path]}/pg/tablespace_map'\n"
+            "P00 DETAIL: create path '{[path]}/pg/base'\n"
+            "P00 DETAIL: create path '{[path]}/pg/base/1'\n"
             "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '{[path]}/pg/postgresql.conf' to '../config/postgresql.conf'\n"
-            "P01   INFO: restore file {[path]}/pg/postgresql.conf (15B, 50%) checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
-            "P01   INFO: restore file {[path]}/pg/pg_hba.conf (11B, 86%) checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
+            "P01   INFO: restore file {[path]}/pg/postgresql.conf (15B, 44%) checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
+            "P01   INFO: restore file {[path]}/pg/pg_hba.conf (11B, 76%) checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
+            "P01   INFO: restore file {[path]}/pg/base/1/PG_VERSION (4B, 88%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P00 DETAIL: sync path '{[path]}/config'\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/base'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/base/1'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
@@ -1633,6 +1723,9 @@ testRun(void)
             storagePg(), NULL, manifest,
             ". {path}\n"
             "PG_VERSION {file, s=4, t=1482182860}\n"
+            "base {path}\n"
+            "base/1 {path}\n"
+            "base/1/PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
             "pg_hba.conf {link, d=../config/pg_hba.conf}\n"
             "pg_tblspc {path}\n"
@@ -1644,6 +1737,7 @@ testRun(void)
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
             ". {link, d={[path]}/ts/1}\n"
             "16384 {path}\n"
+            "16384/PG_VERSION {file, s=4, t=1482182860}\n"
             "PG_10_201707211 {path}\n");
 
         testRestoreCompare(
