@@ -1629,6 +1629,23 @@ manifestFileFindDefault(const Manifest *this, const String *name, const Manifest
     FUNCTION_TEST_RETURN(lstFindDefault(this->fileList, &name, (void *)fileDefault));
 }
 
+void
+manifestFileRemove(const Manifest *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    if (!lstRemove(this->fileList, &name))
+        THROW_FMT(AssertError, "unable to remove '%s' from manifest file list", strPtr(name));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 unsigned int
 manifestFileTotal(const Manifest *this)
 {

@@ -1345,12 +1345,12 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
             "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d={[path]}/ts/1}");
+            "pg_tblspc/1 {link, d={[path]}/ts/1}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
             ". {link, d={[path]}/ts/1}\n"
-            "16384 {path}");
+            "16384 {path}\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with force");
@@ -1381,13 +1381,29 @@ testRun(void)
             symlink("/bogus", strPtr(strNewFmt("%s/pg_tblspc/1", strPtr(pgPath)))) == -1, FileOpenError,
             "unable to create symlink");
 
-        // MEM_CONTEXT_BEGIN(manifest->memContext)
-        // {
-        //     ManifestFile *file = (ManifestFile *)manifestFileFind(manifest, STRDEF(TEST_PGDATA PG_FILE_PGVERSION));
-        //     file->user = strNew("bogus");
-        //     file->group = strNew("root");
-        // }
-        // MEM_CONTEXT_END();
+        MEM_CONTEXT_BEGIN(manifest->memContext)
+        {
+            // tablespace_map (will be ignored during restore)
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
+
+            // Always sort
+            lstSort(manifest->targetList, sortOrderAsc);
+            lstSort(manifest->fileList, sortOrderAsc);
+            lstSort(manifest->linkList, sortOrderAsc);
+            lstSort(manifest->pathList, sortOrderAsc);
+        }
+        MEM_CONTEXT_END();
+
+        manifestSave(
+            manifest,
+            storageWriteIo(
+                storageNewWriteNP(storageRepoWrite(),
+                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         #undef TEST_LABEL
         #undef TEST_PGDATA
@@ -1407,6 +1423,7 @@ testRun(void)
             "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
             "P01 DETAIL: restore file {[path]}/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860 (4B, 100%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P01   INFO: restore file {[path]}/pg/tablespace_map (0B, 100%)\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '{[path]}/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
@@ -1420,12 +1437,13 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
             "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d={[path]}/ts/1}");
+            "pg_tblspc/1 {link, d={[path]}/ts/1}\n"
+            "tablespace_map {file, s=0, t=1482182860}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
             ". {link, d={[path]}/ts/1}\n"
-            "16384 {path}");
+            "16384 {path}\n");
 
         // Prepare manifest and backup directory for incremental delta restore
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1437,6 +1455,8 @@ testRun(void)
         strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "--type=none");
         strLstAddZ(argList, "--link-map=pg_wal=../wal");
+        strLstAddZ(argList, "--link-map=postgresql.conf=../config/postgresql.conf");
+        strLstAddZ(argList, "--link-map=pg_hba.conf=../config/pg_hba.conf");
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -1476,8 +1496,52 @@ testRun(void)
             storagePutNP(
                 storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_94_STR "\n"));
 
+            // File link to postgresql.conf
+            const String *name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.conf");
+
+            manifestTargetAdd(
+                manifest, &(ManifestTarget){
+                    .type = manifestTargetTypeLink, .name = name, .path = STRDEF("../config"), .file = STRDEF("postgresql.conf")});
+            manifestLinkAdd(
+                manifest, &(ManifestLink){
+                    .name = name, .destination = STRDEF("../config/postgresql.conf"), .group = groupName(), .user = userName()});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "postgresql.conf"), .size = 15, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "98b8abb2e681e2a5a7d8ab082c0a79727887558d"});
+            storagePutNP(
+                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "postgresql.conf")), BUFSTRDEF("POSTGRESQL.CONF"));
+
+            // File link to pg_hba.conf
+            name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_hba.conf");
+
+            manifestTargetAdd(
+                manifest, &(ManifestTarget){
+                    .type = manifestTargetTypeLink, .name = name, .path = STRDEF("../config"), .file = STRDEF("pg_hba.conf")});
+            manifestLinkAdd(
+                manifest, &(ManifestLink){
+                    .name = name, .destination = STRDEF("../config/pg_hba.conf"), .group = groupName(), .user = userName()});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "pg_hba.conf"), .size = 11, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "401215e092779574988a854d8c7caed7f91dba4b"});
+            storagePutNP(
+                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "pg_hba.conf")), BUFSTRDEF("PG_HBA.CONF"));
+
+            // tablespace_map (will be ignored during restore)
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
+
             // Path link to pg_wal
-            const String *name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_wal");
+            name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_wal");
             const String *destination = STRDEF("../wal");
 
             manifestTargetAdd(manifest, &(ManifestTarget){.type = manifestTargetTypeLink, .name = name, .path = destination});
@@ -1530,7 +1594,7 @@ testRun(void)
         storagePathCreateNP(storagePgWrite(), STRDEF("bogus1/bogus2"));
         storagePathCreateNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/bogus3"));
 
-        // Add a few bogus link to be deleted
+        // Add a few bogus links to be deleted
         THROW_ON_SYS_ERROR(
             symlink("../wal", strPtr(strNewFmt("%s/pg_wal2", strPtr(pgPath)))) == -1, FileOpenError,
             "unable to create symlink");
@@ -1539,15 +1603,25 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
+            "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
+            "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/config' exists\n"
             "P00 DETAIL: check '{[path]}/wal' exists\n"
             "P00 DETAIL: check '{[path]}/ts/1/PG_10_201707211' exists\n"
+            "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
             "P00 DETAIL: remove invalid path '{[path]}/pg/bogus1'\n"
             "P00 DETAIL: remove invalid path '{[path]}/pg/global/bogus3'\n"
             "P00 DETAIL: remove invalid link '{[path]}/pg/pg_wal2'\n"
+            "P00 DETAIL: remove invalid file '{[path]}/pg/tablespace_map'\n"
+            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
+            "P00 DETAIL: create symlink '{[path]}/pg/postgresql.conf' to '../config/postgresql.conf'\n"
+            "P01   INFO: restore file {[path]}/pg/postgresql.conf (15B, 50%) checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
+            "P01   INFO: restore file {[path]}/pg/pg_hba.conf (11B, 86%) checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
             "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P00 DETAIL: sync path '{[path]}/config'\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
@@ -1560,19 +1634,21 @@ testRun(void)
             ". {path}\n"
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
+            "pg_hba.conf {link, d=../config/pg_hba.conf}\n"
             "pg_tblspc {path}\n"
             "pg_tblspc/1 {link, d={[path]}/ts/1}\n"
-            "pg_wal {link, d=../wal}");
+            "pg_wal {link, d=../wal}\n"
+            "postgresql.conf {link, d=../config/postgresql.conf}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
             ". {link, d={[path]}/ts/1}\n"
             "16384 {path}\n"
-            "PG_10_201707211 {path}");
+            "PG_10_201707211 {path}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("../wal"), manifest,
-            ". {path}");
+            ". {path}\n");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

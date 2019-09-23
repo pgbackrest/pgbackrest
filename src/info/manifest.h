@@ -166,6 +166,7 @@ File functions and getters/setters
 const ManifestFile *manifestFile(const Manifest *this, unsigned int fileIdx);
 const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
 const ManifestFile *manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault);
+void manifestFileRemove(const Manifest *this, const String *name);
 unsigned int manifestFileTotal(const Manifest *this);
 
 /***********************************************************************************************************************************

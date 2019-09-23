@@ -646,10 +646,6 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
         case storageTypePath:
         {
-            // Tablespaces are mapped under pg_tblspc
-            if (strBeginsWith(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/")))
-                manifestName = strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA));
-
             const ManifestPath *manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
 
             if (manifestPath != NULL)
@@ -789,6 +785,15 @@ restoreClean(Manifest *manifest)
                 // The target directory exists and is valid and will need to be cleaned
                 cleanData->exists = true;
             }
+        }
+
+        // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links have
+        // already been created above.
+        if (manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP), NULL) != NULL &&
+            manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
+        {
+            LOG_DETAIL("skip '"PG_FILE_TABLESPACEMAP"' -- tablespace links will be created based on mappings");
+            manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP));
         }
 
         // Clean target directories
@@ -1106,14 +1111,6 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFile *file = manifestFile(manifest, fileIdx);
-
-            // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links
-            // have already been created by restoreClean().
-            if (strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)) &&
-                manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
-            {
-                continue;
-            }
 
             // Find the target that contains this file
             unsigned int targetIdx = 0;
