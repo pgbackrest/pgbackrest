@@ -1009,6 +1009,21 @@
 
                 <text><backrest/> does backup rotation but is not concerned with when the backups were created.  If two full backups are configured for retention, <backrest/> will keep two full backups no matter whether they occur two hours or two weeks apart.</text>
 
+                <option-list>
+                  <option id="dry-run" name="dry-run">
+                    <summary>
+                      dry-run exectuion, it does not expire backups.
+                    </summary>
+                    <text>
+                      Using this option, <backrest/> will not effectively expire the archives,
+                      rather <backrest/> will simply inform you about <b>which</b> archives
+                      and backups are going to be expired.
+                    </text>
+                    <example>y</example>
+                  </option>
+                </option-list>
+
+
                 <command-example-list>
                     <command-example>
                         <text><code-block title="">

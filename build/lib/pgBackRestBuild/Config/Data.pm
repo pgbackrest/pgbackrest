@@ -1259,7 +1259,7 @@ my %hConfigDefine =
        &CFGDEF_DEFAULT => false,
        &CFGDEF_COMMAND =>
        {
-         &CFGCMD_expire => {},
+         &CFGCMD_EXPIRE => {},
       },
     },
 
