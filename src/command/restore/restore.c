@@ -646,7 +646,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
         case storageTypePath:
         {
-            // Tablepspaces are mapped under pg_tblspc
+            // Tablespaces are mapped under pg_tblspc
             if (strBeginsWith(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/")))
                 manifestName = strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA));
 

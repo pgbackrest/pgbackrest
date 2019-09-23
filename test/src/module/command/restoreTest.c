@@ -1347,6 +1347,11 @@ testRun(void)
             "pg_tblspc {path}\n"
             "pg_tblspc/1 {link, d={[path]}/ts/1}");
 
+        testRestoreCompare(
+            storagePg(), STRDEF("pg_tblspc/1"), manifest,
+            ". {link, d={[path]}/ts/1}\n"
+            "16384 {path}");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with force");
 
@@ -1417,6 +1422,11 @@ testRun(void)
             "pg_tblspc {path}\n"
             "pg_tblspc/1 {link, d={[path]}/ts/1}");
 
+        testRestoreCompare(
+            storagePg(), STRDEF("pg_tblspc/1"), manifest,
+            ". {link, d={[path]}/ts/1}\n"
+            "16384 {path}");
+
         // Prepare manifest and backup directory for incremental delta restore
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1478,6 +1488,30 @@ testRun(void)
                 symlink("../wal", strPtr(strNewFmt("%s/pg_wal", strPtr(pgPath)))) == -1, FileOpenError,
                 "unable to create symlink");
 
+            // pg_tblspc/1
+            manifestTargetAdd(
+                manifest, &(ManifestTarget){
+                    .type = manifestTargetTypeLink, .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"),
+                    .path = strNewFmt("%s/ts/1", testPath()), .tablespaceId = 1, .tablespaceName = STRDEF("ts1")});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC), .mode = 0700, .group = groupName(),
+                    .user = userName()});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC), .mode = 0700, .group = groupName(), .user = userName()});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"), .mode = 0700, .group = groupName(), .user = userName()});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/PG_10_201707211"), .mode = 0700, .group = groupName(),
+                    .user = userName()});
+            manifestLinkAdd(
+                manifest, &(ManifestLink){
+                    .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/1"),
+                    .destination = strNewFmt("%s/ts/1", testPath()), .group = groupName(), .user = userName()});
+
             // Always sort
             lstSort(manifest->targetList, sortOrderAsc);
             lstSort(manifest->fileList, sortOrderAsc);
@@ -1508,15 +1542,37 @@ testRun(void)
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/wal' exists\n"
+            "P00 DETAIL: check '{[path]}/ts/1/PG_10_201707211' exists\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
             "P00 DETAIL: remove invalid path '{[path]}/pg/bogus1'\n"
             "P00 DETAIL: remove invalid path '{[path]}/pg/global/bogus3'\n"
-            "P00 DETAIL: remove invalid path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: remove invalid link '{[path]}/pg/pg_wal2'\n"
             "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
+
+        testRestoreCompare(
+            storagePg(), NULL, manifest,
+            ". {path}\n"
+            "PG_VERSION {file, s=4, t=1482182860}\n"
+            "global {path}\n"
+            "pg_tblspc {path}\n"
+            "pg_tblspc/1 {link, d={[path]}/ts/1}\n"
+            "pg_wal {link, d=../wal}");
+
+        testRestoreCompare(
+            storagePg(), STRDEF("pg_tblspc/1"), manifest,
+            ". {link, d={[path]}/ts/1}\n"
+            "16384 {path}\n"
+            "PG_10_201707211 {path}");
+
+        testRestoreCompare(
+            storagePg(), STRDEF("../wal"), manifest,
+            ". {path}");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
