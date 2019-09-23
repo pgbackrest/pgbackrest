@@ -417,7 +417,8 @@ sub run
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
-                    ($self->{bDebug} ? '' : ' -DNDEBUG') . ($self->{bDebugTestTrace} ? ' -DDEBUG_TEST_TRACE' : '');
+                    ($self->{bDebug} ? '' : ' -DNDEBUG') .
+                    ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '');
 
                 # Flags used to build harness files
                 my $strHarnessFlags =
@@ -430,7 +431,8 @@ sub run
 
                 # Flags used to build test.c
                 my $strTestFlags =
-                    '-DDEBUG_TEST_TRACE -O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    ($self->{bDebug} ? '-DDEBUG_TEST_TRACE ' : '') .
+                    '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                         ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
