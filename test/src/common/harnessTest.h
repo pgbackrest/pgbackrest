@@ -37,6 +37,24 @@ void testRepoPathSet(const char *testRepoPath);
 const char *testUser(void);
 const char *testGroup(void);
 
+// Read a file (max 256k) into a buffer
+void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize);
+
+// Write a buffer to a file
+void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize);
+
+// Replace common test values in a string and return a buffer with the replacements.
+//
+// Note that the returned buffer will be overwritten with each call.  Values that can be replaced are:
+//
+// {[path]} - the current test path
+// {[user]} - the current test user
+// {[group]} - the current test group
+const char *hrnReplaceKey(const char *string);
+
+// Diff two strings using command-line diff tool
+const char *hrnDiff(const char *actual, const char *expected);
+
 /***********************************************************************************************************************************
 Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies
 to the formatting of bools, ints, floats, etc.  This should be plenty of room for any of those types.
@@ -173,7 +191,7 @@ parameters.
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \
-   /* Test the type operator */                                                                                                    \
+    /* Test the type operator */                                                                                                   \
     bool TEST_RESULT_resultOp = false;                                                                                             \
     compareMacro(TEST_RESULT_resultOp, TEST_RESULT_result, typeOp, TEST_RESULT_resultExpected);                                    \
                                                                                                                                    \
@@ -183,10 +201,20 @@ parameters.
         /* Format the actual result */                                                                                             \
         formatMacro(type, format, TEST_RESULT_result);                                                                             \
                                                                                                                                    \
+        /* Throw diff error */                                                                                                     \
+        if (strcmp(#type, "char *") == 0 && strstr(TEST_RESULT_resultStr, "\n") != NULL)                                           \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF:\n%s\n\n",                                           \
+                #statement, TEST_RESULT_resultStr, hrnDiff(TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr));                 \
+        }                                                                                                                          \
         /* Throw error */                                                                                                          \
-        THROW_FMT(                                                                                                                 \
-            AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s\n\n",                                           \
-            #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                     \
+        else                                                                                                                       \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s\n\n",                                       \
+                #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                 \
+        }                                                                                                                          \
     }                                                                                                                              \
 }
 
@@ -300,6 +328,65 @@ Macros to ease the use of common data types
     TEST_RESULT_UINT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
 /***********************************************************************************************************************************
+Test system calls
+***********************************************************************************************************************************/
+#define TEST_SYSTEM(command)                                                                                                       \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        int TEST_SYSTEM_FMT_result = system(hrnReplaceKey(command));                                                               \
+                                                                                                                                   \
+        if (TEST_SYSTEM_FMT_result != 0)                                                                                           \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", hrnReplaceKey(command),                \
+                TEST_SYSTEM_FMT_result, errorStackTrace());                                                                        \
+        }                                                                                                                          \
+    } while(0)
+
+#define TEST_SYSTEM_FMT(...)                                                                                                       \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        char TEST_SYSTEM_FMT_buffer[8192];                                                                                         \
+                                                                                                                                   \
+        if (snprintf(TEST_SYSTEM_FMT_buffer, sizeof(TEST_SYSTEM_FMT_buffer), __VA_ARGS__) >= (int)sizeof(TEST_SYSTEM_FMT_buffer))  \
+            THROW_FMT(AssertError, "command needs more than the %zu characters available", sizeof(TEST_SYSTEM_FMT_buffer));        \
+                                                                                                                                   \
+        TEST_SYSTEM(TEST_SYSTEM_FMT_buffer);                                                                                       \
+    } while(0)
+
+/***********************************************************************************************************************************
+Test log result
+***********************************************************************************************************************************/
+#define TEST_RESULT_LOG(expected)                                                                                                  \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            harnessLogResult(expected);                                                                                            \
+        }                                                                                                                          \
+        CATCH_ANY()                                                                                                                \
+        {                                                                                                                          \
+            THROW_FMT(AssertError, "LOG RESULT FAILED WITH:\n%s", errorMessage());                                                 \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
+    } while(0)
+
+#define TEST_RESULT_LOG_FMT(...)                                                                                                   \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        char TEST_RESULT_LOG_FMT_buffer[65536];                                                                                    \
+                                                                                                                                   \
+        if (snprintf(TEST_RESULT_LOG_FMT_buffer, sizeof(TEST_RESULT_LOG_FMT_buffer), __VA_ARGS__) >=                               \
+            (int)sizeof(TEST_RESULT_LOG_FMT_buffer))                                                                               \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "expected result needs more than the %zu characters available", sizeof(TEST_RESULT_LOG_FMT_buffer));  \
+        }                                                                                                                          \
+                                                                                                                                   \
+        TEST_RESULT_LOG(TEST_RESULT_LOG_FMT_buffer);                                                                               \
+    } while(0)
+
+/***********************************************************************************************************************************
 Logging macros
 ***********************************************************************************************************************************/
 #define TEST_LOG(message)                                                                                                          \
@@ -320,10 +407,11 @@ Logging macros
         fflush(stdout);                                                                                                            \
     } while(0)
 
-#endif
 
 /***********************************************************************************************************************************
 Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not supported.
 ***********************************************************************************************************************************/
 #define TEST_64BIT()                                                                                                               \
     (sizeof(size_t) == 8)
+
+#endif

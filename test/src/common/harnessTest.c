@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 C Test Harness
 ***********************************************************************************************************************************/
+#include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -302,4 +303,161 @@ testComplete(void)
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Replace a substring with another string
+***********************************************************************************************************************************/
+static void
+hrnReplaceStr(char *string, size_t bufferSize, const char *substring, const char *replace)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, string);
+        FUNCTION_HARNESS_PARAM(SIZE, bufferSize);
+        FUNCTION_HARNESS_PARAM(STRINGZ, substring);
+        FUNCTION_HARNESS_PARAM(STRINGZ, replace);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(string != NULL);
+    ASSERT(substring != NULL);
+
+    // Find substring
+    char *begin = strstr(string, substring);
+
+    while (begin != NULL)
+    {
+        // Find end of substring and calculate replace size difference
+        char *end = begin + strlen(substring);
+        int diff = (int)strlen(replace) - (int)strlen(substring);
+
+        // Make sure we won't overflow the buffer
+        CHECK((size_t)((int)strlen(string) + diff) < bufferSize - 1);
+
+        // Move data from end of string enough to make room for the replacement and copy replacement
+        memmove(end + diff, end, strlen(end) + 1);
+        memcpy(begin, replace, strlen(replace));
+
+        // Find next substring
+        begin = strstr(begin + strlen(replace), substring);
+    }
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/**********************************************************************************************************************************/
+char harnessReplaceKeyBuffer[256 * 1024];
+
+const char *
+hrnReplaceKey(const char *string)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, string);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(string != NULL);
+
+    // Make sure we won't overflow the buffer
+    ASSERT(strlen(string) < sizeof(harnessReplaceKeyBuffer) - 1);
+
+    strcpy(harnessReplaceKeyBuffer, string);
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[path]}", testPath());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[user]}", testUser());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[group]}", testGroup());
+
+    FUNCTION_HARNESS_RESULT(STRINGZ, harnessReplaceKeyBuffer);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
+{
+    int result = open(fileName, O_RDONLY, 0660);
+
+    if (result == -1)
+    {
+        fprintf(stderr, "ERROR: unable to open '%s' for read\n", fileName);
+        fflush(stderr);
+        exit(255);
+    }
+
+    ssize_t bufferRead = read(result, buffer, bufferSize);
+
+    if (bufferRead == -1)
+    {
+        fprintf(stderr, "ERROR: unable to read '%s'\n", fileName);
+        fflush(stderr);
+        exit(255);
+    }
+
+    buffer[bufferRead] = 0;
+
+    close(result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize)
+{
+    int result = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0660);
+
+    if (result == -1)
+    {
+        fprintf(stderr, "ERROR: unable to open '%s' for write\n", fileName);
+        fflush(stderr);
+        exit(255);
+    }
+
+    if (write(result, buffer, bufferSize) != (int)bufferSize)
+    {
+        fprintf(stderr, "ERROR: unable to write '%s'\n", fileName);
+        fflush(stderr);
+        exit(255);
+    }
+
+    close(result);
+}
+
+/**********************************************************************************************************************************/
+char harnessDiffBuffer[256 * 1024];
+
+const char *
+hrnDiff(const char *actual, const char *expected)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, actual);
+        FUNCTION_HARNESS_PARAM(STRINGZ, expected);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(actual != NULL);
+
+    // Write actual file
+    char actualFile[1024];
+    snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", testExpectPath());
+    hrnFileWrite(actualFile, (unsigned char *)actual, strlen(actual));
+
+    // Write expected file
+    char expectedFile[1024];
+    snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", testExpectPath());
+    hrnFileWrite(expectedFile, (unsigned char *)expected, strlen(expected));
+
+    // Perform diff
+    char command[2048];
+    snprintf(command, sizeof(command), "diff -u %s %s > %s/diff.result", actualFile, expectedFile, testExpectPath());
+
+    if (system(command) == 2)
+    {
+        fprintf(stderr, "ERROR: unable to execute '%s'\n", command);
+        fflush(stderr);
+        exit(255);
+    }
+
+    // Read result
+    char resultFile[1024];
+    snprintf(resultFile, sizeof(resultFile), "%s/diff.result", testExpectPath());
+    hrnFileRead(resultFile, (unsigned char *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
+
+    // Remove last linefeed from diff output
+    harnessDiffBuffer[strlen(harnessDiffBuffer) - 1] = 0;
+
+    FUNCTION_HARNESS_RESULT(STRINGZ, harnessDiffBuffer);
 }
