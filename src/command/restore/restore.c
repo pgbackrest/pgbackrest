@@ -1384,7 +1384,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
 }
 
 /***********************************************************************************************************************************
-Restore a backup
+Return new restore jobs as requested
 ***********************************************************************************************************************************/
 typedef struct RestoreJobData
 {
@@ -1394,15 +1394,34 @@ typedef struct RestoreJobData
     const String *cipherSubPass;                                    // Passphrase used to decrypt files in the backup
 } RestoreJobData;
 
+// Helper to caculate the next queue to scan based on the client index
+static int
+restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+        FUNCTION_TEST_PARAM(INT, queueIdx);
+        FUNCTION_TEST_PARAM(UINT, queueTotal);
+    FUNCTION_TEST_END();
+
+    // Move (forward or back) to the next queue
+    queueIdx += clientIdx % 2 ? -1 : 1;
+
+    // Deal with wrapping on either end
+    if (queueIdx < 0)
+        FUNCTION_TEST_RETURN((int)queueTotal - 1);
+    else if (queueIdx == (int)queueTotal)
+        FUNCTION_TEST_RETURN(0);
+
+    FUNCTION_TEST_RETURN(queueIdx);
+}
+
 static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(UINT, clientIdx);
     FUNCTION_TEST_END();
-
-    // !!! PUT SPECIAL LOGIC HERE
-    (void)clientIdx;
 
     ProtocolParallelJob *result = NULL;
 
@@ -1411,12 +1430,13 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
         // Get a new job if there are any left
         RestoreJobData *jobData = data;
 
-        // unsigned int posBegin = clientIdx % lstSize(jobData->queueList);
-        // unsigned int posCurrent = posBegin;
+        // Determine where to begin scanning the queue (we'll stop when we get back here)
+        int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
+        int queueEnd = queueIdx;
 
-        for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
+        do
         {
-            List *queue = *(List **)lstGet(jobData->queueList, queueIdx);
+            List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx);
 
             if (lstSize(queue) > 0)
             {
@@ -1450,13 +1470,19 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 // Break out of the loop since we found a job
                 break;
             }
+
+            queueIdx = restoreJobQueueNext(clientIdx, queueIdx, lstSize(jobData->queueList));
         }
+        while (queueIdx != queueEnd);
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
 }
 
+/***********************************************************************************************************************************
+Restore a backup
+***********************************************************************************************************************************/
 void
 cmdRestore(void)
 {
