@@ -11,7 +11,6 @@ Restore Command
 #include "command/restore/restore.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/io/bufferWrite.h" // !!! REMOVE WITH MANIFEST TEST CODE
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/user.h"
@@ -1484,32 +1483,6 @@ cmdRestore(void)
 
         // If there are no files in the manifest then something has gone horribly wrong
         CHECK(manifestFileTotal(jobData.manifest) > 0);
-
-        // !!! THIS IS TEMPORARY TO DOUBLE-CHECK THE C MANIFEST CODE.  LOAD THE ORIGINAL MANIFEST AND COMPARE IT TO WHAT WE WOULD
-        // SAVE TO DISK IF WE SAVED NOW.  THE LATER SAVE MAY HAVE MADE MODIFICATIONS BASED ON USER INPUT SO WE CAN'T USE THAT.
-        // -------------------------------------------------------------------------------------------------------------------------
-        if (cipherType(cfgOptionStr(cfgOptRepoCipherType)) == cipherTypeNone)                       // {uncovered_branch - !!! TEST}
-        {
-            Buffer *manifestTestPerlBuffer = storageGetNP(
-                storageNewReadNP(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupSet))));
-
-            Buffer *manifestTestCBuffer = bufNew(0);
-            manifestSave(jobData.manifest, ioBufferWriteNew(manifestTestCBuffer));
-
-            if (!bufEq(manifestTestPerlBuffer, manifestTestCBuffer))                                // {uncovered_branch - !!! TEST}
-            {
-                // Dump manifests to disk so we can check them with diff
-                storagePutNP(                                                                       // {uncovered - !!! TEST}
-                    storageNewWriteNP(storagePgWrite(), STRDEF(BACKUP_MANIFEST_FILE ".expected")), manifestTestPerlBuffer);
-                storagePutNP(                                                                       // {uncovered - !!! TEST}
-                    storageNewWriteNP(storagePgWrite(), STRDEF(BACKUP_MANIFEST_FILE ".actual")), manifestTestCBuffer);
-
-                THROW_FMT(                                                                          // {uncovered - !!! TEST}
-                    AssertError, "C and Perl manifests are not equal, files saved to '%s'",
-                    strPtr(storagePathNP(storagePgWrite(), NULL)));
-            }
-        }
 
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupSet);
