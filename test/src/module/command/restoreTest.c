@@ -942,10 +942,28 @@ testRun(void)
             "P00 DETAIL: check '{[path]}/conf' exists\n"
             "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when linked file already exists without delta");
+
+        storageRemoveNP(storagePgWrite(), STRDEF("pg_hba.conf"));
+        storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF("../conf/pg_hba.conf")), NULL);
+
+        TEST_ERROR_FMT(
+            restoreClean(manifest), FileExistsError,
+            "unable to restore file '%s/conf/pg_hba.conf' because it already exists\n"
+            "HINT: try using --delta if this is what you intended.",
+            testPath());
+
+        TEST_RESULT_LOG(
+            "P00 DETAIL: check '{[path]}/pg' exists\n"
+            "P00 DETAIL: check '{[path]}/conf' exists");
+
+        storageRemoveP(storagePgWrite(), STRDEF("../conf/pg_hba.conf"), .errorOnMissing = true);
 
         // Succeed when all directories empty and ignore recovery.conf
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
+
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");

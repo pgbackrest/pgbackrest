@@ -736,16 +736,13 @@ restoreClean(Manifest *manifest)
             }
 
             // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
-            // Don't check the same path twice.  There can be multiple links to files in the same path, but syncing it more than
-            // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
-            // performance.
-            if (strLstExists(pathChecked, cleanData->targetPath))
-                continue;
-            else
-                strLstAdd(pathChecked, cleanData->targetPath);
+            // Don't log check for the same path twice.  There can be multiple links to files in the same path, but logging it more
+            // than once makes the logs noisy and looks like a bug.
+            if (!strLstExists(pathChecked, cleanData->targetPath))
+                LOG_DETAIL("check '%s' exists", strPtr(cleanData->targetPath));
 
-            LOG_DETAIL("check '%s' exists", strPtr(cleanData->targetPath));
             StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true, .followLink = true);
+            strLstAdd(pathChecked, cleanData->targetPath);
 
             if (info.exists)
             {
@@ -774,7 +771,16 @@ restoreClean(Manifest *manifest)
                     }
                     else
                     {
-                        // !!! JUST CHECK TO SEE IF THE FILE IS PRESENT
+                        const String *file = strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(cleanData->target->file));
+
+                        if (storageExistsNP(storageLocal(), file))
+                        {
+                            THROW_FMT(
+                                FileExistsError,
+                                "unable to restore file '%s' because it already exists\n"
+                                "HINT: try using --delta if this is what you intended.",
+                                strPtr(file));
+                        }
                     }
 
                     // Now that we know there are no files in this target enable delta to process the next pass
@@ -1186,10 +1192,17 @@ restoreRecoveryConf(unsigned int pgVersion)
             // Write restore_command
             if (!strLstExists(recoveryOptionKey, STRDEF("restore_command")))
             {
-                // Option replacements
+                // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
+                // reasonable defaults so there is no danger of a error -- they just might not be optimal.  In any case, it seems
+                // better than for example, passing --process-max=32 to archive-get because it was specified for restore.
                 KeyValue *optionReplace = kvNew();
-                // !!! Add replacements process-max, log-level-console, log-level-file, log-level-stderr, log-path, log-subprocess
-                // log-timestamp
+
+                kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
+                kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
+                kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);
+                kvPut(optionReplace, VARSTR(CFGOPT_LOG_SUBPROCESS_STR), NULL);
+                kvPut(optionReplace, VARSTR(CFGOPT_LOG_TIMESTAMP_STR), NULL);
+                kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_MAX_STR), NULL);
 
                 strCatFmt(
                     result, "restore_command = '%s %s %%f \"%%p\"'\n", strPtr(cfgExe()),
