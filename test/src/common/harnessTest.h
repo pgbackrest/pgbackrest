@@ -69,7 +69,7 @@ Test that an expected error is actually thrown and error when it isn't
     bool TEST_ERROR_catch = false;                                                                                                 \
                                                                                                                                    \
     printf(                                                                                                                        \
-        "    %03u.%03us l%04d - expect %s: %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                   \
+        "    %03u.%03us l%04d -     expect %s: %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),               \
         (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, errorTypeName(&errorTypeExpected),                \
         errorMessageExpected);                                                                                                     \
     fflush(stdout);                                                                                                                \
@@ -153,7 +153,7 @@ Output information about the test
 ***********************************************************************************************************************************/
 #define TEST_RESULT_INFO(...)                                                                                                      \
     printf(                                                                                                                        \
-        "    %03u.%03us l%04d - ", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                                  \
+        "    %03u.%03us l%04d -     ", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                              \
         (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__);                                                  \
     printf(__VA_ARGS__);                                                                                                           \
     printf("\n");                                                                                                                  \
@@ -407,6 +407,17 @@ Logging macros
         fflush(stdout);                                                                                                            \
     } while(0)
 
+/***********************************************************************************************************************************
+Test title macro
+***********************************************************************************************************************************/
+#define TEST_TITLE(message)                                                                                                        \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        printf(                                                                                                                    \
+            "    %03u.%03us l%04d - %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                          \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, message);                                     \
+        fflush(stdout);                                                                                                            \
+    } while(0)
 
 /***********************************************************************************************************************************
 Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not supported.
