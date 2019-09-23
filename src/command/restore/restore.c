@@ -86,6 +86,7 @@ restorePathValidate(void)
                     " exist in the destination directories the restore will be aborted.",
                strPtr(cfgOptionStr(cfgOptPgPath)));
 
+            // Disable delta and force so restore will fail if the directories are not empty
             cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
             cfgOptionSet(cfgOptForce, cfgSourceDefault, VARBOOL(false));
         }
@@ -499,6 +500,7 @@ typedef struct RestoreCleanCallbackData
     bool preserveRecoveryConf;                                      // Should the recovery.conf file be preserved?
 } RestoreCleanCallbackData;
 
+// Helper to update ownership on a file/link/path
 static void
 restoreCleanOwnership(
     const String *pgPath, const String *manifestUserName, const String *manifestGroupName, uid_t actualUserId, gid_t actualGroupId,
@@ -552,6 +554,7 @@ restoreCleanOwnership(
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// Helper to update mode on a file/path
 static void
 restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *info)
 {
@@ -573,6 +576,7 @@ restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *i
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// storageInfoList() callback that cleans the paths
 static void
 restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 {
@@ -811,8 +815,8 @@ restoreClean(Manifest *manifest)
             }
         }
 
-        // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links have
-        // already been created above.
+        // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links will be
+        // created below.
         if (manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP), NULL) != NULL &&
             manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
         {
@@ -821,6 +825,7 @@ restoreClean(Manifest *manifest)
         }
 
         // Clean target directories
+        // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
@@ -1053,8 +1058,12 @@ restoreSelectiveExpression(Manifest *manifest)
                 }
             }
 
+            // If all user databases have been selected then nothing to do
             if (expression == NULL)
+            {
                 LOG_INFO("nothing to filter - all user databases have been selected");
+            }
+            // Else return the expression
             else
             {
                 memContextSwitch(MEM_CONTEXT_OLD());
