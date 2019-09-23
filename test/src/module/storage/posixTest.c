@@ -287,7 +287,7 @@ testRun(void)
             storageInfoListP(storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData),
             "directory with one dot file sorted");
         TEST_RESULT_STR_Z(
-            callbackData.content, strPtr(strNewFmt(". {path, m=0766, u=%s, g=%s}", testUser(), testGroup())),
+            callbackData.content, strPtr(strNewFmt(". {path, m=0766, u=%s, g=%s}\n", testUser(), testGroup())),
             "    check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -319,7 +319,7 @@ testRun(void)
             ".include {path, m=0755, u=77777, g=77777}\n"
             "file {file, s=8, m=0660}\n"
             "link {link, d=../file}\n"
-            "pipe {special}",
+            "pipe {special}\n",
             "    check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -340,7 +340,7 @@ testRun(void)
             "path {path, m=0700}\n"
             "link {link, d=../file}\n"
             "file {file, s=8, m=0660}\n"
-            ". {path}",
+            ". {path}\n",
             "    check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -353,7 +353,7 @@ testRun(void)
             "filter");
         TEST_RESULT_STR_Z(
             callbackData.content,
-            "path {path, m=0700}",
+            "path {path, m=0700}\n",
             "    check content");
     }
 

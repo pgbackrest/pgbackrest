@@ -14,10 +14,6 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 {
     HarnessStorageInfoListCallbackData *data = callbackData;
 
-    // Add LF for after the first item
-    if (strSize(data->content) != 0)
-        strCat(data->content, "\n");
-
     strCatFmt(data->content, "%s {", strPtr(info->name));
 
     switch (info->type)
@@ -93,5 +89,5 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
         }
     }
 
-    strCat(data->content, "}");
+    strCat(data->content, "}\n");
 }
