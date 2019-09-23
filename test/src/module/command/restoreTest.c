@@ -1209,6 +1209,20 @@ testRun(void)
             "recovery_target_inclusive = 'false'\n",
             "recovery target time inclusive");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no recovery_target_inclusive for target=name");
+
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=name");
+        strLstAddZ(argList, "--target=NAME");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94),
+            "restore_command = 'my_restore_command'\n"
+            "recovery_target_name = 'NAME'\n",
+            "check recovery options");
+
         // Recovery target action = shutdown
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argBaseList);
@@ -1813,7 +1827,7 @@ testRun(void)
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01   INFO: restore file {[path]}/pg/base/1/PG_VERSION (4B, 99%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01   INFO: restore file /home/vagrant/test/test-0/pg/global/999 (0B, 100%)\n"
+            "P01   INFO: restore file {[path]}/pg/global/999 (0B, 100%)\n"
             "P00 DETAIL: sync path '{[path]}/config'\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/base'\n"

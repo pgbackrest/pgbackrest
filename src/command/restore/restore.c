@@ -1210,7 +1210,7 @@ restoreRecoveryConf(unsigned int pgVersion)
                     result, "recovery_target_%s = '%s'\n", strPtr(cfgOptionStr(cfgOptType)), strPtr(cfgOptionStr(cfgOptTarget)));
 
                 // Write recovery_target_inclusive
-                if (cfgOptionBool(cfgOptTargetExclusive))
+                if (cfgOptionTest(cfgOptTargetExclusive) && cfgOptionBool(cfgOptTargetExclusive))
                     strCatFmt(result, "recovery_target_inclusive = 'false'\n");
             }
 
