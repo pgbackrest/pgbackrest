@@ -6,12 +6,7 @@
     <section id="introduction">
         <title>Introduction</title>
 
-        <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.  Coding standards to follow are defined in <link url="https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md">CODING.md</link>. For testing, it is recommended that Vagrant and Docker be used; instructions are provided in the <file>README.md</file> file of the <backrest/> <link url="https://github.com/pgbackrest/pgbackrest/tree/master/test">test</link> directory. A list of all possible test combinations can be viewed by running:</p>
-        <code-block>
-            /backrest/test/test.pl --dry-run
-        </code-block>
-
-        <p>If using a RHEL system, the CPAN XML parser is required for running <code>test.pl</code> and <code>doc.pl</code>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="https://github.com/cmwshang/pgbackrest/tree/master/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docus need only be run for HTML output.</p>
+        <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.  Coding standards to follow are defined in <link url="https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md">CODING.md</link>. At a minimum, unit tests must be written and run and the documentation run before submitting a Pull Request; see the <link section="/testing">Testing</link> section below for details.</p>
     </section>
 
     <section id="option">
@@ -84,9 +79,9 @@
         <section id="reference-file">
             <title>reference.xml</title>
 
-            <p>All options must be documented or the system will error during the build.  To add an option, find the command section identified by <code>command id="COMMAND"</code> section where COMMAND is the name of the command (e.g. <code>expire</code>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>operation-general title="General Options"</code> section.</p>
+            <p>All options must be documented or the system will error during the build.  To add an option, find the command section identified by <code>command id="COMMAND"</code> section where COMMAND is the name of the command (e.g. <cmd>expire</cmd>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>operation-general title="General Options"</code> section.</p>
 
-            <p>To add an option, add the following to the <code>&lt;option-list&gt;</code> section; if it does not exist, then wrap the following in <code>&lt;option-list&gt;</code> <code>&lt;/option-list&gt;</code>. Note that his example uses the boolean option <code>force</code> of the <code>restore</code> command. Simply replace that with your new option and the appropriate <code>summary</code>, <code>text</code> and <code>example</code>.</p>
+            <p>To add an option, add the following to the <code>&lt;option-list&gt;</code> section; if it does not exist, then wrap the following in <code>&lt;option-list&gt;</code> <code>&lt;/option-list&gt;</code>. Note that his example uses the boolean option <code>force</code> of the <cmd>restore</cmd> command. Simply replace that with your new option and the appropriate <code>summary</code>, <code>text</code> and <code>example</code>.</p>
 
             <code-block>
 &lt;option id="force" name="Force"&gt;
@@ -98,5 +93,74 @@
 &lt;/option&gt;
             </code-block>
         </section>
+    </section>
+
+    <section id="testing">
+        <title>Testing</title>
+
+        <p>For testing, it is recommended that Vagrant and Docker be used; instructions are provided in the <file>README.md</file> file of the <backrest/> <link url="https://github.com/pgbackrest/pgbackrest/tree/master/test">test</link> directory. A list of all possible test combinations can be viewed by running:</p>
+        <code-block>
+            /backrest/test/test.pl --dry-run
+        </code-block>
+
+        <p>If using a RHEL system, the CPAN XML parser is required for running <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="https://github.com/cmwshang/pgbackrest/tree/master/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docus need only be run for HTML output.</p>
+
+        <p>While some files are automatically generated during <code>make</code>, others are generated by running the test harness as follows:</p>
+
+        <code-block>
+            /backrest/test/test.pl --gen-only
+        </code-block>
+
+        <p>Prior to any submission, the html version of the documentation should also be run.</p>
+
+        <code-block>
+            /backrest/doc/doc.pl --out=html
+        </code-block>
+
+        <admonition type="note"><code>ERROR: [028]</code> regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.</admonition>
+
+        <section id="unit-test">
+            <title>Writing Unit Tests</title>
+
+            <p>The goal of unit testing is to have 100 percent coverage. Two files will usually be involved in this process:</p>
+
+            <list>
+                <list-item><b>define.yaml</b> - defines the number of tests to be run for each module and test file. There is a comment at the top of the file that provides more information about this file.</list-item>
+                <list-item><b>src/module/somefileTest.c</b> - where <quote>somefile</quote> is the path and name of the test file where the unit tests are located for the code being updated (e.g. <file>src/module/command/expireTest.c</file>).</list-item>
+            </list>
+
+            <section id="define-yaml">
+                <title>define.yaml</title>
+
+                <p>Each module is separated by a line of asterisks (*) and each test within is separated by a line of dashes (-). In the example below, the module is <code>command</code> and the unit tests is <code>check</code>. The number of calls to <code>testBegin()</code> in a unit test file will dictate the number following <code>total:</code>, in this case 2. Under <code>coverage:</code>, the list of files that will be tested must be listed followed by the coverage level, which should always be <code>full</code>.</p>
+
+                <code-block>
+  # ********************************************************************************************************************************
+  - name: command
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: check
+        total: 2
+
+        coverage:
+          command/check/common: full
+          command/check/check: full
+                </code-block>
+
+            </section>
+
+            <section id="test-file">
+                <title>somefileTest.c</title>
+                <p>Assuming that a test file already exists, new unit tests will either go in a new <code>testBegin()</code> section or be added to an existing section.</p>
+
+                <code-block>
+// *****************************************************************************************************************************
+if (testBegin("expireBackup()"))
+                </code-block>
+
+            </section>
+        </section>
+
     </section>
 </doc>
