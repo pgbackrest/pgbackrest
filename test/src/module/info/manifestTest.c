@@ -340,7 +340,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupLoadFile() and infoBackupSaveFile()"))
+    if (testBegin("manifestLoadFile()"))
     {
         Manifest *manifest = NULL;
 
