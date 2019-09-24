@@ -334,6 +334,7 @@ manifestTargetAdd(Manifest *this, const ManifestTarget *target)
     ASSERT(this != NULL);
     ASSERT(target != NULL);
     ASSERT(target->path != NULL);
+    ASSERT(target->name != NULL);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
     {
@@ -1369,6 +1370,8 @@ manifestLinkCheck(const Manifest *this)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
     FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
 
     for (unsigned int linkIdx1 = 0; linkIdx1 < manifestTargetTotal(this); linkIdx1++)
     {
