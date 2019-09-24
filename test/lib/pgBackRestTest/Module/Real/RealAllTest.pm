@@ -950,7 +950,7 @@ sub run
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strNameMessage);
         }
 
-        # Restore (restore type = default, timeline = 3)
+        # Restore (restore type = default, timeline = 4)
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_84)
         {
