@@ -284,7 +284,7 @@ restoreManifestMap(Manifest *manifest)
                 }
             }
 
-            // Issue a warning message when remapping tablespaces in postgre < 9.2
+            // Issue a warning message when remapping tablespaces in PostgreSQL < 9.2
             if (manifestData(manifest)->pgVersion <= PG_VERSION_92)
                 LOG_WARN("update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= " PG_VERSION_92_STR);
         }
@@ -367,6 +367,7 @@ restoreManifestMap(Manifest *manifest)
 /***********************************************************************************************************************************
 Check ownership of items in the manifest
 ***********************************************************************************************************************************/
+// Helper to get list of owners from a file/link/path list
 #define RESTORE_MANIFEST_OWNER_GET(type)                                                                                           \
     for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
     {                                                                                                                              \
@@ -389,6 +390,7 @@ Check ownership of items in the manifest
         }                                                                                                                          \
     }
 
+// Helper to update an owner in a file/link/path list
 #define RESTORE_MANIFEST_OWNER_NULL_UPDATE(type, user, group)                                                                      \
     for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
     {                                                                                                                              \
@@ -401,6 +403,7 @@ Check ownership of items in the manifest
             item->group = group;                                                                                                   \
     }
 
+// Helper to warn when an owner is missing and must be remapped
 #define RESTORE_MANIFEST_OWNER_WARN(type)                                                                                          \
     do                                                                                                                             \
     {                                                                                                                              \
@@ -437,7 +440,7 @@ restoreManifestOwner(Manifest *manifest)
         RESTORE_MANIFEST_OWNER_GET(Link);
         RESTORE_MANIFEST_OWNER_GET(Path);
 
-        // Build a list of users and groups in the manifest
+        // Update users and groups in the manifest (this can only be done as root)
         // -------------------------------------------------------------------------------------------------------------------------
         if (userRoot())
         {
@@ -816,7 +819,7 @@ restoreClean(Manifest *manifest)
         }
 
         // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links will be
-        // created below.
+        // created after paths are cleaned.
         if (manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP), NULL) != NULL &&
             manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
         {
@@ -854,7 +857,10 @@ restoreClean(Manifest *manifest)
 
                 // There is no path information for a file link so we'll need to use the data directory
                 if (cleanData->target->file != NULL)
+                {
                     path = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+                }
+                // Else grab the info for the path that matches the link name
                 else
                     path = manifestPathFind(manifest, cleanData->target->name);
 
@@ -871,13 +877,14 @@ restoreClean(Manifest *manifest)
 
             // Skip the pg_tblspc path because it only maps to the manifest.  We should remove this in a future release but not much
             // can be done about it for now.
-            if (strEqZ(path->name, MANIFEST_TARGET_PGTBLSPC))
+            if (strEq(path->name, MANIFEST_TARGET_PGTBLSPC_STR))
                 continue;
 
-            // If this path has been mapped as a link then create a link
+            // If this path has been mapped as a link then create a link.  The path has already been created as part of target
+            // creation (or it might have already existed).
             const ManifestLink *link = manifestLinkFindDefault(
                 manifest,
-                strBeginsWithZ(path->name, MANIFEST_TARGET_PGTBLSPC) ?
+                strBeginsWith(path->name, MANIFEST_TARGET_PGTBLSPC_STR) ?
                     strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(path->name)) : path->name,
                 NULL);
 
@@ -914,7 +921,7 @@ restoreClean(Manifest *manifest)
             }
         }
 
-        // Create file links
+        // Create file links.  These don't get created during path creation because they do not have a matching path entry.
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
         {
@@ -972,7 +979,7 @@ restoreSelectiveExpression(Manifest *manifest)
                     strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strPtr(tablespaceId)));
             }
 
-            // Generate a list of databases in base and or in a tablespace
+            // Generate a list of databases in base or in a tablespace
             StringList *dbList = strLstNew();
 
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
@@ -1014,7 +1021,7 @@ restoreSelectiveExpression(Manifest *manifest)
                     includeDb = varStrForce(VARUINT(db->id));
                 }
 
-                // Error if the db is a built-in db
+                // Error if the db is a system db
                 if (cvtZToUInt64(strPtr(includeDb)) < PG_USER_OBJECT_MIN_ID)
                     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
 
@@ -1030,10 +1037,10 @@ restoreSelectiveExpression(Manifest *manifest)
             {
                 const String *db = strLstGet(dbList, dbIdx);
 
-                // Only user created databases can be zeroed, never built-in databases
+                // Only user created databases can be zeroed, never system databases
                 if (cvtZToUInt64(strPtr(db)) >= PG_USER_OBJECT_MIN_ID)
                 {
-                    // Create expression string or add |
+                    // Create expression string or append |
                     if (expression == NULL)
                         expression = strNew("");
                     else
@@ -1080,7 +1087,7 @@ restoreSelectiveExpression(Manifest *manifest)
 /***********************************************************************************************************************************
 Generate a list of queues that determine the order of file processing
 ***********************************************************************************************************************************/
-// Comparator to order ManifestFile objects by size
+// Comparator to order ManifestFile objects by size then name
 static int
 restoreProcessQueueComparator(const void *item1, const void *item2)
 {
@@ -1222,7 +1229,7 @@ restoreRecoveryConf(unsigned int pgVersion)
             {
                 // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
                 // reasonable defaults so there is no danger of a error -- they just might not be optimal.  In any case, it seems
-                // better than for example, passing --process-max=32 to archive-get because it was specified for restore.
+                // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
                 KeyValue *optionReplace = kvNew();
 
                 kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
@@ -1237,12 +1244,12 @@ restoreRecoveryConf(unsigned int pgVersion)
                     strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, optionReplace, true), " ")));
             }
 
-            // If type is immediate
+            // If recovery type is immediate
             if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_IMMEDIATE_STR))
             {
                 strCat(result, RECOVERY_TARGET " = '" RECOVERY_TYPE_IMMEDIATE "'\n");
             }
-            // Else type is not default so write target options
+            // Else recovery type is not default so write target options
             else if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_DEFAULT_STR))
             {
                 // Write the recovery target
@@ -1261,12 +1268,15 @@ restoreRecoveryConf(unsigned int pgVersion)
 
                 if (!strEqZ(targetAction, cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptTargetAction)))
                 {
+                    // Write recovery_target on supported PostgreSQL versions
                     if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
                     {
                         strCatFmt(result, RECOVERY_TARGET_ACTION " = '%s'\n", strPtr(targetAction));
                     }
+                    // Write pause_at_recovery_target on supported PostgreSQL versions
                     else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
                     {
+                        // Shutdown action is not supported with pause_at_recovery_target setting
                         if (strEq(targetAction, RECOVERY_TARGET_ACTION_SHUTDOWN_STR))
                         {
                             THROW_FMT(
@@ -1277,6 +1287,7 @@ restoreRecoveryConf(unsigned int pgVersion)
 
                         strCat(result, PAUSE_AT_RECOVERY_TARGET " = 'false'\n");
                     }
+                    // Else error on unsupported version
                     else
                     {
                         THROW_FMT(
@@ -1445,6 +1456,7 @@ restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTota
     FUNCTION_TEST_RETURN(queueIdx);
 }
 
+// Callback to fetch restore jobs for the parallel executor
 static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -1471,23 +1483,25 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
             {
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
+                // Create restore job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
 
+                protocolCommandParamAdd(command, VARSTR(file->name));
+                protocolCommandParamAdd(
+                    command, file->reference != NULL ?
+                        VARSTR(file->reference) : VARSTR(manifestData(jobData->manifest)->backupLabel));
+                protocolCommandParamAdd(command, VARBOOL(manifestData(jobData->manifest)->backupOptionCompress));
                 protocolCommandParamAdd(command, VARSTR(restoreFilePgPath(jobData->manifest, file->name)));
-                protocolCommandParamAdd(command, VARUINT64(file->size));
-                protocolCommandParamAdd(command, VARUINT64((uint64_t)file->timestamp));
                 protocolCommandParamAdd(command, VARSTRZ(file->checksumSha1));
                 protocolCommandParamAdd(command, VARBOOL(restoreFileZeroed(file->name, jobData->zeroExp)));
-                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptForce)));
-                protocolCommandParamAdd(command, VARSTR(file->name));
-                protocolCommandParamAdd(command, VARSTR(file->reference));
+                protocolCommandParamAdd(command, VARUINT64(file->size));
+                protocolCommandParamAdd(command, VARUINT64((uint64_t)file->timestamp));
                 protocolCommandParamAdd(command, VARSTR(strNewFmt("%04o", file->mode)));
                 protocolCommandParamAdd(command, VARSTR(file->user));
                 protocolCommandParamAdd(command, VARSTR(file->group));
                 protocolCommandParamAdd(command, VARUINT64((uint64_t)manifestData(jobData->manifest)->backupTimestampCopyStart));
                 protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)));
-                protocolCommandParamAdd(command, VARSTR(manifestData(jobData->manifest)->backupLabel));
-                protocolCommandParamAdd(command, VARBOOL(manifestData(jobData->manifest)->backupOptionCompress));
+                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptForce)));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
 
                 // Remove job from the queue

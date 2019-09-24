@@ -312,21 +312,21 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(repoFile1));
+        varLstAdd(paramList, varNewStr(repoFileReferenceFull));
+        varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewStrZ("protocol"));
-        varLstAdd(paramList, varNewUInt64(9));
-        varLstAdd(paramList, varNewUInt64(1557432100));
         varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
         varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewStr(repoFile1));
-        varLstAdd(paramList, NULL);
+        varLstAdd(paramList, varNewUInt64(9));
+        varLstAdd(paramList, varNewUInt64(1557432100));
         varLstAdd(paramList, varNewStrZ("0677"));
         varLstAdd(paramList, varNewStrZ(testUser()));
         varLstAdd(paramList, varNewStrZ(testGroup()));
         varLstAdd(paramList, varNewUInt64(1557432200));
         varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewStr(repoFileReferenceFull));
         varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, NULL);
 
         TEST_RESULT_BOOL(restoreProtocol(PROTOCOL_COMMAND_RESTORE_FILE_STR, paramList, server), true, "protocol restore file");
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "    check result");
@@ -343,20 +343,19 @@ testRun(void)
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storagePg(), strNew("protocol"))))), "atestfile", "    check contents");
 
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStrZ("protocol"));
-        varLstAdd(paramList, varNewUInt64(9));
-        varLstAdd(paramList, varNewUInt64(1557432100));
-        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewStr(repoFile1));
         varLstAdd(paramList, varNewStr(repoFileReferenceFull));
+        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewStrZ("protocol"));
+        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
+        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewUInt64(9));
+        varLstAdd(paramList, varNewUInt64(1557432100));
         varLstAdd(paramList, varNewStrZ("0677"));
         varLstAdd(paramList, varNewStrZ(testUser()));
         varLstAdd(paramList, varNewStrZ(testGroup()));
         varLstAdd(paramList, varNewUInt64(1557432200));
         varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, NULL);
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, NULL);
 
@@ -1647,7 +1646,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/999"), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+                    .checksumSha1 = HASH_TYPE_SHA1_ZERO, .reference = STRDEF(TEST_LABEL)});
             storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/999")), NULL);
 
             // PG_VERSION
