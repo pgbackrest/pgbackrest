@@ -1012,7 +1012,7 @@
                 <option-list>
                   <option id="dry-run" name="dry-run">
                     <summary>
-                      dry-run exectuion, it does not expire backups.
+                      dry-run execution, it does not expire backups.
                     </summary>
                     <text>
                       Using this option, <backrest/> will not effectively expire the archives,
