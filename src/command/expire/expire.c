@@ -363,12 +363,14 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 String *fullPath = storagePath(
                                     storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)));
 
+                                LOG_INFO("remove archive path: %s", strPtr(fullPath));
+
                                 // execute the real expiration and deletion
                                 // only if the dry-run mode is disabled
                                 if ( ! cfgOptionBool(cfgOptDryRun) )
                                   storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
 
-                                LOG_INFO("remove archive path: %s", strPtr(fullPath));
+
                             }
 
                             // Continue to next directory
@@ -620,6 +622,7 @@ removeExpiredBackup(InfoBackup *infoBackup)
         if (!strLstExists(currentBackupList, strLstGet(backupList, backupIdx)))
         {
             LOG_INFO("remove expired backup %s", strPtr(strLstGet(backupList, backupIdx)));
+
             // execute the real expiration and deletion
             // only if the dry-run mode is disabled
             if ( ! cfgOptionBool(cfgOptDryRun) )
