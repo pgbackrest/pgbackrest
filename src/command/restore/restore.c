@@ -161,6 +161,9 @@ restoreManifestValidate(Manifest *manifest, const String *backupSet)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // If there are no files in the manifest then something has gone horribly wrong
+        CHECK(manifestFileTotal(manifest) > 0);
+
         // Sanity check to ensure the manifest has not been moved to a new directory
         const ManifestData *data = manifestData(manifest);
 
@@ -1510,7 +1513,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 // Assign job to result
                 result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), MEM_CONTEXT_OLD());
 
-                // Break out of the loop since we found a job
+                // Break out of the loop early since we found a job
                 break;
             }
 
@@ -1561,10 +1564,8 @@ cmdRestore(void)
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupSet)),
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
 
+        // Get the cipher subpass used to decrypt files in the backup
         jobData.cipherSubPass = manifestCipherSubPass(jobData.manifest);
-
-        // If there are no files in the manifest then something has gone horribly wrong
-        CHECK(manifestFileTotal(jobData.manifest) > 0);
 
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupSet);
@@ -1596,7 +1597,7 @@ cmdRestore(void)
 
         // Delete the pg_control file so the cluster cannot be started if restore does not complete
         storageRemoveNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
-        storagePathSyncNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL));
+        storagePathSyncNP(storagePgWrite(), PG_PATH_GLOBAL_STR);
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
@@ -1620,7 +1621,7 @@ cmdRestore(void)
         }
         while (!protocolParallelDone(parallelExec));
 
-        // If preserve then leave recovery.conf as it is
+        // If recovery type is preserve then leave recovery.conf as it is
         if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
         {
             if (!storageExistsNP(storagePg(), PG_FILE_RECOVERYCONF_STR))
