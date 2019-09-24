@@ -106,6 +106,8 @@ restoreBackupSet(InfoBackup *infoBackup)
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
     FUNCTION_LOG_END();
 
+    ASSERT(infoBackup != NULL);
+
     String *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -158,6 +160,9 @@ restoreManifestValidate(Manifest *manifest, const String *backupSet)
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, backupSet);
     FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
+    ASSERT(backupSet != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -430,6 +435,8 @@ restoreManifestOwner(Manifest *manifest)
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
+    ASSERT(manifest != NULL);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build a list of users and groups in the manifest
@@ -570,6 +577,9 @@ restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *i
         FUNCTION_TEST_PARAM(INFO, info);
     FUNCTION_TEST_END();
 
+    ASSERT(pgPath != NULL);
+    ASSERT(info != NULL);
+
     // Update mode if not as expected
     if (manifestMode != info->mode)
     {
@@ -590,6 +600,9 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(info != NULL);
 
     RestoreCleanCallbackData *cleanData = (RestoreCleanCallbackData *)data;
 
@@ -960,6 +973,8 @@ restoreSelectiveExpression(Manifest *manifest)
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
+    ASSERT(manifest != NULL);
+
     String *result = NULL;
 
     // Continue if db-include is specified
@@ -995,12 +1010,7 @@ restoreSelectiveExpression(Manifest *manifest)
 
             // If no databases were found then this backup is not a valid cluster
             if (strLstSize(dbList) == 0)
-            {
-                THROW(
-                    FormatError,
-                    "no databases found for selective restore\n"
-                    "HINT: is this a valid cluster?");
-            }
+                THROW(FormatError, "no databases found for selective restore\nHINT: is this a valid cluster?");
 
             // Log databases found
             LOG_DETAIL("databases found for selective restore (%s)", strPtr(strLstJoin(dbList, ", ")));
@@ -1119,6 +1129,8 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM_P(LIST, queueList);
     FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
 
     uint64_t result = 0;
 
@@ -1326,6 +1338,8 @@ restoreFileZeroed(const String *manifestName, RegExp *zeroExp)
         FUNCTION_TEST_PARAM(REGEXP, zeroExp);
     FUNCTION_TEST_END();
 
+    ASSERT(manifestName != NULL);
+
     FUNCTION_TEST_RETURN(
         zeroExp == NULL ? false : regExpMatch(zeroExp, manifestName) && !strEndsWith(manifestName, STRDEF("/" PG_FILE_PGVERSION)));
 }
@@ -1338,6 +1352,9 @@ restoreFilePgPath(const Manifest *manifest, const String *manifestName)
         FUNCTION_TEST_PARAM(MANIFEST, manifest);
         FUNCTION_TEST_PARAM(STRING, manifestName);
     FUNCTION_TEST_END();
+
+    ASSERT(manifest != NULL);
+    ASSERT(manifestName != NULL);
 
     String *result = strNewFmt("%s/%s", strPtr(manifestTargetBase(manifest)->path), strPtr(manifestPgPath(manifestName)));
 
@@ -1357,6 +1374,8 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM(UINT64, sizeRestored);
     FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
 
     // The job was successful
     if (protocolParallelJobErrorCode(job) == 0)
@@ -1466,6 +1485,8 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(UINT, clientIdx);
     FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
 
     ProtocolParallelJob *result = NULL;
 
