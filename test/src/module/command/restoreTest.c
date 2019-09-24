@@ -1451,6 +1451,7 @@ testRun(void)
             "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
             "P00 DETAIL: create path '{[path]}/pg/pg_tblspc/1/16384'\n"
             "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P00 DETAIL: write {[path]}/pg/recovery.conf\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"

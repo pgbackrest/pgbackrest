@@ -1626,6 +1626,8 @@ cmdRestore(void)
                 // Use the data directory to set permissions and ownership
                 const ManifestPath *dataPath = manifestPathFind(jobData.manifest, MANIFEST_TARGET_PGDATA_STR);
 
+                LOG_DETAIL("write %s", strPtr(storagePathNP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
+
                 storagePutNP(
                     storageNewWriteP(
                         storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true,
