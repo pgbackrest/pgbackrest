@@ -1626,7 +1626,7 @@ cmdRestore(void)
                 // Use the data directory to set permissions and ownership
                 const ManifestPath *dataPath = manifestPathFind(jobData.manifest, MANIFEST_TARGET_PGDATA_STR);
 
-                LOG_DETAIL("write %s", strPtr(storagePathNP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
+                LOG_INFO("write %s", strPtr(storagePathNP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
 
                 storagePutNP(
                     storageNewWriteP(
@@ -1689,16 +1689,19 @@ cmdRestore(void)
         if (storageExistsNP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)))
         {
             LOG_INFO(
-                "rename " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT " to " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
-                    " and sync '" PG_PATH_GLOBAL "' path");
+                "restore " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL " (performed last to ensure aborted restores cannot be started)");
 
             storageMoveNP(
                 storagePgWrite(),
                 storageNewReadNP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)),
-                storageNewWriteNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
+                storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .noSyncPath = true));
         }
         else
             LOG_WARN("backup does not contain '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' -- cluster will not start");
+
+        // Sync global path
+        LOG_DETAIL("sync path '%s'", strPtr(storagePathNP(storagePg(), PG_PATH_GLOBAL_STR)));
+        storagePathSyncNP(storagePgWrite(), PG_PATH_GLOBAL_STR);
     }
     MEM_CONTEXT_TEMP_END();
 

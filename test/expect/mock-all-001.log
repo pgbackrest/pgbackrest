@@ -613,7 +613,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/zero_from_start - exists and is zero size (0B, 100%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
-P00 DETAIL: write [TEST_PATH]/db-master/db/base/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -631,7 +631,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat_tmp'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_tblspc'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -671,7 +672,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/zero_from_start - exists and is zero size (0B, 100%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
-P00 DETAIL: write [TEST_PATH]/db-master/db/base/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -689,7 +690,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat_tmp'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_tblspc'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -729,7 +731,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/zero_from_start - exists and is zero size (0B, 100%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
-P00 DETAIL: write [TEST_PATH]/db-master/db/base/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -747,7 +749,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat_tmp'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_tblspc'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -788,7 +791,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/zero_from_start - exists and is zero size (0B, 100%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
-P00 DETAIL: write [TEST_PATH]/db-master/db/base/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -806,7 +809,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat_tmp'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_tblspc'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -891,7 +895,7 @@ P01   INFO: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/zero_from_start (0B, 100%)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? (0B, 100%)
-P00 DETAIL: write [TEST_PATH]/db-master/db/base/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
@@ -909,7 +913,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat_tmp'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_tblspc'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -969,7 +974,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exist
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/zero_from_start - exists and matches size 0 and modification time [MODIFICATION-TIME-1] (0B, 100%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/special-!_.*'()&!@;:+,? - exists and matches size 0 and modification time [MODIFICATION-TIME-1] (0B, 100%)
-P00 DETAIL: write [TEST_PATH]/db-master/db/base/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/base/1'
@@ -986,7 +991,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_stat_tmp'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/pg_tblspc'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -1984,7 +1990,7 @@ P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/zero_from_start (0B, 99
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/special-!_.*'()&!@;:+,? (0B, 99%)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00 DETAIL: write [TEST_PATH]/db-master/db/base-2/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/1'
@@ -2007,7 +2013,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/1
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -2050,7 +2057,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/zero_from_start - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 99%)
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt - exists and matches backup (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00 DETAIL: write [TEST_PATH]/db-master/db/base-2/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/1'
@@ -2073,7 +2080,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/1
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -3883,7 +3891,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/zero_from_start - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 99%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%)
-P00 DETAIL: write [TEST_PATH]/db-master/db/base-2/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/1'
@@ -3903,7 +3911,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -3944,7 +3953,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/zero_from_start - exist
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 99%)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00 DETAIL: write [TEST_PATH]/db-master/db/base-2/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/1'
@@ -3964,7 +3973,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -4031,7 +4041,7 @@ P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/zero_from_start (0
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/special-!_.*'()&!@;:+,? (0B, 99%)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00 DETAIL: write [TEST_PATH]/db-master/db/base-2/base/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/base/1'
@@ -4051,7 +4061,8 @@ P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]'
 P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768'
-P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path
+P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00 DETAIL: sync path '[TEST_PATH]/db-master/db/base-2/base/global'
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/base/recovery.conf

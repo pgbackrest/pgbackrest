@@ -25,6 +25,7 @@ Defines for various Postgres paths and files
 #define PG_PATH_ARCHIVE_STATUS                                      "archive_status"
 #define PG_PATH_BASE                                                "base"
 #define PG_PATH_GLOBAL                                              "global"
+    STRING_DECLARE(PG_PATH_GLOBAL_STR);
 
 #define PG_NAME_WAL                                                 "wal"
     STRING_DECLARE(PG_NAME_WAL_STR);

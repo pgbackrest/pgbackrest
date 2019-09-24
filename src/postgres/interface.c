@@ -21,6 +21,8 @@ STRING_EXTERN(PG_FILE_PGVERSION_STR,                                PG_FILE_PGVE
 STRING_EXTERN(PG_FILE_POSTMASTERPID_STR,                            PG_FILE_POSTMASTERPID);
 STRING_EXTERN(PG_FILE_RECOVERYCONF_STR,                             PG_FILE_RECOVERYCONF);
 
+STRING_EXTERN(PG_PATH_GLOBAL_STR,                                   PG_PATH_GLOBAL);
+
 STRING_EXTERN(PG_NAME_WAL_STR,                                      PG_NAME_WAL);
 STRING_EXTERN(PG_NAME_XLOG_STR,                                     PG_NAME_XLOG);
 

@@ -1451,12 +1451,13 @@ testRun(void)
             "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
             "P00 DETAIL: create path '{[path]}/pg/pg_tblspc/1/16384'\n"
             "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P00 DETAIL: write {[path]}/pg/recovery.conf\n"
+            "P00   INFO: write {[path]}/pg/recovery.conf\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
-            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
+            "P00 DETAIL: sync path '{[path]}/pg/global'");
 
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
         storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .errorOnMissing = true);
@@ -1566,7 +1567,8 @@ testRun(void)
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
-            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start");
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
+            "P00 DETAIL: sync path '{[path]}/pg/global'");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -1904,7 +1906,8 @@ testRun(void)
             "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/PG_10_201707211'\n"
-            "P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path");
+            "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
+            "P00 DETAIL: sync path '{[path]}/pg/global'");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2006,7 +2009,8 @@ testRun(void)
             "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/PG_10_201707211'\n"
-            "P00   INFO: rename global/pg_control.pgbackrest.tmp to global/pg_control and sync 'global' path");
+            "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
+            "P00 DETAIL: sync path '{[path]}/pg/global'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Keep this test at the end since is corrupts the repo
