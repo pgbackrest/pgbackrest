@@ -59,17 +59,21 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
-    storageRemoveNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
-    storageRemoveNP(
-        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
+    // execute the real expiration and deletion
+    // only if the dry-run mode is disabled
+    if ( ! cfgOptionBool(cfgOptDryRun) ){
+      storageRemoveNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
+      storageRemoveNP(
+                      storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
 
-    // Remove the backup from the info file
-    infoBackupDataDelete(infoBackup, removeBackupLabel);
+      // Remove the backup from the info file
+      infoBackupDataDelete(infoBackup, removeBackupLabel);
 
-    if (strSize(backupExpired) == 0)
+      if (strSize(backupExpired) == 0)
         strCat(backupExpired, strPtr(removeBackupLabel));
-    else
+      else
         strCatFmt(backupExpired, ", %s", strPtr(removeBackupLabel));
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -358,7 +362,12 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             {
                                 String *fullPath = storagePath(
                                     storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)));
-                                storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
+
+                                // execute the real expiration and deletion
+                                // only if the dry-run mode is disabled
+                                if ( ! cfgOptionBool(cfgOptDryRun) )
+                                  storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
+
                                 LOG_INFO("remove archive path: %s", strPtr(fullPath));
                             }
 
@@ -502,9 +511,12 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 // Remove the entire directory if all archive is expired
                                 if (removeArchive)
                                 {
+                                  // execute the real expiration and deletion
+                                  // only if the dry-run mode is disabled
+                                  if ( ! cfgOptionBool(cfgOptDryRun) )
                                     storagePathRemoveP(
-                                        storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
-                                        strPtr(walPath)), .recurse = true);
+                                                       storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
+                                                                                     strPtr(walPath)), .recurse = true);
 
                                     archiveExpire.total++;
                                     archiveExpire.start = strDup(walPath);
@@ -608,10 +620,12 @@ removeExpiredBackup(InfoBackup *infoBackup)
         if (!strLstExists(currentBackupList, strLstGet(backupList, backupIdx)))
         {
             LOG_INFO("remove expired backup %s", strPtr(strLstGet(backupList, backupIdx)));
-
-            storagePathRemoveP(
-                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(strLstGet(backupList, backupIdx))),
-                .recurse = true);
+            // execute the real expiration and deletion
+            // only if the dry-run mode is disabled
+            if ( ! cfgOptionBool(cfgOptDryRun) )
+              storagePathRemoveP(
+                                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(strLstGet(backupList, backupIdx))),
+                                 .recurse = true);
         }
     }
 
