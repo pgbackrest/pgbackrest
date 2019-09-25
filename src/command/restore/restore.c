@@ -484,7 +484,9 @@ restoreManifestOwner(Manifest *manifest)
                 memContextSwitch(MEM_CONTEXT_TEMP());
             }
         }
-        // Else map everything to the current user/group
+        // Else set owners to NULL.  This means we won't make any attempt to update ownership and will just leave it as written by
+        // the current user/group.  If there are existing files that are not owned by the current user/group then we will attempt
+        // to update them, which will generally cause an error, though some systems allow updates to the group ownership.
         // -------------------------------------------------------------------------------------------------------------------------
         else
         {
