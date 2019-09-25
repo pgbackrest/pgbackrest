@@ -920,21 +920,21 @@ testRun(void)
         userLocalData.userId = getuid() + 1;
 
         TEST_ERROR_FMT(
-            restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' not owned by current user", testPath());
+            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' not owned by current user", testPath());
 
         TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
 
         userLocalData.userRoot = true;
 
         TEST_ERROR_FMT(
-            restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
+            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
 
         TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
 
         userInitInternal();
 
         TEST_ERROR_FMT(
-            restoreClean(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
+            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
 
         TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
 
@@ -947,7 +947,7 @@ testRun(void)
         storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
 
         TEST_ERROR_FMT(
-            restoreClean(manifest), PathNotEmptyError,
+            restoreCleanBuild(manifest), PathNotEmptyError,
             "unable to restore to path '%s/pg' because it contains files\n"
                 "HINT: try using --delta if this is what you intended.",
             testPath());
@@ -968,7 +968,7 @@ testRun(void)
 
         storagePathCreateP(storageTest, STRDEF("conf"), .mode = 0700);
 
-        TEST_RESULT_VOID(restoreClean(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '{[path]}/pg' exists\n"
@@ -982,7 +982,7 @@ testRun(void)
         storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF("../conf/pg_hba.conf")), NULL);
 
         TEST_ERROR_FMT(
-            restoreClean(manifest), FileExistsError,
+            restoreCleanBuild(manifest), FileExistsError,
             "unable to restore file '%s/conf/pg_hba.conf' because it already exists\n"
             "HINT: try using --delta if this is what you intended.",
             testPath());
@@ -1007,7 +1007,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(restoreClean(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '{[path]}/pg' exists\n"
@@ -1017,7 +1017,7 @@ testRun(void)
         TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
         storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
-        TEST_RESULT_VOID(restoreClean(manifest), "normal restore ignore recovery.conf");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest), "normal restore ignore recovery.conf");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '{[path]}/pg' exists\n"

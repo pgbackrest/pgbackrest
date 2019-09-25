@@ -743,7 +743,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 }
 
 static void
-restoreClean(Manifest *manifest)
+restoreCleanBuild(Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1626,8 +1626,8 @@ cmdRestore(void)
         String *expression = restoreSelectiveExpression(jobData.manifest);
         jobData.zeroExp = expression == NULL ? NULL : regExpNew(expression);
 
-        // Clean the data directory
-        restoreClean(jobData.manifest);
+        // Clean the data directory and build path/link structure
+        restoreCleanBuild(jobData.manifest);
 
         // Generate processing queues
         uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
