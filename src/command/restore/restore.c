@@ -748,7 +748,7 @@ restoreClean(Manifest *manifest)
         // Allocate data for each target
         RestoreCleanCallbackData *cleanDataList = memNew(sizeof(RestoreCleanCallbackData) * manifestTargetTotal(manifest));
 
-        // Check permissions and validity (is the directory empty without delta?) if the target directory exists
+        // Step 1: Check permissions and validity (is the directory empty without delta?) if the target directory exists
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *pathChecked = strLstNew();
 
@@ -792,8 +792,7 @@ restoreClean(Manifest *manifest)
                 if (!userRoot() && userId() != info.userId)
                 {
                     THROW_FMT(
-                        PathOpenError, "unable to restore to path '%s' not owned by current user",
-                        strPtr(cleanData->targetPath));
+                        PathOpenError, "unable to restore to path '%s' not owned by current user", strPtr(cleanData->targetPath));
                 }
 
                 if ((info.mode & 0700) != 0700)
@@ -802,7 +801,7 @@ restoreClean(Manifest *manifest)
                         PathOpenError, "unable to restore to path '%s' without rwx permissions", strPtr(cleanData->targetPath));
                 }
 
-                // If not a delta restore then check that the directories are empty
+                // If not a delta restore then check that the directories are empty, or if a file link, that the file doesn't exist
                 if (!cleanData->delta)
                 {
                     if (cleanData->target->file == NULL)
@@ -825,7 +824,7 @@ restoreClean(Manifest *manifest)
                         }
                     }
 
-                    // Now that we know there are no files in this target enable delta to process the next pass
+                    // Now that we know there are no files in this target enable delta for processing in Step 2
                     cleanData->delta = true;
                 }
 
@@ -843,7 +842,7 @@ restoreClean(Manifest *manifest)
             manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP));
         }
 
-        // Clean target directories
+        // Step 2: Clean target directories
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
@@ -885,7 +884,7 @@ restoreClean(Manifest *manifest)
             }
         }
 
-        // Create missing paths and path links
+        // Step 3: Create missing paths and path links
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
         {
@@ -937,7 +936,7 @@ restoreClean(Manifest *manifest)
             }
         }
 
-        // Create file links.  These don't get created during path creation because they do not have a matching path entry.
+        // Step 4: Create file links.  These don't get created during path creation because they do not have a matching path entry.
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
         {
