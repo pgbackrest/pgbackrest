@@ -566,6 +566,7 @@ P00   WARN: unknown group in backup manifest mapped to '[GROUP-2]'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_config' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_stat' exists
+P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: remove special file '[TEST_PATH]/db-master/db/base/apipe'
@@ -649,6 +650,7 @@ P00   WARN: unknown group in backup manifest mapped to '[GROUP-1]'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_config' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_stat' exists
+P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base/base/1/PG_VERSION'
 P00 DETAIL: update ownership for '[TEST_PATH]/db-master/db/base/base/16384/PG_VERSION'
@@ -708,6 +710,7 @@ P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_config' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_stat' exists
+P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: remove link '[TEST_PATH]/db-master/db/base/pg_stat' because destination changed
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
@@ -770,6 +773,7 @@ P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_config' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/pg_stat' exists
+P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/pg_stat'
@@ -950,6 +954,7 @@ P00   WARN: unknown user 'bogus' in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
 P00   WARN: unknown group 'bogus' in backup manifest mapped to current group
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base' exists
+P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base'
 P00 DETAIL: remove invalid link '[TEST_PATH]/db-master/db/base/pg_hba.conf'
 P00 DETAIL: remove invalid link '[TEST_PATH]/db-master/db/base/pg_stat'
@@ -2032,6 +2037,7 @@ P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
+P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]'
@@ -3866,6 +3872,7 @@ P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace
 P00 DETAIL: databases found for selective restore (1, 16384, 32768)
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
+P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'
@@ -3928,6 +3935,7 @@ P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace
 P00 DETAIL: databases found for selective restore (1, 16384, 32768)
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]' exists
+P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/base-2'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-master/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]'

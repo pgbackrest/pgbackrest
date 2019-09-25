@@ -1975,6 +1975,7 @@ testRun(void)
             "P00 DETAIL: check '{[path]}/wal' exists\n"
             "P00 DETAIL: check '{[path]}/ts/1/PG_10_201707211' exists\n"
             "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
+            "P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/wal'\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/ts/1/PG_10_201707211'\n"

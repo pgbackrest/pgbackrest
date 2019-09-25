@@ -824,7 +824,7 @@ restoreClean(Manifest *manifest)
                         }
                     }
 
-                    // Now that we know there are no files in this target enable delta for processing in Step 2
+                    // Now that we know there are no files in this target enable delta for processing in step 2
                     cleanData->delta = true;
                 }
 
@@ -838,12 +838,21 @@ restoreClean(Manifest *manifest)
         if (manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP), NULL) != NULL &&
             manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
         {
-            LOG_DETAIL("skip '"PG_FILE_TABLESPACEMAP"' -- tablespace links will be created based on mappings");
+            LOG_DETAIL("skip '" PG_FILE_TABLESPACEMAP "' -- tablespace links will be created based on mappings");
             manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP));
         }
 
         // Step 2: Clean target directories
         // -------------------------------------------------------------------------------------------------------------------------
+        // Delete the pg_control file (if it exists) so the cluster cannot be started if restore does not complete.  Sync the path
+        // so the file does not return, zombie-like, in the case of a host crash.
+        if (storageExistsNP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
+        {
+            LOG_DETAIL("remove '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' so cluster will not start if restore does not complete");
+            storageRemoveNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
+            storagePathSyncNP(storagePgWrite(), PG_PATH_GLOBAL_STR);
+        }
+
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
@@ -1614,10 +1623,6 @@ cmdRestore(void)
 
         // Save manifest to the data directory so we can restart a delta restore even if the PG_VERSION file is missing
         manifestSave(jobData.manifest, storageWriteIo(storageNewWriteNP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR)));
-
-        // Delete the pg_control file so the cluster cannot be started if restore does not complete
-        storageRemoveNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
-        storagePathSyncNP(storagePgWrite(), PG_PATH_GLOBAL_STR);
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
