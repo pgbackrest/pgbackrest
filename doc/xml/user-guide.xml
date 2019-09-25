@@ -26,6 +26,9 @@
         <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos6, centos7 -->
         <variable key="os-type">debian</variable>
 
+        <!-- Will encryption be used in the documentation? It can be useful for testing to omit encryption. -->
+        <variable key="encrypt">y</variable>
+
         <!-- Common if expressions for testing os-type -->
         <variable key="os-type-is-debian">'{[os-type]}' eq '{[os-debian]}'</variable>
         <variable key="os-type-is-centos6">'{[os-type]}' eq '{[os-centos6]}'</variable>
@@ -1039,7 +1042,7 @@
 
         <!-- SECTION => QUICKSTART - CONFIGURE ENCRYPTION -->
         <!-- Since S3 and repository host require configure-archiving, this section must come after. -->
-        <section id="configure-encryption">
+        <section if="'{[encrypt]}' eq 'y'" id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
             <p>The repository will be configured with a cipher type and key to demonstrate encryption.  Encryption is always performed client-side even if the repository type (e.g. <proper>S3</proper> or other object store) supports encryption.</p>
