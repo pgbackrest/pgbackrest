@@ -325,6 +325,15 @@ restoreManifestMap(Manifest *manifest)
 
                     if (target->file != NULL)
                     {
+                        // The link destination must have at least one path component in addition to the file part. So '..' would
+                        // not be a valid destination but '../file' or '/file' is.
+                        if (strSize(strPath(linkPath)) == 0)
+                        {
+                            THROW_FMT(
+                                LinkMapError, "'%s' is not long enough to be the destination for file link '%s'", strPtr(linkPath),
+                                strPtr(link));
+                        }
+
                         linkFile = strBase(linkPath);
                         linkPath = strPath(linkPath);
                     }

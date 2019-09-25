@@ -678,6 +678,22 @@ testRun(void)
         manifestLinkAdd(
             manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_wal"), .destination = STRDEF("/wal")});
 
+        // Error on invalid file link path
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--link-map=pg_hba.conf=bogus");
+        strLstAddZ(argList, "restore");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(
+            restoreManifestMap(manifest), LinkMapError,
+            "'bogus' is not long enough to be the destination for file link 'pg_hba.conf'");
+
+        TEST_RESULT_LOG("P00   INFO: map link 'pg_hba.conf' to 'bogus'");
+
         // Remap both links
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
