@@ -2645,6 +2645,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "immediate",
                 "name",
                 "time",
+                "standby",
                 "xid"
             )
         )
@@ -4610,6 +4611,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     cfgDefOptType,
                     "default",
                     "name",
+                    "standby",
                     "time",
                     "xid"
                 )
@@ -4788,7 +4790,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     "preserve",
                     "none",
                     "immediate",
-                    "default"
+                    "default",
+                    "standby"
                 )
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("default")
@@ -4805,6 +4808,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     "* xid - recover to the transaction id specified in --target.\n"
                     "* time - recover to the time specified in --target.\n"
                     "* preserve - preserve the existing recovery.conf file.\n"
+                    "* standby - add standby_mode=on to recovery.conf file so cluster will start in standby mode.\n"
                     "* none - no recovery.conf file is written so PostgreSQL will attempt to achieve consistency using WAL "
                         "segments present in pg_xlog/pg_wal. Provide the required WAL segments or use the archive-copy setting to "
                         "include them with the backup."

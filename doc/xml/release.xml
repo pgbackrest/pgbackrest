@@ -14,6 +14,12 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.18dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Add <id>standby</id> restore type which automatically adds <pg-option>standby_mode</pg-option> to <file>recovery.conf</file>.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>

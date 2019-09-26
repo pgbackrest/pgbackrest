@@ -439,9 +439,9 @@ sub run
 
             $oHostDbStandby->restore(
                 'restore backup on replica', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-                {rhRemapHash => \%oRemapHash,
+                {rhRemapHash => \%oRemapHash, strType => CFGOPTVAL_RESTORE_TYPE_STANDBY,
                     strOptionalParam =>
-                        ' --recovery-option=standby_mode=on --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
+                        ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
                         ' port=' . $oHostDbMaster->pgPort() . ' user=replicator"'});
 
             $oHostDbStandby->clusterStart({bHotStandby => true});
@@ -960,8 +960,10 @@ sub run
 
             $oHostDbMaster->restore(
                 undef, $strIncrBackup,
-                {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_DEFAULT, strTargetTimeline => 4,
-                    rhRecoveryHash => $oHostDbMaster->pgVersion() >= PG_VERSION_90 ? {'standby-mode' => 'on'} : undef});
+                {bDelta => true,
+                    strType => $oHostDbMaster->pgVersion() >= PG_VERSION_90 ?
+                        CFGOPTVAL_RESTORE_TYPE_STANDBY : CFGOPTVAL_RESTORE_TYPE_DEFAULT,
+                    strTargetTimeline => 4});
 
             $oHostDbMaster->clusterStart({bHotStandby => true});
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimelineMessage, {iTimeout => 120});

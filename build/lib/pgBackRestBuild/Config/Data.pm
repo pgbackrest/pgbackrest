@@ -438,6 +438,8 @@ use constant CFGOPTVAL_RESTORE_TYPE_IMMEDIATE                       => 'immediat
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_IMMEDIATE);
 use constant CFGOPTVAL_RESTORE_TYPE_DEFAULT                         => 'default';
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_DEFAULT);
+use constant CFGOPTVAL_RESTORE_TYPE_STANDBY                         => 'standby';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_STANDBY);
 
 # Restore target action
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -949,6 +951,7 @@ my %hConfigDefine =
                     [
                         &CFGOPTVAL_RESTORE_TYPE_DEFAULT,
                         &CFGOPTVAL_RESTORE_TYPE_NAME,
+                        &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                         &CFGOPTVAL_RESTORE_TYPE_TIME,
                         &CFGOPTVAL_RESTORE_TYPE_XID,
                     ],
@@ -1003,6 +1006,7 @@ my %hConfigDefine =
                     &CFGOPTVAL_RESTORE_TYPE_NONE,
                     &CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
                     &CFGOPTVAL_RESTORE_TYPE_DEFAULT,
+                    &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                 ]
             }
         }
@@ -2389,6 +2393,7 @@ my %hConfigDefine =
                 &CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
                 &CFGOPTVAL_RESTORE_TYPE_NAME,
                 &CFGOPTVAL_RESTORE_TYPE_TIME,
+                &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                 &CFGOPTVAL_RESTORE_TYPE_XID,
             ],
         },

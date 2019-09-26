@@ -72,15 +72,15 @@ spool-path=[TEST_PATH]/db-standby/spool
 archive-copy=y
 start-fast=y
 
-restore, type 'default', remap - restore backup on replica (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf  --recovery-option=standby_mode=on --recovery-option="primary_conninfo=host=db-master port=6543 user=replicator"  --link-map="pg_xlog=[TEST_PATH]/db-standby/db/pg_xlog" --link-all --stanza=db restore
+restore, type 'standby', remap - restore backup on replica (db-standby host)
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf  --recovery-option="primary_conninfo=host=db-master port=6543 user=replicator"  --type=standby --link-map="pg_xlog=[TEST_PATH]/db-standby/db/pg_xlog" --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-standby/db/base/recovery.conf
 -----------------------------------------------------------------
 primary_conninfo = 'host=db-master port=6543 user=replicator'
-standby_mode = 'on'
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db archive-get %f "%p"'
+standby_mode = 'on'
 
 full backup - backup from standby, failure to reach master (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --pg8-host=bogus --backup-standby --type=full --stanza=db backup

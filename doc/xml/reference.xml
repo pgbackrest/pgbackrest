@@ -1055,6 +1055,7 @@
                             <li><id>xid</id> - recover to the transaction id specified in <br-option>--target</br-option>.</li>
                             <li><id>time</id> - recover to the time specified in <br-option>--target</br-option>.</li>
                             <li><id>preserve</id> - preserve the existing <file>recovery.conf</file> file.</li>
+                            <li><id>standby</id> - add <setting>standby_mode=on</setting> to <file>recovery.conf</file> file so cluster will start in standby mode.</li>
                             <li><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>.  Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</li>
                         </ul></text>
                         <example>xid</example>

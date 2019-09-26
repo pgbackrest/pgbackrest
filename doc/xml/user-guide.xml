@@ -2611,7 +2611,7 @@
 
             <p>A hot standby performs replication using the WAL archive and allows read-only queries.</p>
 
-            <p><backrest/> configuration is very similar to <host>{[host-pg1]}</host> except that the <pg-option>standby_mode</pg-option> setting will be enabled to keep the cluster in recovery mode when the end of the WAL stream has been reached.</p>
+            <p><backrest/> configuration is very similar to <host>{[host-pg1]}</host> except that the <id>standby</id> recovery type will be used to keep the cluster in recovery mode when the end of the WAL stream has been reached.</p>
 
             <backrest-config host="{[host-pg2]}" file="{[backrest-config-demo]}">
                 <title>Configure <backrest/> on the standby</title>
@@ -2619,8 +2619,6 @@
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
 
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
-
-                <backrest-config-option section="demo" key="recovery-option">standby_mode=on</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
@@ -2656,19 +2654,17 @@
                 <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
                 <execute user="postgres" if="{[os-type-is-debian]}">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
                 </execute>
 
                 <execute user="postgres" if="{[os-type-is-centos]}">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>cat {[postgres-recovery-demo]}</exe-cmd>
                 </execute>
             </execute-list>
-
-            <admonition type="note">The <pg-setting>standby_mode</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>--type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</admonition>
 
             <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>.  Otherwise, connection attempts will be refused.  The rest of the configuration is in case the standby is promoted to a primary.</p>
 
@@ -2851,13 +2847,15 @@
                 </execute>
 
                 <execute user="postgres">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>cat {[postgres-recovery-demo]}</exe-cmd>
                 </execute>
             </execute-list>
+
+            <admonition type="note">The <pg-setting>primary_conninfo</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>{[dash]}-type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</admonition>
 
             <p if="{[os-type-is-centos]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
 
@@ -3321,11 +3319,11 @@
             <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
             <execute user="postgres" if="{[os-type-is-debian]}">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
             </execute>
 
             <execute user="postgres" if="{[os-type-is-centos]}">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
             </execute>
         </execute-list>
 

@@ -1323,6 +1323,34 @@ testRun(void)
         TEST_ERROR(
             restoreRecoveryConf(PG_VERSION_90), OptionInvalidError,
             "target-action option is only available in PostgreSQL >= 9.1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery type = standby");
+
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=standby");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94),
+            "restore_command = 'my_restore_command'\n"
+            "standby_mode = 'on'\n",
+            "check recovery options");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery type = standby with timeline");
+
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=standby");
+        strLstAddZ(argList, "--target-timeline=current");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94),
+            "restore_command = 'my_restore_command'\n"
+            "standby_mode = 'on'\n"
+            "recovery_target_timeline = 'current'\n",
+            "check recovery options");
     }
 
     // *****************************************************************************************************************************

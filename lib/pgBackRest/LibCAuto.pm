@@ -53,6 +53,7 @@ sub libcAutoConstant
         CFGOPTVAL_RESTORE_TYPE_NONE                                      => 'none',
         CFGOPTVAL_RESTORE_TYPE_IMMEDIATE                                 => 'immediate',
         CFGOPTVAL_RESTORE_TYPE_DEFAULT                                   => 'default',
+        CFGOPTVAL_RESTORE_TYPE_STANDBY                                   => 'standby',
 
         CFGDEF_TYPE_BOOLEAN                                              => 0,
         CFGDEF_TYPE_FLOAT                                                => 1,
@@ -114,6 +115,7 @@ sub libcAutoExportTag
             'CFGOPTVAL_RESTORE_TYPE_NONE',
             'CFGOPTVAL_RESTORE_TYPE_IMMEDIATE',
             'CFGOPTVAL_RESTORE_TYPE_DEFAULT',
+            'CFGOPTVAL_RESTORE_TYPE_STANDBY',
             'CFGCMD_ARCHIVE_GET',
             'CFGCMD_ARCHIVE_GET_ASYNC',
             'CFGCMD_ARCHIVE_PUSH',

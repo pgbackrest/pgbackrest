@@ -40,6 +40,7 @@ Recovery constants
 #define RECOVERY_TARGET_INCLUSIVE                                   "recovery_target_inclusive"
 #define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
 #define PAUSE_AT_RECOVERY_TARGET                                    "pause_at_recovery_target"
+#define STANDBY_MODE                                                "standby_mode"
 
 #define RECOVERY_TYPE_DEFAULT                                       "default"
     STRING_STATIC(RECOVERY_TYPE_DEFAULT_STR,                        RECOVERY_TYPE_DEFAULT);
@@ -49,6 +50,8 @@ Recovery constants
     STRING_STATIC(RECOVERY_TYPE_NONE_STR,                           RECOVERY_TYPE_NONE);
 #define RECOVERY_TYPE_PRESERVE                                      "preserve"
     STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                       RECOVERY_TYPE_PRESERVE);
+#define RECOVERY_TYPE_STANDBY                                       "standby"
+    STRING_STATIC(RECOVERY_TYPE_STANDBY_STR,                        RECOVERY_TYPE_STANDBY);
 
 /***********************************************************************************************************************************
 Validate restore path
@@ -1178,6 +1181,12 @@ restoreRecoveryConf(unsigned int pgVersion)
             if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_IMMEDIATE_STR))
             {
                 strCat(result, RECOVERY_TARGET " = '" RECOVERY_TYPE_IMMEDIATE "'\n");
+            }
+            // Else recovery type is standby
+            else if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
+            {
+                // Write standby_mode
+                strCatFmt(result, STANDBY_MODE " = 'on'\n");
             }
             // Else recovery type is not default so write target options
             else if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_DEFAULT_STR))
