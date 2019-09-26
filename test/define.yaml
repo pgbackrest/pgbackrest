@@ -693,11 +693,18 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 1
+        total: 10
+        perlReq: true
 
         coverage:
           command/restore/file: full
           command/restore/protocol: full
+          command/restore/restore: full
+
+        include:
+          - common/user
+          - info/infoBackup
+          - info/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stanza

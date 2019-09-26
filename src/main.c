@@ -18,6 +18,7 @@ Main
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/restore/restore.h"
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
 #include "command/stanza/upgrade.h"
@@ -190,7 +191,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRestore:
                 {
-                    perlExec();
+                    cmdRestore();
                     break;
                 }
 

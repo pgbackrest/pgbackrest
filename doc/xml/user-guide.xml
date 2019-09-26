@@ -1644,6 +1644,15 @@
 
         <p>The Restore section introduces additional <cmd>restore</cmd> command features.</p>
 
+        <!-- ******************************************************************************************************************* -->
+        <section id="ownership">
+            <title>File Ownership</title>
+
+            <p>If a <cmd>restore</cmd> is run as a non-root user (the typical scenario) then all files restored will belong to the user/group executing <backrest/>.  If existing files are not owned by the executing user/group then an error will result if the ownership cannot be updated to the executing user/group.  In that case the file ownership will need to be updated by a privileged user before the restore can be retried.</p>
+
+            <p>If a <cmd>restore</cmd> is run as the <id>root</id> user then <backrest/> will attempt to recreate the ownership recorded in the manifest when the backup was made.  Only user/group <b>names</b> are stored in the manifest so the same names must exist on the restore host for this to work.  If the user/group name cannot be found locally then the user/group of the <postgres/> data directory will be used and finally <id>root</id> if the data directory user/group cannot be mapped to a name.</p>
+        </section>
+
         <!-- SECTION => RESTORE - DELTA -->
         <section id="option-delta">
             <title>Delta Option</title>
@@ -1660,7 +1669,7 @@
                 <execute user="postgres" output="y" filter="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
                         --log-level-console=detail restore</exe-cmd>
-                    <exe-highlight>demo\/PG_VERSION - exists and matches backup|check\/clean db path|restore global\/pg_control</exe-highlight>
+                    <exe-highlight>demo\/PG_VERSION - exists and matches backup|remove invalid files|rename global\/pg_control</exe-highlight>
                 </execute>
             </execute-list>
 
