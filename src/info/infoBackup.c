@@ -25,7 +25,6 @@ Backup Info Handler
 
 /***********************************************************************************************************************************
 Constants
-??? INFO_BACKUP_SECTION should be in a separate include since it will also be used when reading the manifest
 ***********************************************************************************************************************************/
 #define INFO_BACKUP_SECTION                                         "backup"
 #define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
@@ -409,6 +408,40 @@ infoBackupDataLabelList(const InfoBackup *this, const String *expression)
 }
 
 /***********************************************************************************************************************************
+Add missing backups
+***********************************************************************************************************************************/
+StringList *
+infoBackupDataAddMissing(const Storage *storage, const InfoBackup *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(storage != NULL);
+    ASSERT(this != NULL);
+
+    // Get a list of backups in the repo
+    StringList *backupList = strLstSort(
+        storageListP(
+            storage, STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true,
+            .incremental = true)),
+        sortOrderDesc);
+
+    StringList *backupCurrentList = infoBackupDataLabelList(this, NULL);
+
+    // Check for backups that are in the repo but not in backup:current
+    for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+    {
+        if (!strLstExists(backupCurrentList, strLstGet(backupList, backupIdx)))
+        {
+// CSHANG At this point, we know a backup is missing so we need to reead the manifest from disk and construct the infoBackupData and then add it to the current backup list
+            // lstAdd(this->backup, infoBackupData);
+        }
+    }
+}
+
+/***********************************************************************************************************************************
 Return the cipher passphrase
 ***********************************************************************************************************************************/
 const String *
@@ -512,6 +545,7 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
                 errorMessage());
         }
         TRY_END();
+// CSHANG Should we validate/reconstruct here during the load by passing a flag to say we should or not or just leave it as a separate function that Expire, Backup and whatever else (maybe Info) commands will need to do separately?
     }
     MEM_CONTEXT_TEMP_END();
 
