@@ -110,7 +110,7 @@ sub run
 
         $self->testException(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, ERROR_CRYPTO,
             "encryption incompatible for '$strArchiveFile'" .
-            "\nHINT: Is or was the repo encrypted?");
+            "\nHINT: is or was the repo encrypted?");
 
         executeTest('sudo rm ' . $strArchiveFile);
 
@@ -206,7 +206,7 @@ sub run
 
         $self->testException(sub {new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE))}, ERROR_CRYPTO,
             "unable to parse '$strFile'" .
-            "\nHINT: Is or was the repo encrypted?");
+            "\nHINT: is or was the repo encrypted?");
 
         # Remove the archive info files
         executeTest('sudo rm ' . $oArchiveInfo->{strFileName} . '*');
@@ -224,7 +224,7 @@ sub run
         # Clear the storage repo settings
         storageRepoCacheClear();
 
-        # Create an encrypted storage and generate an encyption sub passphrase to store in the file
+        # Create an encrypted storage and generate an encryption sub passphrase to store in the file
         my $strCipherPassSub = cipherPassGen();
 
         # Error on encrypted repo but no passphrase passed to store in the file

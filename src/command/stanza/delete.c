@@ -11,8 +11,7 @@ Stanza Delete Command
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/infoManifest.h"
-#include "info/infoPg.h"
+#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
@@ -39,11 +38,10 @@ manifestDelete(const Storage *storageRepoWriteStanza)
     for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
     {
         storageRemoveNP(
-            storageRepoWriteStanza,
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
+            storageRepoWriteStanza, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
         storageRemoveNP(
             storageRepoWriteStanza,
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -108,7 +106,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
             manifestDelete(storageRepoWriteStanza);
         }
 
-        // Recusively remove the entire stanza repo if exists. S3 will attempt to remove even if not.
+        // Recursively remove the entire stanza repo if exists. S3 will attempt to remove even if not.
         if (archiveList != NULL)
             storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE), .recurse = true);
 

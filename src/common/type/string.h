@@ -54,6 +54,7 @@ String *strFirstLower(String *this);
 String *strUpper(String *this);
 String *strLower(String *this);
 String *strPath(const String *this);
+String *strPathAbsolute(const String *this, const String *base);
 const char *strPtr(const String *this);
 String *strQuote(const String *this, const String *quote);
 String *strQuoteZ(const String *this, const char *quote);
@@ -120,6 +121,8 @@ Constant strings that are generally useful
 STRING_DECLARE(BRACKETL_STR);
 STRING_DECLARE(BRACKETR_STR);
 STRING_DECLARE(CR_STR);
+STRING_DECLARE(DOT_STR);
+STRING_DECLARE(DOTDOT_STR);
 STRING_DECLARE(EMPTY_STR);
 STRING_DECLARE(EQ_STR);
 STRING_DECLARE(FALSE_STR);

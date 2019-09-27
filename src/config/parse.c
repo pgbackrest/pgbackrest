@@ -242,7 +242,7 @@ Rules:
   the config-include-path will be appended and at least one is expected to exist.
 - If --no-config is specified and --config-include-path is specified then only *.conf files in the config-include-path will be
   loaded; the directory is required.
-- If --no-config is specified and --config-path is specified then only *.conf files in the overriden default config-include-path
+- If --no-config is specified and --config-path is specified then only *.conf files in the overridden default config-include-path
   (<config-path>/conf.d) will be loaded if exist but not required.
 - If --no-config is specified and neither --config-include-path nor --config-path are specified then no configs will be loaded.
 - If --config-path only, the defaults for config and config-include-path will be changed to use that as a base path but the files
@@ -531,7 +531,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                         // Only set the argument if the option requires one
                         if (optionList[optionListIdx].has_arg == required_argument)
-                            parseOptionList[optionId].valueList = strLstAdd(strLstNew(), STR(optarg));
+                        {
+                            parseOptionList[optionId].valueList = strLstNew();
+                            strLstAdd(parseOptionList[optionId].valueList, STR(optarg));
+                        }
                     }
                     else
                     {
@@ -582,7 +585,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             if (argFound)
                 THROW_FMT(CommandRequiredError, "no command found");
 
-            // Otherwise set the comand to help
+            // Otherwise set the command to help
             cfgCommandHelpSet(true);
         }
 
@@ -932,7 +935,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                         // If depend not resolved and option value is set on the command-line then error.  It's OK to have
                         // unresolved options in the config file because they may be there for another command.  For instance,
-                        // spool-path is only loaded for the archive-push command when archive-async=y, and the presense of
+                        // spool-path is only loaded for the archive-push command when archive-async=y, and the presence of
                         // spool-path in the config file should not cause an error here, it will just end up null.
                         if (!dependResolved && optionSet && parseOption->source == cfgSourceParam)
                         {
@@ -1077,7 +1080,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         cfgOptionName(optionId));
                                 }
 
-                                // Make sure there are no occurences of //
+                                // Make sure there are no occurrences of //
                                 if (strstr(strPtr(value), "//") != NULL)
                                 {
                                     THROW_FMT(

@@ -304,7 +304,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdBackup)
 
@@ -352,7 +352,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdBackup)
 
@@ -1015,7 +1015,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Sets the timeout, in seconds, for queries against the database. This includes the pg_start_backup() and "
                 "pg_stop_backup() functions which can each take a substantial amount of time. Because of this the timeout should "
                 "be kept high unless you know that these functions will return quickly (i.e. if you have set startfast=y and you "
-                "know that the database cluster will not generate many WAL segments during the backup)."
+                "know that the database cluster will not generate many WAL segments during the backup). \n"
+            "NOTE: The db-timeout option must be less than the protocol-timeout option."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1137,7 +1138,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
 
@@ -1173,7 +1174,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdBackup)
 
@@ -1199,7 +1200,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRestore)
 
@@ -1213,7 +1214,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStanzaCreate)
 
@@ -1231,7 +1232,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStanzaDelete)
 
@@ -1245,7 +1246,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStop)
 
@@ -1516,14 +1517,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("info")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("off")
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
 
@@ -1846,7 +1847,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdBackup)
 
@@ -1862,7 +1863,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStanzaCreate)
 
@@ -1873,7 +1874,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStanzaUpgrade)
 
@@ -1901,11 +1902,12 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
 
@@ -1924,6 +1926,28 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     "\n"
                     "* text - Human-readable summary of backup information.\n"
                     "* json - Exhaustive machine-readable backup information in JSON format."
+                )
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+
+                CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
+                (
+                    "text",
+                    "json"
+                )
+
+                CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("text")
+
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Output format.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
+                (
+                    "The following output types are supported:\n"
+                    "\n"
+                    "* text - Simple list with one file/link/path name on each line.\n"
+                    "* json - Detailed file/link/path information in JSON format."
                 )
             )
         )
@@ -2003,35 +2027,35 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-host")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchiveGet)
 
                 CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchiveGetAsync)
 
                 CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchivePush)
 
                 CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchivePushAsync)
 
                 CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRestore)
 
@@ -2333,42 +2357,42 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-path")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchiveGet)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchiveGetAsync)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchivePush)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchivePushAsync)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
 
@@ -2481,14 +2505,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 1024)
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(true)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
 
@@ -2551,8 +2575,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Sets the timeout, in seconds, that the local or remote process will wait for a new message to be received on the "
-                "protocol layer. This prevents processes from waiting indefinitely for a message. The protocol-timeout option must "
-                "be greater than the db-timeout option."
+                "protocol layer. This prevents processes from waiting indefinitely for a message. \n"
+            "NOTE: The protocol-timeout option must be greater than the db-timeout option."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2621,7 +2645,42 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "immediate",
                 "name",
                 "time",
+                "standby",
                 "xid"
+            )
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("recurse")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Include all subpaths in output.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
+                (
+                    "All subpaths and their files will be included in the output."
+                )
             )
         )
     )
@@ -2816,35 +2875,35 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-host")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdBackup)
 
                 CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdExpire)
 
                 CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStanzaCreate)
 
                 CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStanzaDelete)
 
                 CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStanzaUpgrade)
 
@@ -3638,14 +3697,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
 
@@ -3704,14 +3763,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
 
@@ -4042,7 +4101,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRestore)
 
@@ -4079,23 +4138,25 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
             (
+                "none",
                 "asc",
                 "desc"
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("asc")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
 
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Sort output ascending/descending.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Sort output ascending, descending, or none.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
                 (
                     "The following sort types are supported:\n"
                     "\n"
                     "* asc - sort ascending.\n"
-                    "* desc - sort descending."
+                    "* desc - sort descending.\n"
+                    "* none - no sorting."
                 )
             )
         )
@@ -4148,7 +4209,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/var/spool/pgbackrest")
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchiveGet)
 
@@ -4159,7 +4220,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchivePush)
 
@@ -4220,28 +4281,28 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStart)
 
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStop)
 
@@ -4400,7 +4461,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRestore)
 
@@ -4440,7 +4501,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRestore)
 
@@ -4497,7 +4558,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRestore)
 
@@ -4541,7 +4602,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRestore)
 
@@ -4550,6 +4611,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     cfgDefOptType,
                     "default",
                     "name",
+                    "standby",
                     "time",
                     "xid"
                 )
@@ -4670,7 +4732,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdBackup)
 
@@ -4694,7 +4756,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
 
@@ -4705,7 +4767,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
 
@@ -4716,7 +4778,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 )
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRestore)
 
@@ -4728,7 +4790,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     "preserve",
                     "none",
                     "immediate",
-                    "default"
+                    "default",
+                    "standby"
                 )
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("default")
@@ -4745,6 +4808,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     "* xid - recover to the transaction id specified in --target.\n"
                     "* time - recover to the time specified in --target.\n"
                     "* preserve - preserve the existing recovery.conf file.\n"
+                    "* standby - add standby_mode=on to recovery.conf file so cluster will start in standby mode.\n"
                     "* none - no recovery.conf file is written so PostgreSQL will attempt to achieve consistency using WAL "
                         "segments present in pg_xlog/pg_wal. Provide the required WAL segments or use the archive-copy setting to "
                         "include them with the backup."

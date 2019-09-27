@@ -254,7 +254,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad db-id");
+                "put backup info to file - bad db-id");
 
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
@@ -273,9 +273,9 @@ testRun(void)
             "[db]\n"
             "db-catalog-version=201608131\n"
             "db-control-version=960\n"
-            "db-id=2\n"
+            "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
@@ -284,7 +284,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file");
+                "put backup info to file");
 
         contentArchive = strNew
         (
@@ -338,7 +338,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file");
+                "put backup info to file");
 
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileInvalidError, "backup and archive info files exist but do not match the database\n"
@@ -434,7 +434,7 @@ testRun(void)
         TEST_ERROR_FMT(
             pgValidate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
             " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
-            "HINT: the pg1-path and pg1-port settings likely reference different clusters",
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
             strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path), strPtr(pgVersionToStr(PG_VERSION_91)), strPtr(pg1Path),
             strPtr(pg1Path));
 
@@ -455,7 +455,7 @@ testRun(void)
         TEST_ERROR_FMT(
             pgValidate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
             " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
-            "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters",
+            "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters.",
             strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(strNewFmt("%s/pg2", testPath())), strPtr(pgVersionToStr(PG_VERSION_92)),
             strPtr(pg1Path), strPtr(pg1Path));
 
@@ -514,13 +514,13 @@ testRun(void)
 
         InfoArchive *infoArchive = NULL;
         TEST_ASSIGN(
-            infoArchive, infoArchiveNewLoad(storageTest, archiveInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
+            infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
             "  load archive info");
         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
+            infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
             "  load backup info");
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
 
@@ -677,7 +677,7 @@ testRun(void)
             "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.5\"}\n"
         );
         TEST_RESULT_VOID(
@@ -696,7 +696,7 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.5\"}\n"
             "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.6\"}\n"
@@ -727,7 +727,7 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665999,"
                 "\"db-version\":\"9.5\"}\n"
             "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.6\"}\n"

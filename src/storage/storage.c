@@ -8,9 +8,11 @@ Storage Interface
 
 #include "common/debug.h"
 #include "common/io/io.h"
+#include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
+#include "common/regExp.h"
 #include "common/wait.h"
 #include "storage/storage.intern.h"
 
@@ -272,6 +274,157 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 /***********************************************************************************************************************************
 Info for all files/paths in a path
 ***********************************************************************************************************************************/
+typedef struct StorageInfoListSortData
+{
+    MemContext *memContext;                                         // Mem context to use for allocating data in this struct
+    StringList *ownerList;                                          // List of users and groups to reduce memory usage
+    List *infoList;                                                 // List of info
+} StorageInfoListSortData;
+
+static void
+storageInfoListSortCallback(void *data, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    StorageInfoListSortData *infoData = data;
+
+    MEM_CONTEXT_BEGIN(infoData->memContext)
+    {
+        // Copy info and dup strings
+        StorageInfo infoCopy = *info;
+        infoCopy.name = strDup(info->name);
+        infoCopy.linkDestination = strDup(info->linkDestination);
+        infoCopy.user = strLstAddIfMissing(infoData->ownerList, info->user);
+        infoCopy.group = strLstAddIfMissing(infoData->ownerList, info->group);
+
+        lstAdd(infoData->infoList, &infoCopy);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static bool
+storageInfoListSort(
+    const Storage *this, const String *path, SortOrder sortOrder, StorageInfoListCallback callback, void *callbackData)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, sortOrder);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(callback != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If no sorting then use the callback directly
+        if (sortOrder == sortOrderNone)
+        {
+            result = this->interface.infoList(this->driver, path, callback, callbackData);
+        }
+        // Else sort the info before sending it to the callback
+        else
+        {
+            StorageInfoListSortData data =
+            {
+                .memContext = MEM_CONTEXT_TEMP(),
+                .ownerList = strLstNew(),
+                .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
+            };
+
+            result = this->interface.infoList(this->driver, path, storageInfoListSortCallback, &data);
+            lstSort(data.infoList, sortOrder);
+
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
+            {
+                for (unsigned int infoIdx = 0; infoIdx < lstSize(data.infoList); infoIdx++)
+                {
+                    // Pass info to the caller
+                    callback(callbackData, lstGet(data.infoList, infoIdx));
+
+                    // Reset the memory context occasionally
+                    MEM_CONTEXT_TEMP_RESET(1000);
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+typedef struct StorageInfoListData
+{
+    const Storage *storage;                                         // Storage object;
+    StorageInfoListCallback callbackFunction;                       // Original callback function
+    void *callbackData;                                             // Original callback data
+    RegExp *expression;                                             // Filter for names
+    bool recurse;                                                   // Should we recurse?
+    SortOrder sortOrder;                                            // Sort order
+    const String *path;                                             // Top-level path for info
+    const String *subPath;                                          // Path below the top-level path (starts as NULL)
+} StorageInfoListData;
+
+static void
+storageInfoListCallback(void *data, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    StorageInfoListData *listData = data;
+
+    // Is this the . path?
+    bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
+
+    // Skip . paths when getting info for subpaths (since info was already reported in the parent path)
+    if (dotPath && listData->subPath != NULL)
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    // Update the name in info with the subpath
+    StorageInfo infoUpdate = *info;
+
+    if (listData->subPath != NULL)
+        infoUpdate.name = strNewFmt("%s/%s", strPtr(listData->subPath), strPtr(infoUpdate.name));
+
+    // Only continue if there is no expression or the expression matches
+    if (listData->expression == NULL || regExpMatch(listData->expression, infoUpdate.name))
+    {
+        if (listData->sortOrder != sortOrderDesc)
+            listData->callbackFunction(listData->callbackData, &infoUpdate);
+
+        // Recurse into paths
+        if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
+        {
+            StorageInfoListData data = *listData;
+            data.subPath = infoUpdate.name;
+
+            storageInfoListSort(
+                data.storage, strNewFmt("%s/%s", strPtr(data.path), strPtr(data.subPath)), data.sortOrder, storageInfoListCallback,
+                &data);
+        }
+
+        if (listData->sortOrder == sortOrderDesc)
+            listData->callbackFunction(listData->callbackData, &infoUpdate);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 bool
 storageInfoList(
     const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param)
@@ -282,6 +435,9 @@ storageInfoList(
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
+        FUNCTION_LOG_PARAM(STRING, param.expression);
+        FUNCTION_LOG_PARAM(BOOL, param.recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -296,8 +452,26 @@ storageInfoList(
         // Build the path
         String *path = storagePathNP(this, pathExp);
 
-        // Call driver function
-        result = this->interface.infoList(this->driver, path, callback, callbackData);
+        // If there is an expression or recursion then the info will need to be filtered through a local callback
+        if (param.expression != NULL || param.recurse)
+        {
+            StorageInfoListData data =
+            {
+                .storage = this,
+                .callbackFunction = callback,
+                .callbackData = callbackData,
+                .sortOrder = param.sortOrder,
+                .recurse = param.recurse,
+                .path = path,
+            };
+
+            if (param.expression != NULL)
+                data.expression = regExpNew(param.expression);
+
+            result = storageInfoListSort(this, path, param.sortOrder, storageInfoListCallback, &data);
+        }
+        else
+            result = storageInfoListSort(this, path, param.sortOrder, callback, callbackData);
 
         if (!result && param.errorOnMissing)
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));
@@ -387,7 +561,7 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
             this->interface.remove(this->driver, storageReadName(source), false);
 
             // Sync source path if the destination path was synced.  We know the source and destination paths are different because
-            // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented becaue there's
+            // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented because there's
             // no way to get coverage on it now.
             if (storageWriteSyncPath(destination))
                 this->interface.pathSync(this->driver, strPath(storageReadName(source)));

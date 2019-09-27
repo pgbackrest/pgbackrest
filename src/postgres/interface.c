@@ -17,6 +17,12 @@ PostgreSQL Interface
 /***********************************************************************************************************************************
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
+STRING_EXTERN(PG_FILE_PGVERSION_STR,                                PG_FILE_PGVERSION);
+STRING_EXTERN(PG_FILE_POSTMASTERPID_STR,                            PG_FILE_POSTMASTERPID);
+STRING_EXTERN(PG_FILE_RECOVERYCONF_STR,                             PG_FILE_RECOVERYCONF);
+
+STRING_EXTERN(PG_PATH_GLOBAL_STR,                                   PG_PATH_GLOBAL);
+
 STRING_EXTERN(PG_NAME_WAL_STR,                                      PG_NAME_WAL);
 STRING_EXTERN(PG_NAME_XLOG_STR,                                     PG_NAME_XLOG);
 
@@ -58,11 +64,17 @@ typedef struct PgInterface
     // Version of PostgreSQL supported by this interface
     unsigned int version;
 
+    // Get the catalog version for this version of PostgreSQL
+    uint32_t (*catalogVersion)(void);
+
     // Does pg_control match this version of PostgreSQL?
     bool (*controlIs)(const unsigned char *);
 
     // Convert pg_control to a common data structure
     PgControl (*control)(const unsigned char *);
+
+    // Get the control version for this version of PostgreSQL
+    uint32_t (*controlVersion)(void);
 
     // Does the WAL header match this version of PostgreSQL?
     bool (*walIs)(const unsigned char *);
@@ -85,8 +97,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_11,
 
+        .catalogVersion = pgInterfaceCatalogVersion110,
+
         .controlIs = pgInterfaceControlIs110,
         .control = pgInterfaceControl110,
+        .controlVersion = pgInterfaceControlVersion110,
 
         .walIs = pgInterfaceWalIs110,
         .wal = pgInterfaceWal110,
@@ -99,8 +114,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_10,
 
+        .catalogVersion = pgInterfaceCatalogVersion100,
+
         .controlIs = pgInterfaceControlIs100,
         .control = pgInterfaceControl100,
+        .controlVersion = pgInterfaceControlVersion100,
 
         .walIs = pgInterfaceWalIs100,
         .wal = pgInterfaceWal100,
@@ -113,8 +131,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_96,
 
+        .catalogVersion = pgInterfaceCatalogVersion096,
+
         .controlIs = pgInterfaceControlIs096,
         .control = pgInterfaceControl096,
+        .controlVersion = pgInterfaceControlVersion096,
 
         .walIs = pgInterfaceWalIs096,
         .wal = pgInterfaceWal096,
@@ -127,8 +148,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_95,
 
+        .catalogVersion = pgInterfaceCatalogVersion095,
+
         .controlIs = pgInterfaceControlIs095,
         .control = pgInterfaceControl095,
+        .controlVersion = pgInterfaceControlVersion095,
 
         .walIs = pgInterfaceWalIs095,
         .wal = pgInterfaceWal095,
@@ -141,8 +165,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_94,
 
+        .catalogVersion = pgInterfaceCatalogVersion094,
+
         .controlIs = pgInterfaceControlIs094,
         .control = pgInterfaceControl094,
+        .controlVersion = pgInterfaceControlVersion094,
 
         .walIs = pgInterfaceWalIs094,
         .wal = pgInterfaceWal094,
@@ -155,8 +182,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_93,
 
+        .catalogVersion = pgInterfaceCatalogVersion093,
+
         .controlIs = pgInterfaceControlIs093,
         .control = pgInterfaceControl093,
+        .controlVersion = pgInterfaceControlVersion093,
 
         .walIs = pgInterfaceWalIs093,
         .wal = pgInterfaceWal093,
@@ -169,8 +199,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_92,
 
+        .catalogVersion = pgInterfaceCatalogVersion092,
+
         .controlIs = pgInterfaceControlIs092,
         .control = pgInterfaceControl092,
+        .controlVersion = pgInterfaceControlVersion092,
 
         .walIs = pgInterfaceWalIs092,
         .wal = pgInterfaceWal092,
@@ -183,8 +216,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_91,
 
+        .catalogVersion = pgInterfaceCatalogVersion091,
+
         .controlIs = pgInterfaceControlIs091,
         .control = pgInterfaceControl091,
+        .controlVersion = pgInterfaceControlVersion091,
 
         .walIs = pgInterfaceWalIs091,
         .wal = pgInterfaceWal091,
@@ -197,8 +233,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_90,
 
+        .catalogVersion = pgInterfaceCatalogVersion090,
+
         .controlIs = pgInterfaceControlIs090,
         .control = pgInterfaceControl090,
+        .controlVersion = pgInterfaceControlVersion090,
 
         .walIs = pgInterfaceWalIs090,
         .wal = pgInterfaceWal090,
@@ -211,8 +250,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_84,
 
+        .catalogVersion = pgInterfaceCatalogVersion084,
+
         .controlIs = pgInterfaceControlIs084,
         .control = pgInterfaceControl084,
+        .controlVersion = pgInterfaceControlVersion084,
 
         .walIs = pgInterfaceWalIs084,
         .wal = pgInterfaceWal084,
@@ -225,8 +267,11 @@ static const PgInterface pgInterface[] =
     {
         .version = PG_VERSION_83,
 
+        .catalogVersion = pgInterfaceCatalogVersion083,
+
         .controlIs = pgInterfaceControlIs083,
         .control = pgInterfaceControl083,
+        .controlVersion = pgInterfaceControlVersion083,
 
         .walIs = pgInterfaceWalIs083,
         .wal = pgInterfaceWal083,
@@ -251,6 +296,47 @@ typedef struct PgControlCommon
     uint32_t controlVersion;
     uint32_t catalogVersion;
 } PgControlCommon;
+
+/***********************************************************************************************************************************
+Get the interface for a PostgreSQL version
+***********************************************************************************************************************************/
+static const PgInterface *
+pgInterfaceVersion(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    const PgInterface *result = NULL;
+
+    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
+    {
+        if (pgInterface[interfaceIdx].version == pgVersion)
+        {
+            result = &pgInterface[interfaceIdx];
+            break;
+        }
+    }
+
+    // If the version was not found then error
+    if (result == NULL)
+        THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Get the catalog version for a PostgreSQL version
+***********************************************************************************************************************************/
+uint32_t
+pgCatalogVersion(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgInterfaceVersion(pgVersion)->catalogVersion());
+}
 
 /***********************************************************************************************************************************
 Get info from pg_control
@@ -338,6 +424,19 @@ pgControlFromFile(const Storage *storage, const String *pgPath)
 }
 
 /***********************************************************************************************************************************
+Get the control version for a PostgreSQL version
+***********************************************************************************************************************************/
+uint32_t
+pgControlVersion(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgInterfaceVersion(pgVersion)->controlVersion());
+}
+
+/***********************************************************************************************************************************
 These WAL header fields are common to all versions of PostgreSQL, so we can use them to generate error messages when the WAL magic
 cannot be found.
 ***********************************************************************************************************************************/
@@ -420,6 +519,32 @@ pgWalFromFile(const String *walFile)
     FUNCTION_LOG_RETURN(PG_WAL, result);
 }
 
+/**********************************************************************************************************************************/
+String *
+pgTablespaceId(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    String *result = NULL;
+
+    if (pgVersion >= PG_VERSION_90)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            String *pgVersionStr = pgVersionToStr(pgVersion);
+
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result = strNewFmt("PG_%s_%u", strPtr(pgVersionStr), pgCatalogVersion(pgVersion));
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 /***********************************************************************************************************************************
 Get WAL name (wal/xlog) for a PostgreSQL version
 ***********************************************************************************************************************************/
@@ -454,27 +579,18 @@ pgControlTestToBuffer(PgControl pgControl)
     memset(bufPtr(result), 0, bufSize(result));
     bufUsedSet(result, bufSize(result));
 
-    // Find the interface for the version of PostgreSQL
-    const PgInterface *interface = NULL;
-
-    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
-    {
-        if (pgInterface[interfaceIdx].version == pgControl.version)
-        {
-            interface = &pgInterface[interfaceIdx];
-            break;
-        }
-    }
-
-    // If the version was not found then error
-    if (interface == NULL)
-        THROW_FMT(AssertError, "invalid version %u", pgControl.version);
-
     // Generate pg_control
-    interface->controlTest(pgControl, bufPtr(result));
+    pgInterfaceVersion(pgControl.version)->controlTest(pgControl, bufPtr(result));
 
     FUNCTION_TEST_RETURN(result);
 }
+
+#endif
+
+/***********************************************************************************************************************************
+Create WAL for testing
+***********************************************************************************************************************************/
+#ifdef DEBUG
 
 void
 pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer)
@@ -486,24 +602,8 @@ pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer)
 
     ASSERT(walBuffer != NULL);
 
-    // Find the interface for the version of PostgreSQL
-    const PgInterface *interface = NULL;
-
-    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
-    {
-        if (pgInterface[interfaceIdx].version == pgWal.version)
-        {
-            interface = &pgInterface[interfaceIdx];
-            break;
-        }
-    }
-
-    // If the version was not found then error
-    if (interface == NULL)
-        THROW_FMT(AssertError, "invalid version %u", pgWal.version);
-
-    // Generate pg_control
-    interface->walTest(pgWal, bufPtr(walBuffer));
+    // Generate WAL
+    pgInterfaceVersion(pgWal.version)->walTest(pgWal, bufPtr(walBuffer));
 
     FUNCTION_TEST_RETURN_VOID();
 }

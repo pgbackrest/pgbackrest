@@ -516,7 +516,7 @@ sub process
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
 
-    # Get passphrase to open manifest (undefined if repo not encrypted) and intialize passphrase variable for backup files
+    # Get passphrase to open manifest (undefined if repo not encrypted) and initialize passphrase variable for backup files
     my $strCipherPassManifest = $oBackupInfo->cipherPassSub();
     my $strCipherPassBackupSet;
 
@@ -809,7 +809,7 @@ sub process
     # If this is an offline backup
     if (!cfgOption(CFGOPT_ONLINE))
     {
-        # If checksum-page is not explictly enabled then disable it.  Even if the version is high enough to have checksums we can't
+        # If checksum-page is not explicitly enabled then disable it.  Even if the version is high enough to have checksums we can't
         # know if they are enabled without asking the database.  When pg_control can be reliably parsed then this decision could be
         # based on that.
         if (!cfgOptionTest(CFGOPT_CHECKSUM_PAGE))
@@ -920,7 +920,7 @@ sub process
         &log(WARN, "aborted backup ${strBackupLabel} of same type exists, will be cleaned to remove invalid files and resumed");
         &log(TEST, TEST_BACKUP_RESUME);
 
-        # Clean the backup path before resuming. The delta option may have changed from false to true during the reseume clean
+        # Clean the backup path before resuming. The delta option may have changed from false to true during the resume clean
         # so set it to the result.
         cfgOptionSet(CFGOPT_DELTA, $self->resumeClean($oStorageRepo, $strBackupLabel, $oBackupManifest, $oAbortedManifest,
             cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $strTimelineCurrent, $strTimelineAborted));

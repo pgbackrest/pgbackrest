@@ -558,7 +558,7 @@ sub backupStart
     my $bChecksumPage =
         $self->executeSqlOne("select count(*) = 1 from pg_settings where name = 'data_checksums' and setting = 'on'");
 
-    # If checksum page option is not explictly set then set it to whatever the database says
+    # If checksum page option is not explicitly set then set it to whatever the database says
     if (!cfgOptionTest(CFGOPT_CHECKSUM_PAGE))
     {
         cfgOptionSet(CFGOPT_CHECKSUM_PAGE, $bChecksumPage);
@@ -707,7 +707,7 @@ sub configValidate
                 " '${strDbVersion}' and " . cfgOptionName(CFGOPT_PG_PATH) . " '$self->{strDbPath}' read from" .
                 " '$self->{strDbPath}/" . DB_FILE_PGCONTROL . "'\n" .
             "HINT: the " . cfgOptionName(CFGOPT_PG_PATH) . " and " . cfgOptionName(CFGOPT_PG_PORT) .
-                " settings likely reference different clusters",
+                " settings likely reference different clusters.",
             ERROR_DB_MISMATCH);
     }
 

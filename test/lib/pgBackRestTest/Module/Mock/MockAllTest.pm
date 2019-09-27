@@ -68,8 +68,8 @@ sub run
         {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false},
         {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true},
         {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false},
-        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, delta => false},
-        {vm => VM4, remote =>  true, s3 => false, encrypt => false, delta =>  true},
+        {vm => VM4, remote => false, s3 => false, encrypt => false, delta => false},
+        {vm => VM4, remote =>  true, s3 =>  true, encrypt =>  true, delta =>  true},
     )
     {
         # Only run tests for this vm
@@ -261,7 +261,7 @@ sub run
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSERIAL . '/anything.tmp', 'IGNORE');
 
-            # Create pg_snaphots dir and file - only file will be ignored
+            # Create pg_snapshots dir and file - only file will be ignored
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSNAPSHOTS . '/anything.tmp', 'IGNORE');
 
@@ -297,6 +297,7 @@ sub run
             $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2');
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2/logfile', 'IGNORE');
 
+            executeTest('mkfifo ' . $oHostDbMaster->dbBasePath() . '/apipe');
         }
 
         # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.
@@ -364,7 +365,7 @@ sub run
         $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad',
                                               '../pg_config/postgresql.conf.link');
 
-        # Fail bacause two links point to the same place
+        # Fail because two links point to the same place
         $strFullBackup = $oHostBackup->backup(
             $strType, 'error on link to a link',
             {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
@@ -401,6 +402,11 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 4194304;
+
+        # Add pipe to exclusions
+        $oHostBackup->configUpdate(
+            {(CFGDEF_SECTION_GLOBAL . ':backup') =>
+                {cfgOptionName(CFGOPT_EXCLUDE) => ['postgresql.auto.conf', 'pg_log/', 'pg_log2', 'apipe']}});
 
         # Error on backup option to check logging
         #---------------------------------------------------------------------------------------------------------------------------
@@ -594,6 +600,9 @@ sub run
         # Restore will set invalid user and group to root since the base path user/group are also invalid
         if (!$bRemote)
         {
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER} = 'root';
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP} = 'root';
+
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
                 {&MANIFEST_SUBKEY_USER} = 'root';
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
@@ -693,7 +702,7 @@ sub run
 
             $oHostDbMaster->restore(
                 'error on existing linked file', $strFullBackup,
-                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
+                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_EXISTS,
                     strOptionalParam => '--log-level-console=warn --link-all'});
 
             executeTest('rm ' . $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf');
@@ -718,6 +727,8 @@ sub run
             # Now a combination of remapping
             # testFileCreate(
             #     $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf', "CONTENTS2\n", $lTime - 100);
+
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'backup.manifest', '');
 
             $oHostDbMaster->restore(
                 'restore all links --link-all and mapping', $strFullBackup,
@@ -1068,10 +1079,11 @@ sub run
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'} = $oHostDbMaster->tablespacePath(1, 2);
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'} = $oHostDbMaster->tablespacePath(2, 2);
 
-        # At this point the $PG_DATA permissions have been reset to 0600
+        # At this point the $PG_DATA permissions have been reset to 0700
         if (!$bRemote)
         {
-            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE});
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE} = '0777';
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGTBLSPC}{&MANIFEST_SUBKEY_MODE} = '0777';
         }
 
         $oHostDbMaster->restore(
@@ -1335,15 +1347,8 @@ sub run
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
         $oHostDbMaster->restore(
-            'no tablespace remap - error when tablespace dir does not exist', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, iExpectedExitStatus => ERROR_PATH_MISSING,
-                bTablespace => false, strOptionalParam => '--tablespace-map-all=../../tablespace'});
-
-        storageTest()->pathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace', {strMode => '0700'});
-
-        $oHostDbMaster->restore(
             'no tablespace remap', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-            {rhExpectedManifest => \%oManifest, bTablespace => false,
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bTablespace => false,
                 strOptionalParam => '--tablespace-map-all=../../tablespace'});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';

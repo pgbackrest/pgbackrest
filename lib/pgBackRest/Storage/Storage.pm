@@ -400,13 +400,41 @@ sub manifest
             {name => 'strFilter', optional => true, trace => true},
         );
 
-    my $hManifest = $self->{oJSON}->decode($self->{oStorageC}->manifest($strPathExp, $strFilter));
+    my $hManifest = $self->{oJSON}->decode($self->manifestJson($strPathExp, {strFilter => $strFilter}));
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'hManifest', value => $hManifest, trace => true}
+    );
+}
+
+sub manifestJson
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+        $strFilter,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->manifestJson', \@_,
+            {name => 'strPathExp'},
+            {name => 'strFilter', optional => true, trace => true},
+        );
+
+    my $strManifestJson = $self->{oStorageC}->manifest($strPathExp, $strFilter);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strManifestJson', value => $strManifestJson, trace => true}
     );
 }
 
@@ -991,7 +1019,7 @@ sub encrypted
 }
 
 ####################################################################################################################################
-# encryptionValid - determine if encyption set properly based on the value passed
+# encryptionValid - determine if encryption set properly based on the value passed
 ####################################################################################################################################
 sub encryptionValid
 {

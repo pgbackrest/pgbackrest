@@ -181,7 +181,7 @@ testRun(void)
         TEST_ERROR_FMT(
             cmdCheck(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
             " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
-            "HINT: the pg1-path and pg1-port settings likely reference different clusters",
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
             strPtr(pgVersionToStr(PG_VERSION_92)), testPath(), strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path),
             strPtr(pg1Path));
 
@@ -284,8 +284,8 @@ testRun(void)
         TEST_ERROR(
             cmdCheck(), ArchiveTimeoutError,
             "WAL segment 000000010000000100000001 was not archived before the 500ms timeout\n"
-            "HINT: check the archive_command to ensure that all options are correct (especially --stanza)\n"
-            "HINT: check the PostgreSQL server log for errors");
+            "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+            "HINT: check the PostgreSQL server log for errors.");
 
         // Create WAL segment
         Buffer *buffer = bufNew(16 * 1024 * 1024);
@@ -393,7 +393,7 @@ testRun(void)
             checkDbConfig(PG_VERSION_94, db.primaryId, db.primary, false), DbMismatchError,
             "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
             PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
-            "HINT: the pg1-path and pg1-port settings likely reference different clusters",
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
             strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path), strPtr(pgVersionToStr(PG_VERSION_94)), strPtr(pg1Path),
             strPtr(pg1Path));
 
@@ -403,7 +403,7 @@ testRun(void)
             checkDbConfig(PG_VERSION_92, db.standbyId, db.standby, true), DbMismatchError,
             "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
             PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
-            "HINT: the pg8-path and pg8-port settings likely reference different clusters",
+            "HINT: the pg8-path and pg8-port settings likely reference different clusters.",
             strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(dbPgDataPath(db.standby)), strPtr(pgVersionToStr(PG_VERSION_92)),
             strPtr(pg8Path), strPtr(pg8Path));
 
@@ -460,17 +460,17 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("checkStanzaInfo(), checkStanzaInfoPg()"))
     {
-        InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_96, 6569239123849665679, cipherTypeNone, NULL);
+        InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_96, 6569239123849665679, NULL);
         InfoPgData archivePg = infoPgData(infoArchivePg(archiveInfo), infoPgDataCurrentId(infoArchivePg(archiveInfo)));
 
-        InfoBackup *backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665679, 123, 12345, cipherTypeNone, NULL);
+        InfoBackup *backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665679, NULL);
         InfoPgData backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_RESULT_VOID(checkStanzaInfo(&archivePg, &backupPg), "stanza info files match");
 
         // Create a corrupted backup file - system id
         // -------------------------------------------------------------------------------------------------------------------------
-        backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, 123, 12345, cipherTypeNone, NULL);
+        backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -481,7 +481,7 @@ testRun(void)
 
         // Create a corrupted backup file - system id and version
         // -------------------------------------------------------------------------------------------------------------------------
-        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, 123, 12345, cipherTypeNone, NULL);
+        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -492,7 +492,7 @@ testRun(void)
 
         // Create a corrupted backup file - version
         // -------------------------------------------------------------------------------------------------------------------------
-        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, 123, 12345, cipherTypeNone, NULL);
+        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -503,7 +503,7 @@ testRun(void)
 
         // Create a corrupted backup file - db id
         // -------------------------------------------------------------------------------------------------------------------------
-        infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679, 960, 201608131);
+        infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(

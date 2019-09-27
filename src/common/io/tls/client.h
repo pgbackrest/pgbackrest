@@ -5,9 +5,9 @@ A simple, secure TLS client intended to allow access to services that are expose
 SSL methods are disabled so only TLS connections are allowed.
 
 This object is intended to be used for multiple TLS connections against a service so tlsClientOpen() can be called each time a new
-connection is needed.  By default, an open connection will be reused for pipelining so the user must be prepared to retry their
-transaction on a read/write error if the server closes the connection before it can be reused.  If this behavior is not desirable
-then tlsClientClose() may be used to ensure that the next call to tlsClientOpen() will create a new TLS session.
+connection is needed.  By default, an open connection will be reused so the user must be prepared to retry their transaction on a
+read/write error if the server closes the connection before it is reused.  If this behavior is not desirable then tlsClientClose()
+may be used to ensure that the next call to tlsClientOpen() will create a new TLS session.
 
 Note that tlsClientRead() is non-blocking unless there are *zero* bytes to be read from the session in which case it will raise an
 error after the defined timeout.  In any case the tlsClientRead()/tlsClientWrite()/tlsClientEof() functions should not generally

@@ -8,6 +8,7 @@ Backup Info Handler
 #include <string.h>
 #include <inttypes.h>
 
+#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/ini.h"
 #include "common/log.h"
@@ -16,10 +17,8 @@ Backup Info Handler
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
-#include "info/info.h"
 #include "info/infoBackup.h"
-#include "info/infoManifest.h"
-#include "info/infoPg.h"
+#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
@@ -30,12 +29,26 @@ Constants
 ***********************************************************************************************************************************/
 #define INFO_BACKUP_SECTION                                         "backup"
 #define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
+    STRING_STATIC(INFO_BACKUP_SECTION_BACKUP_CURRENT_STR,           INFO_BACKUP_SECTION_BACKUP_CURRENT);
 
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR,       "backup-info-repo-size");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR,     "backup-archive-start");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR,      "backup-archive-stop");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR,    "backup-info-repo-size");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR, "backup-info-repo-size-delta");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR,            "backup-info-size");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR,      "backup-info-size-delta");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR,            "backup-reference");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR,         "backup-info-size");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR,   "backup-info-size-delta");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_PRIOR_VAR,             "backup-prior");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR,         "backup-reference");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR,   "backup-timestamp-start");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR,    "backup-timestamp-stop");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TYPE_VAR,              "backup-type");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR,        "option-archive-check");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR,         "option-archive-copy");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR,       "option-backup-standby");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR,        "option-checksum-page");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_COMPRESS_VAR,             "option-compress");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_HARDLINK_VAR,             "option-hardlink");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ONLINE_VAR,               "option-online");
 
 STRING_EXTERN(INFO_BACKUP_PATH_FILE_STR,                            INFO_BACKUP_PATH_FILE);
 STRING_EXTERN(INFO_BACKUP_PATH_FILE_COPY_STR,                       INFO_BACKUP_PATH_FILE_COPY);
@@ -58,15 +71,38 @@ Create new object
 static InfoBackup *
 infoBackupNewInternal(void)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_TEST_VOID();
+
+    InfoBackup *this = memNew(sizeof(InfoBackup));
+    this->memContext = memContextCurrent();
+    this->backup = lstNew(sizeof(InfoBackupData));
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Create new object without loading it from a file
+***********************************************************************************************************************************/
+InfoBackup *
+infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+    FUNCTION_LOG_END();
+
+    ASSERT(pgVersion > 0 && pgSystemId > 0);
 
     InfoBackup *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("InfoBackup")
     {
-        // Create object
-        this = memNew(sizeof(InfoBackup));
-        this->memContext = MEM_CONTEXT_NEW();
+        this = infoBackupNewInternal();
+
+        // Initialize the pg data
+        this->infoPg = infoPgNew(infoPgBackup, cipherPassSub);
+        infoBackupPgSet(this, pgVersion, pgSystemId);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -74,126 +110,90 @@ infoBackupNewInternal(void)
 }
 
 /***********************************************************************************************************************************
-Create new object without loading it from a file
-***********************************************************************************************************************************/
-InfoBackup *
-infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgControlVersion, const uint32_t pgCatalogVersion,
-    CipherType cipherType, const String *cipherPassSub)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
-        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
-        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
-        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
-    FUNCTION_LOG_END();
-
-    ASSERT(pgVersion > 0 && pgSystemId > 0 && pgControlVersion > 0 && pgCatalogVersion > 0);
-
-    InfoBackup *this = infoBackupNewInternal();
-
-    // Initialize the pg data
-    this->infoPg = infoPgNew(cipherType, cipherPassSub);
-    infoBackupPgSet(this, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
-
-    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
-}
-
-/***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
-InfoBackup *
-infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+static void
+infoBackupLoadCallback(void *data, const String *section, const String *key, const String *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
+
+    InfoBackup *infoBackup = (InfoBackup *)data;
+
+    // Process current backup list
+    if (strEq(section, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR))
+    {
+        const KeyValue *backupKv = jsonToKv(value);
+
+        MEM_CONTEXT_BEGIN(lstMemContext(infoBackup->backup))
+        {
+            InfoBackupData infoBackupData =
+            {
+                .backrestFormat = varUIntForce(kvGet(backupKv, VARSTR(INFO_KEY_FORMAT_STR))),
+                .backrestVersion = varStrForce(kvGet(backupKv, VARSTR(INFO_KEY_VERSION_STR))),
+                .backupInfoRepoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR)),
+                .backupInfoRepoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR)),
+                .backupInfoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR)),
+                .backupInfoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR)),
+                .backupLabel = strDup(key),
+                .backupPgId = cvtZToUInt(strPtr(varStrForce(kvGet(backupKv, INFO_KEY_DB_ID_VAR)))),
+                .backupTimestampStart = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR)),
+                .backupTimestampStop= varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR)),
+                .backupType = varStrForce(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR)),
+
+                // Possible NULL values
+                .backupArchiveStart = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR))),
+                .backupArchiveStop = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR))),
+                .backupPrior = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR))),
+                .backupReference =
+                    kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR) != NULL ?
+                        strLstNewVarLst(varVarLst(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR))) : NULL,
+
+                // Options
+                .optionArchiveCheck = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR)),
+                .optionArchiveCopy = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR)),
+                .optionBackupStandby = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR)),
+                .optionChecksumPage = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR)),
+                .optionCompress = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_COMPRESS_VAR)),
+                .optionHardlink = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_HARDLINK_VAR)),
+                .optionOnline = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR)),
+            };
+
+            // Add the backup data to the list
+            lstAdd(infoBackup->backup, &infoBackupData);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static InfoBackup *
+infoBackupNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(IO_READ, read);
     FUNCTION_LOG_END();
 
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT(read != NULL);
 
-    InfoBackup *this = infoBackupNewInternal();
+    InfoBackup *this = NULL;
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_NEW_BEGIN("InfoBackup")
     {
-        Ini *ini = NULL;
-
-        // Catch file missing error and add backup-specific hints before rethrowing
-        TRY_BEGIN()
-        {
-            this->infoPg = infoPgNewLoad(storage, fileName, infoPgBackup, cipherType, cipherPass, &ini);
-        }
-        CATCH_ANY()
-        {
-            THROWP_FMT(
-                errorType(),
-                "%s\n"
-                "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-                "HINT: has a stanza-create been performed?",
-                errorMessage());
-        }
-        TRY_END();
-
-        const String *backupCurrentSection = STRDEF(INFO_BACKUP_SECTION_BACKUP_CURRENT);
-
-        // If there are current backups, then parse the json for each into a list object
-        if (strLstExists(iniSectionList(ini), backupCurrentSection))
-        {
-            // Initialize the store and get the list of backup labels
-            this->backup = lstNew(sizeof(InfoBackupData));
-            const StringList *backupLabelList = iniSectionKeyList(ini, backupCurrentSection);
-
-            // For each backup label, store the information
-            for (unsigned int backupLabelIdx = 0; backupLabelIdx < strLstSize(backupLabelList); backupLabelIdx++)
-            {
-                const String *backupLabelKey = strLstGet(backupLabelList, backupLabelIdx);
-                const KeyValue *backupKv = jsonToKv(iniGet(ini, backupCurrentSection, backupLabelKey));
-
-                InfoBackupData infoBackupData =
-                {
-                    .backrestFormat = varUIntForce(kvGet(backupKv, VARSTR(INFO_KEY_FORMAT_STR))),
-                    .backrestVersion = varStrForce(kvGet(backupKv, VARSTR(INFO_KEY_VERSION_STR))),
-                    .backupInfoRepoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR)),
-                    .backupInfoRepoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR)),
-                    .backupInfoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR)),
-                    .backupInfoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR)),
-                    .backupLabel = strDup(backupLabelKey),
-                    .backupPgId = cvtZToUInt(strPtr(varStrForce(kvGet(backupKv, INFO_KEY_DB_ID_VAR)))),
-                    .backupTimestampStart = varUInt64(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_VAR)),
-                    .backupTimestampStop= varUInt64(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_VAR)),
-                    .backupType = varStrForce(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_TYPE_VAR)),
-
-                    // Possible NULL values
-                    .backupArchiveStart = varStr(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_VAR)),
-                    .backupArchiveStop = varStr(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_VAR)),
-                    .backupPrior = varStr(kvGet(backupKv, INFO_MANIFEST_KEY_BACKUP_PRIOR_VAR)),
-                    .backupReference =
-                        kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR) != NULL ?
-                            strLstNewVarLst(varVarLst(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR))) : NULL,
-
-                    // Options
-                    .optionArchiveCheck = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_CHECK_VAR)),
-                    .optionArchiveCopy = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_COPY_VAR)),
-                    .optionBackupStandby = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_BACKUP_STANDBY_VAR)),
-                    .optionChecksumPage = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_CHECKSUM_PAGE_VAR)),
-                    .optionCompress = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_COMPRESS_VAR)),
-                    .optionHardlink = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_HARDLINK_VAR)),
-                    .optionOnline = varBool(kvGet(backupKv, INFO_MANIFEST_KEY_OPT_ONLINE_VAR)),
-                };
-
-                // Add the backup data to the list
-                lstAdd(this->backup, &infoBackupData);
-            }
-        }
-
-        iniFree(ini);
+        this = infoBackupNewInternal();
+        this->infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
@@ -201,31 +201,26 @@ infoBackupNewLoad(const Storage *storage, const String *fileName, CipherType cip
 /***********************************************************************************************************************************
 Save to file
 ***********************************************************************************************************************************/
-void
-infoBackupSave(
-    InfoBackup *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+static void
+infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(STRING, sectionNext);
+        FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
+    FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT(data != NULL);
+    ASSERT(infoSaveData != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    InfoBackup *infoBackup = (InfoBackup *)data;
+
+    if (infoSaveSection(infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, sectionNext))
     {
-        Ini *ini = iniNew();
-
         // Set the backup current section
-        for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(this); backupIdx++)
+        for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
         {
-            InfoBackupData backupData = infoBackupData(this, backupIdx);
+            InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
 
             KeyValue *backupDataKv = kvNew();
             kvPut(backupDataKv, VARSTR(INFO_KEY_FORMAT_STR), VARUINT(backupData.backrestFormat));
@@ -233,11 +228,11 @@ infoBackupSave(
 
             kvPut(backupDataKv, INFO_KEY_DB_ID_VAR, VARUINT(backupData.backupPgId));
 
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_VAR, VARSTR(backupData.backupArchiveStart));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_VAR, VARSTR(backupData.backupArchiveStop));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR, VARSTR(backupData.backupArchiveStart));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR, VARSTR(backupData.backupArchiveStop));
 
             if (backupData.backupPrior != NULL)
-                kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_PRIOR_VAR, VARSTR(backupData.backupPrior));
+                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR, VARSTR(backupData.backupPrior));
 
             if (backupData.backupReference != NULL)
             {
@@ -249,22 +244,40 @@ infoBackupSave(
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR, VARUINT64(backupData.backupInfoRepoSizeDelta));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR, VARUINT64(backupData.backupInfoSize));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR, VARUINT64(backupData.backupInfoSizeDelta));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_VAR, VARUINT64(backupData.backupTimestampStart));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARUINT64(backupData.backupTimestampStop));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_TYPE_VAR, VARSTR(backupData.backupType));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR, VARUINT64(backupData.backupTimestampStart));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARUINT64(backupData.backupTimestampStop));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR, VARSTR(backupData.backupType));
 
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_BACKUP_STANDBY_VAR, VARBOOL(backupData.optionBackupStandby));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_CHECKSUM_PAGE_VAR, VARBOOL(backupData.optionChecksumPage));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_COMPRESS_VAR, VARBOOL(backupData.optionCompress));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_HARDLINK_VAR, VARBOOL(backupData.optionHardlink));
-            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ONLINE_VAR, VARBOOL(backupData.optionOnline));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR, VARBOOL(backupData.optionBackupStandby));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR, VARBOOL(backupData.optionChecksumPage));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_COMPRESS_VAR, VARBOOL(backupData.optionCompress));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_HARDLINK_VAR, VARBOOL(backupData.optionHardlink));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR, VARBOOL(backupData.optionOnline));
 
-            iniSet(ini, STRDEF(INFO_BACKUP_SECTION_BACKUP_CURRENT), backupData.backupLabel, jsonFromKv(backupDataKv, 0));
+            infoSaveValue(
+                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel, jsonFromKv(backupDataKv, 0));
         }
+    }
 
-        infoPgSave(infoBackupPg(this), ini, storage, fileName, infoPgBackup, cipherType, cipherPass);
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+infoBackupSave(InfoBackup *this, IoWrite *write)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(IO_WRITE, write);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(write != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        infoPgSave(infoBackupPg(this), write, infoBackupSaveCallback, this);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -290,17 +303,15 @@ infoBackupPg(const InfoBackup *this)
 Set the infoPg data
 ***********************************************************************************************************************************/
 InfoBackup *
-infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion)
+infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
-        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
     FUNCTION_LOG_END();
 
-    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId, pgControlVersion, pgCatalogVersion);
+    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId);
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
@@ -317,7 +328,7 @@ infoBackupDataTotal(const InfoBackup *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN((this->backup == NULL ? 0 : lstSize(this->backup)));
+    FUNCTION_TEST_RETURN(lstSize(this->backup));
 }
 
 /***********************************************************************************************************************************
@@ -354,7 +365,7 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
         InfoBackupData backupData = infoBackupData(this, idx);
 
         if (strCmp(backupData.backupLabel, backupDeleteLabel) == 0)
-            lstRemove(this->backup, idx);
+            lstRemoveIdx(this->backup, idx);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -410,6 +421,137 @@ infoBackupCipherPass(const InfoBackup *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
+}
+
+/***********************************************************************************************************************************
+Helper function to load backup info files
+***********************************************************************************************************************************/
+typedef struct InfoBackupLoadFileData
+{
+    MemContext *memContext;                                         // Mem context
+    const Storage *storage;                                         // Storage to load from
+    const String *fileName;                                         // Base filename
+    CipherType cipherType;                                          // Cipher type
+    const String *cipherPass;                                       // Cipher passphrase
+    InfoBackup *infoBackup;                                         // Loaded infoBackup object
+} InfoBackupLoadFileData;
+
+static bool
+infoBackupLoadFileCallback(void *data, unsigned int try)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(UINT, try);
+    FUNCTION_LOG_END();
+
+    ASSERT(data != NULL);
+
+    InfoBackupLoadFileData *loadData = (InfoBackupLoadFileData *)data;
+    bool result = false;
+
+    if (try < 2)
+    {
+        // Construct filename based on try
+        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strPtr(loadData->fileName));
+
+        // Attempt to load the file
+        IoRead *read = storageReadIo(storageNewReadNP(loadData->storage, fileName));
+        cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
+
+        MEM_CONTEXT_BEGIN(loadData->memContext)
+        {
+            loadData->infoBackup = infoBackupNewLoad(read);
+            result = true;
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+InfoBackup *
+infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+
+    InfoBackupLoadFileData data =
+    {
+        .memContext = memContextCurrent(),
+        .storage = storage,
+        .fileName = fileName,
+        .cipherType = cipherType,
+        .cipherPass = cipherPass,
+    };
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const char *fileNamePath = strPtr(storagePathNP(storage, fileName));
+
+        TRY_BEGIN()
+        {
+            infoLoad(
+                strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
+                infoBackupLoadFileCallback, &data);
+        }
+        CATCH_ANY()
+        {
+            THROWP_FMT(
+                errorType(),
+                "%s\n"
+                "HINT: backup.info cannot be opened and is required to perform a backup.\n"
+                "HINT: has a stanza-create been performed?",
+                errorMessage());
+        }
+        TRY_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(INFO_BACKUP, data.infoBackup);
+}
+
+/***********************************************************************************************************************************
+Helper function to save backup info files
+***********************************************************************************************************************************/
+void
+infoBackupSaveFile(
+    InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Save the file
+        IoWrite *write = storageWriteIo(storageNewWriteNP(storage, fileName));
+        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
+        infoBackupSave(infoBackup, write);
+
+        // Make a copy of the file
+        storageCopy(
+            storageNewReadNP(storage, fileName), storageNewWriteNP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

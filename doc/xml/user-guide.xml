@@ -26,11 +26,14 @@
         <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos6, centos7 -->
         <variable key="os-type">debian</variable>
 
+        <!-- Will encryption be used in the documentation? It can be useful for testing to omit encryption. -->
+        <variable key="encrypt">y</variable>
+
         <!-- Common if expressions for testing os-type -->
         <variable key="os-type-is-debian">'{[os-type]}' eq '{[os-debian]}'</variable>
         <variable key="os-type-is-centos6">'{[os-type]}' eq '{[os-centos6]}'</variable>
         <variable key="os-type-is-centos7">'{[os-type]}' eq '{[os-centos7]}'</variable>
-        <variable key="os-type-is-centos">{[os-type-is-centos6]} || {[os-type-is-centos7]}</variable>
+        <variable key="os-type-is-centos">({[os-type-is-centos6]} || {[os-type-is-centos7]})</variable>
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:16.04</variable>
@@ -732,7 +735,7 @@
             <title>Download version <id>{[version]}</id> of <backrest/> to pre-created <path>/build</path> path</title>
 
             <!-- This is shown to the user but never actually run for the very good reason that the release is not available before the documentation is built -->
-            <execute user="root" skip="y">
+            <execute skip="y">
                 <exe-cmd>wget -q -O -
                     {[github-url-release]}/{[version]}.tar.gz |
                     tar zx -C /build</exe-cmd>
@@ -817,16 +820,16 @@
 
         <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-option]}"/>
 
-        <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
+        <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
             <title>Create <user>{[br-user]}</user> user</title>
 
             <execute if="{[os-type-is-debian]}" user="root">
-                <exe-cmd>adduser --ingroup {[pg-group]} --disabled-password --gecos "" {[br-user]}</exe-cmd>
+                <exe-cmd>adduser {[dash]}-ingroup {[pg-group]} {[dash]}-disabled-password {[dash]}-gecos "" {[br-user]}</exe-cmd>
             </execute>
             <execute if="{[os-type-is-centos]}" user="root">
                 <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
             </execute>
-        </execute-list>
+        </execute-list> -->
 
         <block id="br-install">
             <block-variable-replace key="br-install-host">{[host-pg1]}</block-variable-replace>
@@ -925,9 +928,9 @@
             <list>
                 <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are default: the default config file will be loaded, if it exists, and <file>*.conf</file> files in the default config include path will be appended, if they exist.</list-item>
                 <list-item><br-option>config</br-option> option is specified: only the specified config file will be loaded and is expected to exist.</list-item>
-                <list-item><br-option>config-include-path</br-option> is specified: <file>*.conf</file> files in the config include path will be loaded and the path is required to exist. The default config file will be be loaded if it exists. If it is desireable to load only the files in the specified config include path, then the <br-option>--no-config</br-option> option can also be passed.</list-item>
+                <list-item><br-option>config-include-path</br-option> is specified: <file>*.conf</file> files in the config include path will be loaded and the path is required to exist. The default config file will be be loaded if it exists. If it is desirable to load only the files in the specified config include path, then the <br-option>--no-config</br-option> option can also be passed.</list-item>
                 <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are specified: using the user-specified values, the config file will be loaded and <file>*.conf</file> files in the config include path will be appended. The files are expected to exist.</list-item>
-                <list-item><br-option>config-path</br-option> is specified: this setting will override the base path for the default location of the config file and/or the base path of the default config-include-path setting unless the config and/or config-incude-path option is explicitly set.</list-item>
+                <list-item><br-option>config-path</br-option> is specified: this setting will override the base path for the default location of the config file and/or the base path of the default config-include-path setting unless the config and/or config-include-path option is explicitly set.</list-item>
             </list>
 
             <p>The files are concatenated as if they were one big file; order doesn't matter, but there is precedence based on sections. The precedence (highest to lowest) is:</p>
@@ -1039,7 +1042,7 @@
 
         <!-- SECTION => QUICKSTART - CONFIGURE ENCRYPTION -->
         <!-- Since S3 and repository host require configure-archiving, this section must come after. -->
-        <section id="configure-encryption">
+        <section if="'{[encrypt]}' eq 'y'" id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
             <p>The repository will be configured with a cipher type and key to demonstrate encryption.  Encryption is always performed client-side even if the repository type (e.g. <proper>S3</proper> or other object store) supports encryption.</p>
@@ -1641,6 +1644,15 @@
 
         <p>The Restore section introduces additional <cmd>restore</cmd> command features.</p>
 
+        <!-- ******************************************************************************************************************* -->
+        <section id="ownership">
+            <title>File Ownership</title>
+
+            <p>If a <cmd>restore</cmd> is run as a non-root user (the typical scenario) then all files restored will belong to the user/group executing <backrest/>.  If existing files are not owned by the executing user/group then an error will result if the ownership cannot be updated to the executing user/group.  In that case the file ownership will need to be updated by a privileged user before the restore can be retried.</p>
+
+            <p>If a <cmd>restore</cmd> is run as the <id>root</id> user then <backrest/> will attempt to recreate the ownership recorded in the manifest when the backup was made.  Only user/group <b>names</b> are stored in the manifest so the same names must exist on the restore host for this to work.  If the user/group name cannot be found locally then the user/group of the <postgres/> data directory will be used and finally <id>root</id> if the data directory user/group cannot be mapped to a name.</p>
+        </section>
+
         <!-- SECTION => RESTORE - DELTA -->
         <section id="option-delta">
             <title>Delta Option</title>
@@ -1657,7 +1669,7 @@
                 <execute user="postgres" output="y" filter="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
                         --log-level-console=detail restore</exe-cmd>
-                    <exe-highlight>demo\/PG_VERSION - exists and matches backup|check\/clean db path|restore global\/pg_control</exe-highlight>
+                    <exe-highlight>demo\/PG_VERSION - exists and matches backup|remove invalid files|rename global\/pg_control</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -2194,6 +2206,8 @@
 
         <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>repository</host> host where the backups and WAL archive files are stored.  This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact.  It is still a good idea to employ traditional backup software to backup the <host>repository</host> host.</p>
 
+        <p>On <postgres/> hosts, <br-option>pg1-path</br-option> is required to be the path of the local PostgreSQL cluster and no <br-option>pg1-host</br-option> should be configured. When configuring a repository host, the pgbackrest configuration file must have the <br-option>pg-host</br-option> option configured to connect to the primary and standby (if any) hosts. The repository host has the only pgbackrest configuration that should be aware of more than one <postgres/> host. Order does not matter, e.g. pg1-path/pg1-host, pg2-path/pg2-host can be primary or standby.</p>
+
         <section id="install">
             <title>Installation</title>
 
@@ -2282,7 +2296,7 @@
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
                 <backrest-config-option section="demo" key="pg1-host">{[host-pg1]}</backrest-config-option>
-                <backrest-config-option if="{[pg-version]} >= 11" section="demo" key="pg1-host-user">{[br-user]}</backrest-config-option>
+                <!-- <backrest-config-option if="{[pg-version]} >= 11" section="demo" key="pg1-host-user">{[br-user]}</backrest-config-option> -->
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
@@ -2308,7 +2322,7 @@
 
             <p>Commands are run the same as on a single host configuration except that some commands such as <cmd>backup</cmd> and <cmd>expire</cmd> are run from the <host>repository</host> host instead of the <host>database</host> host.</p>
 
-            <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
+            <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
                 <title>Set permissions required for backup</title>
 
                 <execute user="postgres">
@@ -2322,7 +2336,7 @@
                             grant execute on function pg_create_restore_point(text) to pgbackrest;"
                     </exe-cmd>
                 </execute>
-            </execute-list>
+            </execute-list> -->
 
             <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
 
@@ -2551,16 +2565,16 @@
 
             <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="{[host-option]}"/>
 
-            <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
+            <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
                 <title>Create <user>{[br-user]}</user> user</title>
 
                 <execute if="{[os-type-is-debian]}" user="root">
-                    <exe-cmd>adduser --ingroup {[pg-group]} --disabled-password --gecos "" {[br-user]}</exe-cmd>
+                    <exe-cmd>adduser {[dash]}-ingroup {[pg-group]} {[dash]}-disabled-password {[dash]}-gecos "" {[br-user]}</exe-cmd>
                 </execute>
                 <execute if="{[os-type-is-centos]}" user="root">
                     <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
                 </execute>
-            </execute-list>
+            </execute-list> -->
 
             <block id="br-install">
                 <block-variable-replace key="br-install-host">{[host-pg2]}</block-variable-replace>
@@ -2597,7 +2611,7 @@
 
             <p>A hot standby performs replication using the WAL archive and allows read-only queries.</p>
 
-            <p><backrest/> configuration is very similar to <host>{[host-pg1]}</host> except that the <pg-option>standby_mode</pg-option> setting will be enabled to keep the cluster in recovery mode when the end of the WAL stream has been reached.</p>
+            <p><backrest/> configuration is very similar to <host>{[host-pg1]}</host> except that the <id>standby</id> recovery type will be used to keep the cluster in recovery mode when the end of the WAL stream has been reached.</p>
 
             <backrest-config host="{[host-pg2]}" file="{[backrest-config-demo]}">
                 <title>Configure <backrest/> on the standby</title>
@@ -2605,8 +2619,6 @@
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
 
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
-
-                <backrest-config-option section="demo" key="recovery-option">standby_mode=on</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
@@ -2642,19 +2654,17 @@
                 <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
                 <execute user="postgres" if="{[os-type-is-debian]}">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
                 </execute>
 
                 <execute user="postgres" if="{[os-type-is-centos]}">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>cat {[postgres-recovery-demo]}</exe-cmd>
                 </execute>
             </execute-list>
-
-            <admonition type="note">The <pg-setting>standby_mode</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>--type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</admonition>
 
             <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>.  Otherwise, connection attempts will be refused.  The rest of the configuration is in case the standby is promoted to a primary.</p>
 
@@ -2837,13 +2847,15 @@
                 </execute>
 
                 <execute user="postgres">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>cat {[postgres-recovery-demo]}</exe-cmd>
                 </execute>
             </execute-list>
+
+            <admonition type="note">The <pg-setting>primary_conninfo</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>{[dash]}-type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</admonition>
 
             <p if="{[os-type-is-centos]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
 
@@ -3073,8 +3085,8 @@
 
             <backrest-config-option section="demo" key="pg2-path">{[pg-path]}</backrest-config-option>
             <backrest-config-option section="demo" key="pg2-host">{[host-pg2]}</backrest-config-option>
-            <backrest-config-option if="{[pg-version]} >= 11" section="demo"
-                key="pg2-host-user">{[br-user]}</backrest-config-option>
+            <!-- <backrest-config-option if="{[pg-version]} >= 11" section="demo"
+                key="pg2-host-user">{[br-user]}</backrest-config-option> -->
 
             <backrest-config-option section="global" key="backup-standby">y</backrest-config-option>
         </backrest-config>
@@ -3307,11 +3319,11 @@
             <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
             <execute user="postgres" if="{[os-type-is-debian]}">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
             </execute>
 
             <execute user="postgres" if="{[os-type-is-centos]}">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
             </execute>
         </execute-list>
 

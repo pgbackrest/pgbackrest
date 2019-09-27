@@ -36,7 +36,7 @@ use constant BOGUS =>                                               'bogus';
     push @EXPORT, qw(BOGUS);
 
 ####################################################################################################################################
-# The current test run that is executung.  Only a single run should ever occur in a process to prevent various cleanup issues from
+# The current test run that is executing.  Only a single run should ever occur in a process to prevent various cleanup issues from
 # affecting the next run.  Of course multiple subtests can be executed in a single run.
 ####################################################################################################################################
 my $oTestRun;
@@ -70,14 +70,14 @@ sub new
 ####################################################################################################################################
 # initModule
 #
-# Empty init sub in case the ancestor class does not delare one.
+# Empty init sub in case the ancestor class does not declare one.
 ####################################################################################################################################
 sub initModule {}
 
 ####################################################################################################################################
 # initTest
 #
-# Empty init sub in case the ancestor class does not delare one.
+# Empty init sub in case the ancestor class does not declare one.
 ####################################################################################################################################
 sub initTest {}
 
@@ -96,7 +96,7 @@ sub cleanTest
 ####################################################################################################################################
 # cleanModule
 #
-# Empty final sub in case the ancestor class does not delare one.
+# Empty final sub in case the ancestor class does not declare one.
 ####################################################################################################################################
 sub cleanModule {}
 

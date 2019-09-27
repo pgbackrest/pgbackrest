@@ -286,7 +286,7 @@ sub list
     # Attempt to open the path
     if (opendir($hPath, $strPath))
     {
-        @stryFileList = grep(!/^(\.)|(\.\.)$/i, readdir($hPath));
+        @stryFileList = grep(!/^(\.|\.\.)$/m, readdir($hPath));
         close($hPath);
     }
     # Else process errors

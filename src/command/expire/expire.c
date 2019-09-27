@@ -9,10 +9,9 @@ Expire Command
 #include "common/debug.h"
 #include "common/regExp.h"
 #include "config/config.h"
-#include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/infoManifest.h"
+#include "info/manifest.h"
 #include "storage/helper.h"
 
 #include <stdlib.h>
@@ -28,7 +27,7 @@ typedef struct ArchiveExpired
 } ArchiveExpired;
 
 static int
-archiveIdAscComparator(const void *item1, const void *item2)
+archiveIdComparator(const void *item1, const void *item2)
 {
     StringList *archiveSort1 = strLstNewSplitZ(*(String **)item1, "-");
     StringList *archiveSort2 = strLstNewSplitZ(*(String **)item2, "-");
@@ -36,45 +35,6 @@ archiveIdAscComparator(const void *item1, const void *item2)
     int int2 = atoi(strPtr(strLstGet(archiveSort2, 1)));
 
     return (int1 - int2);
-}
-
-static int
-archiveIdDescComparator(const void *item1, const void *item2)
-{
-    StringList *archiveSort1 = strLstNewSplitZ(*(String **)item1, "-");
-    StringList *archiveSort2 = strLstNewSplitZ(*(String **)item2, "-");
-    int int1 = atoi(strPtr(strLstGet(archiveSort1, 1)));
-    int int2 = atoi(strPtr(strLstGet(archiveSort2, 1)));
-
-    return (int2 - int1);
-}
-
-static StringList *
-sortArchiveId(StringList *sortString, SortOrder sortOrder)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING_LIST, sortString);
-        FUNCTION_LOG_PARAM(ENUM, sortOrder);
-    FUNCTION_LOG_END();
-
-    ASSERT(sortString != NULL);
-
-    switch (sortOrder)
-    {
-        case sortOrderAsc:
-        {
-            lstSort((List *)sortString, archiveIdAscComparator);
-            break;
-        }
-
-        case sortOrderDesc:
-        {
-            lstSort((List *)sortString, archiveIdDescComparator);
-            break;
-        }
-    }
-
-    FUNCTION_LOG_RETURN(STRING_LIST, sortString);
 }
 
 typedef struct ArchiveRange
@@ -99,11 +59,9 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
+    storageRemoveNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
     storageRemoveNP(
-        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE, strPtr(removeBackupLabel)));
-
-    storageRemoveNP(
-        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" INFO_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
+        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
 
     // Remove the backup from the info file
     infoBackupDataDelete(infoBackup, removeBackupLabel);
@@ -307,15 +265,18 @@ removeExpiredArchive(InfoBackup *infoBackup)
             if (strLstSize(globalBackupRetentionList) > 0)
             {
                 // Attempt to load the archive info file
-                InfoArchive *infoArchive = infoArchiveNewLoad(
+                InfoArchive *infoArchive = infoArchiveLoadFile(
                     storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                     cfgOptionStr(cfgOptRepoCipherPass));
 
                 InfoPg *infoArchivePgData = infoArchivePg(infoArchive);
 
                 // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
-                StringList *listArchiveDisk = sortArchiveId(
-                    storageListP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE), .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                StringList *listArchiveDisk = strLstSort(
+                    strLstComparatorSet(
+                        storageListP(
+                            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE), .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                        archiveIdComparator),
                     sortOrderAsc);
 
                 StringList *globalBackupArchiveRetentionList = strLstNew();
@@ -361,7 +322,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                     for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(listArchiveDisk); archiveIdx++)
                     {
-                        // Is there an archive directory for this archvieId? If not, move on to the next.
+                        // Is there an archive directory for this archiveId? If not, move on to the next.
                         if (strCmp(archiveId, strLstGet(listArchiveDisk, archiveIdx)) != 0)
                             continue;
 
@@ -406,7 +367,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         }
 
                         // If we get here, then a local backup was found for retention
-                        StringList *localBackupArchiveRententionList = strLstNew();
+                        StringList *localBackupArchiveRetentionList = strLstNew();
 
                         // If the archive retention is less than or equal to the number of all backups, then perform selective
                         // expiration
@@ -423,7 +384,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                             strLstGet(globalBackupArchiveRetentionList, globalIdx),
                                             strLstGet(localBackupRetentionList, localIdx)) == 0)
                                     {
-                                        strLstAdd(localBackupArchiveRententionList, strLstGet(localBackupRetentionList, localIdx));
+                                        strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, localIdx));
                                     }
                                 }
                             }
@@ -437,15 +398,15 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             LOG_INFO(
                                 "full backup total < %u - using oldest full backup for %s archive retention", archiveRetention,
                                 strPtr(archiveId));
-                            strLstAdd(localBackupArchiveRententionList, strLstGet(localBackupRetentionList, 0));
+                            strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, 0));
                         }
 
                         // If no local backups were found as part of retention then set the backup archive retention to the newest
                         // backup so that the database is fully recoverable (can be recovered from the last backup through pitr)
-                        if (strLstSize(localBackupArchiveRententionList) == 0)
+                        if (strLstSize(localBackupArchiveRetentionList) == 0)
                         {
                             strLstAdd(
-                                localBackupArchiveRententionList,
+                                localBackupArchiveRetentionList,
                                 strLstGet(localBackupRetentionList, strLstSize(localBackupRetentionList) - 1));
                         }
 
@@ -458,7 +419,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             InfoBackupData archiveIdBackup = infoBackupData(infoBackup, infoBackupIdx);
 
                             // If this is the backup selected for retention, store its data
-                            if (strCmp(archiveIdBackup.backupLabel, strLstGet(localBackupArchiveRententionList, 0)) == 0)
+                            if (strCmp(archiveIdBackup.backupLabel, strLstGet(localBackupArchiveRetentionList, 0)) == 0)
                                 archiveRetentionBackup = infoBackupData(infoBackup, infoBackupIdx);
 
                             // If this is a backup associated with this archive Id, then add it to the list to check
@@ -671,14 +632,14 @@ cmdExpire(void)
         storageRepo();
 
         // Load the backup.info
-        InfoBackup *infoBackup = infoBackupNewLoad(
+        InfoBackup *infoBackup = infoBackupLoadFile(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
 
-        infoBackupSave(
+        infoBackupSaveFile(
             infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 

@@ -11,6 +11,7 @@ Test Posix Storage
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test function for path expression
@@ -37,24 +38,6 @@ Macro to create a path and file that cannot be accessed
             strPtr(strNewFmt("sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strPtr(pathNoPerm), strPtr(fileNoPerm), \
             strPtr(fileNoPerm)))),                                                                                                 \
         0, "create no perm path/file");
-
-/***********************************************************************************************************************************
-Callback and data for storageInfoList() tests
-***********************************************************************************************************************************/
-unsigned int testStorageInfoListSize = 0;
-StorageInfo testStorageInfoList[256];
-
-void
-testStorageInfoListCallback(void *callbackData, const StorageInfo *info)
-{
-    MEM_CONTEXT_BEGIN((MemContext *)callbackData)
-    {
-        testStorageInfoList[testStorageInfoListSize] = *info;
-        testStorageInfoList[testStorageInfoListSize].name = strDup(info->name);
-        testStorageInfoListSize++;
-    }
-    MEM_CONTEXT_END();
-}
 
 /***********************************************************************************************************************************
 Test Run
@@ -190,7 +173,9 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0770, "    check mode");
         TEST_RESULT_UINT(info.timeModified, 1555160000, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
         TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
         TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -243,9 +228,17 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *pipeName = strNewFmt("%s/testpipe", testPath());
-        TEST_RESULT_INT(system(strPtr(strNewFmt("mkfifo %s", strPtr(pipeName)))), 0, "create pipe");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("mkfifo -m 666 %s", strPtr(pipeName)))), 0, "create pipe");
 
-        TEST_ERROR_FMT(storageInfoNP(storageTest, pipeName), FileInfoError, "invalid type for '%s'", strPtr(pipeName));
+        TEST_ASSIGN(info, storageInfoNP(storageTest, pipeName), "get info from pipe (special file)");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
+        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_INT(info.mode, 0666, "    check mode");
+        TEST_RESULT_STR(strPtr(info.linkDestination), NULL, "    check link destination");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         storageRemoveP(storageTest, pipeName, .errorOnMissing = true);
     }
@@ -273,21 +266,95 @@ testRun(void)
             STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        testStorageInfoListSize = 0;
+        HarnessStorageInfoListCallbackData callbackData =
+        {
+            .content = strNew(""),
+        };
+
         TEST_RESULT_VOID(
-            storagePosixInfoListEntry((StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"),
-                testStorageInfoListCallback, (void *)memContextCurrent()),
-            "missing file");
-        TEST_RESULT_UINT(testStorageInfoListSize, 0, "    no file found");
+            storagePosixInfoListEntry(
+                (StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"),
+                hrnStorageInfoListCallback, &callbackData),
+            "missing path");
+        TEST_RESULT_STR_Z(callbackData.content, "", "    check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateP(storageTest, strNew("pg"), .mode = 0766);
 
+        callbackData.content = strNew("");
+
         TEST_RESULT_VOID(
-            storageInfoListNP(storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent()),
-            "empty directory");
-        TEST_RESULT_UINT(testStorageInfoListSize, 1, "    only path returned");
-        TEST_RESULT_STR(strPtr(testStorageInfoList[0].name), ".", "    check name");
+            storageInfoListP(storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData),
+            "directory with one dot file sorted");
+        TEST_RESULT_STR_Z(
+            callbackData.content, strPtr(strNewFmt(". {path, m=0766, u=%s, g=%s}\n", testUser(), testGroup())),
+            "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0755);
+        ASSERT(system(strPtr(strNewFmt("sudo chown 77777:77777 %s/pg/.include", testPath()))) == 0);
+
+        storagePutNP(storageNewWriteP(storageTest, strNew("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
+
+        ASSERT(system(strPtr(strNewFmt("ln -s ../file %s/pg/link", testPath()))) == 0);
+        ASSERT(system(strPtr(strNewFmt("mkfifo -m 777 %s/pg/pipe", testPath()))) == 0);
+
+        callbackData = (HarnessStorageInfoListCallbackData)
+        {
+            .content = strNew(""),
+            .timestampOmit = true,
+            .modeOmit = true,
+            .modePath = 0766,
+            .modeFile = 0600,
+            .userOmit = true,
+            .groupOmit = true,
+        };
+
+        TEST_RESULT_VOID(
+            storageInfoListP(storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+            "directory with one dot file sorted");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            ". {path}\n"
+            ".include {path, m=0755, u=77777, g=77777}\n"
+            "file {file, s=8, m=0660}\n"
+            "link {link, d=../file}\n"
+            "pipe {special}\n",
+            "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        ASSERT(system(strPtr(strNewFmt("sudo rmdir %s/pg/.include", testPath()))) == 0);
+        storagePathCreateP(storageTest, strNew("pg/path"), .mode = 0700);
+        storagePutNP(storageNewWriteP(storageTest, strNew("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+
+        callbackData.content = strNew("");
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
+            "recurse descending");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "pipe {special}\n"
+            "path/file {file, s=8}\n"
+            "path {path, m=0700}\n"
+            "link {link, d=../file}\n"
+            "file {file, s=8, m=0660}\n"
+            ". {path}\n",
+            "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        callbackData.content = strNew("");
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc,
+                .expression = STRDEF("^path")),
+            "filter");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "path {path, m=0700}\n",
+            "    check content");
     }
 
     // *****************************************************************************************************************************
@@ -315,9 +382,9 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew("aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
+            storagePutNP(storageNewWriteNP(storageTest, strNew(".aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(storageListNP(storageTest, NULL), ", ")), "aaa.txt, noperm",
+            strPtr(strLstJoin(strLstSort(storageListNP(storageTest, NULL), sortOrderAsc), ", ")), ".aaa.txt, noperm",
             "dir list");
 
         TEST_RESULT_VOID(
@@ -426,7 +493,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsNP(storageTest, sourceFile), false, "check source file not exists");
         TEST_RESULT_BOOL(storageExistsNP(storageTmp, destinationFile), true, "check destination file exists");
 
-        // Move across fileystems without syncing the paths
+        // Move across filesystems without syncing the paths
         // -------------------------------------------------------------------------------------------------------------------------
         sourceFile = destinationFile;
         source = storageNewReadNP(storageTmp, sourceFile);
@@ -625,12 +692,6 @@ testRun(void)
         TEST_ERROR_FMT(
             ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN ": [13] Permission denied",
             strPtr(fileNoPerm));
-
-        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .user = strNew("bogus")), "new write file (bogus user)");
-        TEST_ERROR(ioWriteOpen(storageWriteIo(file)), UserMissingError, "unable to find user 'bogus'");
-
-        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .group = strNew("bogus")), "new write file (bogus group)");
-        TEST_ERROR(ioWriteOpen(storageWriteIo(file)), GroupMissingError, "unable to find group 'bogus'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(

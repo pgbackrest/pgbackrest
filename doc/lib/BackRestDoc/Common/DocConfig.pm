@@ -489,7 +489,7 @@ sub manGet
         {
             my $hOption = $$hOptionList{$strSection}{$strOption};
 
-            # Contruct the default
+            # Construct the default
             my $strCommand = grep(/$strSection/i, cfgDefineCommandList()) ? $strSection : undef;
             my $strDefault = docConfigOptionDefault($strOption, $strCommand);
 

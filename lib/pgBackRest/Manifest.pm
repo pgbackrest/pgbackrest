@@ -898,7 +898,7 @@ sub build
         # If version is greater than 9.0, check for files to exclude
         if ($self->dbVersion() >= PG_VERSION_90 && $hManifest->{$strName}{type} eq 'f')
         {
-            # Get the directory name from the manifest; it will be used later to seach for existence in the keys
+            # Get the directory name from the manifest; it will be used later to search for existence in the keys
             my $strDir = dirname($strName);
 
             # If it is a database data directory (base or tablespace) then check for files to skip
@@ -937,48 +937,6 @@ sub build
             }
         }
 
-        my $cType = $hManifest->{$strName}{type};
-        my $strSection = MANIFEST_SECTION_TARGET_PATH;
-
-        if ($cType eq 'f')
-        {
-            $strSection = MANIFEST_SECTION_TARGET_FILE;
-        }
-        elsif ($cType eq 'l')
-        {
-            $strSection = MANIFEST_SECTION_TARGET_LINK;
-        }
-        elsif ($cType ne 'd')
-        {
-            confess &log(ASSERT, "unrecognized file type $cType for file $strName");
-        }
-
-        # Make sure that DB_PATH_PGTBLSPC contains only absolute links that do not point inside PGDATA
-        my $bTablespace = false;
-
-        if (index($strName, DB_PATH_PGTBLSPC . '/') == 0 && $strLevel eq MANIFEST_TARGET_PGDATA)
-        {
-            $bTablespace = true;
-            $strFile = MANIFEST_TARGET_PGDATA . '/' . $strName;
-
-            # Check for files in DB_PATH_PGTBLSPC that are not links
-            if ($hManifest->{$strName}{type} ne 'l')
-            {
-                confess &log(ERROR, "${strName} is not a symlink - " . DB_PATH_PGTBLSPC . ' should contain only symlinks',
-                             ERROR_LINK_EXPECTED);
-            }
-
-            # Check for tablespaces in PGDATA
-            if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
-                (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
-                 index($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
-                       $hManifest->{$strName}{link_destination}) . '/', "${strPath}/") == 0))
-            {
-                confess &log(ERROR, 'tablespace symlink ' . $hManifest->{$strName}{link_destination} .
-                             ' destination must not be in $PGDATA', ERROR_TABLESPACE_IN_PGDATA);
-            }
-        }
-
         # Exclude files requested by the user
         if (defined($rhExclude))
         {
@@ -1013,6 +971,49 @@ sub build
 
             # Skip the file if it was excluded
             next if $bExclude;
+        }
+
+        my $cType = $hManifest->{$strName}{type};
+        my $strSection = MANIFEST_SECTION_TARGET_PATH;
+
+        if ($cType eq 'f')
+        {
+            $strSection = MANIFEST_SECTION_TARGET_FILE;
+        }
+        elsif ($cType eq 'l')
+        {
+            $strSection = MANIFEST_SECTION_TARGET_LINK;
+        }
+        elsif ($cType ne 'd')
+        {
+            &log(WARN, "exclude special file '" . $self->dbPathGet(undef, $strFile) . "' from backup");
+            next;
+        }
+
+        # Make sure that DB_PATH_PGTBLSPC contains only absolute links that do not point inside PGDATA
+        my $bTablespace = false;
+
+        if (index($strName, DB_PATH_PGTBLSPC . '/') == 0 && $strLevel eq MANIFEST_TARGET_PGDATA)
+        {
+            $bTablespace = true;
+            $strFile = MANIFEST_TARGET_PGDATA . '/' . $strName;
+
+            # Check for files in DB_PATH_PGTBLSPC that are not links
+            if ($hManifest->{$strName}{type} ne 'l')
+            {
+                confess &log(ERROR, "${strName} is not a symlink - " . DB_PATH_PGTBLSPC . ' should contain only symlinks',
+                             ERROR_LINK_EXPECTED);
+            }
+
+            # Check for tablespaces in PGDATA
+            if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
+                (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
+                 index($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
+                       $hManifest->{$strName}{link_destination}) . '/', "${strPath}/") == 0))
+            {
+                confess &log(ERROR, 'tablespace symlink ' . $hManifest->{$strName}{link_destination} .
+                             ' destination must not be in $PGDATA', ERROR_TABLESPACE_IN_PGDATA);
+            }
         }
 
         # User and group required for all types
@@ -1420,7 +1421,7 @@ sub buildDefault
 ####################################################################################################################################
 # validate
 #
-# Checks for any mising values or inconsistencies in the manifest.
+# Checks for any missing values or inconsistencies in the manifest.
 ####################################################################################################################################
 sub validate
 {

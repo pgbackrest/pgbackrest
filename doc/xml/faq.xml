@@ -25,7 +25,7 @@
         <list>
             <list-item>check the archive_command in <postgres/></list-item>
             <list-item>check the <backrest/> configuration settings on each host (e.g. pg* settings are set on the repository host and repo* settings on the pg host)</list-item>
-            <list-item>run the <cmd>check</cmd> command with <br-setting>{[dash]}-archive-timeout</br-setting> set to a higher value than in the <backrest/> configuration file (or default) to see if the WAL queue needs more time to clear. If the system is generating a lot of WAL, then consider configuring <link url="https://pgbackrest.org/user-guide.html#async-archiving">asyncronous archiving</link></list-item>
+            <list-item>run the <cmd>check</cmd> command with <br-setting>{[dash]}-archive-timeout</br-setting> set to a higher value than in the <backrest/> configuration file (or default) to see if the WAL queue needs more time to clear. If the system is generating a lot of WAL, then consider configuring <link url="https://pgbackrest.org/user-guide.html#async-archiving">asynchronous archiving</link></list-item>
         </list>
     </section>
 
@@ -80,10 +80,36 @@ process-max=1
         <p>The <link url="https://apt.postgresql.org">apt.postgresql.org</link> repository maintains an <link url="https://atalia.postgresql.org/morgue/p/pgbackrest">archive of older versions</link>.  Debian also maintains <link url="https://snapshot.debian.org/binary/pgbackrest/">snapshots</link> of all test builds.</p>
     </section>
 
+    <section id="backup-standby">
+        <title>Why does a backup attempt fail when <br-option>backup-standby=y</br-option> and the standby database is down?</title>
+
+        <p>Configuring backup from standby is generally intended to reduce load on the primary, so switching backups to the  primary when the standby is down often defeats the point. Putting more load on the primary in a situation where there are already failures in the system is not recommended. Backups are not critical as long as you have one that is fairly recent -- the important thing is to keep up with WAL archiving. There is plenty of time to get a backup when the system is stable again.</p>
+
+        <p>If you really need a backup, the solution is to have more standbys or remove <br-option>backup-standby</br-option>. This can be overridden on the command line with <br-option>--no-backup-standby</br-option>, so there is no need to reconfigure for a one-off backup.</p>
+    </section>
+
+    <section id="standby-repo">
+        <title>Should I setup my repository on a standby host?</title>
+
+        <p>No. When primary and standby databases are configured, the <backrest/> configuration files should be symmetric in order to seamlessly handle failovers. If they are not, the configurations will need to be changed on failover or further problems may result.</p>
+
+        <p>See the <link url="user-guide.html#repo-host">Dedicated Repository Host</link> section of the <proper>User Guide</proper> for more information.</p>
+    </section>
+
+    <section id="time-based-pitr">
+        <title>Time-based Point-in-Time Recovery does not appear to work, why?</title>
+
+        <p>The most common mistake when using time-based Point-in-Time Recovery is forgetting to choose a backup set that is before the target time. <backrest/> defaults to the latest backup and if it is after the target time, then <setting>--target=</setting> is not considered valid by <postgres/> and is therefore ignored, resulting in WAL recovery to the latest time available.</p>
+
+        <p>To choose the correct backup set, run the <cmd>info</cmd> command and find the backup with a timestamp stop that is before the target time. When running the restore, specify the option <setting>--set=BACKUP_LABEL</setting> where <id>BACKUP_LABEL</id> is the backup that was found with a <b>stop</b> timestamp before the target time.</p>
+
+        <p>See the <link url="user-guide.html#pitr">Point-in-Time Recovery</link> section of the <proper>User Guide</proper> for more information.</p>
+    </section>
+
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 
-        <p>It is often desireable to restore the latest backup from a production server to a development server. In principal, the instructions are the same as in <link url="https://pgbackrest.org/user-guide.html#replication/hot-standby">setting up a hot standby</link> with a few exceptions.</p>
+        <p>It is often desirable to restore the latest backup from a production server to a development server. In principal, the instructions are the same as in <link url="https://pgbackrest.org/user-guide.html#replication/hot-standby">setting up a hot standby</link> with a few exceptions.</p>
 
         <p>NEED TO ELABORATE HERE:  Need an example of the restore command - what settings are different? Would they be {[dash]}-target, {[dash]}-target-action=promote, {[dash]}-type=immediate on the command-line? What about in the POSTGRES (e.g. hot_standby = on / wal_level = hot_standby - these would be different, no?) and PGBACKREST (e.g. would recovery-option=standby_mode=on still be set?) config files</p>
     </section>

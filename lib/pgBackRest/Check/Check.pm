@@ -69,7 +69,7 @@ sub process
     # Get the master database object to test to see if the manifest can be built
     my ($oDb) = dbMasterGet();
 
-    # Get the databse version to pass to the manifest constructor and the system-id in the event of a failure
+    # Get the database version to pass to the manifest constructor and the system-id in the event of a failure
     my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info();
 
     # Turn off console logging to control when to display the error
@@ -84,7 +84,7 @@ sub process
         {
             eval
             {
-                # Passing file location dev/null so that the save will fail if it is ever attempted. Pass a miscellaneus value for
+                # Passing file location dev/null so that the save will fail if it is ever attempted. Pass a miscellaneous value for
                 # encryption key since the file will not be saved.
                 my $oBackupManifest = new pgBackRest::Manifest("/dev/null/manifest.chk",
                     {bLoad => false, strDbVersion => $strDbVersion, iDbCatalogVersion => $iCatalogVersion,

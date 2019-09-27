@@ -340,20 +340,20 @@ sub run
                 {strOptionalParam =>
                     ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
                     '/testbase/ --no-' .  cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
-            my $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
+            my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
             my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
 
             # Read info files to confirm the files were created with a different database version
             if ($self->pgVersion() eq PG_VERSION_94)
             {
-                $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                     PG_VERSION_95)}, true, 'archive upgrade forced with pg mismatch');
                 $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
                     PG_VERSION_95)}, true, 'backup upgrade forced with pg mismatch');
             }
             else
             {
-                $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                     PG_VERSION_94)}, true, 'archive create forced with pg mismatch in prep for stanza-upgrade');
                 $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
                     PG_VERSION_94)}, true, 'backup create forced with pg mismatch in prep for stanza-upgrade');
@@ -363,9 +363,9 @@ sub run
             $oHostBackup->stanzaUpgrade('upgrade stanza files online');
 
             # Reread the info files and confirm the result
-            $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
+            $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
             $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
-            $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+            $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                 $self->pgVersion())}, true, 'archive upgrade online corrects db');
             $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
                 $self->pgVersion())}, true, 'backup upgrade online corrects db');
@@ -411,7 +411,7 @@ sub run
         # Enabled async archiving
         $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_ARCHIVE_ASYNC) => 'y'}});
 
-        # Kick out a bunch of archive logs to excercise async archiving.  Only do this when compressed and remote to slow it
+        # Kick out a bunch of archive logs to exercise async archiving.  Only do this when compressed and remote to slow it
         # down enough to make it evident that the async process is working.
         if ($bTestExtra && $bCompress && $strBackupDestination eq HOST_BACKUP)
         {
@@ -442,9 +442,9 @@ sub run
 
             $oHostDbStandby->restore(
                 'restore backup on replica', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-                {rhRemapHash => \%oRemapHash,
+                {rhRemapHash => \%oRemapHash, strType => CFGOPTVAL_RESTORE_TYPE_STANDBY,
                     strOptionalParam =>
-                        ' --recovery-option=standby_mode=on --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
+                        ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
                         ' port=' . $oHostDbMaster->pgPort() . ' user=replicator"'});
 
             $oHostDbStandby->clusterStart({bHotStandby => true});
@@ -522,7 +522,7 @@ sub run
                 $oHostDbStandby->check('verify check command on standby');
             }
 
-            # Shutdown the stanby before creating tablespaces (this will error since paths are different)
+            # Shutdown the standby before creating tablespaces (this will error since paths are different)
             $oHostDbStandby->clusterStop({bIgnoreLogError => true});
         }
 
@@ -603,7 +603,7 @@ sub run
         }
 
         # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
-        # are run in non-exlusive mode.
+        # are run in non-exclusive mode.
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_93 && $oHostDbMaster->pgVersion() < PG_VERSION_96)
         {
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will cause an error', true)");
@@ -953,7 +953,7 @@ sub run
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strNameMessage);
         }
 
-        # Restore (restore type = default, timeline = 3)
+        # Restore (restore type = default, timeline = 4)
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_84)
         {
@@ -963,8 +963,10 @@ sub run
 
             $oHostDbMaster->restore(
                 undef, $strIncrBackup,
-                {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_DEFAULT, strTargetTimeline => 4,
-                    rhRecoveryHash => $oHostDbMaster->pgVersion() >= PG_VERSION_90 ? {'standby-mode' => 'on'} : undef});
+                {bDelta => true,
+                    strType => $oHostDbMaster->pgVersion() >= PG_VERSION_90 ?
+                        CFGOPTVAL_RESTORE_TYPE_STANDBY : CFGOPTVAL_RESTORE_TYPE_DEFAULT,
+                    strTargetTimeline => 4});
 
             $oHostDbMaster->clusterStart({bHotStandby => true});
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimelineMessage, {iTimeout => 120});
@@ -999,7 +1001,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestExtra && !$bS3 && $bHostBackup)
         {
-            # With stanza-delete --force, allow stanza to be deleted regardless of accessiblility of database host
+            # With stanza-delete --force, allow stanza to be deleted regardless of accessibility of database host
             if ($bHostBackup)
             {
                 $oHostDbMaster->stop();

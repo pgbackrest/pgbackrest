@@ -134,53 +134,32 @@ sub main
                 storageLocal(),
                 cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
 
-            # Process restore command
-            # ----------------------------------------------------------------------------------------------------------------------
-            if (cfgCommandTest(CFGCMD_RESTORE))
+            # Check if processes have been stopped
+            lockStopTest();
+
+            # Check locality
+            if (!isRepoLocal())
             {
-                # Check locality
-                if (!isDbLocal())
-                {
-                    confess &log(ERROR,
-                        cfgCommandName(cfgCommandGet()) . ' command must be run on the PostgreSQL host', ERROR_HOST_INVALID);
-                }
-
-                # Load module dynamically
-                require pgBackRest::Restore;
-                pgBackRest::Restore->import();
-
-                # Do the restore
-                new pgBackRest::Restore()->process();
+                confess &log(ERROR,
+                    cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
             }
-            else
+
+            # Process backup command
+            # ----------------------------------------------------------------------------------------------------------------------
+            if (cfgCommandTest(CFGCMD_BACKUP))
             {
-                # Check if processes have been stopped
-                lockStopTest();
+                # Load module dynamically
+                require pgBackRest::Backup::Backup;
+                pgBackRest::Backup::Backup->import();
 
-                # Check locality
-                if (!isRepoLocal())
-                {
-                    confess &log(ERROR,
-                        cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
-                }
+                new pgBackRest::Backup::Backup()->process();
+            }
 
-                # Process backup command
-                # ------------------------------------------------------------------------------------------------------------------
-                if (cfgCommandTest(CFGCMD_BACKUP))
-                {
-                    # Load module dynamically
-                    require pgBackRest::Backup::Backup;
-                    pgBackRest::Backup::Backup->import();
-
-                    new pgBackRest::Backup::Backup()->process();
-                }
-
-                # Process expire command
-                # --------------------------------------------------------------------------------------------------------------
-                elsif (cfgCommandTest(CFGCMD_EXPIRE))
-                {
-                    new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
-                }
+            # Process expire command
+            # ----------------------------------------------------------------------------------------------------------------------
+            elsif (cfgCommandTest(CFGCMD_EXPIRE))
+            {
+                new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
             }
         }
 
@@ -191,7 +170,7 @@ sub main
     # ------------------------------------------------------------------------------------------------------------------------------
     or do
     {
-        # Perl 5.10 seems to have a problem propogating errors up through a large call stack, so in the case that the error arrives
+        # Perl 5.10 seems to have a problem propagating errors up through a large call stack, so in the case that the error arrives
         # blank just use the last logged error instead.  Don't do this in all cases because newer Perls seem to work fine and there
         # are other errors that could be arriving in $EVAL_ERROR.
         my $oException = defined($EVAL_ERROR) && length($EVAL_ERROR) > 0 ? $EVAL_ERROR : logErrorLast();

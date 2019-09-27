@@ -6,9 +6,7 @@ Posix Storage
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <grp.h>
 #include <limits.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -18,6 +16,7 @@ Posix Storage
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/user.h"
 #include "storage/posix/read.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
@@ -108,19 +107,11 @@ storagePosixInfo(THIS_VOID, const String *file, bool followLink)
     else
     {
         result.exists = true;
+        result.groupId = statFile.st_gid;
+        result.group = groupNameFromId(result.groupId);
+        result.userId = statFile.st_uid;
+        result.user = userNameFromId(result.userId);
         result.timeModified = statFile.st_mtime;
-
-        // Get user name if it exists
-        struct passwd *userData = getpwuid(statFile.st_uid);
-
-        if (userData != NULL)
-            result.user = strNew(userData->pw_name);
-
-        // Get group name if it exists
-        struct group *groupData = getgrgid(statFile.st_gid);
-
-        if (groupData != NULL)
-            result.group = strNew(groupData->gr_name);
 
         if (S_ISREG(statFile.st_mode))
         {
@@ -143,7 +134,7 @@ storagePosixInfo(THIS_VOID, const String *file, bool followLink)
             result.linkDestination = strNewN(linkDestination, (size_t)linkDestinationSize);
         }
         else
-            THROW_FMT(FileInfoError, "invalid type for '%s'", strPtr(file));
+            result.type = storageTypeSpecial;
 
         result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
     }
@@ -182,8 +173,6 @@ storagePosixInfoListEntry(
             storageInfo.name = name;
             callback(callbackData, &storageInfo);
         }
-
-        strFree(pathInfo);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -678,6 +667,9 @@ storagePosixNewInternal(
     ASSERT(path != NULL);
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
+
+    // Initialze user module
+    userInit();
 
     // Create the object
     Storage *this = NULL;

@@ -34,12 +34,13 @@ sub iniHeader
     my $strChecksum = shift;
 
     return
-        "[backrest]" .
-        "\nbackrest-checksum=\"" .
-            (defined($strChecksum) ? $strChecksum : $oIni->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM)) . "\"" .
-        "\nbackrest-format=" . (defined($iFormat) ? $iFormat : $oIni->get(INI_SECTION_BACKREST, INI_KEY_FORMAT)) .
-        "\nbackrest-version=\"" . (defined($iVersion) ? $iVersion : $oIni->get(INI_SECTION_BACKREST, INI_KEY_VERSION)) . "\"" .
-        "\n";
+        "[backrest]\n" .
+        "backrest-format=" . (defined($iFormat) ? $iFormat : $oIni->get(INI_SECTION_BACKREST, INI_KEY_FORMAT)) . "\n" .
+        "backrest-version=\"" . (defined($iVersion) ? $iVersion : $oIni->get(INI_SECTION_BACKREST, INI_KEY_VERSION)) . "\"\n" .
+        "\n" .
+        "[backrest]\n" .
+        "backrest-checksum=\"" .
+            (defined($strChecksum) ? $strChecksum : $oIni->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM)) . "\"\n";
 }
 
 ####################################################################################################################################
@@ -289,14 +290,14 @@ sub run
 
         $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CRYPTO,
             "unable to parse '$strTestFileCopy'" .
-            "\nHINT: Is or was the repo encrypted?");
+            "\nHINT: is or was the repo encrypted?");
 
         # Prepend encryption Magic signature to main to simulate encryption
         executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strTestFile . ')" > ' . $strTestFile);
 
         $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CRYPTO,
             "unable to parse '$strTestFile'" .
-            "\nHINT: Is or was the repo encrypted?");
+            "\nHINT: is or was the repo encrypted?");
     }
 
     ################################################################################################################################

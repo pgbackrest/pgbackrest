@@ -339,10 +339,6 @@ lib/pgBackRest/RestoreFile.pm:
   class: core
   type: perl
 
-lib/pgBackRest/Stanza.pm:
-  class: core
-  type: perl
-
 lib/pgBackRest/Storage/Base.pm:
   class: core
   type: perl
@@ -559,6 +555,14 @@ src/command/check/check.h:
   class: core
   type: c/h
 
+src/command/check/common.c:
+  class: core
+  type: c
+
+src/command/check/common.h:
+  class: core
+  type: c/h
+
 src/command/command.c:
   class: core
   type: c
@@ -572,6 +576,22 @@ src/command/control/common.c:
   type: c
 
 src/command/control/common.h:
+  class: core
+  type: c/h
+
+src/command/control/start.c:
+  class: core
+  type: c
+
+src/command/control/start.h:
+  class: core
+  type: c/h
+
+src/command/control/stop.c:
+  class: core
+  type: c
+
+src/command/control/stop.h:
   class: core
   type: c/h
 
@@ -628,6 +648,38 @@ src/command/restore/protocol.c:
   type: c
 
 src/command/restore/protocol.h:
+  class: core
+  type: c/h
+
+src/command/stanza/common.c:
+  class: core
+  type: c
+
+src/command/stanza/common.h:
+  class: core
+  type: c/h
+
+src/command/stanza/create.c:
+  class: core
+  type: c
+
+src/command/stanza/create.h:
+  class: core
+  type: c/h
+
+src/command/stanza/delete.c:
+  class: core
+  type: c
+
+src/command/stanza/delete.h:
+  class: core
+  type: c/h
+
+src/command/stanza/upgrade.c:
+  class: core
+  type: c
+
+src/command/stanza/upgrade.h:
   class: core
   type: c/h
 
@@ -1019,6 +1071,14 @@ src/common/type/list.h:
   class: core
   type: c/h
 
+src/common/type/mcv.c:
+  class: core
+  type: c
+
+src/common/type/mcv.h:
+  class: core
+  type: c/h
+
 src/common/type/string.c:
   class: core
   type: c
@@ -1191,19 +1251,15 @@ src/info/infoBackup.h:
   class: core
   type: c/h
 
-src/info/infoManifest.c:
-  class: core
-  type: c
-
-src/info/infoManifest.h:
-  class: core
-  type: c/h
-
 src/info/infoPg.c:
   class: core
   type: c
 
 src/info/infoPg.h:
+  class: core
+  type: c/h
+
+src/info/manifest.h:
   class: core
   type: c/h
 
@@ -1727,10 +1783,6 @@ test/lib/pgBackRestTest/Module/Real/RealAllTest.pm:
   class: test/module
   type: perl
 
-test/lib/pgBackRestTest/Module/Stanza/StanzaAllPerlTest.pm:
-  class: test/module
-  type: perl
-
 test/lib/pgBackRestTest/Module/Storage/StorageHelperPerlTest.pm:
   class: test/module
   type: perl
@@ -1851,6 +1903,10 @@ test/src/module/command/restoreTest.c:
   class: test/module
   type: c
 
+test/src/module/command/stanzaTest.c:
+  class: test/module
+  type: c
+
 test/src/module/command/storageTest.c:
   class: test/module
   type: c
@@ -1960,6 +2016,10 @@ test/src/module/common/typeKeyValueTest.c:
   type: c
 
 test/src/module/common/typeListTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeMcvTest.c:
   class: test/module
   type: c
 

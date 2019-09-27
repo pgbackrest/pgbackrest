@@ -305,7 +305,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         TRY_BEGIN()
         {
             // Attempt to load the backup info file
-            info = infoBackupNewLoad(
+            info = infoBackupLoadFile(
                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanzaListName), INFO_BACKUP_FILE),
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
@@ -317,11 +317,11 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         }
         CATCH(CryptoError)
         {
-            // If a reason for the error is due to a an ecryption error, add a hint
+            // If a reason for the error is due to a an encryption error, add a hint
             THROW_FMT(
                 CryptoError,
                 "%s\n"
-                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
                 errorMessage());
         }
         TRY_END();
@@ -352,7 +352,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
                 varLstAdd(dbSection, pgInfo);
 
                 // Get the archive info for the DB from the archive.info file
-                InfoArchive *info = infoArchiveNewLoad(
+                InfoArchive *info = infoArchiveLoadFile(
                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanzaListName), INFO_ARCHIVE_FILE),
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
                 archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
@@ -482,13 +482,13 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
                     backupResult, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
                 strCat(backupResult, "            wal start/stop: ");
 
-                KeyValue *archiveDBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
+                KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
 
-                if (kvGet(archiveDBackupInfo, KEY_START_VAR) != NULL &&
-                    kvGet(archiveDBackupInfo, KEY_STOP_VAR) != NULL)
+                if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL &&
+                    kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)
                 {
-                    strCatFmt(backupResult, "%s / %s\n", strPtr(varStr(kvGet(archiveDBackupInfo, KEY_START_VAR))),
-                        strPtr(varStr(kvGet(archiveDBackupInfo, KEY_STOP_VAR))));
+                    strCatFmt(backupResult, "%s / %s\n", strPtr(varStr(kvGet(archiveBackupInfo, KEY_START_VAR))),
+                        strPtr(varStr(kvGet(archiveBackupInfo, KEY_STOP_VAR))));
                 }
                 else
                     strCat(backupResult, "n/a\n");

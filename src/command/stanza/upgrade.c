@@ -46,12 +46,12 @@ cmdStanzaUpgrade(void)
         PgControl pgControl = pgValidate();
 
         // Load the info files (errors if missing)
-        InfoArchive *infoArchive = infoArchiveNewLoad(
+        InfoArchive *infoArchive = infoArchiveLoadFile(
             storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
-        InfoBackup *infoBackup = infoBackupNewLoad(
+        InfoBackup *infoBackup = infoBackupLoadFile(
             storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
@@ -67,8 +67,7 @@ cmdStanzaUpgrade(void)
         // Update backup
         if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
         {
-            infoBackupPgSet(
-                infoBackup, pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion);
+            infoBackupPgSet(infoBackup, pgControl.version, pgControl.systemId);
             infoBackupUpgrade = true;
         }
 
@@ -81,7 +80,7 @@ cmdStanzaUpgrade(void)
         // Save archive info
         if (infoArchiveUpgrade)
         {
-            infoArchiveSave(
+            infoArchiveSaveFile(
                 infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
         }
@@ -89,7 +88,7 @@ cmdStanzaUpgrade(void)
         // Save backup info
         if (infoBackupUpgrade)
         {
-            infoBackupSave(
+            infoBackupSaveFile(
                 infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
         }

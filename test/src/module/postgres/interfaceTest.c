@@ -31,6 +31,18 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("pgControlVersion() and pgCatalogVersion()"))
+    {
+        TEST_ERROR(pgControlVersion(70300), AssertError, "invalid PostgreSQL version 70300");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_83), 833, "8.3 control version");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
+
+        TEST_ERROR(pgCatalogVersion(70900), AssertError, "invalid PostgreSQL version 70900");
+        TEST_RESULT_UINT(pgCatalogVersion(PG_VERSION_83), 200711281, "8.3 catalog version");
+        TEST_RESULT_UINT(pgCatalogVersion(PG_VERSION_11), 201809051, "11 catalog version");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("pgControlFromBuffer() and pgControlFromFile()"))
     {
         // Sanity test to ensure PG_VERSION_MAX has been updated
@@ -52,7 +64,7 @@ testRun(void)
             "unexpected control version = 501 and catalog version = 19780101\nHINT: is this version of PostgreSQL supported?");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(pgControlTestToBuffer((PgControl){.version = 0}), AssertError, "invalid version 0");
+        TEST_ERROR(pgControlTestToBuffer((PgControl){.version = 0}), AssertError, "invalid PostgreSQL version 0");
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
@@ -62,8 +74,6 @@ testRun(void)
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest, strNew(testPath())), "get control info v11");
         TEST_RESULT_INT(info.systemId, 0xFACEFACE, "   check system id");
-        TEST_RESULT_INT(info.controlVersion, 1100, "   check control version");
-        TEST_RESULT_INT(info.catalogVersion, 201809051, "   check catalog version");
         TEST_RESULT_INT(info.version, PG_VERSION_11, "   check version");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -89,14 +99,17 @@ testRun(void)
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, strNew(testPath())), "get control info v83");
         TEST_RESULT_INT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_INT(info.controlVersion, 833, "   check control version");
-        TEST_RESULT_INT(info.catalogVersion, 200711281, "   check catalog version");
         TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgWalName()"))
+    if (testBegin("pgTablespaceId() and pgWalName()"))
     {
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_84), NULL, "check 8.4 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_90), "PG_9.0_201008051", "check 9.0 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94), "PG_9.4_201409291", "check 9.4 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_11), "PG_11_201809051", "check 11 tablespace id");
+
         TEST_RESULT_STR(strPtr(pgWalName(PG_VERSION_96)), "xlog", "check xlog name");
         TEST_RESULT_STR(strPtr(pgWalName(PG_VERSION_10)), "wal", "check wal name");
     }
@@ -126,7 +139,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        TEST_ERROR(pgWalTestToBuffer((PgWal){.version = 0}, result), AssertError, "invalid version 0");
+        TEST_ERROR(pgWalTestToBuffer((PgWal){.version = 0}, result), AssertError, "invalid PostgreSQL version 0");
 
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));

@@ -5,6 +5,7 @@ Convert Base Data Types
 #define COMMON_TYPE_CONVERT_H
 
 #include <inttypes.h>
+#include <stdbool.h>
 #include <sys/types.h>
 
 /***********************************************************************************************************************************

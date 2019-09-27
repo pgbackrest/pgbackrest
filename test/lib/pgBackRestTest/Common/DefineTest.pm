@@ -97,7 +97,7 @@ sub testDefLoad
 
         my $bExpect = false;                                        # By default don't run expect tests
         my $bContainer = true;                                      # By default run tests in a single container
-        my $bIndividual = false;                                    # By default runs are all executed in the same contanier
+        my $bIndividual = false;                                    # By default runs are all executed in the same container
 
         if ($strModuleType eq TESTDEF_INTEGRATION)
         {

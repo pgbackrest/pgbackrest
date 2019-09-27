@@ -120,7 +120,7 @@ checkPrimary(const DbGetResult dbGroup)
             cfgOptionStr(cfgOptRepoCipherPass));
 
         // Attempt to load the archive info file and retrieve the archiveId
-        InfoArchive *archiveInfo = infoArchiveNewLoad(
+        InfoArchive *archiveInfo = infoArchiveLoadFile(
             storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
         const String *archiveId = infoArchiveId(archiveInfo);
@@ -144,8 +144,8 @@ checkPrimary(const DbGetResult dbGroup)
             THROW_FMT(
                 ArchiveTimeoutError,
                 "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
-                    "HINT: check the archive_command to ensure that all options are correct (especially --stanza)\n"
-                    "HINT: check the PostgreSQL server log for errors",
+                    "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+                    "HINT: check the PostgreSQL server log for errors.",
                 strPtr(walSegment), archiveTimeout);
         }
     }

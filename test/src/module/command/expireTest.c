@@ -155,7 +155,7 @@ testRun(void)
         storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
 
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
         // Create backup directories and manifest files
         String *full1 = strNew("20181119-152138F");
@@ -168,11 +168,14 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), INFO_MANIFEST_FILE)),
-                BUFSTRDEF(BOGUS_STR)), "full1 put manifest");
+            storagePutNP(
+                storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), BACKUP_MANIFEST_FILE)), BUFSTRDEF(BOGUS_STR)),
+                "full1 put manifest");
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), INFO_MANIFEST_FILE ".copy")),
-                BUFSTRDEF(BOGUS_STR)), "full1 put manifest copy");
+            storagePutNP(
+                storageNewWriteNP(
+                    storageTest, strNewFmt("%s/%s", strPtr(full1Path), BACKUP_MANIFEST_FILE ".copy")), BUFSTRDEF(BOGUS_STR)),
+            "full1 put manifest copy");
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), "bogus")),
                 BUFSTRDEF(BOGUS_STR)), "full1 put extra file");
@@ -201,7 +204,7 @@ testRun(void)
         storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
 
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -253,7 +256,7 @@ testRun(void)
         storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
 
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
         // Load Parameters
         StringList *argList = strLstDup(argListAvoidWarn);
@@ -328,7 +331,7 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
                 "\"db-version\":\"9.4\"}"));
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
         // Load parameters
         argList = strLstDup(argListAvoidWarn);
@@ -374,7 +377,7 @@ testRun(void)
                     "\"db-version\":\"9.4\"}"));
 
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
         // Create backup directories, manifest files and other path/file
         String *full = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152100F");
@@ -426,7 +429,7 @@ testRun(void)
                 "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
                     "\"db-version\":\"9.4\"}"));
 
-        TEST_ASSIGN(infoBackup,infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup,infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup), "remove backups - backup.info current empty");
 
@@ -459,7 +462,7 @@ testRun(void)
                     "\"db-version\":\"9.4\"}"));
 
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention not set");
         harnessLogResult(
@@ -555,7 +558,7 @@ testRun(void)
                 "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
                     "\"db-version\":\"10\"}\n"));
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
         storagePutNP(
             storageNewWriteNP(storageTest, archiveInfoFileName),
@@ -743,7 +746,7 @@ testRun(void)
             "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: remove archive path: %s/%s/9.4-1", testPath(), strPtr(archiveStanzaPath))));
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "  get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "  get backup.info");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "  backup.info updated on disk");
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
@@ -790,7 +793,7 @@ testRun(void)
                 "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
                     "\"db-version\":\"10\"}\n"));
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
 
         archiveGenerate(storageTest, archiveStanzaPath, 1, 5, "9.4-1", "0000000100000000");
 
@@ -1027,19 +1030,19 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("sortArchiveId()"))
+    if (testBegin("archiveIdComparator()"))
     {
-        StringList *list = strLstNew();
+        StringList *list = strLstNewParam(archiveIdComparator);
 
         strLstAddZ(list, "10-4");
         strLstAddZ(list, "11-10");
         strLstAddZ(list, "9.6-1");
 
-        TEST_RESULT_STR(strPtr(strLstJoin(sortArchiveId(list, sortOrderAsc), ", ")), "9.6-1, 10-4, 11-10", "sort ascending");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstSort(list, sortOrderAsc), ", ")), "9.6-1, 10-4, 11-10", "sort ascending");
 
         strLstAddZ(list, "9.4-2");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(sortArchiveId(list, sortOrderDesc), ", ")), "11-10, 10-4, 9.4-2, 9.6-1", "sort descending");
+            strPtr(strLstJoin(strLstSort(list, sortOrderDesc), ", ")), "11-10, 10-4, 9.4-2, 9.6-1", "sort descending");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

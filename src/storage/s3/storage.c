@@ -88,7 +88,7 @@ struct StorageS3
 {
     MemContext *memContext;
     HttpClientCache *httpClientCache;                               // Http client cache to service requests
-    const StringList *headerRedactList;                             // List of headers to redact from logging
+    StringList *headerRedactList;                                   // List of headers to redact from logging
 
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
@@ -352,7 +352,7 @@ storageS3Request(
                     }
 
                     // Output response headers
-                    const HttpHeader *responseHeader = httpClientReponseHeader(httpClient);
+                    const HttpHeader *responseHeader = httpClientResponseHeader(httpClient);
                     const StringList *responseHeaderList = httpHeaderList(responseHeader);
 
                     if (strLstSize(responseHeaderList) > 0)
@@ -377,7 +377,7 @@ storageS3Request(
             {
                 // On success move the buffer to the calling context
                 result.httpClient = httpClient;
-                result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientReponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
+                result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientResponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
                 result.response = bufMove(response, MEM_CONTEXT_OLD());
             }
 
@@ -959,7 +959,10 @@ storageS3New(
         // Create the http client cache used to service requests
         driver->httpClientCache = httpClientCacheNew(
             host == NULL ? driver->bucketEndpoint : host, driver->port, timeout, verifyPeer, caFile, caPath);
-        driver->headerRedactList = strLstAdd(strLstNew(), S3_HEADER_AUTHORIZATION_STR);
+
+        // Create list of redacted headers
+        driver->headerRedactList = strLstNew();
+        strLstAdd(driver->headerRedactList, S3_HEADER_AUTHORIZATION_STR);
 
         this = storageNewP(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver,

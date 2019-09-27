@@ -59,30 +59,21 @@ typedef struct InfoBackupData
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-InfoBackup *infoBackupNew(
-    unsigned int pgVersion, uint64_t pgSystemId, const uint32_t pgControlVersion, const uint32_t pgCatalogVersion,
-    CipherType cipherType, const String *cipherPassSub);
-InfoBackup *infoBackupNewLoad(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Remove a backup from the current section
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
-InfoBackup *infoBackupPgSet(
-    InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgControlVersion, uint32_t pgCatalogVersion);
-void infoBackupSave(
-    InfoBackup *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
-
-/***********************************************************************************************************************************
-infoBackupDataLabelList - get a list of current backup labels
-***********************************************************************************************************************************/
-StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
+InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Get a list of current backup labels
+StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
+
 InfoPg *infoBackupPg(const InfoBackup *this);
 InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 unsigned int infoBackupDataTotal(const InfoBackup *this);
@@ -92,6 +83,14 @@ const String *infoBackupCipherPass(const InfoBackup *this);
 Destructor
 ***********************************************************************************************************************************/
 void infoBackupFree(InfoBackup *this);
+
+/***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
+InfoBackup *infoBackupLoadFile(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+void infoBackupSaveFile(
+    InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging

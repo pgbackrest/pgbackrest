@@ -74,9 +74,8 @@ cmdStanzaCreate(void)
             String *cipherPassSub = cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType)));
 
             // Create and save archive info
-            infoArchive = infoArchiveNew(
-                pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
-            infoArchiveSave(
+            infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherPassSub);
+            infoArchiveSaveFile(
                 infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
 
@@ -84,10 +83,8 @@ cmdStanzaCreate(void)
             cipherPassSub = cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType)));
 
             // Create and save backup info
-            infoBackup = infoBackupNew(
-                pgControl.version, pgControl.systemId, pgControl.controlVersion, pgControl.catalogVersion,
-                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassSub);
-            infoBackupSave(
+            infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, cipherPassSub);
+            infoBackupSaveFile(
                 infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
         }

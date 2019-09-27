@@ -22,7 +22,7 @@ typedef struct XmlNodeList XmlNodeList;
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Document Contructors
+Document Constructors
 ***********************************************************************************************************************************/
 XmlDocument *xmlDocumentNew(const String *rootNode);
 XmlDocument *xmlDocumentNewBuf(const Buffer *);

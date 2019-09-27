@@ -207,7 +207,7 @@ testRun(void)
                     "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
                     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
                     "\"checksum-page-error\":[1,[4,6]],\"backup-timestamp-start\":1482182951}"))),
-            "multpile values with array");
+            "multiple values with array");
         TEST_ASSIGN(json, jsonFromKv(keyValue, 0), "  kvToJson - sorted, no indent");
         TEST_RESULT_STR(strPtr(json),
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","

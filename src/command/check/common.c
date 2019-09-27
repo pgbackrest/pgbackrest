@@ -67,7 +67,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const Db *
         {
             THROW_FMT(
                 DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
-                PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\nHINT: the %s and %s settings likely reference different clusters",
+                PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\nHINT: the %s and %s settings likely reference different clusters.",
                 strPtr(pgVersionToStr(dbVersion)), strPtr(dbPath), strPtr(pgVersionToStr(pgVersion)), strPtr(cfgOptionStr(pgPath)),
                 strPtr(cfgOptionStr(pgPath)), cfgOptionName(pgPath), cfgOptionName(cfgOptPgPort + (dbIdx - 1)));
         }
@@ -147,9 +147,9 @@ checkStanzaInfoPg(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check that the backup and archive info files exist
-        InfoArchive *infoArchive = infoArchiveNewLoad(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
+        InfoArchive *infoArchive = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
         InfoPgData archiveInfoPg = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
-        InfoBackup *infoBackup = infoBackupNewLoad(storage, INFO_BACKUP_PATH_FILE_STR, cipherType, cipherPass);
+        InfoBackup *infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherType, cipherPass);
         InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
         // Check that the info files pg data match each other

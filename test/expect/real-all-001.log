@@ -227,14 +227,14 @@ restore delta, force, type 'name', target 'backrest' (db-master host)
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 recovery_target_name = 'backrest'
 
-restore delta, backup '[BACKUP-INCR-1]', type 'default', timeline '4' (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-INCR-1] --target-timeline="4" --link-all --stanza=db restore
+restore delta, backup '[BACKUP-INCR-1]', type 'standby', timeline '4' (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-INCR-1] --type=standby --target-timeline="4" --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-standby_mode = 'on'
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
+standby_mode = 'on'
 recovery_target_timeline = '4'
 
 incr backup - fail on --no-online (db-master host)
@@ -251,7 +251,6 @@ incr backup - succeed on --no-online with --force (db-master host)
 pg1-path=[TEST_PATH]/db-master/db/base
 pg1-port=6543
 pg1-socket-path=[TEST_PATH]/db-master/db
-recovery-option=standby-mode=on
 
 [global]
 archive-async=y

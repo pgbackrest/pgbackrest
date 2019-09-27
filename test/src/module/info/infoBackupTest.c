@@ -1,10 +1,12 @@
 /***********************************************************************************************************************************
 Test Backup Info Handler
 ***********************************************************************************************************************************/
-#include "storage/storage.intern.h"
+#include "command/backup/common.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessInfo.h"
-#include "command/backup/common.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -12,32 +14,16 @@ Test Run
 void
 testRun(void)
 {
-    // Initialize test variables
-    //--------------------------------------------------------------------------------------------------------------------------
-    String *content = NULL;
-    String *fileName = strNewFmt("%s/test.ini", testPath());
-    String *fileName2 = strNewFmt("%s/test2.ini", testPath());
-    InfoBackup *infoBackup = NULL;
+    // Create default storage object for testing
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupNew(), infoBackupNewLoad(), infoBackupDataTotal(), infoBackupPg(), infoBackupCipherPass(), "
-        "infoBackupFree()"))
+    if (testBegin("InfoBackup"))
     {
-        // File missing
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            infoBackupNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError,
-            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "HINT: has a stanza-create been performed?",
-            testPath(), testPath(),  strPtr(strNewFmt("%s/test.ini", testPath())),
-            strPtr(strNewFmt("%s/test.ini.copy", testPath())));
-
-        // File exists, no backup:current section
-        //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
+        // File with section to ignore
+        // -------------------------------------------------------------------------------------------------------------------------
+        const Buffer *contentLoad = harnessInfoChecksumZ
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -46,78 +32,72 @@ testRun(void)
             "db-system-id=6569239123849665679\n"
             "db-version=\"9.4\"\n"
             "\n"
+            "[ignore-section]\n"
+            "key1=value1\n"
+            "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.4\"}\n"
         );
 
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info to file");
+        // Load to make sure ignore-section is ignored
+        InfoBackup *infoBackup;
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad)), "    new backup info");
+
+        // Save to verify with new created info backup
+        Buffer *contentSave = bufNew(0);
+
+        TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentSave)), "info backup save");
+
+        // Create new info backup
+        Buffer *contentCompare = bufNew(0);
 
         TEST_ASSIGN(
-            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, 942, 201409291, cipherTypeNone, NULL),
+            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, NULL),
             "infoBackupNew() - no cipher sub");
-        TEST_RESULT_VOID(
-            infoBackupSave(infoBackup, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "    save backup info from new");
-        TEST_RESULT_BOOL(
-            bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
-                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
-            true, "    files are equal");
+        TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "    save backup info from new");
+        TEST_RESULT_STR(strPtr(strNewBuf(contentCompare)), strPtr(strNewBuf(contentSave)), "   check save");
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName2, cipherTypeNone, NULL), "load backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentCompare)), "load backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "    cipher sub not set");
-        TEST_RESULT_PTR(infoBackup->backup, NULL, "    backupCurrent NULL");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "    infoBackupDataTotal returns 0");
 
-        // Remove both files and recreate from scratch with cipher
-        //--------------------------------------------------------------------------------------------------------------------------
-        storageRemoveP(storageLocalWrite(), fileName, .errorOnMissing = true);
-        storageRemoveP(storageLocalWrite(), fileName2, .errorOnMissing = true);
-
+        // Check cipher pass
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            infoBackup, infoBackupNew(PG_VERSION_10, 6569239123849665999, 1002, 201707211, cipherTypeAes256Cbc,
-                strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+            infoBackup,
+            infoBackupNew(
+                PG_VERSION_10, 6569239123849665999, strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
-        TEST_RESULT_VOID(
-            infoBackupSave(infoBackup, storageLocalWrite(), fileName, cipherTypeAes256Cbc, strNew("123xyz")), "    save new encrypted");
+
+        contentSave = bufNew(0);
+
+        TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentSave)), "    save new with cipher sub");
 
         infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("123xyz")),
-            "    load encrypted backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave)), "    load backup info with cipher sub");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
         TEST_RESULT_STR(strPtr(infoBackupCipherPass(infoBackup)),
             "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "    cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 1, "    history set");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // Add pg info
+        // -------------------------------------------------------------------------------------------------------------------------
         InfoPgData infoPgData = {0};
-        TEST_RESULT_VOID(infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, 12345, 54321), "add another infoPg");
+        TEST_RESULT_VOID(infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679), "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 2, "    history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackup->infoPg), "    get current infoPgData");
         TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
         TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    systemId set");
-        TEST_RESULT_INT(infoPgData.controlVersion, 12345, "    catalog set");
-        TEST_RESULT_INT(infoPgData.catalogVersion, 54321, "    catalog set");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(infoBackup, infoBackupNewInternal(), "infoBackupNewInternal()");
-        TEST_RESULT_PTR(infoBackupPg(infoBackup), NULL, "    infoPg not set");
 
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(infoBackupFree(infoBackup), "infoBackupFree() - free backup info");
-    }
-    // *****************************************************************************************************************************
-    if (testBegin(
-        "infoBackupData(), infoBackupDataTotal(), infoBackupDataToLog(), infoBackupDataLabelList(), infoBackupDataDelete()"))
-    {
-        // File exists, backup:current section exists
-        //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
-        (
+
+        // backup:current section exists
+        // -------------------------------------------------------------------------------------------------------------------------
+        contentLoad = harnessInfoChecksumZ(
             "[backup:current]\n"
             "20161219-212741F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
             "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","
@@ -151,21 +131,9 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+                "\"db-version\":\"9.4\"}\n");
 
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info current to file");
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(storageLocal(), fileName, cipherTypeNone, NULL), "    new backup info");
-
-        // Save the file and verify it
-        TEST_RESULT_VOID(infoBackupSave(infoBackup, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "save file");
-        TEST_RESULT_BOOL(
-            bufEq(
-                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
-                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
-            true, "files are equal");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad)), "    new backup info");
 
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 3, "    backup list contains backups");
 
@@ -216,15 +184,23 @@ testRun(void)
         TEST_RESULT_BOOL(backupData.optionHardlink, false, "    option hardlink");
         TEST_RESULT_BOOL(backupData.optionOnline, true, "    option online");
 
+        // Save info and verify
+        contentSave = bufNew(0);
+
+        TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentSave)), "info backup save");
+        TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
+
         // infoBackupDataLabelList and infoBackupDataDelete
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList without expression");
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I",
+            "infoBackupDataLabelList without expression");
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(
                 infoBackup, backupRegExpP(.full=true, .differential=true, .incremental=true)), sortOrderAsc), ", ")),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList with expression");
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I",
+            "infoBackupDataLabelList with expression");
         TEST_RESULT_STR(
             strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), ", ")),
             "20161219-212741F", "  full=true");
@@ -245,8 +221,32 @@ testRun(void)
         TEST_RESULT_UINT(strLstSize(infoBackupDataLabelList(infoBackup, NULL)), 0, "  no backups remain");
 
         // infoBackupDataToLog
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(
             strPtr(infoBackupDataToLog(&backupData)), "{label: 20161219-212741F_20161219-212918I, pgId: 1}", "check log format");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("infoBackupLoadFile() and infoBackupSaveFile()"))
+    {
+        TEST_ERROR_FMT(
+            infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), FileMissingError,
+            "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
+            "FileMissingError: unable to open missing file '%s/backup.info' for read\n"
+            "FileMissingError: unable to open missing file '%s/backup.info.copy' for read\n"
+            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "HINT: has a stanza-create been performed?",
+            testPath(), testPath(), testPath(), testPath());
+
+        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, NULL);
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "save backup info");
+
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "load main");
+        TEST_RESULT_UINT(infoPgDataCurrent(infoBackup->infoPg).systemId, 6569239123849665999, "    check file loaded");
+
+        storageRemoveP(storageTest, STRDEF(INFO_BACKUP_FILE), .errorOnMissing = true);
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "load copy");
+        TEST_RESULT_UINT(infoPgDataCurrent(infoBackup->infoPg).systemId, 6569239123849665999, "    check file loaded");
     }
 }
