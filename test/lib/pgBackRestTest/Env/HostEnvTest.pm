@@ -287,6 +287,7 @@ sub dbControlVersion
         &PG_VERSION_95 => 942,
         &PG_VERSION_96 => 960,
         &PG_VERSION_10 => 1002,
+        &PG_VERSION_11 => 1100,
     };
 
     if (!defined($hControlVersion->{$strPgVersion}))
@@ -441,6 +442,7 @@ sub walGenerateContent
         &PG_VERSION_95 => hex('0xD087'),
         &PG_VERSION_96 => hex('0xD093'),
         &PG_VERSION_10 => hex('0xD097'),
+        &PG_VERSION_11 => hex('0xD098'),
     };
 
     my $tWalContent = pack('S', $hWalMagic->{$strPgVersion});
