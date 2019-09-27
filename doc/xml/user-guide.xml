@@ -2289,7 +2289,7 @@
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>The <host>repository</host> host must be configured with the <host>{[host-pg1]}</host> host/user and database path.  The primary will be configured as <id>db1</id> to allow a standby to be added later.</p>
+            <p>The <host>repository</host> host must be configured with the <host>{[host-pg1]}</host> host/user and database path.  The primary will be configured as <id>pg1</id> to allow a standby to be added later.</p>
 
             <backrest-config host="{[host-repo1]}" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>pg1-host</br-option>/<br-option>pg1-host-user</br-option> and <br-option>pg1-path</br-option></title>
