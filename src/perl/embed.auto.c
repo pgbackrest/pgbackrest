@@ -7691,6 +7691,8 @@ static const EmbeddedModule embeddedModule[] =
             "push @EXPORT, qw(PG_VERSION_10);\n"
             "use constant PG_VERSION_11 => '11';\n"
             "push @EXPORT, qw(PG_VERSION_11);\n"
+            "use constant PG_VERSION_12 => '12';\n"
+            "push @EXPORT, qw(PG_VERSION_12);\n"
             "\n"
             "use constant PG_VERSION_APPLICATION_NAME => PG_VERSION_90;\n"
             "push @EXPORT, qw(PG_VERSION_APPLICATION_NAME);\n"
