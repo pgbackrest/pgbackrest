@@ -135,7 +135,7 @@ sub run
         my $strTimeMessage = 'time';
         my $strXidMessage = 'xid';
         my $strNameMessage = 'name';
-        my $strTimelineMessage = 'timeline3';
+        my $strTimelineMessage = 'timeline';
 
         # Create two new databases
         if ($bTestLocal)
@@ -959,7 +959,7 @@ sub run
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strNameMessage);
         }
 
-        # Restore (restore type = default, timeline = 4)
+        # Restore (restore type = default, timeline = created by type = xid, inclusive recovery)
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_84)
         {
@@ -967,6 +967,9 @@ sub run
 
             $oHostDbMaster->clusterStop();
 
+            # The timeline to use for this test is subject to change based on tests being added or removed above.  The best thing
+            # would be to automatically grab the timeline after the restore, but since this test has been stable for a long time
+            # it does not seem worth the effort to automate.
             $oHostDbMaster->restore(
                 undef, $strIncrBackup,
                 {bDelta => true,
