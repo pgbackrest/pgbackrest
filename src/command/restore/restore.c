@@ -524,7 +524,7 @@ typedef struct RestoreCleanCallbackData
     bool basePath;                                                  // Is this the base path?
     bool exists;                                                    // Does the target path exist?
     bool delta;                                                     // Is this a delta restore?
-    bool preserveRecoveryConf;                                      // Should the recovery.conf file be preserved?
+    StringList *fileIgnore;                                         // Files to ignore during clean
 } RestoreCleanCallbackData;
 
 // Helper to update ownership on a file/link/path
@@ -621,9 +621,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
     RestoreCleanCallbackData *cleanData = (RestoreCleanCallbackData *)data;
 
     // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
-    if (cleanData->basePath && info->type == storageTypeFile &&
-        (strEq(info->name, BACKUP_MANIFEST_FILE_STR) ||
-            (cleanData->preserveRecoveryConf && strEq(info->name, PG_FILE_RECOVERYCONF_STR))))
+    if (cleanData->basePath && info->type == storageTypeFile && strLstExists(cleanData->fileIgnore, info->name))
     {
         FUNCTION_TEST_RETURN_VOID();
         return;
@@ -776,7 +774,14 @@ restoreCleanBuild(Manifest *manifest)
             cleanData->targetPath = manifestTargetPath(manifest, cleanData->target);
             cleanData->basePath = strEq(cleanData->targetName, MANIFEST_TARGET_PGDATA_STR);
             cleanData->delta = delta;
-            cleanData->preserveRecoveryConf = strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR);
+
+            // Ignore backup.manifest while cleaning since it may exist from an prior incomplete restore
+            cleanData->fileIgnore = strLstNew();
+            strLstAdd(cleanData->fileIgnore, BACKUP_MANIFEST_FILE_STR);
+
+            // Alse ignore recovery.conf when recovery type = preserve
+            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+                strLstAdd(cleanData->fileIgnore, PG_FILE_RECOVERYCONF_STR);
 
             // If this is a tablespace append the tablespace identifier
             if (cleanData->target->type == manifestTargetTypeLink && cleanData->target->tablespaceId != 0)
