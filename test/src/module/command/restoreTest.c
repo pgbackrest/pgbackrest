@@ -1192,18 +1192,9 @@ testRun(void)
         strLstAddZ(argBaseList, "restore");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("no recovery conf");
-
-        StringList *argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=none");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-
-        TEST_RESULT_PTR(restoreRecoveryConf(PG_VERSION_94), NULL, "check recovery options");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("user-specified options");
 
-        argList = strLstDup(argBaseList);
+        StringList *argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--recovery-option=a-setting=a");
         strLstAddZ(argList, "--recovery-option=b_setting=b");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
