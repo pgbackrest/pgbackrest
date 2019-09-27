@@ -856,6 +856,8 @@ sub run
 
         # Restore (restore type = xid, inclusive)
         #---------------------------------------------------------------------------------------------------------------------------
+        my $strRecoveryFile = undef;
+
         if ($bTestLocal)
         {
             &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_XID);
@@ -872,8 +874,10 @@ sub run
                     strOptionalParam => '--tablespace-map-all=../../tablespace', bTablespace => false});
 
             # Save recovery file to test so we can use it in the next test
+            $strRecoveryFile = DB_FILE_RECOVERYCONF;
+
             storageDb()->copy(
-                $oHostDbMaster->dbBasePath() . qw{/} . DB_FILE_RECOVERYCONF, $self->testPath() . qw{/} . DB_FILE_RECOVERYCONF);
+                $oHostDbMaster->dbBasePath() . qw{/} . $strRecoveryFile, $self->testPath() . qw{/} . $strRecoveryFile);
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strXidMessage);
@@ -894,7 +898,7 @@ sub run
             executeTest('rm -rf ' . $oHostDbMaster->tablespacePath(1) . "/*");
 
             # Restore recovery file that was saved in last test
-            storageDb()->move($self->testPath . '/recovery.conf', $oHostDbMaster->dbBasePath() . '/recovery.conf');
+            storageDb()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
 
             $oHostDbMaster->restore(
                 undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), {strType => CFGOPTVAL_RESTORE_TYPE_PRESERVE});
