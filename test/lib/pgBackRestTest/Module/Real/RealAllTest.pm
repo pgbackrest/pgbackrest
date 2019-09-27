@@ -847,7 +847,8 @@ sub run
 
             $oHostDbMaster->clusterStop();
 
-            $oHostDbMaster->restore(undef, $strFullBackup, {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_IMMEDIATE});
+            $oHostDbMaster->restore(
+                undef, $strFullBackup, {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_IMMEDIATE, strTargetAction => 'promote'});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest(
@@ -917,7 +918,9 @@ sub run
         $oHostDbMaster->clusterStop();
 
         $oHostDbMaster->restore(
-            undef, $strFullBackup, {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget});
+            undef, $strFullBackup,
+            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget,
+                strTargetAction => $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef});
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimeMessage);
@@ -932,7 +935,8 @@ sub run
 
             $oHostDbMaster->restore(
                 undef, $strIncrBackup,
-                {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, bTargetExclusive => true});
+                {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, bTargetExclusive => true,
+                    strTargetAction => $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strIncrMessage);
@@ -948,7 +952,8 @@ sub run
 
             $oHostDbMaster->restore(
                 undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-                {bDelta => true, bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_NAME, strTarget => $strNameTarget});
+                {bDelta => true, bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_NAME, strTarget => $strNameTarget,
+                    strTargetAction => 'promote'});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strNameMessage);
