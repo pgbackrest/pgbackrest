@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Lists
 ***********************************************************************************************************************************/
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Test sort comparator
@@ -59,7 +60,10 @@ testRun(void)
 
         String *string3 = strNew("string3");
         TEST_RESULT_PTR(lstFindDefault(list, &string3, (void *)1), (void *)1, "    find string3 returns default");
+        TEST_RESULT_BOOL(lstExists(list, &string3), false, "    string3 does not exist");
         TEST_RESULT_STR(strPtr(*(String **)lstFind(list, &string2)), "string2", "    find string2");
+        TEST_RESULT_STR(strPtr(*(String **)lstFindDefault(list, &string2, NULL)), "string2", "    find string2 no default");
+        TEST_RESULT_BOOL(lstExists(list, &string2), true, "    string2 exists");
 
         TEST_RESULT_BOOL(lstRemove(list, &string2), true, "    remove string2");
         TEST_RESULT_BOOL(lstRemove(list, &string2), false, "    unable to remove string2");
@@ -153,6 +157,39 @@ testRun(void)
         TEST_RESULT_INT(*((int *)lstGet(list, 1)), 3, "sort value 1");
         TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
         TEST_RESULT_INT(*((int *)lstGet(list, 3)), 2, "sort value 3");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("performance"))
+    {
+        int testMax = 2000;
+        List *list = lstNewP(sizeof(int), .comparator = testComparator);
+
+        // Generate a large list of values (use int instead of string so there fewer allocations)
+        for (int listIdx = 0; listIdx < testMax; listIdx++)
+            lstAdd(list, &listIdx);
+
+        TEST_RESULT_UINT(lstSize(list), testMax, "check list total");
+
+        // Search for all values with an ascending sort
+        lstSort(list, sortOrderAsc);
+
+        TimeMSec timeBegin = timeMSec();
+
+        for (int listIdx = 0; listIdx < testMax; listIdx++)
+            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+
+        TEST_LOG_FMT("asc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
+
+        // Search for all values with an descending sort
+        lstSort(list, sortOrderDesc);
+
+        timeBegin = timeMSec();
+
+        for (int listIdx = 0; listIdx < testMax; listIdx++)
+            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+
+        TEST_LOG_FMT("desc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
