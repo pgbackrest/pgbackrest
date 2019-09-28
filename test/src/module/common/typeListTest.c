@@ -160,36 +160,33 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("performance"))
+    if (testBegin("lstFind()"))
     {
-        int testMax = 2000;
+        // Generate a list of values
+        int testMax = 100;
+
         List *list = lstNewP(sizeof(int), .comparator = testComparator);
 
-        // Generate a large list of values (use int instead of string so there fewer allocations)
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
-        TEST_RESULT_UINT(lstSize(list), testMax, "check list total");
+        CHECK(lstSize(list) == (unsigned int)testMax);
 
-        // Search for all values with an ascending sort
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("search ascending sort");
+
         lstSort(list, sortOrderAsc);
 
-        TimeMSec timeBegin = timeMSec();
-
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
 
-        TEST_LOG_FMT("asc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("search descending sort");
 
-        // Search for all values with an descending sort
         lstSort(list, sortOrderDesc);
 
-        timeBegin = timeMSec();
-
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
-
-        TEST_LOG_FMT("desc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
