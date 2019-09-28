@@ -37,6 +37,9 @@ void testRepoPathSet(const char *testRepoPath);
 const char *testUser(void);
 const char *testGroup(void);
 
+// For scaling performance tests
+uint64_t testScale(void);
+
 // Read a file (max 256k) into a buffer
 void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize);
 

@@ -46,6 +46,8 @@ use constant TEST_PGSQL_BIN                                         => 'pgsql-bi
     push @EXPORT, qw(TEST_PGSQL_BIN);
 use constant TEST_INTEGRATION                                       => 'integration';
     push @EXPORT, qw(TEST_INTEGRATION);
+use constant TEST_TYPE                                              => 'type';
+    push @EXPORT, qw(TEST_TYPE);
 use constant TEST_RUN                                               => 'run';
     push @EXPORT, qw(TEST_RUN);
 use constant TEST_VM                                                => 'os';
@@ -150,6 +152,7 @@ sub testListGet
 
                                     my $oTestRun =
                                     {
+                                        &TEST_TYPE => $hTest->{&TESTDEF_TYPE},
                                         &TEST_VM => $strTestOS,
                                         &TEST_C => coalesce($hTest->{&TESTDEF_C}, $hModule->{&TESTDEF_C}, false),
                                         &TEST_CDEF => $hTest->{&TESTDEF_DEFINE},
