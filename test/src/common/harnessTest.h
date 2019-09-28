@@ -393,8 +393,8 @@ Logging macros
     do                                                                                                                             \
     {                                                                                                                              \
         printf(                                                                                                                    \
-            "    %03u.%03us       %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                            \
-            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), message);                                               \
+            "    %03u.%03us l%04d -     %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                      \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, message);                                     \
         fflush(stdout);                                                                                                            \
     } while(0)
 
@@ -402,8 +402,8 @@ Logging macros
     do                                                                                                                             \
     {                                                                                                                              \
         printf(                                                                                                                    \
-            "    %03u.%03us       " format "\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                    \
-            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __VA_ARGS__);                                           \
+            "    %03u.%03us l%04d -     " format "\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),              \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, __VA_ARGS__);                                 \
         fflush(stdout);                                                                                                            \
     } while(0)
 
