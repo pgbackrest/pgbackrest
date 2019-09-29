@@ -285,6 +285,7 @@ restoreManifestMap(Manifest *manifest)
             if (tablespaceMap != NULL)
             {
                 const VariantList *tablespaceMapList = kvKeyList(tablespaceMap);
+                strLstSort(tablespaceRemapped, sortOrderAsc);
 
                 for (unsigned int tablespaceMapIdx = 0; tablespaceMapIdx < varLstSize(tablespaceMapList); tablespaceMapIdx++)
                 {
@@ -369,6 +370,7 @@ restoreManifestMap(Manifest *manifest)
         if (linkMap != NULL)
         {
             const VariantList *linkMapList = kvKeyList(linkMap);
+            strLstSort(linkRemapped, sortOrderAsc);
 
             for (unsigned int linkMapIdx = 0; linkMapIdx < varLstSize(linkMapList); linkMapIdx++)
             {
@@ -796,6 +798,8 @@ restoreCleanBuild(Manifest *manifest)
                 }
             }
 
+            strLstSort(cleanData->fileIgnore, sortOrderAsc);
+
             // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
             // Don't log check for the same path twice.  There can be multiple links to files in the same path, but logging it more
             // than once makes the logs noisy and looks like a bug.
@@ -1035,6 +1039,8 @@ restoreSelectiveExpression(Manifest *manifest)
                     strLstAddIfMissing(dbList, strBase(strPath(file->name)));
             }
 
+            strLstSort(dbList, sortOrderAsc);
+
             // If no databases were found then this backup is not a valid cluster
             if (strLstSize(dbList) == 0)
                 THROW(FormatError, "no databases found for selective restore\nHINT: is this a valid cluster?");
@@ -1159,6 +1165,8 @@ restoreRecoveryOption(unsigned int pgVersion)
 
                 kvPut(result, VARSTR(key), VARSTR(value));
             }
+
+            strLstSort(recoveryOptionKey, sortOrderAsc);
         }
 
         // Write restore_command
