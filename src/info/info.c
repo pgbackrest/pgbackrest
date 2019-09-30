@@ -40,6 +40,8 @@ Object types
 struct Info
 {
     MemContext *memContext;                                         // Mem context
+    unsigned int backrestFormat;                                    // pgBackRest format
+    const String *backrestVersion;                                  // pgBackRest version
     const String *cipherPass;                                       // Cipher passphrase if set
 };
 
@@ -208,6 +210,9 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
         {
             if (jsonToUInt(value) != REPOSITORY_FORMAT)
                 THROW_FMT(FormatError, "expected format %d but found %d", REPOSITORY_FORMAT, cvtZToInt(strPtr(value)));
+
+            loadData->info->backrestFormat = jsonToUInt(value);
+
         }
         // Store checksum to be validated later
         else if (strEq(key, INFO_KEY_CHECKSUM_STR))
@@ -218,6 +223,9 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
             }
             MEM_CONTEXT_END();
         }
+        // Store pgBackRest version
+        else if (strEq(key, INFO_KEY_VERSION_STR))
+            loadData->info->backrestVersion = jsonToStr(value);
     }
     // Process cipher section
     else if (strEq(section, INFO_SECTION_CIPHER_STR))
@@ -437,21 +445,6 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
 }
 
 /***********************************************************************************************************************************
-Accessor functions
-***********************************************************************************************************************************/
-const String *
-infoCipherPass(const Info *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->cipherPass);
-}
-
-/***********************************************************************************************************************************
 Load info file(s) and throw error for each attempt if none are successful
 ***********************************************************************************************************************************/
 void
@@ -524,4 +517,44 @@ infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callback
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+
+/***********************************************************************************************************************************
+Accessor functions
+***********************************************************************************************************************************/
+const String *
+infoCipherPass(const Info *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->cipherPass);
+}
+
+unsigned int
+infoBackrestFormat(const Info *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->backrestFormat);
+}
+
+const String *
+infoBackrestVersion(const Info *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->backrestVersion);
 }

@@ -22,9 +22,9 @@ Constants
 #define INFO_COPY_EXT                                               ".copy"
 
 #define INFO_KEY_FORMAT                                             "backrest-format"
-    STRING_DECLARE(INFO_KEY_VERSION_STR);
-#define INFO_KEY_VERSION                                            "backrest-version"
     STRING_DECLARE(INFO_KEY_FORMAT_STR);
+#define INFO_KEY_VERSION                                            "backrest-version"
+    STRING_DECLARE(INFO_KEY_VERSION_STR);
 
 /***********************************************************************************************************************************
 Function types for loading and saving
@@ -54,6 +54,8 @@ void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *
 Getters
 ***********************************************************************************************************************************/
 const String *infoCipherPass(const Info *this);
+unsigned int infoBackrestFormat(const Info *this);
+const String *infoBackrestVersion(const Info *this);
 
 /***********************************************************************************************************************************
 Helper functions

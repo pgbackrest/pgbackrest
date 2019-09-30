@@ -1925,6 +1925,34 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 }
 
 /***********************************************************************************************************************************
+Info accessors
+***********************************************************************************************************************************/
+const String *
+manifestBackrestVersion(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(infoBackrestVersion(this->info));
+}
+
+unsigned int
+manifestBackrestFormat(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(infoBackrestFormat(this->info));
+}
+
+
+/***********************************************************************************************************************************
 Helper function to load backup manifest files
 ***********************************************************************************************************************************/
 typedef struct ManifestLoadFileData
