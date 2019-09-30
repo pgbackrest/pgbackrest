@@ -823,7 +823,15 @@ my %hConfigDefine =
             &CFGCMD_RESTORE =>
             {
                 &CFGDEF_DEFAULT => 'latest',
-            }
+            },
+            &CFGCMD_INFO =>
+            {
+                &CFGDEF_REQUIRED => false,
+                &CFGDEF_DEPEND =>
+                {
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_STANZA,
+                },
+            },
         }
     },
 

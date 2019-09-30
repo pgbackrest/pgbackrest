@@ -4096,11 +4096,28 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdInfo)
+
+                CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptStanza)
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Backup set to detail.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
+                (
+                    "Details include a list of databases (with OIDs) in the backup set (excluding template databases), tablespaces "
+                        "(with OIDs) with the destination where they will be restored by default, and symlinks with the "
+                        "destination where they will be restored when --link-all is specified."
+                )
+            )
+
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRestore)

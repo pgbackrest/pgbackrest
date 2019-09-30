@@ -1752,6 +1752,22 @@
                 </execute>
             </execute-list>
 
+            <p>If the database to restore is not known, use the <cmd>info</cmd> command <br-option>set</br-option> option to discover databases that are part of the backup set.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Show database list for backup</title>
+
+                <execute user="postgres" show="n" variable-key="backup-last-incr">
+                    <exe-cmd>{[cmd-backup-last]}</exe-cmd>
+                </execute>
+
+                <execute user="postgres">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
+                        {[dash]}-set={[backup-last-incr]} info</exe-cmd>
+                    <exe-highlight>database list</exe-highlight>
+                </execute>
+            </execute-list>
+
             <p>Stop the cluster and restore only the test2 database.  Built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</p>
 
             <execute-list host="{[host-pg1]}">
