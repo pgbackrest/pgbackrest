@@ -8,6 +8,7 @@ Backup Info Handler
 #include <string.h>
 #include <inttypes.h>
 
+#include "command/backup/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/ini.h"
@@ -22,6 +23,7 @@ Backup Info Handler
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -347,6 +349,157 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 }
 
 /***********************************************************************************************************************************
+Add a backup to the current list
+***********************************************************************************************************************************/
+// CSHANG Should this function return InfoBackup (*this) or can we leave it VOID?
+void
+infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const ManifestData *manData = manifestData(manifest);
+
+        // Calculate backup sizes and references
+        uint64_t backupSize = 0;
+        uint64_t backupSizeDelta = 0;
+        uint64_t backupRepoSize = 0;
+        uint64_t backupRepoSizeDelta = 0;
+        StringList *referenceList = strLstNew();
+
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+        {
+            const ManifestFile *file = manifestFile(manifest, fileIdx);
+
+            backupSize += file->size;
+            backupRepoSize += file->sizeRepo;
+
+            if (file->reference != NULL)
+                strLstAdd(referenceList, file->reference);
+            else
+            {
+                backupSizeDelta += file->size;
+                backupRepoSizeDelta += file->sizeRepo;
+            }
+        }
+
+        InfoBackupData infoBackupData =
+        {
+            .backrestFormat = REPOSITORY_FORMAT,
+            .backrestVersion = strDup(manData->backrestVersion),
+            .backupInfoRepoSize = backupRepoSize,
+            .backupInfoRepoSizeDelta = backupRepoSizeDelta,
+            .backupInfoSize = backupSize,
+            .backupInfoSizeDelta = backupSizeDelta,
+            .backupLabel = strDup(manData->backupLabel),
+            .backupPgId = manData->pgId,
+            .backupTimestampStart = (uint64_t) manData->backupTimestampStart, // ??? Need to fix this so InfoBackupData has time_t
+            .backupTimestampStop= (uint64_t) manData->backupTimestampStop,    // ??? Need to fix this so InfoBackupData has time_t
+            .backupType = backupTypeStr(manData->backupType),
+
+            .backupArchiveStart = strDup(manData->archiveStart),
+            .backupArchiveStop = strDup(manData->archiveStop),
+
+            .optionArchiveCheck = manData->backupOptionArchiveCheck,
+            .optionArchiveCopy = manData->backupOptionArchiveCopy,
+            .optionBackupStandby = varBool(manData->backupOptionStandby),
+            .optionChecksumPage = varBool(manData->backupOptionChecksumPage),
+            .optionCompress = manData->backupOptionCompress,
+            .optionHardlink = manData->backupOptionHardLink,
+            .optionOnline = manData->backupOptionOnline,
+        };
+
+        if (manData->backupType != backupTypeFull)
+        {
+            strLstSort(referenceList, sortOrderAsc);
+            infoBackupData.backupReference = strLstDup(referenceList);
+            infoBackupData.backupPrior = strDup(manData->backupLabelPrior);
+        }
+
+        // Add the backup data to the current backup list
+        lstAdd(this->backup, &infoBackupData);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Locate and add missing backups
+***********************************************************************************************************************************/
+void
+infoBackupDataAddMissing(const Storage *storage, const InfoBackup *this, CipherType cipherType)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+    FUNCTION_LOG_END();
+
+    ASSERT(storage != NULL);
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get a list of backups in the repo
+        StringList *backupList = strLstSort(
+            storageListP(
+                storage, STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true,
+                .incremental = true)),
+            sortOrderDesc);
+
+        // Get the current list of backups from backup.info
+        StringList *backupCurrentList = infoBackupDataLabelList(this, NULL);
+
+        // For each backup in the repo, check if it exists in backup.info
+        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+        {
+            // If it does not exists in the list of current backups, then if it is valid, add it
+            if (!strLstExists(backupCurrentList, strLstGet(backupList, backupIdx)))
+            {
+                String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE,
+                    strPtr(strLstGet(backupList, backupIdx)));
+
+                // Check if a completed backup (backup.manifest only) exists
+                if (storageExistsNP(storage, manifestFileName))
+                {
+                    bool found = false;
+                    const Manifest *manifest = manifestLoadFile(
+                        storage, manifestFileName, cipherType, infoPgCipherPass(this->infoPg));
+                    const ManifestData *manData = manifestData(manifest);
+
+                    // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match
+                    // then warn that the backup is not valid
+                    for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(this->infoPg); pgIdx++)
+                    {
+                        InfoPgData pgHistory = infoPgData(this->infoPg, pgIdx);
+
+                        // If there is an exact match with the history, system and version then add it to the current backup list
+                        if (manData->pgId == pgHistory.id && manData->pgSystemId == pgHistory.systemId &&
+                            manData->pgVersion == pgHistory.version)
+                        {
+                            infoBackupDataAdd(this, manifest);
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                        LOG_WARN("invalid backup '%s' cannot be added to current backups", strPtr(manData->backupLabel));
+                }
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Delete a backup from the current backup list
 ***********************************************************************************************************************************/
 void
@@ -405,109 +558,6 @@ infoBackupDataLabelList(const InfoBackup *this, const String *expression)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
-}
-
-/***********************************************************************************************************************************
-Add missing backups
-***********************************************************************************************************************************/
-void
-infoBackupDataAddMissing(const Storage *storage, const InfoBackup *this, CipherType cipherType)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);  // CSHANG We really need to do something about the type
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(this != NULL);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Get a list of backups in the repo
-        StringList *backupList = strLstSort(
-            storageListP(
-                storage, STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true,
-                .incremental = true)),
-            sortOrderDesc);
-
-        StringList *backupCurrentList = infoBackupDataLabelList(this, NULL);
-
-        // For each backup in the repo, check if it exists in backup.info
-        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
-        {
-            // If it does not exists in the list of current backups, then if it is valid, add it
-            if (!strLstExists(backupCurrentList, strLstGet(backupList, backupIdx)))
-            {
-                String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE,
-                    strPtr(strLstGet(backupList, backupIdx)));
-
-                // Check if a completed backup (backup.manifest only) exists
-                if (storageExistsNP(storage, manifestFileName))
-                {
-                    bool found = false;
-                    const Manifest *manifest = manifestLoadFile(storage, manifestFileName, cipherType, infoPgCipherPass(this->infoPg));
-                    const ManifestData *manData = manifestData(manifest);
-
-                    // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match
-                    // then warn that the backup is not valid
-                    for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(this->infoPg); pgIdx++)
-                    {
-                        InfoPgData pgHistory = infoPgData(this->infoPg, pgIdx);
-
-                        // If there is an exact match with the history, system and version then add it to the current backup list
-                        if (manData->pgId == pgHistory.id && manData->pgSystemId == pgHistory.systemId &&
-                            manData->pgVersion == pgHistory.version)
-                        {
-                            InfoBackupData infoBackupData =
-                            {
-                                .backrestFormat = manifestBackrestFormat(manifest),
-                                .backrestVersion = manifestBackrestVersion(manifest),
-                            //     .backupInfoRepoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR)),
-                            //     .backupInfoRepoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR)),
-                            //     .backupInfoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR)),
-                            //     .backupInfoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR)),
-                            //     .backupLabel = manifestData->backupLabel,
-                            //     .backupPgId = cvtZToUInt(strPtr(varStrForce(kvGet(backupKv, INFO_KEY_DB_ID_VAR)))),
-                            //     .backupTimestampStart = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR)),
-                            //     .backupTimestampStop= varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR)),
-                            //     .backupType = varStrForce(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR)),
-                            //
-                            //     // Possible NULL values
-                            //     .backupArchiveStart = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR))),
-                            //     .backupArchiveStop = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR))),
-                            //     .backupPrior = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR))),
-                            //     .backupReference =
-                            //         kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR) != NULL ?
-                            //             strLstNewVarLst(varVarLst(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR))) : NULL,
-                            //
-                            //     // Options
-                            //     .optionArchiveCheck = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR)),
-                            //     .optionArchiveCopy = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR)),
-                            //     .optionBackupStandby = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR)),
-                            //     .optionChecksumPage = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR)),
-                            //     .optionCompress = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_COMPRESS_VAR)),
-                            //     .optionHardlink = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_HARDLINK_VAR)),
-                            //     .optionOnline = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR)),
-                            };
-
-                            // Add the backup data to the current backup list
-                            lstAdd(this->backup, &infoBackupData);
-
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (!found)
-                        LOG_WARN("invalid backup found: %s", strPtr(manData->backupLabel));
-                }
-            }
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -590,7 +640,7 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
         .memContext = memContextCurrent(),
         .storage = storage,
         .fileName = fileName,
-        .cipherType = cipherType,   // CSHANG But if we're storing the type here, then why not expose it?
+        .cipherType = cipherType,
         .cipherPass = cipherPass,
     };
 

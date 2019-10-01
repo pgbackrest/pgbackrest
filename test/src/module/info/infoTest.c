@@ -196,6 +196,7 @@ testRun(void)
             infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with content and cipher");
         TEST_RESULT_STR(strPtr(callbackContent), "[c] key=1\n[d] key=1\n", "    check callback content");
         TEST_RESULT_STR(strPtr(infoCipherPass(info)), "somepass", "    check cipher pass set");
+        TEST_RESULT_STR(strPtr(infoBackrestVersion(info)), PROJECT_VERSION, "    check backrest version");
 
         contentSave = bufNew(0);
 

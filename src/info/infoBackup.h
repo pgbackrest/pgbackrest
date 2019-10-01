@@ -15,6 +15,7 @@ typedef struct InfoBackup InfoBackup;
 #include "common/type/string.h"
 #include "common/type/stringList.h"
 #include "info/infoPg.h"
+#include "info/manifest.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -65,6 +66,8 @@ InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const Str
 Functions
 ***********************************************************************************************************************************/
 // Remove a backup from the current section
+void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
+void infoBackupDataAddMissing(const Storage *storage, const InfoBackup *this, CipherType cipherType);
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
 

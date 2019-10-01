@@ -40,7 +40,6 @@ Object types
 struct Info
 {
     MemContext *memContext;                                         // Mem context
-    unsigned int backrestFormat;                                    // pgBackRest format
     const String *backrestVersion;                                  // pgBackRest version
     const String *cipherPass;                                       // Cipher passphrase if set
 };
@@ -143,6 +142,7 @@ infoNew(const String *cipherPass)
 
         // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
         this->cipherPass = strDup(cipherPass);
+        this->backrestVersion = STRDEF(PROJECT_VERSION);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -210,12 +210,18 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
         {
             if (jsonToUInt(value) != REPOSITORY_FORMAT)
                 THROW_FMT(FormatError, "expected format %d but found %d", REPOSITORY_FORMAT, cvtZToInt(strPtr(value)));
-
-            loadData->info->backrestFormat = jsonToUInt(value);
-
+        }
+        // Store pgBackRest version
+        else if (strEq(key, INFO_KEY_VERSION_STR))
+        {
+            MEM_CONTEXT_BEGIN(loadData->info->memContext)
+            {
+                loadData->info->backrestVersion = jsonToStr(value);
+            }
+            MEM_CONTEXT_END();
         }
         // Store checksum to be validated later
-        else if (strEq(key, INFO_KEY_CHECKSUM_STR))
+        else if (strEq(key, INFO_KEY_CHECKSUM_STR)) // CSHANG I don't understand why this no longer has coverage (I'm not sure how it ever actully had coverage)
         {
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
@@ -223,9 +229,6 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
             }
             MEM_CONTEXT_END();
         }
-        // Store pgBackRest version
-        else if (strEq(key, INFO_KEY_VERSION_STR))
-            loadData->info->backrestVersion = jsonToStr(value);
     }
     // Process cipher section
     else if (strEq(section, INFO_SECTION_CIPHER_STR))
@@ -445,6 +448,33 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
 }
 
 /***********************************************************************************************************************************
+Accessor functions
+***********************************************************************************************************************************/
+const String *
+infoCipherPass(const Info *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->cipherPass);
+}
+
+const String *
+infoBackrestVersion(const Info *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->backrestVersion);
+}
+
+/***********************************************************************************************************************************
 Load info file(s) and throw error for each attempt if none are successful
 ***********************************************************************************************************************************/
 void
@@ -517,44 +547,4 @@ infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callback
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-
-/***********************************************************************************************************************************
-Accessor functions
-***********************************************************************************************************************************/
-const String *
-infoCipherPass(const Info *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->cipherPass);
-}
-
-unsigned int
-infoBackrestFormat(const Info *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->backrestFormat);
-}
-
-const String *
-infoBackrestVersion(const Info *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->backrestVersion);
 }
