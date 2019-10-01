@@ -575,13 +575,13 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                 KeyValue *timestampInfo = varKv(kvGet(backupInfo, BACKUP_KEY_TIMESTAMP_VAR));
 
                 // Get and format the backup start/stop time
-                static char timeBufferStart[20];
-                static char timeBufferStop[20];
+                char timeBufferStart[20];
+                char timeBufferStop[20];
                 time_t timeStart = (time_t)varUInt64(kvGet(timestampInfo, KEY_START_VAR));
                 time_t timeStop = (time_t)varUInt64(kvGet(timestampInfo, KEY_STOP_VAR));
 
-                strftime(timeBufferStart, 20, "%Y-%m-%d %H:%M:%S", localtime(&timeStart));
-                strftime(timeBufferStop, 20, "%Y-%m-%d %H:%M:%S", localtime(&timeStop));
+                strftime(timeBufferStart, sizeof(timeBufferStart), "%Y-%m-%d %H:%M:%S", localtime(&timeStart));
+                strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime(&timeStop));
 
                 strCatFmt(
                     backupResult, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
