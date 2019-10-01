@@ -1,5 +1,412 @@
 [
     {
+        "commit": "9bab2124781fd7ac80e033430615f63aef5d2ee8",
+        "date": "2019-10-01 10:29:59 -0400",
+        "subject": "PostgreSQL 12 support.",
+        "body": "Recovery settings are now written into postgresql.auto.conf instead of recovery.conf.  Existing recovery_target* settings will be commented out to help avoid conflicts.\n\nA comment is added before recovery settings to identify them as written by pgBackRest since it is unclear how, in general, old settings will be removed.\n\nrecovery.signal and standby.signal are automatically created based on the recovery settings."
+    },
+    {
+        "commit": "6be7e6fde54f2dc3edbed802efc3f5cb1e050fd2",
+        "date": "2019-10-01 10:25:08 -0400",
+        "subject": "Fix misplaced String declarations."
+    },
+    {
+        "commit": "309ae66e2fbd128b54f0859b231c14f6ab1518c4",
+        "date": "2019-10-01 08:47:56 -0400",
+        "subject": "Remove unneeded static declarations and use sizeof() where appropriate."
+    },
+    {
+        "commit": "f96c54c4ba0e526cda4cf9bed5cc1231b1d819b5",
+        "date": "2019-09-30 12:39:38 -0400",
+        "subject": "Add info command set option for detailed text output.",
+        "body": "The additional details include databases that can be used for selective restore and a list of tablespaces and symlinks with their default destinations.\n\nThis information is not included in the JSON output because it requires reading the manifest which is too IO intensive to do for all manifests.  We plan to include this information for JSON in a future release."
+    },
+    {
+        "commit": "33ec5a3aacdfe0dd258463c0cbcd43f0d155152e",
+        "date": "2019-09-29 09:05:55 -0400",
+        "subject": "Sort lists where it might help performance.",
+        "body": "Most of these lists should be quite small with the exception of the list in get.c, but it doesn't cost much to sort them and may help in corner cases we have not thought of."
+    },
+    {
+        "commit": "a58635ac0285fbb3178329bdc222221fe7160380",
+        "date": "2019-09-28 14:24:27 -0400",
+        "subject": "Move C performance tests out of unit tests.",
+        "body": "Performance tests were being done in unit tests until there was a better place to put them.\n\nNow there is, so move them there."
+    },
+    {
+        "commit": "f1ba428fb037eac7b6c6ea5b9f617d1ad4579026",
+        "date": "2019-09-28 14:02:12 -0400",
+        "subject": "Add performance test capability in C with scaling.",
+        "body": "Scaling allows the starting values to be increased from the command-line without code changes.\n\nAlso suppress valgrind and assertions when running performance testing.  Optimization is left at -O0 because we should not be depending on compiler optimizations to make our code performant, and it makes profiling more informative."
+    },
+    {
+        "commit": "004ff99a2d918fa3a5079ce9d7ff2f5b120176e3",
+        "date": "2019-09-28 13:17:21 -0400",
+        "subject": "Identify Perl performance test by appending -perl.",
+        "body": "This is intended to differentiate the upcoming C performance tests from the Perl performance tests that will eventually be migrated."
+    },
+    {
+        "commit": "cb62bebadf62613b770f79cd4fd43e20ec7db10c",
+        "date": "2019-09-28 10:08:20 -0400",
+        "subject": "Use bsearch() on sorted lists rather than an iterative method.",
+        "body": "bsearch() is far more efficient than an iterative approach except in the most trivial cases.\n\nFor now insert will reset the sort order to none and the list will need to be resorted before bsearch() can be used.  This is necessary because item pointers are not stable after a sort, i.e. they can move around.  Until lists are stable it's not a good idea to surprise the caller by mixing up their pointers on insert."
+    },
+    {
+        "commit": "d3d2a7cd8606be9696957eb052ca6569db1a8167",
+        "date": "2019-09-28 09:57:06 -0400",
+        "subject": "Add line number and fix spacing in TEST_LOG*() macros."
+    },
+    {
+        "commit": "afc483ef86aefe2cf8f057b6159af2c54f77c28b",
+        "date": "2019-09-27 13:37:59 -0400",
+        "subject": "Clarify which timeline should be used for timeline integration test."
+    },
+    {
+        "commit": "0a4122c77dc2e3fb866b95be73c2831530b2def1",
+        "date": "2019-09-27 13:34:59 -0400",
+        "subject": "Add reviewer."
+    },
+    {
+        "commit": "6355451870c90be346a378ef8b301f182c635edb",
+        "date": "2019-09-27 13:33:14 -0400",
+        "subject": "Fix old option name in documentation."
+    },
+    {
+        "commit": "d82102d6ef5445e5c96e47a095210f36a618b800",
+        "date": "2019-09-27 13:04:36 -0400",
+        "subject": "Add explicit promotes to recovery integration tests.",
+        "body": "PostgreSQL 12 will shutdown in these cases which seems to be the correct action (according to the documentation) when hot_standby = off, but older versions are promoting instead.  Set target_action explicitly so all versions will behave the same way.\n\nThis does beg the question of whether the PostgreSQL 12 behavior is wrong (though it matches the docs) or the previous versions are."
+    },
+    {
+        "commit": "833d0da0d96036ada9e2397e2b1484d2032c25fa",
+        "date": "2019-09-27 12:29:33 -0400",
+        "subject": "Store recovery file name in integration when testing preserve recovery.",
+        "body": "This makes the test a little more maintainable and is friendly with the changes needed for PostgreSQL 12."
+    },
+    {
+        "commit": "80eb561cafc1af645e689cca865158e4336c143d",
+        "date": "2019-09-27 09:45:11 -0400",
+        "subject": "Add missing PostgreSQL 11 control/WAL versions in Perl tests.",
+        "body": "These values don't seem to be used for testing but better to be tidy."
+    },
+    {
+        "commit": "d6a6d93a041af1b8e333d8e9b68b151ae43e564d",
+        "date": "2019-09-27 09:35:59 -0400",
+        "subject": "Add PostgreSQL 12 to u18 container.",
+        "body": "This does not add PostgresQL 12 support; it simply adds PostgreSQL 12 to the u18 container for development and testing."
+    },
+    {
+        "commit": "03a7bda511b293cf40fd8324951ace1252d40ac2",
+        "date": "2019-09-27 09:19:12 -0400",
+        "subject": "Refactor recovery file generation.",
+        "body": "Separate the generation of recovery values and formatting them into recovery.conf format.  This is generally a good idea, but also makes the code ready to deal with a different recovery file in PostgreSQL 12.\n\nAlso move the recovery file logic out of cmdRestore() into restoreRecoveryWrite()."
+    },
+    {
+        "commit": "cf1e96e827d154a62c0b52ff5531dd687695bf73",
+        "date": "2019-09-27 08:50:33 -0400",
+        "subject": "Refactor handling of ignored files in restore delta cleanup.",
+        "body": "Replace the boolean logic with a simple list that will be checked to see if the file should be ignored."
+    },
+    {
+        "commit": "c41fb575fbef7b4ce9714986b08f48d32b719862",
+        "date": "2019-09-26 17:39:45 -0400",
+        "subject": "Add standby restore type.",
+        "body": "This restore type automatically adds standby_mode=on to recovery.conf.\n\nThis could be accomplished previously by setting --recovery-option=standby_mode=on but PostgreSQL 12 requires standby mode to be enabled by a special file named standby.signal.\n\nThe new restore type allows us to maintain a common interface between PostgreSQL versions."
+    },
+    {
+        "commit": "89793368196e4073ca7137f2bf21edb385fb9ef6",
+        "date": "2019-09-26 16:02:39 -0400",
+        "subject": "Comment out unprivileged user documentation.",
+        "body": "We haven't had the time to complete this documentation and it has suffered bit rot.\n\nThis prevents us from building the docs on PostgreSQL >= 11 so just comment it all out until it can be updated."
+    },
+    {
+        "commit": "451ae397bec3f3bc070c4db674cc5df61bd63498",
+        "date": "2019-09-26 07:52:02 -0400",
+        "subject": "The restore command is implemented entirely in C.",
+        "body": "For the most part this is a direct migration of the Perl code into C.\n\nThere is one important behavioral change with regard to how file permissions are handled.  The Perl code tried to set ownership as it was in the manifest even when running as an unprivileged user.  This usually just led to errors and frustration.\n\nThe C code works like this:\n\nIf a restore is run as a non-root user (the typical scenario) then all files restored will belong to the user/group executing pgBackRest. If existing files are not owned by the executing user/group then an error will result if the ownership cannot be updated to the executing user/group. In that case the file ownership will need to be updated by a privileged user before the restore can be retried.\n\nIf a restore is run as the root user then pgBackRest will attempt to recreate the ownership recorded in the manifest when the backup was made. Only user/group names are stored in the manifest so the same names must exist on the restore host for this to work. If the user/group name cannot be found locally then the user/group of the PostgreSQL data directory will be used and finally root if the data directory user/group cannot be mapped to a name."
+    },
+    {
+        "commit": "92e48c856ac87838c479c2a454fe007cf026d4bd",
+        "date": "2019-09-26 07:27:07 -0400",
+        "subject": "Add missing asserts."
+    },
+    {
+        "commit": "f2781bdad4bbe2afba4a0eda7df90753c63ccf03",
+        "date": "2019-09-25 16:38:13 -0400",
+        "subject": "Allow documentation to be built without encryption.",
+        "body": "This is mainly useful for testing, where an encrypted repo is a real nuisance."
+    },
+    {
+        "commit": "e968acbdd74db8f78f718cbe5bd6358107bcf822",
+        "date": "2019-09-24 16:55:11 -0400",
+        "subject": "Fix outdated comment.",
+        "body": "This was probably missed when a new test was added and the timeline was updated."
+    },
+    {
+        "commit": "6af64df9b6519897a55a733583ee40a571a51ee6",
+        "date": "2019-09-23 19:26:24 -0400",
+        "subject": "Thoughts on repository version 6."
+    },
+    {
+        "commit": "71349c89aecdb3b158d1638d0310cdba6c96362a",
+        "date": "2019-09-23 17:56:17 -0400",
+        "subject": "Add TEST_TITLE() macro.",
+        "body": "This macro displays a title for each test.  A test frequently has multiple parts and it was hard to tell which subparts went together.  We used ad hoc indentation to do this.\n\nAnything that is a not a title is automatically indented so manually indenting is not longer needed.  This should make the tests and the test output easier to read."
+    },
+    {
+        "commit": "2fd2fe509f3039ef28766b865f3b66cc524dee04",
+        "date": "2019-09-23 17:20:47 -0400",
+        "subject": "Add TEST_RESULT_LOG*() and TEST_SYSTEM*() macros.",
+        "body": "These macros encapsulate the functionality provided by direct calls to harnessLogResult() and system().  They both have _FMT() variants.\n\nThe primary advantage is that {[path]}, {[user]}, and {[group]} will be replaced with the test path, user, and group respectively.  This saves a log of strNewFmt() calls and makes the tests less noisy."
+    },
+    {
+        "commit": "d3a7055ee5d290da0196ba266051846c107ddede",
+        "date": "2019-09-23 15:15:04 -0400",
+        "subject": "Only enable test.pl --debug-test-trace option when --debug also enabled.",
+        "body": "The other way makes no sense and leads to compile errors since --debug-test-trace requires some code that is only enabled by --debug."
+    },
+    {
+        "commit": "072aeb810932605bb5e2b8ef64288f24913ddd04",
+        "date": "2019-09-23 15:10:31 -0400",
+        "subject": "Add LFs to storage list tests.",
+        "body": "This makes the diffs easier to read when testing."
+    },
+    {
+        "commit": "c969137021da5dc03e5f95d36080f4e4fd08522b",
+        "date": "2019-09-23 13:50:46 -0400",
+        "subject": "Migrate backup manifest load/save to C.",
+        "body": "The backup manifest stores a complete list of all files, links, and paths in a backup along with metadata such as checksums, sizes,\ntimestamps, etc.  A list of databases is also included for selective restore.\n\nThe purpose of the manifest is to allow the restore command to confidently reconstruct the PostgreSQL data directory and ensure that\nnothing is missing or corrupt.  It is also useful for reporting, e.g. size of backup, backup time, etc.\n\nFor now, migrate enough functionality to implement the restore command."
+    },
+    {
+        "commit": "5b64c93e8b1de010176b8d3927f80cc8039f4dbc",
+        "date": "2019-09-20 17:50:49 -0400",
+        "subject": "Add local option for cfgExecParam().",
+        "body": "cfgExecParam() was originally written to provide options for remote processes.  Remotes processes do not have access to the local config so it was necessary to pass every non-default option.\n\nLocal processes on the other hand, e.g. archive-get, archive-get-async, archive-push-async, and local, do have access to the local config and therefore don't need every parameter to be passed on the command-line.  The previous way was not wrong, but it was overly verbose and did not align with the way Perl had worked.\n\nUpdate cfgExecParam() to accept a local option which excludes options from the command line which can be read from local configs."
+    },
+    {
+        "commit": "3f18040aab5707c9be9b51fe37f3464d222fceb5",
+        "date": "2019-09-20 08:13:36 -0400",
+        "subject": "Rename MANIFEST_FILE to BACKUP_MANIFEST_FILE.",
+        "body": "This is a bit more descriptive and avoids a naming conflict in the new C manifest code."
+    },
+    {
+        "commit": "174cb7b3af6b40d171186060509252c256208cd6",
+        "date": "2019-09-19 22:42:28 -0400",
+        "subject": "Add strPathAbsolute() and strLstRemoveIdx().",
+        "body": "strPathAbsolute() generates an absolute path from an absolute base path and an absolute/relative path.\n\nstrLstRemoveIdx() is a support function based on lstRemoveIdx()."
+    },
+    {
+        "commit": "9421493d09033efda2d5e2cc6eb60d13491beca3",
+        "date": "2019-09-19 22:34:12 -0400",
+        "subject": "Allow resets when generating local/remote command options.",
+        "body": "Somehow this was left out of the original implementation, but it is particularly important for certain types of restores."
+    },
+    {
+        "commit": "e24b2e3f4dcb0a288b4e742fd0b198b768d6320a",
+        "date": "2019-09-18 22:23:04 -0400",
+        "subject": "Only test timestamps for files.",
+        "body": "In general we don't care about path and link times since they are easily recreated when restoring.\n\nSo, outside of storageInfo() we don't need to bother testing them."
+    },
+    {
+        "commit": "54638e87042b2315f24abef2d7f8c5610c53762e",
+        "date": "2019-09-18 22:17:22 -0400",
+        "subject": "Add strLstRemove().",
+        "body": "Allow a string to be removed from a StringList using the underlying lstRemove()."
+    },
+    {
+        "commit": "a6a42b18a9c28b1410df803d7073340b2d7d52c6",
+        "date": "2019-09-18 22:09:49 -0400",
+        "subject": "Use switch instead of if else tree in jsonFromKvInternal().",
+        "body": "This is more efficient but more importantly it is easier to read."
+    },
+    {
+        "commit": "60d93df503c234730109c87114068dde4203804e",
+        "date": "2019-09-18 07:15:16 -0400",
+        "subject": "Use a callback to feed jobs to ProtocolParallel.",
+        "body": "Loading jobs in advance uses a lot of memory in the case that there are millions of jobs to be performed.  We haven't seen this yet, but with backup and restore on the horizon it will become the norm.\n\nInstead, use a callback so that jobs are only created as they are needed and can be freed as soon as they are completed."
+    },
+    {
+        "commit": "ce1c7b02520f2e37dfcfb283471fb4ec263b5d50",
+        "date": "2019-09-17 21:04:38 -0400",
+        "subject": "Ignore write errors when the ls command is writing to stdout.",
+        "body": "It's possible (even likely) that the ls output is being piped to something like head which will exit when it gets what it needs and leave us writing to a broken pipe.\n\nIt would be better to just ignore the broken pipe error but currently we don't store system error codes."
+    },
+    {
+        "commit": "8675699d08b91c57294becfcf27dbf7ddb594c46",
+        "date": "2019-09-16 14:09:53 -0400",
+        "subject": "Add FAQ for time-based Point-in-Time Recovery."
+    },
+    {
+        "commit": "49b421d372144df726d71552850e55cee298a566",
+        "date": "2019-09-16 13:56:25 -0400",
+        "subject": "Add documentation clarifications regarding standby repositories.",
+        "body": "Clarify that placing the repository on a standby is not a robust configuration and recommend against it."
+    },
+    {
+        "commit": "09ef03b7ef69d2760756146cad86b784b0b5d7c3",
+        "date": "2019-09-15 08:27:38 -0400",
+        "subject": "Add FAQ regarding backup-standby."
+    },
+    {
+        "commit": "f9c8bd31de89cc1140fe37e3996672bbb1c99934",
+        "date": "2019-09-14 14:10:04 -0400",
+        "subject": "Add required FreeBSD header."
+    },
+    {
+        "commit": "56bf9d0566bbb9708d1687e9d2e59be306e32dda",
+        "date": "2019-09-14 12:21:08 -0400",
+        "subject": "Update HINT messages to conform to new standard detailed in CODING.md."
+    },
+    {
+        "commit": "c5f496b903ab9a4fa545d5f1a0a8dae9ec5c49af",
+        "date": "2019-09-14 11:56:29 -0400",
+        "subject": "Rename parameter processId to processIdx in harnessFork.h for clarity."
+    },
+    {
+        "commit": "f57e119b25d73a4b33aa83b5484898c5d7e84dfb",
+        "date": "2019-09-13 12:28:39 -0400",
+        "subject": "Document the relationship between db-timeout and protocol-timeout."
+    },
+    {
+        "commit": "15d04ca19c0bd1aafe9d4389e8429bcc392e842d",
+        "date": "2019-09-12 16:29:50 -0400",
+        "subject": "Add recursion and json output to the ls command.",
+        "body": "These features finally make the ls command practical.\n\nCurrently the JSON contains only name, type, and size.  We may add more fields in the future, but these seem like the minimum needed to be useful."
+    },
+    {
+        "commit": "e45baa1830ac5251fc4284d094c3e12920e50862",
+        "date": "2019-09-12 16:03:05 -0400",
+        "subject": "Add sorting, filters, and recursion to storageInfoList().",
+        "body": "These are needed for the ls command and are also useful for testing."
+    },
+    {
+        "commit": "92365fb801543f8d6d52037b1936b3cd42512238",
+        "date": "2019-09-12 15:55:18 -0400",
+        "subject": "Disable missing-field-initializers warnings in unit testing.",
+        "body": "This warning gives very unpredictable results between compiler versions and seems unrealistic since most of our structs are zeroed for initialization.\n\nThis warning has been disabled in the Makefile for a long time."
+    },
+    {
+        "commit": "f809d2f008a4d8d769b72a68ffff9ef75ab9de22",
+        "date": "2019-09-12 15:16:42 -0400",
+        "subject": "Ignore apt-get update errors in Travis CI.",
+        "body": "Broken vendor packages have been causing builds to break due to an error on apt-get update.\n\nIgnore errors and proceed directory to apt-get install.  It's possible that we'll try to reference an expired package version and get an error anyway, but that seems better than a guaranteed hard error."
+    },
+    {
+        "commit": "506c10f7f270806aca8acecaa303bf4458463720",
+        "date": "2019-09-12 12:04:25 -0400",
+        "subject": "Sort and find improvements to List and StringList objects.",
+        "body": "Push the responsibility for sort and find down to the List object by introducing a general comparator function that can be used for both sorting and finding.\n\nUpdate insert and add functions to return the item added rather than the list.  This is more useful in the core code, though numerous updates to the tests were required."
+    },
+    {
+        "commit": "e4a071ce033ae53dafb35eb9ccd4daba1030064c",
+        "date": "2019-09-12 10:56:45 -0400",
+        "subject": "Add missing header in common/user module."
+    },
+    {
+        "commit": "b53305cc361e9978807d506e3e8ec13b3ae93511",
+        "date": "2019-09-12 08:17:07 -0400",
+        "subject": "Update incorrect pipelining references to connection reuse.",
+        "body": "Connection reuse and pipelining are not the same thing and should not have been conflated.\n\nUpdate comments and release notes to reflect the correct usage."
+    },
+    {
+        "commit": "dca5b63f970be8a13cd11222f4b5a9d4ca71261e",
+        "date": "2019-09-10 13:06:44 -0400",
+        "subject": "Move documentation job first for Travis CI.",
+        "body": "Since this job has been running long recently this should improved overall performance when multiple commits are queued up."
+    },
+    {
+        "commit": "f4f21d0df7217bcb583189d0fc4ecaac3faed146",
+        "date": "2019-09-10 13:02:05 -0400",
+        "subject": "Add groupIdFromName() and userIdFromName() to user module.",
+        "body": "Update StorageWritePosix to use the new functions.\n\nA side effect is that storageWritePosixOpen() will no longer error when the user/group name does not exist.  It will simply retain the original user/group, i.e. the user that executed the restore.\n\nIn general this is a feature since completing a restore is more important than setting permissions exactly from the source host.  However, some notification of this omission to the user would be beneficial."
+    },
+    {
+        "commit": "f8d0574759340f0260f06e377da412041987f582",
+        "date": "2019-09-10 12:29:36 -0400",
+        "subject": "Increase process timeout and emit occasional warnings.",
+        "body": "Travis will timeout after 10 minutes with no output.  Emit a warning every 5 minutes to keep Travis alive and increase the total timeout to 20 minutes.\n\nDocumentation builds have been timing out a lot recently so hopefully this will help."
+    },
+    {
+        "commit": "e043c6b1bc388422aee9255077544c3644b8f69d",
+        "date": "2019-09-09 07:37:57 -0400",
+        "subject": "Update comment missed in d957acb3."
+    },
+    {
+        "commit": "1049632873d5a70cda90e5c4ed87312bfe4810d6",
+        "date": "2019-09-08 20:11:51 -0400",
+        "subject": "Add user module for managing system users/groups.",
+        "body": "Centralize the management of users and groups.\n\nAlso update Posix storage driver where users/groups were already in use."
+    },
+    {
+        "commit": "d957acb36b6b50c6166d9a68b03f239cdc508fa7",
+        "date": "2019-09-08 06:53:23 -0400",
+        "subject": "Add function to generate PostgreSQL tablespace identifier.",
+        "body": "In PostgreSQL >= 9.0 each tablespace data is stored in a specially named directory so different major versions can share the same tablespace path."
+    },
+    {
+        "commit": "051128ed9ee0ebc63fb35e69818c6213397a053f",
+        "date": "2019-09-08 06:47:52 -0400",
+        "subject": "Add test macro for comparing String to zero-terminated strings.",
+        "body": "This macro avoids the need to wrap the first parameter in strPtr() and should improve readability."
+    },
+    {
+        "commit": "0a96764cb8daa615121069e840268e216d1983ff",
+        "date": "2019-09-07 18:04:39 -0400",
+        "subject": "Remove most references to PostgreSQL control and catalog versions.",
+        "body": "The control and catalog versions were stored a variety of places in the optimistic hope that they would be useful.  In fact they never were.\n\nWe can't remove them from the backup.info and backup.manifest files due to backwards compatibility concerns, but we can at least avoid loading and storing them in C structures.\n\nAdd functions to the PostgreSQL interface which will return the control and catalog versions for any supported version of PostgreSQL to allow backwards compatibility for backup.info and backup.manifest.  These functions will be useful in other ways, e.g. generating the tablespace identifier in PostgreSQL >= 9.0."
+    },
+    {
+        "commit": "843a602080e13ea0f205720892f7bfee58e075fb",
+        "date": "2019-09-07 15:41:55 -0400",
+        "subject": "Add user/group id to storageInfo().",
+        "body": "This is required for some operations on Posix storage."
+    },
+    {
+        "commit": "1c7c1042b4509ff3ad42dad240d895617f01d644",
+        "date": "2019-09-07 12:32:25 -0400",
+        "subject": "Remove extraneous semicolons and add spaces."
+    },
+    {
+        "commit": "2eb1d1fee315e1e757856d3d88eb74b8434dad74",
+        "date": "2019-09-06 16:50:57 -0400",
+        "subject": "Rename lstRemove() to lstRemoveIdx().",
+        "body": "This works better with the names of upcoming functions and seems sensible even in isolation."
+    },
+    {
+        "commit": "dde0c2b0c9c9743a863b6064e7dbb69de26fa364",
+        "date": "2019-09-06 16:43:53 -0400",
+        "subject": "Rename INFO_MANIFEST_FILE to MANIFEST_FILE.",
+        "body": "This was missed in 5c314df0 when the module was renamed."
+    },
+    {
+        "commit": "4d84820021ad2a96922c87263d9200aace42358f",
+        "date": "2019-09-06 13:48:28 -0400",
+        "subject": "Improve performance of info file load/save.",
+        "body": "Info files required three copies in memory to be loaded (the original string, an ini representation, and the final info object). Not only was this memory inefficient but the Ini object does sequential scans when searching for keys making large files very slow to load.\n\nThis has not been an issue since archive.info and backup.info are very small, but it becomes a big deal when loading manifests with hundreds of thousands of files.\n\nInstead of holding copies of the data in memory, use a callback to deliver the ini data directly to the object when loading. Use a similar method for save to avoid having an intermediate copy. Save is a bit complex because sections/keys must be written in alpha order or older versions of pgBackRest will not calculate the correct checksum.\n\nAlso move the load retry logic to helper functions rather than embedding it in the Info object. This allows for more flexibility in loading and ensures that stack traces will be available when developing unit tests."
+    },
+    {
+        "commit": "7334f30c350b5275106b9acf28b60d999287d800",
+        "date": "2019-09-06 13:35:28 -0400",
+        "subject": "Add helper function for adding CipherBlock filters to groups."
+    },
+    {
+        "commit": "5c314df098ee2295af400fb0b6b4f0cccd96fb69",
+        "date": "2019-09-05 19:53:00 -0400",
+        "subject": "Rename infoManifest module to manifest.",
+        "body": "The manifest is not an info file so if anything it should be called backupManifest.  But that seems too long for such a commonly used object so manifest seems better.\n\nNote that unlike Perl there is no storage manifest method so this stands as the only manifest in the C code, as befits its importance."
+    },
+    {
+        "commit": "8df7d68c8dca2c61b665bbbd1f26800c0dca3ae8",
+        "date": "2019-09-03 18:28:53 -0400",
+        "subject": "Fix sudo missed in \"Build pgBackRest as an unprivileged user\".",
+        "body": "286a106a updated the documentation to build pgBackRest as an unprivileged user, but the wget command was missed.  This command is not actually run, just displayed, because the release is not yet available when the documentation is built.\n\nUpdate the wget command to run as the local user."
+    },
+    {
+        "commit": "005684bf1f55206f122e1d0fcb4164cc84875ff5",
+        "date": "2019-09-03 17:53:50 -0400",
+        "subject": "Begin v2.18 development."
+    },
+    {
         "commit": "ce2bf2999892f689001b084af4d5feb63dc9b402",
         "date": "2019-09-03 16:39:32 -0400",
         "subject": "v2.17: C Migrations and Bug Fixes"
