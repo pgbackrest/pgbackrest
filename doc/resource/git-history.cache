@@ -1,7 +1,12 @@
 [
     {
-        "commit": "9bab2124781fd7ac80e033430615f63aef5d2ee8",
-        "date": "2019-10-01 10:29:59 -0400",
+        "commit": "4629237d6a308a250cd52fff49693cd0a1069253",
+        "date": "2019-10-01 16:02:07 -0400",
+        "subject": "v2.18: PostgreSQL 12 Support"
+    },
+    {
+        "commit": "29e132f5e928298e9be135d76674f2016b122029",
+        "date": "2019-10-01 13:20:43 -0400",
         "subject": "PostgreSQL 12 support.",
         "body": "Recovery settings are now written into postgresql.auto.conf instead of recovery.conf.  Existing recovery_target* settings will be commented out to help avoid conflicts.\n\nA comment is added before recovery settings to identify them as written by pgBackRest since it is unclear how, in general, old settings will be removed.\n\nrecovery.signal and standby.signal are automatically created based on the recovery settings."
     },
