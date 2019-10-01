@@ -1135,6 +1135,13 @@
 
                         <example>json</example>
                     </option>
+
+                    <option id="set" name="Set">
+                        <summary>Backup set to detail.</summary>
+
+                        <text>Details include a list of databases (with OIDs) in the backup set (excluding template databases), tablespaces (with OIDs) with the destination where they will be restored by default, and symlinks with the destination where they will be restored when <setting>--link-all</setting> is specified.</text>
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
                 </option-list>
 
                 <command-example-list>

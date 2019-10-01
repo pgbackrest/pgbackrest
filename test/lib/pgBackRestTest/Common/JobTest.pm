@@ -75,6 +75,7 @@ sub new
         $self->{bOptimize},
         $self->{bBackTrace},
         $self->{bProfile},
+        $self->{iScale},
         $self->{bDebug},
         $self->{bDebugTestTrace},
         $self->{iBuildMax},
@@ -105,6 +106,7 @@ sub new
             {name => 'bOptimize'},
             {name => 'bBackTrace'},
             {name => 'bProfile'},
+            {name => 'iScale'},
             {name => 'bDebug'},
             {name => 'bDebugTestTrace'},
             {name => 'iBuildMax'},
@@ -254,7 +256,8 @@ sub run
                 'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
                 "cd $self->{strGCovPath} && " .
                 "make -j $self->{iBuildMax} -s 2>&1 &&" .
-                ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit}?
+                ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit} &&
+                    $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
                     " valgrind -q --gen-suppressions=all --suppressions=$self->{strGCovPath}/test/valgrind.suppress" .
                     " --leak-check=full --leak-resolution=high --error-exitcode=25" : '') .
                 " ./test.bin 2>&1'";
@@ -344,7 +347,16 @@ sub run
 
                 # Update C test file with test module
                 my $strTestC = ${$self->{oStorageTest}->get("$self->{strGCovPath}/test/test.c")};
-                $strTestC =~ s/\{\[C\_INCLUDE\]\}/$strCInclude/g;
+
+                if (defined($strCInclude))
+                {
+                    $strTestC =~ s/\{\[C\_INCLUDE\]\}/$strCInclude/g;
+                }
+                else
+                {
+                    $strTestC =~ s/\{\[C\_INCLUDE\]\}//g;
+                }
+
                 $strTestC =~ s/\{\[C\_TEST\_INCLUDE\]\}/\#include \"$strTestFile\"/g;
                 $strTestDepend .= " ${strTestFile}";
 
@@ -364,6 +376,7 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
                 $strTestC =~ s/\{\[C\_TEST\_EXPECT_PATH\]\}/$self->{strExpectPath}/g;
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
+                $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
 
                 # Set default log level
                 my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});
@@ -417,7 +430,7 @@ sub run
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
-                    ($self->{bDebug} ? '' : ' -DNDEBUG') .
+                    ($self->{bDebug} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ? '' : ' -DNDEBUG') .
                     ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '');
 
                 # Flags used to build harness files

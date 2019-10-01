@@ -170,14 +170,15 @@ restore, type 'default' (db-master host)
 ----------------------------------------------------------------
 restore_command = '[BACKREST-BIN] --buffer-size=16384 --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-restore, force, backup '[BACKUP-FULL-1]', type 'immediate' (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --force --set=[BACKUP-FULL-1] --type=immediate --link-all --stanza=db restore
+restore, force, backup '[BACKUP-FULL-1]', type 'immediate', target-action=promote (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --force --set=[BACKUP-FULL-1] --type=immediate --link-all --target-action=promote --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 recovery_target = 'immediate'
+recovery_target_action = 'promote'
 
 restore, force, backup '[BACKUP-INCR-1]', type 'xid', target '[XID-TARGET-1]', target-action=promote (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --force --set=[BACKUP-INCR-1] --tablespace-map-all=../../tablespace  --type=xid --target="[XID-TARGET-1]" --link-all --target-action=promote --stanza=db restore
@@ -199,17 +200,18 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 recovery_target_xid = '[XID-TARGET-1]'
 recovery_target_action = 'promote'
 
-restore delta, backup '[BACKUP-FULL-1]', type 'time', target '[TIMESTAMP-TARGET-1]' (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-1] --type=time --target="[TIMESTAMP-TARGET-1]" --link-all --stanza=db restore
+restore delta, backup '[BACKUP-FULL-1]', type 'time', target '[TIMESTAMP-TARGET-1]', target-action=promote (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-1] --type=time --target="[TIMESTAMP-TARGET-1]" --link-all --target-action=promote --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 recovery_target_time = '[TIMESTAMP-TARGET-1]'
+recovery_target_action = 'promote'
 
-restore delta, backup '[BACKUP-INCR-1]', type 'xid', target '[XID-TARGET-1]', exclusive (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-INCR-1] --type=xid --target="[XID-TARGET-1]" --target-exclusive --link-all --stanza=db restore
+restore delta, backup '[BACKUP-INCR-1]', type 'xid', target '[XID-TARGET-1]', exclusive, target-action=promote (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-INCR-1] --type=xid --target="[XID-TARGET-1]" --target-exclusive --link-all --target-action=promote --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -217,15 +219,17 @@ restore delta, backup '[BACKUP-INCR-1]', type 'xid', target '[XID-TARGET-1]', ex
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 recovery_target_xid = '[XID-TARGET-1]'
 recovery_target_inclusive = 'false'
+recovery_target_action = 'promote'
 
-restore delta, force, type 'name', target 'backrest' (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --type=name --target="backrest" --link-all --stanza=db restore
+restore delta, force, type 'name', target 'backrest', target-action=promote (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --type=name --target="backrest" --link-all --target-action=promote --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 recovery_target_name = 'backrest'
+recovery_target_action = 'promote'
 
 restore delta, backup '[BACKUP-INCR-1]', type 'standby', timeline '4' (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-INCR-1] --type=standby --target-timeline="4" --link-all --stanza=db restore

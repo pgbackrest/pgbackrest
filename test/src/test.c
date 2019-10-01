@@ -30,6 +30,8 @@ The test code is included directly so it can freely interact with the included C
 #include "common/harnessDebug.h"
 #include "common/harnessTest.h"
 
+extern void testScaleSet(uint64_t testScale);
+
 #ifndef NO_LOG
     #include "common/harnessLog.h"
     void harnessLogLevelDefaultSet(LogLevel logLevel);
@@ -81,6 +83,7 @@ main(int argListSize, const char *argList[])
     testPathSet("{[C_TEST_PATH]}");
     testRepoPathSet("{[C_TEST_REPO_PATH]}");
     testExpectPathSet("{[C_TEST_EXPECT_PATH]}");
+    testScaleSet({[C_TEST_SCALE]});
 
     // Set default test log level
 #ifndef NO_LOG

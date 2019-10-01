@@ -285,6 +285,7 @@ restoreManifestMap(Manifest *manifest)
             if (tablespaceMap != NULL)
             {
                 const VariantList *tablespaceMapList = kvKeyList(tablespaceMap);
+                strLstSort(tablespaceRemapped, sortOrderAsc);
 
                 for (unsigned int tablespaceMapIdx = 0; tablespaceMapIdx < varLstSize(tablespaceMapList); tablespaceMapIdx++)
                 {
@@ -369,6 +370,7 @@ restoreManifestMap(Manifest *manifest)
         if (linkMap != NULL)
         {
             const VariantList *linkMapList = kvKeyList(linkMap);
+            strLstSort(linkRemapped, sortOrderAsc);
 
             for (unsigned int linkMapIdx = 0; linkMapIdx < varLstSize(linkMapList); linkMapIdx++)
             {
@@ -524,7 +526,7 @@ typedef struct RestoreCleanCallbackData
     bool basePath;                                                  // Is this the base path?
     bool exists;                                                    // Does the target path exist?
     bool delta;                                                     // Is this a delta restore?
-    bool preserveRecoveryConf;                                      // Should the recovery.conf file be preserved?
+    StringList *fileIgnore;                                         // Files to ignore during clean
 } RestoreCleanCallbackData;
 
 // Helper to update ownership on a file/link/path
@@ -621,9 +623,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
     RestoreCleanCallbackData *cleanData = (RestoreCleanCallbackData *)data;
 
     // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
-    if (cleanData->basePath && info->type == storageTypeFile &&
-        (strEq(info->name, BACKUP_MANIFEST_FILE_STR) ||
-            (cleanData->preserveRecoveryConf && strEq(info->name, PG_FILE_RECOVERYCONF_STR))))
+    if (cleanData->basePath && info->type == storageTypeFile && strLstExists(cleanData->fileIgnore, info->name))
     {
         FUNCTION_TEST_RETURN_VOID();
         return;
@@ -776,7 +776,14 @@ restoreCleanBuild(Manifest *manifest)
             cleanData->targetPath = manifestTargetPath(manifest, cleanData->target);
             cleanData->basePath = strEq(cleanData->targetName, MANIFEST_TARGET_PGDATA_STR);
             cleanData->delta = delta;
-            cleanData->preserveRecoveryConf = strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR);
+
+            // Ignore backup.manifest while cleaning since it may exist from an prior incomplete restore
+            cleanData->fileIgnore = strLstNew();
+            strLstAdd(cleanData->fileIgnore, BACKUP_MANIFEST_FILE_STR);
+
+            // Alse ignore recovery.conf when recovery type = preserve
+            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+                    strLstAdd(cleanData->fileIgnore, PG_FILE_RECOVERYCONF_STR);
 
             // If this is a tablespace append the tablespace identifier
             if (cleanData->target->type == manifestTargetTypeLink && cleanData->target->tablespaceId != 0)
@@ -790,6 +797,8 @@ restoreCleanBuild(Manifest *manifest)
                     cleanData->targetPath = strNewFmt("%s/%s", strPtr(cleanData->targetPath), strPtr(tablespaceId));
                 }
             }
+
+            strLstSort(cleanData->fileIgnore, sortOrderAsc);
 
             // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
             // Don't log check for the same path twice.  There can be multiple links to files in the same path, but logging it more
@@ -1030,6 +1039,8 @@ restoreSelectiveExpression(Manifest *manifest)
                     strLstAddIfMissing(dbList, strBase(strPath(file->name)));
             }
 
+            strLstSort(dbList, sortOrderAsc);
+
             // If no databases were found then this backup is not a valid cluster
             if (strLstSize(dbList) == 0)
                 THROW(FormatError, "no databases found for selective restore\nHINT: is this a valid cluster?");
@@ -1120,27 +1131,26 @@ restoreSelectiveExpression(Manifest *manifest)
 }
 
 /***********************************************************************************************************************************
-Generate the recovery.conf file
+Generate the recovery file
 ***********************************************************************************************************************************/
-static String *
-restoreRecoveryConf(unsigned int pgVersion)
+// Helper to generate recovery options
+static KeyValue *
+restoreRecoveryOption(unsigned int pgVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
     FUNCTION_LOG_END();
 
-    String *result = NULL;
+    KeyValue *result = NULL;
 
-    // Only generate recovery.conf if recovery type is not none
-    if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            result = strNew("");
-            StringList *recoveryOptionKey = strLstNew();
+        result = kvNew();
 
-            if (cfgOptionTest(cfgOptRecoveryOption))
-            {
+        StringList *recoveryOptionKey = strLstNew();
+
+        if (cfgOptionTest(cfgOptRecoveryOption))
+        {
             const KeyValue *recoveryOption = cfgOptionKv(cfgOptRecoveryOption);
             recoveryOptionKey = strLstSort(strLstNewVarLst(kvKeyList(recoveryOption)), sortOrderAsc);
 
@@ -1153,101 +1163,189 @@ restoreRecoveryConf(unsigned int pgVersion)
                 // Replace - in key with _.  Since we use - users naturally will as well.
                 strReplaceChr(key, '-', '_');
 
-                strCatFmt(result, "%s = '%s'\n", strPtr(key), strPtr(value));
-            }
+                kvPut(result, VARSTR(key), VARSTR(value));
             }
 
-            // Write restore_command
-            if (!strLstExists(recoveryOptionKey, RESTORE_COMMAND_STR))
+            strLstSort(recoveryOptionKey, sortOrderAsc);
+        }
+
+        // Write restore_command
+        if (!strLstExists(recoveryOptionKey, RESTORE_COMMAND_STR))
+        {
+            // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
+            // reasonable defaults so there is no danger of a error -- they just might not be optimal.  In any case, it seems
+            // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
+            KeyValue *optionReplace = kvNew();
+
+            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
+            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
+            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);
+            kvPut(optionReplace, VARSTR(CFGOPT_LOG_SUBPROCESS_STR), NULL);
+            kvPut(optionReplace, VARSTR(CFGOPT_LOG_TIMESTAMP_STR), NULL);
+            kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_MAX_STR), NULL);
+
+            kvPut(
+                result, VARSTRZ(RESTORE_COMMAND),
+                VARSTR(
+                    strNewFmt(
+                        "%s %s %%f \"%%p\"", strPtr(cfgExe()),
+                        strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, optionReplace, true), " ")))));
+        }
+
+        // If recovery type is immediate
+        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_IMMEDIATE_STR))
+        {
+            kvPut(result, VARSTRZ(RECOVERY_TARGET), VARSTRZ(RECOVERY_TYPE_IMMEDIATE));
+        }
+        // Else recovery type is standby
+        else if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
+        {
+            // Write standby_mode
+            kvPut(result, VARSTRZ(STANDBY_MODE), VARSTRDEF("on"));
+        }
+        // Else recovery type is not default so write target options
+        else if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_DEFAULT_STR))
+        {
+            // Write the recovery target
+            kvPut(
+                result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", strPtr(cfgOptionStr(cfgOptType)))),
+                VARSTR(cfgOptionStr(cfgOptTarget)));
+
+            // Write recovery_target_inclusive
+            if (cfgOptionTest(cfgOptTargetExclusive) && cfgOptionBool(cfgOptTargetExclusive))
+                kvPut(result, VARSTRZ(RECOVERY_TARGET_INCLUSIVE), VARSTR(FALSE_STR));
+        }
+
+        // Write pause_at_recovery_target/recovery_target_action
+        if (cfgOptionTest(cfgOptTargetAction))
+        {
+            const String *targetAction = cfgOptionStr(cfgOptTargetAction);
+
+            if (!strEqZ(targetAction, cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptTargetAction)))
             {
-                // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
-                // reasonable defaults so there is no danger of a error -- they just might not be optimal.  In any case, it seems
-                // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
-                KeyValue *optionReplace = kvNew();
-
-                kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
-                kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
-                kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);
-                kvPut(optionReplace, VARSTR(CFGOPT_LOG_SUBPROCESS_STR), NULL);
-                kvPut(optionReplace, VARSTR(CFGOPT_LOG_TIMESTAMP_STR), NULL);
-                kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_MAX_STR), NULL);
-
-                strCatFmt(
-                    result, RESTORE_COMMAND " = '%s %s %%f \"%%p\"'\n", strPtr(cfgExe()),
-                    strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, optionReplace, true), " ")));
-            }
-
-            // If recovery type is immediate
-            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_IMMEDIATE_STR))
-            {
-                strCat(result, RECOVERY_TARGET " = '" RECOVERY_TYPE_IMMEDIATE "'\n");
-            }
-            // Else recovery type is standby
-            else if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
-            {
-                // Write standby_mode
-                strCatFmt(result, STANDBY_MODE " = 'on'\n");
-            }
-            // Else recovery type is not default so write target options
-            else if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_DEFAULT_STR))
-            {
-                // Write the recovery target
-                strCatFmt(
-                    result, RECOVERY_TARGET "_%s = '%s'\n", strPtr(cfgOptionStr(cfgOptType)), strPtr(cfgOptionStr(cfgOptTarget)));
-
-                // Write recovery_target_inclusive
-                if (cfgOptionTest(cfgOptTargetExclusive) && cfgOptionBool(cfgOptTargetExclusive))
-                    strCatFmt(result, RECOVERY_TARGET_INCLUSIVE " = 'false'\n");
-            }
-
-            // Write pause_at_recovery_target/recovery_target_action
-            if (cfgOptionTest(cfgOptTargetAction))
-            {
-                const String *targetAction = cfgOptionStr(cfgOptTargetAction);
-
-                if (!strEqZ(targetAction, cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptTargetAction)))
+                // Write recovery_target on supported PostgreSQL versions
+                if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
                 {
-                    // Write recovery_target on supported PostgreSQL versions
-                    if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
-                    {
-                        strCatFmt(result, RECOVERY_TARGET_ACTION " = '%s'\n", strPtr(targetAction));
-                    }
-                    // Write pause_at_recovery_target on supported PostgreSQL versions
-                    else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
-                    {
-                        // Shutdown action is not supported with pause_at_recovery_target setting
-                        if (strEq(targetAction, RECOVERY_TARGET_ACTION_SHUTDOWN_STR))
-                        {
-                            THROW_FMT(
-                                OptionInvalidError,
-                                CFGOPT_TARGET_ACTION "=" RECOVERY_TARGET_ACTION_SHUTDOWN " is only available in PostgreSQL >= %s",
-                                strPtr(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
-                        }
-
-                        strCat(result, PAUSE_AT_RECOVERY_TARGET " = 'false'\n");
-                    }
-                    // Else error on unsupported version
-                    else
+                    kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(targetAction));
+                }
+                // Write pause_at_recovery_target on supported PostgreSQL versions
+                else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
+                {
+                    // Shutdown action is not supported with pause_at_recovery_target setting
+                    if (strEq(targetAction, RECOVERY_TARGET_ACTION_SHUTDOWN_STR))
                     {
                         THROW_FMT(
-                            OptionInvalidError, CFGOPT_TARGET_ACTION " option is only available in PostgreSQL >= %s",
-                            strPtr(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_PAUSE)));
+                            OptionInvalidError,
+                            CFGOPT_TARGET_ACTION "=" RECOVERY_TARGET_ACTION_SHUTDOWN " is only available in PostgreSQL >= %s",
+                            strPtr(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
                     }
+
+                    kvPut(result, VARSTRZ(PAUSE_AT_RECOVERY_TARGET), VARSTR(FALSE_STR));
+                }
+                // Else error on unsupported version
+                else
+                {
+                    THROW_FMT(
+                        OptionInvalidError, CFGOPT_TARGET_ACTION " option is only available in PostgreSQL >= %s",
+                        strPtr(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_PAUSE)));
                 }
             }
-
-            // Write recovery_target_timeline
-            if (cfgOptionTest(cfgOptTargetTimeline))
-                strCatFmt(result, RECOVERY_TARGET_TIMELINE " = '%s'\n", strPtr(cfgOptionStr(cfgOptTargetTimeline)));
-
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result = strDup(result);
-            memContextSwitch(MEM_CONTEXT_TEMP());
         }
-        MEM_CONTEXT_TEMP_END();
+
+        // Write recovery_target_timeline
+        if (cfgOptionTest(cfgOptTargetTimeline))
+            kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
+
+        // Move to calling context
+        kvMove(result, MEM_CONTEXT_OLD());
     }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(KEY_VALUE, result);
+}
+
+// Helper to write recovery options into recovery.conf
+static String *
+restoreRecoveryConf(unsigned int pgVersion)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_END();
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = strNew("");
+
+        // Output all recovery options
+        KeyValue *optionKv = restoreRecoveryOption(pgVersion);
+        const VariantList *optionKeyList = kvKeyList(optionKv);
+
+        for (unsigned int optionKeyIdx = 0; optionKeyIdx < varLstSize(optionKeyList); optionKeyIdx++)
+        {
+            const Variant *optionKey = varLstGet(optionKeyList, optionKeyIdx);
+            strCatFmt(result, "%s = '%s'\n", strPtr(varStr(optionKey)), strPtr(varStr(kvGet(optionKv, optionKey))));
+        }
+
+        // Move to calling context
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strDup(result);
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING, result);
+}
+
+static void
+restoreRecoveryWrite(const Manifest *manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_TEST_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    // Get PostgreSQL version to write recovery for
+    unsigned int pgVersion = manifestData(manifest)->pgVersion;
+
+    // Determine which file recovery setttings will be written to
+    const String *recoveryFile = PG_FILE_RECOVERYCONF_STR;
+
+    // Use the data directory to set permissions and ownership for recovery file
+    const ManifestPath *dataPath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+    mode_t recoveryFileMode = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If recovery type is preserve then leave recovery file as it is
+        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+        {
+            if (!storageExistsNP(storagePg(), recoveryFile))
+            {
+                LOG_WARN(
+                    "recovery type is " RECOVERY_TYPE_PRESERVE " but recovery file does not exist at '%s'",
+                    strPtr(storagePathNP(storagePg(), recoveryFile)));
+            }
+        }
+        // Else write recovery file if requested
+        else
+        {
+            // Only generate recovery file if recovery type is not none
+            if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+            {
+                LOG_INFO("write %s", strPtr(storagePathNP(storagePg(), recoveryFile)));
+
+                storagePutNP(
+                    storageNewWriteP(
+                        storagePgWrite(), recoveryFile, .noCreatePath = true, .modeFile = recoveryFileMode, .noAtomic = true,
+                        .noSyncPath = true, .user = dataPath->user, .group = dataPath->group),
+                    BUFSTR(restoreRecoveryConf(pgVersion)));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -1666,36 +1764,8 @@ cmdRestore(void)
         }
         while (!protocolParallelDone(parallelExec));
 
-        // If recovery type is preserve then leave recovery.conf as it is
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
-        {
-            if (!storageExistsNP(storagePg(), PG_FILE_RECOVERYCONF_STR))
-            {
-                LOG_WARN(
-                    "recovery type is " RECOVERY_TYPE_PRESERVE " but recovery file does not exist at '%s'",
-                    strPtr(storagePathNP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
-            }
-        }
-        // Else write recovery.conf if requested
-        else
-        {
-            String *recoveryConf = restoreRecoveryConf(manifestData(jobData.manifest)->pgVersion);
-
-            if (recoveryConf != NULL)
-            {
-                // Use the data directory to set permissions and ownership
-                const ManifestPath *dataPath = manifestPathFind(jobData.manifest, MANIFEST_TARGET_PGDATA_STR);
-
-                LOG_INFO("write %s", strPtr(storagePathNP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
-
-                storagePutNP(
-                    storageNewWriteP(
-                        storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true,
-                        .modeFile = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), .noAtomic = true, .noSyncPath = true,
-                        .user = dataPath->user, .group = dataPath->group),
-                    BUFSTR(recoveryConf));
-            }
-        }
+        // Write recovery settings
+        restoreRecoveryWrite(jobData.manifest);
 
         // Remove backup.manifest
         storageRemoveNP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);

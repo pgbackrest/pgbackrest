@@ -88,6 +88,8 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
         }
 
         // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
+        strLstSort(keepQueue, sortOrderAsc);
+
         for (unsigned int idealQueueIdx = 0; idealQueueIdx < strLstSize(idealQueue); idealQueueIdx++)
         {
             if (!strLstExists(keepQueue, strLstGet(idealQueue, idealQueueIdx)))

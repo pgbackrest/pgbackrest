@@ -281,18 +281,7 @@ strLstExists(const StringList *this, const String *string)
 
     ASSERT(this != NULL);
 
-    bool result = false;
-
-    for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
-    {
-        if (strEq(strLstGet(this, listIdx), string))
-        {
-            result = true;
-            break;
-        }
-    }
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(lstExists((List *)this, &string));
 }
 
 bool
@@ -305,18 +294,9 @@ strLstExistsZ(const StringList *this, const char *cstring)
 
     ASSERT(this != NULL);
 
-    bool result = false;
+    const String *string = cstring == NULL ? NULL : STR(cstring);
 
-    for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
-    {
-        if (strEqZ(strLstGet(this, listIdx), cstring))
-        {
-            result = true;
-            break;
-        }
-    }
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(lstExists((List *)this, &string));
 }
 
 /***********************************************************************************************************************************

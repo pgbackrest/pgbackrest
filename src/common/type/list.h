@@ -54,6 +54,7 @@ List *lstNew(size_t itemSize);
 
 typedef struct ListParam
 {
+    SortOrder sortOrder;
     ListComparator *comparator;
 } ListParam;
 
@@ -68,9 +69,11 @@ Functions
 void *lstAdd(List *this, const void *item);
 List *lstClear(List *this);
 void *lstGet(const List *this, unsigned int listIdx);
+bool lstExists(const List *this, const void *item);
 void *lstFind(const List *this, const void *item);
 void *lstFindDefault(const List *this, const void *item, void *itemDefault);
 unsigned int lstFindIdx(const List *this, const void *item);
+unsigned int lstIdx(const List *this, const void *item);
 void *lstInsert(List *this, unsigned int listIdx, const void *item);
 bool lstRemove(List *this, const void *item);
 List *lstRemoveIdx(List *this, unsigned int listIdx);

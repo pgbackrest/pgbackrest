@@ -135,7 +135,7 @@ sub run
         my $strTimeMessage = 'time';
         my $strXidMessage = 'xid';
         my $strNameMessage = 'name';
-        my $strTimelineMessage = 'timeline3';
+        my $strTimelineMessage = 'timeline';
 
         # Create two new databases
         if ($bTestLocal)
@@ -847,7 +847,8 @@ sub run
 
             $oHostDbMaster->clusterStop();
 
-            $oHostDbMaster->restore(undef, $strFullBackup, {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_IMMEDIATE});
+            $oHostDbMaster->restore(
+                undef, $strFullBackup, {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_IMMEDIATE, strTargetAction => 'promote'});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest(
@@ -856,6 +857,8 @@ sub run
 
         # Restore (restore type = xid, inclusive)
         #---------------------------------------------------------------------------------------------------------------------------
+        my $strRecoveryFile = undef;
+
         if ($bTestLocal)
         {
             &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_XID);
@@ -872,8 +875,10 @@ sub run
                     strOptionalParam => '--tablespace-map-all=../../tablespace', bTablespace => false});
 
             # Save recovery file to test so we can use it in the next test
+            $strRecoveryFile = DB_FILE_RECOVERYCONF;
+
             storageDb()->copy(
-                $oHostDbMaster->dbBasePath() . qw{/} . DB_FILE_RECOVERYCONF, $self->testPath() . qw{/} . DB_FILE_RECOVERYCONF);
+                $oHostDbMaster->dbBasePath() . qw{/} . $strRecoveryFile, $self->testPath() . qw{/} . $strRecoveryFile);
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strXidMessage);
@@ -894,7 +899,7 @@ sub run
             executeTest('rm -rf ' . $oHostDbMaster->tablespacePath(1) . "/*");
 
             # Restore recovery file that was saved in last test
-            storageDb()->move($self->testPath . '/recovery.conf', $oHostDbMaster->dbBasePath() . '/recovery.conf');
+            storageDb()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
 
             $oHostDbMaster->restore(
                 undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), {strType => CFGOPTVAL_RESTORE_TYPE_PRESERVE});
@@ -913,7 +918,9 @@ sub run
         $oHostDbMaster->clusterStop();
 
         $oHostDbMaster->restore(
-            undef, $strFullBackup, {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget});
+            undef, $strFullBackup,
+            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget,
+                strTargetAction => $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef});
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimeMessage);
@@ -928,7 +935,8 @@ sub run
 
             $oHostDbMaster->restore(
                 undef, $strIncrBackup,
-                {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, bTargetExclusive => true});
+                {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, bTargetExclusive => true,
+                    strTargetAction => $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strIncrMessage);
@@ -944,13 +952,14 @@ sub run
 
             $oHostDbMaster->restore(
                 undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-                {bDelta => true, bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_NAME, strTarget => $strNameTarget});
+                {bDelta => true, bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_NAME, strTarget => $strNameTarget,
+                    strTargetAction => 'promote'});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strNameMessage);
         }
 
-        # Restore (restore type = default, timeline = 4)
+        # Restore (restore type = default, timeline = created by type = xid, inclusive recovery)
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_84)
         {
@@ -958,6 +967,9 @@ sub run
 
             $oHostDbMaster->clusterStop();
 
+            # The timeline to use for this test is subject to change based on tests being added or removed above.  The best thing
+            # would be to automatically grab the timeline after the restore, but since this test has been stable for a long time
+            # it does not seem worth the effort to automate.
             $oHostDbMaster->restore(
                 undef, $strIncrBackup,
                 {bDelta => true,
