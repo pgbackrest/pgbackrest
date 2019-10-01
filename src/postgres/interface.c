@@ -18,8 +18,11 @@ PostgreSQL Interface
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
 STRING_EXTERN(PG_FILE_PGVERSION_STR,                                PG_FILE_PGVERSION);
+STRING_EXTERN(PG_FILE_POSTGRESQLAUTOCONF_STR,                       PG_FILE_POSTGRESQLAUTOCONF);
 STRING_EXTERN(PG_FILE_POSTMASTERPID_STR,                            PG_FILE_POSTMASTERPID);
 STRING_EXTERN(PG_FILE_RECOVERYCONF_STR,                             PG_FILE_RECOVERYCONF);
+STRING_EXTERN(PG_FILE_RECOVERYSIGNAL_STR,                           PG_FILE_RECOVERYSIGNAL);
+STRING_EXTERN(PG_FILE_STANDBYSIGNAL_STR,                            PG_FILE_STANDBYSIGNAL);
 
 STRING_EXTERN(PG_PATH_GLOBAL_STR,                                   PG_PATH_GLOBAL);
 
@@ -94,6 +97,23 @@ typedef struct PgInterface
 
 static const PgInterface pgInterface[] =
 {
+    {
+        .version = PG_VERSION_12,
+
+        .catalogVersion = pgInterfaceCatalogVersion120,
+
+        .controlIs = pgInterfaceControlIs120,
+        .control = pgInterfaceControl120,
+        .controlVersion = pgInterfaceControlVersion120,
+
+        .walIs = pgInterfaceWalIs120,
+        .wal = pgInterfaceWal120,
+
+#ifdef DEBUG
+        .controlTest = pgInterfaceControlTest120,
+        .walTest = pgInterfaceWalTest120,
+#endif
+    },
     {
         .version = PG_VERSION_11,
 

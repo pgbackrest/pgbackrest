@@ -16,6 +16,10 @@
             <release-core-list>
                 <release-feature-list>
                     <release-item>
+                        <p><postgres/> 12 support.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
