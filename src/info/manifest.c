@@ -400,9 +400,9 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
     ASSERT(data != NULL);
     ASSERT(info != NULL);
 
-    // ManifestBuildData *buildData = data;
-
-    // LOG_DETAIL("FOUND repoPath = '%s', name '%s'", strPtr(buildData->parentPathInfo->name), strPtr(info->name));
+    // Skip all . paths because they have already been recorded on the previous level of recursion
+    if (strEq(info->name, DOT_STR))
+        return;
 
     // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
     // are recreated.
@@ -412,52 +412,76 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
         return;
     }
 
+    ManifestBuildData *buildData = data;
+    unsigned int pgVersion = buildData->manifest->data.pgVersion;
+
+    LOG_DETAIL("FOUND manifest parent name = '%s', name '%s'", strPtr(buildData->manifestName), strPtr(info->name));
+
+    const String *manifestName = strNewFmt("%s/%s", strPtr(buildData->manifestName), strPtr(info->name));
+
     // Process file types
     switch (info->type)
     {
         case storageTypePath:
         {
-            // Add the path
-            // ManifestPath *pathInfo = NULL;
-            //
-            // MEM_CONTEXT_BEGIN(buildData->manifest->memContext)
-            // {
-            //     pathInfo = memNew(sizeof(ManifestPath));
-            //     pathInfo->name = strNewFmt("%s/%s", strPtr(buildData->parentPathInfo->name), strPtr(info->name));
-            //     pathInfo->mode = info->mode;
-            //     pathInfo->user = strDup(info->user);
-            //     pathInfo->group = strDup(info->group);
-            // }
-            // MEM_CONTEXT_END();
-            //
-            // lstAdd(buildData->manifest->pathList, &pathInfo);
-
             LOG_DETAIL("    PATH name '%s'", strPtr(info->name));
 
+            // Add path to manifest
+            ManifestPath path =
+            {
+                .name = manifestName,
+                .mode = info->mode,
+                .user = info->user,
+                .group = info->group,
+            };
+
+            manifestPathAdd(buildData->manifest, &path);
+
             // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
-            // if (buildData->parentPath->base)
-            // {
-            //     if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && buildData->manifest->pgVersion >= PG_VERSION_94)
-            //         return;
-            //
-            //     if (strEqZ(info->name, PG_PATH_PGNOTIFY))
-            //         return;
-            //
-            //     if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && buildData->manifest->pgVersion >= PG_VERSION_94)
-            //         return;
-            //
-            //     if (strEqZ(info->name, PG_PATH_PGSERIAL) && buildData->manifest->pgVersion >= PG_VERSION_91)
-            //         return;
-            //
-            //     if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && buildData->manifest->pgVersion >= PG_VERSION_92)
-            //         return;
-            //
-            //     if (strEqZ(info->name, PG_PATH_PGSTATTMP))
-            //         return;
-            //
-            //     if (strEqZ(info->name, PG_PATH_PGSUBTRANS))
-            //         return;
-            // }
+            if (strEq(buildData->manifestName, MANIFEST_TARGET_PGDATA_STR))
+            {
+                if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGNOTIFY))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && pgVersion >= PG_VERSION_94)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSERIAL) && pgVersion >= PG_VERSION_91)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && pgVersion >= PG_VERSION_92)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSTATTMP))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSUBTRANS))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+            }
 
             // // Recurse into the path
             // ManifestBuildData buildDataSub = *buildData;
@@ -507,33 +531,31 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion)
     MEM_CONTEXT_NEW_BEGIN("Manifest")
     {
         this = manifestNewInternal();
-        // // Get the root path
-        // const String *pgPath = storagePathNP(storagePg, NULL);
-        //
-        // // Get info about the root path
-        // ManifestPath *pathInfo = NULL;
-        //
-        // MEM_CONTEXT_BEGIN(this->memContext)
-        // {
-        //     StorageInfo info = storageInfoNP(storagePg, pgPath);
-        //
-        //     pathInfo = memNew(sizeof(ManifestPath));
-        //     pathInfo->name = MANIFEST_PATH_PGDATA_STR;
-        //     pathInfo->base = true;
-        //     pathInfo->mode = info.mode;
-        //     pathInfo->user = strDup(info.user);
-        //     pathInfo->group = strDup(info.group);
-        // }
-        // MEM_CONTEXT_END();
-        //
-        // lstAdd(this->pathList, &pathInfo);
-        //
+        this->data.pgVersion = pgVersion;
+
+        // Get the data path
+        const String *pgPath = storagePathNP(storagePg, NULL);
+
+        // Get info about the root path
+        StorageInfo info = storageInfoNP(storagePg, pgPath);
+
+        ManifestPath path =
+        {
+            .name = MANIFEST_TARGET_PGDATA_STR,
+            .mode = info.mode,
+            .user = info.user,
+            .group = info.group,
+        };
+
+        manifestPathAdd(this, &path);
+
+        // Gather info for the rest of the files/links/paths
         ManifestBuildData buildData =
         {
             .manifest = this,
             .storagePg = storagePg,
             .manifestName = MANIFEST_TARGET_PGDATA_STR,
-            .pgPath = storagePathNP(storagePg, NULL),
+            .pgPath = pgPath,
         };
 
         storageInfoListP(
