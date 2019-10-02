@@ -157,6 +157,8 @@
                 <title>somefileTest.c</title>
                 <p>Assuming that a test file already exists, new unit tests will either go in a new <code>testBegin()</code> section or be added to an existing section.</p>
 
+                <p>Unit test files are organized in the test/src/module directory with the same directory structure as the source code being tested. For example, if new code is added to src/<b>command/expire</b>.c then test/src/module/<b>command/expire</b>Test.c will need to be updated.</p>
+
                 <code-block>
 // *****************************************************************************************************************************
 if (testBegin("expireBackup()"))

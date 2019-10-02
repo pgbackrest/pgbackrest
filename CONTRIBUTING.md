@@ -128,6 +128,8 @@ Each module is separated by a line of asterisks (*) and each test within is sepa
 #### somefileTest.c
 
 Assuming that a test file already exists, new unit tests will either go in a new `testBegin()` section or be added to an existing section.
+
+Unit test files are organized in the test/src/module directory with the same directory structure as the source code being tested. For example, if new code is added to src/**command/expire**.c then test/src/module/**command/expire**Test.c will need to be updated.
 ```
 // *****************************************************************************************************************************
 if (testBegin("expireBackup()"))
