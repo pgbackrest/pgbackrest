@@ -380,6 +380,164 @@ manifestNewInternal(void)
 }
 
 /***********************************************************************************************************************************
+Build a new manifest for a PostgreSQL path
+***********************************************************************************************************************************/
+typedef struct ManifestBuildData
+{
+    Manifest *manifest;
+    const Storage *storagePg;
+    const ManifestPath *parentPath;
+    const String *pgPath;
+} ManifestBuildData;
+
+void manifestBuildCallback(ManifestBuildData *buildData, const StorageInfo *info)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, buildData);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, *storageInfo);
+    FUNCTION_LOG_END();
+
+    ASSERT(buildData != NULL);
+    ASSERT(info != NULL);
+
+    // LOG_DETAIL("FOUND repoPath = '%s', name '%s'", strPtr(buildData->parentPathInfo->name), strPtr(info->name));
+
+    // Skip all . paths because they have already been recorded on the previous level of recursion
+    if (strEqZ(info->name, "."))
+        return;
+
+    // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
+    // are recreated.
+    if (strBeginsWithZ(info->name, PG_PREFIX_PGSQLTMP))
+        return;
+
+    // Process file types
+    switch (info->type)
+    {
+        case storageTypePath:
+        {
+            // Add the path
+            // ManifestPath *pathInfo = NULL;
+            //
+            // MEM_CONTEXT_BEGIN(buildData->manifest->memContext)
+            // {
+            //     pathInfo = memNew(sizeof(ManifestPath));
+            //     pathInfo->name = strNewFmt("%s/%s", strPtr(buildData->parentPathInfo->name), strPtr(info->name));
+            //     pathInfo->mode = info->mode;
+            //     pathInfo->user = strDup(info->user);
+            //     pathInfo->group = strDup(info->group);
+            // }
+            // MEM_CONTEXT_END();
+            //
+            // lstAdd(buildData->manifest->pathList, &pathInfo);
+
+            LOG_DETAIL("    PATH name '%s'", strPtr(info->name));
+
+            // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
+            // if (buildData->parentPath->base)
+            // {
+            //     if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && buildData->manifest->pgVersion >= PG_VERSION_94)
+            //         return;
+            //
+            //     if (strEqZ(info->name, PG_PATH_PGNOTIFY))
+            //         return;
+            //
+            //     if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && buildData->manifest->pgVersion >= PG_VERSION_94)
+            //         return;
+            //
+            //     if (strEqZ(info->name, PG_PATH_PGSERIAL) && buildData->manifest->pgVersion >= PG_VERSION_91)
+            //         return;
+            //
+            //     if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && buildData->manifest->pgVersion >= PG_VERSION_92)
+            //         return;
+            //
+            //     if (strEqZ(info->name, PG_PATH_PGSTATTMP))
+            //         return;
+            //
+            //     if (strEqZ(info->name, PG_PATH_PGSUBTRANS))
+            //         return;
+            // }
+
+            // // Recurse into the path
+            // ManifestBuildData buildDataSub = *buildData;
+            // // buildDataSub.parentPathInfo = pathInfo;
+            // buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData->pgPath), strPtr(info->name));
+            //
+            // storageInfoListNP(
+            //     buildDataSub.storagePg, buildDataSub.pgPath, (StorageInfoListCallback)manifestBuildCallback, &buildDataSub);
+
+            break;
+        }
+
+        case storageTypeFile:
+        {
+            LOG_DETAIL("    FILE name '%s'", strPtr(info->name));
+
+            break;
+        }
+
+        case storageTypeLink:
+        {
+            break;
+        }
+
+        case storageTypeSpecial:
+        {
+            break;
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+manifestNewBuild(const Storage *storagePg)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storagePg);
+    FUNCTION_LOG_END();
+
+    ASSERT(storagePg != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // // Get the root path
+        // const String *pgPath = storagePathNP(storagePg, NULL);
+        //
+        // // Get info about the root path
+        // ManifestPath *pathInfo = NULL;
+        //
+        // MEM_CONTEXT_BEGIN(this->memContext)
+        // {
+        //     StorageInfo info = storageInfoNP(storagePg, pgPath);
+        //
+        //     pathInfo = memNew(sizeof(ManifestPath));
+        //     pathInfo->name = MANIFEST_PATH_PGDATA_STR;
+        //     pathInfo->base = true;
+        //     pathInfo->mode = info.mode;
+        //     pathInfo->user = strDup(info.user);
+        //     pathInfo->group = strDup(info.group);
+        // }
+        // MEM_CONTEXT_END();
+        //
+        // lstAdd(this->pathList, &pathInfo);
+        //
+        // ManifestBuildData buildData =
+        // {
+        //     .manifest = this,
+        //     .storagePg = storagePg,
+        //     .parentPathInfo = pathInfo,
+        //     .pgPath = pgPath,
+        // };
+        //
+        // storageInfoListP(storagePg, pgPath, (StorageInfoListCallback)manifestBuildCallback, &buildData, .errorOnMissing = true);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Load manifest
 ***********************************************************************************************************************************/
 // Keep track of which values were found during load and which need to be loaded from defaults. There is no point in having
