@@ -41,7 +41,7 @@ testRun(void)
         //     storageDriverPosixNew(strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true,
         //     NULL));
         //
-        // storagePut(storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400), BUFSTRDEF("9.4"));
+        // storagePut(storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400), BUFSTRDEF("9.4\n"));
         // storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
         // storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
         // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);

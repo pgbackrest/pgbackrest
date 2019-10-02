@@ -386,30 +386,31 @@ typedef struct ManifestBuildData
 {
     Manifest *manifest;
     const Storage *storagePg;
-    const ManifestPath *parentPath;
+    const String *manifestName;
     const String *pgPath;
 } ManifestBuildData;
 
-void manifestBuildCallback(ManifestBuildData *buildData, const StorageInfo *info)
+void manifestBuildCallback(void *data, const StorageInfo *info)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_P(VOID, buildData);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, *storageInfo);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, *storageInfo);
+    FUNCTION_TEST_END();
 
-    ASSERT(buildData != NULL);
+    ASSERT(data != NULL);
     ASSERT(info != NULL);
 
-    // LOG_DETAIL("FOUND repoPath = '%s', name '%s'", strPtr(buildData->parentPathInfo->name), strPtr(info->name));
+    // ManifestBuildData *buildData = data;
 
-    // Skip all . paths because they have already been recorded on the previous level of recursion
-    if (strEqZ(info->name, "."))
-        return;
+    // LOG_DETAIL("FOUND repoPath = '%s', name '%s'", strPtr(buildData->parentPathInfo->name), strPtr(info->name));
 
     // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
     // are recreated.
     if (strBeginsWithZ(info->name, PG_PREFIX_PGSQLTMP))
+    {
+        FUNCTION_TEST_RETURN_VOID();
         return;
+    }
 
     // Process file types
     switch (info->type)
@@ -487,20 +488,25 @@ void manifestBuildCallback(ManifestBuildData *buildData, const StorageInfo *info
         }
     }
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
-void
-manifestNewBuild(const Storage *storagePg)
+Manifest *
+manifestNewBuild(const Storage *storagePg, unsigned int pgVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
     FUNCTION_LOG_END();
 
     ASSERT(storagePg != NULL);
+    ASSERT(pgVersion != 0);
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    Manifest *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("Manifest")
     {
+        this = manifestNewInternal();
         // // Get the root path
         // const String *pgPath = storagePathNP(storagePg, NULL);
         //
@@ -522,19 +528,20 @@ manifestNewBuild(const Storage *storagePg)
         //
         // lstAdd(this->pathList, &pathInfo);
         //
-        // ManifestBuildData buildData =
-        // {
-        //     .manifest = this,
-        //     .storagePg = storagePg,
-        //     .parentPathInfo = pathInfo,
-        //     .pgPath = pgPath,
-        // };
-        //
-        // storageInfoListP(storagePg, pgPath, (StorageInfoListCallback)manifestBuildCallback, &buildData, .errorOnMissing = true);
-    }
-    MEM_CONTEXT_TEMP_END();
+        ManifestBuildData buildData =
+        {
+            .manifest = this,
+            .storagePg = storagePg,
+            .manifestName = MANIFEST_TARGET_PGDATA_STR,
+            .pgPath = storagePathNP(storagePg, NULL),
+        };
 
-    FUNCTION_LOG_RETURN_VOID();
+        storageInfoListP(
+            storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(MANIFEST, this);
 }
 
 /***********************************************************************************************************************************
