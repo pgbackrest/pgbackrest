@@ -118,11 +118,12 @@ testRun(void)
             "[backrest]\n"
             "backrest-checksum=\"BOGUS\"\n"
             "backrest-format=5\n"
-            "backrest-version=\"2.17\"\n");
+            "backrest-version=\"2.17\"\n"
+            "bogus=\"BOGUS\"\n");
 
         TEST_ERROR(
             infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), ChecksumError,
-            "invalid checksum, actual 'a9e578459485db14eb1093809a7964832be2779a' but expected 'BOGUS'");
+            "invalid checksum, actual 'fe989a75dcf7a0261e57d210707c0db741462763' but expected 'BOGUS'");
         TEST_RESULT_STR(strPtr(callbackContent), "", "    check callback content");
 
         // Crypto expected

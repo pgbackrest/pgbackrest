@@ -45,8 +45,8 @@ typedef struct InfoBackupData
     unsigned int backupPgId;
     const String *backupPrior;
     StringList *backupReference;
-    uint64_t backupTimestampStart;
-    uint64_t backupTimestampStop;
+    uint64_t backupTimestampStart;                                  // ??? Need to fix this so it is time_t
+    uint64_t backupTimestampStop;                                   // ??? Need to fix this so it is time_t
     const String *backupType;
     bool optionArchiveCheck;
     bool optionArchiveCopy;
@@ -65,9 +65,9 @@ InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const Str
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Remove a backup from the current section
+// Add backup to current section
 void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
-void infoBackupDataAddMissing(const Storage *storage, const InfoBackup *this, CipherType cipherType);
+// Remove a backup from the current section
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
 
@@ -91,6 +91,8 @@ void infoBackupFree(InfoBackup *this);
 Helper functions
 ***********************************************************************************************************************************/
 InfoBackup *infoBackupLoadFile(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+InfoBackup *infoBackupLoadFileReconstruct(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 void infoBackupSaveFile(
     InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
