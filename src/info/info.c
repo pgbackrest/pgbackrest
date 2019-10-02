@@ -221,7 +221,7 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
             MEM_CONTEXT_END();
         }
         // Store checksum to be validated later
-        else if (strEq(key, INFO_KEY_CHECKSUM_STR)) // CSHANG I don't understand why this no longer has coverage (I'm not sure how it ever actully had coverage)
+        else if (strEq(key, INFO_KEY_CHECKSUM_STR))
         {
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {

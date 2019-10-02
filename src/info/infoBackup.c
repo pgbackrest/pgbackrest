@@ -76,7 +76,7 @@ infoBackupNewInternal(void)
 
     InfoBackup *this = memNew(sizeof(InfoBackup));
     this->memContext = memContextCurrent();
-    this->backup = lstNew(sizeof(InfoBackupData));
+    this->backup = lstNewP(sizeof(InfoBackupData), .comparator =  lstComparatorStr);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -351,7 +351,6 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 /***********************************************************************************************************************************
 Add a backup to the current list
 ***********************************************************************************************************************************/
-// CSHANG Should this function return InfoBackup (*this) or can we leave it VOID?
 void
 infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 {
@@ -360,6 +359,9 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
+    ASSERT(this != NULL);
+    ASSERT(manifest != NULL);
+// CSHANG Originally there was a save parameter and the default was true to SAVE this to disk at the end - used by Backup.pm
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const ManifestData *manData = manifestData(manifest);
@@ -376,52 +378,59 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
             const ManifestFile *file = manifestFile(manifest, fileIdx);
 
             backupSize += file->size;
-            backupRepoSize += file->sizeRepo;
+            backupRepoSize += file->sizeRepo > 0 ? file->sizeRepo : file->size;
 
             if (file->reference != NULL)
                 strLstAdd(referenceList, file->reference);
             else
             {
                 backupSizeDelta += file->size;
-                backupRepoSizeDelta += file->sizeRepo;
+                backupRepoSizeDelta += file->sizeRepo > 0 ? file->sizeRepo : file->size;;
             }
         }
 
-        InfoBackupData infoBackupData =
+        MEM_CONTEXT_BEGIN(lstMemContext(this->backup))
         {
-            .backrestFormat = REPOSITORY_FORMAT,
-            .backrestVersion = strDup(manData->backrestVersion),
-            .backupInfoRepoSize = backupRepoSize,
-            .backupInfoRepoSizeDelta = backupRepoSizeDelta,
-            .backupInfoSize = backupSize,
-            .backupInfoSizeDelta = backupSizeDelta,
-            .backupLabel = strDup(manData->backupLabel),
-            .backupPgId = manData->pgId,
-            .backupTimestampStart = (uint64_t)manData->backupTimestampStart,
-            .backupTimestampStop= (uint64_t)manData->backupTimestampStop,
-            .backupType = backupTypeStr(manData->backupType),
+            InfoBackupData infoBackupData =
+            {
+                .backupLabel = strDup(manData->backupLabel),
+                .backrestFormat = REPOSITORY_FORMAT,
+                .backrestVersion = strDup(manData->backrestVersion),
+                .backupInfoRepoSize = backupRepoSize,
+                .backupInfoRepoSizeDelta = backupRepoSizeDelta,
+                .backupInfoSize = backupSize,
+                .backupInfoSizeDelta = backupSizeDelta,
+                .backupPgId = manData->pgId,
+                .backupTimestampStart = (uint64_t)manData->backupTimestampStart,
+                .backupTimestampStop= (uint64_t)manData->backupTimestampStop,
+                .backupType = backupTypeStr(manData->backupType),
 
-            .backupArchiveStart = strDup(manData->archiveStart),
-            .backupArchiveStop = strDup(manData->archiveStop),
+                .backupArchiveStart = strDup(manData->archiveStart),
+                .backupArchiveStop = strDup(manData->archiveStop),
 
-            .optionArchiveCheck = manData->backupOptionArchiveCheck,
-            .optionArchiveCopy = manData->backupOptionArchiveCopy,
-            .optionBackupStandby = varBool(manData->backupOptionStandby),
-            .optionChecksumPage = varBool(manData->backupOptionChecksumPage),
-            .optionCompress = manData->backupOptionCompress,
-            .optionHardlink = manData->backupOptionHardLink,
-            .optionOnline = manData->backupOptionOnline,
-        };
+                .optionArchiveCheck = manData->backupOptionArchiveCheck,
+                .optionArchiveCopy = manData->backupOptionArchiveCopy,
+                .optionBackupStandby = manData->backupOptionStandby != NULL ? varBool(manData->backupOptionStandby) : false,
+                .optionChecksumPage = manData->backupOptionChecksumPage != NULL ? varBool(manData->backupOptionChecksumPage) : false,
+                .optionCompress = manData->backupOptionCompress,
+                .optionHardlink = manData->backupOptionHardLink,
+                .optionOnline = manData->backupOptionOnline,
+            };
 
-        if (manData->backupType != backupTypeFull)
-        {
-            strLstSort(referenceList, sortOrderAsc);
-            infoBackupData.backupReference = strLstDup(referenceList);
-            infoBackupData.backupPrior = strDup(manData->backupLabelPrior);
+            if (manData->backupType != backupTypeFull)
+            {
+                strLstSort(referenceList, sortOrderAsc);
+                infoBackupData.backupReference = strLstDup(referenceList);
+                infoBackupData.backupPrior = strDup(manData->backupLabelPrior);
+            }
+
+            // Add the backup data to the current backup list
+            lstAdd(this->backup, &infoBackupData);
+
+            // Ensure the list is sorted ascending by the backupLabel
+            lstSort(this->backup, sortOrderAsc);
         }
-
-        // Add the backup data to the current backup list
-        lstAdd(this->backup, &infoBackupData);
+        MEM_CONTEXT_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -600,7 +609,7 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
 }
 
 /***********************************************************************************************************************************
-Load backup info and update it by adding valid backups from the repo or removing backups no longer int he repo
+Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
 ***********************************************************************************************************************************/
 InfoBackup *
 infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
@@ -612,6 +621,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
+// CSHANG Originally there was a save parameter for the reconstruct function and the default was true to SAVE this to disk at the end. This was done every time the backup.info NEW was called unless bValidate was passed to NEW as false - which seems to have only been done in expire. So we should think about how this is really called and if we want to autosave here or not.
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
@@ -625,10 +635,10 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
             storageListP(
                 storage, STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true,
                 .incremental = true)),
-            sortOrderDesc);
+            sortOrderAsc);
 
         // Get the current list of backups from backup.info
-        StringList *backupCurrentList = infoBackupDataLabelList(infoBackup, NULL);
+        StringList *backupCurrentList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc);
 
         // For each backup in the repo, check if it exists in backup.info
         for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)

@@ -220,8 +220,88 @@ testRun(void)
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F")), "  deleted");
         TEST_RESULT_UINT(strLstSize(infoBackupDataLabelList(infoBackup, NULL)), 0, "  no backups remain");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("infoBackupDataAdd");
+
+        Manifest *manifest = NULL;
+
+        contentLoad = harnessInfoChecksumZ
+        (
+            "[backup]\n"
+            "backup-label=\"20190808-163540F\"\n"
+            "backup-timestamp-copy-start=1565282141\n"
+            "backup-timestamp-start=1565282140\n"
+            "backup-timestamp-stop=1565282142\n"
+            "backup-type=\"full\"\n"
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=1000000000000000094\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[backup:option]\n"
+            "option-archive-check=true\n"
+            "option-archive-copy=true\n"
+            "option-compress=false\n"
+            "option-hardlink=false\n"
+            "option-online=false\n"
+            "\n"
+            "[backup:target]\n"
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
+            "\n"
+            "[cipher]\n"
+            "cipher-pass=\"somepass\"\n"
+            "\n"
+            "[target:file]\n"
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
+            "pg_data/postgresql.conf={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"repo-size\":24,\"size\":7,"
+            "\"timestamp\":1565282214}\n"
+            "\n"
+            "[target:file:default]\n"
+            "group=\"group1\"\n"
+            "master=true\n"
+            "mode=\"0600\"\n"
+            "user=\"user1\"\n"
+            "\n"
+            "[target:path]\n"
+            "pg_data={}\n"
+            "\n"
+            "[target:path:default]\n"
+            "group=\"group1\"\n"
+            "mode=\"0700\"\n"
+            "user=\"user1\"\n"
+        );
+
+        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
+        TEST_RESULT_VOID(infoBackupDataAdd(infoBackup, manifest), "add a backup");
+        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 1, "backup added to current");
+        TEST_ASSIGN(backupData, infoBackupData(infoBackup, 0), "get added backup");
+        TEST_RESULT_STR(strPtr(backupData.backupLabel), "20190808-163540F", "backup label set");
+        TEST_RESULT_UINT(backupData.backrestFormat, REPOSITORY_FORMAT, "backrest format");
+        TEST_RESULT_STR(strPtr(backupData.backrestVersion), PROJECT_VERSION, "backuprest version");
+        TEST_RESULT_PTR(backupData.backupArchiveStart, NULL, "archive start NULL");
+        TEST_RESULT_PTR(backupData.backupArchiveStop, NULL, "archive stop NULL");
+        TEST_RESULT_STR(strPtr(backupData.backupType), "full", "backup type set");
+        TEST_RESULT_PTR(strPtr(backupData.backupPrior), NULL, "no backup prior");
+        TEST_RESULT_UINT(strLstSize(backupData.backupReference), 0, "no backup reference");
+        TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "option archive check");
+        TEST_RESULT_BOOL(backupData.optionArchiveCopy, true, " option archive copy");
+        TEST_RESULT_BOOL(backupData.optionBackupStandby, false, "no option backup standby");
+        TEST_RESULT_BOOL(backupData.optionChecksumPage, false, "no option checksum page");
+        TEST_RESULT_BOOL(backupData.optionCompress, false, "option compress");
+        TEST_RESULT_BOOL(backupData.optionHardlink, false, "option hardlink");
+        TEST_RESULT_BOOL(backupData.optionOnline, false, "option online");
+        TEST_RESULT_UINT(backupData.backupInfoSize, 11, "database size");
+        TEST_RESULT_UINT(backupData.backupInfoSizeDelta, 11, "backup size");
+        TEST_RESULT_UINT(backupData.backupInfoRepoSize, 28, "repo size");
+        TEST_RESULT_UINT(backupData.backupInfoRepoSizeDelta, 28, "repo backup size");
+
         // infoBackupDataToLog
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("infoBackupDataToLog");
+
         TEST_RESULT_STR(
             strPtr(infoBackupDataToLog(&backupData)), "{label: 20161219-212741F_20161219-212918I, pgId: 1}", "check log format");
     }
