@@ -206,8 +206,6 @@ const ManifestData *manifestData(const Manifest *this);
 String *manifestPgPath(const String *manifestPath);
 const ManifestTarget *manifestTargetBase(const Manifest *this);
 String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
-unsigned int manifestBackrestFormat(const Manifest *this);
-const String *manifestBackrestVersion(const Manifest *this);
 
 /***********************************************************************************************************************************
 Helper functions

@@ -385,7 +385,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
             else
             {
                 backupSizeDelta += file->size;
-                backupRepoSizeDelta += file->sizeRepo > 0 ? file->sizeRepo : file->size;;
+                backupRepoSizeDelta += file->sizeRepo > 0 ? file->sizeRepo : file->size;
             }
         }
 
