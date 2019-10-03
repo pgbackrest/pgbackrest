@@ -30,30 +30,30 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoManifestNewBuild()"))
     {
-        // Create pg directory and generate minimal manifest
-        // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
-
-        Storage *storagePg = storagePosixNew(
-            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
-        Storage *storagePgWrite = storagePosixNew(
-            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-
-        storagePutNP(storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400), BUFSTRDEF("9.4\n"));
-        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSTATTMP), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
-
-        Manifest *manifest = NULL;
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_90), "build manifest");
-        // !!! CHECK THE MANIFEST HERE TO DETERMINE IF EXCLUSIONS ARE WORKING
-        (void)manifest;
+        // // Create pg directory and generate minimal manifest
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
+        //
+        // Storage *storagePg = storagePosixNew(
+        //     strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
+        // Storage *storagePgWrite = storagePosixNew(
+        //     strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+        //
+        // storagePutNP(storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400), BUFSTRDEF("9.4\n"));
+        // storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
+        // storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
+        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
+        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
+        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
+        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
+        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
+        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSTATTMP), .mode = 0700, .noParentCreate = true);
+        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
+        //
+        // Manifest *manifest = NULL;
+        // TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_90), "build manifest");
+        // // !!! CHECK THE MANIFEST HERE TO DETERMINE IF EXCLUSIONS ARE WORKING
+        // (void)manifest;
 
         // // -------------------------------------------------------------------------------------------------------------------------
         // storagePathCreateP(storagePgWrite, strNew(PG_PATH_GLOBAL), .mode = 0700, .noParentCreate = true);

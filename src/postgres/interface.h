@@ -14,6 +14,7 @@ PostgreSQL Interface
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
 #define PG_FILE_PGCONTROL                                           "pg_control"
+#define PG_FILE_PGINTERNALINIT                                      "pg_internal.init"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
     STRING_DECLARE(PG_FILE_PGVERSION_STR);
 #define PG_FILE_POSTGRESQLAUTOCONF                                  "postgresql.auto.conf"
