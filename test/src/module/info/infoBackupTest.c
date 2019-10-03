@@ -220,6 +220,11 @@ testRun(void)
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F")), "  deleted");
         TEST_RESULT_UINT(strLstSize(infoBackupDataLabelList(infoBackup, NULL)), 0, "  no backups remain");
 
+        // infoBackupDataToLog
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(
+            strPtr(infoBackupDataToLog(&backupData)), "{label: 20161219-212741F_20161219-212918I, pgId: 1}", "check log format");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoBackupDataAdd");
 
@@ -285,9 +290,9 @@ testRun(void)
         TEST_RESULT_PTR(backupData.backupArchiveStop, NULL, "archive stop NULL");
         TEST_RESULT_STR(strPtr(backupData.backupType), "full", "backup type set");
         TEST_RESULT_PTR(strPtr(backupData.backupPrior), NULL, "no backup prior");
-        TEST_RESULT_UINT(strLstSize(backupData.backupReference), 0, "no backup reference");
+        TEST_RESULT_PTR(backupData.backupReference, NULL, "no backup reference");
         TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "option archive check");
-        TEST_RESULT_BOOL(backupData.optionArchiveCopy, true, " option archive copy");
+        TEST_RESULT_BOOL(backupData.optionArchiveCopy, true, "option archive copy");
         TEST_RESULT_BOOL(backupData.optionBackupStandby, false, "no option backup standby");
         TEST_RESULT_BOOL(backupData.optionChecksumPage, false, "no option checksum page");
         TEST_RESULT_BOOL(backupData.optionCompress, false, "option compress");
@@ -297,13 +302,6 @@ testRun(void)
         TEST_RESULT_UINT(backupData.backupInfoSizeDelta, 11, "backup size");
         TEST_RESULT_UINT(backupData.backupInfoRepoSize, 28, "repo size");
         TEST_RESULT_UINT(backupData.backupInfoRepoSizeDelta, 28, "repo backup size");
-
-        // infoBackupDataToLog
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("infoBackupDataToLog");
-
-        TEST_RESULT_STR(
-            strPtr(infoBackupDataToLog(&backupData)), "{label: 20161219-212741F_20161219-212918I, pgId: 1}", "check log format");
     }
 
     // *****************************************************************************************************************************
