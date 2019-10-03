@@ -31,6 +31,45 @@ Backup Command
 // #include "version.h"
 
 /***********************************************************************************************************************************
+Get the postgres database and storage objects
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_BACKUP_PG_TYPE                                                                                                \
+    BackupPg
+#define FUNCTION_LOG_BACKUP_PG_FORMAT(value, buffer, bufferSize)                                                                   \
+    objToLog(&value, "BackupPg", buffer, bufferSize)
+
+typedef struct BackupPg
+{
+    const Storage *storagePrimary;
+} BackupPg;
+
+static BackupPg
+backupPgGet(const InfoBackup *infoBackup)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_END();
+
+    // !!! PRETTY BADLY FAKED FOR NOW, SHOULD BE pgGet() KINDA THING
+    BackupPg result = {.storagePrimary = storagePgId(1)};
+
+    // Get control information from the primary and validate it against backup info
+    InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
+    PgControl pgControl = pgControlFromFile(result.storagePrimary);
+
+    if (pgControl.version != infoPg.version || pgControl.systemId != infoPg.systemId)
+    {
+        THROW_FMT(
+            BackupMismatchError,
+            PG_NAME " version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64,
+            strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId, strPtr(pgVersionToStr(infoPg.version)),
+            infoPg.systemId);
+    }
+
+    FUNCTION_LOG_RETURN(BACKUP_PG, result);
+}
+
+/***********************************************************************************************************************************
 Check for a prior backup and promote to full if diff/incr and a prior backup does not exist
 ***********************************************************************************************************************************/
 static const Manifest *
@@ -137,24 +176,11 @@ cmdBackup(void)
             cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
-        // Get the primary pg storage !!! HACKED TO ONE FOR NOW UNTIL WE BRING IN THE DB LOGIC
-        const Storage *storagePgPrimary = storagePgId(1);
-
-        // Get control information from the primary and validate it against backup info
-        PgControl pgControl = pgControlFromFile(storagePgPrimary);
-
-        if (pgControl.version != infoPg.version || pgControl.systemId != infoPg.systemId)
-        {
-            THROW_FMT(
-                BackupMismatchError,
-                PG_NAME " version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64,
-                strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId, strPtr(pgVersionToStr(infoPg.version)),
-                infoPg.systemId);
-        }
+        // Get pg storage and database objects
+        backupPgGet(infoBackup);
 
         // Get the prior manifest if one exists
         const Manifest *manifestPrior = backupPrior(infoBackup);
-        (void)manifestPrior;
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
 
