@@ -119,30 +119,9 @@ sub main
         }
         else
         {
-            # Check that the repo path exists
-            require pgBackRest::Protocol::Storage::Helper;
-            pgBackRest::Protocol::Storage::Helper->import();
-
-            if (isRepoLocal() && !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) && !storageRepo()->pathExists(''))
-            {
-                confess &log(ERROR,
-                    cfgOptionName(CFGOPT_REPO_PATH) . ' \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist',
-                    ERROR_PATH_MISSING);
-            }
-
             logFileSet(
                 storageLocal(),
                 cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
-
-            # Check if processes have been stopped
-            lockStopTest();
-
-            # Check locality
-            if (!isRepoLocal())
-            {
-                confess &log(ERROR,
-                    cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
-            }
 
             # Process backup command
             # ----------------------------------------------------------------------------------------------------------------------

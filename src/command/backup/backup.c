@@ -8,7 +8,7 @@ Backup Command
 // #include <time.h>
 // #include <unistd.h>
 //
-// #include "command/restore/protocol.h"
+#include "command/control/common.h"
 #include "command/backup/backup.h"
 // #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
@@ -37,6 +37,9 @@ cmdBackup(void)
 
     // Verify the repo is local
     repoIsLocalVerify();
+
+    // Test for stop file
+    lockStopTest();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
