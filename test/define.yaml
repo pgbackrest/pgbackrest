@@ -626,11 +626,12 @@ unit:
         total: 4
 
         coverage:
-          command/backup/backup: full
+          # command/backup/backup: full
           command/backup/file: full
           command/backup/protocol: full
 
         include:
+          - command/backup/backup
           - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------

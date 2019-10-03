@@ -456,22 +456,22 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdBackup()"))
     {
-        const String *pgPath = strNewFmt("%s/pg", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("PLACEHOLDER TEST");
-
-        StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        // const String *pgPath = strNewFmt("%s/pg", testPath());
+        // const String *repoPath = strNewFmt("%s/repo", testPath());
+        //
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("PLACEHOLDER TEST");
+        //
+        // StringList *argList = strLstNew();
+        // strLstAddZ(argList, "pgbackrest");
+        // strLstAddZ(argList, "--stanza=test1");
+        // strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        // strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        // strLstAddZ(argList, "--repo1-retention-full=1");
+        // strLstAddZ(argList, "backup");
+        // harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        //
+        // TEST_RESULT_VOID(cmdBackup(), "backup");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
