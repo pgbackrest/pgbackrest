@@ -498,12 +498,15 @@ sub processManifest
 sub process
 {
     my $self = shift;
+    my @stryCommandArg = @_;
 
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
-    # Record timestamp start
-    my $lTimestampStart = time();
+    if (@stryCommandArg < 1)
+    {
+        confess &log(ERROR, "missing command parameters from C");
+    }
 
     # Initialize the local file object
     my $oStorageRepo = storageRepo();
@@ -549,12 +552,9 @@ sub process
     my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $self->{iMasterRemoteIdx}));
     my $strDbCopyPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $self->{iCopyRemoteIdx}));
 
-    # Database info
-    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDbMaster->info();
-
-    my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-
     # Find the previous backup based on the type
+    my $strDbVersion = $stryCommandArg[2];
+    my $ullDbSysId = $stryCommandArg[3] + 0;
     my $oLastManifest;
     my $strBackupLastPath;
     my $strTimelineLast;
@@ -752,6 +752,8 @@ sub process
     }
 
     # If backup label is not defined then create the label and path.
+    my $lTimestampStart = $stryCommandArg[0] + 0;
+
     if (!defined($strBackupLabel))
     {
         $strBackupLabel = backupLabel($oStorageRepo, $strType, $strBackupLastPath, $lTimestampStart);
@@ -762,7 +764,7 @@ sub process
     # Instead just instantiate it. Pass the passphrases to open the manifest and one to encrypt the backup files if the repo is
     # encrypted (undefined if not).
     my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
-        {bLoad => false, strDbVersion => $strDbVersion, iDbCatalogVersion => $iCatalogVersion,
+        {bLoad => false, strDbVersion => $strDbVersion, iDbCatalogVersion => $stryCommandArg[5] + 0,
         strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef,
         strCipherPassSub => defined($strCipherPassManifest) ? $strCipherPassBackupSet : undef});
 
@@ -786,8 +788,8 @@ sub process
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_PROCESS_MAX, undef, cfgOption(CFGOPT_PROCESS_MAX));
 
     # Database settings
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $stryCommandArg[1] + 0);
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $stryCommandArg[4] + 0);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
 
     # Backup from standby can only be used on PostgreSQL >= 9.1

@@ -776,7 +776,7 @@ sub run
         # Break the database version
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
+            {&INFO_BACKUP_SECTION_DB_HISTORY => {"1" => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}}});
 
         $oHostBackup->backup(
             $strType, 'invalid database version',
@@ -785,28 +785,10 @@ sub run
         # Break the database system id
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
+            {&INFO_BACKUP_SECTION_DB_HISTORY => {"1" => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}}});
 
         $oHostBackup->backup(
             $strType, 'invalid system id',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
-
-        # Break the control version
-        $oHostBackup->infoMunge(
-            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_CONTROL => 842}});
-
-        $oHostBackup->backup(
-            $strType, 'invalid control version',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
-
-        # Break the catalog version
-        $oHostBackup->infoMunge(
-            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_CATALOG => 197208141}});
-
-        $oHostBackup->backup(
-            $strType, 'invalid catalog version',
             {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
 
         # Restore the file to its original condition

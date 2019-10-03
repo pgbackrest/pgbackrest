@@ -119,6 +119,17 @@ sub main
         }
         else
         {
+            # Check that the repo path exists !!! Currently only needed to make the error test in perl/exec module pass.
+            require pgBackRest::Protocol::Storage::Helper;
+            pgBackRest::Protocol::Storage::Helper->import();
+
+            if (isRepoLocal() && !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) && !storageRepo()->pathExists(''))
+            {
+                confess &log(ERROR,
+                    cfgOptionName(CFGOPT_REPO_PATH) . ' \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist',
+                    ERROR_PATH_MISSING);
+            }
+
             logFileSet(
                 storageLocal(),
                 cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
@@ -131,7 +142,7 @@ sub main
                 require pgBackRest::Backup::Backup;
                 pgBackRest::Backup::Backup->import();
 
-                new pgBackRest::Backup::Backup()->process();
+                new pgBackRest::Backup::Backup()->process(@stryCommandArg);
             }
 
             # Process expire command
