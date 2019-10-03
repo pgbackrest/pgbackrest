@@ -606,6 +606,8 @@
 
                         This feature relies on pg_is_in_backup() so only works on <postgres/> >= <id>9.3</id>.
 
+                        This feature is not supported for <postgres/> >= <id>9.6</id> since backups are run in non-exclusive mode.
+
                         The setting is disabled by default because it assumes that <backrest/> is the only process doing exclusive online backups.  It depends on an advisory lock that only <backrest/> sets so it may abort other processes that do exclusive online backups.  Note that <cmd>base_backup</cmd> and <cmd>pg_dump</cmd> are safe to use with this setting because they do not call <code>pg_start_backup()</code> so are not exclusive.</text>
 
                         <example>y</example>

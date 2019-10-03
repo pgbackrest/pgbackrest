@@ -13,6 +13,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.19dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="brad.nicholson"/>
+                        </release-item-contributor-list>
+
+                        <p>Document maximum version for <br-option>auto-stop</br-option> option.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+
         </release>
 
         <release date="2019-10-01" version="2.18" title="PostgreSQL 12 Support">
