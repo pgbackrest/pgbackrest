@@ -20,6 +20,7 @@ Backup Command
 #include "common/type/json.h" // !!! TRY TO REMOVE
 #include "config/config.h"
 // #include "config/exec.h"
+#include "db/helper.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -41,6 +42,7 @@ Get the postgres database and storage objects
 typedef struct BackupPg
 {
     const Storage *storagePrimary;
+    const Db *dbStandby;
 } BackupPg;
 
 static BackupPg
@@ -64,6 +66,16 @@ backupPgGet(const InfoBackup *infoBackup)
             PG_NAME " version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64,
             strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId, strPtr(pgVersionToStr(infoPg.version)),
             infoPg.systemId);
+    }
+
+    // If backup from standby option is set but a standby was not configured in the config file or on the command line, then turn
+    // off backup-standby and warn that backups will be performed from the prinary.
+    if (result.dbStandby == NULL && cfgOptionBool(cfgOptBackupStandby))
+    {
+        cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
+        LOG_WARN(
+            "option " CFGOPT_BACKUP_STANDBY " is enabled but standby is not properly configured - backups will be performed from"
+            " the primary");
     }
 
     FUNCTION_LOG_RETURN(BACKUP_PG, result);
