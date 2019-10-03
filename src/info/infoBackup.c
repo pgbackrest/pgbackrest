@@ -8,6 +8,7 @@ Backup Info Handler
 #include <string.h>
 #include <inttypes.h>
 
+#include "command/backup/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/ini.h"
@@ -22,10 +23,10 @@ Backup Info Handler
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Constants
-??? INFO_BACKUP_SECTION should be in a separate include since it will also be used when reading the manifest
 ***********************************************************************************************************************************/
 #define INFO_BACKUP_SECTION                                         "backup"
 #define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
@@ -75,7 +76,7 @@ infoBackupNewInternal(void)
 
     InfoBackup *this = memNew(sizeof(InfoBackup));
     this->memContext = memContextCurrent();
-    this->backup = lstNew(sizeof(InfoBackupData));
+    this->backup = lstNewP(sizeof(InfoBackupData), .comparator =  lstComparatorStr);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -348,6 +349,95 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 }
 
 /***********************************************************************************************************************************
+Add a backup to the current list
+***********************************************************************************************************************************/
+void
+infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(manifest != NULL);
+// CSHANG Originally there was a save parameter and the default was true to SAVE this to disk at the end - used by Backup.pm
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const ManifestData *manData = manifestData(manifest);
+
+        // Calculate backup sizes and references
+        uint64_t backupSize = 0;
+        uint64_t backupSizeDelta = 0;
+        uint64_t backupRepoSize = 0;
+        uint64_t backupRepoSizeDelta = 0;
+        StringList *referenceList = strLstNew();
+
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+        {
+            const ManifestFile *file = manifestFile(manifest, fileIdx);
+
+            backupSize += file->size;
+            backupRepoSize += file->sizeRepo > 0 ? file->sizeRepo : file->size;
+
+            if (file->reference != NULL)
+                strLstAdd(referenceList, file->reference);
+            else
+            {
+                backupSizeDelta += file->size;
+                backupRepoSizeDelta += file->sizeRepo > 0 ? file->sizeRepo : file->size;;
+            }
+        }
+
+        MEM_CONTEXT_BEGIN(lstMemContext(this->backup))
+        {
+            InfoBackupData infoBackupData =
+            {
+                .backupLabel = strDup(manData->backupLabel),
+                .backrestFormat = REPOSITORY_FORMAT,
+                .backrestVersion = strDup(manData->backrestVersion),
+                .backupInfoRepoSize = backupRepoSize,
+                .backupInfoRepoSizeDelta = backupRepoSizeDelta,
+                .backupInfoSize = backupSize,
+                .backupInfoSizeDelta = backupSizeDelta,
+                .backupPgId = manData->pgId,
+                .backupTimestampStart = (uint64_t)manData->backupTimestampStart,
+                .backupTimestampStop= (uint64_t)manData->backupTimestampStop,
+                .backupType = backupTypeStr(manData->backupType),
+
+                .backupArchiveStart = strDup(manData->archiveStart),
+                .backupArchiveStop = strDup(manData->archiveStop),
+
+                .optionArchiveCheck = manData->backupOptionArchiveCheck,
+                .optionArchiveCopy = manData->backupOptionArchiveCopy,
+                .optionBackupStandby = manData->backupOptionStandby != NULL ? varBool(manData->backupOptionStandby) : false,
+                .optionChecksumPage = manData->backupOptionChecksumPage != NULL ? varBool(manData->backupOptionChecksumPage) : false,
+                .optionCompress = manData->backupOptionCompress,
+                .optionHardlink = manData->backupOptionHardLink,
+                .optionOnline = manData->backupOptionOnline,
+            };
+
+            if (manData->backupType != backupTypeFull)
+            {
+                strLstSort(referenceList, sortOrderAsc);
+                infoBackupData.backupReference = strLstDup(referenceList);
+                infoBackupData.backupPrior = strDup(manData->backupLabelPrior);
+            }
+
+            // Add the backup data to the current backup list
+            lstAdd(this->backup, &infoBackupData);
+
+            // Ensure the list is sorted ascending by the backupLabel
+            lstSort(this->backup, sortOrderAsc);
+        }
+        MEM_CONTEXT_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Delete a backup from the current backup list
 ***********************************************************************************************************************************/
 void
@@ -516,6 +606,99 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, data.infoBackup);
+}
+
+/***********************************************************************************************************************************
+Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
+***********************************************************************************************************************************/
+InfoBackup *
+infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+// CSHANG Originally there was a save parameter for the reconstruct function and the default was true to SAVE this to disk at the end. This was done every time the backup.info NEW was called unless bValidate was passed to NEW as false - which seems to have only been done in expire. So we should think about how this is really called and if we want to autosave here or not.
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+
+    InfoBackup *infoBackup = infoBackupLoadFile(storage, fileName, cipherType, cipherPass);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get a list of backups in the repo
+        StringList *backupList = strLstSort(
+            storageListP(
+                storage, STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true,
+                .incremental = true)),
+            sortOrderAsc);
+
+        // Get the current list of backups from backup.info
+        StringList *backupCurrentList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc);
+
+        // For each backup in the repo, check if it exists in backup.info
+        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+        {
+            String *backupLabel = strLstGet(backupList, backupIdx);
+
+            // If it does not exists in the list of current backups, then if it is valid, add it
+            if (!strLstExists(backupCurrentList, backupLabel))
+            {
+                String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+
+                // Check if a completed backup (backup.manifest only) exists
+                if (storageExistsNP(storage, manifestFileName))
+                {
+                    bool found = false;
+                    const Manifest *manifest = manifestLoadFile(
+                        storage, manifestFileName, cipherType, infoPgCipherPass(infoBackup->infoPg));
+                    const ManifestData *manData = manifestData(manifest);
+
+                    // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match
+                    // then warn that the backup is not valid
+                    for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackup->infoPg); pgIdx++)
+                    {
+                        InfoPgData pgHistory = infoPgData(infoBackup->infoPg, pgIdx);
+
+                        // If there is an exact match with the history, system and version then add it to the current backup list
+                        if (manData->pgId == pgHistory.id && manData->pgSystemId == pgHistory.systemId &&
+                            manData->pgVersion == pgHistory.version)
+                        {
+                            LOG_WARN("backup '%s' found in repository added to " INFO_BACKUP_FILE, strPtr(backupLabel));
+                            infoBackupDataAdd(infoBackup, manifest);
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                        LOG_WARN("invalid backup '%s' cannot be added to current backups", strPtr(manData->backupLabel));
+                }
+            }
+        }
+
+        // Get the updated list of current backups and remove backups that are no longer in the repository
+        backupCurrentList = infoBackupDataLabelList(infoBackup, NULL);
+
+        for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
+        {
+            String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
+            String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+
+            if (!storageExistsNP(storage, manifestFileName))
+            {
+                LOG_WARN("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(backupLabel));
+                infoBackupDataDelete(infoBackup, backupLabel);
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(INFO_BACKUP, infoBackup);
 }
 
 /***********************************************************************************************************************************
