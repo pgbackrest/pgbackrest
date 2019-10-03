@@ -56,7 +56,7 @@ cmdBackup(void)
         const Storage *storagePgPrimary = storagePgId(1);
 
         // Get control information from the primary and validate it against backup info
-        PgControl pgControl = pgControlFromFile(storagePgPrimary, storagePathNP(storagePgPrimary, NULL));
+        PgControl pgControl = pgControlFromFile(storagePgPrimary);
 
         if (pgControl.version != infoPg.version || pgControl.systemId != infoPg.systemId)
         {

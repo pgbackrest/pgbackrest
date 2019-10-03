@@ -417,15 +417,13 @@ pgControlFromBuffer(const Buffer *controlFile)
 Get info from pg_control
 ***********************************************************************************************************************************/
 PgControl
-pgControlFromFile(const Storage *storage, const String *pgPath)
+pgControlFromFile(const Storage *storage)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, pgPath);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
-    ASSERT(pgPath != NULL);
 
     PgControl result = {0};
 
@@ -433,8 +431,7 @@ pgControlFromFile(const Storage *storage, const String *pgPath)
     {
         // Read control file
         Buffer *controlFile = storageGetP(
-            storageNewReadNP(storage, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pgPath))),
-            .exactSize = PG_CONTROL_DATA_SIZE);
+            storageNewReadNP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), .exactSize = PG_CONTROL_DATA_SIZE);
 
         result = pgControlFromBuffer(controlFile);
     }
