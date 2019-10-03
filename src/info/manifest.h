@@ -28,6 +28,9 @@ Constants
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define MANIFEST_TYPE                                               Manifest
+#define MANIFEST_PREFIX                                             manifest
+
 typedef struct Manifest Manifest;
 
 #include "common/crypto/hash.h"
@@ -152,6 +155,7 @@ Manifest *manifestNewLoad(IoRead *read);
 Functions
 ***********************************************************************************************************************************/
 void manifestLinkCheck(const Manifest *this);
+Manifest *manifestMove(Manifest *this, MemContext *parentNew);
 void manifestSave(Manifest *this, IoWrite *write);
 
 /***********************************************************************************************************************************

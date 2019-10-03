@@ -10,6 +10,7 @@ use English '-no_match_vars';
 
 use Exporter qw(import);
 use File::Basename;
+use JSON::PP;
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Backup::Common;
@@ -503,10 +504,13 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
-    if (@stryCommandArg < 1)
+    # Get parameters passed from C backup code
+    if (@stryCommandArg != 1)
     {
-        confess &log(ERROR, "missing command parameters from C");
+        confess &log(ERROR, "missing command parameter from C");
     }
+
+    my $rhParam = (JSON::PP->new()->allow_nonref())->decode($stryCommandArg[0]);
 
     # Initialize the local file object
     my $oStorageRepo = storageRepo();
@@ -553,60 +557,23 @@ sub process
     my $strDbCopyPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $self->{iCopyRemoteIdx}));
 
     # Find the previous backup based on the type
-    my $strDbVersion = $stryCommandArg[2];
-    my $ullDbSysId = $stryCommandArg[3] + 0;
+    my $strBackupLastPath = $rhParam->{backupLabelPrior};
     my $oLastManifest;
-    my $strBackupLastPath;
     my $strTimelineLast;
 
-    if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL)
+    if (defined($strBackupLastPath))
     {
-        $strBackupLastPath = $oBackupInfo->last(
-            $strType eq CFGOPTVAL_BACKUP_TYPE_DIFF ? CFGOPTVAL_BACKUP_TYPE_FULL : CFGOPTVAL_BACKUP_TYPE_INCR);
+        $oLastManifest = new pgBackRest::Manifest(
+            $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLastPath}/" . FILE_MANIFEST),
+            {strCipherPass => $strCipherPassManifest});
 
-        # If there is a prior backup and it is for the current database, then use it as base
-        if (defined($strBackupLastPath) && $oBackupInfo->confirmDb($strBackupLastPath, $strDbVersion, $ullDbSysId))
+        # If the repo is encrypted then use the passphrase in this manifest for the backup set
+        $strCipherPassBackupSet = $oLastManifest->cipherPassSub();
+
+        # Get archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online backup.
+        if ($oLastManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
         {
-            $oLastManifest = new pgBackRest::Manifest(
-                $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLastPath}/" . FILE_MANIFEST),
-                {strCipherPass => $strCipherPassManifest});
-
-            # If the repo is encrypted then use the passphrase in this manifest for the backup set
-            $strCipherPassBackupSet = $oLastManifest->cipherPassSub();
-
-            # Get archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online backup.
-            if ($oLastManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
-            {
-                $strTimelineLast = substr($oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
-            }
-
-            &log(INFO, 'last backup label = ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) .
-                       ', version = ' . $oLastManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
-
-            # If this is incr or diff warn if certain options have changed
-            my $strKey;
-
-            # Warn if compress option changed
-            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress))
-            {
-                &log(WARN, "${strType} backup cannot alter compress option to '" . boolFormat($bCompress) .
-                           "', reset to value in ${strBackupLastPath}");
-                $bCompress = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
-            }
-
-            # Warn if hardlink option changed
-            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink))
-            {
-                &log(WARN, "${strType} backup cannot alter hardlink option to '" . boolFormat($bHardLink) .
-                           "', reset to value in ${strBackupLastPath}");
-                $bHardLink = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
-            }
-        }
-        else
-        {
-            &log(WARN, "no prior backup exists, ${strType} backup has been changed to full");
-            $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
-            $strBackupLastPath = undef;
+            $strTimelineLast = substr($oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
         }
     }
 
@@ -752,7 +719,7 @@ sub process
     }
 
     # If backup label is not defined then create the label and path.
-    my $lTimestampStart = $stryCommandArg[0] + 0;
+    my $lTimestampStart = $rhParam->{timestampStart};
 
     if (!defined($strBackupLabel))
     {
@@ -763,8 +730,10 @@ sub process
     # Declare the backup manifest. Since the manifest could be an aborted backup, don't load it from the file here.
     # Instead just instantiate it. Pass the passphrases to open the manifest and one to encrypt the backup files if the repo is
     # encrypted (undefined if not).
+    my $strDbVersion = $rhParam->{pgVersion};
+
     my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
-        {bLoad => false, strDbVersion => $strDbVersion, iDbCatalogVersion => $stryCommandArg[5] + 0,
+        {bLoad => false, strDbVersion => $strDbVersion, iDbCatalogVersion => $rhParam->{pgCatalogVersion},
         strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef,
         strCipherPassSub => defined($strCipherPassManifest) ? $strCipherPassBackupSet : undef});
 
@@ -788,9 +757,9 @@ sub process
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_PROCESS_MAX, undef, cfgOption(CFGOPT_PROCESS_MAX));
 
     # Database settings
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $stryCommandArg[1] + 0);
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $stryCommandArg[4] + 0);
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $rhParam->{pgId});
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $rhParam->{pgControlVersion});
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $rhParam->{pgSystemId});
 
     # Backup from standby can only be used on PostgreSQL >= 9.1
     if (cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_BACKUP_STANDBY) && $strDbVersion < PG_VERSION_BACKUP_STANDBY)

@@ -17,6 +17,7 @@ Backup Command
 // #include "common/regExp.h"
 // #include "common/user.h"
 #include "common/type/convert.h"
+#include "common/type/json.h" // !!! TRY TO REMOVE
 #include "config/config.h"
 // #include "config/exec.h"
 #include "info/infoBackup.h"
@@ -28,6 +29,88 @@ Backup Command
 #include "storage/helper.h"
 // #include "storage/write.intern.h"
 // #include "version.h"
+
+/***********************************************************************************************************************************
+Check for a prior backup and promote to full if diff/incr and a prior backup does not exist
+***********************************************************************************************************************************/
+static const Manifest *
+backupPrior(const InfoBackup *infoBackup)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_END();
+
+    Manifest *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        BackupType type = backupType(cfgOptionStr(cfgOptType));
+        InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
+        const String *backupLabelPrior = NULL;
+
+        if (type != backupTypeFull)
+        {
+            unsigned int backupTotal = infoBackupDataTotal(infoBackup);
+
+            for (unsigned int backupIdx = backupTotal - 1; backupIdx < backupTotal; backupIdx--)
+            {
+                 InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
+
+                 // The prior backup for a diff must be full
+                 if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
+                    continue;
+
+                // The backups must come from the same cluster
+                if (infoPg.id != backupPrior.backupPgId)
+                    continue;
+
+                // This backup is a candidate for prior
+                backupLabelPrior = strDup(backupPrior.backupLabel);
+                break;
+            }
+
+            // If there is a prior backup then check that options for the new backup are compatible
+            if (backupLabelPrior != NULL)
+            {
+                result = manifestLoadFile(
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabelPrior)),
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+                const ManifestData *manifestPriorData = manifestData(result);
+
+                LOG_INFO(
+                    "last backup label = %s, version = %s", strPtr(backupLabelPrior), strPtr(manifestPriorData->backrestVersion));
+
+                // Warn if compress option changed
+                if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
+                {
+                    LOG_WARN(
+                        "%s backup cannot alter compress option to '%s', reset to value in %s", strPtr(cfgOptionStr(cfgOptType)),
+                        cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)), strPtr(backupLabelPrior));
+                    cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
+                }
+
+                // Warn if hardlink option changed
+                if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
+                {
+                    LOG_WARN(
+                        "%s backup cannot alter hardlink option to '%s', reset to value in %s", strPtr(cfgOptionStr(cfgOptType)),
+                        cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)), strPtr(backupLabelPrior));
+                    cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
+                }
+            }
+            else
+            {
+                LOG_WARN("no prior backup exists, %s backup has been changed to full", strPtr(cfgOptionStr(cfgOptType)));
+                cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(type)));
+            }
+        }
+
+        manifestMove(result, MEM_CONTEXT_OLD());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(MANIFEST, result);
+}
 
 /***********************************************************************************************************************************
 Make a backup
@@ -69,94 +152,30 @@ cmdBackup(void)
                 infoPg.systemId);
         }
 
-        // Validate the backup type
-        BackupType type = backupType(cfgOptionStr(cfgOptType));
-        const String *backupLabelPrior = NULL;
-        unsigned int backupTimelinePrior = NULL;
-        const String *backupCipherSubPass = NULL;
-
-        if (type != backupTypeFull)
-        {
-            unsigned int backupTotal = infoBackupDataTotal(infoBackup);
-            // InfoBackupData backupPrior = {};
-
-            // $strBackupLastPath = $oBackupInfo->last(
-            //     $strType eq CFGOPTVAL_BACKUP_TYPE_DIFF ? CFGOPTVAL_BACKUP_TYPE_FULL : CFGOPTVAL_BACKUP_TYPE_INCR);
-
-            for (unsigned int backupIdx = backupTotal - 1; backupIdx < backupTotal; backupIdx--)
-            {
-                 InfoBackupData backupTest = infoBackupData(infoBackup, backupIdx);
-
-                 // The prior backup for a diff must be full
-                 if (type == backupTypeDiff && backupType(backupTest.backupType) != backupTypeFull)
-                    continue;
-
-                // The backups must come from the same cluster
-                if (infoPg.id != backupTest.backupPgId)
-                    continue;
-
-                // This backup is a candidate for prior
-                backupLabelPrior = strDup(backupTest.backupLabel);
-                break;
-            }
-
-            // If there is a prior backup then check that options for the new backup are compatible
-            if (backupLabelPrior != NULL)
-            {
-                const Manifest *manifestPrior = manifestLoadFile(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabelPrior)),
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
-                const ManifestData *manifestPriorData = manifestData(manifestPrior);
-
-                // Get the passphrase from the manifest (if set).  The same passphrase is used for the entire backup set.
-                backupCipherSubPass = manifestCipherSubPass(manifestPrior);
-
-                // Get archive segment timeline for determining if a timeline switch has occurred. Only defined for online backup.
-                if (manifestPriorData->archiveStop != NULL)
-                    backupTimelinePrior = cvtZToUInt(strPtr(strSubN(manifestPriorData->archiveStop, 0, 8)));
-
-                LOG_INFO("last backup label = %s, version = 2.19dev", strPtr(backupLabelPrior) /* !!! ADD REAL VERSION */);
-
-                // Warn if compress option changed
-                if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
-                {
-                    LOG_WARN(
-                        "%s backup cannot alter compress option to '%s', reset to value in %s", strPtr(cfgOptionStr(cfgOptType)),
-                        cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)), strPtr(backupLabelPrior));
-                    // cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(cfgOptionBool(cfgOptCompress)));
-                }
-
-                // Warn if hardlink option changed
-                if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
-                {
-                    LOG_WARN(
-                        "%s backup cannot alter hardlink option to '%s', reset to value in %s", strPtr(cfgOptionStr(cfgOptType)),
-                        cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)), strPtr(backupLabelPrior));
-                    // cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(cfgOptionBool(cfgOptRepoHardlink)));
-                }
-            }
-            else
-            {
-                LOG_WARN("no prior backup exists, %s backup has been changed to full", strPtr(cfgOptionStr(cfgOptType)));
-                type = backupTypeFull;
-                // cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(type)));
-            }
-        }
+        // Get the prior manifest if one exists
+        const Manifest *manifestPrior = backupPrior(infoBackup);
+        (void)manifestPrior;
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
 
         // Parameters that must be passed to Perl during migration
+        KeyValue *paramKv = kvNew();
+        kvPut(paramKv, VARSTRDEF("timestampStart"), VARUINT64((uint64_t)timestampStart));
+        kvPut(paramKv, VARSTRDEF("pgId"), VARUINT(infoPg.id));
+        kvPut(paramKv, VARSTRDEF("pgVersion"), VARSTR(pgVersionToStr(infoPg.version)));
+        kvPut(paramKv, VARSTRDEF("pgSystemId"), VARUINT64(infoPg.systemId));
+        kvPut(paramKv, VARSTRDEF("pgControlVersion"), VARUINT(pgControlVersion(infoPg.version)));
+        kvPut(paramKv, VARSTRDEF("pgCatalogVersion"), VARUINT(pgCatalogVersion(infoPg.version)));
+        kvPut(paramKv, VARSTRDEF("backupLabelPrior"), manifestPrior ? VARSTR(manifestData(manifestPrior)->backupLabel) : NULL);
+
         StringList *paramList = strLstNew();
-        strLstAdd(paramList, strNewFmt("%" PRIu64, (uint64_t)timestampStart));
-        strLstAdd(paramList, strNewFmt("%u", infoPg.id));
-        strLstAdd(paramList, pgVersionToStr(infoPg.version));
-        strLstAdd(paramList, strNewFmt("%" PRIu64, infoPg.systemId));
-        strLstAdd(paramList, strNewFmt("%u", pgControlVersion(infoPg.version)));
-        strLstAdd(paramList, strNewFmt("%u", pgCatalogVersion(infoPg.version)));
-        strLstAdd(paramList, backupLabelPrior ? backupLabelPrior : STRDEF("?"));
-        strLstAdd(paramList, backupCipherSubPass ? backupCipherSubPass : STRDEF("?"));
-        strLstAdd(paramList, strNewFmt("%u", backupTimelinePrior));
+        strLstAdd(paramList, jsonFromVar(varNewKv(paramKv), 0));
         cfgCommandParamSet(paramList);
+
+        // Do this so Perl does not need to reconstruct backup.info
+        infoBackupSaveFile(
+            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            cfgOptionStr(cfgOptRepoCipherPass));
 
         // Shutdown protocol so Perl can take locks
         protocolFree();
