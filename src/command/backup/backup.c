@@ -49,7 +49,7 @@ cmdBackup(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Load backup.info
-        InfoBackup *infoBackup = infoBackupLoadFile(
+        InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
