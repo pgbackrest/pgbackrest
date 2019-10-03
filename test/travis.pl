@@ -170,7 +170,7 @@ or do
 
     # Else output the unhandled error
     # print $EVAL_ERROR;
-    # exit ERROR_UNHANDLED;
+    exit ERROR_UNHANDLED;
 };
 
 # It shouldn't be possible to get here
