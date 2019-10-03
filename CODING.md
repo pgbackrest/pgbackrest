@@ -6,6 +6,42 @@
 
 Indentation is four spaces -- no tabs. Only file types that absolutely require tabs (e.g. `Makefile`) may use them.
 
+### Line Length
+
+With the exception of documentation code, no line of any code or test file shall exceed 132 characters. If a line break is required, then it shall be after the first function parenthesis:
+```
+// CORRECT - location of line break after first function parenthesis if line length is greater than 132
+StringList *removeList = infoBackupDataLabelList(
+    infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
+
+// INCORRECT
+StringList *removeList = infoBackupDataLabelList(infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList,
+    fullIdx))));
+```
+or if a conditional, then after a completed coditional, for example:
+```
+// CORRECT - location of line break after a completed conditional if line length is greater than 132
+if (archiveInfoPgHistory.id != backupInfoPgHistory.id ||
+    archiveInfoPgHistory.systemId != backupInfoPgHistory.systemId ||
+    archiveInfoPgHistory.version != backupInfoPgHistory.version)
+
+// INCORRECT
+if (archiveInfoPgHistory.id != backupInfoPgHistory.id || archiveInfoPgHistory.systemId !=
+    backupInfoPgHistory.systemId || archiveInfoPgHistory.version != backupInfoPgHistory.version)
+```
+
+### Inline Comment
+
+Inline comments shall start at character 69 and must not exceed the line length of 132. For example:
+```
+typedef struct InlineCommentExample
+{
+    const String *comment;                                          // Inline comment example
+    const String *longComment;                                      // Inline comment example that exceeds 132 characters should
+                                                                    // then go to next line but this should be avoided
+} InlineCommentExample;
+```
+
 ### Naming
 
 #### Variables
