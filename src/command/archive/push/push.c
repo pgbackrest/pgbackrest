@@ -213,7 +213,7 @@ archivePushCheck(CipherType cipherType, const String *cipherPass)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get info from pg_control
-        PgControl controlInfo = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
+        PgControl controlInfo = pgControlFromFile(storagePg());
 
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);

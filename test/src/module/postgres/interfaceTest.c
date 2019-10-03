@@ -72,7 +72,7 @@ testRun(void)
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACE, .walSegmentSize = 1024 * 1024}));
 
         PgControl info = {0};
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, strNew(testPath())), "get control info v11");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v11");
         TEST_RESULT_INT(info.systemId, 0xFACEFACE, "   check system id");
         TEST_RESULT_INT(info.version, PG_VERSION_11, "   check version");
 
@@ -82,22 +82,21 @@ testRun(void)
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .walSegmentSize = 1024 * 1024}));
 
         TEST_ERROR(
-            pgControlFromFile(storageTest, strNew(testPath())), FormatError,
-            "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
+            pgControlFromFile(storageTest), FormatError, "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, controlFile),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .pageSize = 32 * 1024}));
 
-        TEST_ERROR(pgControlFromFile(storageTest, strNew(testPath())), FormatError, "page size is 32768 but must be 8192");
+        TEST_ERROR(pgControlFromFile(storageTest), FormatError, "page size is 32768 but must be 8192");
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, controlFile),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF}));
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, strNew(testPath())), "get control info v83");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
         TEST_RESULT_INT(info.systemId, 0xEFEFEFEFEF, "   check system id");
         TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
     }

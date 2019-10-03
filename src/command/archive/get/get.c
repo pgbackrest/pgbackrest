@@ -206,7 +206,7 @@ cmdArchiveGet(void)
                     lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
                 {
                     // Get control info
-                    PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
+                    PgControl pgControl = pgControlFromFile(storagePg());
 
                     // Create the queue
                     storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);

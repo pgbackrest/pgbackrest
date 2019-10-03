@@ -64,7 +64,7 @@ sub versionSupport
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->versionSupport');
 
     my @strySupportVersion = (PG_VERSION_83, PG_VERSION_84, PG_VERSION_90, PG_VERSION_91, PG_VERSION_92, PG_VERSION_93,
-                              PG_VERSION_94, PG_VERSION_95, PG_VERSION_96, PG_VERSION_10, PG_VERSION_11);
+                              PG_VERSION_94, PG_VERSION_95, PG_VERSION_96, PG_VERSION_10, PG_VERSION_11, PG_VERSION_12);
 
     # Return from function and log return values if any
     return logDebugReturn

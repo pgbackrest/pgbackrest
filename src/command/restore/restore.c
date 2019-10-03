@@ -5,6 +5,7 @@ Restore Command
 
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "command/restore/protocol.h"
@@ -24,6 +25,7 @@ Restore Command
 #include "protocol/parallel.h"
 #include "storage/helper.h"
 #include "storage/write.intern.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Recovery constants
@@ -32,6 +34,10 @@ Recovery constants
     STRING_STATIC(RESTORE_COMMAND_STR,                              RESTORE_COMMAND);
 
 #define RECOVERY_TARGET                                             "recovery_target"
+#define RECOVERY_TARGET_LSN                                         "recovery_target_lsn"
+#define RECOVERY_TARGET_NAME                                        "recovery_target_name"
+#define RECOVERY_TARGET_TIME                                        "recovery_target_time"
+#define RECOVERY_TARGET_XID                                         "recovery_target_xid"
 
 #define RECOVERY_TARGET_ACTION                                      "recovery_target_action"
 #define RECOVERY_TARGET_ACTION_SHUTDOWN                             "shutdown"
@@ -41,6 +47,7 @@ Recovery constants
 #define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
 #define PAUSE_AT_RECOVERY_TARGET                                    "pause_at_recovery_target"
 #define STANDBY_MODE                                                "standby_mode"
+    STRING_STATIC(STANDBY_MODE_STR,                                 STANDBY_MODE);
 
 #define RECOVERY_TYPE_DEFAULT                                       "default"
     STRING_STATIC(RECOVERY_TYPE_DEFAULT_STR,                        RECOVERY_TYPE_DEFAULT);
@@ -781,9 +788,20 @@ restoreCleanBuild(Manifest *manifest)
             cleanData->fileIgnore = strLstNew();
             strLstAdd(cleanData->fileIgnore, BACKUP_MANIFEST_FILE_STR);
 
-            // Alse ignore recovery.conf when recovery type = preserve
+            // Also ignore recovery files when recovery type = preserve
             if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+            {
+                // If recovery GUCs then three files must be preserved
+                if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC)
+                {
+                    strLstAdd(cleanData->fileIgnore, PG_FILE_POSTGRESQLAUTOCONF_STR);
+                    strLstAdd(cleanData->fileIgnore, PG_FILE_RECOVERYSIGNAL_STR);
+                    strLstAdd(cleanData->fileIgnore, PG_FILE_STANDBYSIGNAL_STR);
+                }
+                // Else just recovery.conf
+                else
                     strLstAdd(cleanData->fileIgnore, PG_FILE_RECOVERYCONF_STR);
+            }
 
             // If this is a tablespace append the tablespace identifier
             if (cleanData->target->type == manifestTargetTypeLink && cleanData->target->tablespaceId != 0)
@@ -863,6 +881,15 @@ restoreCleanBuild(Manifest *manifest)
         {
             LOG_DETAIL("skip '" PG_FILE_TABLESPACEMAP "' -- tablespace links will be created based on mappings");
             manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP));
+        }
+
+        // Skip postgresql.auto.conf if preserve is set and the PostgreSQL version supports recovery GUCs
+        if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC &&
+            strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR) &&
+            manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF), NULL) != NULL)
+        {
+            LOG_DETAIL("skip '" PG_FILE_POSTGRESQLAUTOCONF "' -- recovery type is preserve");
+            manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF));
         }
 
         // Step 2: Clean target directories
@@ -1200,8 +1227,9 @@ restoreRecoveryOption(unsigned int pgVersion)
         // Else recovery type is standby
         else if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
         {
-            // Write standby_mode
-            kvPut(result, VARSTRZ(STANDBY_MODE), VARSTRDEF("on"));
+            // Write standby_mode for PostgreSQL versions that support it
+            if (pgVersion < PG_VERSION_RECOVERY_GUC)
+                kvPut(result, VARSTR(STANDBY_MODE_STR), VARSTRDEF("on"));
         }
         // Else recovery type is not default so write target options
         else if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_DEFAULT_STR))
@@ -1264,19 +1292,20 @@ restoreRecoveryOption(unsigned int pgVersion)
     FUNCTION_LOG_RETURN(KEY_VALUE, result);
 }
 
-// Helper to write recovery options into recovery.conf
+// Helper to convert recovery options to text format
 static String *
-restoreRecoveryConf(unsigned int pgVersion)
+restoreRecoveryConf(unsigned int pgVersion, const String *restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(STRING, restoreLabel);
     FUNCTION_LOG_END();
 
     String *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strNew("");
+        result = strNewFmt("# Recovery settings generated by " PROJECT_NAME " restore on %s\n", strPtr(restoreLabel));
 
         // Output all recovery options
         KeyValue *optionKv = restoreRecoveryOption(pgVersion);
@@ -1298,28 +1327,180 @@ restoreRecoveryConf(unsigned int pgVersion)
     FUNCTION_LOG_RETURN(STRING, result);
 }
 
+// Helper to write recovery options into recovery.conf
+static void
+restoreRecoveryWriteConf(const Manifest *manifest, unsigned int pgVersion, const String *restoreLabel)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(STRING, restoreLabel);
+    FUNCTION_LOG_END();
+
+    // Only write recovery.conf if recovery type != none
+    if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+    {
+        LOG_INFO("write %s", strPtr(storagePathNP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
+
+        // Use the data directory to set permissions and ownership for recovery file
+        const ManifestPath *dataPath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+        mode_t recoveryFileMode = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+        // Write recovery.conf
+        storagePutNP(
+            storageNewWriteP(
+                storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode, .noAtomic = true,
+                .noSyncPath = true, .user = dataPath->user, .group = dataPath->group),
+            BUFSTR(restoreRecoveryConf(pgVersion, restoreLabel)));
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+// Helper to write recovery options into postgresql.auto.conf
+static void
+restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(STRING, restoreLabel);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *content = strNew("");
+
+        // Load postgresql.auto.conf so we can preserve the existing contents
+        Buffer *autoConf = storageGetNP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR, .ignoreMissing = true));
+
+        // It is unusual for the file not to exist, but we'll continue processing by creating a blank file
+        if (autoConf == NULL)
+        {
+            LOG_WARN(PG_FILE_POSTGRESQLAUTOCONF " does not exist -- creating to contain recovery settings");
+        }
+        // Else the file does exist so cleanup old recovery options that could interfere with the current recovery
+        else
+        {
+            // Generate a regexp that will match on all current recovery_target settings
+            RegExp *recoveryExp =
+                regExpNew(
+                    STRDEF(
+                        "^\\s*(" RECOVERY_TARGET "|" RECOVERY_TARGET_ACTION "|" RECOVERY_TARGET_INCLUSIVE "|" RECOVERY_TARGET_LSN
+                            "|" RECOVERY_TARGET_NAME "|" RECOVERY_TARGET_TIME "|" RECOVERY_TARGET_TIMELINE "|" RECOVERY_TARGET_XID
+                            ")\\s*="));
+
+            // Check each line for recovery settings
+            const StringList *contentList = strLstNewSplit(strNewBuf(autoConf), LF_STR);
+
+            for (unsigned int contentIdx = 0; contentIdx < strLstSize(contentList); contentIdx++)
+            {
+                if (contentIdx != 0)
+                    strCat(content, "\n");
+
+                const String *line = strLstGet(contentList, contentIdx);
+
+                if (regExpMatch(recoveryExp, line))
+                    strCatFmt(content, "# Removed by " PROJECT_NAME " restore on %s # ", strPtr(restoreLabel));
+
+                strCat(content, strPtr(line));
+            }
+
+            // If settings will be appended then format the file so a blank line will be between old and new settings
+            if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+            {
+                strTrim(content);
+                strCat(content, "\n\n");
+            }
+        }
+
+        // If recovery was requested then write the recovery options
+        if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+        {
+            // If the user specified standby_mode as a recovery option then error.  It's tempting to just set type=standby in this
+            // case but since config parsing has already happened the target options could be in an invalid state.
+            if (cfgOptionTest(cfgOptRecoveryOption))
+            {
+                const KeyValue *recoveryOption = cfgOptionKv(cfgOptRecoveryOption);
+                StringList *recoveryOptionKey = strLstNewVarLst(kvKeyList(recoveryOption));
+
+                for (unsigned int keyIdx = 0; keyIdx < strLstSize(recoveryOptionKey); keyIdx++)
+                {
+                    // Get the key and value
+                    String *key = strLstGet(recoveryOptionKey, keyIdx);
+
+                    // Replace - in key with _.  Since we use - users naturally will as well.
+                    strReplaceChr(key, '-', '_');
+
+                    if (strEq(key, STANDBY_MODE_STR))
+                    {
+                        THROW_FMT(
+                            OptionInvalidError,
+                            "'" STANDBY_MODE "' setting is not valid for " PG_NAME " >= %s\n"
+                            "HINT: use --" CFGOPT_TYPE "=" RECOVERY_TYPE_STANDBY " instead of --" CFGOPT_RECOVERY_OPTION "="
+                                STANDBY_MODE "=on.",
+                            strPtr(pgVersionToStr(PG_VERSION_RECOVERY_GUC)));
+                    }
+                }
+            }
+
+            strCatFmt(content, "%s", strPtr(restoreRecoveryConf(pgVersion, restoreLabel)));
+        }
+
+        LOG_INFO(
+            "write %s%s", autoConf == NULL ? "" : "updated ", strPtr(storagePathNP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)));
+
+        // Use the data directory to set permissions and ownership for recovery file
+        const StorageInfo dataPath = storageInfoNP(storagePg(), NULL);
+        mode_t recoveryFileMode = dataPath.mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+        // Write postgresql.auto.conf
+        storagePutNP(
+            storageNewWriteP(
+                storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
+                .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+            BUFSTR(content));
+
+        // The recovery.signal file is required for targeted recovery
+        storagePutNP(
+            storageNewWriteP(
+                storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
+                .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+            NULL);
+
+        // The standby.signal file is required for standby mode
+        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
+        {
+            storagePutNP(
+                storageNewWriteP(
+                    storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
+                    .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                NULL);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 static void
 restoreRecoveryWrite(const Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
     // Get PostgreSQL version to write recovery for
     unsigned int pgVersion = manifestData(manifest)->pgVersion;
-
-    // Determine which file recovery setttings will be written to
-    const String *recoveryFile = PG_FILE_RECOVERYCONF_STR;
-
-    // Use the data directory to set permissions and ownership for recovery file
-    const ManifestPath *dataPath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
-    mode_t recoveryFileMode = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If recovery type is preserve then leave recovery file as it is
         if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
         {
+            // Determine which file recovery setttings will be written to
+            const String *recoveryFile = pgVersion >= PG_VERSION_RECOVERY_GUC ?
+                PG_FILE_POSTGRESQLAUTOCONF_STR : PG_FILE_RECOVERYCONF_STR;
+
             if (!storageExistsNP(storagePg(), recoveryFile))
             {
                 LOG_WARN(
@@ -1327,20 +1508,20 @@ restoreRecoveryWrite(const Manifest *manifest)
                     strPtr(storagePathNP(storagePg(), recoveryFile)));
             }
         }
-        // Else write recovery file if requested
+        // Else write recovery file
         else
         {
-            // Only generate recovery file if recovery type is not none
-            if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
-            {
-                LOG_INFO("write %s", strPtr(storagePathNP(storagePg(), recoveryFile)));
+            // Generate a label used to identify this restore in the recovery file
+            char restoreTimestamp[20];
+            time_t timestamp = time(NULL);
+            strftime(restoreTimestamp, sizeof(restoreTimestamp), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
+            const String *restoreLabel = STR(restoreTimestamp);
 
-                storagePutNP(
-                    storageNewWriteP(
-                        storagePgWrite(), recoveryFile, .noCreatePath = true, .modeFile = recoveryFileMode, .noAtomic = true,
-                        .noSyncPath = true, .user = dataPath->user, .group = dataPath->group),
-                    BUFSTR(restoreRecoveryConf(pgVersion)));
-            }
+            // Write recovery file based on PostgreSQL version
+            if (pgVersion >= PG_VERSION_RECOVERY_GUC)
+                restoreRecoveryWriteAutoConf(pgVersion, restoreLabel);
+            else
+                restoreRecoveryWriteConf(manifest, pgVersion, restoreLabel);
         }
     }
     MEM_CONTEXT_TEMP_END();

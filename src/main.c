@@ -111,7 +111,7 @@ main(int argListSize, const char *argList[])
                     // archive-get/archive-push and end up in the PostgreSQL log which is not output in CI.  This can be removed
                     // once backup is written in C.
                     if (cfgOptionBool(cfgOptOnline) && !cfgOptionBool(cfgOptBackupStandby) && !cfgOptionTest(cfgOptPgHost))
-                        pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
+                        pgControlFromFile(storagePg());
 #endif
 
                     // Run backup

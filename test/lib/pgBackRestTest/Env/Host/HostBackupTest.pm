@@ -1937,6 +1937,13 @@ sub restoreCompare
         }
     }
 
+    # If PostgreSQL >= 12 don't compare postgresql.auto.conf since it will have recovery settings written into it
+    if (${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_12)
+    {
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/postgresql.auto.conf'});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, 'pg_data/postgresql.auto.conf');
+    }
+
     # If the link section is empty then delete it and the default section
     if (keys(%{${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_LINK}}) == 0)
     {
