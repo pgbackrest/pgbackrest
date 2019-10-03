@@ -4382,6 +4382,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "This feature relies on pg_is_in_backup() so only works on PostgreSQL >= 9.3.\n"
             "\n"
+            "This feature is not supported for PostgreSQL >= 9.6 since backups are run in non-exclusive mode.\n"
+            "\n"
             "The setting is disabled by default because it assumes that pgBackRest is the only process doing exclusive online "
                 "backups. It depends on an advisory lock that only pgBackRest sets so it may abort other processes that do "
                 "exclusive online backups. Note that base_backup and pg_dump are safe to use with this setting because they do not "
