@@ -76,6 +76,9 @@ cmdBackup(void)
         strLstAdd(paramList, strNewFmt("%u", pgControlVersion(infoPg.version)));
         strLstAdd(paramList, strNewFmt("%u", pgCatalogVersion(infoPg.version)));
         cfgCommandParamSet(paramList);
+
+        // Shutdown protocol so Perl can take locks
+        protocolFree();
     }
     MEM_CONTEXT_TEMP_END();
 
