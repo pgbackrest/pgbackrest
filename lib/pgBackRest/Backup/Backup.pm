@@ -671,7 +671,8 @@ sub process
     }
 
     # Generate a passphrase for the backup set if the repo is encrypted
-    if (defined($oBackupInfo->cipherPassSub()) && !defined($strCipherPassBackupSet) && cfgOption(CFGOPT_TYPE) eq CFGOPTVAL_BACKUP_TYPE_FULL)
+    if (defined($oBackupInfo->cipherPassSub()) && !defined($strCipherPassBackupSet) &&
+        cfgOption(CFGOPT_TYPE) eq CFGOPTVAL_BACKUP_TYPE_FULL)
     {
         $strCipherPassBackupSet = cipherPassGen();
     }

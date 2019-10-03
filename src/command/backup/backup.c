@@ -164,6 +164,162 @@ backupPrior(const InfoBackup *infoBackup)
 }
 
 /***********************************************************************************************************************************
+Check for a halted backup that can be resumed
+***********************************************************************************************************************************/
+static const Manifest *
+backupHalted(void)
+{
+    FUNCTION_LOG_VOID(logLevelDebug);
+
+    Manifest *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const StringList *backupList = strLstSort(
+            storageListP(
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
+                .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+            sortOrderDesc);
+
+        // Loop through all backups in the repo in reverse
+        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+        {
+            const String *backupLabel = strLstGet(backupList, backupIdx);
+            const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
+
+            // Halted backups have a copy of the manifest but no main
+            if (storageExistsNP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strPtr(manifestFile))) &&
+                !storageExistsNP(storageRepo(), manifestFile))
+            {
+                // bool usable = false;
+                const String *reason = STRDEF("resume is disabled");
+
+                // Attempt to read the manifest file in the halted backup to see if it can be used.  If any error at all occurs then
+                // the backup will be considered unusable and a resume will not be attempted.
+                if (cfgOptionBool(cfgOptResume))
+                {
+        //         $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strAbortedBackup}");
+        //
+        //             $strReason = "unable to read ${strBackupPath}/" . FILE_MANIFEST;
+        //
+        //             eval
+        //             {
+        //                 # Load the aborted manifest
+        //                 $oAbortedManifest = new pgBackRest::Manifest("${strBackupPath}/" . FILE_MANIFEST,
+        //                     {strCipherPass => $oBackupInfo->cipherPassSub()});
+        //
+        //                 # Key and values that do not match
+        //                 my $strKey;
+        //                 my $strValueNew;
+        //                 my $strValueAborted;
+        //
+        //                 # Check version
+        //                 if ($oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION) ne PROJECT_VERSION)
+        //                 {
+        //                     $strKey =  INI_KEY_VERSION;
+        //                     $strValueNew = PROJECT_VERSION;
+        //                     $strValueAborted = $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION);
+        //                 }
+        //                 # Check format
+        //                 elsif ($oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT) ne REPOSITORY_FORMAT)
+        //                 {
+        //                     $strKey =  INI_KEY_FORMAT;
+        //                     $strValueNew = REPOSITORY_FORMAT;
+        //                     $strValueAborted = $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT);
+        //                 }
+        //                 # Check backup type
+        //                 elsif ($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE) ne cfgOption(CFGOPT_TYPE))
+        //                 {
+        //                     $strKey =  MANIFEST_KEY_TYPE;
+        //                     $strValueNew = cfgOption(CFGOPT_TYPE);
+        //                     $strValueAborted = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
+        //                 }
+        //                 # Check prior label
+        //                 elsif ($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>') ne
+        //                        (defined($strBackupLastPath) ? $strBackupLastPath : '<undef>'))
+        //                 {
+        //                     $strKey =  MANIFEST_KEY_PRIOR;
+        //                     $strValueNew = defined($strBackupLastPath) ? $strBackupLastPath : '<undef>';
+        //                     $strValueAborted =
+        //                         $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>');
+        //                 }
+        //                 # Check compression
+        //                 elsif ($oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS) !=
+        //                        cfgOption(CFGOPT_COMPRESS))
+        //                 {
+        //                     $strKey = MANIFEST_KEY_COMPRESS;
+        //                     $strValueNew = cfgOption(CFGOPT_COMPRESS);
+        //                     $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
+        //                 }
+        //                 # Check hardlink
+        //                 elsif ($oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK) !=
+        //                        cfgOption(CFGOPT_REPO_HARDLINK))
+        //                 {
+        //                     $strKey = MANIFEST_KEY_HARDLINK;
+        //                     $strValueNew = cfgOption(CFGOPT_REPO_HARDLINK);
+        //                     $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
+        //                 }
+        //
+        //                 # If key is defined then something didn't match
+        //                 if (defined($strKey))
+        //                 {
+        //                     $strReason = "new ${strKey} '${strValueNew}' does not match aborted ${strKey} '${strValueAborted}'";
+        //                 }
+        //                 # Else the backup can be resumed
+        //                 else
+        //                 {
+        //                     $bUsable = true;
+        //                 }
+        //
+        //                 return true;
+        //             }
+        //             or do
+        //             {
+        //                 $bUsable = false;
+        //             }
+        //         }
+        //
+        //         # If the backup is usable then set the backup label
+        //         if ($bUsable)
+        //         {
+        //             $strBackupLabel = $strAbortedBackup;
+        //
+        //             # If the repo is encrypted, set the backup set passphrase from this manifest
+        //             if (defined($oBackupInfo->cipherPassSub()))
+        //             {
+        //                 $strCipherPassBackupSet = $oAbortedManifest->cipherPassSub();
+        //             }
+        //
+        //             # Get the archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online
+        //             # backup.
+        //             if ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
+        //             {
+        //                 $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
+        //             }
+        //             elsif ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
+        //             {
+        //                 $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START), 0, 8);
+        //             }
+                }
+                else
+                {
+                    LOG_WARN("halted backup %s cannot be resumed: %s", strPtr(backupLabel), strPtr(reason));
+                    // &log(TEST, TEST_BACKUP_NORESUME);
+
+                    storagePathRemoveP(
+                        storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel)), .recurse = true);
+                }
+
+                break;
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(MANIFEST, result);
+}
+
+/***********************************************************************************************************************************
 Make a backup
 ***********************************************************************************************************************************/
 void
@@ -193,6 +349,10 @@ cmdBackup(void)
 
         // Get the prior manifest if one exists
         const Manifest *manifestPrior = backupPrior(infoBackup);
+
+        // Check for a halted backup
+        const Manifest *manifestHalted = backupHalted();
+        (void)manifestHalted;
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
 
