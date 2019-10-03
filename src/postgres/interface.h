@@ -93,7 +93,7 @@ typedef struct PgWal
 Functions
 ***********************************************************************************************************************************/
 uint32_t pgCatalogVersion(unsigned int pgVersion);
-PgControl pgControlFromFile(const Storage *storage, const String *pgPath);
+PgControl pgControlFromFile(const Storage *storage);
 PgControl pgControlFromBuffer(const Buffer *controlFile);
 uint32_t pgControlVersion(unsigned int pgVersion);
 unsigned int pgVersionFromStr(const String *version);
