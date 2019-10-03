@@ -9,6 +9,7 @@ Main
 
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
+#include "command/backup/backup.h"
 #include "command/check/check.h"
 #include "command/command.h"
 #include "command/control/start.h"
@@ -115,7 +116,8 @@ main(int argListSize, const char *argList[])
 #endif
 
                     // Run backup
-                    perlExec();
+                    cmdBackup();
+                    perlExec();  // !!! RUN BOTH COMMANDS DURNG MIGRATION
 
                     // Switch to expire command
                     cmdEnd(0, NULL);
