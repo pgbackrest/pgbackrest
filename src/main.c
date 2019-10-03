@@ -118,6 +118,7 @@ main(int argListSize, const char *argList[])
                     // Run backup
                     cmdBackup();
                     perlExec();  // !!! RUN BOTH COMMANDS DURNG MIGRATION
+                    cfgCommandParamSet(strLstNew()); // !!! CLEAR OPTIONS THAT WERE PASSED TO PERL
 
                     // Switch to expire command
                     cmdEnd(0, NULL);

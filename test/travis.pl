@@ -140,7 +140,7 @@ eval
 
         processBegin("${strVm} test");
         executeTest(
-            "${strTestExe} --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" .
+            "${strTestExe} --no-gen --no-package --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" .
                 ($strVm eq "u18" ? " --c-only" : " --module=mock --test=all"),
             {bShowOutputAsync => true});
         processEnd();
@@ -169,8 +169,8 @@ or do
     exit $EVAL_ERROR->code() if (isException(\$EVAL_ERROR));
 
     # Else output the unhandled error
-    print $EVAL_ERROR;
-    exit ERROR_UNHANDLED;
+    # print $EVAL_ERROR;
+    # exit ERROR_UNHANDLED;
 };
 
 # It shouldn't be possible to get here
