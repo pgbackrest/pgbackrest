@@ -562,7 +562,7 @@ sub run
 
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
+            {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--force --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) . ($bDeltaBackup ? ' --delta' : '')});
 
         # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
@@ -990,7 +990,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'resume and add tablespace 2',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
+            {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
@@ -1019,7 +1019,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - new diff',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
+            {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
                 ($bDeltaBackup ? ' --delta' : '')});
 
@@ -1041,7 +1041,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
+            {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--no-resume --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
                 ($bDeltaBackup ? ' --delta' : '')});
 
