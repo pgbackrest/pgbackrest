@@ -86,7 +86,7 @@ backupPgGet(const InfoBackup *infoBackup)
 /***********************************************************************************************************************************
 Check for a prior backup and promote to full if diff/incr and a prior backup does not exist
 ***********************************************************************************************************************************/
-static const Manifest *
+static Manifest *
 backupPrior(const InfoBackup *infoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -319,15 +319,20 @@ cmdBackup(void)
         InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
         // Get pg storage and database objects
-        backupPgGet(infoBackup);
+        BackupPg pg = backupPgGet(infoBackup);
+        (void)pg; // !!! REMOVE
 
         // Get the prior manifest if one exists
-        const Manifest *manifestPrior = backupPrior(infoBackup);
+        Manifest *manifestPrior = backupPrior(infoBackup);
+
+        // Build the new manifest
+        // Manifest *manifest = manifestNewBuild(pg.storagePrimary, manifestPrior);
+        manifestFree(manifestPrior);
 
         // Check for a halted backup
         String *backupLabelHalted = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
         const Manifest *manifestHalted = backupHalted(infoBackup, manifestPrior, &backupLabelHalted);
-        (void)manifestHalted;
+        (void)manifestHalted; // !!! REMOVE
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
 

@@ -30,30 +30,119 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoManifestNewBuild()"))
     {
-        // // Create pg directory and generate minimal manifest
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
-        //
-        // Storage *storagePg = storagePosixNew(
-        //     strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
-        // Storage *storagePgWrite = storagePosixNew(
-        //     strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-        //
-        // storagePutNP(storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400), BUFSTRDEF("9.4\n"));
-        // storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
-        // storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
-        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
-        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
-        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
-        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
-        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
-        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSTATTMP), .mode = 0700, .noParentCreate = true);
-        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
-        //
-        // Manifest *manifest = NULL;
-        // TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_90), "build manifest");
-        // // !!! CHECK THE MANIFEST HERE TO DETERMINE IF EXCLUSIONS ARE WORKING
-        // (void)manifest;
+        #define TEST_MANIFEST_HEADER                                                                                               \
+            "[backup]\n"                                                                                                           \
+            "backup-label=null\n"                                                                                                  \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"full\"\n"                                                                                               \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201409291\n"                                                                                       \
+            "db-control-version=942\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"9.4\"\n"                                                                                                 \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "option-archive-check=false\n"                                                                                         \
+            "option-archive-copy=false\n"                                                                                          \
+            "option-compress=false\n"                                                                                              \
+            "option-hardlink=false\n"                                                                                              \
+            "option-online=false\n"
+
+        #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:file:default]\n"                                                                                              \
+            "group=\"{[group]}\"\n"                                                                                                \
+            "master=false\n"                                                                                                       \
+            "mode=\"0400\"\n"                                                                                                      \
+            "user=\"{[user]}\"\n"
+
+        #define TEST_MANIFEST_LINK_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:link:default]\n"                                                                                              \
+            "group=\"{[group]}\"\n"                                                                                                \
+            "user=\"{[user]}\"\n"
+
+        #define TEST_MANIFEST_PATH_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:path:default]\n"                                                                                              \
+            "group=\"{[group]}\"\n"                                                                                                \
+            "mode=\"0700\"\n"                                                                                                      \
+            "user=\"{[user]}\"\n"
+
+        // Create pg directory and generate minimal manifest
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
+
+        Storage *storagePg = storagePosixNew(
+            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
+        Storage *storagePgWrite = storagePosixNew(
+            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+
+        storagePutNP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
+            BUFSTRDEF("9.4\n"));
+
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE "/1"), .mode = 0700, .noParentCreate = true);
+
+        // Temp relations to ignore
+        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1")), NULL);
+        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1.1")), NULL);
+        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm")), NULL);
+        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm.999999")), NULL);
+
+        // Unlogged relations
+        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555")), NULL);
+        storagePutNP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_init"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL);
+
+        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSTATTMP), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
+
+        Manifest *manifest = NULL;
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, NULL), "build manifest");
+
+        Buffer *contentSave = bufNew(0);
+
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/home/vagrant/test/test-0/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/pg_dynshmem={}\n"
+                "pg_data/pg_notify={}\n"
+                "pg_data/pg_replslot={}\n"
+                "pg_data/pg_serial={}\n"
+                "pg_data/pg_snapshots={}\n"
+                "pg_data/pg_stat_tmp={}\n"
+                "pg_data/pg_subtrans={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
 
         // // -------------------------------------------------------------------------------------------------------------------------
         // storagePathCreateP(storagePgWrite, strNew(PG_PATH_GLOBAL), .mode = 0700, .noParentCreate = true);
@@ -62,6 +151,11 @@ testRun(void)
         //     system(strPtr(strNewFmt("ln -s /tmp %s/pg/pg_test", testPath()))) != 0, FileWriteError, "unable to create link");
         //
         // TEST_ASSIGN(manifest, infoManifestNew(storagePg, PG_VERSION_94), "create manifest");
+
+        #undef TEST_MANIFEST_HEADER
+        #undef TEST_MANIFEST_FILE_DEFAULT
+        #undef TEST_MANIFEST_LINK_DEFAULT
+        #undef TEST_MANIFEST_PATH_DEFAULT
     }
 
     // *****************************************************************************************************************************

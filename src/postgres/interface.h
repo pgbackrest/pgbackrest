@@ -13,16 +13,22 @@ PostgreSQL Interface
 /***********************************************************************************************************************************
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
+#define PG_FILE_BACKUPLABEL                                         "backup_label"
+#define PG_FILE_BACKUPLABELOLD                                      "backup_label.old"
 #define PG_FILE_PGCONTROL                                           "pg_control"
 #define PG_FILE_PGINTERNALINIT                                      "pg_internal.init"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
     STRING_DECLARE(PG_FILE_PGVERSION_STR);
 #define PG_FILE_POSTGRESQLAUTOCONF                                  "postgresql.auto.conf"
     STRING_DECLARE(PG_FILE_POSTGRESQLAUTOCONF_STR);
+#define PG_FILE_POSTGRESQLAUTOCONFTMP                               "postgresql.auto.conf.tmp"
+#define PG_FILE_POSTMASTEROPTS                                      "postmaster.opts"
 #define PG_FILE_POSTMASTERPID                                       "postmaster.pid"
     STRING_DECLARE(PG_FILE_POSTMASTERPID_STR);
 #define PG_FILE_RECOVERYCONF                                        "recovery.conf"
     STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
+#define PG_FILE_RECOVERYDONE                                        "recovery.done"
+    STRING_DECLARE(PG_FILE_RECOVERYDONE_STR);
 #define PG_FILE_RECOVERYSIGNAL                                      "recovery.signal"
     STRING_DECLARE(PG_FILE_RECOVERYSIGNAL_STR);
 #define PG_FILE_STANDBYSIGNAL                                       "standby.signal"

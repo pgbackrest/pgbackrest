@@ -149,6 +149,7 @@ typedef struct ManifestTarget
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
+Manifest *manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, const Manifest *manifestPrior);
 Manifest *manifestNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
@@ -210,6 +211,11 @@ const ManifestData *manifestData(const Manifest *this);
 String *manifestPgPath(const String *manifestPath);
 const ManifestTarget *manifestTargetBase(const Manifest *this);
 String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
+void manifestFree(Manifest *this);
 
 /***********************************************************************************************************************************
 Helper functions

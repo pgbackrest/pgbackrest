@@ -3,12 +3,14 @@ Backup Manifest Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <ctype.h>
 #include <string.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/object.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "common/type/mcv.h"
@@ -157,6 +159,7 @@ struct Manifest
     List *dbList;                                                   // List of databases
 };
 
+OBJECT_DEFINE_FREE(MANIFEST);
 OBJECT_DEFINE_MOVE(MANIFEST);
 
 /***********************************************************************************************************************************
@@ -367,17 +370,19 @@ manifestNewInternal(void)
     FUNCTION_TEST_VOID();
 
     // Create object
-    Manifest *this = memNew(sizeof(Manifest));
-    this->memContext = memContextCurrent();
+    Manifest *this = memNewRaw(sizeof(Manifest));
 
-    // Create lists
-    this->dbList = lstNewP(sizeof(ManifestDb), .comparator = lstComparatorStr);
-    this->fileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr);
-    this->linkList = lstNewP(sizeof(ManifestLink), .comparator =  lstComparatorStr);
-    this->pathList = lstNewP(sizeof(ManifestPath), .comparator =  lstComparatorStr);
-    this->ownerList = strLstNew();
-    this->referenceList = strLstNew();
-    this->targetList = lstNewP(sizeof(ManifestTarget), .comparator =  lstComparatorStr);
+    *this = (Manifest)
+    {
+        .memContext = memContextCurrent(),
+        .dbList = lstNewP(sizeof(ManifestDb), .comparator = lstComparatorStr),
+        .fileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr),
+        .linkList = lstNewP(sizeof(ManifestLink), .comparator =  lstComparatorStr),
+        .pathList = lstNewP(sizeof(ManifestPath), .comparator =  lstComparatorStr),
+        .ownerList = strLstNew(),
+        .referenceList = strLstNew(),
+        .targetList = lstNewP(sizeof(ManifestTarget), .comparator =  lstComparatorStr),
+    };
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -385,213 +390,335 @@ manifestNewInternal(void)
 /***********************************************************************************************************************************
 Build a new manifest for a PostgreSQL path
 ***********************************************************************************************************************************/
-// typedef struct ManifestBuildData
-// {
-//     Manifest *manifest;
-//     const Storage *storagePg;
-//     const String *manifestParentName;
-//     const String *pgPath;
-// } ManifestBuildData;
-//
-// void manifestBuildCallback(void *data, const StorageInfo *info)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM_P(VOID, data);
-//         FUNCTION_TEST_PARAM(STORAGE_INFO, *storageInfo);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(data != NULL);
-//     ASSERT(info != NULL);
-//
-//     // Skip all . paths because they have already been recorded on the previous level of recursion
-//     if (strEq(info->name, DOT_STR))
-//         return;
-//
-//     // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
-//     // are recreated.
-//     if (strBeginsWithZ(info->name, PG_PREFIX_PGSQLTMP))
-//     {
-//         FUNCTION_TEST_RETURN_VOID();
-//         return;
-//     }
-//
-//     ManifestBuildData *buildData = data;
-//     unsigned int pgVersion = buildData->manifest->data.pgVersion;
-//
-//     const String *manifestName = strNewFmt("%s/%s", strPtr(buildData->manifestParentName), strPtr(info->name));
-//
-//     // Process file types
-//     switch (info->type)
-//     {
-//         case storageTypePath:
-//         {
-//             // Add path to manifest
-//             ManifestPath path =
-//             {
-//                 .name = manifestName,
-//                 .mode = info->mode,
-//                 .user = info->user,
-//                 .group = info->group,
-//             };
-//
-//             manifestPathAdd(buildData->manifest, &path);
-//
-//             // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
-//             if (strEq(buildData->manifestParentName, MANIFEST_TARGET_PGDATA_STR))
-//             {
-//                 if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
-//                 {
-//                     FUNCTION_TEST_RETURN_VOID();
-//                     return;
-//                 }
-//
-//                 if (strEqZ(info->name, PG_PATH_PGNOTIFY))
-//                 {
-//                     FUNCTION_TEST_RETURN_VOID();
-//                     return;
-//                 }
-//
-//                 if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && pgVersion >= PG_VERSION_94)
-//                 {
-//                     FUNCTION_TEST_RETURN_VOID();
-//                     return;
-//                 }
-//
-//                 if (strEqZ(info->name, PG_PATH_PGSERIAL) && pgVersion >= PG_VERSION_91)
-//                 {
-//                     FUNCTION_TEST_RETURN_VOID();
-//                     return;
-//                 }
-//
-//                 if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && pgVersion >= PG_VERSION_92)
-//                 {
-//                     FUNCTION_TEST_RETURN_VOID();
-//                     return;
-//                 }
-//
-//                 if (strEqZ(info->name, PG_PATH_PGSTATTMP))
-//                 {
-//                     FUNCTION_TEST_RETURN_VOID();
-//                     return;
-//                 }
-//
-//                 if (strEqZ(info->name, PG_PATH_PGSUBTRANS))
-//                 {
-//                     FUNCTION_TEST_RETURN_VOID();
-//                     return;
-//                 }
-//             }
-//
-//             // Recurse into the path
-//             ManifestBuildData buildDataSub = *buildData;
-//             buildDataSub.manifestParentName = manifestName;
-//             buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData->pgPath), strPtr(info->name));
-//
-//             storageInfoListP(
-//                 buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
-//
-//             break;
-//         }
-//
-//         case storageTypeFile:
-//         {
-//             // Skip pg_internal.init since it is recreated on startup
-//             if (strEqZ(info->name, PG_FILE_PGINTERNALINIT))
-//             {
-//                 FUNCTION_TEST_RETURN_VOID();
-//                 return;
-//             }
-//
-//             if (strEq(buildData->manifestParentName, MANIFEST_TARGET_PGDATA_STR))
-//             {
-//                 // Skip recovery files
-//                 if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_RECOVERYSIGNAL)) &&
-//                         pgVersion >= PG_VERSION_12) ||
-//                     ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
-//                             pgVersion < PG_VERSION_12))
-//                 {
-//                     FUNCTION_TEST_RETURN_VOID();
-//                     return;
-//                 }
-//             }
-//
-//             // Add file to manifest
-//             ManifestFile file =
-//             {
-//                 .name = manifestName,
-//                 .mode = info->mode,
-//                 .user = info->user,
-//                 .group = info->group,
-//             };
-//
-//             manifestFileAdd(buildData->manifest, &file);
-//             break;
-//         }
-//
-//         case storageTypeLink:
-//         {
-//             break;
-//         }
-//
-//         case storageTypeSpecial:
-//         {
-//             break;
-//         }
-//     }
-//
-//     FUNCTION_TEST_RETURN_VOID();
-// }
-//
-// Manifest *
-// manifestNewBuild(const Storage *storagePg, unsigned int pgVersion)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelDebug);
-//         FUNCTION_LOG_PARAM(STORAGE, storagePg);
-//         FUNCTION_LOG_PARAM(UINT, pgVersion);
-//     FUNCTION_LOG_END();
-//
-//     ASSERT(storagePg != NULL);
-//     ASSERT(pgVersion != 0);
-//
-//     Manifest *this = NULL;
-//
-//     MEM_CONTEXT_NEW_BEGIN("Manifest")
-//     {
-//         this = manifestNewInternal();
-//         this->data.pgVersion = pgVersion;
-//
-//         // Get the data path
-//         const String *pgPath = storagePathNP(storagePg, NULL);
-//
-//         // Get info about the root path
-//         StorageInfo info = storageInfoNP(storagePg, pgPath);
-//
-//         ManifestPath path =
-//         {
-//             .name = MANIFEST_TARGET_PGDATA_STR,
-//             .mode = info.mode,
-//             .user = info.user,
-//             .group = info.group,
-//         };
-//
-//         manifestPathAdd(this, &path);
-//
-//         // Gather info for the rest of the files/links/paths
-//         ManifestBuildData buildData =
-//         {
-//             .manifest = this,
-//             .storagePg = storagePg,
-//             .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
-//             .pgPath = pgPath,
-//         };
-//
-//         storageInfoListP(
-//             storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
-//     }
-//     MEM_CONTEXT_NEW_END();
-//
-//     FUNCTION_LOG_RETURN(MANIFEST, this);
-// }
+typedef struct ManifestBuildData
+{
+    Manifest *manifest;
+    const Storage *storagePg;
+    const String *tablespaceId;                                     // Tablespace id if PostgreSQL version has one
+    RegExp *dbPathExp;                                              // Identify paths containing relations
+    RegExp *tempRelationExp;                                        // Identify temp relations
+
+    const String *manifestParentName;
+    const String *pgPath;
+    bool dbPath;                                                    // Does this path contain relations?
+} ManifestBuildData;
+
+void manifestBuildCallback(void *data, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, *storageInfo);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(info != NULL);
+
+    // Skip all . paths because they have already been recorded on the previous level of recursion
+    if (strEq(info->name, DOT_STR))
+        return;
+
+    // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
+    // are recreated.
+    if (strBeginsWithZ(info->name, PG_PREFIX_PGSQLTMP))
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    ManifestBuildData *buildData = data;
+    unsigned int pgVersion = buildData->manifest->data.pgVersion;
+
+    const String *manifestName = strNewFmt("%s/%s", strPtr(buildData->manifestParentName), strPtr(info->name));
+
+    // Process file types
+    switch (info->type)
+    {
+        case storageTypePath:
+        {
+            // Add path to manifest
+            ManifestPath path =
+            {
+                .name = manifestName,
+                .mode = info->mode,
+                .user = info->user,
+                .group = info->group,
+            };
+
+            manifestPathAdd(buildData->manifest, &path);
+
+            // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
+            if (strEq(buildData->manifestParentName, MANIFEST_TARGET_PGDATA_STR))
+            {
+                if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGNOTIFY))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && pgVersion >= PG_VERSION_94)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSERIAL) && pgVersion >= PG_VERSION_91)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && pgVersion >= PG_VERSION_92)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSTATTMP))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSUBTRANS))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+            }
+
+            // Recurse into the path
+            ManifestBuildData buildDataSub = *buildData;
+            buildDataSub.manifestParentName = manifestName;
+            buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData->pgPath), strPtr(info->name));
+
+            if (buildData->dbPathExp != NULL)
+                buildDataSub.dbPath = regExpMatch(buildData->dbPathExp, manifestName);
+
+            storageInfoListP(
+                buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
+
+            break;
+        }
+
+        case storageTypeFile:
+        {
+            // Skip pg_internal.init since it is recreated on startup
+            if (strEqZ(info->name, PG_FILE_PGINTERNALINIT))
+            {
+                FUNCTION_TEST_RETURN_VOID();
+                return;
+            }
+
+            // Skip files in the root data directory
+            if (strEq(buildData->manifestParentName, MANIFEST_TARGET_PGDATA_STR))
+            {
+                // Skip recovery files
+                if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_RECOVERYSIGNAL)) &&
+                        pgVersion >= PG_VERSION_12) ||
+                    ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
+                            pgVersion < PG_VERSION_12) ||
+                    // Skip temp file for safely writing postgresql.auto.conf
+                    (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP) && pgVersion >= PG_VERSION_94) ||
+                    // Skip backup_label in versions where non-exclusive backup is supported
+                    (strEqZ(info->name, PG_FILE_BACKUPLABEL) && pgVersion >= PG_VERSION_96) ||
+                    // Skip old backup labels
+                    strEqZ(info->name, PG_FILE_BACKUPLABELOLD) ||
+                    // Skip running postmaster options
+                    strEqZ(info->name, PG_FILE_POSTMASTEROPTS) ||
+                    // Skip process id file to avoid confusing postgres after restore
+                    strEqZ(info->name, PG_FILE_POSTMASTERPID))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+            }
+
+            // Skip temp relations in db paths
+            if (buildData->dbPath && regExpMatch(buildData->tempRelationExp, info->name))
+            {
+                FUNCTION_TEST_RETURN_VOID();
+                return;
+            }
+
+            // Add file to manifest
+            ManifestFile file =
+            {
+                .name = manifestName,
+                .mode = info->mode,
+                .user = info->user,
+                .group = info->group,
+                .size = info->size,
+                .sizeRepo = info->size,
+                .timestamp = info->timeModified,
+            };
+
+            manifestFileAdd(buildData->manifest, &file);
+            break;
+        }
+
+        case storageTypeLink:
+        {
+            // ManifestLink link =
+            // {
+            //     .name = manifestName,
+            //     .user = info->user,
+            //     .group = info->group,
+            //     .destination = info->linkDestination,
+            // };
+            //
+            // ManifestTarget target =
+            // {
+            //     .name = manifestName,
+            //     .destination = info->linkDestination,
+            // };
+            //
+            // if (strEq(buildData->manifestParentPath, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
+            // {
+            // }
+            //
+            // manifestLinkAdd(buildData->manifest, &link);
+            break;
+        }
+
+        case storageTypeSpecial:
+        {
+            LOG_WARN("exclude special file '%s/%s' from backup", strPtr(buildData->pgPath), strPtr(info->name));
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+#define RELATION_EXP                                                "[0-9]+(|_(fsm|vm)){0,1}(\\.[0-9]+){0,1}"
+#define DB_PATH_EXP                                                 "(pg_data/base/[0-9]+|pg_tblspc/[0-9]+/%s/[0-9]+)"
+
+Manifest *
+manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, const Manifest *manifestPrior)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storagePg);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
+    FUNCTION_LOG_END();
+
+    ASSERT(storagePg != NULL);
+    ASSERT(pgVersion != 0);
+
+    Manifest *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("Manifest")
+    {
+        this = manifestNewInternal();
+        this->info = infoNew(NULL);
+        this->data.pgVersion = pgVersion;
+
+        // Data needed to build the manifest
+        ManifestBuildData buildData =
+        {
+            .manifest = this,
+            .storagePg = storagePg,
+            .tablespaceId = pgTablespaceId(pgVersion),
+            .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
+            .pgPath = storagePathNP(storagePg, NULL),
+        };
+
+        // We won't identify db paths for PostgreSQL < 9.0.  This means that temp relations will not be excluded but it doesn't seem
+        // worth supporting this feature on such old versions of PostgreSQL.
+        if (pgVersion >= PG_VERSION_90)
+        {
+            ASSERT(buildData.tablespaceId != NULL);
+
+            buildData.dbPathExp = regExpNew(
+                strNewFmt("^" DB_PATH_EXP "$", strPtr(buildData.tablespaceId)));
+
+            // Expression to find temp relations
+            buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
+        }
+
+        // Add root path and targer
+        StorageInfo info = storageInfoNP(storagePg, buildData.pgPath);
+
+        ManifestPath path =
+        {
+            .name = MANIFEST_TARGET_PGDATA_STR,
+            .mode = info.mode,
+            .user = info.user,
+            .group = info.group,
+        };
+
+        manifestPathAdd(this, &path);
+
+        ManifestTarget target =
+        {
+            .name = MANIFEST_TARGET_PGDATA_STR,
+            .path = buildData.pgPath,
+            .type = manifestTargetTypePath,
+        };
+
+        manifestTargetAdd(this, &target);
+
+        // Gather info for the rest of the files/links/paths
+        storageInfoListP(
+            storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+
+        // Remove unlogged relations from the manifest.  This can't be done during the initial build because of the requirement to
+        // check for _init files which will sort after the vast majority of the relation files.  We could check storage for each
+        // _init file but that would be expensive.
+        if (pgVersion >= PG_VERSION_91)
+        {
+            RegExp *relationExp = regExpNew(STRDEF("^" DB_PATH_EXP "/" RELATION_EXP "$"));
+            unsigned int fileIdx = 0;
+            const String *lastRelationFileId = NULL;
+            bool lastRelationFileIdUnlogged = false;
+
+            while (fileIdx < manifestFileTotal(this))
+            {
+                const ManifestFile *file = manifestFile(this, fileIdx);
+
+                if (regExpMatch(relationExp, file->name))
+                {
+                    String *fileName = strBase(file->name);
+                    String *relationFileId = strNew("");
+
+                    for (unsigned int nameIdx = 0; nameIdx < strSize(fileName); nameIdx++)
+                    {
+                        char nameChr = strPtr(fileName)[nameIdx];
+
+                        if (!isdigit(nameChr))
+                            break;
+
+                        strCatChr(relationFileId, nameChr);
+                    }
+
+                    if (lastRelationFileId == NULL || !strEq(lastRelationFileId, relationFileId))
+                    {
+                        const String *relationInit = strNewFmt("%s/%s_init", strPtr(strPath(file->name)), strPtr(relationFileId));
+                        lastRelationFileId = relationFileId;
+                        lastRelationFileIdUnlogged = manifestFileFindDefault(this, relationInit, NULL) != NULL;
+                    }
+
+                    if (lastRelationFileIdUnlogged)
+                    {
+                        manifestFileRemove(this, file->name);
+                        continue;
+                    }
+                }
+
+                fileIdx++;
+            }
+        }
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(MANIFEST, this);
+}
 
 /***********************************************************************************************************************************
 Load manifest
@@ -1347,7 +1474,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 const ManifestFile *file = manifestFile(manifest, fileIdx);
                 KeyValue *fileKv = kvNew();
 
-                if (file->size != 0)
+                if (file->size != 0 && file->checksumSha1[0] != 0)
                     kvPut(fileKv, MANIFEST_KEY_CHECKSUM_VAR, VARSTRZ(file->checksumSha1));
 
                 if (file->checksumPage)
