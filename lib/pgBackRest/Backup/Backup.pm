@@ -546,8 +546,7 @@ sub process
         $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
 
         $oAbortedManifest = new pgBackRest::Manifest(
-            storageRepo()->pathGet("${strBackupPath}/" . FILE_MANIFEST),
-            {strCipherPass => $oBackupInfo->cipherPassSub()});
+            storageRepo()->pathGet("${strBackupPath}/" . FILE_MANIFEST), {strCipherPass => $oBackupInfo->cipherPassSub()});
 
         # If the repo is encrypted, set the backup set passphrase from this manifest
         if (defined($oBackupInfo->cipherPassSub()))

@@ -171,11 +171,12 @@ backupPrior(const InfoBackup *infoBackup)
 Check for a halted backup that can be resumed
 ***********************************************************************************************************************************/
 static const Manifest *
-backupHalted(const InfoBackup *infoBackup, const Manifest *manifestPrior)
+backupHalted(const InfoBackup *infoBackup, const Manifest *manifestPrior, String **backupLabelHalted)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
+        FUNCTION_LOG_PARAM_P(STRING, backupLabelHalted);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
@@ -184,16 +185,16 @@ backupHalted(const InfoBackup *infoBackup, const Manifest *manifestPrior)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Only the last backup can be resumed
         const StringList *backupList = strLstSort(
             storageListP(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderDesc);
 
-        // Loop through all backups in the repo in reverse
-        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+        if (strLstSize(backupList) > 0)
         {
-            const String *backupLabel = strLstGet(backupList, backupIdx);
+            const String *backupLabel = strLstGet(backupList, 0);
             const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
             // Halted backups have a copy of the manifest but no main
@@ -269,18 +270,21 @@ backupHalted(const InfoBackup *infoBackup, const Manifest *manifestPrior)
                 // If the backup is usable then return the manifest
                 if (usable)
                 {
+                    // HACKY BIT TO MAKE PERL HAPPY
+                    memContextSwitch(MEM_CONTEXT_OLD());
+                    *backupLabelHalted = strDup(backupLabel);
+                    memContextSwitch(MEM_CONTEXT_TEMP());
+
                     result = manifestMove(manifestHalted, MEM_CONTEXT_OLD());
                 }
                 // Else warn and remove the unusable halted backup
                 else
                 {
-                    LOG_WARN("halted backup %s cannot be resumed: %s", strPtr(backupLabel), strPtr(reason));
+                    LOG_WARN("halted backup '%s' cannot be resumed: %s", strPtr(backupLabel), strPtr(reason));
 
                     storagePathRemoveP(
                         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel)), .recurse = true);
                 }
-
-                break;
             }
         }
     }
@@ -321,7 +325,9 @@ cmdBackup(void)
         const Manifest *manifestPrior = backupPrior(infoBackup);
 
         // Check for a halted backup
-        const Manifest *manifestHalted = backupHalted(infoBackup, manifestPrior);
+        String *backupLabelHalted = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
+        const Manifest *manifestHalted = backupHalted(infoBackup, manifestPrior, &backupLabelHalted);
+        (void)manifestHalted;
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
 
@@ -334,7 +340,7 @@ cmdBackup(void)
         kvPut(paramKv, VARSTRDEF("pgControlVersion"), VARUINT(pgControlVersion(infoPg.version)));
         kvPut(paramKv, VARSTRDEF("pgCatalogVersion"), VARUINT(pgCatalogVersion(infoPg.version)));
         kvPut(paramKv, VARSTRDEF("backupLabelPrior"), manifestPrior ? VARSTR(manifestData(manifestPrior)->backupLabel) : NULL);
-        kvPut(paramKv, VARSTRDEF("backupLabelHalted"), manifestHalted ? VARSTR(manifestData(manifestHalted)->backupLabel) : NULL);
+        kvPut(paramKv, VARSTRDEF("backupLabelHalted"), backupLabelHalted ? VARSTR(backupLabelHalted) : NULL);
 
         StringList *paramList = strLstNew();
         strLstAdd(paramList, jsonFromVar(varNewKv(paramKv), 0));

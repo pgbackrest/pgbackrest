@@ -970,7 +970,7 @@ diff backup - cannot resume - new diff (backup host)
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-2]' missing manifest removed from backup.info
-P00   WARN: aborted backup [BACKUP-INCR-2] cannot be resumed: new backup-type 'diff' does not match aborted backup-type 'incr'
+P00   WARN: halted backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match halted backup type 'incr'
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
@@ -1181,7 +1181,7 @@ diff backup - cannot resume - disabled / no repo link (backup host)
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-DIFF-1]' missing manifest removed from backup.info
-P00   WARN: halted backup [BACKUP-DIFF-1] cannot be resumed: resume is disabled
+P00   WARN: halted backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
