@@ -632,7 +632,7 @@ cmdExpire(void)
         storageRepo();
 
         // Load the backup.info
-        InfoBackup *infoBackup = infoBackupLoadFile(
+        InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
