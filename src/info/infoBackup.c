@@ -645,12 +645,12 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
         {
             String *backupLabel = strLstGet(backupList, backupIdx);
 
-            // If it does not exists in the list of current backups, then if it is valid, add it
+            // If it does not exist in the list of current backups, then if it is valid, add it
             if (!strLstExists(backupCurrentList, backupLabel))
             {
                 String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
-                // Check if a completed backup (backup.manifest only) exists
+                // Check if a completed backup exists (backup.manifest only - ignore .copy)
                 if (storageExistsNP(storage, manifestFileName))
                 {
                     bool found = false;
@@ -681,7 +681,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
             }
         }
 
-        // Get the updated list of current backups and remove backups that are no longer in the repository
+        // Get the updated list of current backups and remove backups from current that are no longer in the repository
         backupCurrentList = infoBackupDataLabelList(infoBackup, NULL);
 
         for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
@@ -689,6 +689,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
             String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
             String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
+            // Remove backup from the current list in the infoBackup object
             if (!storageExistsNP(storage, manifestFileName))
             {
                 LOG_WARN("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(backupLabel));
