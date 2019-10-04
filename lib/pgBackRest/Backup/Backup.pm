@@ -536,137 +536,34 @@ sub process
     }
 
     # Search cluster directory for an aborted backup
-    my $strBackupLabel;
+    my $strBackupLabel = $rhParam->{backupLabelHalted};
     my $oAbortedManifest;
     my $strBackupPath;
     my $strTimelineAborted;
 
-    foreach my $strAbortedBackup (storageRepo()->list(
-        STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))
+    if (defined($strBackupLabel))
     {
-        # Aborted backups have a copy of the manifest but no main
-        if (storageRepo()->exists(STORAGE_REPO_BACKUP . "/${strAbortedBackup}/" . FILE_MANIFEST_COPY) &&
-            !storageRepo()->exists(STORAGE_REPO_BACKUP . "/${strAbortedBackup}/" . FILE_MANIFEST))
+        $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
+
+        $oAbortedManifest = new pgBackRest::Manifest(
+            storageRepo()->pathGet("${strBackupPath}/" . FILE_MANIFEST),
+            {strCipherPass => $oBackupInfo->cipherPassSub()});
+
+        # If the repo is encrypted, set the backup set passphrase from this manifest
+        if (defined($oBackupInfo->cipherPassSub()))
         {
-            my $bUsable;
-            my $strReason = "resume is disabled";
-            $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strAbortedBackup}");
+            $strCipherPassBackupSet = $oAbortedManifest->cipherPassSub();
+        }
 
-            # Attempt to read the manifest file in the aborted backup to see if it can be used.  If any error at all occurs then the
-            # backup will be considered unusable and a resume will not be attempted.
-            if (cfgOption(CFGOPT_RESUME))
-            {
-                $strReason = "unable to read ${strBackupPath}/" . FILE_MANIFEST;
-
-                eval
-                {
-                    # Load the aborted manifest
-                    $oAbortedManifest = new pgBackRest::Manifest("${strBackupPath}/" . FILE_MANIFEST,
-                        {strCipherPass => $oBackupInfo->cipherPassSub()});
-
-                    # Key and values that do not match
-                    my $strKey;
-                    my $strValueNew;
-                    my $strValueAborted;
-
-                    # Check version
-                    if ($oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION) ne PROJECT_VERSION)
-                    {
-                        $strKey =  INI_KEY_VERSION;
-                        $strValueNew = PROJECT_VERSION;
-                        $strValueAborted = $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION);
-                    }
-                    # Check format
-                    elsif ($oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT) ne REPOSITORY_FORMAT)
-                    {
-                        $strKey =  INI_KEY_FORMAT;
-                        $strValueNew = REPOSITORY_FORMAT;
-                        $strValueAborted = $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT);
-                    }
-                    # Check backup type
-                    elsif ($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE) ne cfgOption(CFGOPT_TYPE))
-                    {
-                        $strKey =  MANIFEST_KEY_TYPE;
-                        $strValueNew = cfgOption(CFGOPT_TYPE);
-                        $strValueAborted = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
-                    }
-                    # Check prior label
-                    elsif ($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>') ne
-                           (defined($strBackupLastPath) ? $strBackupLastPath : '<undef>'))
-                    {
-                        $strKey =  MANIFEST_KEY_PRIOR;
-                        $strValueNew = defined($strBackupLastPath) ? $strBackupLastPath : '<undef>';
-                        $strValueAborted =
-                            $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>');
-                    }
-                    # Check compression
-                    elsif ($oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS) !=
-                           cfgOption(CFGOPT_COMPRESS))
-                    {
-                        $strKey = MANIFEST_KEY_COMPRESS;
-                        $strValueNew = cfgOption(CFGOPT_COMPRESS);
-                        $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
-                    }
-                    # Check hardlink
-                    elsif ($oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK) !=
-                           cfgOption(CFGOPT_REPO_HARDLINK))
-                    {
-                        $strKey = MANIFEST_KEY_HARDLINK;
-                        $strValueNew = cfgOption(CFGOPT_REPO_HARDLINK);
-                        $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
-                    }
-
-                    # If key is defined then something didn't match
-                    if (defined($strKey))
-                    {
-                        $strReason = "new ${strKey} '${strValueNew}' does not match aborted ${strKey} '${strValueAborted}'";
-                    }
-                    # Else the backup can be resumed
-                    else
-                    {
-                        $bUsable = true;
-                    }
-
-                    return true;
-                }
-                or do
-                {
-                    $bUsable = false;
-                }
-            }
-
-            # If the backup is usable then set the backup label
-            if ($bUsable)
-            {
-                $strBackupLabel = $strAbortedBackup;
-
-                # If the repo is encrypted, set the backup set passphrase from this manifest
-                if (defined($oBackupInfo->cipherPassSub()))
-                {
-                    $strCipherPassBackupSet = $oAbortedManifest->cipherPassSub();
-                }
-
-                # Get the archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online
-                # backup.
-                if ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
-                {
-                    $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
-                }
-                elsif ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
-                {
-                    $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START), 0, 8);
-                }
-            }
-            else
-            {
-                &log(WARN, "aborted backup ${strAbortedBackup} cannot be resumed: ${strReason}");
-                &log(TEST, TEST_BACKUP_NORESUME);
-
-                storageRepo()->pathRemove(STORAGE_REPO_BACKUP . "/${strAbortedBackup}", {bRecurse => true});
-                undef($oAbortedManifest);
-            }
-
-            last;
+        # Get the archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online
+        # backup.
+        if ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
+        {
+            $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
+        }
+        elsif ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
+        {
+            $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START), 0, 8);
         }
     }
 

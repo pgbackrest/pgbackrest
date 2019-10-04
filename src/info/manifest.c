@@ -701,7 +701,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
 
             if (file.size == 0)
                 memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
-            else
+            else if (kvKeyExists(fileKv, MANIFEST_KEY_CHECKSUM_VAR))
             {
                 memcpy(
                     file.checksumSha1, strPtr(varStr(kvGet(fileKv, MANIFEST_KEY_CHECKSUM_VAR))), HASH_TYPE_SHA1_SIZE_HEX + 1);
