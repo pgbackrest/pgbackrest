@@ -395,6 +395,8 @@ typedef struct ManifestBuildData
     Manifest *manifest;
     const Storage *storagePg;
     const String *tablespaceId;                                     // Tablespace id if PostgreSQL version has one
+    bool online;                                                    // Is this an online backup?
+    const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
 
@@ -492,6 +494,14 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 }
             }
 
+            // Skip the contents of archive_status when online
+            if (buildData->online && strEq(buildData->manifestParentName, buildData->manifestWalName) &&
+                strEqZ(info->name, PG_PATH_ARCHIVE_STATUS))
+            {
+                FUNCTION_TEST_RETURN_VOID();
+                return;
+            }
+
             // Recurse into the path
             ManifestBuildData buildDataSub = *buildData;
             buildDataSub.manifestParentName = manifestName;
@@ -515,7 +525,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 return;
             }
 
-            // Skip files in the root data directory
+            // Skip files in the root data path
             if (strEq(buildData->manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
                 // Skip recovery files
@@ -537,6 +547,13 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                     FUNCTION_TEST_RETURN_VOID();
                     return;
                 }
+            }
+
+            // Skip the contents of the wal path when online
+            if (buildData->online && strEq(buildData->manifestParentName, buildData->manifestWalName))
+            {
+                FUNCTION_TEST_RETURN_VOID();
+                return;
             }
 
             // Skip temp relations in db paths
@@ -593,7 +610,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 // Identify this target as a tablespace
                 target.name = manifestName;
                 target.tablespaceId = cvtZToUInt(strPtr(info->name));
-                target.tablespaceName = info->name;
+                target.tablespaceName = strNewFmt("ts%s", strPtr(info->name));
 
                 // Add a dummy pg_tblspc path entry if it does not already exist.  This entry will be ignored by restore but it is
                 // part of the original manifest format so we need to have it.
@@ -708,11 +725,12 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
 #define DB_PATH_EXP                                                 "(pg_data/base/[0-9]+|pg_tblspc/[0-9]+/%s/[0-9]+)"
 
 Manifest *
-manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, const Manifest *manifestPrior)
+manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, const Manifest *manifestPrior)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
     FUNCTION_LOG_END();
 
@@ -733,7 +751,9 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, const Manifes
             .manifest = this,
             .storagePg = storagePg,
             .tablespaceId = pgTablespaceId(pgVersion),
+            .online = online,
             .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
+            .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/pg_%s", strPtr(pgWalName(pgVersion))),
             .pgPath = storagePathNP(storagePg, NULL),
         };
 

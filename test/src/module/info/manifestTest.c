@@ -149,7 +149,7 @@ testRun(void)
         storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
 
         Manifest *manifest = NULL;
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, NULL), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), "build manifest");
 
         Buffer *contentSave = bufNew(0);
 
@@ -164,7 +164,7 @@ testRun(void)
                 "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "pg_data/pg_xlog={\"path\":\"{[path]}/wal\",\"type\":\"link\"}\n"
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"1\",\"type\":\"link\"}\n"
+                "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
@@ -200,14 +200,6 @@ testRun(void)
                 "pg_tblspc/1/PG_9.4_201409291/1={}\n"
                 TEST_MANIFEST_PATH_DEFAULT))),
             "check manifest");
-
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_GLOBAL), .mode = 0700, .noParentCreate = true);
-        // storagePathCreateP(storagePgWrite, strNew(PG_PATH_GLOBAL "/1"), .mode = 0700, .noParentCreate = true);
-        // THROW_ON_SYS_ERROR(
-        //     system(strPtr(strNewFmt("ln -s /tmp %s/pg/pg_test", testPath()))) != 0, FileWriteError, "unable to create link");
-        //
-        // TEST_ASSIGN(manifest, infoManifestNew(storagePg, PG_VERSION_94), "create manifest");
 
         #undef TEST_MANIFEST_HEADER
         #undef TEST_MANIFEST_FILE_DEFAULT
