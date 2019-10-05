@@ -75,8 +75,9 @@ testRun(void)
             "mode=\"0700\"\n"                                                                                                      \
             "user=\"{[user]}\"\n"
 
-        // Create pg directory and generate minimal manifest
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest with all features");
+
         storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
 
         Storage *storagePg = storagePosixNew(
@@ -205,6 +206,17 @@ testRun(void)
         #undef TEST_MANIFEST_FILE_DEFAULT
         #undef TEST_MANIFEST_LINK_DEFAULT
         #undef TEST_MANIFEST_PATH_DEFAULT
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on link in pg_data");
+
+        THROW_ON_SYS_ERROR(
+            symlink(strPtr(strNewFmt("%s/pg/base", testPath())), strPtr(strNewFmt("%s/pg/link", testPath()))) == -1,
+            FileOpenError, "unable to create symlink");
+
+        TEST_ERROR(
+            manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), LinkDestinationError,
+            "link 'link' (/home/vagrant/test/test-0/pg/base) destination is in PGDATA");
     }
 
     // *****************************************************************************************************************************

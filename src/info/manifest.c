@@ -695,18 +695,29 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 };
 
                 manifestPathAdd(buildData->manifest, &path);
+            }
 
-                // Now recurse into the path
+            // Add target and link
+            manifestTargetAdd(buildData->manifest, &target);
+            manifestLinkAdd(buildData->manifest, &link);
+
+            // Now recurse into the path
+            if (linkedInfo.type == storageTypePath)
+            {
+                // Before following a path link make sure it is valid so we don't have loops
+                lstSort(buildData->manifest->targetList, sortOrderAsc);
+                lstSort(buildData->manifest->linkList, sortOrderAsc);
+                lstSort(buildData->manifest->pathList, sortOrderAsc);
+
+                manifestLinkCheck(buildData->manifest);
+
+                // Now it should be safe to recurse
                 if (buildData->dbPathExp != NULL)
                     buildDataSub.dbPath = regExpMatch(buildData->dbPathExp, manifestName);
 
                 storageInfoListP(
                     buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
             }
-
-            // Add target and link
-            manifestTargetAdd(buildData->manifest, &target);
-            manifestLinkAdd(buildData->manifest, &link);
 
             break;
         }
@@ -1849,12 +1860,27 @@ manifestLinkCheck(const Manifest *this)
 
     ASSERT(this != NULL);
 
+    // Base path used for link checks
+    const ManifestTarget *base = manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR);
+
     for (unsigned int linkIdx1 = 0; linkIdx1 < manifestTargetTotal(this); linkIdx1++)
     {
         const ManifestTarget *link1 = manifestTarget(this, linkIdx1);
 
+        // Check that no link is a subpath of another link
         if (link1->type == manifestTargetTypeLink)
         {
+            // Check that the link is not inside the base data path
+            if (strBeginsWith(
+                    strNewFmt("%s/", strPtr(manifestTargetPath(this, link1))),
+                    strNewFmt("%s/", strPtr(manifestTargetPath(this, base)))))
+            {
+                THROW_FMT(
+                    LinkDestinationError,
+                    "link '%s' (%s) destination is in PGDATA",
+                    strPtr(manifestPgPath(link1->name)), strPtr(manifestTargetPath(this, link1)));
+            }
+
             for (unsigned int linkIdx2 = 0; linkIdx2 < manifestTargetTotal(this); linkIdx2++)
             {
                 const ManifestTarget *link2 = manifestTarget(this, linkIdx2);
