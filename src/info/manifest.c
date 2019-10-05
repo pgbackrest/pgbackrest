@@ -564,25 +564,133 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
 
         case storageTypeLink:
         {
-            // ManifestLink link =
-            // {
-            //     .name = manifestName,
-            //     .user = info->user,
-            //     .group = info->group,
-            //     .destination = info->linkDestination,
-            // };
-            //
-            // ManifestTarget target =
-            // {
-            //     .name = manifestName,
-            //     .destination = info->linkDestination,
-            // };
-            //
-            // if (strEq(buildData->manifestParentPath, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
-            // {
-            // }
-            //
-            // manifestLinkAdd(buildData->manifest, &link);
+            ManifestLink link =
+            {
+                .name = manifestName,
+                .user = info->user,
+                .group = info->group,
+                .destination = info->linkDestination,
+            };
+
+            ManifestTarget target =
+            {
+                .name = manifestName,
+                .type = manifestTargetTypeLink,
+            };
+
+            // Setup data for recursion
+            ManifestBuildData buildDataSub = *buildData;
+            buildDataSub.manifestParentName = manifestName;
+            buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData->pgPath), strPtr(info->name));
+
+            // Is this a tablespace
+            if (strEq(buildData->manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
+            {
+                // Strip pg_data off the manifest name so it begins with pg_tblspc instead.  This reflects how the files are stored
+                // in the backup directory.
+                manifestName = strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA));
+
+                // Identify this target as a tablespace
+                target.name = manifestName;
+                target.tablespaceId = cvtZToUInt(strPtr(info->name));
+                target.tablespaceName = info->name;
+
+                // Add a dummy pg_tblspc path entry if it does not already exist.  This entry will be ignored by restore but it is
+                // part of the original manifest format so we need to have it.
+                lstSort(buildData->manifest->pathList, sortOrderAsc);
+                const ManifestPath *pathBase = manifestPathFind(buildData->manifest, MANIFEST_TARGET_PGDATA_STR);
+
+                if (manifestPathFindDefault(buildData->manifest, MANIFEST_TARGET_PGTBLSPC_STR, NULL) == NULL)
+                {
+                    ManifestPath path =
+                    {
+                        .name = MANIFEST_TARGET_PGTBLSPC_STR,
+                        .mode = pathBase->mode,
+                        .user = pathBase->user,
+                        .group = pathBase->group,
+                    };
+
+                    manifestPathAdd(buildData->manifest, &path);
+                }
+
+                // If the tablespace id is present then the tablespace link destination path is not the path where data will be
+                // stored so we can just store it as dummy path.
+                if (buildData->tablespaceId != NULL)
+                {
+                    ManifestPath path =
+                    {
+                        .name = manifestName,
+                        .mode = pathBase->mode,
+                        .user = pathBase->user,
+                        .group = pathBase->group,
+                    };
+
+                    manifestPathAdd(buildData->manifest, &path);
+
+                    // Now append the tablespace id to the manifest name
+                    manifestName = strNewFmt("%s/%s", strPtr(manifestName), strPtr(buildData->tablespaceId));
+
+                    // Update data structure for recursion
+                    buildDataSub.manifestParentName = manifestName;
+                    buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildDataSub.pgPath), strPtr(buildData->tablespaceId));
+                }
+            }
+
+            // Add info about the linked file/path
+            StorageInfo linkedInfo = storageInfoP(buildData->storagePg, buildDataSub.pgPath, .followLink = true);
+
+            // If a file link
+            if (linkedInfo.type == storageTypeFile)
+            {
+                // Tablespace links should never be to a file
+                CHECK(target.tablespaceId == 0);
+
+                // Identify target as a file
+                target.path = strPath(info->linkDestination);
+                target.file = strBase(info->linkDestination);
+
+                // Add file to manifest
+                ManifestFile file =
+                {
+                    .name = manifestName,
+                    .mode = linkedInfo.mode,
+                    .user = linkedInfo.user,
+                    .group = linkedInfo.group,
+                    .size = linkedInfo.size,
+                    .sizeRepo = linkedInfo.size,
+                    .timestamp = linkedInfo.timeModified,
+                };
+
+                manifestFileAdd(buildData->manifest, &file);
+            }
+            // Else if a path link
+            else
+            {
+                target.path = info->linkDestination;
+
+                // Add linked path info
+                ManifestPath path =
+                {
+                    .name = manifestName,
+                    .mode = linkedInfo.mode,
+                    .user = linkedInfo.user,
+                    .group = linkedInfo.group,
+                };
+
+                manifestPathAdd(buildData->manifest, &path);
+
+                // Now recurse into the path
+                if (buildData->dbPathExp != NULL)
+                    buildDataSub.dbPath = regExpMatch(buildData->dbPathExp, manifestName);
+
+                storageInfoListP(
+                    buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
+            }
+
+            // Add target and link
+            manifestTargetAdd(buildData->manifest, &target);
+            manifestLinkAdd(buildData->manifest, &link);
+
             break;
         }
 
@@ -667,6 +775,12 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, const Manifes
         // Gather info for the rest of the files/links/paths
         storageInfoListP(
             storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+
+        // These may not be in order even if the incoming data was sorted
+        lstSort(this->fileList, sortOrderAsc);
+        lstSort(this->linkList, sortOrderAsc);
+        lstSort(this->pathList, sortOrderAsc);
+        lstSort(this->targetList, sortOrderAsc);
 
         // Remove unlogged relations from the manifest.  This can't be done during the initial build because of the requirement to
         // check for _init files which will sort after the vast majority of the relation files.  We could check storage for each

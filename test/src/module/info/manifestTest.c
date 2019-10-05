@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Backup Manifest Handler
 ***********************************************************************************************************************************/
+#include <unistd.h>
+
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "info/infoBackup.h"
@@ -82,6 +84,7 @@ testRun(void)
         Storage *storagePgWrite = storagePosixNew(
             strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
+        // Version
         storagePutNP(
             storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
             BUFSTRDEF("9.4\n"));
@@ -101,6 +104,40 @@ testRun(void)
             storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_init"), .modeFile = 0400, .timeModified = 1565282114),
             NULL);
 
+        // Tablespace 1
+        storagePathCreateP(storageTest, STRDEF("ts/1"), .mode = 0777);
+        storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.4_201409291/1"), .mode = 0700);
+        storagePathCreateP(storagePgWrite, MANIFEST_TARGET_PGTBLSPC_STR, .mode = 0700, .noParentCreate = true);
+        THROW_ON_SYS_ERROR(
+            symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutNP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/16384"), .modeFile = 0400,  .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
+
+        // Config directory and file links
+        storagePathCreateP(storageTest, STRDEF("config"), .mode = 0700);
+        THROW_ON_SYS_ERROR(
+            symlink("../config/postgresql.conf", strPtr(strNewFmt("%s/pg/postgresql.conf", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutNP(
+            storageNewWriteP(storageTest, strNew("config/postgresql.conf"), .modeFile = 0400,  .timeModified = 1565282116),
+            BUFSTRDEF("POSTGRESQLCONF"));
+        THROW_ON_SYS_ERROR(
+            symlink("../config/pg_hba.conf", strPtr(strNewFmt("%s/pg/pg_hba.conf", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutNP(
+            storageNewWriteP(storageTest, strNew("config/pg_hba.conf"), .modeFile = 0400,  .timeModified = 1565282117),
+            BUFSTRDEF("PGHBACONF"));
+
+        // pg_xlog/wal link
+        storagePathCreateP(storageTest, STRDEF("wal"), .mode = 0700);
+        THROW_ON_SYS_ERROR(
+            symlink(strPtr(strNewFmt("%s/wal", testPath())), strPtr(strNewFmt("%s/pg/pg_xlog", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+
+        // Directories to ignore files for depending on the version
         storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
         storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
         storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
@@ -124,11 +161,25 @@ testRun(void)
                 "\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_data/pg_xlog={\"path\":\"{[path]}/wal\",\"type\":\"link\"}\n"
+                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"1\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                "pg_tblspc/1/PG_9.4_201409291/1/16384={\"size\":8,\"timestamp\":1565282115}\n"
                 TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:link]\n"
+                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
+                "pg_data/pg_xlog={\"destination\":\"{[path]}/wal\"}\n"
+                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                TEST_MANIFEST_LINK_DEFAULT
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -141,6 +192,12 @@ testRun(void)
                 "pg_data/pg_snapshots={}\n"
                 "pg_data/pg_stat_tmp={}\n"
                 "pg_data/pg_subtrans={}\n"
+                "pg_data/pg_tblspc={}\n"
+                "pg_data/pg_xlog={}\n"
+                "pg_tblspc={}\n"
+                "pg_tblspc/1={}\n"
+                "pg_tblspc/1/PG_9.4_201409291={}\n"
+                "pg_tblspc/1/PG_9.4_201409291/1={}\n"
                 TEST_MANIFEST_PATH_DEFAULT))),
             "check manifest");
 
