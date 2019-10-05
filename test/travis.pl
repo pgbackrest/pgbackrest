@@ -141,7 +141,7 @@ eval
         processBegin("${strVm} test");
         executeTest(
             "${strTestExe} --no-gen --no-package --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" .
-                ($strVm eq "u18" ? " --c-only --no-coverage" : " --module=mock --test=all"),
+                ($strVm eq "u18" ? " --c-only --no-coverage  --module=info --module=command" : " --module=mock --test=all"),
             {bShowOutputAsync => true});
         processEnd();
     }
