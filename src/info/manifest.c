@@ -781,7 +781,10 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, 
             buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
         }
 
-        // Add root path and targer
+        // Build list of exclusions
+        // !!! EXCLUSION LIST HERE -- REWRITE THE ORIGINAL LIST WITH pg_data/ in front for easy matching
+
+        // Add root path and target
         StorageInfo info = storageInfoNP(storagePg, buildData.pgPath);
 
         ManifestPath path =
