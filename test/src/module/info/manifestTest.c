@@ -123,7 +123,7 @@ testRun(void)
                 TEST_MANIFEST_HEADER
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"/home/vagrant/test/test-0/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"

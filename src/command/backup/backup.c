@@ -327,7 +327,7 @@ cmdBackup(void)
 
         // Build the new manifest
         // Manifest *manifest = manifestNewBuild(pg.storagePrimary, manifestPrior);
-        manifestFree(manifestPrior);
+        // manifestFree(manifestPrior);
 
         // Check for a halted backup
         String *backupLabelHalted = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
