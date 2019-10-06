@@ -216,7 +216,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), LinkDestinationError,
-            "link 'link' (/home/vagrant/test/test-0/pg/base) destination is in PGDATA");
+            hrnReplaceKey("link 'link' ({[path]}/pg/base) destination is in PGDATA"));
     }
 
     // *****************************************************************************************************************************
