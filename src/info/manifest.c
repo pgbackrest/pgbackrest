@@ -399,6 +399,8 @@ typedef struct ManifestBuildData
     const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
+    StringList *excludeContent;                                     // Exclude contents of directories
+    StringList *excludeSingle;                                      // Exclude a single file/link/path
 
     const String *manifestParentName;
     const String *pgPath;
@@ -417,7 +419,10 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
 
     // Skip all . paths because they have already been recorded on the previous level of recursion
     if (strEq(info->name, DOT_STR))
+    {
+        FUNCTION_TEST_RETURN_VOID();
         return;
+    }
 
     // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
     // are recreated.
@@ -427,14 +432,29 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
         return;
     }
 
+    // Get build data
     ManifestBuildData *buildData = data;
     unsigned int pgVersion = buildData->manifest->data.pgVersion;
 
+    // Contruct the name used to identify this file/link/path in the manifest
     const String *manifestName = strNewFmt("%s/%s", strPtr(buildData->manifestParentName), strPtr(info->name));
+
+    // Skip excluded files/links/paths
+    if (buildData->excludeSingle != NULL && strLstExists(buildData->excludeSingle, manifestName))
+    {
+        LOG_INFO(
+            "exclude '%s/%s' from backup using '%s' exclusion", strPtr(buildData->pgPath), strPtr(info->name),
+            strPtr(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
+
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
 
     // Process file types
     switch (info->type)
     {
+        // Add paths
+        // -------------------------------------------------------------------------------------------------------------------------
         case storageTypePath:
         {
             // Add path to manifest
@@ -447,6 +467,17 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             };
 
             manifestPathAdd(buildData->manifest, &path);
+
+            // Skip excluded path content
+            if (buildData->excludeContent != NULL && strLstExists(buildData->excludeContent, manifestName))
+            {
+                LOG_INFO(
+                    "exclude '%s/%s' from backup using '%s/' exclusion", strPtr(buildData->pgPath), strPtr(info->name),
+                    strPtr(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
+
+                FUNCTION_TEST_RETURN_VOID();
+                return;
+            }
 
             // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
             if (strEq(buildData->manifestParentName, MANIFEST_TARGET_PGDATA_STR))
@@ -516,6 +547,8 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             break;
         }
 
+        // Add files
+        // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeFile:
         {
             // Skip pg_internal.init since it is recreated on startup
@@ -579,6 +612,8 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             break;
         }
 
+        // Add links
+        // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeLink:
         {
             ManifestLink link =
@@ -722,6 +757,8 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             break;
         }
 
+        // Skip special files
+        // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
         {
             LOG_WARN("exclude special file '%s/%s' from backup", strPtr(buildData->pgPath), strPtr(info->name));
@@ -733,15 +770,17 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
 }
 
 #define RELATION_EXP                                                "[0-9]+(|_(fsm|vm)){0,1}(\\.[0-9]+){0,1}"
-#define DB_PATH_EXP                                                 "(pg_data/base/[0-9]+|pg_tblspc/[0-9]+/%s/[0-9]+)"
+#define DB_PATH_EXP                                                 "(pg_data/(global|base/[0-9]+)|pg_tblspc/[0-9]+/%s/[0-9]+)"
 
 Manifest *
-manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, const Manifest *manifestPrior)
+manifestNewBuild(
+    const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList, const Manifest *manifestPrior)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(BOOL, online);
+        FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
     FUNCTION_LOG_END();
 
@@ -770,6 +809,7 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, 
 
         // We won't identify db paths for PostgreSQL < 9.0.  This means that temp relations will not be excluded but it doesn't seem
         // worth supporting this feature on such old versions of PostgreSQL.
+        // -------------------------------------------------------------------------------------------------------------------------
         if (pgVersion >= PG_VERSION_90)
         {
             ASSERT(buildData.tablespaceId != NULL);
@@ -782,9 +822,34 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, 
         }
 
         // Build list of exclusions
-        // !!! EXCLUSION LIST HERE -- REWRITE THE ORIGINAL LIST WITH pg_data/ in front for easy matching
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (excludeList != NULL)
+        {
+            for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
+            {
+                const String *exclude = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(strLstGet(excludeList, excludeIdx)));
 
-        // Add root path and target
+                // If the exclusions refers to the contents of a path
+                if (strEndsWithZ(exclude, "/"))
+                {
+                    if (buildData.excludeContent == NULL)
+                        buildData.excludeContent = strLstNew();
+
+                    strLstAdd(buildData.excludeContent, strSubN(exclude, 0, strSize(exclude) - 1));
+                }
+                // Otherwise exclude a single file/link/path
+                else
+                {
+                    if (buildData.excludeSingle == NULL)
+                        buildData.excludeSingle = strLstNew();
+
+                    strLstAdd(buildData.excludeSingle, exclude);
+                }
+            }
+        }
+
+        // Build manifest
+        // -------------------------------------------------------------------------------------------------------------------------
         StorageInfo info = storageInfoNP(storagePg, buildData.pgPath);
 
         ManifestPath path =
@@ -819,6 +884,7 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, 
         // Remove unlogged relations from the manifest.  This can't be done during the initial build because of the requirement to
         // check for _init files which will sort after the vast majority of the relation files.  We could check storage for each
         // _init file but that would be expensive.
+        // -------------------------------------------------------------------------------------------------------------------------
         if (pgVersion >= PG_VERSION_91)
         {
             RegExp *relationExp = regExpNew(STRDEF("^" DB_PATH_EXP "/" RELATION_EXP "$"));

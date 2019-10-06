@@ -38,14 +38,27 @@ testRun(void)
             "backup-timestamp-copy-start=0\n"                                                                                      \
             "backup-timestamp-start=0\n"                                                                                           \
             "backup-timestamp-stop=0\n"                                                                                            \
-            "backup-type=\"full\"\n"                                                                                               \
+            "backup-type=\"full\"\n"
+
+        #define TEST_MANIFEST_DB_83                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=200711281\n"                                                                                       \
+            "db-control-version=833\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"8.3\"\n"
+
+        #define TEST_MANIFEST_DB_94                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
             "db-catalog-version=201409291\n"                                                                                       \
             "db-control-version=942\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
-            "db-version=\"9.4\"\n"                                                                                                 \
+            "db-version=\"9.4\"\n"
+
+        #define TEST_MANIFEST_OPTION                                                                                               \
             "\n"                                                                                                                   \
             "[backup:option]\n"                                                                                                    \
             "option-archive-check=false\n"                                                                                         \
@@ -75,9 +88,6 @@ testRun(void)
             "mode=\"0700\"\n"                                                                                                      \
             "user=\"{[user]}\"\n"
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest with all features");
-
         storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
 
         Storage *storagePg = storagePosixNew(
@@ -85,13 +95,72 @@ testRun(void)
         Storage *storagePgWrite = storagePosixNew(
             strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("8.3 with custom exclusions and special file");
+
+        // Version
+        storagePutNP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
+            BUFSTRDEF("8.3\n"));
+
+        // Directories that will always be ignored
+        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
+
+        // global directory
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_GLOBAL), .mode = 0700, .noParentCreate = true);
+        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT)), NULL);
+        storagePutNP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/t1_1"), .modeFile = 0400, .timeModified = 1565282114), NULL);
+
+        // base/1 directory
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE "/1"), .mode = 0700, .noParentCreate = true);
+
+        StringList *exclusionList = strLstNew();
+        strLstAddZ(exclusionList, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT);
+        strLstAddZ(exclusionList, "bogus");
+        strLstAddZ(exclusionList, PG_PATH_BASE "/");
+        strLstAddZ(exclusionList, "bogus/");
+
+        Manifest *manifest = NULL;
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_83, false, exclusionList, NULL), "build manifest");
+
+        Buffer *contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_83
+                TEST_MANIFEST_OPTION
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
+                "pg_data/global/t1_1={\"size\":0,\"timestamp\":1565282114}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/global={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: exclude '{[path]}/pg/base' from backup using 'base/' exclusion\n"
+            "P00   INFO: exclude '{[path]}/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest with all features");
+
         // Version
         storagePutNP(
             storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
             BUFSTRDEF("9.4\n"));
-
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE "/1"), .mode = 0700, .noParentCreate = true);
 
         // Temp relations to ignore
         storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1")), NULL);
@@ -139,8 +208,6 @@ testRun(void)
             "unable to create symlink");
 
         // Directories to ignore files for depending on the version
-        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
         storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
         storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
         storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
@@ -149,16 +216,16 @@ testRun(void)
         storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSTATTMP), .mode = 0700, .noParentCreate = true);
         storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
 
-        Manifest *manifest = NULL;
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, false, NULL, NULL), "build manifest");
 
-        Buffer *contentSave = bufNew(0);
-
+        contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_94
+                TEST_MANIFEST_OPTION
                 "\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
@@ -186,6 +253,7 @@ testRun(void)
                 "pg_data={}\n"
                 "pg_data/base={}\n"
                 "pg_data/base/1={}\n"
+                "pg_data/global={}\n"
                 "pg_data/pg_dynshmem={}\n"
                 "pg_data/pg_notify={}\n"
                 "pg_data/pg_replslot={}\n"
@@ -215,7 +283,7 @@ testRun(void)
             FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), LinkDestinationError,
+            manifestNewBuild(storagePg, PG_VERSION_94, false, NULL, NULL), LinkDestinationError,
             hrnReplaceKey("link 'link' ({[path]}/pg/base) destination is in PGDATA"));
     }
 

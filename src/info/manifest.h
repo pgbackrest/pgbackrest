@@ -149,7 +149,8 @@ typedef struct ManifestTarget
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-Manifest *manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, const Manifest *manifestPrior);
+Manifest *manifestNewBuild(
+    const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList, const Manifest *manifestPrior);
 Manifest *manifestNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
