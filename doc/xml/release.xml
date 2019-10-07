@@ -25,7 +25,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>The <cmd>check</cmd> command is implemented entirely in C. Note that building the manifest has been temporarily removed and will be brought back after the manifest code has been fully migrated to C.</p>
