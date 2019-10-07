@@ -312,6 +312,7 @@ testRun(void)
         TEST_RESULT_VOID(strLstAddIfMissing(list, STRDEF("item1")), "add item 1");
         TEST_RESULT_UINT(strLstSize(list), 1, "check size");
         TEST_RESULT_BOOL(strLstExistsZ(list, "item1"), true, "check exists");
+        TEST_RESULT_BOOL(strLstExistsZ(list, NULL), false, "check null exists");
         TEST_RESULT_VOID(strLstAddIfMissing(list, STRDEF("item1")), "add item 1 again");
         TEST_RESULT_UINT(strLstSize(list), 1, "check size");
 

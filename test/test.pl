@@ -96,6 +96,7 @@ test.pl [options]
    --backtrace          enable backtrace when available (adds stack trace line numbers -- very slow)
    --profile            generate profile info
    --no-debug           don't generate a debug build
+   --scale              scale performance tests
    --debug-test-trace   test stack trace for low-level functions (slow, esp w/valgrind, may cause timeouts)
 
  Report Options:
@@ -164,6 +165,7 @@ my $bExpect = false;
 my $bNoValgrind = false;
 my $bNoOptimize = false;
 my $bNoDebug = false;
+my $iScale = 1;
 my $bDebugTestTrace = false;
 my $iRetry = 0;
 
@@ -210,6 +212,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-valgrind' => \$bNoValgrind,
             'no-optimize' => \$bNoOptimize,
             'no-debug', => \$bNoDebug,
+            'scale=s' => \$iScale,
             'debug-test-trace', => \$bDebugTestTrace,
             'retry=s' => \$iRetry)
     or pod2usage(2);
@@ -1301,7 +1304,7 @@ eval
                         $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
                         $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync,
                         $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bBackTrace,
-                        $bProfile, !$bNoDebug, $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
+                        $bProfile, $iScale, !$bNoDebug, $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
                     if ($oJob->run())

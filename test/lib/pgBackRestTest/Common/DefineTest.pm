@@ -59,6 +59,8 @@ use constant TESTDEF_INDIVIDUAL                                     => 'individu
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
 use constant TESTDEF_TOTAL                                          => 'total';
     push @EXPORT, qw(TESTDEF_TOTAL);
+use constant TESTDEF_TYPE                                           => 'type';
+    push @EXPORT, qw(TESTDEF_TYPE);
 use constant TESTDEF_PERL_REQ                                       => 'perlReq';
     push @EXPORT, qw(TESTDEF_PERL_REQ);
 use constant TESTDEF_VM                                             => 'vm';
@@ -137,8 +139,9 @@ sub testDefLoad
                 }
 
                 # Set module type variables
+                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TYPE} = $strModuleType;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_C} =
-                    $strModuleType eq TESTDEF_UNIT && $strTest !~ /perl$/ ? true : false;
+                    $strModuleType ne TESTDEF_INTEGRATION && $strTest !~ /perl$/ ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INTEGRATION} = $strModuleType eq TESTDEF_INTEGRATION ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_EXPECT} = $bExpect;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_CONTAINER} = $bContainer;

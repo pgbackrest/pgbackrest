@@ -23,8 +23,9 @@ PostgreSQL version constants
 #define PG_VERSION_96                                                90600
 #define PG_VERSION_10                                               100000
 #define PG_VERSION_11                                               110000
+#define PG_VERSION_12                                               120000
 
-#define PG_VERSION_MAX                                              PG_VERSION_11
+#define PG_VERSION_MAX                                              PG_VERSION_12
 
 /***********************************************************************************************************************************
 Version where various PostgreSQL capabilities were introduced
@@ -50,6 +51,9 @@ Version where various PostgreSQL capabilities were introduced
 // xlog was renamed to wal
 #define PG_VERSION_WAL_RENAME                                       PG_VERSION_10
 
+// recovery settings are implemented as GUCs (recovery.conf is no longer valid)
+#define PG_VERSION_RECOVERY_GUC                                     PG_VERSION_12
+
 /***********************************************************************************************************************************
 PostgreSQL version string constants for use in error messages
 ***********************************************************************************************************************************/
@@ -64,5 +68,6 @@ PostgreSQL version string constants for use in error messages
 #define PG_VERSION_96_STR                                            "9.6"
 #define PG_VERSION_10_STR                                            "10"
 #define PG_VERSION_11_STR                                            "11"
+#define PG_VERSION_12_STR                                            "12"
 
 #endif

@@ -12,11 +12,48 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.18dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.19dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="brad.nicholson"/>
+                        </release-item-contributor-list>
+
+                        <p>Document maximum version for <br-option>auto-stop</br-option> option.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+
+        </release>
+
+        <release date="2019-10-01" version="2.18" title="PostgreSQL 12 Support">
             <release-core-list>
                 <release-feature-list>
                     <release-item>
-                        <p>Add <id>standby</id> restore type which automatically adds <pg-option>standby_mode</pg-option> to <file>recovery.conf</file>.</p>
+                        <p><postgres/> 12 support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-ideator id="ejberdecia"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <cmd>info</cmd> command <br-option>set</br-option> option for detailed text output.</p>
+
+                        <p>The additional details include databases that can be used for selective restore and a list of tablespaces and symlinks with their default destinations.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>standby</id> restore type.</p>
+
+                        <p>This restore type automatically adds <pg-option>standby_mode=on</pg-option> to recovery.conf for <postgres/> &lt; 12 and creates <file>standby.signal</file> for <postgres/> &amp;ge; 12, creating a common interface between PostgreSQL versions.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -7454,6 +7491,11 @@
         <contributor id="douglas.j.hunley">
             <contributor-name-display>Douglas J Hunley</contributor-name-display>
             <contributor-id type="github">hunleyd</contributor-id>
+        </contributor>
+
+        <contributor id="ejberdecia">
+            <contributor-name-display>ejberdecia</contributor-name-display>
+            <contributor-id type="github">ejberdecia</contributor-id>
         </contributor>
 
         <contributor id="eric.radman">

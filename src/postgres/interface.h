@@ -16,10 +16,16 @@ Defines for various Postgres paths and files
 #define PG_FILE_PGCONTROL                                           "pg_control"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
     STRING_DECLARE(PG_FILE_PGVERSION_STR);
+#define PG_FILE_POSTGRESQLAUTOCONF                                  "postgresql.auto.conf"
+    STRING_DECLARE(PG_FILE_POSTGRESQLAUTOCONF_STR);
 #define PG_FILE_POSTMASTERPID                                       "postmaster.pid"
     STRING_DECLARE(PG_FILE_POSTMASTERPID_STR);
 #define PG_FILE_RECOVERYCONF                                        "recovery.conf"
     STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
+#define PG_FILE_RECOVERYSIGNAL                                      "recovery.signal"
+    STRING_DECLARE(PG_FILE_RECOVERYSIGNAL_STR);
+#define PG_FILE_STANDBYSIGNAL                                       "standby.signal"
+    STRING_DECLARE(PG_FILE_STANDBYSIGNAL_STR);
 #define PG_FILE_TABLESPACEMAP                                       "tablespace_map"
 
 #define PG_PATH_ARCHIVE_STATUS                                      "archive_status"
@@ -87,7 +93,7 @@ typedef struct PgWal
 Functions
 ***********************************************************************************************************************************/
 uint32_t pgCatalogVersion(unsigned int pgVersion);
-PgControl pgControlFromFile(const Storage *storage, const String *pgPath);
+PgControl pgControlFromFile(const Storage *storage);
 PgControl pgControlFromBuffer(const Buffer *controlFile);
 uint32_t pgControlVersion(unsigned int pgVersion);
 unsigned int pgVersionFromStr(const String *version);

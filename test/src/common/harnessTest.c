@@ -142,6 +142,30 @@ testExpectPathSet(const char *testExpectPath)
 }
 
 /***********************************************************************************************************************************
+Get and set scale for performance testing
+***********************************************************************************************************************************/
+static uint64_t testScaleData = 1;
+
+uint64_t
+testScale(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(UINT64, testScaleData);
+}
+
+void
+testScaleSet(uint64_t testScale)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(UINT64, testScale);
+    FUNCTION_HARNESS_END();
+
+    testScaleData = testScale;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
 Get test user/group
 ***********************************************************************************************************************************/
 const char *

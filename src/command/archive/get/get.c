@@ -88,6 +88,8 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
         }
 
         // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
+        strLstSort(keepQueue, sortOrderAsc);
+
         for (unsigned int idealQueueIdx = 0; idealQueueIdx < strLstSize(idealQueue); idealQueueIdx++)
         {
             if (!strLstExists(keepQueue, strLstGet(idealQueue, idealQueueIdx)))
@@ -204,7 +206,7 @@ cmdArchiveGet(void)
                     lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
                 {
                     // Get control info
-                    PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
+                    PgControl pgControl = pgControlFromFile(storagePg());
 
                     // Create the queue
                     storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
