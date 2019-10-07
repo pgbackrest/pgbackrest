@@ -28,7 +28,6 @@ checkManifest(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-// CSHANG The perl code for testing the manifest build doesn't seem right as the outer loop was using the CFGOPT_PG_HOST total. I've changed it to PG_PATH here - any reason why this would not be correct?
         // Loop through all defined databases and attempt to build a manifest
         for (unsigned int pgIdx = 0; pgIdx < cfgOptionIndexTotal(cfgOptPgPath); pgIdx++)
         {
@@ -65,8 +64,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
         }
 
         // Validate the standby database config
-        PgControl pgControl = pgControlFromFile(
-            storagePgId(dbGroup.standbyId), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
+        PgControl pgControl = pgControlFromFile(storagePgId(dbGroup.standbyId));
 
         // Check the user configured path and version against the database
         checkDbConfig(pgControl.version, dbGroup.standbyId, dbGroup.standby, true);
@@ -104,8 +102,7 @@ checkPrimary(const DbGetResult dbGroup)
     if (dbGroup.primary != NULL)
     {
         // Validate the primary database config
-        PgControl pgControl = pgControlFromFile(
-            storagePgId(dbGroup.primaryId), cfgOptionStr(cfgOptPgPath + dbGroup.primaryId - 1));
+        PgControl pgControl = pgControlFromFile(storagePgId(dbGroup.primaryId));
 
         // Check the user configured path and version against the database
         checkDbConfig(pgControl.version, dbGroup.primaryId, dbGroup.primary, false);
@@ -136,7 +133,8 @@ checkPrimary(const DbGetResult dbGroup)
         {
             LOG_INFO(
                 "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
-                strPtr(storagePath(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walSegmentFile)))));
+                strPtr(storagePath(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
+                strPtr(walSegmentFile)))));
         }
         else
         {
