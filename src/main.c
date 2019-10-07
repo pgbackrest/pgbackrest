@@ -124,7 +124,6 @@ main(int argListSize, const char *argList[])
                     cmdBegin(true);
 
                     // Run expire
-                    perlExec();
                     cmdExpire();
 
                     break;

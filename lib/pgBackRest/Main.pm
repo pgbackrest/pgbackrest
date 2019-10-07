@@ -154,13 +154,6 @@ sub main
 
                 new pgBackRest::Backup::Backup()->process();
             }
-
-            # Process expire command
-            # ----------------------------------------------------------------------------------------------------------------------
-            elsif (cfgCommandTest(CFGCMD_EXPIRE))
-            {
-                new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
-            }
         }
 
         return 1;

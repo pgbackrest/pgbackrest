@@ -464,11 +464,11 @@ sub add
             $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false, $lFileSize);
         my $strFileReference =
             $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE, false);
-# CSHANG So what does this comment mean?
+
         # Temporary until compressed size is back in
         $lBackupSize += $lFileSize;
         $lBackupRepoSize += $lRepoSize;
-# CSHANG So only if it is a FULL backup (reference would never be defined for FULL) do we add the "delta" sizes
+
         if (defined($strFileReference))
         {
             $$oReferenceHash{$strFileReference} = true;

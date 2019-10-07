@@ -400,12 +400,7 @@ testRun(void)
             "pg_data/base/65536={\"user\":false}\n"
             TEST_MANIFEST_PATH_DEFAULT
         );
-// CSHANG Need to make sure the formula is correct. Ask David.
-// backupSize 4 + 8192 + 4 + 1073741824 + 32768 + 4457 + 0 = 1073787249  // database size from info command
-// backupRepoSize 4 + 4096 + 4 + 1073741824 + 32768 + 4457 + 0 = 1073783153    // repo size from info command
-// refList 20190818-084502F_20190819-084506D, 20190818-084502F, 20190818-084502F_20190819-084506I
-// backupSizeDelta 8192 + 4 + 4457 + 0 = 12653   // backup size from info command - this only gets incremented if no reference
-// backupRepoSizeDelta 4096 + 4 + 4457 + 0 = 8557   // repo backup size from info command - this only gets incremented if no reference
+
         TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(manifestContent)), "load manifest");
         TEST_RESULT_VOID(infoBackupDataAdd(infoBackup, manifest), "add a backup");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup added to current");
