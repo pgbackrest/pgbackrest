@@ -26,10 +26,6 @@ use constant OP_BACKUP_FILE                                          => 'backupF
 use constant OP_ARCHIVE_GET_CHECK                                   => 'archiveCheck';
     push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
 
-# Check Module
-use constant OP_CHECK_BACKUP_INFO_CHECK                             => 'backupInfoCheck';
-    push @EXPORT, qw(OP_CHECK_BACKUP_INFO_CHECK);
-
 # Db Module
 use constant OP_DB_CONNECT                                          => 'dbConnect';
     push @EXPORT, qw(OP_DB_CONNECT);

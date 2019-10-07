@@ -35,8 +35,7 @@ checkManifest(void)
             if (cfgOptionTest(cfgOptPgHost + pgIdx) || cfgOptionTest(cfgOptPgPath + pgIdx))
             {
                 result++;
-                // CSHANG Placeholder for manifest builds - this is here just to make sure the loop is run and to check error
-                // StringList *listTest =
+                // ??? Placeholder for manifest builds - this is here just to make sure the loop is run and to check error
                 storageListNP(storagePgId(pgIdx + 1), varStr(cfgOption(cfgOptPgPath + pgIdx)));
             }
         }
@@ -64,7 +63,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
             if (repoIsLocal() || pgPathDefinedTotal > 1)
                 THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
         }
-// CSHANG What worries me is that we're requiring that pg1-* always be the local db host (you mentioned archive-push) so I think we need to make that very clear in the user-guide. Do we test for p2-path being the only thing configured on the primary to confirm archive push still works?
+
         // Validate the standby database config
         PgControl pgControl = pgControlFromFile(
             storagePgId(dbGroup.standbyId), cfgOptionStr(cfgOptPgPath + dbGroup.standbyId - 1));
