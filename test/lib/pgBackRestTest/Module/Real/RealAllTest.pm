@@ -495,27 +495,28 @@ sub run
                 $strFullBackup = $strStandbyBackup;
             }
 
-            # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
-            my $strDir = $oHostDbStandby->dbBasePath() . '/rootreaddir';
-            executeTest('sudo mkdir ' . $strDir);
-            executeTest("sudo chown root:root ${strDir}");
-            executeTest("sudo chmod 400 ${strDir}");
-
-            my $strComment = 'confirm standby manifest->build executed';
-
-            # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
-            # an open error instead of a read error
-            if (!$oHostDbStandby->bogusHost())
-            {
-                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
-            }
-            else
-            {
-                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
-            }
-
-            # Remove the directory in pg_data location that is only readable by root
-            executeTest("sudo rmdir ${strDir}");
+            # ??? Removed temporarily until manifest build can be brought back into the check command
+            # # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
+            # my $strDir = $oHostDbStandby->dbBasePath() . '/rootreaddir';
+            # executeTest('sudo mkdir ' . $strDir);
+            # executeTest("sudo chown root:root ${strDir}");
+            # executeTest("sudo chmod 400 ${strDir}");
+            #
+            # my $strComment = 'confirm standby manifest->build executed';
+            #
+            # # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
+            # # an open error instead of a read error
+            # if (!$oHostDbStandby->bogusHost())
+            # {
+            #     $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
+            # }
+            # else
+            # {
+            #     $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
+            # }
+            #
+            # # Remove the directory in pg_data location that is only readable by root
+            # executeTest("sudo rmdir ${strDir}");
 
             # Confirm the check command runs without error on a standby (when a bogus host is not configured)
             if (!$oHostDbStandby->bogusHost())
