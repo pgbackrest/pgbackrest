@@ -215,10 +215,6 @@ repo1-path=[TEST_PATH]/backup/repo
 archive-copy=y
 start-fast=y
 
-check db - confirm standby manifest->build executed (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --archive-timeout=5 --stanza=db check
-------------------------------------------------------------------------------------------------------------------------------------
-
 check db - verify check command on standby (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------

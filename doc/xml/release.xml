@@ -20,6 +20,14 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>The <cmd>check</cmd> command is implemented entirely in C.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Document how to contribute to <backrest/>.</p>
                     </release-item>
 

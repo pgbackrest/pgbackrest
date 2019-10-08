@@ -34,7 +34,7 @@ testRun(void)
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdStanzaCreate(), infoValidate()"))
+    if (testBegin("cmdStanzaCreate(), checkStanzaInfo()"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -231,7 +231,7 @@ testRun(void)
             cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // infoValidate()
+        // checkStanzaInfo() - already checked in checkTest so just a sanity check here
         //--------------------------------------------------------------------------------------------------------------------------
         // Create a corrupted backup file - db id
         contentBackup = strNew
@@ -250,7 +250,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad db-id");
+                "put backup info to file - bad db-id");
 
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
@@ -258,57 +258,12 @@ testRun(void)
             "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // Create a corrupted backup file - system id
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad system-id");
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Copy files may or may not exist - remove
+        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
+        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
 
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        // Create a corrupted backup file - system id and version
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.5\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.5\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad system-id and version");
-
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.5, system-id = 6569239123849665999\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        // Create a corrupted backup file - version
+        // Create an archive.info file and backup.info files that match but do not match the current database version
         contentBackup = strNew
         (
             "[db]\n"
@@ -325,20 +280,8 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad version");
+                "put backup info to file");
 
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        // Copy files may or may not exist - remove
-        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
-        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
-
-        // Create an archive.info file that matches the backup.info file but does not match the current database version
         contentArchive = strNew
         (
             "[db]\n"
@@ -355,7 +298,7 @@ testRun(void)
                 "put archive info file");
 
         TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup and archive info files already exist but do not match the database\n"
+            cmdStanzaCreate(), FileInvalidError, "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
 
@@ -391,10 +334,10 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file");
+                "put backup info to file");
 
         TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup and archive info files already exist but do not match the database\n"
+            cmdStanzaCreate(), FileInvalidError, "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
 
@@ -449,7 +392,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -460,7 +403,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -477,7 +420,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -498,7 +441,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(strNewFmt("%s/pg2", testPath())), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(strNewFmt("%s/pg2", testPath())), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -532,8 +475,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", testPath(), true),
-            HRNPQ_MACRO_OPEN_92(2, "dbname='postgres' port=5434", strPtr(pg1Path), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", testPath(), true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_92(2, "dbname='postgres' port=5434", strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(2),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()

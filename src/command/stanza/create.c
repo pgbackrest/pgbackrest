@@ -7,6 +7,7 @@ Stanza Create Command
 #include <string.h>
 #include <inttypes.h>
 
+#include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/stanza/common.h"
 #include "command/stanza/create.h"
@@ -74,6 +75,7 @@ cmdStanzaCreate(void)
 
             // Create and save archive info
             infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherPassSub);
+
             infoArchiveSaveFile(
                 infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
@@ -83,6 +85,7 @@ cmdStanzaCreate(void)
 
             // Create and save backup info
             infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, cipherPassSub);
+
             infoBackupSaveFile(
                 infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
@@ -90,59 +93,41 @@ cmdStanzaCreate(void)
         // Else if at least one archive and one backup info file exists, then ensure both are valid
         else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
         {
-            infoArchive = infoArchiveLoadFile(
-                storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            // Error if there is a mismatch between the archive and backup info files or the database version/system Id matches
+            // current database
+            checkStanzaInfoPg(
+                storageRepoReadStanza, pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStr(cfgOptRepoCipherPass));
-            InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
-            infoBackup = infoBackupLoadFile(
-                storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStr(cfgOptRepoCipherPass));
-            InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+            // The files are valid - upgrade
+            const String *sourceFile = NULL;
+            const String *destinationFile = NULL;
 
-            // Error if there is a mismatch between the archive and backup info files
-            infoValidate(&archiveInfo, &backupInfo);
-
-            // The archive and backup info files match so check if the versions or system ids match the current database,
-            // if not, then an upgrade may be necessary
-            if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
+            // If the existing files are valid, then, if a file is missing, copy the existing one to the missing one to ensure
+            // there is both a .info and .info.copy
+            if (!archiveInfoFileExists || !archiveInfoFileCopyExists)
             {
-                THROW(FileInvalidError, "backup and archive info files already exist but do not match the database\n"
-                    "HINT: is this the correct stanza?\n"
-                    "HINT: did an error occur during stanza-upgrade?");
+                sourceFile = archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
+                destinationFile = !archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
+
+                storageCopyNP(
+                    storageNewReadNP(storageRepoReadStanza, sourceFile),
+                    storageNewWriteNP(storageRepoWriteStanza, destinationFile));
             }
-            // Else the files are valid
-            else
+
+            if (!backupInfoFileExists || !backupInfoFileCopyExists)
             {
-                const String *sourceFile = NULL;
-                const String *destinationFile = NULL;
+                sourceFile = backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
+                destinationFile = !backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
 
-                // If the existing files are valid, then, if a file is missing, copy the existing one to the missing one to ensure
-                // there is both a .info and .info.copy
-                if (!archiveInfoFileExists || !archiveInfoFileCopyExists)
-                {
-                    sourceFile = archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
-                    destinationFile = !archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
-
-                    storageCopyNP(
-                        storageNewReadNP(storageRepoReadStanza, sourceFile),
-                        storageNewWriteNP(storageRepoWriteStanza, destinationFile));
-                }
-
-                if (!backupInfoFileExists || !backupInfoFileCopyExists)
-                {
-                    sourceFile = backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
-                    destinationFile = !backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
-
-                    storageCopyNP(
-                        storageNewReadNP(storageRepoReadStanza, sourceFile),
-                        storageNewWriteNP(storageRepoWriteStanza, destinationFile));
-                }
-
-                // If no files copied, then the stanza was already valid
-                if (sourceFile == NULL)
-                    LOG_INFO("stanza '%s' already exists and is valid", strPtr(cfgOptionStr(cfgOptStanza)));
+                storageCopyNP(
+                    storageNewReadNP(storageRepoReadStanza, sourceFile),
+                    storageNewWriteNP(storageRepoWriteStanza, destinationFile));
             }
+
+            // If no files copied, then the stanza was already valid
+            if (sourceFile == NULL)
+                LOG_INFO("stanza '%s' already exists and is valid", strPtr(cfgOptionStr(cfgOptStanza)));
         }
         // Else if both .info and corresponding .copy file are missing for one but not the other, then error
         else

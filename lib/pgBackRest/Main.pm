@@ -106,17 +106,6 @@ sub main
             $oRemote->process(
                 cfgOption(CFGOPT_LOCK_PATH), cfgOption(CFGOPT_COMMAND), cfgOption(CFGOPT_STANZA, false), cfgOption(CFGOPT_PROCESS));
         }
-
-        # Process check command
-        # --------------------------------------------------------------------------------------------------------------------------
-        elsif (cfgCommandTest(CFGCMD_CHECK))
-        {
-            # Load module dynamically
-            require pgBackRest::Check::Check;
-            pgBackRest::Check::Check->import();
-
-            $iResult = new pgBackRest::Check::Check()->process();
-        }
         else
         {
             # Check that the repo path exists

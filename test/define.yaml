@@ -640,7 +640,8 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: check
-        total: 2
+        total: 4
+        containerReq: true
 
         coverage:
           command/check/common: full

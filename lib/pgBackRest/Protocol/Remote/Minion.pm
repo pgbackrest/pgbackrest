@@ -15,7 +15,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Wait;
 use pgBackRest::Archive::Get::File;
-use pgBackRest::Check::Check;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::Protocol::Command::Minion;
@@ -68,7 +67,6 @@ sub init
     # Create objects
     my $oStorage = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? storageDb() : storageRepo();
 
-    my $oCheck = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Check::Check() : undef;
     my $oDb = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? new pgBackRest::Db() : undef;
 
     # Create anonymous subs for each command
@@ -76,9 +74,6 @@ sub init
     {
         # ArchiveGet commands
         &OP_ARCHIVE_GET_CHECK => sub {archiveGetCheck(@{shift()})},
-
-        # Check commands
-        &OP_CHECK_BACKUP_INFO_CHECK => sub {$oCheck->backupInfoCheck(@{shift()})},
 
         # Db commands
         &OP_DB_CONNECT => sub {$oDb->connect()},

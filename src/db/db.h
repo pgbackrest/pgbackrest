@@ -38,6 +38,8 @@ Getters
 ***********************************************************************************************************************************/
 const String *dbPgDataPath(const Db *this);
 unsigned int dbPgVersion(const Db *this);
+const String *dbArchiveMode(const Db *this);
+const String *dbArchiveCommand(const Db *this);
 
 /***********************************************************************************************************************************
 Destructor
