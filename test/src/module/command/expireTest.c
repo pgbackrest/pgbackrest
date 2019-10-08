@@ -723,11 +723,36 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
         harnessCfgLoad(cfgCmdExpire, argList);
 
+        // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152900F_20181119-152500I/" BACKUP_MANIFEST_FILE,
+            strPtr(backupStanzaPath))), BUFSTRDEF("tmp"));
+
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
             storagePathExistsNP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1/0000000100000000")),
             false, "  archive sub path removed");
-        harnessLogResult("P00   INFO: expire full backup 20181119-152138F");
+        harnessLogResult(
+            "P00   INFO: expire full backup 20181119-152138F\n"
+            "P00   INFO: remove expired backup 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListAvoidWarn);
@@ -742,6 +767,10 @@ testRun(void)
         harnessLogResult(strPtr(strNewFmt(
             "P00   INFO: expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
             "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup 20181119-152800F_20181119-152152D\n"
+            "P00   INFO: remove expired backup 20181119-152800F\n"
             "P00   INFO: remove archive path: %s/%s/9.4-1", testPath(), strPtr(archiveStanzaPath))));
 
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "  get backup.info");
@@ -890,6 +919,18 @@ testRun(void)
                 "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
                     "\"db-version\":\"10\"}\n"));
 
+        // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk and removeExpiredBackup
+        // will find backup directories to remove
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+
         storagePutNP(
             storageNewWriteNP(storageTest, archiveInfoFileName),
             harnessInfoChecksumZ(
@@ -907,7 +948,9 @@ testRun(void)
         archiveGenerate(storageTest, archiveStanzaPath, 1, 7, "10-2", "0000000100000000");
 
         TEST_ERROR(cmdExpire(), FormatError, "archive expiration cannot continue - archive and backup history lists do not match");
-        harnessLogResult("P00   INFO: expire full backup 20181119-152138F");
+        harnessLogResult(
+            "P00   INFO: expire full backup 20181119-152138F\n"
+            "P00   INFO: remove expired backup 20181119-152138F");
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(storageListNP(
                 storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc), ", ")),
@@ -994,6 +1037,18 @@ testRun(void)
                 "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
                     "\"db-version\":\"10\"}\n"));
 
+        // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk and removeExpiredBackup
+        // will find backup directories to remove
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strPtr(backupStanzaPath))),
+            BUFSTRDEF("tmp"));
+
         storagePutNP(
             storageNewWriteNP(storageTest, archiveInfoFileName),
             harnessInfoChecksumZ(
@@ -1014,7 +1069,11 @@ testRun(void)
         // here we are testing that things on disk that we are not aware of are not touched.
         TEST_RESULT_VOID(cmdExpire(), "Expire archive that archive.info is aware of");
 
-        harnessLogResult("P00   INFO: expire full backup 20181119-152138F\nP00   INFO: expire full backup 20181119-152800F");
+        harnessLogResult(
+            "P00   INFO: expire full backup 20181119-152138F\n"
+            "P00   INFO: expire full backup 20181119-152800F\n"
+            "P00   INFO: remove expired backup 20181119-152800F\n"
+            "P00   INFO: remove expired backup 20181119-152138F");
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(storageListNP(
                 storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc), ", ")),
