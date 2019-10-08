@@ -40,7 +40,8 @@ Vagrant.configure(2) do |config|
         echo 'supersede domain-name-servers 8.8.8.8;' >> /etc/dhcp/dhclient.conf
         /etc/init.d/networking restart
 
-        # Set time sync settings so builds don't fail with clock skew errors
+        # Set time sync settings so builds don't fail with clock skew errors. If a build does fail with "clock skew detected",
+        # rerun the following at the command line.
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Time Sync Settings' && date
         sudo /etc/init.d/virtualbox-guest-utils stop
