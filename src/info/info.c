@@ -40,6 +40,7 @@ Object types
 struct Info
 {
     MemContext *memContext;                                         // Mem context
+    const String *backrestVersion;                                  // pgBackRest version
     const String *cipherPass;                                       // Cipher passphrase if set
 };
 
@@ -141,6 +142,7 @@ infoNew(const String *cipherPass)
 
         // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
         this->cipherPass = strDup(cipherPass);
+        this->backrestVersion = STRDEF(PROJECT_VERSION);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -208,6 +210,15 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
         {
             if (jsonToUInt(value) != REPOSITORY_FORMAT)
                 THROW_FMT(FormatError, "expected format %d but found %d", REPOSITORY_FORMAT, cvtZToInt(strPtr(value)));
+        }
+        // Store pgBackRest version
+        else if (strEq(key, INFO_KEY_VERSION_STR))
+        {
+            MEM_CONTEXT_BEGIN(loadData->info->memContext)
+            {
+                loadData->info->backrestVersion = jsonToStr(value);
+            }
+            MEM_CONTEXT_END();
         }
         // Store checksum to be validated later
         else if (strEq(key, INFO_KEY_CHECKSUM_STR))
@@ -449,6 +460,18 @@ infoCipherPass(const Info *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->cipherPass);
+}
+
+const String *
+infoBackrestVersion(const Info *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->backrestVersion);
 }
 
 /***********************************************************************************************************************************

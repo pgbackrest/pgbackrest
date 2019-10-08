@@ -803,6 +803,7 @@ manifestNewLoad(IoRead *read)
         MEM_CONTEXT_END();
 
         this->info = infoNewLoad(read, manifestLoadCallback, &loadData);
+        this->data.backrestVersion = infoBackrestVersion(this->info);
 
         // Process file defaults
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
