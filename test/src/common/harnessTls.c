@@ -14,7 +14,13 @@ Tls Test Harness
 #include "common/type/buffer.h"
 #include "common/wait.h"
 
+#include "common/harnessTest.h"
 #include "common/harnessTls.h"
+
+/***********************************************************************************************************************************
+Test defaults
+***********************************************************************************************************************************/
+#define TLS_TEST_HOST                                               "tls.test.pgbackrest.org"
 
 static int testServerSocket = 0;
 static SSL_CTX *testServerContext = NULL;
@@ -28,8 +34,11 @@ void
 harnessTlsServerInit(int port, const char *serverCert, const char *serverKey)
 {
     // Add test hosts
-    if (system("echo \"127.0.0.1 " TLS_TEST_HOST "\" | sudo tee -a /etc/hosts > /dev/null") != 0)
-        THROW(AssertError, "unable to add test host to /etc/hosts");
+    if (testContainer())
+    {
+        if (system("echo \"127.0.0.1 " TLS_TEST_HOST "\" | sudo tee -a /etc/hosts > /dev/null") != 0)
+            THROW(AssertError, "unable to add test host to /etc/hosts");
+    }
 
     // Initialize ssl and create a context
     cryptoInit();
@@ -76,6 +85,21 @@ harnessTlsServerInit(int port, const char *serverCert, const char *serverKey)
     // Listen for client connections
     if (listen(testServerSocket, 1) < 0)
         THROW_SYS_ERROR(AssertError, "unable to listen on socket");
+}
+
+/**********************************************************************************************************************************/
+void
+harnessTlsServerInitDefault(void)
+{
+    if (testContainer())
+        harnessTlsServerInit(TLS_TEST_PORT, TLS_CERT_TEST_CERT, TLS_CERT_TEST_KEY);
+    else
+    {
+        harnessTlsServerInit(
+            TLS_TEST_PORT,
+            strPtr(strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath())),
+            strPtr(strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".key", testRepoPath())));
+    }
 }
 
 /***********************************************************************************************************************************
@@ -149,4 +173,10 @@ harnessTlsServerClose(void)
 {
     SSL_free(testClientSSL);
     close(testClientSocket);
+}
+
+/**********************************************************************************************************************************/
+const String *harnessTlsTestHost(void)
+{
+    return strNew(testContainer() ? TLS_TEST_HOST : "localhost");
 }

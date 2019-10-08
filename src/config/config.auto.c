@@ -425,6 +425,7 @@ STRING_EXTERN(CFGOPT_PROCESS_STR,                                   CFGOPT_PROCE
 STRING_EXTERN(CFGOPT_PROCESS_MAX_STR,                               CFGOPT_PROCESS_MAX);
 STRING_EXTERN(CFGOPT_PROTOCOL_TIMEOUT_STR,                          CFGOPT_PROTOCOL_TIMEOUT);
 STRING_EXTERN(CFGOPT_RECOVERY_OPTION_STR,                           CFGOPT_RECOVERY_OPTION);
+STRING_EXTERN(CFGOPT_RECURSE_STR,                                   CFGOPT_RECURSE);
 STRING_EXTERN(CFGOPT_REPO1_CIPHER_PASS_STR,                         CFGOPT_REPO1_CIPHER_PASS);
 STRING_EXTERN(CFGOPT_REPO1_CIPHER_TYPE_STR,                         CFGOPT_REPO1_CIPHER_TYPE);
 STRING_EXTERN(CFGOPT_REPO1_HARDLINK_STR,                            CFGOPT_REPO1_HARDLINK);
@@ -1457,6 +1458,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_RECOVERY_OPTION)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRecoveryOption)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_RECURSE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRecurse)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

@@ -54,7 +54,10 @@ testRun(void)
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(exec, execNew(strNew("cat"), strLstAddZ(strLstNew(), "-b"), strNew("cat"), 1000), "new cat exec");
+        StringList *option = strLstNew();
+        strLstAddZ(option, "-b");
+
+        TEST_ASSIGN(exec, execNew(strNew("cat"), option, strNew("cat"), 1000), "new cat exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
@@ -73,7 +76,10 @@ testRun(void)
                 for (int fd = 0; fd < 64; fd++)
                     close(fd);
 
-                TEST_ASSIGN(exec, execNew(strNew("cat"), strLstAddZ(strLstNew(), "-b"), strNew("cat"), 1000), "new cat exec");
+                StringList *option = strLstNew();
+                strLstAddZ(option, "-b");
+
+                TEST_ASSIGN(exec, execNew(strNew("cat"), option , strNew("cat"), 1000), "new cat exec");
                 TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
                 TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
@@ -86,7 +92,10 @@ testRun(void)
         HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(exec, execNew(strNew("sleep"), strLstAddZ(strLstNew(), "2"), strNew("sleep"), 1000), "new sleep exec");
+        option = strLstNew();
+        strLstAddZ(option, "2");
+
+        TEST_ASSIGN(exec, execNew(strNew("sleep"), option, strNew("sleep"), 1000), "new sleep exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         TEST_ERROR(execFreeResource(exec), ExecuteError, "sleep did not exit when expected");

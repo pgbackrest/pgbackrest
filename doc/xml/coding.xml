@@ -206,6 +206,14 @@ if (condition)
 }
                 </code-block>
             </section>
+
+            <section id="hints-warnings-errors">
+                <title>Hints, Warnings, and Errors</title>
+
+                <p>Hints are to be formatted with capitalized <id>HINT:</id> followed by a space and a sentence. The sentence shall only begin with a capital letter if the first word is an acronym (e.g. TLS) or a proper name (e.g. PostgreSQL). The sentence must end with a period, question mark or exclamation point as appropriate.</p>
+
+                <p>Warning and errors shall be lowercase with the exceptions for proper names and acronyms and end without punctuation.</p>
+            </section>
         </section>
     </section>
 

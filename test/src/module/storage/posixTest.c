@@ -11,6 +11,7 @@ Test Posix Storage
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test function for path expression
@@ -37,24 +38,6 @@ Macro to create a path and file that cannot be accessed
             strPtr(strNewFmt("sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strPtr(pathNoPerm), strPtr(fileNoPerm), \
             strPtr(fileNoPerm)))),                                                                                                 \
         0, "create no perm path/file");
-
-/***********************************************************************************************************************************
-Callback and data for storageInfoList() tests
-***********************************************************************************************************************************/
-unsigned int testStorageInfoListSize = 0;
-StorageInfo testStorageInfoList[256];
-
-void
-testStorageInfoListCallback(void *callbackData, const StorageInfo *info)
-{
-    MEM_CONTEXT_BEGIN((MemContext *)callbackData)
-    {
-        testStorageInfoList[testStorageInfoListSize] = *info;
-        testStorageInfoList[testStorageInfoListSize].name = strDup(info->name);
-        testStorageInfoListSize++;
-    }
-    MEM_CONTEXT_END();
-}
 
 /***********************************************************************************************************************************
 Test Run
@@ -283,24 +266,95 @@ testRun(void)
             STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        testStorageInfoListSize = 0;
+        HarnessStorageInfoListCallbackData callbackData =
+        {
+            .content = strNew(""),
+        };
+
         TEST_RESULT_VOID(
-            storagePosixInfoListEntry((StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"),
-                testStorageInfoListCallback, (void *)memContextCurrent()),
-            "missing file");
-        TEST_RESULT_UINT(testStorageInfoListSize, 0, "    no file found");
+            storagePosixInfoListEntry(
+                (StoragePosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"),
+                hrnStorageInfoListCallback, &callbackData),
+            "missing path");
+        TEST_RESULT_STR_Z(callbackData.content, "", "    check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0766);
+        storagePathCreateP(storageTest, strNew("pg"), .mode = 0766);
+
+        callbackData.content = strNew("");
 
         TEST_RESULT_VOID(
-            storageInfoListNP(storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent()),
-            "empty directory");
-        TEST_RESULT_UINT(testStorageInfoListSize, 2, "    two paths returned");
-        TEST_RESULT_STR(
-            strPtr(testStorageInfoList[0].name), strEqZ(testStorageInfoList[1].name, ".") ? ".include" : ".", "    check name");
-        TEST_RESULT_STR(
-            strPtr(testStorageInfoList[1].name), strEqZ(testStorageInfoList[0].name, ".") ? ".include" : ".", "    check name");
+            storageInfoListP(storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData),
+            "directory with one dot file sorted");
+        TEST_RESULT_STR_Z(
+            callbackData.content, strPtr(strNewFmt(". {path, m=0766, u=%s, g=%s}\n", testUser(), testGroup())),
+            "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0755);
+        ASSERT(system(strPtr(strNewFmt("sudo chown 77777:77777 %s/pg/.include", testPath()))) == 0);
+
+        storagePutNP(storageNewWriteP(storageTest, strNew("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
+
+        ASSERT(system(strPtr(strNewFmt("ln -s ../file %s/pg/link", testPath()))) == 0);
+        ASSERT(system(strPtr(strNewFmt("mkfifo -m 777 %s/pg/pipe", testPath()))) == 0);
+
+        callbackData = (HarnessStorageInfoListCallbackData)
+        {
+            .content = strNew(""),
+            .timestampOmit = true,
+            .modeOmit = true,
+            .modePath = 0766,
+            .modeFile = 0600,
+            .userOmit = true,
+            .groupOmit = true,
+        };
+
+        TEST_RESULT_VOID(
+            storageInfoListP(storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+            "directory with one dot file sorted");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            ". {path}\n"
+            ".include {path, m=0755, u=77777, g=77777}\n"
+            "file {file, s=8, m=0660}\n"
+            "link {link, d=../file}\n"
+            "pipe {special}\n",
+            "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        ASSERT(system(strPtr(strNewFmt("sudo rmdir %s/pg/.include", testPath()))) == 0);
+        storagePathCreateP(storageTest, strNew("pg/path"), .mode = 0700);
+        storagePutNP(storageNewWriteP(storageTest, strNew("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+
+        callbackData.content = strNew("");
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
+            "recurse descending");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "pipe {special}\n"
+            "path/file {file, s=8}\n"
+            "path {path, m=0700}\n"
+            "link {link, d=../file}\n"
+            "file {file, s=8, m=0660}\n"
+            ". {path}\n",
+            "    check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        callbackData.content = strNew("");
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, strNew("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc,
+                .expression = STRDEF("^path")),
+            "filter");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "path {path, m=0700}\n",
+            "    check content");
     }
 
     // *****************************************************************************************************************************
@@ -638,12 +692,6 @@ testRun(void)
         TEST_ERROR_FMT(
             ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN ": [13] Permission denied",
             strPtr(fileNoPerm));
-
-        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .user = strNew("bogus")), "new write file (bogus user)");
-        TEST_ERROR(ioWriteOpen(storageWriteIo(file)), UserMissingError, "unable to find user 'bogus'");
-
-        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .group = strNew("bogus")), "new write file (bogus group)");
-        TEST_ERROR(ioWriteOpen(storageWriteIo(file)), GroupMissingError, "unable to find group 'bogus'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
@@ -1011,11 +1059,9 @@ testRun(void)
     {
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_ERROR(storageRepoGet(strNew(BOGUS_STR), false), AssertError, "invalid storage type 'BOGUS'");
 
@@ -1055,10 +1101,8 @@ testRun(void)
         // Change the stanza to NULL with the stanzaInit flag still true, make sure helper does not fail when stanza option not set
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
-        strLstAddZ(argList, "info");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ASSIGN(storage, storageRepo(), "new repo storage no stanza");
         TEST_RESULT_PTR(storageHelper.stanza, NULL, "stanza NULL");
@@ -1092,14 +1136,12 @@ testRun(void)
 
         // Load configuration to set spool-path and stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--archive-async");
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         strLstAdd(argList, strNewFmt("--pg2-path=%s/db2", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_PTR(storageHelper.storageSpool, NULL, "storage not cached");
         TEST_ASSIGN(storage, storageSpool(), "new storage");
@@ -1169,10 +1211,8 @@ testRun(void)
         storageHelper.stanza = NULL;
 
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
-        strLstAddZ(argList, "info");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ERROR(storageSpool(), AssertError, "stanza cannot be NULL for this storage object");
         TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");

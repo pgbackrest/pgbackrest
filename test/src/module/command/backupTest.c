@@ -44,13 +44,11 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         // Create the pg path
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
@@ -359,15 +357,13 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
-        strLstAddZ(argList, "backup");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdBackup, argList);
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         // Create the pg path

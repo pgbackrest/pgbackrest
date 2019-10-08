@@ -24,13 +24,11 @@ testRun(void)
     if (testBegin("cmdCheck()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
-        strLstAddZ(argList, "check");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdCheck, argList);
 
         TEST_ERROR_FMT(
             cmdCheck(), FileMissingError,
@@ -72,8 +70,8 @@ testRun(void)
         TEST_ERROR(
             cmdCheck(), ArchiveTimeoutError,
             "WAL segment 000000010000000100000001 was not archived before the 500ms timeout\n"
-            "HINT: Check the archive_command to ensure that all options are correct (especially --stanza).\n"
-            "HINT: Check the PostgreSQL server log for errors.");
+            "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+            "HINT: check the PostgreSQL server log for errors.");
 
         // Create WAL segment
         Buffer *buffer = bufNew(16 * 1024 * 1024);
@@ -107,13 +105,11 @@ testRun(void)
         // Single standby
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
-        strLstAddZ(argList, "check");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdCheck, argList);
 
         // Set script
         harnessPqScriptSet((HarnessPq [])
@@ -131,12 +127,10 @@ testRun(void)
     if (testBegin("checkDbConfig()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAddZ(argList, "check");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdCheck, argList);
 
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, 1, PG_VERSION_92, pg1Path), "valid db config");
 
@@ -145,7 +139,7 @@ testRun(void)
             checkDbConfig(PG_VERSION_92, 1, PG_VERSION_94, pg1Path),
             DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
             " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
-            "HINT: the pg1-path and pg1-port settings likely reference different clusters",
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
             strPtr(pgVersionToStr(PG_VERSION_94)), strPtr(pg1Path), strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path),
             strPtr(pg1Path));
 
@@ -154,7 +148,7 @@ testRun(void)
             checkDbConfig(PG_VERSION_92, 1, PG_VERSION_92, strNew("bogus/path")),
             DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
             " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
-            "HINT: the pg1-path and pg1-port settings likely reference different clusters",
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
             strPtr(pgVersionToStr(PG_VERSION_92)), "bogus/path", strPtr(pgVersionToStr(PG_VERSION_92)), strPtr(pg1Path),
             strPtr(pg1Path));
     }

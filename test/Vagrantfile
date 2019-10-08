@@ -47,6 +47,13 @@ Vagrant.configure(2) do |config|
         sudo /etc/init.d/virtualbox-guest-utils stop
         sudo /usr/sbin/VBoxService --timesync-set-on-restore --timesync-interval 5000 --timesync-set-threshold 1
 
+        # Create /tmp/pgbackrest and give ownership to root so we know unit tests are not writing there
+        #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Create /tmp/pgbackrest owned by root' && date
+        sudo mkdir -p /tmp/pgbackrest
+        sudo chown root:root /tmp/pgbackrest
+        sudo chmod 700 /tmp/pgbackrest
+
         # Mount tmpfs at /home/vagrant/test for faster testing
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Mount tmpfs' && date
@@ -61,7 +68,7 @@ Vagrant.configure(2) do |config|
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Build Tools' && date
         apt-get install -y devscripts build-essential lintian git lcov cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
-             libxml2-dev liblz4-dev libpq-dev
+             libxml2-dev liblz4-dev libpq-dev valgrind
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install AWS CLI' && date
@@ -83,9 +90,10 @@ Vagrant.configure(2) do |config|
         apt-get install -y vim htop
 
         #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install TeX Live' && date
-        apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended
-        apt-get install -y texlive-font-utils
+        # echo 'Install TeX Live' && date
+        # Not installed by default since latex is only needed for releases and PDF development/testing
+        # apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended
+        # apt-get install -y texlive-font-utils
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Create Postgres Group & pgBackRest User' && date

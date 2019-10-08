@@ -220,8 +220,12 @@ use constant DB_FILE_POSTMASTERPID                                  => 'postmast
     push @EXPORT, qw(DB_FILE_POSTMASTERPID);
 use constant DB_FILE_RECOVERYCONF                                   => 'recovery.conf';
     push @EXPORT, qw(DB_FILE_RECOVERYCONF);
+use constant DB_FILE_RECOVERYSIGNAL                                 => 'recovery.signal';
+    push @EXPORT, qw(DB_FILE_RECOVERYSIGNAL);
 use constant DB_FILE_RECOVERYDONE                                   => 'recovery.done';
     push @EXPORT, qw(DB_FILE_RECOVERYDONE);
+use constant DB_FILE_STANDBYSIGNAL                                  => 'standby.signal';
+    push @EXPORT, qw(DB_FILE_STANDBYSIGNAL);
 use constant DB_FILE_TABLESPACEMAP                                  => 'tablespace_map';
     push @EXPORT, qw(DB_FILE_TABLESPACEMAP);
 
@@ -268,8 +272,12 @@ use constant MANIFEST_FILE_POSTMASTERPID                            => MANIFEST_
     push @EXPORT, qw(MANIFEST_FILE_POSTMASTERPID);
 use constant MANIFEST_FILE_RECOVERYCONF                             => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYCONF;
     push @EXPORT, qw(MANIFEST_FILE_RECOVERYCONF);
+use constant MANIFEST_FILE_RECOVERYSIGNAL                           => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYSIGNAL;
+    push @EXPORT, qw(MANIFEST_FILE_RECOVERYSIGNAL);
 use constant MANIFEST_FILE_RECOVERYDONE                             => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYDONE;
     push @EXPORT, qw(MANIFEST_FILE_RECOVERYDONE);
+use constant MANIFEST_FILE_STANDBYSIGNAL                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_STANDBYSIGNAL;
+    push @EXPORT, qw(MANIFEST_FILE_STANDBYSIGNAL);
 use constant MANIFEST_FILE_TABLESPACEMAP                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_TABLESPACEMAP;
     push @EXPORT, qw(MANIFEST_FILE_TABLESPACEMAP);
 
@@ -884,13 +892,21 @@ sub build
         # Skip pg_internal.init since it is recreated on startup
         next if $strFile =~ (DB_FILE_PGINTERNALINIT . '$');
 
+        # Skip recovery files
+        if ($self->dbVersion() >= PG_VERSION_12)
+        {
+            next if ($strFile eq MANIFEST_FILE_RECOVERYSIGNAL || $strFile eq MANIFEST_FILE_STANDBYSIGNAL);
+        }
+        else
+        {
+            next if ($strFile eq MANIFEST_FILE_RECOVERYDONE || $strFile eq MANIFEST_FILE_RECOVERYCONF);
+        }
+
         # Skip ignored files
         if ($strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe writes
             $strFile eq MANIFEST_FILE_BACKUPLABELOLD ||             # backup_label.old - old backup labels are not useful
             $strFile eq MANIFEST_FILE_POSTMASTEROPTS ||             # postmaster.opts - not useful for backup
-            $strFile eq MANIFEST_FILE_POSTMASTERPID ||              # postmaster.pid - to avoid confusing postgres after restore
-            $strFile eq MANIFEST_FILE_RECOVERYCONF ||               # recovery.conf - doesn't make sense to backup this file
-            $strFile eq MANIFEST_FILE_RECOVERYDONE)                 # recovery.done - doesn't make sense to backup this file
+            $strFile eq MANIFEST_FILE_POSTMASTERPID)                # postmaster.pid - to avoid confusing postgres after restore
         {
             next;
         }

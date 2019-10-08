@@ -18,6 +18,7 @@ Main
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/restore/restore.h"
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
 #include "command/stanza/upgrade.h"
@@ -110,7 +111,7 @@ main(int argListSize, const char *argList[])
                     // archive-get/archive-push and end up in the PostgreSQL log which is not output in CI.  This can be removed
                     // once backup is written in C.
                     if (cfgOptionBool(cfgOptOnline) && !cfgOptionBool(cfgOptBackupStandby) && !cfgOptionTest(cfgOptPgHost))
-                        pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
+                        pgControlFromFile(storagePg());
 #endif
 
                     // Run backup
@@ -190,7 +191,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRestore:
                 {
-                    perlExec();
+                    cmdRestore();
                     break;
                 }
 

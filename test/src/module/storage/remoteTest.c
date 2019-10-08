@@ -23,14 +23,12 @@ testRun(void)
 
     // Load configuration to set repo-path and stanza
     StringList *argList = strLstNew();
-    strLstAddZ(argList, "/usr/bin/pgbackrest");
     strLstAddZ(argList, "--stanza=db");
     strLstAddZ(argList, "--protocol-timeout=10");
     strLstAddZ(argList, "--buffer-size=16384");
     strLstAddZ(argList, "--repo1-host=localhost");
     strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-    strLstAddZ(argList, "info");
-    harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+    harnessCfgLoad(cfgCmdInfo, argList);
 
     // Set type since we'll be running local and remote tests here
     cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("backup"));

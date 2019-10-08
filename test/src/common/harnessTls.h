@@ -7,9 +7,13 @@ Simple TLS server for testing TLS client functionality.
 #define TEST_COMMON_HARNESS_TLS_H
 
 /***********************************************************************************************************************************
+Path and prefix for test certificates
+***********************************************************************************************************************************/
+#define TEST_CERTIFICATE_PREFIX                                     "test/certificate/pgbackrest-test"
+
+/***********************************************************************************************************************************
 Tls test defaults
 ***********************************************************************************************************************************/
-#define TLS_TEST_HOST                                               "tls.test.pgbackrest.org"
 #define TLS_TEST_PORT                                               9443
 
 #define TLS_CERT_FAKE_PATH                                          "/etc/fake-cert"
@@ -21,9 +25,18 @@ Functions
 ***********************************************************************************************************************************/
 void harnessTlsServerInit(int port, const char *serverCert, const char *serverKey);
 
+// Initialize TLS with default parameters
+void harnessTlsServerInitDefault(void);
+
 void harnessTlsServerAccept(void);
 void harnessTlsServerExpect(const char *expected);
 void harnessTlsServerReply(const char *reply);
 void harnessTlsServerClose(void);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+// Hostname to use for testing -- this will vary based on whether the test is running in a container
+const String *harnessTlsTestHost(void);
 
 #endif

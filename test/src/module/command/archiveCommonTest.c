@@ -25,13 +25,11 @@ testRun(void)
     if (testBegin("archiveAsyncStatus()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "archive-push");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchivePush, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *segment = strNew("000000010000000100000001");
@@ -112,11 +110,10 @@ testRun(void)
     if (testBegin("archiveAsyncStatusErrorWrite() and archiveAsyncStatusOkWrite()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-get-async");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
 
         String *walSegment = strNew("000000010000000100000001");
 
@@ -182,7 +179,7 @@ testRun(void)
         TEST_ERROR(
             walPath(strNew("relative/path"), NULL, strNew("test")), OptionRequiredError,
             "option 'pg1-path' must be specified when relative wal paths are used\n"
-                "HINT: Is %f passed to test instead of %p?\n"
+                "HINT: is %f passed to test instead of %p?\n"
                 "HINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
     }
 
@@ -191,11 +188,10 @@ testRun(void)
     {
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no path");
 

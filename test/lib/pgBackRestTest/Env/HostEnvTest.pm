@@ -246,6 +246,7 @@ sub dbCatalogVersion
         &PG_VERSION_96 => 201608131,
         &PG_VERSION_10 => 201707211,
         &PG_VERSION_11 => 201806231,
+        &PG_VERSION_12 => 201909212,
     };
 
     if (!defined($hCatalogVersion->{$strPgVersion}))
@@ -287,6 +288,8 @@ sub dbControlVersion
         &PG_VERSION_95 => 942,
         &PG_VERSION_96 => 960,
         &PG_VERSION_10 => 1002,
+        &PG_VERSION_11 => 1100,
+        &PG_VERSION_12 => 1201,
     };
 
     if (!defined($hControlVersion->{$strPgVersion}))
@@ -336,6 +339,7 @@ sub controlGenerateContent
             '9.6' => 200 - length($tControlContent),
              '10' => 200 - length($tControlContent),
              '11' => 192 - length($tControlContent),
+             '12' => 196 - length($tControlContent),
         },
 
         64 =>
@@ -351,6 +355,7 @@ sub controlGenerateContent
             '9.6' => 216 - length($tControlContent),
              '10' => 216 - length($tControlContent),
              '11' => 208 - length($tControlContent),
+             '12' => 212 - length($tControlContent),
         },
     };
 
@@ -441,6 +446,8 @@ sub walGenerateContent
         &PG_VERSION_95 => hex('0xD087'),
         &PG_VERSION_96 => hex('0xD093'),
         &PG_VERSION_10 => hex('0xD097'),
+        &PG_VERSION_11 => hex('0xD098'),
+        &PG_VERSION_12 => hex('0xD101'),
     };
 
     my $tWalContent = pack('S', $hWalMagic->{$strPgVersion});

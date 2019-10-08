@@ -86,14 +86,14 @@ pgValidate(void)
             DbGetResult dbObject = dbGet(false, true);
 
             // Get the pgControl information from the pg*-path deemed to be the master
-            result = pgControlFromFile(storagePgId(dbObject.primaryId), cfgOptionStr(cfgOptPgPath + dbObject.primaryId - 1));
+            result = pgControlFromFile(storagePgId(dbObject.primaryId));
 
             // Check the user configured path and version against the database
             checkDbConfig(result.version, dbObject.primaryId, dbPgVersion(dbObject.primary), dbPgDataPath(dbObject.primary));
         }
         // If the database is not online, assume that pg1 is the master
         else
-            result = pgControlFromFile(storagePg(), cfgOptionStr(cfgOptPgPath));
+            result = pgControlFromFile(storagePg());
     }
     MEM_CONTEXT_TEMP_END();
 

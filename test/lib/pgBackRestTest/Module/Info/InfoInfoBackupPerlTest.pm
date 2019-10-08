@@ -215,7 +215,7 @@ sub run
 
         $self->testException(sub {new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP))}, ERROR_CRYPTO,
             "unable to parse '$strFile'" .
-            "\nHINT: Is or was the repo encrypted?");
+            "\nHINT: is or was the repo encrypted?");
 
         # Create encrypted files, change the passphrase and attempt to load - ensure flush error returned as parse error
         #---------------------------------------------------------------------------------------------------------------------------
@@ -255,7 +255,7 @@ sub run
 
         $self->testException(sub {new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP))}, ERROR_CRYPTO,
             "unable to parse '" . $oBackupInfo->{strFileName} . "'" .
-            "\nHINT: Is or was the repo encrypted?");
+            "\nHINT: is or was the repo encrypted?");
     }
 }
 

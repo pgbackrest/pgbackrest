@@ -120,7 +120,7 @@ sub new
         }
         elsif ($iResult == ERROR_CRYPTO && $strResultMessage =~ "^unable to flush")
         {
-            confess &log(ERROR, "unable to parse '$strArchiveInfoFile'\nHINT: Is or was the repo encrypted?", $iResult);
+            confess &log(ERROR, "unable to parse '$strArchiveInfoFile'\nHINT: is or was the repo encrypted?", $iResult);
         }
         else
         {
@@ -412,7 +412,7 @@ sub reconstruct
         if (!storageRepo()->encryptionValid(storageRepo()->encrypted($strArchiveFilePath)))
         {
             confess &log(ERROR, "encryption incompatible for '$strArchiveFilePath'" .
-                "\nHINT: Is or was the repo encrypted?", ERROR_CRYPTO);
+                "\nHINT: is or was the repo encrypted?", ERROR_CRYPTO);
         }
 
         # If the file is encrypted, then the passphrase from the info file is required, else getEncryptionKeySub returns undefined

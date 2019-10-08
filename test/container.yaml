@@ -13,8 +13,10 @@
 # - docker tag pgbackrest/test:{vm}-base pgbackrest/test:{vm}-base-YYYYMMDDA
 # - docker push pgbackrest/test:{vm}-base-YYYYMMDDA
 # **********************************************************************************************************************************
+20190926A:
+  u18: 9a6456313490a68de01e5bae6876b1d598a00ef5
+
 20190725A:
-  u18: 91252e3e21ff553b231094194e13966065c32d6b
   co6: 194df5323239146733c51e77e9324b495bb2c727
   co7: 3373903192a6dcf7c0b88c66ce9223da54ee2deb
   u12: d3f1c8123b747b479586c2bbbf544c9a9cc42619

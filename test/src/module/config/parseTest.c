@@ -147,13 +147,19 @@ testRun(void)
         ParseOption parseOptionList[CFG_OPTION_TOTAL];
         memset(&parseOptionList, 0, sizeof(parseOptionList));
 
+        StringList *value = strLstNew();
+        strLstAdd(value, configFile);
+
         parseOptionList[cfgOptConfig].found = true;
         parseOptionList[cfgOptConfig].source = cfgSourceParam;
-        parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), configFile);
+        parseOptionList[cfgOptConfig].valueList = value;
+
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
 
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
         TEST_RESULT_VOID(cfgFileLoadPart(NULL, NULL), "check null part");
 
@@ -172,15 +178,25 @@ testRun(void)
         // Pass invalid values
         //--------------------------------------------------------------------------------------------------------------------------
         // --config valid, --config-include-path invalid (does not exist)
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAddZ(strLstNew(), BOGUS_STR);
+        value = strLstNew();
+        strLstAddZ(value, BOGUS_STR);
+
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
         TEST_ERROR(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
                 backupCmdDefConfigInclPathValue, oldConfigDefault), PathMissingError,
                 "unable to list files for missing path '/BOGUS'");
 
         // --config-include-path valid, --config invalid (does not exist)
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
-        parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), strNewFmt("%s/%s", testPath(), BOGUS_STR));
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
+
+        value = strLstNew();
+        strLstAdd(value, strNewFmt("%s/%s", testPath(), BOGUS_STR));
+
+        parseOptionList[cfgOptConfig].valueList = value;
 
         TEST_ERROR_FMT(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
@@ -203,11 +219,14 @@ testRun(void)
 
         // Config not passed as parameter - config does not exist. config-include-path passed as parameter - only include read
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue, oldConfigDefault)),
@@ -249,11 +268,14 @@ testRun(void)
         // Config not passed as parameter - config does not exist in new default but does exist in old default. config-include-path
         // passed as parameter - both include and old default read
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue, oldConfigDefault)),
@@ -268,12 +290,15 @@ testRun(void)
 
         // --no-config and config-include-path passed as parameter (files read only from include path and not current or old config)
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = true;
         parseOptionList[cfgOptConfig].source = cfgSourceParam;
         parseOptionList[cfgOptConfig].negate = true;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue, oldConfigDefault)),
@@ -298,10 +323,13 @@ testRun(void)
 
         // config passed and config-include-path default exists with files - only config read
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configFile);
+
         parseOptionList[cfgOptConfig].found = true;
         parseOptionList[cfgOptConfig].source = cfgSourceParam;
         parseOptionList[cfgOptConfig].negate = false;
-        parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), configFile);
+        parseOptionList[cfgOptConfig].valueList = value;
         parseOptionList[cfgOptConfigIncludePath].found = false;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
@@ -314,11 +342,14 @@ testRun(void)
 
         // config new default and config-include-path passed - both exists with files. config-include-path & new config default read
         //--------------------------------------------------------------------------------------------------------------------------
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,
             backupCmdDefConfigInclPathValue, oldConfigDefault)),
@@ -352,9 +383,12 @@ testRun(void)
             "config-path override - config-include-path files and old config default read since no config in current path");
 
         // Pass --config-path
+        value = strLstNew();
+        strLstAddZ(value, testPath());
+
         parseOptionList[cfgOptConfigPath].found = true;
         parseOptionList[cfgOptConfigPath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigPath].valueList = strLstAddZ(strLstNew(), testPath());
+        parseOptionList[cfgOptConfigPath].valueList = value;
 
         // Override default paths for config and config-include-path - but no pgbackrest.conf file in override path only in old
         // default so ignored
@@ -367,10 +401,13 @@ testRun(void)
             "config-path override: config-include-path files read but config not read - does not exist");
 
         // Pass --config
+        value = strLstNew();
+        strLstAdd(value, configFile);
+
         parseOptionList[cfgOptConfig].found = true;
         parseOptionList[cfgOptConfig].source = cfgSourceParam;
         parseOptionList[cfgOptConfig].negate = false;
-        parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), configFile);
+        parseOptionList[cfgOptConfig].valueList = value;
 
         // Passing --config and --config-path - default config-include-path overwritten and config is required and is loaded and
         // config-include-path files will attempt to be loaded but not required
@@ -386,7 +423,10 @@ testRun(void)
             "recovery-option=c=d\n",
             "config-path changed config-include-path default - files exist, config and config includes read");
 
-        parseOptionList[cfgOptConfigPath].valueList = strLstAddZ(strLstNew(), BOGUS_STR);
+        value = strLstNew();
+        strLstAddZ(value, BOGUS_STR);
+
+        parseOptionList[cfgOptConfigPath].valueList = value;
 
         // Passing --config and bogus --config-path - default config-include-path overwritten, config is required and is loaded and
         // config-include-path files will attempt to be loaded but doesn't exist - no error since not required
@@ -410,7 +450,10 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].found = false;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
-        parseOptionList[cfgOptConfigPath].valueList = strLstAddZ(strLstNew(), testPath());
+        value = strLstNew();
+        strLstAddZ(value, testPath());
+
+        parseOptionList[cfgOptConfigPath].valueList = value;
 
         // Override default paths for config and config-include-path with --config-path
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
@@ -432,13 +475,16 @@ testRun(void)
         // config default and config-include-path passed - but no config files in the include path - only in the default path
         // rm command is split below because code counter is confused by what looks like a comment.
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s/" "*", strPtr(configIncludePath)))), 0, "remove all include files");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/" "*", strPtr(configIncludePath)))), 0, "remove all include files");
+
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
 
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,
             backupCmdDefConfigInclPathValue, oldConfigDefault)),
@@ -452,11 +498,14 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/empty.conf", strPtr(configIncludePath)))))), 0,
             "add empty conf file to include directory");
 
+        value = strLstNew();
+        strLstAdd(value, configIncludePath);
+
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
         parseOptionList[cfgOptConfigIncludePath].found = true;
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].valueList = value;
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue, backupCmdDefConfigValue)),

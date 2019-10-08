@@ -61,7 +61,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strBase() and strPath()"))
+    if (testBegin("strBase(), strPath(), and strPathAbsolute()"))
     {
         TEST_RESULT_STR(strPtr(strBase(STRDEF(""))), "", "empty string");
         TEST_RESULT_STR(strPtr(strBase(STRDEF("/"))), "", "/ only");
@@ -72,6 +72,17 @@ testRun(void)
         TEST_RESULT_STR(strPtr(strPath(STRDEF("/"))), "/", "/ only");
         TEST_RESULT_STR(strPtr(strPath(STRDEF("/file"))), "/", "root path");
         TEST_RESULT_STR(strPtr(strPath(STRDEF("/dir1/dir2/file"))), "/dir1/dir2", "subdirectory file");
+
+        TEST_ERROR(strPathAbsolute(STRDEF("/.."), NULL), AssertError, "result path '/..' is not absolute");
+        TEST_ERROR(strPathAbsolute(STRDEF("//"), NULL), AssertError, "result path '//' is not absolute");
+        TEST_ERROR(strPathAbsolute(STRDEF(".."), STRDEF("path1")), AssertError, "base path 'path1' is not absolute");
+        TEST_ERROR(
+            strPathAbsolute(STRDEF(".."), STRDEF("/")), AssertError, "relative path '..' goes back too far in base path '/'");
+        TEST_ERROR(strPathAbsolute(STRDEF("path1/"), STRDEF("/")), AssertError, "'path1/' is not a valid relative path");
+        TEST_RESULT_STR_Z(strPathAbsolute(STRDEF("/"), NULL), "/", "path is already absolute");
+        TEST_RESULT_STR_Z(strPathAbsolute(STRDEF(".."), STRDEF("/path1")), "/", "simple relative path");
+        TEST_RESULT_STR_Z(
+            strPathAbsolute(STRDEF("../path2/../path3"), STRDEF("/base1/base2")), "/base1/path3", "complex relative path");
     }
 
     // *****************************************************************************************************************************
@@ -131,6 +142,9 @@ testRun(void)
         TEST_RESULT_INT(strCmp(STRDEF("equalstring"), STRDEF("equalstring")), 0, "strings equal");
         TEST_RESULT_INT(strCmp(STRDEF("a"), STRDEF("b")), -1, "a < b");
         TEST_RESULT_INT(strCmp(STRDEF("b"), STRDEF("a")), 1, "b > a");
+        TEST_RESULT_INT(strCmp(NULL, NULL), 0, "null == null");
+        TEST_RESULT_INT(strCmp(NULL, STRDEF("x")), -1, "null < not null");
+        TEST_RESULT_INT(strCmp(STRDEF("x"), NULL), 1, "not null > null");
 
         TEST_RESULT_BOOL(strEqZ(STRDEF("equalstring"), "equalstring"), true, "strings equal");
         TEST_RESULT_BOOL(strEqZ(STRDEF("astring"), "anotherstring"), false, "strings not equal");
@@ -139,6 +153,7 @@ testRun(void)
         TEST_RESULT_INT(strCmpZ(STRDEF("equalstring"), "equalstring"), 0, "strings equal");
         TEST_RESULT_INT(strCmpZ(STRDEF("a"), "b"), -1, "a < b");
         TEST_RESULT_INT(strCmpZ(STRDEF("b"), "a"), 1, "b > a");
+        TEST_RESULT_INT(strCmpZ(STRDEF("b"), NULL), 1, "b > null");
     }
 
     // *****************************************************************************************************************************
@@ -261,10 +276,13 @@ testRun(void)
             {
                 if (listIdx == 0)
                 {
-                    TEST_RESULT_PTR(strLstAdd(list, NULL), list, "add null item");
+                    TEST_RESULT_PTR(strLstAdd(list, NULL), NULL, "add null item");
                 }
                 else
-                    TEST_RESULT_PTR(strLstAdd(list, strNewFmt("STR%02d", listIdx)), list, "add item %d", listIdx);
+                {
+                    TEST_RESULT_STR_STR(
+                        strLstAdd(list, strNewFmt("STR%02d", listIdx)), strNewFmt("STR%02d", listIdx), "add item %d", listIdx);
+                }
             }
 
             strLstMove(list, MEM_CONTEXT_OLD());
@@ -287,6 +305,20 @@ testRun(void)
 
         TEST_RESULT_VOID(strLstFree(list), "free string list");
         TEST_RESULT_VOID(strLstFree(NULL), "free null string list");
+
+        // Add if missing and remove
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(list, strLstNew(), "new list");
+        TEST_RESULT_VOID(strLstAddIfMissing(list, STRDEF("item1")), "add item 1");
+        TEST_RESULT_UINT(strLstSize(list), 1, "check size");
+        TEST_RESULT_BOOL(strLstExistsZ(list, "item1"), true, "check exists");
+        TEST_RESULT_BOOL(strLstExistsZ(list, NULL), false, "check null exists");
+        TEST_RESULT_VOID(strLstAddIfMissing(list, STRDEF("item1")), "add item 1 again");
+        TEST_RESULT_UINT(strLstSize(list), 1, "check size");
+
+        TEST_RESULT_BOOL(strLstRemove(list, STRDEF("item1")), true, "remove item 1");
+        TEST_RESULT_BOOL(strLstRemove(list, STRDEF("item1")), false, "remove item 1 fails");
+        TEST_RESULT_UINT(strLstSize(list), 0, "    check size");
     }
 
     // *****************************************************************************************************************************
@@ -454,6 +486,9 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(strLstJoin(strLstSort(list, sortOrderAsc), ", ")), "a, b, c", "sort ascending");
         TEST_RESULT_STR(strPtr(strLstJoin(strLstSort(list, sortOrderDesc), ", ")), "c, b, a", "sort descending");
+
+        strLstComparatorSet(list, lstComparatorStr);
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstSort(list, sortOrderAsc), ", ")), "a, b, c", "sort ascending");
     }
 
     // *****************************************************************************************************************************

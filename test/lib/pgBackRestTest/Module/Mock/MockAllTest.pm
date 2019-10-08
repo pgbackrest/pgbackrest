@@ -600,6 +600,9 @@ sub run
         # Restore will set invalid user and group to root since the base path user/group are also invalid
         if (!$bRemote)
         {
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER} = 'root';
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP} = 'root';
+
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
                 {&MANIFEST_SUBKEY_USER} = 'root';
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
@@ -699,7 +702,7 @@ sub run
 
             $oHostDbMaster->restore(
                 'error on existing linked file', $strFullBackup,
-                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
+                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_EXISTS,
                     strOptionalParam => '--log-level-console=warn --link-all'});
 
             executeTest('rm ' . $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf');
@@ -724,6 +727,8 @@ sub run
             # Now a combination of remapping
             # testFileCreate(
             #     $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf', "CONTENTS2\n", $lTime - 100);
+
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'backup.manifest', '');
 
             $oHostDbMaster->restore(
                 'restore all links --link-all and mapping', $strFullBackup,
@@ -1074,10 +1079,11 @@ sub run
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'} = $oHostDbMaster->tablespacePath(1, 2);
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'} = $oHostDbMaster->tablespacePath(2, 2);
 
-        # At this point the $PG_DATA permissions have been reset to 0600
+        # At this point the $PG_DATA permissions have been reset to 0700
         if (!$bRemote)
         {
-            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE});
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE} = '0777';
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGTBLSPC}{&MANIFEST_SUBKEY_MODE} = '0777';
         }
 
         $oHostDbMaster->restore(
@@ -1341,15 +1347,8 @@ sub run
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
         $oHostDbMaster->restore(
-            'no tablespace remap - error when tablespace dir does not exist', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, iExpectedExitStatus => ERROR_PATH_MISSING,
-                bTablespace => false, strOptionalParam => '--tablespace-map-all=../../tablespace'});
-
-        storageTest()->pathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace', {strMode => '0700'});
-
-        $oHostDbMaster->restore(
             'no tablespace remap', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-            {rhExpectedManifest => \%oManifest, bTablespace => false,
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bTablespace => false,
                 strOptionalParam => '--tablespace-map-all=../../tablespace'});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';

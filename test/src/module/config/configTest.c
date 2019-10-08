@@ -93,8 +93,11 @@ testRun(void)
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "command help is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        StringList *param = strLstNew();
+        strLstAddZ(param, "param");
+
         TEST_RESULT_INT(strLstSize(cfgCommandParam()), 0, "command param list defaults to empty");
-        TEST_RESULT_VOID(cfgCommandParamSet(strLstAddZ(strLstNew(), "param")), "set command param list");
+        TEST_RESULT_VOID(cfgCommandParamSet(param), "set command param list");
         TEST_RESULT_INT(strLstSize(cfgCommandParam()), 1, "command param list is set");
 
         // -------------------------------------------------------------------------------------------------------------------------

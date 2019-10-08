@@ -86,22 +86,28 @@ sub process
         "services:\n" .
         "  - docker\n" .
         "\n" .
-        "env:\n";
+        "matrix:\n" .
+        "  include:\n";
 
     # Iterate each OS
     foreach my $strVm (VM_LIST)
     {
-        $strConfig .= "  - PGB_CI=\"--vm=${strVm} test\"\n";
+        $strConfig .= "    - env: PGB_CI=\"--vm=${strVm} test\"\n";
     }
 
-    $strConfig .= "  - PGB_CI=\"doc\"\n";
+    $strConfig .=
+        "    - env: PGB_CI=\"--vm=u18 doc\"\n" .
+        "    - dist: bionic\n" .
+        "      env: PGB_CI=\"--vm=none test\"\n" .
+        "    - env: PGB_CI=\"--vm=co7 doc\"\n" .
+        "    - env: PGB_CI=\"--vm=co6 doc\"\n";
 
     # Configure install and script
     $strConfig .=
         "\n" .
         "before_install:\n" .
-        "  - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip" .
-            " lcov libperl-dev\n" .
+        "  - sudo apt-get -qq update || true\n" .
+        "  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip lcov libperl-dev\n" .
         "  - |\n" .
         "    # Install & Configure AWS CLI\n" .
         "    pip install --upgrade --user awscli\n" .

@@ -165,7 +165,7 @@ sub new
         }
         elsif ($iResult == ERROR_CRYPTO && $strResultMessage =~ "^unable to flush")
         {
-            confess &log(ERROR, "unable to parse '$strBackupInfoFile'\nHINT: Is or was the repo encrypted?", $iResult);
+            confess &log(ERROR, "unable to parse '$strBackupInfoFile'\nHINT: is or was the repo encrypted?", $iResult);
         }
         else
         {

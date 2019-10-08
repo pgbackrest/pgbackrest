@@ -767,73 +767,87 @@ jsonFromKvInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
             // NULL value
             if (value == NULL)
                 strCat(result, "null");
-            // KeyValue
-            else if (varType(value) == varTypeKeyValue)
+            else
             {
-                strCat(indentDepth, strPtr(indentSpace));
-                strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(value)), indentSpace, indentDepth)));
-            }
-            // VariantList
-            else if (varType(value) == varTypeVariantList)
-            {
-                // If the array is empty, then do not add formatting, else process the array.
-                if (varVarLst(value) == NULL)
-                    strCat(result, "null");
-                else if (varLstSize(varVarLst(value)) == 0)
-                    strCat(result, "[]");
-                else
+                switch (varType(value))
                 {
-                    strCat(indentDepth, strPtr(indentSpace));
-                    strCatFmt(result, "[%s", strPtr(indentDepth));
-
-                    for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
+                    case varTypeKeyValue:
                     {
-                        Variant *arrayValue = varLstGet(varVarLst(value), arrayIdx);
-
-                        // If going to add another element, add a comma
-                        if (arrayIdx > 0)
-                            strCatFmt(result, ",%s", strPtr(indentDepth));
-
-                        // If array value is null
-                        if (arrayValue == NULL)
-                        {
-                            strCat(result, "null");
-                        }
-                        // If the type is a string, add leading and trailing double quotes
-                        else if (varType(arrayValue) == varTypeString)
-                        {
-                            jsonFromStrInternal(result, varStr(arrayValue));
-                        }
-                        else if (varType(arrayValue) == varTypeKeyValue)
-                        {
-                            strCat(indentDepth, strPtr(indentSpace));
-                            strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(arrayValue)), indentSpace, indentDepth)));
-                        }
-                        else if (varType(arrayValue) == varTypeVariantList)
-                        {
-                            strCat(indentDepth, strPtr(indentSpace));
-                            strCat(result, strPtr(jsonFromVar(arrayValue, 0)));
-                        }
-                        // Numeric, Boolean or other type
-                        else
-                            strCat(result, strPtr(varStrForce(arrayValue)));
+                        strCat(indentDepth, strPtr(indentSpace));
+                        strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(value)), indentSpace, indentDepth)));
+                        break;
                     }
 
-                    if (strSize(indentDepth) > strSize(indentSpace))
-                        strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+                    case varTypeVariantList:
+                    {
+                        // If the array is empty, then do not add formatting, else process the array.
+                        if (varVarLst(value) == NULL)
+                            strCat(result, "null");
+                        else if (varLstSize(varVarLst(value)) == 0)
+                            strCat(result, "[]");
+                        else
+                        {
+                            strCat(indentDepth, strPtr(indentSpace));
+                            strCatFmt(result, "[%s", strPtr(indentDepth));
 
-                    strCatFmt(result, "%s]", strPtr(indentDepth));
+                            for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
+                            {
+                                Variant *arrayValue = varLstGet(varVarLst(value), arrayIdx);
+
+                                // If going to add another element, add a comma
+                                if (arrayIdx > 0)
+                                    strCatFmt(result, ",%s", strPtr(indentDepth));
+
+                                // If array value is null
+                                if (arrayValue == NULL)
+                                {
+                                    strCat(result, "null");
+                                }
+                                // If the type is a string, add leading and trailing double quotes
+                                else if (varType(arrayValue) == varTypeString)
+                                {
+                                    jsonFromStrInternal(result, varStr(arrayValue));
+                                }
+                                else if (varType(arrayValue) == varTypeKeyValue)
+                                {
+                                    strCat(indentDepth, strPtr(indentSpace));
+                                    strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(arrayValue)), indentSpace, indentDepth)));
+                                }
+                                else if (varType(arrayValue) == varTypeVariantList)
+                                {
+                                    strCat(indentDepth, strPtr(indentSpace));
+                                    strCat(result, strPtr(jsonFromVar(arrayValue, 0)));
+                                }
+                                // Numeric, Boolean or other type
+                                else
+                                    strCat(result, strPtr(varStrForce(arrayValue)));
+                            }
+
+                            if (strSize(indentDepth) > strSize(indentSpace))
+                                strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+
+                            strCatFmt(result, "%s]", strPtr(indentDepth));
+                        }
+
+                        break;
+                    }
+
+                    // String
+                    case varTypeString:
+                    {
+                        jsonFromStrInternal(result, varStr(value));
+                        break;
+                    }
+
+                    default:
+                    {
+                        strCat(result, strPtr(varStrForce(value)));
+                        break;
+                    }
                 }
             }
-            // String
-            else if (varType(value) == varTypeString)
-            {
-                jsonFromStrInternal(result, varStr(value));
-            }
-            // Numeric, Boolean or other type
-            else
-                strCat(result, strPtr(varStrForce(value)));
         }
+
         if (strSize(indentDepth) > strSize(indentSpace))
             strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
 

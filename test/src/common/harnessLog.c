@@ -70,7 +70,7 @@ harnessLogInit(void)
     logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, 99);
     logFileBanner = true;
 
-    snprintf(logFile, sizeof(logFile), "%s/expect.log", testExpectPath());
+    snprintf(logFile, sizeof(logFile), "%s/expect.log", testDataPath());
     logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
     logAnySet();
 
@@ -166,8 +166,10 @@ harnessLogResult(const char *expected)
 
     harnessLogLoad(logFile);
 
+    expected = hrnReplaceKey(expected);
+
     if (strcmp(harnessLogBuffer, expected) != 0)
-        THROW_FMT(AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, harnessLogBuffer);
+        THROW_FMT(AssertError, "\n\nexpected log:\n\n%s\n\nbut diff was:\n\n%s", expected, hrnDiff(harnessLogBuffer, expected));
 
     close(logHandleFile);
     logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);

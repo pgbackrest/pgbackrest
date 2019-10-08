@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 C Test Harness
 ***********************************************************************************************************************************/
+#include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -31,7 +32,6 @@ static uint64_t timeMSecBegin;
 static const char *testExeData = NULL;
 static const char *testPathData = NULL;
 static const char *testRepoPathData = NULL;
-static const char *testExpectPathData = NULL;
 
 static char testUserData[64];
 static char testGroupData[64];
@@ -43,6 +43,30 @@ Extern functions
     void harnessLogInit(void);
     void harnessLogFinal(void);
 #endif
+
+/***********************************************************************************************************************************
+Is this test running in a container? i.e., can we use sudo and system paths with impunity?
+***********************************************************************************************************************************/
+static bool testContainerData = false;
+
+bool
+testContainer(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(BOOL, testContainerData);
+}
+
+void
+testContainerSet(bool testContainer)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(BOOL, testContainer);
+    FUNCTION_HARNESS_END();
+
+    testContainerData = testContainer;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
 
 /***********************************************************************************************************************************
 Get and set the test exe
@@ -64,6 +88,30 @@ testExeSet(const char *testExe)
     FUNCTION_HARNESS_END();
 
     testExeData = testExe;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Get and set the project exe
+***********************************************************************************************************************************/
+static const char *testProjectExeData = NULL;
+
+const char *
+testProjectExe(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(STRINGZ, testProjectExeData);
+}
+
+void
+testProjectExeSet(const char *testProjectExe)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, testProjectExe);
+    FUNCTION_HARNESS_END();
+
+    testProjectExeData = testProjectExe;
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -116,26 +164,48 @@ testPathSet(const char *testPath)
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
-/***********************************************************************************************************************************
-Get and set the expect path, i.e., the path where expect logs will be stored by the harnessLog module
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
+static const char *testDataPathData = NULL;
+
 const char *
-testExpectPath(void)
+testDataPath(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(STRINGZ, testExpectPathData);
+    FUNCTION_HARNESS_RESULT(STRINGZ, testDataPathData);
 }
 
 void
-testExpectPathSet(const char *testExpectPath)
+testDataPathSet(const char *testDataPath)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, testExpectPath);
-
-        FUNCTION_HARNESS_ASSERT(testExpectPath != NULL);
+        FUNCTION_HARNESS_PARAM(STRINGZ, testDataPath);
     FUNCTION_HARNESS_END();
 
-    testExpectPathData = testExpectPath;
+    testDataPathData = testDataPath;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Get and set scale for performance testing
+***********************************************************************************************************************************/
+static uint64_t testScaleData = 1;
+
+uint64_t
+testScale(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(UINT64, testScaleData);
+}
+
+void
+testScaleSet(uint64_t testScale)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(UINT64, testScale);
+    FUNCTION_HARNESS_END();
+
+    testScaleData = testScale;
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -248,11 +318,21 @@ testBegin(const char *name)
 
             // Clear out the test directory so the next test starts clean
             char buffer[2048];
-            snprintf(buffer, sizeof(buffer), "sudo rm -rf %s/" "*", testPath());
+            snprintf(buffer, sizeof(buffer), "%srm -rf %s/" "*", testContainer() ? "sudo " : "", testPath());
 
             if (system(buffer) != 0)
             {
                 fprintf(stderr, "ERROR: unable to clear test path '%s'\n", testPath());
+                fflush(stderr);
+                exit(255);
+            }
+
+            // Clear out the data directory so the next test starts clean
+            snprintf(buffer, sizeof(buffer), "%srm -rf %s/" "*", testContainer() ? "sudo " : "", testDataPath());
+
+            if (system(buffer) != 0)
+            {
+                fprintf(stderr, "ERROR: unable to clear data path '%s'\n", testDataPath());
                 fflush(stderr);
                 exit(255);
             }
@@ -302,4 +382,163 @@ testComplete(void)
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Replace a substring with another string
+***********************************************************************************************************************************/
+static void
+hrnReplaceStr(char *string, size_t bufferSize, const char *substring, const char *replace)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, string);
+        FUNCTION_HARNESS_PARAM(SIZE, bufferSize);
+        FUNCTION_HARNESS_PARAM(STRINGZ, substring);
+        FUNCTION_HARNESS_PARAM(STRINGZ, replace);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(string != NULL);
+    ASSERT(substring != NULL);
+
+    // Find substring
+    char *begin = strstr(string, substring);
+
+    while (begin != NULL)
+    {
+        // Find end of substring and calculate replace size difference
+        char *end = begin + strlen(substring);
+        int diff = (int)strlen(replace) - (int)strlen(substring);
+
+        // Make sure we won't overflow the buffer
+        CHECK((size_t)((int)strlen(string) + diff) < bufferSize - 1);
+
+        // Move data from end of string enough to make room for the replacement and copy replacement
+        memmove(end + diff, end, strlen(end) + 1);
+        memcpy(begin, replace, strlen(replace));
+
+        // Find next substring
+        begin = strstr(begin + strlen(replace), substring);
+    }
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/**********************************************************************************************************************************/
+char harnessReplaceKeyBuffer[256 * 1024];
+
+const char *
+hrnReplaceKey(const char *string)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, string);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(string != NULL);
+
+    // Make sure we won't overflow the buffer
+    ASSERT(strlen(string) < sizeof(harnessReplaceKeyBuffer) - 1);
+
+    strcpy(harnessReplaceKeyBuffer, string);
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[path]}", testPath());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[path-data]}", testDataPath());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[user]}", testUser());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[group]}", testGroup());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[project-exe]}", testProjectExe());
+
+    FUNCTION_HARNESS_RESULT(STRINGZ, harnessReplaceKeyBuffer);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
+{
+    int result = open(fileName, O_RDONLY, 0660);
+
+    if (result == -1)
+    {
+        fprintf(stderr, "ERROR: unable to open '%s' for read\n", fileName);
+        fflush(stderr);
+        exit(255);
+    }
+
+    ssize_t bufferRead = read(result, buffer, bufferSize);
+
+    if (bufferRead == -1)
+    {
+        fprintf(stderr, "ERROR: unable to read '%s'\n", fileName);
+        fflush(stderr);
+        exit(255);
+    }
+
+    buffer[bufferRead] = 0;
+
+    close(result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize)
+{
+    int result = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0660);
+
+    if (result == -1)
+    {
+        fprintf(stderr, "ERROR: unable to open '%s' for write\n", fileName);
+        fflush(stderr);
+        exit(255);
+    }
+
+    if (write(result, buffer, bufferSize) != (int)bufferSize)
+    {
+        fprintf(stderr, "ERROR: unable to write '%s'\n", fileName);
+        fflush(stderr);
+        exit(255);
+    }
+
+    close(result);
+}
+
+/**********************************************************************************************************************************/
+char harnessDiffBuffer[256 * 1024];
+
+const char *
+hrnDiff(const char *actual, const char *expected)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, actual);
+        FUNCTION_HARNESS_PARAM(STRINGZ, expected);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(actual != NULL);
+
+    // Write actual file
+    char actualFile[1024];
+    snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", testDataPath());
+    hrnFileWrite(actualFile, (unsigned char *)actual, strlen(actual));
+
+    // Write expected file
+    char expectedFile[1024];
+    snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", testDataPath());
+    hrnFileWrite(expectedFile, (unsigned char *)expected, strlen(expected));
+
+    // Perform diff
+    char command[2048];
+    snprintf(command, sizeof(command), "diff -u %s %s > %s/diff.result", actualFile, expectedFile, testDataPath());
+
+    if (system(command) == 2)
+    {
+        fprintf(stderr, "ERROR: unable to execute '%s'\n", command);
+        fflush(stderr);
+        exit(255);
+    }
+
+    // Read result
+    char resultFile[1024];
+    snprintf(resultFile, sizeof(resultFile), "%s/diff.result", testDataPath());
+    hrnFileRead(resultFile, (unsigned char *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
+
+    // Remove last linefeed from diff output
+    harnessDiffBuffer[strlen(harnessDiffBuffer) - 1] = 0;
+
+    FUNCTION_HARNESS_RESULT(STRINGZ, harnessDiffBuffer);
 }

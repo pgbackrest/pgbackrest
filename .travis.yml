@@ -11,15 +11,21 @@ language: c
 services:
   - docker
 
-env:
-  - PGB_CI="--vm=u18 test"
-  - PGB_CI="--vm=co6 test"
-  - PGB_CI="--vm=co7 test"
-  - PGB_CI="--vm=u12 test"
-  - PGB_CI="doc"
+matrix:
+  include:
+    - env: PGB_CI="--vm=u12 test"
+    - env: PGB_CI="--vm=co6 test"
+    - env: PGB_CI="--vm=co7 test"
+    - env: PGB_CI="--vm=u18 test"
+    - env: PGB_CI="--vm=u18 doc"
+    - dist: bionic
+      env: PGB_CI="--vm=none test"
+    - env: PGB_CI="--vm=co7 doc"
+    - env: PGB_CI="--vm=co6 doc"
 
 before_install:
-  - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip lcov libperl-dev
+  - sudo apt-get -qq update || true
+  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip lcov libperl-dev
   - |
     # Install & Configure AWS CLI
     pip install --upgrade --user awscli

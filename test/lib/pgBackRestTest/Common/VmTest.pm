@@ -80,6 +80,9 @@ use constant VM_ARCH_AMD64                                          => 'amd64';
 use constant VM_ALL                                                 => 'all';
     push @EXPORT, qw(VM_ALL);
 
+use constant VM_NONE                                                => 'none';
+    push @EXPORT, qw(VM_NONE);
+
 use constant VM_CO6                                                 => 'co6';
     push @EXPORT, qw(VM_CO6);
 use constant VM_CO7                                                 => 'co7';
@@ -115,12 +118,33 @@ use constant VM3                                                    => VM_CO7;
 use constant VM4                                                    => VM_U18;
     push @EXPORT, qw(VM4);
 
-# List of default test VMs (in this order: newest, oldest, next newest, next oldest)
-use constant VM_LIST                                                => (VM4, VM1, VM3, VM2);
+# List of default test VMs
+use constant VM_LIST                                                => (VM2, VM1, VM3, VM4);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
 {
+    # None
+    &VM_NONE =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_RHEL,
+        &VM_OS => VM_OS_CENTOS,
+        &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_COVERAGE_C => true,
+        &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
+
+        &VM_DB =>
+        [
+            PG_VERSION_10,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_10,
+        ],
+    },
+
     # CentOS 6
     &VM_CO6 =>
     {
@@ -147,6 +171,7 @@ my $oyVm =
             PG_VERSION_92,
             PG_VERSION_94,
             PG_VERSION_95,
+            PG_VERSION_10,
         ],
     },
 
@@ -351,12 +376,13 @@ my $oyVm =
             PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
         ],
     },
 };

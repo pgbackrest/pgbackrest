@@ -29,13 +29,41 @@ void testExeSet(const char *testExe);
 
 const char *testPath(void);
 void testPathSet(const char *testPath);
-const char *testExpectPath(void);
-void testExpectPathSet(const char *testExpectPath);
 const char *testRepoPath(void);
 void testRepoPathSet(const char *testRepoPath);
 
 const char *testUser(void);
 const char *testGroup(void);
+
+// Is this test running in a container?
+bool testContainer(void);
+
+// Location of the data path were the harness can write data that won't be visible to the test
+const char *testDataPath(void);
+
+// Location of the project exe
+const char *testProjectExe(void);
+
+// For scaling performance tests
+uint64_t testScale(void);
+
+// Read a file (max 256k) into a buffer
+void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize);
+
+// Write a buffer to a file
+void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize);
+
+// Replace common test values in a string and return a buffer with the replacements.
+//
+// Note that the returned buffer will be overwritten with each call.  Values that can be replaced are:
+//
+// {[path]} - the current test path
+// {[user]} - the current test user
+// {[group]} - the current test group
+const char *hrnReplaceKey(const char *string);
+
+// Diff two strings using command-line diff tool
+const char *hrnDiff(const char *actual, const char *expected);
 
 /***********************************************************************************************************************************
 Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies
@@ -51,7 +79,7 @@ Test that an expected error is actually thrown and error when it isn't
     bool TEST_ERROR_catch = false;                                                                                                 \
                                                                                                                                    \
     printf(                                                                                                                        \
-        "    %03u.%03us l%04d - expect %s: %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                   \
+        "    %03u.%03us l%04d -     expect %s: %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),               \
         (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, errorTypeName(&errorTypeExpected),                \
         errorMessageExpected);                                                                                                     \
     fflush(stdout);                                                                                                                \
@@ -135,7 +163,7 @@ Output information about the test
 ***********************************************************************************************************************************/
 #define TEST_RESULT_INFO(...)                                                                                                      \
     printf(                                                                                                                        \
-        "    %03u.%03us l%04d - ", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                                  \
+        "    %03u.%03us l%04d -     ", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                              \
         (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__);                                                  \
     printf(__VA_ARGS__);                                                                                                           \
     printf("\n");                                                                                                                  \
@@ -173,7 +201,7 @@ parameters.
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \
-   /* Test the type operator */                                                                                                    \
+    /* Test the type operator */                                                                                                   \
     bool TEST_RESULT_resultOp = false;                                                                                             \
     compareMacro(TEST_RESULT_resultOp, TEST_RESULT_result, typeOp, TEST_RESULT_resultExpected);                                    \
                                                                                                                                    \
@@ -183,10 +211,20 @@ parameters.
         /* Format the actual result */                                                                                             \
         formatMacro(type, format, TEST_RESULT_result);                                                                             \
                                                                                                                                    \
+        /* Throw diff error */                                                                                                     \
+        if (strcmp(#type, "char *") == 0 && strstr(TEST_RESULT_resultStr, "\n") != NULL)                                           \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF:\n%s\n\n",                                           \
+                #statement, TEST_RESULT_resultStr, hrnDiff(TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr));                 \
+        }                                                                                                                          \
         /* Throw error */                                                                                                          \
-        THROW_FMT(                                                                                                                 \
-            AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s\n\n",                                           \
-            #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                     \
+        else                                                                                                                       \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s\n\n",                                       \
+                #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                 \
+        }                                                                                                                          \
     }                                                                                                                              \
 }
 
@@ -284,6 +322,8 @@ Macros to ease the use of common data types
 #define TEST_RESULT_STR_NE(statement, resultExpected, ...)                                                                         \
     TEST_RESULT_STR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
+#define TEST_RESULT_STR_STR(statement, resultExpected, ...)                                                                        \
+    TEST_RESULT_STR(strPtr(statement), strPtr(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_STR(strPtr(statement), resultExpected, __VA_ARGS__);
 
@@ -298,14 +338,73 @@ Macros to ease the use of common data types
     TEST_RESULT_UINT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
 /***********************************************************************************************************************************
+Test system calls
+***********************************************************************************************************************************/
+#define TEST_SYSTEM(command)                                                                                                       \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        int TEST_SYSTEM_FMT_result = system(hrnReplaceKey(command));                                                               \
+                                                                                                                                   \
+        if (TEST_SYSTEM_FMT_result != 0)                                                                                           \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", hrnReplaceKey(command),                \
+                TEST_SYSTEM_FMT_result, errorStackTrace());                                                                        \
+        }                                                                                                                          \
+    } while(0)
+
+#define TEST_SYSTEM_FMT(...)                                                                                                       \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        char TEST_SYSTEM_FMT_buffer[8192];                                                                                         \
+                                                                                                                                   \
+        if (snprintf(TEST_SYSTEM_FMT_buffer, sizeof(TEST_SYSTEM_FMT_buffer), __VA_ARGS__) >= (int)sizeof(TEST_SYSTEM_FMT_buffer))  \
+            THROW_FMT(AssertError, "command needs more than the %zu characters available", sizeof(TEST_SYSTEM_FMT_buffer));        \
+                                                                                                                                   \
+        TEST_SYSTEM(TEST_SYSTEM_FMT_buffer);                                                                                       \
+    } while(0)
+
+/***********************************************************************************************************************************
+Test log result
+***********************************************************************************************************************************/
+#define TEST_RESULT_LOG(expected)                                                                                                  \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            harnessLogResult(expected);                                                                                            \
+        }                                                                                                                          \
+        CATCH_ANY()                                                                                                                \
+        {                                                                                                                          \
+            THROW_FMT(AssertError, "LOG RESULT FAILED WITH:\n%s", errorMessage());                                                 \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
+    } while(0)
+
+#define TEST_RESULT_LOG_FMT(...)                                                                                                   \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        char TEST_RESULT_LOG_FMT_buffer[65536];                                                                                    \
+                                                                                                                                   \
+        if (snprintf(TEST_RESULT_LOG_FMT_buffer, sizeof(TEST_RESULT_LOG_FMT_buffer), __VA_ARGS__) >=                               \
+            (int)sizeof(TEST_RESULT_LOG_FMT_buffer))                                                                               \
+        {                                                                                                                          \
+            THROW_FMT(                                                                                                             \
+                AssertError, "expected result needs more than the %zu characters available", sizeof(TEST_RESULT_LOG_FMT_buffer));  \
+        }                                                                                                                          \
+                                                                                                                                   \
+        TEST_RESULT_LOG(TEST_RESULT_LOG_FMT_buffer);                                                                               \
+    } while(0)
+
+/***********************************************************************************************************************************
 Logging macros
 ***********************************************************************************************************************************/
 #define TEST_LOG(message)                                                                                                          \
     do                                                                                                                             \
     {                                                                                                                              \
         printf(                                                                                                                    \
-            "    %03u.%03us       %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                            \
-            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), message);                                               \
+            "    %03u.%03us l%04d -     %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                      \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, message);                                     \
         fflush(stdout);                                                                                                            \
     } while(0)
 
@@ -313,15 +412,27 @@ Logging macros
     do                                                                                                                             \
     {                                                                                                                              \
         printf(                                                                                                                    \
-            "    %03u.%03us       " format "\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                    \
-            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __VA_ARGS__);                                           \
+            "    %03u.%03us l%04d -     " format "\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),              \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, __VA_ARGS__);                                 \
         fflush(stdout);                                                                                                            \
     } while(0)
 
-#endif
+/***********************************************************************************************************************************
+Test title macro
+***********************************************************************************************************************************/
+#define TEST_TITLE(message)                                                                                                        \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        printf(                                                                                                                    \
+            "    %03u.%03us l%04d - %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                          \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, message);                                     \
+        fflush(stdout);                                                                                                            \
+    } while(0)
 
 /***********************************************************************************************************************************
 Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not supported.
 ***********************************************************************************************************************************/
 #define TEST_64BIT()                                                                                                               \
     (sizeof(size_t) == 8)
+
+#endif

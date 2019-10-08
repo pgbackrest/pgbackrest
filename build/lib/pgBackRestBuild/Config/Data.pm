@@ -164,6 +164,8 @@ use constant CFGOPT_HOST_ID                                         => 'host-id'
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_FILTER                                          => 'filter';
     push @EXPORT, qw(CFGOPT_FILTER);
+use constant CFGOPT_RECURSE                                         => 'recurse';
+    push @EXPORT, qw(CFGOPT_RECURSE);
 use constant CFGOPT_SORT                                            => 'sort';
     push @EXPORT, qw(CFGOPT_SORT);
 
@@ -416,10 +418,10 @@ use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-
 
 # Info output
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPTVAL_INFO_OUTPUT_TEXT                             => 'text';
-    push @EXPORT, qw(CFGOPTVAL_INFO_OUTPUT_TEXT);
-use constant CFGOPTVAL_INFO_OUTPUT_JSON                             => 'json';
-    push @EXPORT, qw(CFGOPTVAL_INFO_OUTPUT_JSON);
+use constant CFGOPTVAL_OUTPUT_TEXT                                  => 'text';
+    push @EXPORT, qw(CFGOPTVAL_OUTPUT_TEXT);
+use constant CFGOPTVAL_OUTPUT_JSON                                  => 'json';
+    push @EXPORT, qw(CFGOPTVAL_OUTPUT_JSON);
 
 # Restore type
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -437,6 +439,8 @@ use constant CFGOPTVAL_RESTORE_TYPE_IMMEDIATE                       => 'immediat
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_IMMEDIATE);
 use constant CFGOPTVAL_RESTORE_TYPE_DEFAULT                         => 'default';
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_DEFAULT);
+use constant CFGOPTVAL_RESTORE_TYPE_STANDBY                         => 'standby';
+    push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_STANDBY);
 
 # Restore target action
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -820,7 +824,15 @@ my %hConfigDefine =
             &CFGCMD_RESTORE =>
             {
                 &CFGDEF_DEFAULT => 'latest',
-            }
+            },
+            &CFGCMD_INFO =>
+            {
+                &CFGDEF_REQUIRED => false,
+                &CFGDEF_DEPEND =>
+                {
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_STANZA,
+                },
+            },
         }
     },
 
@@ -948,6 +960,7 @@ my %hConfigDefine =
                     [
                         &CFGOPTVAL_RESTORE_TYPE_DEFAULT,
                         &CFGOPTVAL_RESTORE_TYPE_NAME,
+                        &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                         &CFGOPTVAL_RESTORE_TYPE_TIME,
                         &CFGOPTVAL_RESTORE_TYPE_XID,
                     ],
@@ -1002,6 +1015,7 @@ my %hConfigDefine =
                     &CFGOPTVAL_RESTORE_TYPE_NONE,
                     &CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
                     &CFGOPTVAL_RESTORE_TYPE_DEFAULT,
+                    &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                 ]
             }
         }
@@ -1014,11 +1028,21 @@ my %hConfigDefine =
         {
             &CFGCMD_INFO =>
             {
-                &CFGDEF_DEFAULT => CFGOPTVAL_INFO_OUTPUT_TEXT,
+                &CFGDEF_DEFAULT => CFGOPTVAL_OUTPUT_TEXT,
                 &CFGDEF_ALLOW_LIST =>
                 [
-                    &CFGOPTVAL_INFO_OUTPUT_TEXT,
-                    &CFGOPTVAL_INFO_OUTPUT_JSON,
+                    &CFGOPTVAL_OUTPUT_TEXT,
+                    &CFGOPTVAL_OUTPUT_JSON,
+                ]
+            },
+
+            &CFGCMD_STORAGE_LIST =>
+            {
+                &CFGDEF_DEFAULT => CFGOPTVAL_OUTPUT_TEXT,
+                &CFGDEF_ALLOW_LIST =>
+                [
+                    &CFGOPTVAL_OUTPUT_TEXT,
+                    &CFGOPTVAL_OUTPUT_JSON,
                 ]
             }
         }
@@ -1086,12 +1110,23 @@ my %hConfigDefine =
         }
     },
 
+    &CFGOPT_RECURSE =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_STORAGE_LIST => {},
+        }
+    },
+
     &CFGOPT_SORT =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => 'asc',
         &CFGDEF_ALLOW_LIST =>
         [
+            'none',
             'asc',
             'desc',
         ],
@@ -2367,6 +2402,7 @@ my %hConfigDefine =
                 &CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
                 &CFGOPTVAL_RESTORE_TYPE_NAME,
                 &CFGOPTVAL_RESTORE_TYPE_TIME,
+                &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                 &CFGOPTVAL_RESTORE_TYPE_XID,
             ],
         },

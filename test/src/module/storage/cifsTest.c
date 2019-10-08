@@ -16,12 +16,10 @@ testRun(void)
     {
         // Load configuration
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--repo1-type=cifs");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_CIFS), true), "get cifs repo storage");

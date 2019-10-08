@@ -55,6 +55,7 @@ sub new
     # Set defaults
     $self->{bSuppressError} = defined($self->{bSuppressError}) ? $self->{bSuppressError} : false;
     $self->{bSuppressStdErr} = defined($self->{bSuppressStdErr}) ? $self->{bSuppressStdErr} : false;
+    $self->{bOutLogOnError} = defined($self->{bOutLogOnError}) ? $self->{bOutLogOnError} : true;
     $self->{bShowOutput} = defined($self->{bShowOutput}) ? $self->{bShowOutput} : false;
     $self->{bShowOutputAsync} = defined($self->{bShowOutputAsync}) ? $self->{bShowOutputAsync} : false;
     $self->{iExpectedExitStatus} = defined($self->{iExpectedExitStatus}) ? $self->{iExpectedExitStatus} : 0;
@@ -107,7 +108,8 @@ sub begin
         new pgBackRest::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
 
     # Record start time and set process timeout
-    $self->{iProcessTimeout} = 540;
+    $self->{iProcessTimeout} = 300;
+    $self->{iProcessTimeoutTotal} = 4;
     $self->{lTimeLast} = time();
 
     if (!defined($self->{hError}))
@@ -147,8 +149,16 @@ sub endRetry
         # Error if process has been running longer than timeout
         if (time() - $self->{lTimeLast} > $self->{iProcessTimeout})
         {
-            confess &log(ASSERT,
-                "timeout after $self->{iProcessTimeout} seconds waiting for process to complete: $self->{strCommand}");
+            if ($self->{iProcessTimeoutTotal} > 0)
+            {
+                &log(WARN, "process has been running for $self->{iProcessTimeout} seconds with no output");
+                $self->{iProcessTimeoutTotal}--;
+                $self->{lTimeLast} = time();
+            }
+            else
+            {
+                confess &log(ASSERT, "timeout waiting for process to complete: $self->{strCommand}");
+            }
         }
 
         # Drain the stdout stream and look for test points
@@ -243,8 +253,10 @@ sub endRetry
             {
                 confess &log(ERROR, "command '$self->{strCommand}' returned " . $iExitStatus .
                              ($self->{iExpectedExitStatus} != 0 ? ", but $self->{iExpectedExitStatus} was expected" : '') . "\n" .
-                             ($self->{strOutLog} ne '' ? "STDOUT (last 10,000 characters):\n" . substr($self->{strOutLog},
-                                 length($self->{strOutLog}) > 10000 ? length($self->{strOutLog}) - 10000 : 0) : '') .
+                             ($self->{strOutLog} ne '' && $self->{bOutLogOnError} ? "STDOUT (last 10,000 characters):\n" .
+                                substr(
+                                    $self->{strOutLog}, length($self->{strOutLog}) > 10000 ?
+                                    length($self->{strOutLog}) - 10000 : 0) : '') .
                              ($self->{strErrorLog} ne '' ? "STDERR:\n$self->{strErrorLog}" : ''));
             }
         }
