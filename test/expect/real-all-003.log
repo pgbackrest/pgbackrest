@@ -157,10 +157,6 @@ spool-path=[TEST_PATH]/db-standby/spool
 archive-copy=y
 start-fast=y
 
-check db - confirm standby manifest->build executed (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --archive-timeout=5 --stanza=db check
-------------------------------------------------------------------------------------------------------------------------------------
-
 incr backup - update during backup (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stop-auto --buffer-size=32768 --delta --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
