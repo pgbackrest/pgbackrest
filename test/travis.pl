@@ -24,6 +24,7 @@ use lib dirname(dirname($0)) . '/lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::VmTest;
 
@@ -121,6 +122,11 @@ eval
 
     logLevelSet(INFO, INFO, OFF);
 
+    processBegin('install common packages');
+    processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
+    processExec('sudo apt-get install libxml-checker-perl libyaml-libyaml-perl', {bSuppressStdErr => true});
+    processEnd();
+
     ################################################################################################################################
     # Build documentation
     ################################################################################################################################
@@ -133,7 +139,6 @@ eval
                 'sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended',
                 {bSuppressStdErr => true});
             processExec('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
-            processEnd();
         }
 
         processBegin('release documentation');
@@ -146,16 +151,33 @@ eval
     ################################################################################################################################
     elsif ($ARGV[0] eq 'test')
     {
-        # Run tests that can be run without a container
         my $strParam = "";
         my $strVmHost = VM_U14;
 
+        # Build list of packages that need to be installed
+        my $strPackage = "libperl-dev";
+
+        if (vmCoverageC($strVm))
+        {
+            $strPackage .= " lcov";
+        }
+
         if ($strVm eq VM_NONE)
         {
-            processBegin('debug tools install');
-            processExec('sudo apt-get install -y valgrind', {bSuppressStdErr => true});
-            processEnd();
+            $strPackage .= " valgrind";
+        }
+        else
+        {
+            $strPackage .= " python-pip libdbd-pg-perl";
+        }
 
+        processBegin('install test packages');
+        processExec("sudo apt-get install -y ${strPackage}", {bSuppressStdErr => true});
+        processEnd();
+
+        # Run tests that can be run without a container
+        if ($strVm eq VM_NONE)
+        {
             processBegin('/tmp/pgbackrest owned by root so tests cannot use it');
             processExec('sudo mkdir -p /tmp/pgbackrest && sudo chown root:root /tmp/pgbackrest && sudo chmod 700 /tmp/pgbackrest');
             processEnd();
@@ -165,6 +187,17 @@ eval
         # Else run tests that require a container
         else
         {
+            processBegin("create backrest user");
+            processExec("sudo adduser --ingroup=\${USER?} --uid=5001 --disabled-password --gecos \"\" " . BACKREST_USER);
+            processEnd();
+
+            processBegin("install and configure aws cli");
+            processExec('pip install --upgrade --user awscli', {bSuppressStdErr => true});
+            processExec('aws configure set region us-east-1');
+            processExec('aws configure set aws_access_key_id accessKey1');
+            processExec('aws configure set aws_secret_access_key verySecretKey1');
+            processEnd();
+
             # Build the container
             processBegin("${strVm} build");
             processExec("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});

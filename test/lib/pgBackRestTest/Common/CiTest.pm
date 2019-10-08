@@ -105,29 +105,12 @@ sub process
     # Configure install and script
     $strConfig .=
         "\n" .
-        "before_install:\n" .
-        "  - sudo apt-get -qq update || true\n" .
-        "  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip lcov libperl-dev\n" .
-        "  - |\n" .
-        "    # Install & Configure AWS CLI\n" .
-        "    pip install --upgrade --user awscli\n" .
-        "    aws configure set region us-east-1\n" .
-        "    aws configure set aws_access_key_id accessKey1\n" .
-        "    aws configure set aws_secret_access_key verySecretKey1\n" .
-        "    aws help --version\n" .
-        "    aws configure list\n" .
-        "\n" .
         "install:\n" .
-        "  - |\n" .
-        "    # User Configuration\n" .
-        "    sudo adduser --ingroup=\${USER?} --uid=5001 --disabled-password --gecos \"\" " . BACKREST_USER . "\n" .
-        "    umask 0022\n" .
-        "    cd ~ && pwd && whoami && umask && groups\n" .
-        "    mv \${TRAVIS_BUILD_DIR?} " . PROJECT_EXE . "\n" .
-        "    rm -rf \${TRAVIS_BUILD_DIR?}\n" .
+        "  - umask 0022\n" .
+        "  - cd ~ && pwd && whoami && umask && groups\n" .
         "\n" .
         "script:\n" .
-        "  - " . PROJECT_EXE . "/test/travis.pl \${PGB_CI?}\n";
+        "  - \${TRAVIS_BUILD_DIR?}/test/travis.pl \${PGB_CI?}\n";
 
     buildPutDiffers($self->{oStorage}, '.travis.yml', $strConfig);
 
