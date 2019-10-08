@@ -24,6 +24,7 @@ checkManifest(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
+    // Return the actual number of pg* defined
     unsigned int result = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -34,7 +35,7 @@ checkManifest(void)
             if (cfgOptionTest(cfgOptPgHost + pgIdx) || cfgOptionTest(cfgOptPgPath + pgIdx))
             {
                 result++;
-                // ??? Placeholder for manifest builds - this is here just to make sure the loop is run and to check error
+                // ??? Placeholder for manifest build
                 storageListNP(storagePgId(pgIdx + 1), varStr(cfgOption(cfgOptPgPath + pgIdx)));
             }
         }

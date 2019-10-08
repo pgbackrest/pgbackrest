@@ -281,15 +281,16 @@ sub run
             # Restore the file to its original condition
             $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
 
+            # ??? Removed temporarily until manifest build can be brought back into the check command
             # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
-            my $strDir = $oHostDbMaster->dbBasePath() . '/rootreaddir';
-            executeTest('sudo mkdir ' . $strDir);
-            executeTest("sudo chown root:root ${strDir}");
-            executeTest("sudo chmod 400 ${strDir}");
-
-            $strComment = 'confirm master manifest->build executed';
-            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
-            executeTest("sudo rmdir ${strDir}");
+            # my $strDir = $oHostDbMaster->dbBasePath() . '/rootreaddir';
+            # executeTest('sudo mkdir ' . $strDir);
+            # executeTest("sudo chown root:root ${strDir}");
+            # executeTest("sudo chmod 400 ${strDir}");
+            #
+            # $strComment = 'confirm master manifest->build executed';
+            # $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
+            # executeTest("sudo rmdir ${strDir}");
 
             # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
             # archive.info and backup.info files
