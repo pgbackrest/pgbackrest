@@ -21,10 +21,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdRemote()"))
     {
-        // Create default storage object for testing
-        Storage *storageTest = storagePosixNew(
-            strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-
         // No remote lock required
         // -------------------------------------------------------------------------------------------------------------------------
         HARNESS_FORK_BEGIN()
@@ -32,13 +28,11 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--command=info");
                 strLstAddZ(argList, "--process=1");
                 strLstAddZ(argList, "--type=backup");
-                strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                harnessCfgLoad(cfgCmdRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -66,13 +60,13 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
+                strLstAddZ(argList, testProjectExe());
                 strLstAddZ(argList, "--command=archive-get-async");
                 strLstAddZ(argList, "--process=0");
                 strLstAddZ(argList, "--type=backup");
                 strLstAddZ(argList, "--lock-path=/bogus");
                 strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -101,14 +95,14 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
+                strLstAddZ(argList, testProjectExe());
                 strLstAddZ(argList, "--stanza=test");
                 strLstAddZ(argList, "--command=archive-push-async");
                 strLstAddZ(argList, "--process=0");
                 strLstAddZ(argList, "--type=backup");
                 strLstAddZ(argList, "--lock-path=/bogus");
                 strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -136,14 +130,11 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
                 strLstAddZ(argList, "--stanza=test");
                 strLstAddZ(argList, "--command=archive-push-async");
                 strLstAddZ(argList, "--process=0");
                 strLstAddZ(argList, "--type=backup");
-                strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testPath()));
-                strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                harnessCfgLoad(cfgCmdRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -160,7 +151,11 @@ testRun(void)
                 TEST_ASSIGN(client, protocolClientNew(strNew("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), "create client");
                 protocolClientNoOp(client);
 
-                storageExistsNP(storageTest, strNewFmt("--lock-path=%s/lock/test-archive" LOCK_FILE_EXT, testPath()));
+                TEST_RESULT_BOOL(
+                    storageExistsNP(
+                        storagePosixNew(strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL),
+                        STRDEF("lock/test-archive" LOCK_FILE_EXT)),
+                    true, "lock exists");
 
                 protocolClientFree(client);
             }

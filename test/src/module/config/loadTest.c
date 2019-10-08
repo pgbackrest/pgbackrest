@@ -162,23 +162,19 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("help"));
         strLstAdd(argList, strNew("backup"));
         strLstAdd(argList, strNew("process-max"));
 
         harnessLogLevelSet(logLevelWarn);
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load help config -- no retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdHelp, argList), "load help config -- no retention warning");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    command is help");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
-        strLstAdd(argList, strNew("expire"));
 
         harnessLogLevelSet(logLevelWarn);
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
@@ -187,7 +183,7 @@ testRun(void)
 
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config no retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config no retention warning");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 1, "    repo1-retention-archive set");
 
         // Munge repo-type for coverage.  This will go away when there are multiple repos.
@@ -195,13 +191,11 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "load config no repo-type");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=incr"));
-        strLstAdd(argList, strNew("expire"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
                 "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full'"
@@ -211,13 +205,11 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
-        strLstAdd(argList, strNew("expire"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
@@ -228,7 +220,7 @@ testRun(void)
 
         strLstAdd(argList, strNew("--repo1-retention-diff=2"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
@@ -236,31 +228,27 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 2, "    repo1-retention-archive set to retention-diff");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
         strLstAdd(argList, strNew("--repo1-retention-archive=3"));
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
-        strLstAdd(argList, strNew("expire"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         harnessLogResult(
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
                 " to the maximum.");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
         strLstAdd(argList, strNew("--repo1-retention-archive=3"));
         strLstAdd(argList, strNew("--repo1-retention-diff=2"));
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
-        strLstAdd(argList, strNew("expire"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config with success");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config with success");
 
         // -------------------------------------------------------------------------------------------------------------------------
         setenv("PGBACKREST_REPO1_S3_KEY", "mykey", true);
@@ -268,17 +256,15 @@ testRun(void)
 
         // Invalid bucket name with verification enabled fails
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
         strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
         strLstAdd(argList, strNew("--repo1-path=/repo"));
-        strLstAdd(argList, strNew("archive-get"));
 
         TEST_ERROR(
-            harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
+            harnessCfgLoad(cfgCmdArchiveGet, argList), OptionInvalidValueError,
             "'bogus.bucket' is not valid for option 'repo1-s3-bucket'"
                 "\nHINT: RFC-2818 forbids dots in wildcard matches."
                 "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
@@ -286,7 +272,6 @@ testRun(void)
 
         // Invalid bucket name with verification disabled succeeds
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
@@ -294,23 +279,20 @@ testRun(void)
         strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
         strLstAdd(argList, strNew("--no-repo1-s3-verify-ssl"));
         strLstAdd(argList, strNew("--repo1-path=/repo"));
-        strLstAdd(argList, strNew("archive-get"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "invalid bucket with no verification");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "invalid bucket with no verification");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3Bucket)), "bogus.bucket", "    check bucket value");
 
         // Valid bucket name
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=cool-bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
         strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
         strLstAdd(argList, strNew("--repo1-path=/repo"));
-        strLstAdd(argList, strNew("archive-get"));
 
-        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "valid bucket name");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "valid bucket name");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3Bucket)), "cool-bucket", "    check bucket value");
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
@@ -324,6 +306,7 @@ testRun(void)
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--pg1-path=/path"));
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
         strLstAdd(argList, strNew("--log-path=/bogus"));
         strLstAdd(argList, strNew("--log-level-file=info"));
         strLstAdd(argList, strNew("backup"));
@@ -415,6 +398,7 @@ testRun(void)
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--pg1-path=/path"));
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNew("--log-level-console=off"));
         strLstAdd(argList, strNew("--log-level-stderr=off"));

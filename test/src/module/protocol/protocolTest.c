@@ -106,7 +106,7 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(repoIsLocal(), true, "repo is local");
         TEST_RESULT_VOID(repoIsLocalVerify(), "    local verified");
@@ -117,7 +117,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-host=remote-host");
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(repoIsLocal(), false, "repo is remote");
         TEST_ERROR_FMT(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
@@ -129,7 +129,7 @@ testRun(void)
         strLstAddZ(argList, "--pg1-path=/path/to");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(pgIsLocal(1), true, "pg is local");
 
@@ -144,7 +144,7 @@ testRun(void)
         strLstAddZ(argList, "--type=db");
         strLstAddZ(argList, "--process=0");
         strLstAddZ(argList, "local");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(pgIsLocal(7), false, "pg is remote");
     }
@@ -156,7 +156,7 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 0), "|")),
@@ -172,7 +172,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--log-subprocess");
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 1), "|")),
@@ -198,7 +198,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config-include-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--config-path=%s", testPath()));
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 0, 0), "|")),
@@ -221,7 +221,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-host-config-path=/path/config");
         strLstAddZ(argList, "--repo1-host-user=repo-host-user");
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1, 0), "|")),
@@ -243,7 +243,7 @@ testRun(void)
         strLstAddZ(argList, "--type=backup");
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, "local");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 66, 0), "|")),
@@ -262,7 +262,7 @@ testRun(void)
         strLstAddZ(argList, "--pg1-host=pg1-host");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 0), "|")),
@@ -287,7 +287,7 @@ testRun(void)
         strLstAddZ(argList, "--pg2-host=pg2-host");
         strLstAddZ(argList, "--type=db");
         strLstAddZ(argList, "local");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 1), "|")),
@@ -312,7 +312,7 @@ testRun(void)
         strLstAddZ(argList, "--pg3-port=3333");
         strLstAddZ(argList, "--type=db");
         strLstAddZ(argList, "local");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 2), "|")),
@@ -790,13 +790,11 @@ testRun(void)
         // Simple protocol start
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "/usr/bin/pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAddZ(argList, "--repo1-host=localhost");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        strLstAddZ(argList, "info");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         ProtocolClient *client = NULL;
 
@@ -819,7 +817,6 @@ testRun(void)
                 "repo1-cipher-pass=acbd\n"));
 
         argList = strLstNew();
-        strLstAddZ(argList, "/usr/bin/pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAdd(argList, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
@@ -829,8 +826,7 @@ testRun(void)
         strLstAddZ(argList, "--command=archive-get");
         strLstAddZ(argList, "--host-id=1");
         strLstAddZ(argList, "--type=db");
-        strLstAddZ(argList, "local");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdLocal, argList);
 
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
@@ -849,14 +845,12 @@ testRun(void)
                 "repo1-cipher-pass=dcba\n"));
 
         argList = strLstNew();
-        strLstAddZ(argList, "/usr/bin/pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAdd(argList, strNewFmt("--repo1-host-config=%s/pgbackrest.conf", testPath()));
         strLstAddZ(argList, "--repo1-host=localhost");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        strLstAddZ(argList, "info");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_RESULT_PTR(cfgOptionStr(cfgOptRepoCipherPass), NULL, "check cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
@@ -867,27 +861,23 @@ testRun(void)
         // Start db protocol
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "/usr/bin/pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-host=localhost");
         strLstAdd(argList, strNewFmt("--pg1-host-user=%s", testUser()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", testPath()));
-        strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 1), "get remote protocol");
 
         // Start local protocol
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "/usr/bin/pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAddZ(argList, "--process-max=2");
-        strLstAddZ(argList, "archive-get-async");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
 
         TEST_ASSIGN(client, protocolLocalGet(protocolStorageTypeRepo, 1), "get local protocol");
         TEST_RESULT_PTR(protocolLocalGet(protocolStorageTypeRepo, 1), client, "get local cached protocol");

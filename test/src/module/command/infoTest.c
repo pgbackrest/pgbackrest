@@ -25,19 +25,17 @@ testRun(void)
     if (testBegin("infoRender()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));
-        strLstAddZ(argList, "info");
         StringList *argListText = strLstDup(argList);
 
         strLstAddZ(argList, "--output=json");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         // No stanzas have been created
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "json - repo but no stanzas");
 
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()), "No stanzas exist in the repository.\n", "text - no stanzas");
 
         storagePathCreateNP(storageLocalWrite(), archivePath);
@@ -52,7 +50,7 @@ testRun(void)
             "    status: error (missing stanza data)\n"
             "    cipher: none\n", "text - missing stanza data");
 
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
@@ -162,7 +160,7 @@ testRun(void)
             "    }\n"
             "]\n", "json - single stanza, no valid backups");
 
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
             "    status: error (no valid backups)\n"
@@ -183,7 +181,7 @@ testRun(void)
 
         StringList *argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
@@ -216,7 +214,7 @@ testRun(void)
         String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strPtr(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
 
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
         content = strNew
         (
             "[db]\n"
@@ -326,7 +324,7 @@ testRun(void)
             "    }\n"
             "]\n", "json - single stanza, valid backup, no priors, no archives in latest DB");
 
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
             "    status: ok\n"
@@ -572,7 +570,7 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
                 harnessInfoChecksum(content)), "put backup info to file - stanza2");
 
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
@@ -735,7 +733,7 @@ testRun(void)
             "    }\n"
             "]\n", "json - multiple stanzas, one with valid backups, archives in latest DB");
 
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
             "    status: ok\n"
@@ -780,7 +778,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR(strPtr(infoRender()),
 
@@ -807,7 +805,7 @@ testRun(void)
             , "text - backup set requested");
 
         strLstAddZ(argList2, "--output=json");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_ERROR(strPtr(infoRender()), ConfigError, "option 'set' is currently only valid for text output");
 
@@ -816,7 +814,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_TARGET_NO_LINK                                                                                       \
             "\n"                                                                                                                   \
@@ -866,7 +864,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_NO_DB                                                                                                \
             "\n"                                                                                                                   \
@@ -915,7 +913,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argList);
         strLstAddZ(argList2, "--stanza=silly");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
@@ -931,7 +929,7 @@ testRun(void)
 
         StringList *argListText2 = strLstDup(argListText);
         strLstAddZ(argListText2, "--stanza=silly");
-        harnessCfgLoad(strLstSize(argListText2), strLstPtr(argListText2));
+        harnessCfgLoad(cfgCmdInfo, argListText2);
         TEST_RESULT_STR(strPtr(infoRender()),
         "stanza: silly\n"
         "    status: error (missing stanza path)\n"
@@ -940,7 +938,7 @@ testRun(void)
         // Stanza found
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--stanza=stanza2");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
@@ -973,7 +971,7 @@ testRun(void)
             , "json - multiple stanzas - selected found");
 
         strLstAddZ(argListText, "--stanza=stanza2");
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza2\n"
             "    status: error (no valid backups)\n"
@@ -996,7 +994,7 @@ testRun(void)
                 BUFSTR(content)), "put pgbackrest.conf file");
         strLstAddZ(argListText, "--repo-cipher-type=aes-256-cbc");
         strLstAdd(argListText, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_ERROR_FMT(
             infoRender(), CryptoError,
             "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
@@ -1067,10 +1065,8 @@ testRun(void)
     if (testBegin("cmdInfo()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
-        strLstAddZ(argList, "info");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         storagePathCreateNP(storageLocalWrite(), archivePath);
         storagePathCreateNP(storageLocalWrite(), backupPath);
@@ -1097,12 +1093,11 @@ testRun(void)
         strLstAddZ(argList, "--set=bogus");
 
         TEST_ERROR_FMT(
-            harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
-            "option 'set' not valid without option 'stanza'");
+            harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--stanza=stanza1");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ERROR_FMT(
                 cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"

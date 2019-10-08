@@ -31,14 +31,12 @@ testRun(void)
 
                 // Set options
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--pg1-path=/path/to/pg");
                 strLstAddZ(argList, "--command=backup");
                 strLstAddZ(argList, "--type=db");
                 strLstAddZ(argList, "--process=0");
-                strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                harnessCfgLoad(cfgCmdRemote, argList);
 
                 // Set script
                 harnessPqScriptSet((HarnessPq [])
@@ -106,12 +104,10 @@ testRun(void)
         // Error connecting to primary
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/path/to/pg");
-        strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -164,14 +160,12 @@ testRun(void)
         // More than one primary found
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/path/to/pg1");
         strLstAddZ(argList, "--pg8-path=/path/to/pg2");
         strLstAddZ(argList, "--pg8-port=5433");
-        strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -226,7 +220,6 @@ testRun(void)
         // Primary and standby found
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/path/to/pg1");
@@ -237,8 +230,7 @@ testRun(void)
         strLstAddZ(argList, "--pg5-path=/path/to/pg5");
         strLstAddZ(argList, "--pg8-path=/path/to/pg8");
         strLstAddZ(argList, "--pg8-port=5434");
-        strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {

@@ -1059,11 +1059,9 @@ testRun(void)
     {
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_ERROR(storageRepoGet(strNew(BOGUS_STR), false), AssertError, "invalid storage type 'BOGUS'");
 
@@ -1103,10 +1101,8 @@ testRun(void)
         // Change the stanza to NULL with the stanzaInit flag still true, make sure helper does not fail when stanza option not set
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
-        strLstAddZ(argList, "info");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ASSIGN(storage, storageRepo(), "new repo storage no stanza");
         TEST_RESULT_PTR(storageHelper.stanza, NULL, "stanza NULL");
@@ -1140,14 +1136,12 @@ testRun(void)
 
         // Load configuration to set spool-path and stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--archive-async");
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         strLstAdd(argList, strNewFmt("--pg2-path=%s/db2", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_PTR(storageHelper.storageSpool, NULL, "storage not cached");
         TEST_ASSIGN(storage, storageSpool(), "new storage");
@@ -1217,10 +1211,8 @@ testRun(void)
         storageHelper.stanza = NULL;
 
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
-        strLstAddZ(argList, "info");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ERROR(storageSpool(), AssertError, "stanza cannot be NULL for this storage object");
         TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");

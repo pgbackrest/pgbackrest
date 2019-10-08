@@ -70,9 +70,18 @@ sub processBegin
     $lProcessBegin = time();
 }
 
+sub processExec
+{
+    my $strCommand = shift;
+    my $rhParam = shift;
+
+    &log(INFO, "    Exec ${strCommand}");
+    executeTest($strCommand, $rhParam);
+}
+
 sub processEnd
 {
-    &log(INFO, "End ${strProcessTitle} (" . (time() - $lProcessBegin) . 's)');
+    &log(INFO, "    End ${strProcessTitle} (" . (time() - $lProcessBegin) . 's)');
 }
 
 ####################################################################################################################################
@@ -97,6 +106,12 @@ eval
         pod2usage();
     }
 
+    # VM must be defined
+    if (!defined($strVm))
+    {
+        confess &log(ERROR, '--vm is required');
+    }
+
     ################################################################################################################################
     # Paths
     ################################################################################################################################
@@ -111,15 +126,18 @@ eval
     ################################################################################################################################
     if ($ARGV[0] eq 'doc')
     {
-        processBegin('LaTeX install');
-        executeTest(
-            'sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended',
-            {bSuppressStdErr => true});
-        executeTest('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
-        processEnd();
+        if ($strVm eq VM_CO7)
+        {
+            processBegin('LaTeX install');
+            processExec(
+                'sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended',
+                {bSuppressStdErr => true});
+            processExec('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
+            processEnd();
+        }
 
-        processBegin('release documentation doc');
-        executeTest("${strReleaseExe} --build --no-gen", {bShowOutputAsync => true});
+        processBegin('release documentation');
+        processExec("${strReleaseExe} --build --no-gen --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }
 
@@ -128,19 +146,47 @@ eval
     ################################################################################################################################
     elsif ($ARGV[0] eq 'test')
     {
-        # VM must be defined
-        if (!defined($strVm))
+        # Run tests that can be run without a container
+        my $strParam = "";
+        my $strVmHost = VM_U14;
+
+        if ($strVm eq VM_NONE)
         {
-            confess &log(ERROR, '--vm is required');
+            processBegin('debug tools install');
+            processExec('sudo apt-get install -y valgrind', {bSuppressStdErr => true});
+            processEnd();
+
+            processBegin('/tmp/pgbackrest owned by root so tests cannot use it');
+            processExec('sudo mkdir -p /tmp/pgbackrest && sudo chown root:root /tmp/pgbackrest && sudo chmod 700 /tmp/pgbackrest');
+            processEnd();
+
+            $strVmHost = VM_U18;
+        }
+        # Else run tests that require a container
+        else
+        {
+            # Build the container
+            processBegin("${strVm} build");
+            processExec("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
+            processEnd();
+
+            # Run tests
+            $strParam .= " --vm-max=2";
+
+            if ($strVm eq VM_U18)
+            {
+                $strParam .= " --container-only";
+            }
+            elsif ($strVm ne VM_U12)
+            {
+                $strParam .= " --module=command --module=mock --module=real --module=storage --module=performance";
+            }
         }
 
-        processBegin("${strVm} build");
-        executeTest("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true});
-        processEnd();
-
-        processBegin("${strVm} test");
-        executeTest(
-            "${strTestExe} --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}", {bShowOutputAsync => true});
+        processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
+        processExec(
+            "${strTestExe} --no-gen --no-ci-config --vm-host=${strVmHost} --vm=${strVm}${strParam}",
+            {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }
 

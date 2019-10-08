@@ -24,13 +24,11 @@ testRun(void)
     if (testBegin("cmdCheck()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
-        strLstAddZ(argList, "check");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdCheck, argList);
 
         TEST_ERROR_FMT(
             cmdCheck(), FileMissingError,
@@ -107,13 +105,11 @@ testRun(void)
         // Single standby
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
-        strLstAddZ(argList, "check");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdCheck, argList);
 
         // Set script
         harnessPqScriptSet((HarnessPq [])
@@ -131,12 +127,10 @@ testRun(void)
     if (testBegin("checkDbConfig()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAddZ(argList, "check");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdCheck, argList);
 
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, 1, PG_VERSION_92, pg1Path), "valid db config");
 

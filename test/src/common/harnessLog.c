@@ -70,7 +70,7 @@ harnessLogInit(void)
     logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, 99);
     logFileBanner = true;
 
-    snprintf(logFile, sizeof(logFile), "%s/expect.log", testExpectPath());
+    snprintf(logFile, sizeof(logFile), "%s/expect.log", testDataPath());
     logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
     logAnySet();
 

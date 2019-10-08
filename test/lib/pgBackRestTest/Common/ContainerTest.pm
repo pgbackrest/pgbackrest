@@ -43,7 +43,7 @@ use constant TEST_GROUP_ID                                          => getgrnam(
 
 use constant BACKREST_USER                                          => 'pgbackrest';
     push @EXPORT, qw(BACKREST_USER);
-use constant BACKREST_USER_ID                                       => getpwnam(BACKREST_USER) . '';
+use constant BACKREST_USER_ID                                   => getpwnam(BACKREST_USER) ? getpwnam(BACKREST_USER) . '' : undef;
 
 ####################################################################################################################################
 # Package constants

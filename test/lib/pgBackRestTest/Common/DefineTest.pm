@@ -41,6 +41,8 @@ use constant TESTDEF_DB                                             => 'db';
     push @EXPORT, qw(TESTDEF_DB);
 use constant TESTDEF_CONTAINER                                      => 'container';
     push @EXPORT, qw(TESTDEF_CONTAINER);
+use constant TESTDEF_CONTAINER_REQUIRED                             => 'containerReq';
+    push @EXPORT, qw(TESTDEF_CONTAINER_REQUIRED);
 use constant TESTDEF_COVERAGE                                       => 'coverage';
     push @EXPORT, qw(TESTDEF_COVERAGE);
 use constant TESTDEF_EXPECT                                         => 'expect';
@@ -126,7 +128,8 @@ sub testDefLoad
 
                 # Resolve variables that can be set in the module or the test
                 foreach my $strVar (
-                    TESTDEF_DEFINE, TESTDEF_DEFINE_TEST, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_PERL_REQ, TESTDEF_VM)
+                    TESTDEF_DEFINE, TESTDEF_DEFINE_TEST, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_PERL_REQ, TESTDEF_VM,
+                    TESTDEF_CONTAINER_REQUIRED)
                 {
                     $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                         $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);

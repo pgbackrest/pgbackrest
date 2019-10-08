@@ -65,6 +65,7 @@ sub testListGet
     my $strDbVersion = shift;
     my $bCoverageOnly = shift;
     my $bCOnly = shift;
+    my $bContainerOnly = shift;
 
     my $oyVm = vmGet();
     my $oyTestRun = [];
@@ -112,6 +113,18 @@ sub testListGet
 
                         # Skip this test if only C tests are requested and this is not a C test
                         next if ($bCOnly && !$hTest->{&TESTDEF_C});
+
+                        # Skip this test if it is integration and vm=none
+                        next if ($strVm eq VM_NONE && $hTest->{&TESTDEF_TYPE} eq TESTDEF_INTEGRATION);
+
+                        # Skip this test if it is not C and vm=none.  Perl tests require libc which is not supported.
+                        next if ($strVm eq VM_NONE && !$hTest->{&TESTDEF_C});
+
+                        # Skip this test if a container is required and vm=none.
+                        next if ($strVm eq VM_NONE && $hTest->{&TESTDEF_CONTAINER_REQUIRED});
+
+                        # Skip this if it does not require a container and container only tests are required.
+                        next if ($bContainerOnly && $hTest->{&TESTDEF_C} && !$hTest->{&TESTDEF_CONTAINER_REQUIRED});
 
                         for (my $iDbVersionIdx = $iDbVersionMax; $iDbVersionIdx >= $iDbVersionMin; $iDbVersionIdx--)
                         {

@@ -55,6 +55,7 @@ sub new
     # Set defaults
     $self->{bSuppressError} = defined($self->{bSuppressError}) ? $self->{bSuppressError} : false;
     $self->{bSuppressStdErr} = defined($self->{bSuppressStdErr}) ? $self->{bSuppressStdErr} : false;
+    $self->{bOutLogOnError} = defined($self->{bOutLogOnError}) ? $self->{bOutLogOnError} : true;
     $self->{bShowOutput} = defined($self->{bShowOutput}) ? $self->{bShowOutput} : false;
     $self->{bShowOutputAsync} = defined($self->{bShowOutputAsync}) ? $self->{bShowOutputAsync} : false;
     $self->{iExpectedExitStatus} = defined($self->{iExpectedExitStatus}) ? $self->{iExpectedExitStatus} : 0;
@@ -252,8 +253,10 @@ sub endRetry
             {
                 confess &log(ERROR, "command '$self->{strCommand}' returned " . $iExitStatus .
                              ($self->{iExpectedExitStatus} != 0 ? ", but $self->{iExpectedExitStatus} was expected" : '') . "\n" .
-                             ($self->{strOutLog} ne '' ? "STDOUT (last 10,000 characters):\n" . substr($self->{strOutLog},
-                                 length($self->{strOutLog}) > 10000 ? length($self->{strOutLog}) - 10000 : 0) : '') .
+                             ($self->{strOutLog} ne '' && $self->{bOutLogOnError} ? "STDOUT (last 10,000 characters):\n" .
+                                substr(
+                                    $self->{strOutLog}, length($self->{strOutLog}) > 10000 ?
+                                    length($self->{strOutLog}) - 10000 : 0) : '') .
                              ($self->{strErrorLog} ne '' ? "STDERR:\n$self->{strErrorLog}" : ''));
             }
         }

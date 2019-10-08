@@ -27,7 +27,7 @@ testRun(void)
 
         // Set repo1-cipher-pass to make sure it is not passed on the command line
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "1234", true);
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         TEST_RESULT_STR(
@@ -52,7 +52,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
 
         setenv("PGBACKREST_REPO1_HOST", "bogus", true);
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
         unsetenv("PGBACKREST_REPO1_HOST");
 
         KeyValue *optionReplace = kvNew();

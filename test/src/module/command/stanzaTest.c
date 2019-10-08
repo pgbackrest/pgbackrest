@@ -28,7 +28,6 @@ testRun(void)
     String *archiveInfoFileName = strNewFmt("%s/archive.info", strPtr(archiveStanzaPath));
 
     StringList *argListBase = strLstNew();
-    strLstAddZ(argListBase, "pgbackrest");
     strLstAddZ(argListBase, "--no-online");
     strLstAdd(argListBase, strNewFmt("--stanza=%s", strPtr(stanza)));
     strLstAdd(argListBase, strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
@@ -40,16 +39,14 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-host=/repo/not/local");
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         TEST_ERROR_FMT(
             cmdStanzaCreate(), HostInvalidError, "stanza-create command must be run on the repository host");
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create the stop file
         TEST_RESULT_VOID(
@@ -62,8 +59,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
         storagePutNP(
@@ -426,7 +422,7 @@ testRun(void)
         // Repeat last test using --force (deprecated)
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--force");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
         harnessLogResult("P00   WARN: option --force is no longer supported");
     }
@@ -439,12 +435,10 @@ testRun(void)
 
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pg1Path)));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // pgControl and database match
         //--------------------------------------------------------------------------------------------------------------------------
@@ -519,14 +513,12 @@ testRun(void)
         // Primary at pg2
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--pg2-path=%s", strPtr(pg1Path)));
         strLstAddZ(argList, "--pg2-port=5434");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for master
         storagePutNP(
@@ -559,8 +551,7 @@ testRun(void)
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
         storagePutNP(
@@ -592,16 +583,14 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-host=/repo/not/local");
-        strLstAddZ(argList, "stanza-upgrade");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
         TEST_ERROR_FMT(
             cmdStanzaUpgrade(), HostInvalidError, "stanza-upgrade command must be run on the repository host");
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-upgrade");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
         // Create the stop file
         TEST_RESULT_VOID(
@@ -615,8 +604,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         // Load Parameters
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
         storagePutNP(
@@ -627,8 +615,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-upgrade");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - files already exist and both are valid");
         harnessLogResult("P00   INFO: stanza 'db' is already up to date");
@@ -890,15 +877,13 @@ testRun(void)
     {
         // Load Parameters
         StringList *argListCmd = strLstNew();
-        strLstAddZ(argListCmd, "pgbackrest");
         strLstAdd(argListCmd, strNewFmt("--repo1-path=%s/repo", testPath()));
 
         StringList *argList = strLstDup(argListCmd);
         strLstAddZ(argList, "--repo1-host=/repo/not/local");
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
-        strLstAddZ(argList,"stanza-delete");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaDelete, argList);
 
         TEST_ERROR_FMT(
             cmdStanzaDelete(), HostInvalidError, "stanza-delete command must be run on the repository host");
@@ -911,8 +896,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanzaOther)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanzaOther)));
         strLstAddZ(argList, "--no-online");
-        strLstAddZ(argList,"stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for stanza-create
         storagePutNP(
@@ -924,8 +908,7 @@ testRun(void)
         argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
-        strLstAddZ(argList,"stanza-delete");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaDelete, argList);
 
         // stanza already deleted
         //--------------------------------------------------------------------------------------------------------------------------
@@ -941,8 +924,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
         strLstAddZ(argList, "--no-online");
-        strLstAddZ(argList,"stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for stanza-create
         storagePutNP(
@@ -956,8 +938,7 @@ testRun(void)
         argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
-        strLstAddZ(argList,"stanza-delete");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaDelete, argList);
 
         TEST_ERROR_FMT(
             cmdStanzaDelete(), FileMissingError, "stop file does not exist for stanza 'db'\n"
@@ -1093,7 +1074,7 @@ testRun(void)
 
         // Force deletion
         strLstAddZ(argList,"--force");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaDelete, argList);
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete --force");
         TEST_RESULT_BOOL(
             storagePathExistsNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza deleted");

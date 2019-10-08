@@ -22,12 +22,10 @@ testRun(void)
     if (testBegin("cmdStorageList() and storageListRender()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s/repo", testPath()));
         strLstAddZ(argList, "--output=text");
         strLstAddZ(argList, "--sort=none");
-        strLstAddZ(argList, "ls");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdLs, argList);
 
         // Missing directory
         // -------------------------------------------------------------------------------------------------------------------------
@@ -65,12 +63,7 @@ testRun(void)
         cfgOptionSet(cfgOptSort, cfgSourceParam, VARSTRDEF("asc"));
 
         storagePathCreateNP(storageTest, strNew("repo/bbb"));
-        ASSERT(system(strPtr(strNewFmt("sudo chown :77777 %s/repo/bbb", testPath()))) == 0);
-
         storagePutNP(storageNewWriteNP(storageTest, strNew("repo/aaa")), BUFSTRDEF("TESTDATA"));
-        ASSERT(system(strPtr(strNewFmt("sudo chown 77777 %s/repo/aaa", testPath()))) == 0);
-        ASSERT(system(strPtr(strNewFmt("sudo chmod 000 %s/repo/aaa", testPath()))) == 0);
-
         storagePutNP(storageNewWriteNP(storageTest, strNew("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
 
         ASSERT(system(strPtr(strNewFmt("ln -s ../bbb %s/repo/link", testPath()))) == 0);
@@ -128,7 +121,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTmp = strLstDup(argList);
         strLstAddZ(argListTmp, "bbb");
-        harnessCfgLoad(strLstSize(argListTmp), strLstPtr(argListTmp));
+        harnessCfgLoad(cfgCmdLs, argListTmp);
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
@@ -153,7 +146,7 @@ testRun(void)
         // Too many paths
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argListTmp, "ccc");
-        harnessCfgLoad(strLstSize(argListTmp), strLstPtr(argListTmp));
+        harnessCfgLoad(cfgCmdLs, argListTmp);
 
         output = bufNew(0);
         TEST_ERROR(storageListRender(ioBufferWriteNew(output)), ParamInvalidError, "only one path may be specified");

@@ -11,12 +11,17 @@ language: c
 services:
   - docker
 
-env:
-  - PGB_CI="doc"
-  - PGB_CI="--vm=u18 test"
-  - PGB_CI="--vm=co6 test"
-  - PGB_CI="--vm=co7 test"
-  - PGB_CI="--vm=u12 test"
+matrix:
+  include:
+    - env: PGB_CI="--vm=u12 test"
+    - env: PGB_CI="--vm=co6 test"
+    - env: PGB_CI="--vm=co7 test"
+    - env: PGB_CI="--vm=u18 test"
+    - env: PGB_CI="--vm=u18 doc"
+    - dist: bionic
+      env: PGB_CI="--vm=none test"
+    - env: PGB_CI="--vm=co7 doc"
+    - env: PGB_CI="--vm=co6 doc"
 
 before_install:
   - sudo apt-get -qq update || true

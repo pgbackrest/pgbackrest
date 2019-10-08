@@ -39,12 +39,10 @@ testRun(void)
     if (testBegin("archivePushReadyList(), archivePushProcessList(), and archivePushDrop()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
-        strLstAddZ(argList, "archive-push-async");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchivePushAsync, argList);
 
         storagePathCreateNP(storagePgWrite(), strNew("pg_wal/archive_status"));
         storagePathCreateNP(storageTest, strNew("spool/archive/db/out"));
@@ -81,7 +79,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListDrop = strLstDup(argList);
         strLstAdd(argListDrop, strNewFmt("--archive-push-queue-max=%zu", (size_t)1024 * 1024 * 1024));
-        harnessCfgLoad(strLstSize(argListDrop), strLstPtr(argListDrop));
+        harnessCfgLoad(cfgCmdArchivePushAsync, argListDrop);
 
         // Write the files that we claim are in pg_wal
         Buffer *walBuffer = bufNew((size_t)16 * 1024 * 1024);
@@ -102,7 +100,7 @@ testRun(void)
         // Now set queue max low enough that WAL will be dropped
         argListDrop = strLstDup(argList);
         strLstAdd(argListDrop, strNewFmt("--archive-push-queue-max=%zu", (size_t)16 * 1024 * 1024 * 2));
-        harnessCfgLoad(strLstSize(argListDrop), strLstPtr(argListDrop));
+        harnessCfgLoad(cfgCmdArchivePushAsync, argListDrop);
 
         TEST_RESULT_BOOL(
             archivePushDrop(strNew("pg_wal"), archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath()))), true,
@@ -113,12 +111,10 @@ testRun(void)
     if (testBegin("archivePushCheck()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAddZ(argList, "archive-push");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchivePush, argList);
 
         // Check mismatched pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
@@ -180,17 +176,15 @@ testRun(void)
     if (testBegin("Synchronous cmdArchivePush(), archivePushFile() and archivePushProtocol()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test");
-        strLstAddZ(argList, "archive-push");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchivePush, argList);
 
         TEST_ERROR(cmdArchivePush(), ParamRequiredError, "WAL segment to push required");
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_ERROR(
             cmdArchivePush(), OptionRequiredError,
@@ -205,7 +199,7 @@ testRun(void)
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
@@ -287,7 +281,7 @@ testRun(void)
         // Save it to a new file instead
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000002")), walBuffer2);
 
@@ -306,7 +300,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/00000001.history");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/00000001.history")), BUFSTRDEF("FAKEHISTORY"));
 
@@ -324,7 +318,7 @@ testRun(void)
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=16m");
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "drop WAL file");
         harnessLogResult("P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");
@@ -332,7 +326,7 @@ testRun(void)
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=1GB");
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push WAL file again");
         harnessLogResult(
@@ -395,7 +389,7 @@ testRun(void)
         strLstAddZ(argListTemp, "--repo1-cipher-type=aes-256-cbc");
         strLstAddZ(argListTemp, "--no-compress");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "badpassphrase", true);
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
@@ -422,12 +416,13 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--archive-timeout=1");
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testPath()));
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "pg_wal/bogus");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,
@@ -436,19 +431,14 @@ testRun(void)
         // Create pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--no-compress");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--log-path=%s/log", testPath()));
-        strLstAddZ(argList, "--log-level-file=trace");
         strLstAddZ(argList, "--log-subprocess");
-        strLstAddZ(argList, "archive-push");
 
-        storagePathCreateNP(storageTest, strNew("log"));
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}));
@@ -466,7 +456,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         storagePathCreateNP(storagePgWrite(), strNew("pg_xlog/archive_status"));
 
@@ -483,7 +473,7 @@ testRun(void)
         argListTemp = strLstDup(argList);
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
         strLstAddZ(argListTemp, "--archive-timeout=1");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         HARNESS_FORK_BEGIN()
         {
@@ -531,7 +521,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
 
@@ -556,17 +546,13 @@ testRun(void)
         // Direct tests of the async function
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--no-compress");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--log-path=%s/log", testPath()));
-        strLstAddZ(argList, "--log-level-file=trace");
         strLstAddZ(argList, "--log-subprocess");
-        strLstAddZ(argList, "archive-push-async");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchivePushAsync, argList);
 
         TEST_ERROR(cmdArchivePushAsync(), ParamRequiredError, "WAL path to push required");
 
@@ -583,7 +569,7 @@ testRun(void)
         storagePathCreateNP(storagePgWrite(), strNew("pg_xlog/archive_status"));
 
         strLstAdd(argList, strNewFmt("%s/pg/pg_xlog", testPath()));
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchivePushAsync, argList);
 
         TEST_ERROR(cmdArchivePushAsync(), AssertError, "no WAL files to process");
 
@@ -635,7 +621,7 @@ testRun(void)
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=1gb");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePushAsync, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         harnessLogResult(
@@ -662,7 +648,7 @@ testRun(void)
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=16m");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoad(cfgCmdArchivePushAsync, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         harnessLogResult(

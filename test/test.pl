@@ -81,6 +81,7 @@ test.pl [options]
    --build-max          max processes to use for builds (default 4)
    --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
+   --container-only     only run tests that must be run in a container
    --gen-only           only run auto-generation
    --no-gen             do not run code generation
    --code-count         generate code counts
@@ -151,6 +152,7 @@ my $bCoverageOnly = false;
 my $bCoverageSummary = false;
 my $bNoCoverage = false;
 my $bCOnly = false;
+my $bContainerOnly = false;
 my $bGenOnly = false;
 my $bNoGen = false;
 my $bCodeCount = false;
@@ -200,6 +202,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'coverage-summary' => \$bCoverageSummary,
             'no-coverage' => \$bNoCoverage,
             'c-only' => \$bCOnly,
+            'container-only' => \$bContainerOnly,
             'gen-only' => \$bGenOnly,
             'no-gen' => \$bNoGen,
             'code-count' => \$bCodeCount,
@@ -711,13 +714,16 @@ eval
         my $iTestFail = 0;
         my $iTestRetry = 0;
         my $oyProcess = [];
-        my $strCoveragePath = "${strTestPath}/cover_db";
         my $strCodePath = "${strBackRestBase}/test/.vagrant/code";
 
         if (!$bDryRun || $bVmOut)
         {
-            &log(INFO, "cleanup old data and containers");
-            containerRemove('test-([0-9]+|build)');
+            &log(INFO, "cleanup old data" . ($strVm ne VM_NONE ? " and containers" : ''));
+
+            if ($strVm ne VM_NONE)
+            {
+                containerRemove('test-([0-9]+|build)');
+            }
 
             for (my $iVmIdx = 0; $iVmIdx < 8; $iVmIdx++)
             {
@@ -725,9 +731,9 @@ eval
             }
 
             executeTest(
-                "sudo rm -rf ${strTestPath}/cover_db ${strTestPath}/test-* ${strTestPath}/expect-*" .
+                "sudo rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" .
                 ($bDev ? '' : " ${strTestPath}/gcov-*"));
-            $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+            $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
             # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
             executeTest("rm -rf ${strBackRestBase}/test/coverage/c/*");
@@ -760,7 +766,7 @@ eval
         {
             # Get the test list
             $oyTestRun = testListGet(
-                $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly);
+                $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly, $bContainerOnly);
 
             # Determine if the C binary and test library need to be built
             foreach my $hTest (@{$oyTestRun})
@@ -869,10 +875,13 @@ eval
                     {
                         &log(INFO, "    build bin for ${strBuildVM} (${strBuildPath})");
 
-                        executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
-                            {bSuppressStdErr => true});
+                        if ($strBuildVM ne VM_NONE)
+                        {
+                            executeTest(
+                                "docker run -itd -h test-build --name=test-build" .
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                {bSuppressStdErr => true});
+                        }
 
                         foreach my $strBinSrcPath (@stryBinSrcPath)
                         {
@@ -889,17 +898,21 @@ eval
                         if ($bBuildOptionsDiffer || !$oStorageBackRest->exists("${strBuildPath}/Makefile"))
                         {
                             executeTest(
-                                "docker exec -i test-build bash -c 'cd ${strBuildPath} && ./configure${strConfigOptions}'",
+                                ($strBuildVM ne VM_NONE ? 'docker exec -i test-build ' : '') .
+                                "bash -c 'cd ${strBuildPath} && ./configure${strConfigOptions}'",
                                 {bShowOutputAsync => $bLogDetail});
                         }
 
                         executeTest(
-                            'docker exec -i test-build' .
-                            " make -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
+                            ($strBuildVM ne VM_NONE ? 'docker exec -i test-build ' : '') .
+                            "make -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
                                 " --directory ${strBuildPath} CFLAGS='${strCFlags}' LDFLAGS='${strLdFlags}'",
                             {bShowOutputAsync => $bLogDetail});
 
-                        executeTest("docker rm -f test-build");
+                        if ($strBuildVM ne VM_NONE)
+                        {
+                            executeTest("docker rm -f test-build");
+                        }
                     }
                 }
             }
@@ -908,6 +921,11 @@ eval
             #-----------------------------------------------------------------------------------------------------------------------
             if ($bLibCHostRequired || $bLibCVmRequired)
             {
+                if ($strVm eq VM_NONE)
+                {
+                    confess &log(ASSERT, "c library build not yet supported for vm=none");
+                }
+
                 my $strLibCPath = "${strVagrantPath}/bin";
 
                 # Loop through VMs to do the C Library builds
@@ -1026,7 +1044,7 @@ eval
 
             # Build the package
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bNoPackage)
+            if (!$bNoPackage && $strVm ne VM_NONE)
             {
                 my $strPackagePath = "${strVagrantPath}/package";
                 my $strPackageSmart = "${strPackagePath}/build.timestamp";
@@ -1301,7 +1319,7 @@ eval
                 if (!defined($$oyProcess[$iVmIdx]) && $iTestIdx < @{$oyTestRun})
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
-                        $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
+                        $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
                         $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync,
                         $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bBackTrace,
                         $bProfile, $iScale, !$bNoDebug, $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));

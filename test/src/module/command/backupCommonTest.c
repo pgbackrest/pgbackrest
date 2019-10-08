@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Test Common Functions and Definitions for Backup and Expire Commands
 ***********************************************************************************************************************************/
-#include "common/harnessConfig.h"
 #include "common/io/bufferWrite.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
