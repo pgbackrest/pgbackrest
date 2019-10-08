@@ -269,6 +269,8 @@ testRun(void)
 
         TEST_RESULT_INT(result.primaryId, 8, "    check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
+        TEST_RESULT_STR(strPtr(dbArchiveMode(result.primary)), "on", "    dbArchiveMode");
+        TEST_RESULT_STR(strPtr(dbArchiveCommand(result.primary)), PROJECT_BIN, "    dbArchiveCommand");
         TEST_RESULT_STR(strPtr(dbWalSwitch(result.primary)), "000000010000000200000003", "    wal switch");
         TEST_RESULT_INT(result.standbyId, 1, "    check standby id");
         TEST_RESULT_BOOL(result.standby != NULL, true, "    check standby");
