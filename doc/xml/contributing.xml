@@ -170,10 +170,9 @@ if (testBegin("expireBackup()"))
                 <code-block>
 String *repoPath = strNewFmt("%s/repo", testPath());                    // create a string defining the repo path on the test system
 StringList *argList = strLstNew();                                      // create an empty string list
-strLstAddZ(argList, "pgbackrest");                                      // add the executable as a character string to the string list
 strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));     // add the --repo-path option as a formatted string
 strLstAddZ(argList, "info");                                            // add the command
-harnessCfgLoad(strLstSize(argList), strLstPtr(argList));                // load the command into the test harness
+harnessCfgLoad(cfgCmdExpire, argList);                                  // load the command and option list into the test harness
 
 TEST_RESULT_STR(strPtr(infoRender()), "No stanzas exist in the repository.\n", "text - no stanzas");  // run the test
                 </code-block>
@@ -217,6 +216,7 @@ harnessLogResult(
             <code-block>
 /backrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only
             </code-block>
+            <admonition type="note">If you have changed branches, it is recommended the above be run with <code>--dev-test</code> instead of <code>--dev</code> to rebuild the code from scratch.</admonition>
 
             <p>Because no test run is specified and <code>--coverage-only</code> has been requested, a coverage report will be generated and written to the local file system under <file>backrest/test/coverage/c-coverage.html</file> and will highlight code that has not been tested.</p>
 

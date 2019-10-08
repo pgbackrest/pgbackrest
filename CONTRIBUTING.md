@@ -140,10 +140,9 @@ If configuration options are required then a string list with the command and op
 ```
 String *repoPath = strNewFmt("%s/repo", testPath());                    // create a string defining the repo path on the test system
 StringList *argList = strLstNew();                                      // create an empty string list
-strLstAddZ(argList, "pgbackrest");                                      // add the executable as a character string to the string list
 strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));     // add the --repo-path option as a formatted string
 strLstAddZ(argList, "info");                                            // add the command
-harnessCfgLoad(strLstSize(argList), strLstPtr(argList));                // load the command into the test harness
+harnessCfgLoad(cfgCmdExpire, argList);                                  // load the command and option list into the test harness
 
 TEST_RESULT_STR(strPtr(infoRender()), "No stanzas exist in the repository.\n", "text - no stanzas");  // run the test
 ```
@@ -184,6 +183,8 @@ Unit tests are run, and coverage of the code being tested is provided, by runnin
 ```
 /backrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only
 ```
+> **NOTE:** If you have changed branches, it is recommended the above be run with `--dev-test` instead of `--dev` to rebuild the code from scratch.
+
 Because no test run is specified and `--coverage-only` has been requested, a coverage report will be generated and written to the local file system under `backrest/test/coverage/c-coverage.html` and will highlight code that has not been tested.
 
 Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option `--no-cleanup` provided. Again, continuing with the check command, we see in **define.yaml** above that there are two tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.
