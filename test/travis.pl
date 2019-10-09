@@ -168,7 +168,7 @@ eval
         }
         else
         {
-            $strPackage .= " python-pip libdbd-pg-perl";
+            $strPackage .= " libdbd-pg-perl";
         }
 
         processBegin('install test packages');
@@ -189,13 +189,6 @@ eval
         {
             processBegin("create backrest user");
             processExec("sudo adduser --ingroup=\${USER?} --uid=5001 --disabled-password --gecos \"\" " . BACKREST_USER);
-            processEnd();
-
-            processBegin("install and configure aws cli");
-            processExec('pip install --upgrade --user awscli', {bSuppressStdErr => true});
-            processExec('aws configure set region us-east-1');
-            processExec('aws configure set aws_access_key_id accessKey1');
-            processExec('aws configure set aws_secret_access_key verySecretKey1');
             processEnd();
 
             # Build the container

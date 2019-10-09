@@ -32,6 +32,7 @@ use pgBackRest::Storage::Base;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::LogTest;
+use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
@@ -204,9 +205,34 @@ sub forceStorageMove
     # If S3 then use storage commands to remove
     if ($oStorage->type() eq STORAGE_S3)
     {
-        hostGroupGet()->hostGet(HOST_S3)->executeS3(
-            'mv' . ($bRecurse ? ' --recursive' : '') . ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strSourcePathExp) .
-                ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strDestinationPathExp));
+        if ($bRecurse)
+        {
+            my $rhManifest = $oStorage->manifest($strSourcePathExp);
+
+            foreach my $strName (sort(keys(%{$rhManifest})))
+            {
+                if ($rhManifest->{$strName}{type} eq 'f')
+                {
+                    $oStorage->put(
+                        new pgBackRest::Storage::StorageWrite(
+                            $oStorage,
+                            pgBackRest::LibC::StorageWrite->new(
+                                $oStorage->{oStorageC}, "${strDestinationPathExp}/${strName}", 0, undef, undef, 0, true, false)),
+                        ${$oStorage->get(
+                            new pgBackRest::Storage::StorageRead(
+                                $oStorage,
+                                pgBackRest::LibC::StorageRead->new(
+                                    $oStorage->{oStorageC}, "${strSourcePathExp}/${strName}", false)))});
+
+                    $oStorage->remove("${strSourcePathExp}/${strName}");
+                }
+            }
+        }
+        else
+        {
+            $oStorage->put($strDestinationPathExp, ${$oStorage->get($strSourcePathExp)});
+            $oStorage->remove($strSourcePathExp);
+        }
     }
     # Else remove using filesystem commands
     else
