@@ -99,6 +99,7 @@ sub process
         "    - env: PGB_CI=\"--vm=u18 doc\"\n" .
         "    - dist: bionic\n" .
         "      env: PGB_CI=\"--vm=none test\"\n" .
+        "      env: PGB_CI=\"--vm=f30 test\"\n" .
         "    - env: PGB_CI=\"--vm=co7 doc\"\n" .
         "    - env: PGB_CI=\"--vm=co6 doc\"\n";
 

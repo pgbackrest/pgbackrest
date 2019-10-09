@@ -522,7 +522,7 @@ hrnDiff(const char *actual, const char *expected)
     hrnFileWrite(expectedFile, (unsigned char *)expected, strlen(expected));
 
     // Perform diff
-    char command[2048];
+    char command[2560];
     snprintf(command, sizeof(command), "diff -u %s %s > %s/diff.result", actualFile, expectedFile, testDataPath());
 
     if (system(command) == 2)

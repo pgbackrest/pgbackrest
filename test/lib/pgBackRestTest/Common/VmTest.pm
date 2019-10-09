@@ -87,6 +87,8 @@ use constant VM_CO6                                                 => 'co6';
     push @EXPORT, qw(VM_CO6);
 use constant VM_CO7                                                 => 'co7';
     push @EXPORT, qw(VM_CO7);
+use constant VM_F30                                                 => 'f30';
+    push @EXPORT, qw(VM_F30);
 use constant VM_U12                                                 => 'u12';
     push @EXPORT, qw(VM_U12);
 use constant VM_U14                                                 => 'u14';
@@ -199,6 +201,34 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_96,
+        ],
+    },
+
+    # Fedora 30
+    &VM_F30 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_RHEL,
+        &VM_OS => VM_OS_CENTOS,
+        &VM_IMAGE => 'fedora:30',
+        &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
+
+        &VMDEF_DEBUG_INTEGRATION => false,
+
+        &VM_DB =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_11,
         ],
     },
 

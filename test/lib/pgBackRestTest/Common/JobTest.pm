@@ -455,7 +455,8 @@ sub run
                 # Flags used to build test.c
                 my $strTestFlags =
                     ($self->{bDebug} ? '-DDEBUG_TEST_TRACE ' : '') .
-                    '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_F30 ? '-O2' : '-O0') .
+                    ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                         ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
@@ -466,7 +467,8 @@ sub run
 
                 # Flags used to build all other files
                 my $strBuildFlags =
-                    ($self->{bOptimize} ? '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
+                    ($self->{bOptimize} || $self->{oTest}->{&TEST_VM} eq VM_F30 ?
+                        '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
 
                 buildPutDiffers(
                     $self->{oStorageTest}, "$self->{strGCovPath}/buildflags",

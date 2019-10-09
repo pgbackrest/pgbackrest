@@ -241,7 +241,7 @@ testRun(void)
                 ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz"
                 "\nHINT: are multiple primaries archiving to this stanza?");
 
-        TEST_RESULT_STR(
+        TEST_RESULT_PTR(
             walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678.partial"), 0), NULL,
             "did not find partial segment");
     }

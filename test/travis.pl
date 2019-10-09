@@ -203,9 +203,13 @@ eval
             {
                 $strParam .= " --container-only";
             }
+            elsif ($strVm eq VM_F30)
+            {
+                $strParam .= " --no-package --c-only";
+            }
             elsif ($strVm ne VM_U12)
             {
-                $strParam .= " --module=command --module=mock --module=real --module=storage --module=performance";
+                $strParam .= " --module=real";
             }
         }
 
