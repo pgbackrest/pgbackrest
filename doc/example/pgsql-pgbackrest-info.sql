@@ -15,10 +15,10 @@ begin
     -- Create a temp table to hold the JSON data
     create temp table temp_pgbackrest_data (data jsonb);
 
-    -- Copy data into the table directory from the pgBackRest into command
+    -- Copy data into the table directory from the pgBackRest info command
     copy temp_pgbackrest_data (data)
         from program
-            'pgbackrest --output=json info | tr ''\n'' '' ''' (format text);
+            'pgbackrest --output=json info' (format text);
 
     select temp_pgbackrest_data.data
       into data

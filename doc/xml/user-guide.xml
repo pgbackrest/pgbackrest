@@ -1393,15 +1393,7 @@
 
         <p>Monitoring is an important part of any production system.  There are many tools available and <backrest/> can be monitored on any of them with a little work.</p>
 
-        <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.  A script is needed to extract information in a format that the monitoring system can understand.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Get <backrest/> info in JSON format</title>
-
-            <execute user="postgres" show="y">
-                <exe-cmd>pgbackrest --output=json info</exe-cmd>
-            </execute>
-        </execute-list>
+        <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.</p>
 
         <section id="postgresql">
             <title>In <postgres/></title>
