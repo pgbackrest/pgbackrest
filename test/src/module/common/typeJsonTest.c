@@ -146,22 +146,12 @@ testRun(void)
         KeyValue *keyValue = kvNew();
         String *json = NULL;
 
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 0), "kvToJson - empty, no indent");
+        TEST_ASSIGN(json, jsonFromKv(keyValue), "kvToJson - empty");
         TEST_RESULT_STR(strPtr(json), "{}", "  empty curly brackets");
 
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 2), "kvToJson - empty, indent 2");
-        TEST_RESULT_STR(strPtr(json), "{}\n", "  empty curly brackets with carriage return");
-
         kvPut(keyValue, varNewStrZ("backup"), varNewVarLst(varLstNew()));
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 0), "kvToJson - kv with empty array, no indent");
+        TEST_ASSIGN(json, jsonFromKv(keyValue), "kvToJson - kv with empty array");
         TEST_RESULT_STR(strPtr(json), "{\"backup\":[]}", "  kv with empty array brackets");
-
-        kvPut(keyValue, varNewStrZ("backup"), varNewVarLst(varLstNew()));
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 2), "kvToJson - kv with empty array, indent 2");
-        TEST_RESULT_STR(strPtr(json),
-            "{\n"
-            "  \"backup\" : []\n"
-            "}\n", "  formatted kv with empty array brackets");
 
         kvPutKv(keyValue, varNewStr(strNew("archive")));
         kvPutKv(keyValue, varNewStr(strNew("empty")));
@@ -179,25 +169,26 @@ testRun(void)
         kvPut(keyValue, varNewStrZ("db"), varNewVarLst(dbList));
         kvPut(keyValue, varNewStrZ("null-list"), varNewVarLst(NULL));
 
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 2), "kvToJson - kv with empty array, indent 2");
-        TEST_RESULT_STR(strPtr(json),
-            "{\n"
-            "  \"archive\" : {},\n"
-            "  \"backup\" : [],\n"
-            "  \"bool1\" : true,\n"
-            "  \"bool2\" : false,\n"
-            "  \"checknull\" : null,\n"
-            "  \"db\" : [\n"
-            "    {\n"
-            "      \"id\" : 1,\n"
-            "      \"version\" : \"9.4\"\n"
-            "    },\n"
-            "    null\n"
-            "  ],\n"
-            "  \"empty\" : {},\n"
-            "  \"null-list\" : null,\n"
-            "  \"null-str\" : null\n"
-            "}\n", "  formatted kv with empty array, kv, varList with values");
+        TEST_ASSIGN(json, jsonFromKv(keyValue), "kvToJson - kv with empty array, kv, varList with values");
+        TEST_RESULT_STR(
+            strPtr(json),
+            "{"
+                "\"archive\":{},"
+                "\"backup\":[],"
+                "\"bool1\":true,"
+                "\"bool2\":false,"
+                "\"checknull\":null,"
+                "\"db\":["
+                    "{"
+                        "\"id\":1,"
+                        "\"version\":\"9.4\""
+                    "},"
+                    "null"
+                "],"
+                "\"empty\":{},"
+                "\"null-list\":null,"
+                "\"null-str\":null"
+            "}", "  kv with empty array, kv, varList with values");
 
         TEST_ASSIGN(
             keyValue,
@@ -208,7 +199,7 @@ testRun(void)
                     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
                     "\"checksum-page-error\":[1,[4,6]],\"backup-timestamp-start\":1482182951}"))),
             "multiple values with array");
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 0), "  kvToJson - sorted, no indent");
+        TEST_ASSIGN(json, jsonFromKv(keyValue), "  kvToJson - sorted");
         TEST_RESULT_STR(strPtr(json),
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
@@ -249,7 +240,7 @@ testRun(void)
         kvAdd(sectionKv, varNewStr(strNew("key3")), varNewStr(strNew("value2")));
         kvAdd(sectionKv, varNewStr(strNew("escape")), varNewStr(strNew("\"\\/\b\n\r\t\f")));
 
-        TEST_ASSIGN(json, jsonFromVar(keyValue), "KeyValue no indent");
+        TEST_ASSIGN(json, jsonFromVar(keyValue), "KeyValue");
         TEST_RESULT_STR(strPtr(json),
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
@@ -272,7 +263,7 @@ testRun(void)
         varLstAdd(varVarLst(varListOuter), NULL);
         varLstAdd(varVarLst(varListOuter), keyValue);
 
-        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList - no indent");
+        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList");
         TEST_RESULT_STR(strPtr(json),
             "[\"ASTRING\",9223372036854775807,2147483647,true,[],null,{\"backup-info-size-delta\":1982702,"
             "\"backup-prior\":\"20161219-212741F_20161219-212803I\","
@@ -284,7 +275,7 @@ testRun(void)
         Variant *keyValue2 = varDup(keyValue);
         varLstAdd(varVarLst(varListOuter), keyValue2);
 
-        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList - no indent - multiple elements");
+        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList - multiple elements");
         TEST_RESULT_STR(strPtr(json),
             "[\"ASTRING\",9223372036854775807,2147483647,true,[],null,{\"backup-info-size-delta\":1982702,"
             "\"backup-prior\":\"20161219-212741F_20161219-212803I\","

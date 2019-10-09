@@ -71,7 +71,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_SERVICE_STR), VARSTR(service));
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_VERSION_STR), VARSTRZ(PROJECT_VERSION));
 
-            ioWriteStrLine(this->write, jsonFromKv(greetingKv, 0));
+            ioWriteStrLine(this->write, jsonFromKv(greetingKv));
             ioWriteFlush(this->write);
         }
         MEM_CONTEXT_TEMP_END();
@@ -120,7 +120,7 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTR(message));
     kvPut(error, VARSTR(PROTOCOL_ERROR_STACK_STR), VARSTR(stack));
 
-    ioWriteStrLine(this->write, jsonFromKv(error, 0));
+    ioWriteStrLine(this->write, jsonFromKv(error));
     ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
@@ -211,7 +211,7 @@ protocolServerResponse(ProtocolServer *this, const Variant *output)
     if (output != NULL)
         kvAdd(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
 
-    ioWriteStrLine(this->write, jsonFromKv(result, 0));
+    ioWriteStrLine(this->write, jsonFromKv(result));
     ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();

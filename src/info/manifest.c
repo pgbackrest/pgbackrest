@@ -1094,7 +1094,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                         target->type == manifestTargetTypePath ?
                             MANIFEST_TARGET_TYPE_PATH_STR : MANIFEST_TARGET_TYPE_LINK_STR));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonFromKv(targetKv, 0));
+                infoSaveValue(infoSaveData, MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonFromKv(targetKv));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -1115,7 +1115,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 kvPut(dbKv, MANIFEST_KEY_DB_ID_VAR, VARUINT(db->id));
                 kvPut(dbKv, MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR, VARUINT(db->lastSystemId));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_DB_STR, db->name, jsonFromKv(dbKv, 0));
+                infoSaveValue(infoSaveData, MANIFEST_SECTION_DB_STR, db->name, jsonFromKv(dbKv));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -1166,7 +1166,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 if (!varEq(manifestOwnerVar(file->user), saveData->fileUserDefault))
                     kvPut(fileKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(file->user));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, file->name, jsonFromKv(fileKv, 0));
+                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, file->name, jsonFromKv(fileKv));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -1209,7 +1209,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
 
                 kvPut(linkKv, MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonFromKv(linkKv, 0));
+                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonFromKv(linkKv));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -1250,7 +1250,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 if (!varEq(manifestOwnerVar(path->user), saveData->pathUserDefault))
                     kvPut(pathKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(path->user));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathKv, 0));
+                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathKv));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
