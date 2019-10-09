@@ -26,6 +26,7 @@ String *jsonFromKv(const KeyValue *kv, unsigned int indent);
 String *jsonFromStr(const String *string);
 String *jsonFromUInt(unsigned int number);
 String *jsonFromUInt64(uint64_t number);
-String *jsonFromVar(const Variant *var, unsigned int indent);
+String *jsonFromVar(const Variant *var);
+String *jsonFromVarPretty(const Variant *var, unsigned int indent);
 
 #endif

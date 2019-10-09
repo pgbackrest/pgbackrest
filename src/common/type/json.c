@@ -816,7 +816,7 @@ jsonFromKvInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
                                 else if (varType(arrayValue) == varTypeVariantList)
                                 {
                                     strCat(indentDepth, strPtr(indentSpace));
-                                    strCat(result, strPtr(jsonFromVar(arrayValue, 0)));
+                                    strCat(result, strPtr(jsonFromVar(arrayValue)));
                                 }
                                 // Numeric, Boolean or other type
                                 else
@@ -913,13 +913,26 @@ jsonFromKv(const KeyValue *kv, unsigned int indent)
 }
 
 /***********************************************************************************************************************************
+Convert Variant object to JSON string with no indentation.
+***********************************************************************************************************************************/
+String *
+jsonFromVar(const Variant *var)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(VARIANT, var);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(STRING, jsonFromVarPretty(var, 0));
+}
+
+/***********************************************************************************************************************************
 Convert Variant object to JSON string. If indent = 0 then no pretty format.
 
 Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
 needed.
 ***********************************************************************************************************************************/
 String *
-jsonFromVar(const Variant *var, unsigned int indent)
+jsonFromVarPretty(const Variant *var, unsigned int indent)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(VARIANT, var);
@@ -1000,7 +1013,7 @@ jsonFromVar(const Variant *var, unsigned int indent)
                     }
                     else if (varType(varSub) == varTypeVariantList)
                     {
-                        strCat(jsonStr, strPtr(jsonFromVar(varSub, indent)));
+                        strCat(jsonStr, strPtr(jsonFromVarPretty(varSub, indent)));
                     }
                     else if (varType(varSub) == varTypeInt)
                     {

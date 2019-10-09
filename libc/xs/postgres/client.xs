@@ -53,7 +53,7 @@ INPUT:
     const String *query = STR_NEW_SV($arg);
 CODE:
     VariantList *result = pgClientQuery(self, query);
-    RETVAL = result ? strPtr(jsonFromVar(varNewVarLst(result), 0)) : NULL;
+    RETVAL = result ? strPtr(jsonFromVar(varNewVarLst(result))) : NULL;
 OUTPUT:
     RETVAL
 CLEANUP:

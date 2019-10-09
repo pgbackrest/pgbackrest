@@ -1010,21 +1010,21 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR,
-                jsonFromVar(manifest->data.backupOptionStandby, 0));
+                jsonFromVar(manifest->data.backupOptionStandby));
         }
 
         if (manifest->data.backupOptionBufferSize != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_BUFFER_SIZE_STR,
-                jsonFromVar(manifest->data.backupOptionBufferSize, 0));
+                jsonFromVar(manifest->data.backupOptionBufferSize));
         }
 
         if (manifest->data.backupOptionChecksumPage != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR,
-                jsonFromVar(manifest->data.backupOptionChecksumPage, 0));
+                jsonFromVar(manifest->data.backupOptionChecksumPage));
         }
 
         infoSaveValue(
@@ -1035,21 +1035,21 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR,
-                jsonFromVar(manifest->data.backupOptionCompressLevel, 0));
+                jsonFromVar(manifest->data.backupOptionCompressLevel));
         }
 
         if (manifest->data.backupOptionCompressLevelNetwork != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
-                jsonFromVar(manifest->data.backupOptionCompressLevelNetwork, 0));
+                jsonFromVar(manifest->data.backupOptionCompressLevelNetwork));
         }
 
         if (manifest->data.backupOptionDelta != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_DELTA_STR,
-                jsonFromVar(manifest->data.backupOptionDelta, 0));
+                jsonFromVar(manifest->data.backupOptionDelta));
         }
 
         infoSaveValue(
@@ -1063,7 +1063,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_PROCESS_MAX_STR,
-                jsonFromVar(manifest->data.backupOptionProcessMax, 0));
+                jsonFromVar(manifest->data.backupOptionProcessMax));
         }
     }
 
@@ -1179,7 +1179,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
-            jsonFromVar(saveData->fileGroupDefault, 0));
+            jsonFromVar(saveData->fileGroupDefault));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_PRIMARY_STR,
             jsonFromBool(saveData->filePrimaryDefault));
@@ -1188,7 +1188,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             jsonFromStr(strNewFmt("%04o", saveData->fileModeDefault)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_USER_STR,
-            jsonFromVar(saveData->fileUserDefault, 0));
+            jsonFromVar(saveData->fileUserDefault));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1224,10 +1224,10 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
-                jsonFromVar(saveData->linkGroupDefault, 0));
+                jsonFromVar(saveData->linkGroupDefault));
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, MANIFEST_KEY_USER_STR,
-                jsonFromVar(saveData->linkUserDefault, 0));
+                jsonFromVar(saveData->linkUserDefault));
         }
     }
 
@@ -1263,13 +1263,13 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
-            jsonFromVar(saveData->pathGroupDefault, 0));
+            jsonFromVar(saveData->pathGroupDefault));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_MODE_STR,
             jsonFromStr(strNewFmt("%04o", saveData->pathModeDefault)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_USER_STR,
-            jsonFromVar(saveData->pathUserDefault, 0));
+            jsonFromVar(saveData->pathUserDefault));
     }
 
     FUNCTION_TEST_RETURN_VOID();

@@ -145,7 +145,7 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
+            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR))),
             "{\"align\":true,\"valid\":true}", "all zero pages");
 
         // Single checksum error
@@ -172,7 +172,7 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
+            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR))),
             "{\"align\":true,\"error\":[0],\"valid\":false}", "single checksum error");
 
         // Various checksum errors some of which will be skipped because of the LSN
@@ -219,7 +219,7 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
+            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR))),
             "{\"align\":false,\"error\":[0,[2,4],[6,7]],\"valid\":false}", "various checksum errors");
 
         // Impossibly misaligned page
@@ -236,7 +236,7 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR), 0)),
+            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR))),
             "{\"align\":false,\"valid\":false}", "misalignment");
 
         // Two misaligned buffers in a row
