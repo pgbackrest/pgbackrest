@@ -743,7 +743,8 @@ sub info
         ' --config=' . $self->backrestConfig() .
         ' --log-level-console=warn' .
         (defined($$oParam{strStanza}) ? " --stanza=$$oParam{strStanza}" : '') .
-        (defined($$oParam{strOutput}) ? " --output=$$oParam{strOutput}" : '') . ' info',
+        (defined($$oParam{strOutput}) ? " --output=$$oParam{strOutput}" : '') . ' info' .
+        (testRunGet()->expect() && defined($$oParam{strOutput}) && $$oParam{strOutput} eq 'json' ? " | jq '.'" : ''),
         {strComment => $strComment, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any

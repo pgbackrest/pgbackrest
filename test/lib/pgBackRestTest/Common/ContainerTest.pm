@@ -399,7 +399,7 @@ sub containerBuild
             }
             else
             {
-                $strScript .= ' perl-JSON-PP';
+                $strScript .= ' perl-JSON-PP jq';
             }
         }
         else
