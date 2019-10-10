@@ -182,6 +182,9 @@ eval
             processExec('sudo mkdir -p /tmp/pgbackrest && sudo chown root:root /tmp/pgbackrest && sudo chmod 700 /tmp/pgbackrest');
             processEnd();
 
+            # Set local timezone to make sure tests work in any timezone
+            $ENV{'TZ'} = 'America/New_York';
+
             processBegin('remove sudo');
             processExec('sudo rm /etc/sudoers.d/travis');
             processEnd();
