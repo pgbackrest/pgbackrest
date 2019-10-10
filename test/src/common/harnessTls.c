@@ -31,7 +31,7 @@ static SSL *testClientSSL = NULL;
 Initialize TLS and listen on the specified port for TLS connections
 ***********************************************************************************************************************************/
 void
-harnessTlsServerInit(int port, const char *serverCert, const char *serverKey)
+harnessTlsServerInit(unsigned int port, const char *serverCert, const char *serverKey)
 {
     // Add test hosts
     if (testContainer())
@@ -92,11 +92,11 @@ void
 harnessTlsServerInitDefault(void)
 {
     if (testContainer())
-        harnessTlsServerInit(TLS_TEST_PORT, TLS_CERT_TEST_CERT, TLS_CERT_TEST_KEY);
+        harnessTlsServerInit(harnessTlsTestPort(), TLS_CERT_TEST_CERT, TLS_CERT_TEST_KEY);
     else
     {
         harnessTlsServerInit(
-            TLS_TEST_PORT,
+            harnessTlsTestPort(),
             strPtr(strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".crt", testRepoPath())),
             strPtr(strNewFmt("%s/" TEST_CERTIFICATE_PREFIX ".key", testRepoPath())));
     }
@@ -179,4 +179,10 @@ harnessTlsServerClose(void)
 const String *harnessTlsTestHost(void)
 {
     return strNew(testContainer() ? TLS_TEST_HOST : "localhost");
+}
+
+/**********************************************************************************************************************************/
+unsigned int harnessTlsTestPort(void)
+{
+    return 44443 + testIdx();
 }

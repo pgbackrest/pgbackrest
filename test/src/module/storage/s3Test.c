@@ -510,7 +510,7 @@ testRun(void)
     const String *region = strNew("us-east-1");
     const String *endPoint = strNew("s3.amazonaws.com");
     const String *host = harnessTlsTestHost();
-    const unsigned int port = TLS_TEST_PORT;
+    const unsigned int port = harnessTlsTestPort();
     const String *accessKey = strNew("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = strNew("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = strNew(

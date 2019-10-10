@@ -389,6 +389,7 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_PROJECT\_EXE\]\}/$strProjectExePath/g;
                 $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strTestPathC/g;
                 $strTestC =~ s/\{\[C\_TEST\_DATA_PATH\]\}/$self->{strDataPath}/g;
+                $strTestC =~ s/\{\[C\_TEST\_IDX\]\}/$self->{iVmIdx}/g;
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
                 $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
 

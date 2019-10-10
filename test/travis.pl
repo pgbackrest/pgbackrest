@@ -201,8 +201,6 @@ eval
             processEnd();
 
             # Run tests
-            $strParam .= " --vm-max=2";
-
             if ($strVm eq VM_U18)
             {
                 $strParam .= " --container-only";
@@ -219,7 +217,7 @@ eval
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --no-gen --vm-host=${strVmHost} --vm=${strVm}${strParam}",
+            "${strTestExe} --no-gen --vm-host=${strVmHost} --vm-max=2 --vm=${strVm}${strParam}",
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }

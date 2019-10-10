@@ -187,6 +187,30 @@ testDataPathSet(const char *testDataPath)
 }
 
 /***********************************************************************************************************************************
+Get and set test index
+***********************************************************************************************************************************/
+static unsigned int testIdxData = 0;
+
+unsigned int
+testIdx(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(UINT, testIdxData);
+}
+
+void
+testIdxSet(unsigned int testIdx)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(UINT, testIdx);
+    FUNCTION_HARNESS_END();
+
+    testIdxData = testIdx;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
 Get and set scale for performance testing
 ***********************************************************************************************************************************/
 static uint64_t testScaleData = 1;
