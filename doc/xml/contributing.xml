@@ -104,7 +104,7 @@
             /backrest/test/test.pl --dry-run
         </code-block>
 
-        <admonition type="warning">currently the <id>BACKREST_USER</id> in <file>ContainerTest.pm</file> must exists, or the test suite will fail with a string concatenation error.</admonition>
+        <admonition type="warning">currently the <id>BACKREST_USER</id> in <file>ContainerTest.pm</file> must exist, or the test suite will fail with a string concatenation error.</admonition>
 
         <p>If using a RHEL system, the CPAN XML parser is required for running <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docs need only be run for HTML output.</p>
 

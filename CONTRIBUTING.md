@@ -86,7 +86,7 @@ For testing, it is recommended that Vagrant and Docker be used; instructions are
 ```
 /backrest/test/test.pl --dry-run
 ```
-> **WARNING:** currently the `BACKREST_USER` in `ContainerTest.pm` must exists, or the test suite will fail with a string concatenation error.
+> **WARNING:** currently the `BACKREST_USER` in `ContainerTest.pm` must exist, or the test suite will fail with a string concatenation error.
 
 If using a RHEL system, the CPAN XML parser is required for running `test.pl` and `doc.pl`. Instructions for installing Docker and the XML parse can be found in the `README.md` file of the pgBackRest [doc](https://github.com/pgbackrest/pgbackrest/blob/master/doc) directory in the section "The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation". NOTE that the `Install latex (for building PDF)` is not required since testing of the docs need only be run for HTML output.
 
