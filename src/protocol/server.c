@@ -14,6 +14,7 @@ Protocol Server
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
 #include "protocol/client.h"
+#include "protocol/helper.h"
 #include "protocol/server.h"
 #include "version.h"
 
@@ -180,6 +181,11 @@ protocolServerProcess(ProtocolServer *this)
                     else
                         THROW_FMT(ProtocolError, "invalid command '%s'", strPtr(command));
                 }
+
+                // Send keep alives to remotes.  When a local process is doing work that does not involve the remote it is important
+                // that the remote does not timeout.  This will send a keep alive once per unit of work that is performed by the
+                // local process.
+                protocolKeepAlive();
             }
             MEM_CONTEXT_TEMP_END();
         }

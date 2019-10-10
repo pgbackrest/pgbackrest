@@ -13,6 +13,21 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.19dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.sewell"/>
+                            <release-item-ideator id="jens.wilke"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix remote timeout in delta restore.</p>
+
+                        <p>When performing a delta restore on a largely unchanged cluster the remote could timeout if no files were fetched from the repository within <br-option>protocol-timeout</br-option>.  Add keep-alives to prevent remote timeout.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
@@ -7565,6 +7580,11 @@
         <contributor id="james.chanco.jr">
             <contributor-name-display>James Chanco Jr</contributor-name-display>
             <contributor-id type="github">jameschancojr</contributor-id>
+        </contributor>
+
+        <contributor id="james.sewell">
+            <contributor-name-display>James Sewell</contributor-name-display>
+            <contributor-id type="github">jamessewell</contributor-id>
         </contributor>
 
         <contributor id="jan.wieck">
