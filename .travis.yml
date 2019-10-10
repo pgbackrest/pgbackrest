@@ -21,6 +21,7 @@ matrix:
     - env: PGB_CI="--vm=co7 test"
     - dist: bionic
       env: PGB_CI="--vm=none test"
+      services:
     - env: PGB_CI="--vm=co6 doc"
     - env: PGB_CI="--vm=co7 doc"
 
