@@ -219,7 +219,7 @@ eval
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --no-gen --no-ci-config --vm-host=${strVmHost} --vm=${strVm}${strParam}",
+            "${strTestExe} --no-gen --vm-host=${strVmHost} --vm=${strVm}${strParam}",
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }

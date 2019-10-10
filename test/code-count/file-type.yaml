@@ -1587,10 +1587,6 @@ test/lib/pgBackRestTest/Common/BuildTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/CiTest.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/CodeCountTest.pm:
   class: test/harness
   type: perl
