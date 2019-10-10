@@ -731,7 +731,7 @@ eval
             }
 
             executeTest(
-                "sudo rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" .
+                ($strVm ne VM_NONE ? 'sudo ' : '') . "rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" .
                 ($bDev ? '' : " ${strTestPath}/gcov-*"));
             $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 

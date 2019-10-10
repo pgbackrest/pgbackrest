@@ -182,6 +182,10 @@ eval
             processExec('sudo mkdir -p /tmp/pgbackrest && sudo chown root:root /tmp/pgbackrest && sudo chmod 700 /tmp/pgbackrest');
             processEnd();
 
+            processBegin('remove sudo');
+            processExec('sudo rm /etc/sudoers.d/travis');
+            processEnd();
+
             $strVmHost = VM_U18;
         }
         # Else run tests that require a container
