@@ -57,6 +57,18 @@
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix container test path being used when <br-option>--vm=none</br-option>.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-test-list>
         </release>
 
         <release date="2019-10-01" version="2.18" title="PostgreSQL 12 Support">

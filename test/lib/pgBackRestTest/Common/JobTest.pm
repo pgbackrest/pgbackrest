@@ -380,10 +380,14 @@ sub run
                 # Is this test running in a container?
                 my $strContainer = $self->{oTest}->{&TEST_VM} eq VM_NONE ? 'false' : 'true';
 
+                # What test path should be passed to C?  Containers always have their test path at ~/test but when running with
+                # vm=none it should be in a subdirectory of the current directory.
+                my $strTestPathC = $self->{oTest}->{&TEST_VM} eq VM_NONE ? $strHostTestPath : $strVmTestPath;
+
                 # Set globals
                 $strTestC =~ s/\{\[C\_TEST\_CONTAINER\]\}/$strContainer/g;
                 $strTestC =~ s/\{\[C\_TEST\_PROJECT\_EXE\]\}/$strProjectExePath/g;
-                $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
+                $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strTestPathC/g;
                 $strTestC =~ s/\{\[C\_TEST\_DATA_PATH\]\}/$self->{strDataPath}/g;
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
                 $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
