@@ -71,16 +71,6 @@ Vagrant.configure(2) do |config|
              libxml2-dev liblz4-dev libpq-dev valgrind
 
         #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install AWS CLI' && date
-        apt-get install -y python-pip
-        pip install --upgrade awscli
-
-        # Configure AWS CLI
-        sudo -i -u vagrant aws configure set region us-east-1
-        sudo -i -u vagrant aws configure set aws_access_key_id accessKey1
-        sudo -i -u vagrant aws configure set aws_secret_access_key verySecretKey1
-
-        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Docker' && date
         curl -fsSL https://get.docker.com | sh
         sudo usermod -aG docker vagrant

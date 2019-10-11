@@ -46,7 +46,6 @@ use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::CodeCountTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::CoverageTest;
-use pgBackRestTest::Common::CiTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -87,7 +86,6 @@ test.pl [options]
    --code-count         generate code counts
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
-   --no-ci-config       don't overwrite the current continuous integration config
    --dev                --smart --no-package --no-optimize
    --dev-test           --no-package
    --expect             --no-package --vm=co7 --db=9.6 --log-force
@@ -158,7 +156,6 @@ my $bNoGen = false;
 my $bCodeCount = false;
 my $bSmart = false;
 my $bNoPackage = false;
-my $bNoCiConfig = false;
 my $bDev = false;
 my $bDevTest = false;
 my $bBackTrace = false;
@@ -197,7 +194,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'build-only' => \$bBuildOnly,
             'build-max=s' => \$iBuildMax,
             'no-package' => \$bNoPackage,
-            'no-ci-config' => \$bNoCiConfig,
             'coverage-only' => \$bCoverageOnly,
             'coverage-summary' => \$bCoverageSummary,
             'no-coverage' => \$bNoCoverage,
@@ -641,13 +637,6 @@ eval
             }
         }
 
-        # Build CI config
-        #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bNoCiConfig)
-        {
-            (new pgBackRestTest::Common::CiTest($oStorageBackRest))->process();
-        }
-
         # Check Perl version against release notes and update version in C code if needed
         #---------------------------------------------------------------------------------------------------------------------------
         my $bVersionDev = true;
@@ -731,7 +720,7 @@ eval
             }
 
             executeTest(
-                "sudo rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" .
+                ($strVm ne VM_NONE ? 'sudo ' : '') . "rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" .
                 ($bDev ? '' : " ${strTestPath}/gcov-*"));
             $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 

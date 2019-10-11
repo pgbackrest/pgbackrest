@@ -14,6 +14,9 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // The tests expect the timezone to be UTC
+    setenv("TZ", "UTC", true);
+
     // Create the repo directories
     String *repoPath = strNewFmt("%s/repo", testPath());
     String *archivePath = strNewFmt("%s/%s", strPtr(repoPath), "archive");

@@ -410,22 +410,24 @@ testRun(void)
         httpClientStatLocal = (HttpClientStat){0};
         TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
 
-        TEST_ASSIGN(client, httpClientNew(strNew("localhost"), TLS_TEST_PORT, 500, testContainer(), NULL, NULL), "new client");
+        TEST_ASSIGN(
+            client, httpClientNew(strNew("localhost"), harnessTlsTestPort(), 500, testContainer(), NULL, NULL), "new client");
 
         TEST_ERROR_FMT(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), HostConnectError,
-            "unable to connect to 'localhost:%d': [111] Connection refused", TLS_TEST_PORT);
+            "unable to connect to 'localhost:%u': [111] Connection refused", harnessTlsTestPort());
 
         // Start http test server
         testHttpServer();
 
         // Test no output from server
-        TEST_ASSIGN(client, httpClientNew(harnessTlsTestHost(), TLS_TEST_PORT, 500, testContainer(), NULL, NULL), "new client");
+        TEST_ASSIGN(
+            client, httpClientNew(harnessTlsTestHost(), harnessTlsTestPort(), 500, testContainer(), NULL, NULL), "new client");
         client->timeout = 0;
 
         TEST_ERROR_FMT(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FileReadError,
-            "timeout after 500ms waiting for read from '%s:%d'", strPtr(harnessTlsTestHost()), TLS_TEST_PORT);
+            "timeout after 500ms waiting for read from '%s:%u'", strPtr(harnessTlsTestHost()), harnessTlsTestPort());
 
         // Test invalid http version
         TEST_ERROR(
@@ -576,7 +578,8 @@ testRun(void)
         HttpClient *client1 = NULL;
         HttpClient *client2 = NULL;
 
-        TEST_ASSIGN(cache, httpClientCacheNew(strNew("localhost"), TLS_TEST_PORT, 500, true, NULL, NULL), "new http client cache");
+        TEST_ASSIGN(
+            cache, httpClientCacheNew(strNew("localhost"), harnessTlsTestPort(), 500, true, NULL, NULL), "new http client cache");
         TEST_ASSIGN(client1, httpClientCacheGet(cache), "get http client");
         TEST_RESULT_PTR(client1, *(HttpClient **)lstGet(cache->clientList, 0), "    check http client");
         TEST_RESULT_PTR(httpClientCacheGet(cache), *(HttpClient **)lstGet(cache->clientList, 0), "    get same http client");

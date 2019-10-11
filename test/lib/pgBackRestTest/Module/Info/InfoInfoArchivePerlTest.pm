@@ -106,7 +106,7 @@ sub run
         # Attempt to reconstruct from an encypted archived WAL for an unencrypted repo
         #---------------------------------------------------------------------------------------------------------------------------
         # Prepend encryption Magic signature to simulate encryption
-        executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strArchiveFile . ')" > ' . $strArchiveFile);
+        executeTest('echo "' . CIPHER_MAGIC . '" > ' . $strArchiveFile);
 
         $self->testException(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, ERROR_CRYPTO,
             "encryption incompatible for '$strArchiveFile'" .

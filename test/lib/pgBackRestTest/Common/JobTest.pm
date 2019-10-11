@@ -380,11 +380,16 @@ sub run
                 # Is this test running in a container?
                 my $strContainer = $self->{oTest}->{&TEST_VM} eq VM_NONE ? 'false' : 'true';
 
+                # What test path should be passed to C?  Containers always have their test path at ~/test but when running with
+                # vm=none it should be in a subdirectory of the current directory.
+                my $strTestPathC = $self->{oTest}->{&TEST_VM} eq VM_NONE ? $strHostTestPath : $strVmTestPath;
+
                 # Set globals
                 $strTestC =~ s/\{\[C\_TEST\_CONTAINER\]\}/$strContainer/g;
                 $strTestC =~ s/\{\[C\_TEST\_PROJECT\_EXE\]\}/$strProjectExePath/g;
-                $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
+                $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strTestPathC/g;
                 $strTestC =~ s/\{\[C\_TEST\_DATA_PATH\]\}/$self->{strDataPath}/g;
+                $strTestC =~ s/\{\[C\_TEST\_IDX\]\}/$self->{iVmIdx}/g;
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
                 $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
 
@@ -455,7 +460,8 @@ sub run
                 # Flags used to build test.c
                 my $strTestFlags =
                     ($self->{bDebug} ? '-DDEBUG_TEST_TRACE ' : '') .
-                    '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_F30 ? '-O2' : '-O0') .
+                    ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                         ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
@@ -466,7 +472,8 @@ sub run
 
                 # Flags used to build all other files
                 my $strBuildFlags =
-                    ($self->{bOptimize} ? '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
+                    ($self->{bOptimize} || $self->{oTest}->{&TEST_VM} eq VM_F30 ?
+                        '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
 
                 buildPutDiffers(
                     $self->{oStorageTest}, "$self->{strGCovPath}/buildflags",

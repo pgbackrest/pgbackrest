@@ -540,7 +540,7 @@ sub run
 
         if ($bS3)
         {
-            $oHostS3->executeS3('cp /etc/hosts s3://' . HOST_S3_BUCKET . "${strTempFile}");
+            storageRepo()->put($strTempFile, "TEMP");
         }
         else
         {

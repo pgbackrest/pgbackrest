@@ -14,14 +14,16 @@ services:
 matrix:
   include:
     - env: PGB_CI="--vm=u12 test"
+    - env: PGB_CI="--vm=f30 test"
     - env: PGB_CI="--vm=co6 test"
-    - env: PGB_CI="--vm=co7 test"
     - env: PGB_CI="--vm=u18 test"
     - env: PGB_CI="--vm=u18 doc"
+    - env: PGB_CI="--vm=co7 test"
     - dist: bionic
       env: PGB_CI="--vm=none test"
-    - env: PGB_CI="--vm=co7 doc"
+      services:
     - env: PGB_CI="--vm=co6 doc"
+    - env: PGB_CI="--vm=co7 doc"
 
 install:
   - umask 0022

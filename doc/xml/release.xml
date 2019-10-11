@@ -13,7 +13,20 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.19dev" title="UNDER DEVELOPMENT">
-            <release-doc-list>
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.sewell"/>
+                            <release-item-ideator id="jens.wilke"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix remote timeout in delta restore.</p>
+
+                        <p>When performing a delta restore on a largely unchanged cluster the remote could timeout if no files were fetched from the repository within <br-option>protocol-timeout</br-option>.  Add keep-alives to prevent remote timeout.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -22,7 +35,11 @@
 
                         <p>The <cmd>check</cmd> command is implemented entirely in C.</p>
                     </release-item>
+                </release-improvement-list>
+            </release-core-list>
 
+            <release-doc-list>
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
@@ -48,6 +65,26 @@
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix container test path being used when <br-option>--vm=none</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix mismatched timezone in expect test.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-test-list>
         </release>
 
         <release date="2019-10-01" version="2.18" title="PostgreSQL 12 Support">
@@ -7573,6 +7610,11 @@
         <contributor id="james.chanco.jr">
             <contributor-name-display>James Chanco Jr</contributor-name-display>
             <contributor-id type="github">jameschancojr</contributor-id>
+        </contributor>
+
+        <contributor id="james.sewell">
+            <contributor-name-display>James Sewell</contributor-name-display>
+            <contributor-id type="github">jamessewell</contributor-id>
         </contributor>
 
         <contributor id="jan.wieck">

@@ -32,6 +32,7 @@ The test code is included directly so it can freely interact with the included C
 
 void testContainerSet(bool testContainer);
 void testDataPathSet(const char *testDataPath);
+void testIdxSet(unsigned int testIdx);
 void testScaleSet(uint64_t testScale);
 void testProjectExeSet(const char *testProjectExe);
 
@@ -88,6 +89,7 @@ main(int argListSize, const char *argList[])
     testPathSet("{[C_TEST_PATH]}");
     testRepoPathSet("{[C_TEST_REPO_PATH]}");
     testDataPathSet("{[C_TEST_DATA_PATH]}");
+    testIdxSet({[C_TEST_IDX]});
     testScaleSet({[C_TEST_SCALE]});
 
     // Set default test log level

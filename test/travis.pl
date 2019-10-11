@@ -168,7 +168,7 @@ eval
         }
         else
         {
-            $strPackage .= " python-pip libdbd-pg-perl";
+            $strPackage .= " libdbd-pg-perl";
         }
 
         processBegin('install test packages');
@@ -182,6 +182,13 @@ eval
             processExec('sudo mkdir -p /tmp/pgbackrest && sudo chown root:root /tmp/pgbackrest && sudo chmod 700 /tmp/pgbackrest');
             processEnd();
 
+            # Set local timezone to make sure tests work in any timezone
+            $ENV{'TZ'} = 'America/New_York';
+
+            processBegin('remove sudo');
+            processExec('sudo rm /etc/sudoers.d/travis');
+            processEnd();
+
             $strVmHost = VM_U18;
         }
         # Else run tests that require a container
@@ -191,34 +198,29 @@ eval
             processExec("sudo adduser --ingroup=\${USER?} --uid=5001 --disabled-password --gecos \"\" " . BACKREST_USER);
             processEnd();
 
-            processBegin("install and configure aws cli");
-            processExec('pip install --upgrade --user awscli', {bSuppressStdErr => true});
-            processExec('aws configure set region us-east-1');
-            processExec('aws configure set aws_access_key_id accessKey1');
-            processExec('aws configure set aws_secret_access_key verySecretKey1');
-            processEnd();
-
             # Build the container
             processBegin("${strVm} build");
             processExec("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
             processEnd();
 
             # Run tests
-            $strParam .= " --vm-max=2";
-
             if ($strVm eq VM_U18)
             {
                 $strParam .= " --container-only";
             }
+            elsif ($strVm eq VM_F30)
+            {
+                $strParam .= " --no-package --c-only";
+            }
             elsif ($strVm ne VM_U12)
             {
-                $strParam .= " --module=command --module=mock --module=real --module=storage --module=performance";
+                $strParam .= " --module=real";
             }
         }
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --no-gen --no-ci-config --vm-host=${strVmHost} --vm=${strVm}${strParam}",
+            "${strTestExe} --no-gen --vm-host=${strVmHost} --vm-max=2 --vm=${strVm}${strParam}",
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }
