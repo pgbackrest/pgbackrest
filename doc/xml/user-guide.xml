@@ -1481,6 +1481,7 @@
             </execute-list>
 
             <admonition type="note">This syntax requires <proper>jq v1.5</proper>.</admonition>
+            <admonition type="note"><proper>jq</proper> may round large numbers such as system identifiers.  Test your queries carefully.</admonition>
         </section>
     </section>
 
