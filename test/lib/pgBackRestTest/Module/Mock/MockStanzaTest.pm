@@ -231,7 +231,7 @@ sub run
         # Restore archive.info
         forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
 
-        # Push a WAL and create a backup in the new DB to confirm diff changed to full and info command displays the JSON correctly
+        # Push a WAL and create a backup in the new DB to confirm diff changed to full
         #--------------------------------------------------------------------------------------------------------------------------
         storageTest()->put($strArchiveTestFile, $self->walGenerateContent(PG_VERSION_95));
         $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1);
@@ -240,9 +240,6 @@ sub run
         my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',
             {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE)});
         $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
-
-        # Confirm info command displays the JSON correctly
-        $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
 
         # Delete the stanza
         #--------------------------------------------------------------------------------------------------------------------------
