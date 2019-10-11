@@ -261,8 +261,7 @@ sub execute
 
     &log(DEBUG, ('    ' x $iIndent) . "execute: $strCommand");
 
-    if ($self->{oManifest}->variableReplace($oCommand->paramGet('skip', false, 'n')) ne 'y' ||
-        $oCommand->paramGet('pre', false, 'n') eq 'y' && $self->{oManifest}->{bPre})
+    if ($self->{oManifest}->variableReplace($oCommand->paramGet('skip', false, 'n')) ne 'y')
     {
         if ($self->{bExe} && $self->isRequired($oSection))
         {
@@ -1041,6 +1040,7 @@ sub sectionChildProcess
 
                 my $strHost = $hCacheKey->{name};
                 my $strImage = $hCacheKey->{image};
+                my $strHostUser = $self->{oManifest}->variableReplace($oChild->paramGet('user'));
 
                 # Determine if a pre-built image should be created
                 if (defined($self->preExecute($strHost)))
@@ -1056,9 +1056,16 @@ sub sectionChildProcess
                     foreach my $oExecute ($self->preExecute($strHost))
                     {
                         my $hExecuteKey = $self->executeKey($strHost, $oExecute);
+
                         my $strCommand =
                             join("\n", @{$hExecuteKey->{cmd}}) .
                             (defined($hExecuteKey->{'cmd-extra'}) ? ' ' . $hExecuteKey->{'cmd-extra'} : '');
+                        $strCommand =~ s/'/'\\''/g;
+
+                        $strCommand =
+                            "sudo -u ${strHostUser}" .
+                            ($hCacheKey->{'bash-wrap'} ?
+                                " bash" . ($hCacheKey->{'load-env'} ? ' -l' : '') . " -c '${strCommand}'" : " ${strCommand}");
 
                         if (defined($strCommandList))
                         {
@@ -1102,10 +1109,8 @@ sub sectionChildProcess
                 }
 
                 my $oHost = new pgBackRestTest::Common::HostTest(
-                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage,
-                    $self->{oManifest}->variableReplace($oChild->paramGet('user')), $$hCacheKey{os},
-                    defined($strMount) ? [$strMount] : undef,
-                    $strOption, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
+                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage, $strHostUser, $$hCacheKey{os},
+                    defined($strMount) ? [$strMount] : undef, $strOption, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet('host-' . $hCacheKey->{id} . '-ip', $oHost->{strIP}, true);
