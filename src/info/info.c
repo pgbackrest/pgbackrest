@@ -437,7 +437,7 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
         INFO_CHECKSUM_END(data.checksum);
 
         ioWrite(data.write, BUFSTRDEF("\n[" INFO_SECTION_BACKREST "]\n" INFO_KEY_CHECKSUM "="));
-        ioWriteLine(data.write, BUFSTR(jsonFromVar(ioFilterResult(data.checksum), 0)));
+        ioWriteLine(data.write, BUFSTR(jsonFromVar(ioFilterResult(data.checksum))));
 
         // Close the file
         ioWriteClose(data.write);

@@ -166,7 +166,7 @@ CODE:
         storageListP(self, pathExp, .errorOnMissing = storageFeature(self, storageFeaturePath) ? !ignoreMissing : false,
         .expression = expression), sortAsc ? sortOrderAsc : sortOrderDesc);
 
-    const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
+    const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)));
 
     RETVAL = newSVpv(strPtr(fileListJson), strSize(fileListJson));
 OUTPUT:

@@ -258,7 +258,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR, VARBOOL(backupData.optionOnline));
 
             infoSaveValue(
-                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel, jsonFromKv(backupDataKv, 0));
+                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel, jsonFromKv(backupDataKv));
         }
     }
 

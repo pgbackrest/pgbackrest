@@ -170,7 +170,7 @@ storageFilterXsResult(const IoFilterGroup *filterGroup, const String *filter)
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find result for filter '%s'", strPtr(filter));
 
-    return jsonFromVar(result, 0);
+    return jsonFromVar(result);
 }
 
 /***********************************************************************************************************************************
