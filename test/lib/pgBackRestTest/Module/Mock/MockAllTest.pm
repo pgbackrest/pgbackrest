@@ -308,11 +308,6 @@ sub run
             $oHostDbMaster->executeSimple($self->backrestExe() . " help version", {oLogTest => $self->expect()});
         }
 
-        # Backup Info (with no stanzas)
-        #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->info('no stanzas exist');
-        $oHostDbMaster->info('no stanzas exist', {strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
-
         # Full backup
         #---------------------------------------------------------------------------------------------------------------------------
         my $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
@@ -1259,11 +1254,6 @@ sub run
         $strFullBackup = $oHostBackup->backup(
             $strType, 'update file', {oExpectedManifest => \%oManifest});
 
-        # Backup Info
-        #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->info('normal output', {strStanza => $oHostDbMaster->stanza()});
-        $oHostBackup->info('normal output', {strStanza => $oHostBackup->stanza(), strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
-
         # Call expire
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->expire({iRetentionFull => 1});
@@ -1353,16 +1343,6 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';
         $oManifest{&MANIFEST_SECTION_TARGET_LINK}{'pg_data/pg_tblspc/2'}{&MANIFEST_SUBKEY_DESTINATION} = '../../tablespace/ts2';
-
-        # Backup Info (with an empty stanza)
-        #---------------------------------------------------------------------------------------------------------------------------
-        forceStorageMode(storageRepo(), 'backup', 'g+w');
-        storageRepo()->pathCreate(storageRepo()->pathGet('backup/db_empty'), {strMode => '0770'});
-
-        $oHostBackup->info('normal output');
-        $oHostDbMaster->info('normal output', {strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
-        $oHostBackup->info('bogus stanza', {strStanza => BOGUS});
-        $oHostDbMaster->info('bogus stanza', {strStanza => BOGUS, strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
 
         # Dump out history path at the end to verify all history files are being recorded.  This test is only performed locally
         # because for some reason sort order is different when this command is executed via ssh (even though the content of the
