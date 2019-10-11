@@ -82,6 +82,7 @@ test.pl [options]
    --c-only             only run C tests
    --container-only     only run tests that must be run in a container
    --gen-only           only run auto-generation
+   --gen-libc           generate libc code to embed in the binary
    --no-gen             do not run code generation
    --code-count         generate code counts
    --smart              perform libc/package builds only when source timestamps have changed
@@ -152,6 +153,7 @@ my $bNoCoverage = false;
 my $bCOnly = false;
 my $bContainerOnly = false;
 my $bGenOnly = false;
+my $bGenLibC = false;
 my $bNoGen = false;
 my $bCodeCount = false;
 my $bSmart = false;
@@ -200,6 +202,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'c-only' => \$bCOnly,
             'container-only' => \$bContainerOnly,
             'gen-only' => \$bGenOnly,
+            'gen-libc' => \$bGenLibC,
             'no-gen' => \$bNoGen,
             'code-count' => \$bCodeCount,
             'smart' => \$bSmart,
@@ -550,7 +553,7 @@ eval
 
             # Auto-generate C library code to embed in the binary
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bSmart || grep(/^libc\//, @stryModifiedList))
+            if ($bGenLibC && (!$bSmart || grep(/^libc\//, @stryModifiedList)))
             {
                 my $strLibC = executeTest(
                     "cd ${strBackRestBase}/libc && " .
