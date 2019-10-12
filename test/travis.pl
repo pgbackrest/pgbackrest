@@ -124,7 +124,9 @@ eval
 
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
-    processExec('sudo apt-get install libxml-checker-perl libyaml-libyaml-perl', {bSuppressStdErr => true});
+    processExec(
+        'sudo apt-get install -y rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libxml-checker-perl libyaml-libyaml-perl',
+        {bSuppressStdErr => true});
     processEnd();
 
     ################################################################################################################################
