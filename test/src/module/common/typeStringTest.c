@@ -140,20 +140,20 @@ testRun(void)
         TEST_RESULT_BOOL(strEq(NULL, NULL), true, "null is equal to null");
 
         TEST_RESULT_INT(strCmp(STRDEF("equalstring"), STRDEF("equalstring")), 0, "strings equal");
-        TEST_RESULT_INT(strCmp(STRDEF("a"), STRDEF("b")), -1, "a < b");
-        TEST_RESULT_INT(strCmp(STRDEF("b"), STRDEF("a")), 1, "b > a");
+        TEST_RESULT_BOOL(strCmp(STRDEF("a"), STRDEF("b")) < 0, true, "a < b");
+        TEST_RESULT_BOOL(strCmp(STRDEF("b"), STRDEF("a")) > 0, true, "b > a");
         TEST_RESULT_INT(strCmp(NULL, NULL), 0, "null == null");
-        TEST_RESULT_INT(strCmp(NULL, STRDEF("x")), -1, "null < not null");
-        TEST_RESULT_INT(strCmp(STRDEF("x"), NULL), 1, "not null > null");
+        TEST_RESULT_BOOL(strCmp(NULL, STRDEF("x")) < 0, true, "null < not null");
+        TEST_RESULT_BOOL(strCmp(STRDEF("x"), NULL) > 0, true, "not null > null");
 
         TEST_RESULT_BOOL(strEqZ(STRDEF("equalstring"), "equalstring"), true, "strings equal");
         TEST_RESULT_BOOL(strEqZ(STRDEF("astring"), "anotherstring"), false, "strings not equal");
         TEST_RESULT_BOOL(strEqZ(STRDEF("astring"), "bstring"), false, "equal length strings not equal");
 
         TEST_RESULT_INT(strCmpZ(STRDEF("equalstring"), "equalstring"), 0, "strings equal");
-        TEST_RESULT_INT(strCmpZ(STRDEF("a"), "b"), -1, "a < b");
-        TEST_RESULT_INT(strCmpZ(STRDEF("b"), "a"), 1, "b > a");
-        TEST_RESULT_INT(strCmpZ(STRDEF("b"), NULL), 1, "b > null");
+        TEST_RESULT_BOOL(strCmpZ(STRDEF("a"), "b") < 0, true, "a < b");
+        TEST_RESULT_BOOL(strCmpZ(STRDEF("b"), "a") > 0, true, "b > a");
+        TEST_RESULT_BOOL(strCmpZ(STRDEF("b"), NULL) > 0, true, "b > null");
     }
 
     // *****************************************************************************************************************************
