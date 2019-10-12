@@ -163,6 +163,8 @@ my $oyVm =
             PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
@@ -193,6 +195,8 @@ my $oyVm =
             PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
@@ -277,6 +281,7 @@ my $oyVm =
             PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
@@ -336,6 +341,7 @@ my $oyVm =
             PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB =>
@@ -366,6 +372,7 @@ my $oyVm =
             PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
+            PG_VERSION_12,
         ],
 
         &VM_DB_TEST =>
@@ -421,6 +428,11 @@ my $oyVm =
 
         &VM_DB =>
         [
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
             PG_VERSION_12,
         ],
 
