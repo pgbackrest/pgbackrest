@@ -907,6 +907,12 @@ sub run
             # Restore recovery file that was saved in last test
             storageDb()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
 
+            # Also touch recovery.signal when required
+            if ($oHostDbMaster->pgVersion() >= PG_VERSION_12)
+            {
+                storageDb()->put($oHostDbMaster->dbBasePath() . "/" . DB_FILE_RECOVERYSIGNAL);
+            }
+
             $oHostDbMaster->restore(
                 undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), {strType => CFGOPTVAL_RESTORE_TYPE_PRESERVE});
 
