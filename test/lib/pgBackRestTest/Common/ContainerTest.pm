@@ -28,30 +28,12 @@ use pgBackRestTest::Common::VmTest;
 ####################################################################################################################################
 # User/group definitions
 ####################################################################################################################################
-use constant POSTGRES_GROUP                                         => 'postgres';
-    push @EXPORT, qw(POSTGRES_GROUP);
-use constant POSTGRES_GROUP_ID                                      => 5000;
-use constant POSTGRES_USER                                          => POSTGRES_GROUP;
-use constant POSTGRES_USER_ID                                       => 5000;
-
 use constant TEST_USER                                              => getpwuid($UID) . '';
     push @EXPORT, qw(TEST_USER);
 use constant TEST_USER_ID                                           => $UID;
 use constant TEST_GROUP                                             => getgrgid((getpwnam(TEST_USER))[3]) . '';
     push @EXPORT, qw(TEST_GROUP);
 use constant TEST_GROUP_ID                                          => getgrnam(TEST_GROUP) . '';
-
-use constant BACKREST_USER                                          => 'pgbackrest';
-    push @EXPORT, qw(BACKREST_USER);
-use constant BACKREST_USER_ID                                   => getpwnam(BACKREST_USER) ? getpwnam(BACKREST_USER) . '' : undef;
-
-####################################################################################################################################
-# Package constants
-####################################################################################################################################
-use constant LIB_COVER_VERSION                                      => '1.29-2';
-    push @EXPORT, qw(LIB_COVER_VERSION);
-use constant LIB_COVER_EXE                                          => '/usr/bin/cover';
-    push @EXPORT, qw(LIB_COVER_EXE);
 
 ####################################################################################################################################
 # Cert file constants
@@ -73,18 +55,6 @@ use constant CONTAINER_DEBUG                                        => false;
 # Store cache container checksums
 ####################################################################################################################################
 my $hContainerCache;
-
-####################################################################################################################################
-# Generate Devel::Cover package name
-####################################################################################################################################
-sub packageDevelCover
-{
-    my $strArch = shift;
-
-    return 'libdevel-cover-perl_' . LIB_COVER_VERSION . "_${strArch}.deb";
-}
-
-push @EXPORT, qw(packageDevelCover);
 
 ####################################################################################################################################
 # Container repo - defines the Docker repository where the containers will be located
@@ -464,11 +434,6 @@ sub containerBuild
         if (!$bDeprecated)
         {
             $strScript .=  sectionHeader() .
-                "# Create PostgreSQL user/group with known ids for testing\n" .
-                '    ' . groupCreate($strOS, POSTGRES_GROUP, POSTGRES_GROUP_ID) . " && \\\n" .
-                '    ' . userCreate($strOS, POSTGRES_USER, POSTGRES_USER_ID, POSTGRES_GROUP);
-
-            $strScript .=  sectionHeader() .
                 "# Install PostgreSQL packages\n";
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
@@ -567,8 +532,6 @@ sub containerBuild
         $strImage = "${strOS}-build";
         $strCopy = undef;
 
-        my $strPkgDevelCover = packageDevelCover($oVm->{$strOS}{&VM_ARCH});
-
         $strScript = sectionHeader() .
             "# Create test user\n" .
             '    ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .
@@ -642,13 +605,6 @@ sub containerBuild
 
             $strScript .=
                 sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
-
-            $strScript .= sectionHeader() .
-                "# Create pgbackrest user\n" .
-                '    ' . userCreate($strOS, BACKREST_USER, BACKREST_USER_ID, TEST_GROUP);
-
-            $strScript .=
-                sshSetup($strOS, BACKREST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
             $strScript .=  sectionHeader() .
                 "# Make " . TEST_USER . " home dir readable\n" .

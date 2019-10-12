@@ -43,8 +43,6 @@ use constant VM_OS_REPO                                             => 'os-repo'
     push @EXPORT, qw(VM_OS_REPO);
 use constant VMDEF_PGSQL_BIN                                        => 'pgsql-bin';
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
-use constant VMDEF_PERL_ARCH_PATH                                   => 'perl-arch-path';
-    push @EXPORT, qw(VMDEF_PERL_ARCH_PATH);
 use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
     push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
 
@@ -129,12 +127,11 @@ my $oyVm =
     # None
     &VM_NONE =>
     {
-        &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_OS => VM_OS_CENTOS,
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_OS => VM_OS_UBUNTU,
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
-        &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VM_DB =>
         [
@@ -155,7 +152,6 @@ my $oyVm =
         &VM_IMAGE => 'centos:6',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
         &VM_DB =>
         [
@@ -185,7 +181,6 @@ my $oyVm =
         &VM_IMAGE => 'centos:7',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
         &VMDEF_DEBUG_INTEGRATION => false,
 
@@ -212,7 +207,6 @@ my $oyVm =
         &VM_IMAGE => 'fedora:30',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
         &VMDEF_DEBUG_INTEGRATION => false,
 
@@ -241,7 +235,6 @@ my $oyVm =
         &VM_IMAGE => 'debian:8',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.20.2',
 
         &VM_DB =>
         [
@@ -272,7 +265,6 @@ my $oyVm =
         &VM_IMAGE => 'debian:9',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/i386-linux-gnu/perl/5.24.1',
 
         &VM_DB_TEST =>
         [
@@ -300,7 +292,6 @@ my $oyVm =
         &VM_IMAGE => 'i386/ubuntu:12.04',
         &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.14.2',
 
         &VM_DB =>
         [
@@ -330,7 +321,6 @@ my $oyVm =
         &VM_IMAGE => 'ubuntu:14.04',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.18.2',
 
         &VM_DB =>
         [
@@ -361,7 +351,6 @@ my $oyVm =
         &VM_IMAGE => 'ubuntu:16.04',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.22.1',
 
         &VMDEF_WITH_BACKTRACE => true,
 
@@ -394,7 +383,6 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.26.1',
 
         &VMDEF_WITH_BACKTRACE => true,
 

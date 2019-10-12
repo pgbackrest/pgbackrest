@@ -112,7 +112,7 @@ sub run
             "encryption incompatible for '$strArchiveFile'" .
             "\nHINT: is or was the repo encrypted?");
 
-        executeTest('sudo rm ' . $strArchiveFile);
+        executeTest('rm ' . $strArchiveFile);
 
         # Attempt to reconstruct from an encypted archived WAL with an encrypted repo
         #---------------------------------------------------------------------------------------------------------------------------
@@ -209,7 +209,7 @@ sub run
             "\nHINT: is or was the repo encrypted?");
 
         # Remove the archive info files
-        executeTest('sudo rm ' . $oArchiveInfo->{strFileName} . '*');
+        executeTest('rm ' . $oArchiveInfo->{strFileName} . '*');
 
         # Create an encrypted storage and archive.info file
         #---------------------------------------------------------------------------------------------------------------------------

@@ -722,9 +722,7 @@ eval
                 push(@{$oyProcess}, undef);
             }
 
-            executeTest(
-                ($strVm ne VM_NONE ? 'sudo ' : '') . "rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" .
-                ($bDev ? '' : " ${strTestPath}/gcov-*"));
+            executeTest("rm -rf ${strTestPath}/test-* ${strTestPath}/data-*" . ($bDev ? '' : " ${strTestPath}/gcov-*"));
             $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
             # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
@@ -913,11 +911,6 @@ eval
             #-----------------------------------------------------------------------------------------------------------------------
             if ($bLibCHostRequired || $bLibCVmRequired)
             {
-                if ($strVm eq VM_NONE)
-                {
-                    confess &log(ASSERT, "c library build not yet supported for vm=none");
-                }
-
                 my $strLibCPath = "${strVagrantPath}/bin";
 
                 # Loop through VMs to do the C Library builds
@@ -936,7 +929,7 @@ eval
                 foreach my $strBuildVM (@stryBuildVm)
                 {
                     my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
-                    my $bContainerExists = $strBuildVM ne $strVmHost;
+                    my $bContainerExists = $strBuildVM ne $strVmHost && $strBuildVM ne VM_NONE;
                     my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
 
                     my $strLibCSmart = "${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so";
@@ -952,12 +945,6 @@ eval
 
                             $bRebuild = true;
                         }
-                    }
-
-                    # Delete old libc files from the host
-                    if ($bRebuild)
-                    {
-                        executeTest('sudo rm -rf ' . $oVm->{$strBuildVM}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
                     }
 
                     if ($bRebuild)
@@ -1024,12 +1011,6 @@ eval
                         {
                             executeTest("docker rm -f test-build");
                         }
-
-                        if ($strBuildVM eq $strVmHost)
-                        {
-                            executeTest("sudo make -C ${strBuildPath} install", {bSuppressStdErr => true});
-                            buildLoadLibC();
-                        }
                     }
                 }
             }
@@ -1065,7 +1046,7 @@ eval
                         &log(INFO, 'package dependencies have changed, rebuilding...');
                     }
 
-                    executeTest("sudo rm -rf ${strPackagePath}");
+                    executeTest("rm -rf ${strPackagePath}");
                 }
 
                 # Loop through VMs to do the package builds
@@ -1080,16 +1061,19 @@ eval
                     {
                         &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
 
-                        executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
-                            {bSuppressStdErr => true});
+                        if ($strVm ne VM_NONE)
+                        {
+                            executeTest(
+                                "docker run -itd -h test-build --name=test-build" .
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                {bSuppressStdErr => true});
+                        }
 
                         $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
 
                         executeTest("rsync -r --exclude .vagrant --exclude .git ${strBackRestBase}/ ${strBuildPath}/");
                         executeTest(
-                            "docker exec -i test-build " .
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
                             "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER .
                             " ${strBuildPath}");
 
@@ -1133,15 +1117,18 @@ eval
                             ${$oStorageBackRest->get("${strBuildPath}/debian/changelog")});
 
                         executeTest(
-                            "docker exec -i test-build " .
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
                             "bash -c 'cd ${strBuildPath} && debuild -i -us -uc -b'");
 
                         executeTest(
-                            "docker exec -i test-build " .
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
                             "bash -c 'rm -f ${strPackagePath}/${strBuildVM}/*.build ${strPackagePath}/${strBuildVM}/*.changes" .
                             " ${strPackagePath}/${strBuildVM}/pgbackrest-doc*'");
 
-                        executeTest("docker rm -f test-build");
+                        if ($strVm ne VM_NONE)
+                        {
+                            executeTest("docker rm -f test-build");
+                        }
                     }
 
                     if (!$oStorageBackRest->pathExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
@@ -1149,10 +1136,13 @@ eval
                         &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
 
                         # Create build container
-                        executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
-                            {bSuppressStdErr => true});
+                        if ($strVm ne VM_NONE)
+                        {
+                            executeTest(
+                                "docker run -itd -h test-build --name=test-build" .
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                {bSuppressStdErr => true});
+                        }
 
                         # Create build directories
                         $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
@@ -1162,7 +1152,9 @@ eval
                         $oStorageBackRest->pathCreate("${strBuildPath}/BUILD", {bIgnoreExists => true, bCreateParent => true});
 
                         # Install PostreSQL 11 development for package builds
-                        executeTest("docker exec -i test-build bash -c 'yum install -y postgresql11-devel 2>&1'");
+                        executeTest(
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
+                            "bash -c 'yum install -y postgresql11-devel 2>&1'");
 
                         # Copy source files
                         executeTest(
@@ -1172,7 +1164,7 @@ eval
 
                         # Copy package files
                         executeTest(
-                            "docker exec -i test-build bash -c '" .
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') . "bash -c '" .
                             "ln -s ${strBuildPath} /root/rpmbuild && " .
                             "cp /root/package-src/pgbackrest.spec ${strBuildPath}/SPECS && " .
                             "cp /root/package-src/*.patch ${strBuildPath}/SOURCES && " .
@@ -1200,12 +1192,15 @@ eval
 
                         # Build package
                         executeTest(
-                            "docker exec -i test-build rpmbuild --define 'pgmajorversion %{nil}' -v -bb --clean" .
-                                " root/rpmbuild/SPECS/pgbackrest.spec",
+                            ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
+                            "rpmbuild --define 'pgmajorversion %{nil}' -v -bb --clean root/rpmbuild/SPECS/pgbackrest.spec",
                             {bSuppressStdErr => true});
 
                         # Remove build container
-                        executeTest("docker rm -f test-build");
+                        if ($strVm ne VM_NONE)
+                        {
+                            executeTest("docker rm -f test-build");
+                        }
                     }
                 }
 
@@ -1311,7 +1306,7 @@ eval
                 if (!defined($$oyProcess[$iVmIdx]) && $iTestIdx < @{$oyTestRun})
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
-                        $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
+                        $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $strVmHost, $bVmOut,
                         $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync,
                         $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bBackTrace,
                         $bProfile, $iScale, !$bNoDebug, $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
@@ -1494,6 +1489,11 @@ eval
     ################################################################################################################################
     # Runs tests
     ################################################################################################################################
+    push(
+        @INC,
+        "${strBackRestBase}/test/.vagrant/bin/" .
+            ((testDefModuleTest($stryModule[0], $stryModuleTest[0]))->{&TESTDEF_CONTAINER} ? $strVm : $strVmHost) .
+            "/libc/blib/arch");
     buildLoadLibC();
 
     my $iRun = 0;
@@ -1512,13 +1512,13 @@ eval
         $strPgVersion ne 'minimal' ? $strPgVersion: undef,          # Pg version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
         $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,                 # Test options
-        TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
+        TEST_USER, TEST_GROUP);                                     # User/group info
 
     if (!$bNoCleanup)
     {
         if ($oHostGroup->removeAll() > 0)
         {
-            executeTest("sudo rm -rf ${strTestPath}");
+            executeTest("rm -rf ${strTestPath}");
         }
     }
 

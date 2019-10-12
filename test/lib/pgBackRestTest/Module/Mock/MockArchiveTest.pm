@@ -214,13 +214,7 @@ sub run
                     substr($strSourceFile, 0, 16) . "/${strSourceFile}-${strArchiveChecksum}." . COMPRESS_EXT . qw{.} .
                     STORAGE_TEMP_EXT;
 
-            executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
             storageTest()->put($strArchiveTmp, 'JUNK');
-
-            if ($bRemote)
-            {
-                executeTest('sudo chown ' . $oHostBackup->userGet() . " ${strArchiveTmp}");
-            }
         }
 
         # Push the WAL

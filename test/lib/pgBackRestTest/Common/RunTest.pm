@@ -90,7 +90,7 @@ sub cleanTest
 {
     my $self = shift;
 
-    executeTest('sudo rm -rf ' . $self->testPath() . '/*');
+    executeTest('rm -rf ' . $self->testPath() . '/*');
 }
 
 ####################################################################################################################################
@@ -126,7 +126,6 @@ sub process
         $self->{bCleanup},
         $self->{bLogForce},
         $self->{strPgUser},
-        $self->{strBackRestUser},
         $self->{strGroup},
     ) =
         logDebugParam
@@ -148,7 +147,6 @@ sub process
             {name => 'bCleanup'},
             {name => 'bLogForce'},
             {name => 'strPgUser'},
-            {name => 'strBackRestUser'},
             {name => 'strGroup'},
         );
 
@@ -544,7 +542,6 @@ push(@EXPORT, qw(storageTest));
 ####################################################################################################################################
 sub archBits {return vmArchBits(shift->{strVm})}
 sub backrestExe {return shift->{strBackRestExe}}
-sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}

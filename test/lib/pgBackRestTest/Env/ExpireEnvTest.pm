@@ -190,7 +190,7 @@ sub stanzaCreate
 
     # Generate pg_control for stanza-create
     $self->controlGenerate($strDbPath, $strDbVersion);
-    executeTest('sudo chmod 600 ' . $strDbPath . '/' . DB_FILE_PGCONTROL);
+    executeTest('chmod 600 ' . $strDbPath . '/' . DB_FILE_PGCONTROL);
 
     # Create the stanza repo paths if they don't exist
     if (!cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3))
@@ -237,7 +237,7 @@ sub stanzaUpgrade
 
     # Copy pg_control for stanza-upgrade
     $self->controlGenerate(cfgOption(CFGOPT_PG_PATH), $strDbVersion);
-    executeTest('sudo chmod 600 ' . cfgOption(CFGOPT_PG_PATH) . '/' . DB_FILE_PGCONTROL);
+    executeTest('chmod 600 ' . cfgOption(CFGOPT_PG_PATH) . '/' . DB_FILE_PGCONTROL);
 
     $self->stanzaSet($strStanza, $strDbVersion, true);
 

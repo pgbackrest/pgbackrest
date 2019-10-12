@@ -57,6 +57,7 @@ sub new
         $self->{strTestPath},
         $self->{oTest},
         $self->{bDryRun},
+        $self->{strVmHost},
         $self->{bVmOut},
         $self->{iVmIdx},
         $self->{iVmMax},
@@ -87,6 +88,7 @@ sub new
             {name => 'strTestPath'},
             {name => 'oTest'},
             {name => 'bDryRun'},
+            {name => 'strVmHost'},
             {name => 'bVmOut'},
             {name => 'iVmIdx'},
             {name => 'iVmMax'},
@@ -232,9 +234,7 @@ sub run
                 # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
                 if ($self->{oTest}->{&TEST_VM} ne VM_NONE && (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ}))
                 {
-                    jobInstallC(
-                        $self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage,
-                        !$self->{oTest}->{&TEST_C} && !$self->{oTest}->{&TEST_INTEGRATION});
+                    jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
                 }
             }
         }
@@ -269,6 +269,7 @@ sub run
                 ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 abs_path($0) .
                 " --test-path=${strVmTestPath}" .
+                " --vm-host=$self->{strVmHost}" .
                 " --vm=$self->{oTest}->{&TEST_VM}" .
                 " --vm-id=$self->{iVmIdx}" .
                 " --module=" . $self->{oTest}->{&TEST_MODULE} .
@@ -753,7 +754,7 @@ sub end
                 containerRemove("test-$self->{iVmIdx}");
             }
 
-            executeTest(($self->{oTest}->{&TEST_VM} ne VM_NONE ? "sudo " : '') . "rm -rf ${strHostTestPath}");
+            executeTest("rm -rf ${strHostTestPath}");
         }
 
         $bDone = true;
@@ -776,20 +777,15 @@ sub jobInstallC
     my $strBasePath = shift;
     my $strVm = shift;
     my $strImage = shift;
-    my $bCopyLibC = shift;
 
     # Install Perl C Library
     my $oVm = vmGet();
     my $strBuildPath = "${strBasePath}/test/.vagrant/bin/${strVm}";
     my $strBuildLibCPath = "${strBuildPath}/libc";
     my $strBuildBinPath = "${strBuildPath}/src";
-    my $strPerlAutoPath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
 
     executeTest(
         "docker exec -i -u root ${strImage} bash -c '" .
-        (defined($bCopyLibC) && $bCopyLibC ?
-            "mkdir -p -m 755 ${strPerlAutoPath} && " .
-            "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " : '') .
         "cp ${strBuildBinPath}/" . PROJECT_EXE . ' /usr/bin/' . PROJECT_EXE . ' && ' .
         'chmod 755 /usr/bin/' . PROJECT_EXE . "'");
 }

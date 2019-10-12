@@ -86,10 +86,6 @@ Vagrant.configure(2) do |config|
         # apt-get install -y texlive-font-utils
 
         #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Create Postgres Group & pgBackRest User' && date
-        adduser --uid=5001 --ingroup=vagrant --disabled-password --gecos "" pgbackrest
-
-        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build VM Images' && date
         rm -rf /backrest/test/.vagrant/docker/*
         rm -rf /backrest/test/.vagrant/libc/*

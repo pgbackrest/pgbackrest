@@ -30,6 +30,7 @@ The test code is included directly so it can freely interact with the included C
 #include "common/harnessDebug.h"
 #include "common/harnessTest.h"
 
+void testInit(void);
 void testContainerSet(bool testContainer);
 void testDataPathSet(const char *testDataPath);
 void testIdxSet(unsigned int testIdx);
@@ -83,6 +84,7 @@ main(int argListSize, const char *argList[])
     signal(SIGPIPE, SIG_IGN);
 
     // Set globals
+    testInit();
     testExeSet(argList[0]);
     testProjectExeSet("{[C_TEST_PROJECT_EXE]}");
     testContainerSet({[C_TEST_CONTAINER]});

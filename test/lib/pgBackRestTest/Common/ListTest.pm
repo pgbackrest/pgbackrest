@@ -38,8 +38,6 @@ use constant TEST_MODULE                                            => 'module';
     push @EXPORT, qw(TEST_MODULE);
 use constant TEST_NAME                                              => 'test';
     push @EXPORT, qw(TEST_NAME);
-use constant TEST_PERL_ARCH_PATH                                    => VMDEF_PERL_ARCH_PATH;
-    push @EXPORT, qw(TEST_PERL_ARCH_PATH);
 use constant TEST_PERL_REQ                                          => 'perl-req';
     push @EXPORT, qw(TEST_PERL_REQ);
 use constant TEST_PGSQL_BIN                                         => 'pgsql-bin';
@@ -174,7 +172,6 @@ sub testListGet
                                         &TEST_CONTAINER => defined($hTest->{&TESTDEF_CONTAINER}) ?
                                             $hTest->{&TESTDEF_CONTAINER} : $hModule->{&TESTDEF_CONTAINER},
                                         &TEST_PGSQL_BIN => $strPgSqlBin,
-                                        &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
                                         &TEST_PERL_REQ => $hTest->{&TESTDEF_PERL_REQ},
                                         &TEST_INTEGRATION => $hTest->{&TESTDEF_INTEGRATION},
                                         &TEST_MODULE => $strModule,

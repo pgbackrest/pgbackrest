@@ -194,10 +194,6 @@ eval
         # Else run tests that require a container
         else
         {
-            processBegin("create backrest user");
-            processExec("sudo adduser --ingroup=\${USER?} --uid=5001 --disabled-password --gecos \"\" " . BACKREST_USER);
-            processEnd();
-
             # Build the container
             processBegin("${strVm} build");
             processExec("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});

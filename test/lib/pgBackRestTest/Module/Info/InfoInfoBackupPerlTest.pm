@@ -220,7 +220,7 @@ sub run
         # Create encrypted files, change the passphrase and attempt to load - ensure flush error returned as parse error
         #---------------------------------------------------------------------------------------------------------------------------
         # Remove the backup info files
-        executeTest('sudo rm ' . $oBackupInfo->{strFileName} . '*');
+        executeTest('rm ' . $oBackupInfo->{strFileName} . '*');
 
         # Clear the storage repo settings and change the passphrase
         storageRepoCacheClear();

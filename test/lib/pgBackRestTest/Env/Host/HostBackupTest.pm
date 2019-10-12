@@ -78,14 +78,14 @@ sub new
     {
         $strName = HOST_BACKUP;
         $strImage = containerRepo() . ':' . testRunGet()->vm() . '-test';
-        $strUser = testRunGet()->backrestUser();
     }
     else
     {
         $strName = $$oParam{strName};
         $strImage = $$oParam{strImage};
-        $strUser = testRunGet()->pgUser();
     }
+
+    $strUser = testRunGet()->pgUser();
 
     # Create the host
     my $self = $class->SUPER::new($strName, {strImage => $strImage, strUser => $strUser});
@@ -1181,9 +1181,6 @@ sub configCreate
 
     # Write out the configuration file
     storageTest()->put($self->backrestConfig(), iniRender(\%oParamHash, true));
-
-    # Modify the file permissions so it can be read/saved by all test users
-    executeTest('sudo chmod 660 ' . $self->backrestConfig());
 }
 
 ####################################################################################################################################
@@ -1217,16 +1214,7 @@ sub configUpdate
         }
     }
 
-    # Modify the file permissions so it can be saved by all test users
-    executeTest(
-        'sudo chmod 660 ' . $self->backrestConfig() . ' && sudo chmod 770 ' . dirname($self->backrestConfig()));
-
     storageTest()->put($self->backrestConfig(), iniRender($oConfig, true));
-
-    # Fix permissions back to original
-    executeTest(
-        'sudo chmod 660 ' . $self->backrestConfig() . ' && sudo chmod 770 ' . dirname($self->backrestConfig()) .
-        ' && sudo chown ' . $self->userGet() . ' ' . $self->backrestConfig());
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1368,22 +1356,8 @@ sub infoMunge
         }
     }
 
-    # Modify the file/directory permissions so it can be saved
-    if ($self->isFS())
-    {
-        executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
-    }
-
     # Save the munged data to the file
     $oMungeIni->save();
-
-    # Fix permissions
-    if ($self->isFS())
-    {
-        executeTest(
-            "sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName) .
-            ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
-    }
 
     # Clear the cache is requested
     if (!$bCache)
@@ -1424,23 +1398,9 @@ sub infoRestore
     {
         if ($bSave)
         {
-            # Modify the file/directory permissions so it can be saved
-            if ($self->isFS())
-            {
-                executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
-            }
-
             # Save the munged data to the file
             $self->{hInfoFile}{$strFileName}->{bModified} = true;
             $self->{hInfoFile}{$strFileName}->save();
-
-            # Fix permissions
-            if ($self->isFS())
-            {
-                executeTest(
-                    "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
-                    ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
-            }
         }
     }
     else
@@ -1553,16 +1513,7 @@ sub configRemap
     # Save backup config file (but not if this is the standby which is not the source of backups)
     if (defined($oHostBackup))
     {
-        # Modify the file permissions so it can be read/saved by all test users
-        executeTest(
-            'sudo chmod 660 ' . $oHostBackup->backrestConfig() . ' && sudo chmod 770 ' . dirname($oHostBackup->backrestConfig()));
-
         storageTest()->put($oHostBackup->backrestConfig(), iniRender($oRemoteConfig, true));
-
-        # Fix permissions
-        executeTest(
-            'sudo chmod 660 ' . $oHostBackup->backrestConfig() . ' && sudo chmod 770 ' . dirname($oHostBackup->backrestConfig()) .
-            ' && sudo chown ' . $oHostBackup->userGet() . ' ' . $oHostBackup->backrestConfig());
     }
 }
 

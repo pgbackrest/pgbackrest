@@ -539,8 +539,7 @@ sub run
         }
         else
         {
-            executeTest("sudo touch ${strTempFile}", {bRemote => $bRemote});
-            executeTest("sudo chown " . BACKREST_USER . " ${strResumePath}/file.tmp");
+            executeTest("touch ${strTempFile}", {bRemote => $bRemote});
         }
 
         # Add zero-sized file

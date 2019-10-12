@@ -100,7 +100,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -195,7 +195,7 @@ pg_data/special-!_.*'()&!@;:+,?={"master":true,"repo-size":[SIZE],"size":[SIZE],
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf"}
@@ -204,7 +204,7 @@ pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -220,7 +220,7 @@ pg_data/pg_tblspc={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -291,7 +291,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -393,7 +393,7 @@ pg_data/zero_from_start={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf"}
@@ -402,7 +402,7 @@ pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -418,7 +418,7 @@ pg_data/pg_tblspc={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -594,7 +594,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -698,14 +698,14 @@ pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"14c44cef6287269b08d41
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -725,7 +725,7 @@ pg_tblspc/1/[TS_PATH-1]/16384={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -800,7 +800,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -907,7 +907,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -916,7 +916,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -941,7 +941,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1016,7 +1016,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -1122,7 +1122,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -1130,7 +1130,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1153,7 +1153,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1228,7 +1228,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -1334,7 +1334,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -1342,7 +1342,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1365,7 +1365,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1464,7 +1464,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -1570,14 +1570,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1597,7 +1597,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1673,7 +1673,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -1779,14 +1779,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1806,7 +1806,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1886,7 +1886,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -1992,14 +1992,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2019,7 +2019,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -2097,7 +2097,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2203,14 +2203,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2230,7 +2230,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -2312,7 +2312,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2416,14 +2416,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2443,7 +2443,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -2520,7 +2520,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2624,14 +2624,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2651,7 +2651,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -2733,7 +2733,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2839,14 +2839,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2866,7 +2866,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -2937,7 +2937,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 diff backup - config file not validated on remote (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
@@ -2946,7 +2946,7 @@ P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: expire command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -2985,7 +2985,7 @@ bogus=bogus
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
@@ -3091,14 +3091,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"../../tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -3118,7 +3118,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -3153,7 +3153,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the master
@@ -3163,7 +3163,7 @@ P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: expire command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -3201,7 +3201,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
@@ -3307,14 +3307,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"../../tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -3334,7 +3334,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"

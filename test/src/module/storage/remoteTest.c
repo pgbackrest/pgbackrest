@@ -8,6 +8,7 @@ Test Remote Storage
 #include "postgres/interface.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessTest.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -27,6 +28,7 @@ testRun(void)
     strLstAddZ(argList, "--protocol-timeout=10");
     strLstAddZ(argList, "--buffer-size=16384");
     strLstAddZ(argList, "--repo1-host=localhost");
+    strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
     strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
     harnessCfgLoad(cfgCmdInfo, argList);
 
@@ -281,7 +283,6 @@ testRun(void)
     if (testBegin("storageNewWrite()"))
     {
         storagePathCreateNP(storageTest, strNew("repo"));
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown pgbackrest %s/repo", testPath()))), 0, "update repo owner");
 
         Storage *storageRemote = NULL;
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
@@ -445,7 +446,6 @@ testRun(void)
     {
         String *path = strNew("testpath");
         storagePathCreateNP(storageTest, strNew("repo"));
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown pgbackrest %s/repo", testPath()))), 0, "update repo owner");
 
         Storage *storageRemote = NULL;
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
@@ -504,7 +504,6 @@ testRun(void)
     {
         String *path = strNew("testpath");
         storagePathCreateNP(storageTest, strNew("repo"));
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown pgbackrest %s/repo", testPath()))), 0, "update repo owner");
 
         Storage *storageRemote = NULL;
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
@@ -545,7 +544,6 @@ testRun(void)
     if (testBegin("storageRemove()"))
     {
         storagePathCreateNP(storageTest, strNew("repo"));
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown pgbackrest %s/repo", testPath()))), 0, "update repo owner");
 
         Storage *storageRemote = NULL;
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
@@ -594,7 +592,6 @@ testRun(void)
     if (testBegin("storagePathSync()"))
     {
         storagePathCreateNP(storageTest, strNew("repo"));
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown pgbackrest %s/repo", testPath()))), 0, "update repo owner");
 
         Storage *storageRemote = NULL;
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");

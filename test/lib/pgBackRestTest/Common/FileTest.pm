@@ -84,7 +84,7 @@ sub testPathRemove
     my $strPath = shift;
     my $bSuppressError = shift;
 
-    executeTest('sudo rm -rf ' . $strPath, {bSuppressError => $bSuppressError});
+    executeTest('rm -rf ' . $strPath, {bSuppressError => $bSuppressError});
 }
 
 push(@EXPORT, qw(testPathRemove));
@@ -170,7 +170,7 @@ sub forceStorageMode
     # Mode commands are ignored on S3
     if ($oStorage->type() ne STORAGE_S3)
     {
-        executeTest('sudo chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
+        executeTest('chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any
@@ -237,7 +237,7 @@ sub forceStorageMove
     # Else remove using filesystem commands
     else
     {
-        executeTest('sudo mv ' . $oStorage->pathGet($strSourcePathExp) . ' ' . $oStorage->pathGet($strDestinationPathExp));
+        executeTest('mv ' . $oStorage->pathGet($strSourcePathExp) . ' ' . $oStorage->pathGet($strDestinationPathExp));
     }
 
     # Return from function and log return values if any
@@ -272,7 +272,7 @@ sub forceStorageOwner
     # Owner commands are ignored on S3
     if ($oStorage->type() ne STORAGE_S3)
     {
-        executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
+        executeTest('chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any
@@ -318,7 +318,7 @@ sub forceStorageRemove
     }
     else
     {
-        executeTest('sudo rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
+        executeTest('rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any

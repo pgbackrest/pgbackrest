@@ -299,6 +299,41 @@ testAdd(int run, bool selected)
 }
 
 /***********************************************************************************************************************************
+Initialize harness
+***********************************************************************************************************************************/
+void
+testInit(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    // Set test user
+    const char *testUserTemp = getpwuid(getuid())->pw_name;
+
+    if (strlen(testUserTemp) > sizeof(testUserData) - 1)
+    {
+        fprintf(stderr, "ERROR: test user name must be less than %zu characters", sizeof(testUserData) - 1);
+        fflush(stderr);
+        exit(255);
+    }
+
+    strcpy(testUserData, testUserTemp);
+
+    // Set test group
+    const char *testGroupTemp = getgrgid(getgid())->gr_name;
+
+    if (strlen(testGroupTemp) > sizeof(testGroupData) - 1)
+    {
+        fprintf(stderr, "ERROR: test group name must be less than %zu characters", sizeof(testGroupData) - 1);
+        fflush(stderr);
+        exit(255);
+    }
+
+    strcpy(testGroupData, testGroupTemp);
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
 testBegin - should this test run?
 ***********************************************************************************************************************************/
 bool
@@ -315,25 +350,6 @@ testBegin(const char *name)
 
     if (testList[testRun - 1].selected)
     {
-        if (testFirst)
-        {
-            // Set test user
-            const char *testUserTemp = getpwuid(getuid())->pw_name;
-
-            if (strlen(testUserTemp) > sizeof(testUserData) - 1)
-                THROW_FMT(AssertError, "test user name must be less than %zu characters", sizeof(testUserData) - 1);
-
-            strcpy(testUserData, testUserTemp);
-
-            // Set test group
-            const char *testGroupTemp = getgrgid(getgid())->gr_name;
-
-            if (strlen(testGroupTemp) > sizeof(testGroupData) - 1)
-                THROW_FMT(AssertError, "test group name must be less than %zu characters", sizeof(testGroupData) - 1);
-
-            strcpy(testGroupData, testGroupTemp);
-        }
-
 #ifndef NO_LOG
         if (!testFirst)
         {
