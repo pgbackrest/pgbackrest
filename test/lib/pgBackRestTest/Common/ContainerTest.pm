@@ -361,7 +361,7 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        zlib-devel libxml2-devel lz4-devel lcov";
+                "        zlib-devel libxml2-devel lz4-devel";
 
             if ($strOS eq VM_CO6)
             {
@@ -380,7 +380,7 @@ sub containerBuild
                 "    apt-get -y install openssh-server wget sudo gcc make valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
-                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev lcov";
+                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev";
 
             if ($strOS eq VM_U12)
             {
@@ -429,6 +429,16 @@ sub containerBuild
         }
 
         $strScript .= certSetup($strOS);
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strLCovPath = '/root/lcov-1.14';
+
+        $strScript .= sectionHeader() .
+            "# Build lcov\n" .
+            "    wget -q -O - https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz" .
+                " | tar zx -C /root && \\\n" .
+            "    make -C ${strLCovPath} install && \\\n" .
+            "    rm -rf ${strLCovPath}";
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
