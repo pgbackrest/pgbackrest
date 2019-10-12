@@ -185,7 +185,7 @@ testRun(void)
         utimeTest.modtime = 1555155555;
         THROW_ON_SYS_ERROR_FMT(utime(strPtr(fileName), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
 
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown 999999:999999 %s", strPtr(fileName)))), 0, "set invalid user/group");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown 99999:99999 %s", strPtr(fileName)))), 0, "set invalid user/group");
 
         TEST_ASSIGN(info, storageInfoNP(storageTest, fileName), "get file info");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
