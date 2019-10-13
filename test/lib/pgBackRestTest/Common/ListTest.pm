@@ -38,8 +38,6 @@ use constant TEST_MODULE                                            => 'module';
     push @EXPORT, qw(TEST_MODULE);
 use constant TEST_NAME                                              => 'test';
     push @EXPORT, qw(TEST_NAME);
-use constant TEST_PERL_ARCH_PATH                                    => VMDEF_PERL_ARCH_PATH;
-    push @EXPORT, qw(TEST_PERL_ARCH_PATH);
 use constant TEST_PERL_REQ                                          => 'perl-req';
     push @EXPORT, qw(TEST_PERL_REQ);
 use constant TEST_PGSQL_BIN                                         => 'pgsql-bin';
@@ -65,6 +63,7 @@ sub testListGet
     my $strDbVersion = shift;
     my $bCoverageOnly = shift;
     my $bCOnly = shift;
+    my $bContainerOnly = shift;
 
     my $oyVm = vmGet();
     my $oyTestRun = [];
@@ -112,6 +111,18 @@ sub testListGet
 
                         # Skip this test if only C tests are requested and this is not a C test
                         next if ($bCOnly && !$hTest->{&TESTDEF_C});
+
+                        # Skip this test if it is integration and vm=none
+                        next if ($strVm eq VM_NONE && $hTest->{&TESTDEF_TYPE} eq TESTDEF_INTEGRATION);
+
+                        # Skip this test if it is not C and vm=none.  Perl tests require libc which is not supported.
+                        next if ($strVm eq VM_NONE && !$hTest->{&TESTDEF_C});
+
+                        # Skip this test if a container is required and vm=none.
+                        next if ($strVm eq VM_NONE && $hTest->{&TESTDEF_CONTAINER_REQUIRED});
+
+                        # Skip this if it does not require a container and container only tests are required.
+                        next if ($bContainerOnly && $hTest->{&TESTDEF_C} && !$hTest->{&TESTDEF_CONTAINER_REQUIRED});
 
                         for (my $iDbVersionIdx = $iDbVersionMax; $iDbVersionIdx >= $iDbVersionMin; $iDbVersionIdx--)
                         {
@@ -161,7 +172,6 @@ sub testListGet
                                         &TEST_CONTAINER => defined($hTest->{&TESTDEF_CONTAINER}) ?
                                             $hTest->{&TESTDEF_CONTAINER} : $hModule->{&TESTDEF_CONTAINER},
                                         &TEST_PGSQL_BIN => $strPgSqlBin,
-                                        &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
                                         &TEST_PERL_REQ => $hTest->{&TESTDEF_PERL_REQ},
                                         &TEST_INTEGRATION => $hTest->{&TESTDEF_INTEGRATION},
                                         &TEST_MODULE => $strModule,

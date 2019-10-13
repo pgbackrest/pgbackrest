@@ -1,16 +1,6 @@
 run 002 - rmt 1, s3 1, enc 1, delta 0
 =====================================
 
-info all stanzas - no stanzas exist (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn info
-------------------------------------------------------------------------------------------------------------------------------------
-No stanzas exist in the repository.
-
-info all stanzas - no stanzas exist (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --output=json info
-------------------------------------------------------------------------------------------------------------------------------------
-[]
-
 stanza-create db - create required data for stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -110,7 +100,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -205,7 +195,7 @@ pg_data/special-!_.*'()&!@;:+,?={"master":true,"repo-size":[SIZE],"size":[SIZE],
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf"}
@@ -214,7 +204,7 @@ pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -230,7 +220,7 @@ pg_data/pg_tblspc={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -300,7 +290,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -402,7 +392,7 @@ pg_data/zero_from_start={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf"}
@@ -411,7 +401,7 @@ pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -427,7 +417,7 @@ pg_data/pg_tblspc={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -587,7 +577,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -691,14 +681,14 @@ pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"14c44cef6287269b08d41
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -718,7 +708,7 @@ pg_tblspc/1/[TS_PATH-1]/16384={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -792,7 +782,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -899,7 +889,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -908,7 +898,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -933,7 +923,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1007,7 +997,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -1113,7 +1103,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -1121,7 +1111,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1144,7 +1134,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1218,7 +1208,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -1324,7 +1314,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -1332,7 +1322,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1355,7 +1345,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1454,7 +1444,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -1560,14 +1550,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1587,7 +1577,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1663,7 +1653,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -1769,14 +1759,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1796,7 +1786,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -1876,7 +1866,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -1982,14 +1972,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2009,7 +1999,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -2087,7 +2077,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2193,14 +2183,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2220,7 +2210,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -2302,7 +2292,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2406,14 +2396,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2433,7 +2423,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -2510,7 +2500,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2614,14 +2604,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2641,7 +2631,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -2677,351 +2667,6 @@ db-version="9.4"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
-
-info db stanza - normal output (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db info
-------------------------------------------------------------------------------------------------------------------------------------
-stanza: db
-    status: ok
-    cipher: aes-256-cbc
-
-    db (current)
-        wal archive min/max (9.4-1): none present
-
-        full backup: [BACKUP-FULL-2]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 160KB, backup size: 160KB
-            repository size: 160.5KB, repository backup size: 160.5KB
-
-        diff backup: [BACKUP-DIFF-2]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 160KB, backup size: 41B
-            repository size: 160.7KB, repository backup size: 192B
-            backup reference list: [BACKUP-FULL-2]
-
-        incr backup: [BACKUP-INCR-3]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 160KB, backup size: 13B
-            repository size: 160.7KB, repository backup size: 64B
-            backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2]
-
-        incr backup: [BACKUP-INCR-4]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 144KB, backup size: 8B
-            repository size: 144.7KB, repository backup size: 32B
-            backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3]
-
-        diff backup: [BACKUP-DIFF-3]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 144KB, backup size: 55B
-            repository size: 144.7KB, repository backup size: 256B
-            backup reference list: [BACKUP-FULL-2]
-
-        incr backup: [BACKUP-INCR-5]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 144KB, backup size: 0B
-            repository size: 144.7KB, repository backup size: 0B
-            backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-3]
-
-        diff backup: [BACKUP-DIFF-4]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 144KB, backup size: 46B
-            repository size: 144.6KB, repository backup size: 192B
-            backup reference list: [BACKUP-FULL-2]
-
-        full backup: [BACKUP-FULL-3]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 144KB, backup size: 144KB
-            repository size: 2.5KB, repository backup size: 2.5KB
-
-info db stanza - normal output (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=warn --stanza=db --output=json info
-------------------------------------------------------------------------------------------------------------------------------------
-[
-    {
-        "archive" : [
-            {
-                "database" : {
-                    "id" : 1
-                },
-                "id" : "9.4-1",
-                "max" : null,
-                "min" : null
-            }
-        ],
-        "backup" : [
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-FULL-2]",
-                "prior" : null,
-                "reference" : null,
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "full"
-            },
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-DIFF-2]",
-                "prior" : "[BACKUP-FULL-2]",
-                "reference" : [
-                    "[BACKUP-FULL-2]"
-                ],
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "diff"
-            },
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-INCR-3]",
-                "prior" : "[BACKUP-DIFF-2]",
-                "reference" : [
-                    "[BACKUP-FULL-2]",
-                    "[BACKUP-DIFF-2]"
-                ],
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "incr"
-            },
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-INCR-4]",
-                "prior" : "[BACKUP-INCR-3]",
-                "reference" : [
-                    "[BACKUP-FULL-2]",
-                    "[BACKUP-DIFF-2]",
-                    "[BACKUP-INCR-3]"
-                ],
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "incr"
-            },
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-DIFF-3]",
-                "prior" : "[BACKUP-FULL-2]",
-                "reference" : [
-                    "[BACKUP-FULL-2]"
-                ],
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "diff"
-            },
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-INCR-5]",
-                "prior" : "[BACKUP-DIFF-3]",
-                "reference" : [
-                    "[BACKUP-FULL-2]",
-                    "[BACKUP-DIFF-3]"
-                ],
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "incr"
-            },
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-DIFF-4]",
-                "prior" : "[BACKUP-FULL-2]",
-                "reference" : [
-                    "[BACKUP-FULL-2]"
-                ],
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "diff"
-            },
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-FULL-3]",
-                "prior" : null,
-                "reference" : null,
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "full"
-            }
-        ],
-        "cipher" : "aes-256-cbc",
-        "db" : [
-            {
-                "id" : 1,
-                "system-id" : 1000000000000000094,
-                "version" : "9.4"
-            }
-        ],
-        "name" : "db",
-        "status" : {
-            "code" : 0,
-            "message" : "ok"
-        }
-    }
-]
 
 expire full=1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=1  --stanza=db expire
@@ -3068,7 +2713,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -3174,14 +2819,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -3201,7 +2846,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -3269,147 +2914,10 @@ restore, remap - no tablespace remap (db-master host)
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-info all stanzas - normal output (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=warn info
-------------------------------------------------------------------------------------------------------------------------------------
-stanza: db
-    status: ok
-    cipher: aes-256-cbc
-
-    db (current)
-        wal archive min/max (9.4-1): none present
-
-        full backup: [BACKUP-FULL-3]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 144KB, backup size: 144KB
-            repository size: 2.5KB, repository backup size: 2.5KB
-
-        diff backup: [BACKUP-DIFF-5]
-            timestamp start/stop: [TIMESTAMP-STR]
-            wal start/stop: n/a
-            database size: 144.1KB, backup size: 9B
-            repository size: 2.6KB, repository backup size: 48B
-            backup reference list: [BACKUP-FULL-3]
-
-info all stanzas - normal output (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --output=json info
-------------------------------------------------------------------------------------------------------------------------------------
-[
-    {
-        "archive" : [
-            {
-                "database" : {
-                    "id" : 1
-                },
-                "id" : "9.4-1",
-                "max" : null,
-                "min" : null
-            }
-        ],
-        "backup" : [
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-FULL-3]",
-                "prior" : null,
-                "reference" : null,
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "full"
-            },
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-DIFF-5]",
-                "prior" : "[BACKUP-FULL-3]",
-                "reference" : [
-                    "[BACKUP-FULL-3]"
-                ],
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "diff"
-            }
-        ],
-        "cipher" : "aes-256-cbc",
-        "db" : [
-            {
-                "id" : 1,
-                "system-id" : 1000000000000000094,
-                "version" : "9.4"
-            }
-        ],
-        "name" : "db",
-        "status" : {
-            "code" : 0,
-            "message" : "ok"
-        }
-    }
-]
-
-info bogus stanza - bogus stanza (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=warn --stanza=bogus info
-------------------------------------------------------------------------------------------------------------------------------------
-stanza: bogus
-    status: error (missing stanza path)
-
-info bogus stanza - bogus stanza (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=bogus --output=json info
-------------------------------------------------------------------------------------------------------------------------------------
-[
-    {
-        "backup" : [],
-        "db" : [],
-        "name" : "bogus",
-        "status" : {
-            "code" : 1,
-            "message" : "missing stanza path"
-        }
-    }
-]
-
 diff backup - config file not validated on remote (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
@@ -3418,7 +2926,7 @@ P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: expire command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -3457,7 +2965,7 @@ bogus=bogus
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
@@ -3563,14 +3071,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"../../tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -3590,7 +3098,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -3625,7 +3133,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the primary
@@ -3635,7 +3143,7 @@ P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: expire command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -3673,7 +3181,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
@@ -3779,14 +3287,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"../../tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-2]"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -3806,7 +3314,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-2]"
+user="[USER-1]"
 
 [backrest]
 backrest-checksum="[CHECKSUM]"

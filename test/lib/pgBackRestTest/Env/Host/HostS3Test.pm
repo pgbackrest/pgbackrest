@@ -85,48 +85,4 @@ sub new
     );
 }
 
-####################################################################################################################################
-# executeS3
-####################################################################################################################################
-sub executeS3
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strCommand
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->executeS3', \@_,
-            {name => 'strCommand', trace => true},
-        );
-
-    # Retry the command until timeout
-    my $oWait = waitInit(60);
-    my $bSuccess = false;
-    my $strTotalCommand =
-        'export PYTHONWARNINGS="ignore" && aws --endpoint-url=https://' . $self->ipGet() . ' s3 --no-verify-ssl ' . $strCommand;
-
-    do
-    {
-        my $oExec = new pgBackRestTest::Common::ExecuteTest($strTotalCommand, {bSuppressError => true, bSuppressStdErr => true});
-        $oExec->begin();
-
-        $bSuccess = $oExec->end() == 0;
-    }
-    while (!$bSuccess && waitMore($oWait));
-
-    # If no success run again to display the error
-    if (!$bSuccess)
-    {
-        executeTest($strTotalCommand);
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
 1;

@@ -146,22 +146,12 @@ testRun(void)
         KeyValue *keyValue = kvNew();
         String *json = NULL;
 
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 0), "kvToJson - empty, no indent");
+        TEST_ASSIGN(json, jsonFromKv(keyValue), "kvToJson - empty");
         TEST_RESULT_STR(strPtr(json), "{}", "  empty curly brackets");
 
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 2), "kvToJson - empty, indent 2");
-        TEST_RESULT_STR(strPtr(json), "{}\n", "  empty curly brackets with carriage return");
-
         kvPut(keyValue, varNewStrZ("backup"), varNewVarLst(varLstNew()));
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 0), "kvToJson - kv with empty array, no indent");
+        TEST_ASSIGN(json, jsonFromKv(keyValue), "kvToJson - kv with empty array");
         TEST_RESULT_STR(strPtr(json), "{\"backup\":[]}", "  kv with empty array brackets");
-
-        kvPut(keyValue, varNewStrZ("backup"), varNewVarLst(varLstNew()));
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 2), "kvToJson - kv with empty array, indent 2");
-        TEST_RESULT_STR(strPtr(json),
-            "{\n"
-            "  \"backup\" : []\n"
-            "}\n", "  formatted kv with empty array brackets");
 
         kvPutKv(keyValue, varNewStr(strNew("archive")));
         kvPutKv(keyValue, varNewStr(strNew("empty")));
@@ -179,25 +169,26 @@ testRun(void)
         kvPut(keyValue, varNewStrZ("db"), varNewVarLst(dbList));
         kvPut(keyValue, varNewStrZ("null-list"), varNewVarLst(NULL));
 
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 2), "kvToJson - kv with empty array, indent 2");
-        TEST_RESULT_STR(strPtr(json),
-            "{\n"
-            "  \"archive\" : {},\n"
-            "  \"backup\" : [],\n"
-            "  \"bool1\" : true,\n"
-            "  \"bool2\" : false,\n"
-            "  \"checknull\" : null,\n"
-            "  \"db\" : [\n"
-            "    {\n"
-            "      \"id\" : 1,\n"
-            "      \"version\" : \"9.4\"\n"
-            "    },\n"
-            "    null\n"
-            "  ],\n"
-            "  \"empty\" : {},\n"
-            "  \"null-list\" : null,\n"
-            "  \"null-str\" : null\n"
-            "}\n", "  formatted kv with empty array, kv, varList with values");
+        TEST_ASSIGN(json, jsonFromKv(keyValue), "kvToJson - kv with empty array, kv, varList with values");
+        TEST_RESULT_STR(
+            strPtr(json),
+            "{"
+                "\"archive\":{},"
+                "\"backup\":[],"
+                "\"bool1\":true,"
+                "\"bool2\":false,"
+                "\"checknull\":null,"
+                "\"db\":["
+                    "{"
+                        "\"id\":1,"
+                        "\"version\":\"9.4\""
+                    "},"
+                    "null"
+                "],"
+                "\"empty\":{},"
+                "\"null-list\":null,"
+                "\"null-str\":null"
+            "}", "  kv with empty array, kv, varList with values");
 
         TEST_ASSIGN(
             keyValue,
@@ -208,7 +199,7 @@ testRun(void)
                     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
                     "\"checksum-page-error\":[1,[4,6]],\"backup-timestamp-start\":1482182951}"))),
             "multiple values with array");
-        TEST_ASSIGN(json, jsonFromKv(keyValue, 0), "  kvToJson - sorted, no indent");
+        TEST_ASSIGN(json, jsonFromKv(keyValue), "  kvToJson - sorted");
         TEST_RESULT_STR(strPtr(json),
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
@@ -219,7 +210,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("jsonFromVar()"))
     {
-        TEST_ERROR(jsonFromVar(varNewInt(1), 0), JsonFormatError, "variant type is invalid");
+        TEST_ERROR(jsonFromVar(varNewInt(1)), JsonFormatError, "variant type is invalid");
 
         String *json = NULL;
         Variant *keyValue = NULL;
@@ -249,7 +240,7 @@ testRun(void)
         kvAdd(sectionKv, varNewStr(strNew("key3")), varNewStr(strNew("value2")));
         kvAdd(sectionKv, varNewStr(strNew("escape")), varNewStr(strNew("\"\\/\b\n\r\t\f")));
 
-        TEST_ASSIGN(json, jsonFromVar(keyValue, 0), "KeyValue no indent");
+        TEST_ASSIGN(json, jsonFromVar(keyValue), "KeyValue");
         TEST_RESULT_STR(strPtr(json),
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
@@ -257,33 +248,10 @@ testRun(void)
             "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}",
             "  sorted json string result, no pretty print");
 
-        TEST_ASSIGN(json, jsonFromVar(keyValue, 4), "KeyValue - indent 4");
-        TEST_RESULT_STR(strPtr(json),
-            "{\n"
-            "    \"backup-info-size-delta\" : 1982702,\n"
-            "    \"backup-prior\" : \"20161219-212741F_20161219-212803I\",\n"
-            "    \"backup-reference\" : [\n"
-            "        \"20161219-212741F\",\n"
-            "        \"20161219-212741F_20161219-212803I\",\n"
-            "        null\n"
-            "    ],\n"
-            "    \"backup-timestamp-start\" : 1482182951,\n"
-            "    \"checksum-page-error\" : [\n"
-            "        1\n"
-            "    ],\n"
-            "    \"section\" : {\n"
-            "        \"escape\" : \"\\\"\\\\/\\b\\n\\r\\t\\f\",\n"
-            "        \"key1\" : \"value1\",\n"
-            "        \"key2\" : null,\n"
-            "        \"key3\" : \"value2\"\n"
-            "    }\n"
-            "}\n",
-            "  sorted json string result");
-
         //--------------------------------------------------------------------------------------------------------------------------
         Variant *varListOuter = NULL;
 
-        TEST_ASSIGN(json, jsonFromVar(varNewVarLst(varLstNew()), 0), "VariantList");
+        TEST_ASSIGN(json, jsonFromVar(varNewVarLst(varLstNew())), "VariantList");
         TEST_RESULT_STR(strPtr(json), "[]", "  empty list no pretty print");
 
         TEST_ASSIGN(varListOuter, varNewVarLst(varLstNew()), "new variant list with keyValues");
@@ -295,7 +263,7 @@ testRun(void)
         varLstAdd(varVarLst(varListOuter), NULL);
         varLstAdd(varVarLst(varListOuter), keyValue);
 
-        TEST_ASSIGN(json, jsonFromVar(varListOuter, 0), "VariantList - no indent");
+        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList");
         TEST_RESULT_STR(strPtr(json),
             "[\"ASTRING\",9223372036854775807,2147483647,true,[],null,{\"backup-info-size-delta\":1982702,"
             "\"backup-prior\":\"20161219-212741F_20161219-212803I\","
@@ -307,7 +275,7 @@ testRun(void)
         Variant *keyValue2 = varDup(keyValue);
         varLstAdd(varVarLst(varListOuter), keyValue2);
 
-        TEST_ASSIGN(json, jsonFromVar(varListOuter, 0), "VariantList - no indent - multiple elements");
+        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList - multiple elements");
         TEST_RESULT_STR(strPtr(json),
             "[\"ASTRING\",9223372036854775807,2147483647,true,[],null,{\"backup-info-size-delta\":1982702,"
             "\"backup-prior\":\"20161219-212741F_20161219-212803I\","
@@ -320,68 +288,18 @@ testRun(void)
             "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
             "  sorted json string result no pretty print");
 
-        TEST_ASSIGN(json, jsonFromVar(varListOuter, 2), "VariantList - indent 2 - multiple elements");
-        TEST_RESULT_STR(strPtr(json),
-            "[\n"
-            "  \"ASTRING\",\n"
-            "  9223372036854775807,\n"
-            "  2147483647,\n"
-            "  true,\n"
-            "  []\n,\n"
-            "  null,\n"
-            "  {\n"
-            "    \"backup-info-size-delta\" : 1982702,\n"
-            "    \"backup-prior\" : \"20161219-212741F_20161219-212803I\",\n"
-            "    \"backup-reference\" : [\n"
-            "      \"20161219-212741F\",\n"
-            "      \"20161219-212741F_20161219-212803I\",\n"
-            "      null\n"
-            "    ],\n"
-            "    \"backup-timestamp-start\" : 1482182951,\n"
-            "    \"checksum-page-error\" : [\n"
-            "      1\n"
-            "    ],\n"
-            "    \"section\" : {\n"
-            "      \"escape\" : \"\\\"\\\\/\\b\\n\\r\\t\\f\",\n"
-            "      \"key1\" : \"value1\",\n"
-            "      \"key2\" : null,\n"
-            "      \"key3\" : \"value2\"\n"
-            "    }\n"
-            "  },\n"
-            "  {\n"
-            "    \"backup-info-size-delta\" : 1982702,\n"
-            "    \"backup-prior\" : \"20161219-212741F_20161219-212803I\",\n"
-            "    \"backup-reference\" : [\n"
-            "      \"20161219-212741F\",\n"
-            "      \"20161219-212741F_20161219-212803I\",\n"
-            "      null\n"
-            "    ],\n"
-            "    \"backup-timestamp-start\" : 1482182951,\n"
-            "    \"checksum-page-error\" : [\n"
-            "      1\n"
-            "    ],\n"
-            "    \"section\" : {\n"
-            "      \"escape\" : \"\\\"\\\\/\\b\\n\\r\\t\\f\",\n"
-            "      \"key1\" : \"value1\",\n"
-            "      \"key2\" : null,\n"
-            "      \"key3\" : \"value2\"\n"
-            "    }\n"
-            "  }\n"
-            "]\n",
-            "  sorted json string result, pretty print");
-
         VariantList *varList = varLstNew();
         varLstAdd(varList, varNewUInt(32));
         varLstAdd(varList, varNewUInt64(10000000000));
 
-        TEST_RESULT_STR(strPtr(jsonFromVar(varNewVarLst(varList), 0)), "[32,10000000000]", "list various types");
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewVarLst(varList))), "[32,10000000000]", "list various types");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(jsonFromVar(NULL, 0)), "null", "null variant");
-        TEST_RESULT_STR(strPtr(jsonFromVar(varNewBool(true), 0)), "true", "bool variant");
-        TEST_RESULT_STR(strPtr(jsonFromVar(varNewUInt(66), 0)), "66", "uint variant");
-        TEST_RESULT_STR(strPtr(jsonFromVar(varNewUInt64(10000000001), 0)), "10000000001", "uint64 variant");
-        TEST_RESULT_STR(strPtr(jsonFromVar(varNewStrZ("test \" string"), 0)), "\"test \\\" string\"", "string variant");
+        TEST_RESULT_STR(strPtr(jsonFromVar(NULL)), "null", "null variant");
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewBool(true))), "true", "bool variant");
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewUInt(66))), "66", "uint variant");
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewUInt64(10000000001))), "10000000001", "uint64 variant");
+        TEST_RESULT_STR(strPtr(jsonFromVar(varNewStrZ("test \" string"))), "\"test \\\" string\"", "string variant");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

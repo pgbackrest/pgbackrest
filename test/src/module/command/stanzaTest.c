@@ -28,28 +28,25 @@ testRun(void)
     String *archiveInfoFileName = strNewFmt("%s/archive.info", strPtr(archiveStanzaPath));
 
     StringList *argListBase = strLstNew();
-    strLstAddZ(argListBase, "pgbackrest");
     strLstAddZ(argListBase, "--no-online");
     strLstAdd(argListBase, strNewFmt("--stanza=%s", strPtr(stanza)));
     strLstAdd(argListBase, strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdStanzaCreate(), infoValidate()"))
+    if (testBegin("cmdStanzaCreate(), checkStanzaInfo()"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-host=/repo/not/local");
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         TEST_ERROR_FMT(
             cmdStanzaCreate(), HostInvalidError, "stanza-create command must be run on the repository host");
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create the stop file
         TEST_RESULT_VOID(
@@ -62,8 +59,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
         storagePutNP(
@@ -235,7 +231,7 @@ testRun(void)
             cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // infoValidate()
+        // checkStanzaInfo() - already checked in checkTest so just a sanity check here
         //--------------------------------------------------------------------------------------------------------------------------
         // Create a corrupted backup file - db id
         contentBackup = strNew
@@ -254,7 +250,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad db-id");
+                "put backup info to file - bad db-id");
 
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
@@ -262,57 +258,12 @@ testRun(void)
             "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // Create a corrupted backup file - system id
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad system-id");
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Copy files may or may not exist - remove
+        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
+        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
 
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        // Create a corrupted backup file - system id and version
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.5\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.5\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad system-id and version");
-
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.5, system-id = 6569239123849665999\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        // Create a corrupted backup file - version
+        // Create an archive.info file and backup.info files that match but do not match the current database version
         contentBackup = strNew
         (
             "[db]\n"
@@ -329,20 +280,8 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file - bad version");
+                "put backup info to file");
 
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        // Copy files may or may not exist - remove
-        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
-        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
-
-        // Create an archive.info file that matches the backup.info file but does not match the current database version
         contentArchive = strNew
         (
             "[db]\n"
@@ -359,7 +298,7 @@ testRun(void)
                 "put archive info file");
 
         TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup and archive info files already exist but do not match the database\n"
+            cmdStanzaCreate(), FileInvalidError, "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
 
@@ -395,10 +334,10 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(
                 storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put back info to file");
+                "put backup info to file");
 
         TEST_ERROR_FMT(
-            cmdStanzaCreate(), FileInvalidError, "backup and archive info files already exist but do not match the database\n"
+            cmdStanzaCreate(), FileInvalidError, "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
 
@@ -426,7 +365,7 @@ testRun(void)
         // Repeat last test using --force (deprecated)
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--force");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
         harnessLogResult("P00   WARN: option --force is no longer supported");
     }
@@ -439,12 +378,10 @@ testRun(void)
 
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pg1Path)));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // pgControl and database match
         //--------------------------------------------------------------------------------------------------------------------------
@@ -455,7 +392,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -466,7 +403,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -483,7 +420,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -504,7 +441,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(strNewFmt("%s/pg2", testPath())), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(strNewFmt("%s/pg2", testPath())), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -519,14 +456,12 @@ testRun(void)
         // Primary at pg2
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--pg2-path=%s", strPtr(pg1Path)));
         strLstAddZ(argList, "--pg2-port=5434");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for master
         storagePutNP(
@@ -540,8 +475,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", testPath(), true),
-            HRNPQ_MACRO_OPEN_92(2, "dbname='postgres' port=5434", strPtr(pg1Path), false),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", testPath(), true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_92(2, "dbname='postgres' port=5434", strPtr(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(2),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
@@ -559,8 +494,7 @@ testRun(void)
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
         storagePutNP(
@@ -592,16 +526,14 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-host=/repo/not/local");
-        strLstAddZ(argList, "stanza-upgrade");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
         TEST_ERROR_FMT(
             cmdStanzaUpgrade(), HostInvalidError, "stanza-upgrade command must be run on the repository host");
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-upgrade");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
         // Create the stop file
         TEST_RESULT_VOID(
@@ -615,8 +547,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         // Load Parameters
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
         storagePutNP(
@@ -627,8 +558,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "stanza-upgrade");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - files already exist and both are valid");
         harnessLogResult("P00   INFO: stanza 'db' is already up to date");
@@ -890,15 +820,13 @@ testRun(void)
     {
         // Load Parameters
         StringList *argListCmd = strLstNew();
-        strLstAddZ(argListCmd, "pgbackrest");
         strLstAdd(argListCmd, strNewFmt("--repo1-path=%s/repo", testPath()));
 
         StringList *argList = strLstDup(argListCmd);
         strLstAddZ(argList, "--repo1-host=/repo/not/local");
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
-        strLstAddZ(argList,"stanza-delete");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaDelete, argList);
 
         TEST_ERROR_FMT(
             cmdStanzaDelete(), HostInvalidError, "stanza-delete command must be run on the repository host");
@@ -911,8 +839,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanzaOther)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanzaOther)));
         strLstAddZ(argList, "--no-online");
-        strLstAddZ(argList,"stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for stanza-create
         storagePutNP(
@@ -924,8 +851,7 @@ testRun(void)
         argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
-        strLstAddZ(argList,"stanza-delete");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaDelete, argList);
 
         // stanza already deleted
         //--------------------------------------------------------------------------------------------------------------------------
@@ -941,8 +867,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
         strLstAddZ(argList, "--no-online");
-        strLstAddZ(argList,"stanza-create");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for stanza-create
         storagePutNP(
@@ -956,8 +881,7 @@ testRun(void)
         argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strPtr(stanza)));
-        strLstAddZ(argList,"stanza-delete");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaDelete, argList);
 
         TEST_ERROR_FMT(
             cmdStanzaDelete(), FileMissingError, "stop file does not exist for stanza 'db'\n"
@@ -1093,7 +1017,7 @@ testRun(void)
 
         // Force deletion
         strLstAddZ(argList,"--force");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdStanzaDelete, argList);
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete --force");
         TEST_RESULT_BOOL(
             storagePathExistsNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza deleted");

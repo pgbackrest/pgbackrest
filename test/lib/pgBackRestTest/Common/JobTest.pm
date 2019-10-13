@@ -55,9 +55,9 @@ sub new
         $self->{oStorageTest},
         $self->{strBackRestBase},
         $self->{strTestPath},
-        $self->{strCoveragePath},
         $self->{oTest},
         $self->{bDryRun},
+        $self->{strVmHost},
         $self->{bVmOut},
         $self->{iVmIdx},
         $self->{iVmMax},
@@ -86,9 +86,9 @@ sub new
             {name => 'oStorageTest'},
             {name => 'strBackRestBase'},
             {name => 'strTestPath'},
-            {name => 'strCoveragePath'},
             {name => 'oTest'},
             {name => 'bDryRun'},
+            {name => 'strVmHost'},
             {name => 'bVmOut'},
             {name => 'iVmIdx'},
             {name => 'iVmMax'},
@@ -117,7 +117,7 @@ sub new
 
     # Setup the path where gcc coverage will be performed
     $self->{strGCovPath} = "$self->{strTestPath}/gcov-$self->{oTest}->{&TEST_VM}-$self->{iVmIdx}";
-    $self->{strExpectPath} = "$self->{strTestPath}/expect-$self->{iVmIdx}";
+    $self->{strDataPath} = "$self->{strTestPath}/data-$self->{iVmIdx}";
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -189,24 +189,26 @@ sub run
                 $bGCovExists = false;
             }
 
-            # Create expect directory
-            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strExpectPath}))
+            # Create data directory
+            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strDataPath}))
             {
-                $self->{oStorageTest}->pathCreate($self->{strExpectPath}, {strMode => '0770'});
+                $self->{oStorageTest}->pathCreate($self->{strDataPath}, {strMode => '0770'});
             }
 
             if ($self->{oTest}->{&TEST_CONTAINER})
             {
-                executeTest(
-                    'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
-                    " -v $self->{strCoveragePath}:$self->{strCoveragePath} " .
-                    " -v ${strHostTestPath}:${strVmTestPath}" .
-                    ($self->{oTest}->{&TEST_C} ? " -v $self->{strGCovPath}:$self->{strGCovPath}" : '') .
-                    ($self->{oTest}->{&TEST_C} ? " -v $self->{strExpectPath}:$self->{strExpectPath}" : '') .
-                    " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
-                    containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
-                    "-test",
-                    {bSuppressStdErr => true});
+                if ($self->{oTest}->{&TEST_VM} ne VM_NONE)
+                {
+                    executeTest(
+                        'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
+                        " -v ${strHostTestPath}:${strVmTestPath}" .
+                        ($self->{oTest}->{&TEST_C} ? " -v $self->{strGCovPath}:$self->{strGCovPath}" : '') .
+                        ($self->{oTest}->{&TEST_C} ? " -v $self->{strDataPath}:$self->{strDataPath}" : '') .
+                        " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
+                        containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
+                        "-test",
+                        {bSuppressStdErr => true});
+                }
 
                 # If testing C code copy source files to the test directory
                 if ($self->{oTest}->{&TEST_C})
@@ -230,11 +232,9 @@ sub run
                 }
 
                 # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
-                if (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ})
+                if ($self->{oTest}->{&TEST_VM} ne VM_NONE && (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ}))
                 {
-                    jobInstallC(
-                        $self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage,
-                        !$self->{oTest}->{&TEST_C} && !$self->{oTest}->{&TEST_INTEGRATION});
+                    jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
                 }
             }
         }
@@ -253,7 +253,8 @@ sub run
         if ($self->{oTest}->{&TEST_C})
         {
             $strCommand =
-                'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
+                ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
+                "bash -l -c '" .
                 "cd $self->{strGCovPath} && " .
                 "make -j $self->{iBuildMax} -s 2>&1 &&" .
                 ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit} &&
@@ -268,6 +269,7 @@ sub run
                 ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 abs_path($0) .
                 " --test-path=${strVmTestPath}" .
+                " --vm-host=$self->{strVmHost}" .
                 " --vm=$self->{oTest}->{&TEST_VM}" .
                 " --vm-id=$self->{iVmIdx}" .
                 " --module=" . $self->{oTest}->{&TEST_MODULE} .
@@ -372,9 +374,23 @@ sub run
                         $strDepend;
                 }
 
+                # Determine where the project exe is located
+                my $strProjectExePath = $self->{oTest}->{&TEST_VM} eq VM_NONE ?
+                    "$self->{strBackRestBase}/test/.vagrant/bin/$self->{oTest}->{&TEST_VM}/src/" . PROJECT_EXE : PROJECT_EXE;
+
+                # Is this test running in a container?
+                my $strContainer = $self->{oTest}->{&TEST_VM} eq VM_NONE ? 'false' : 'true';
+
+                # What test path should be passed to C?  Containers always have their test path at ~/test but when running with
+                # vm=none it should be in a subdirectory of the current directory.
+                my $strTestPathC = $self->{oTest}->{&TEST_VM} eq VM_NONE ? $strHostTestPath : $strVmTestPath;
+
                 # Set globals
-                $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
-                $strTestC =~ s/\{\[C\_TEST\_EXPECT_PATH\]\}/$self->{strExpectPath}/g;
+                $strTestC =~ s/\{\[C\_TEST\_CONTAINER\]\}/$strContainer/g;
+                $strTestC =~ s/\{\[C\_TEST\_PROJECT\_EXE\]\}/$strProjectExePath/g;
+                $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strTestPathC/g;
+                $strTestC =~ s/\{\[C\_TEST\_DATA_PATH\]\}/$self->{strDataPath}/g;
+                $strTestC =~ s/\{\[C\_TEST\_IDX\]\}/$self->{iVmIdx}/g;
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
                 $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
 
@@ -445,7 +461,8 @@ sub run
                 # Flags used to build test.c
                 my $strTestFlags =
                     ($self->{bDebug} ? '-DDEBUG_TEST_TRACE ' : '') .
-                    '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_F30 ? '-O2' : '-O0') .
+                    ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                         ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
@@ -456,7 +473,8 @@ sub run
 
                 # Flags used to build all other files
                 my $strBuildFlags =
-                    ($self->{bOptimize} ? '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
+                    ($self->{bOptimize} || $self->{oTest}->{&TEST_VM} eq VM_F30 ?
+                        '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
 
                 buildPutDiffers(
                     $self->{oStorageTest}, "$self->{strGCovPath}/buildflags",
@@ -571,7 +589,7 @@ sub end
         if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && $self->{bProfile})
         {
             executeTest(
-                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                     "gprof $self->{strGCovPath}/test.bin $self->{strGCovPath}/gmon.out > $self->{strGCovPath}/gprof.txt");
 
             $self->{oStorageTest}->pathCreate("$self->{strBackRestBase}/test/profile", {strMode => '0750', bIgnoreExists => true});
@@ -606,7 +624,7 @@ sub end
             my $strLCovOutTmp = $self->{strGCovPath} . '/test.tmp.lcov';
 
             executeTest(
-                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 "${strLCovExeBase} --capture --directory=$self->{strGCovPath} --o=${strLCovOut}");
 
             # Generate coverage report for each module
@@ -731,8 +749,12 @@ sub end
         {
             my $strHostTestPath = "$self->{strTestPath}/${strImage}";
 
-            containerRemove("test-$self->{iVmIdx}");
-            executeTest("sudo rm -rf ${strHostTestPath}");
+            if ($self->{oTest}->{&TEST_VM} ne VM_NONE)
+            {
+                containerRemove("test-$self->{iVmIdx}");
+            }
+
+            executeTest("rm -rf ${strHostTestPath}");
         }
 
         $bDone = true;
@@ -755,20 +777,15 @@ sub jobInstallC
     my $strBasePath = shift;
     my $strVm = shift;
     my $strImage = shift;
-    my $bCopyLibC = shift;
 
     # Install Perl C Library
     my $oVm = vmGet();
     my $strBuildPath = "${strBasePath}/test/.vagrant/bin/${strVm}";
     my $strBuildLibCPath = "${strBuildPath}/libc";
     my $strBuildBinPath = "${strBuildPath}/src";
-    my $strPerlAutoPath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
 
     executeTest(
         "docker exec -i -u root ${strImage} bash -c '" .
-        (defined($bCopyLibC) && $bCopyLibC ?
-            "mkdir -p -m 755 ${strPerlAutoPath} && " .
-            "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " : '') .
         "cp ${strBuildBinPath}/" . PROJECT_EXE . ' /usr/bin/' . PROJECT_EXE . ' && ' .
         'chmod 755 /usr/bin/' . PROJECT_EXE . "'");
 }

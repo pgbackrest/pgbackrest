@@ -1113,7 +1113,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_list)
         storageListP(self, pathExp, .errorOnMissing = storageFeature(self, storageFeaturePath) ? !ignoreMissing : false,
         .expression = expression), sortAsc ? sortOrderAsc : sortOrderDesc);
 
-    const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)), 0);
+    const String *fileListJson = jsonFromVar(varNewVarLst(varLstNewStrLst(fileList)));
 
     RETVAL = newSVpv(strPtr(fileListJson), strSize(fileListJson));
 	RETVAL = sv_2mortal(RETVAL);
@@ -1664,7 +1664,7 @@ XS_EUPXS(XS_pgBackRest__LibC__PgClient_query)
 			"self", "pgBackRest::LibC::PgClient")
 ;
     VariantList *result = pgClientQuery(self, query);
-    RETVAL = result ? strPtr(jsonFromVar(varNewVarLst(result), 0)) : NULL;
+    RETVAL = result ? strPtr(jsonFromVar(varNewVarLst(result))) : NULL;
 	sv_setpv(TARG, RETVAL); XSprePUSH; PUSHTARG;
     }
     MEM_CONTEXT_XS_TEMP_END();

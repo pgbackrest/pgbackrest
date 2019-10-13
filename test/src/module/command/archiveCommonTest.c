@@ -25,13 +25,11 @@ testRun(void)
     if (testBegin("archiveAsyncStatus()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "archive-push");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchivePush, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *segment = strNew("000000010000000100000001");
@@ -112,11 +110,10 @@ testRun(void)
     if (testBegin("archiveAsyncStatusErrorWrite() and archiveAsyncStatusOkWrite()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-get-async");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
 
         String *walSegment = strNew("000000010000000100000001");
 
@@ -191,11 +188,10 @@ testRun(void)
     {
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no path");
 
@@ -245,7 +241,7 @@ testRun(void)
                 ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz"
                 "\nHINT: are multiple primaries archiving to this stanza?");
 
-        TEST_RESULT_STR(
+        TEST_RESULT_PTR(
             walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678.partial"), 0), NULL,
             "did not find partial segment");
     }

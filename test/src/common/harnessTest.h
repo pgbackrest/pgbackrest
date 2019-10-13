@@ -29,13 +29,24 @@ void testExeSet(const char *testExe);
 
 const char *testPath(void);
 void testPathSet(const char *testPath);
-const char *testExpectPath(void);
-void testExpectPathSet(const char *testExpectPath);
 const char *testRepoPath(void);
 void testRepoPathSet(const char *testRepoPath);
 
 const char *testUser(void);
 const char *testGroup(void);
+
+// Is this test running in a container?
+bool testContainer(void);
+
+// Location of the data path were the harness can write data that won't be visible to the test
+const char *testDataPath(void);
+
+// Get the 0-based index of the test.  Useful for modifying resources like port numbers to avoid conflicts when running tests in
+// parallel.
+unsigned int testIdx(void);
+
+// Location of the project exe
+const char *testProjectExe(void);
 
 // For scaling performance tests
 uint64_t testScale(void);

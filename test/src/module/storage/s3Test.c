@@ -82,7 +82,7 @@ testS3Server(void)
 {
     if (fork() == 0)
     {
-        harnessTlsServerInit(TLS_TEST_PORT, TLS_CERT_TEST_CERT, TLS_CERT_TEST_KEY);
+        harnessTlsServerInitDefault();
         harnessTlsServerAccept();
 
         // storageS3NewRead() and StorageS3FileRead
@@ -509,8 +509,8 @@ testRun(void)
     const String *bucket = strNew("bucket");
     const String *region = strNew("us-east-1");
     const String *endPoint = strNew("s3.amazonaws.com");
-    const String *host = strNew(TLS_TEST_HOST);
-    const unsigned int port = TLS_TEST_PORT;
+    const String *host = harnessTlsTestHost();
+    const unsigned int port = harnessTlsTestPort();
     const String *accessKey = strNew("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = strNew("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = strNew(
@@ -524,7 +524,6 @@ testRun(void)
         // Only required options
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
@@ -533,8 +532,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s", strPtr(endPoint)));
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage");
@@ -554,7 +552,6 @@ testRun(void)
         // Add default options
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
@@ -567,8 +564,7 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
@@ -586,7 +582,6 @@ testRun(void)
         // Add a port to the endpoint
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
@@ -598,8 +593,7 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
@@ -617,7 +611,6 @@ testRun(void)
         // Also add port to the host
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
@@ -630,8 +623,7 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
@@ -649,7 +641,6 @@ testRun(void)
         // Use the port option to override both
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
@@ -663,8 +654,7 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
         setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
         TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
@@ -688,7 +678,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StorageS3 *driver = (StorageS3 *)storageDriver(
             storageS3New(
-                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, 2, NULL, 0, 0, true, NULL, NULL));
+                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, 2, NULL, 0, 0, testContainer(),
+                NULL, NULL));
 
         HttpHeader *header = httpHeaderNew(NULL);
 
@@ -735,8 +726,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         driver = (StorageS3 *)storageDriver(
             storageS3New(
-                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, securityToken, 16, 2, NULL, 0, 0, true,
-                NULL, NULL));
+                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, securityToken, 16, 2, NULL, 0, 0,
+                testContainer(), NULL, NULL));
 
         TEST_RESULT_VOID(
             storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
@@ -755,8 +746,8 @@ testRun(void)
         testS3Server();
 
         Storage *s3 = storageS3New(
-            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, 2, host, port, 1000, true, NULL,
-            NULL);
+            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, 2, host, port, 1000, testContainer(),
+            NULL, NULL);
 
         // Coverage for noop functions
         // -------------------------------------------------------------------------------------------------------------------------

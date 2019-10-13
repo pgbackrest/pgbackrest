@@ -106,13 +106,13 @@ sub run
         # Attempt to reconstruct from an encypted archived WAL for an unencrypted repo
         #---------------------------------------------------------------------------------------------------------------------------
         # Prepend encryption Magic signature to simulate encryption
-        executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strArchiveFile . ')" > ' . $strArchiveFile);
+        executeTest('echo "' . CIPHER_MAGIC . '" > ' . $strArchiveFile);
 
         $self->testException(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, ERROR_CRYPTO,
             "encryption incompatible for '$strArchiveFile'" .
             "\nHINT: is or was the repo encrypted?");
 
-        executeTest('sudo rm ' . $strArchiveFile);
+        executeTest('rm ' . $strArchiveFile);
 
         # Attempt to reconstruct from an encypted archived WAL with an encrypted repo
         #---------------------------------------------------------------------------------------------------------------------------
@@ -209,7 +209,7 @@ sub run
             "\nHINT: is or was the repo encrypted?");
 
         # Remove the archive info files
-        executeTest('sudo rm ' . $oArchiveInfo->{strFileName} . '*');
+        executeTest('rm ' . $oArchiveInfo->{strFileName} . '*');
 
         # Create an encrypted storage and archive.info file
         #---------------------------------------------------------------------------------------------------------------------------

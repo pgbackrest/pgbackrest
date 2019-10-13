@@ -17,6 +17,7 @@
 #     * define-test - defines for the test harness
 #     * debugUnitSuppress - don't define DEBUG_UNIT for unit tests -- this is used to test unit test debugging macros
 #     * perlReq - is Perl required for this C test?
+#     * containerReq - is this test required to run in a container?
 #
 # Some options are unique to tests:
 #     * total - total runs in the test
@@ -241,6 +242,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
         total: 4
+        containerReq: true
 
         coverage:
           common/io/tls/client: full
@@ -366,6 +368,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
         total: 4
+        containerReq: true
         perlReq: true
 
         coverage:
@@ -450,6 +453,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
         total: 20
+        containerReq: true
 
         coverage:
           storage/posix/read: full
@@ -463,6 +467,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
         total: 11
+        containerReq: true
         perlReq: true
 
         coverage:
@@ -503,6 +508,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol
         total: 8
+        containerReq: true
         perlReq: true
 
         coverage:
@@ -567,6 +573,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: db
         total: 2
+        containerReq: true
         perlReq: true
 
         coverage:
@@ -636,7 +643,8 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: check
-        total: 2
+        total: 4
+        containerReq: true
 
         coverage:
           command/check/common: full
@@ -696,6 +704,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
         total: 11
+        containerReq: true
         perlReq: true
 
         coverage:

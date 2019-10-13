@@ -153,10 +153,6 @@ repo1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-standby/spool
 
-check db - confirm standby manifest->build executed (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --archive-timeout=5 --stanza=db check
-------------------------------------------------------------------------------------------------------------------------------------
-
 check db - verify check command on standby (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------

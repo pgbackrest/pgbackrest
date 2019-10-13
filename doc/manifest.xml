@@ -88,6 +88,7 @@
         <source key="faq"/>
         <source key="metric"/>
         <source key="coding"/>
+        <source key="contributing"/>
         <source key="documentation"/>
         <source key="test"/>
     </source-list>
@@ -111,6 +112,7 @@
         <render type="markdown">
             <render-source key="index" file="../../../README.md"/>
             <render-source key="coding" file="../../../CODING.md"/>
+            <render-source key="contributing" file="../../../CONTRIBUTING.md"/>
             <render-source key="test" file="../../../test/README.md"/>
             <render-source key="documentation" file="../../README.md"/>
         </render>

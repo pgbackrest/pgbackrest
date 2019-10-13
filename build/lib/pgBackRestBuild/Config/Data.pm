@@ -31,11 +31,12 @@
 #
 # CFGDEF_DEFAULT:
 #   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
-#   CFGDEF_COMMAND section.
+#   CFGDEF_COMMAND section. All boolean types require a default.
 #
 # CFGDEF_NEGATE:
-#   The option can be negated with "no" e.g. --no-compress.  This applies tp options that are only valid on the command line (i.e.
-#   no config section defined).  All config options are automatically negatable.
+#   The option can be negated with "no" e.g. --no-compress.  This applies to options that are only valid on the command line (i.e.
+#   no config section defined) and if not specifically defined, the default is false.  All config file boolean options are
+#   automatically negatable.
 #
 # CFGDEF_RESET:
 #   The option can be reset to default even if the default is undefined.

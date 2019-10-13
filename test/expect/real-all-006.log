@@ -69,10 +69,6 @@ check db - fail on backup info mismatch (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-check db - confirm master manifest->build executed (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db check
-------------------------------------------------------------------------------------------------------------------------------------
-
 check db - verify success after backup (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -133,7 +129,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 pg1-port=6543
 
@@ -199,7 +195,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-2]
+pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 pg1-port=6543
 

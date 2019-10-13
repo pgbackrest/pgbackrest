@@ -309,7 +309,7 @@ testRun(void)
         TEST_RESULT_VOID(ioFilterGroupAdd(ioReadFilterGroup(bufferRead), bufferFilter), "    add filter to filter group");
         TEST_RESULT_PTR(ioFilterMove(NULL, memContextTop()), NULL, "    move NULL filter to top context");
         TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(bufferRead)), 0)),
+            strPtr(jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(bufferRead)))),
             "[{\"size\":null},{\"double\":[\"double\",2,3]},{\"size\":null},{\"buffer\":null}]", "    check filter params");
 
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
@@ -337,7 +337,7 @@ testRun(void)
         TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
         TEST_RESULT_VOID(ioReadClose(bufferRead), " close buffer read object");
         TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResultAll(ioReadFilterGroup(bufferRead)), 0)),
+            strPtr(jsonFromVar(ioFilterGroupResultAll(ioReadFilterGroup(bufferRead)))),
             "{\"buffer\":null,\"double\":null,\"size\":[3,9]}",
             "    check filter result all");
 

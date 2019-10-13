@@ -11,32 +11,23 @@ language: c
 services:
   - docker
 
-env:
-  - PGB_CI="--vm=u18 test"
-  - PGB_CI="--vm=co6 test"
-  - PGB_CI="--vm=co7 test"
-  - PGB_CI="--vm=u12 test"
-
-before_install:
-  - sudo apt-get -qq update || true
-  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libyaml-libyaml-perl python-pip lcov libperl-dev
-  - |
-    # Install & Configure AWS CLI
-    pip install --upgrade --user awscli
-    aws configure set region us-east-1
-    aws configure set aws_access_key_id accessKey1
-    aws configure set aws_secret_access_key verySecretKey1
-    aws help --version
-    aws configure list
+matrix:
+  include:
+    - env: PGB_CI="--vm=u12 test"
+    - env: PGB_CI="--vm=f30 test"
+    - env: PGB_CI="--vm=co6 test"
+    - env: PGB_CI="--vm=u18 test"
+    - env: PGB_CI="--vm=u18 doc"
+    - env: PGB_CI="--vm=co7 test"
+    - dist: bionic
+      env: PGB_CI="--vm=none test"
+      services:
+    - env: PGB_CI="--vm=co6 doc"
+    - env: PGB_CI="--vm=co7 doc"
 
 install:
-  - |
-    # User Configuration
-    sudo adduser --ingroup=${USER?} --uid=5001 --disabled-password --gecos "" pgbackrest
-    umask 0022
-    cd ~ && pwd && whoami && umask && groups
-    mv ${TRAVIS_BUILD_DIR?} pgbackrest
-    rm -rf ${TRAVIS_BUILD_DIR?}
+  - umask 0022
+  - cd ~ && pwd && whoami && umask && groups
 
 script:
-  - pgbackrest/test/travis.pl ${PGB_CI?}
+  - ${TRAVIS_BUILD_DIR?}/test/travis.pl ${PGB_CI?}

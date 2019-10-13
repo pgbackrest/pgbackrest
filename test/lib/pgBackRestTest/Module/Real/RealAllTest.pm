@@ -228,14 +228,15 @@ sub run
             # load the archive info file and munge it for testing by breaking the database version
             $oHostBackup->infoMunge(
                 storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
-                {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
+                {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'},
+                 &INFO_ARCHIVE_SECTION_DB_HISTORY => {1 => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}}});
 
-            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_INVALID});
 
             # If running the remote tests then also need to run check locally
             if ($bHostBackup)
             {
-                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_INVALID});
             }
 
             # Restore the file to its original condition
@@ -264,29 +265,32 @@ sub run
             $oHostBackup->infoMunge(
                 storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
                 {&INFO_BACKUP_SECTION_DB =>
-                    {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
+                    {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999},
+                &INFO_BACKUP_SECTION_DB_HISTORY =>
+                    {1 => {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}}});
 
             # Run the test
-            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
+            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_INVALID});
 
             # If running the remote tests then also need to run check locally
             if ($bHostBackup)
             {
-                $oHostBackup->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
+                $oHostBackup->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_INVALID});
             }
 
             # Restore the file to its original condition
             $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
 
+            # ??? Removed temporarily until manifest build can be brought back into the check command
             # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
-            my $strDir = $oHostDbMaster->dbBasePath() . '/rootreaddir';
-            executeTest('sudo mkdir ' . $strDir);
-            executeTest("sudo chown root:root ${strDir}");
-            executeTest("sudo chmod 400 ${strDir}");
-
-            $strComment = 'confirm master manifest->build executed';
-            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
-            executeTest("sudo rmdir ${strDir}");
+            # my $strDir = $oHostDbMaster->dbBasePath() . '/rootreaddir';
+            # executeTest('sudo mkdir ' . $strDir);
+            # executeTest("sudo chown root:root ${strDir}");
+            # executeTest("sudo chmod 400 ${strDir}");
+            #
+            # $strComment = 'confirm master manifest->build executed';
+            # $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
+            # executeTest("sudo rmdir ${strDir}");
 
             # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
             # archive.info and backup.info files
@@ -491,27 +495,28 @@ sub run
                 $strFullBackup = $strStandbyBackup;
             }
 
-            # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
-            my $strDir = $oHostDbStandby->dbBasePath() . '/rootreaddir';
-            executeTest('sudo mkdir ' . $strDir);
-            executeTest("sudo chown root:root ${strDir}");
-            executeTest("sudo chmod 400 ${strDir}");
-
-            my $strComment = 'confirm standby manifest->build executed';
-
-            # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
-            # an open error instead of a read error
-            if (!$oHostDbStandby->bogusHost())
-            {
-                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
-            }
-            else
-            {
-                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
-            }
-
-            # Remove the directory in pg_data location that is only readable by root
-            executeTest("sudo rmdir ${strDir}");
+            # ??? Removed temporarily until manifest build can be brought back into the check command
+            # # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
+            # my $strDir = $oHostDbStandby->dbBasePath() . '/rootreaddir';
+            # executeTest('sudo mkdir ' . $strDir);
+            # executeTest("sudo chown root:root ${strDir}");
+            # executeTest("sudo chmod 400 ${strDir}");
+            #
+            # my $strComment = 'confirm standby manifest->build executed';
+            #
+            # # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
+            # # an open error instead of a read error
+            # if (!$oHostDbStandby->bogusHost())
+            # {
+            #     $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
+            # }
+            # else
+            # {
+            #     $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
+            # }
+            #
+            # # Remove the directory in pg_data location that is only readable by root
+            # executeTest("sudo rmdir ${strDir}");
 
             # Confirm the check command runs without error on a standby (when a bogus host is not configured)
             if (!$oHostDbStandby->bogusHost())
@@ -901,6 +906,12 @@ sub run
 
             # Restore recovery file that was saved in last test
             storageDb()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
+
+            # Also touch recovery.signal when required
+            if ($oHostDbMaster->pgVersion() >= PG_VERSION_12)
+            {
+                storageDb()->put($oHostDbMaster->dbBasePath() . "/" . DB_FILE_RECOVERYSIGNAL);
+            }
 
             $oHostDbMaster->restore(
                 undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), {strType => CFGOPTVAL_RESTORE_TYPE_PRESERVE});

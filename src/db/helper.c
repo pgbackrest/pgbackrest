@@ -72,15 +72,25 @@ dbGet(bool primaryOnly, bool primaryRequired)
                 TRY_BEGIN()
                 {
                     db = dbGetId(pgIdx + 1);
-                    dbOpen(db);
-                    standby = dbIsStandby(db);
+
+                    // This needs to be nested because db can be reset to NULL on an error in the outer try but we need the pointer
+                    // to be able to free it.
+                    TRY_BEGIN()
+                    {
+                        dbOpen(db);
+                        standby = dbIsStandby(db);
+                    }
+                    CATCH_ANY()
+                    {
+                        dbFree(db);
+                        RETHROW();
+                    }
+                    TRY_END();
                 }
                 CATCH_ANY()
                 {
-                    dbFree(db);
-                    db = NULL;
-
                     LOG_WARN("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
+                    db = NULL;
                 }
                 TRY_END();
 

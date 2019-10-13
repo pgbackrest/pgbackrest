@@ -111,7 +111,7 @@ stanza-create db - fail on database mismatch and warn force option deprecated (d
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: option --force is no longer supported
-P00  ERROR: [028]: backup and archive info files already exist but do not match the database
+P00  ERROR: [028]: backup and archive info files exist but do not match the database
             HINT: is this the correct stanza?
             HINT: did an error occur during stanza-upgrade?
 P00   INFO: stanza-create command end: aborted with exception [028]
@@ -475,115 +475,6 @@ spool-path=[TEST_PATH]/db-master/spool
 [global:backup]
 archive-copy=y
 start-fast=y
-
-info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --output=json info
-------------------------------------------------------------------------------------------------------------------------------------
-[
-    {
-        "archive" : [
-            {
-                "database" : {
-                    "id" : 2
-                },
-                "id" : "9.4-2",
-                "max" : "000000010000000100000001",
-                "min" : "000000010000000100000001"
-            },
-            {
-                "database" : {
-                    "id" : 3
-                },
-                "id" : "9.5-3",
-                "max" : "000000010000000100000001",
-                "min" : "000000010000000100000001"
-            }
-        ],
-        "backup" : [
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 2
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-FULL-1]",
-                "prior" : null,
-                "reference" : null,
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "full"
-            },
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 3
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-FULL-2]",
-                "prior" : null,
-                "reference" : null,
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "full"
-            }
-        ],
-        "cipher" : "none",
-        "db" : [
-            {
-                "id" : 1,
-                "system-id" : 1000000000000000093,
-                "version" : "9.3"
-            },
-            {
-                "id" : 2,
-                "system-id" : 1000000000000000094,
-                "version" : "9.4"
-            },
-            {
-                "id" : 3,
-                "system-id" : 1000000000000000095,
-                "version" : "9.5"
-            }
-        ],
-        "name" : "db",
-        "status" : {
-            "code" : 0,
-            "message" : "ok"
-        }
-    }
-]
 
 stanza-delete db - fail on missing stop file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stanza-delete

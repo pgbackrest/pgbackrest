@@ -106,17 +106,6 @@ sub main
             $oRemote->process(
                 cfgOption(CFGOPT_LOCK_PATH), cfgOption(CFGOPT_COMMAND), cfgOption(CFGOPT_STANZA, false), cfgOption(CFGOPT_PROCESS));
         }
-
-        # Process check command
-        # --------------------------------------------------------------------------------------------------------------------------
-        elsif (cfgCommandTest(CFGCMD_CHECK))
-        {
-            # Load module dynamically
-            require pgBackRest::Check::Check;
-            pgBackRest::Check::Check->import();
-
-            $iResult = new pgBackRest::Check::Check()->process();
-        }
         else
         {
             # Check that the repo path exists !!! Currently only needed to make the error test in perl/exec module pass.
@@ -143,13 +132,6 @@ sub main
                 pgBackRest::Backup::Backup->import();
 
                 new pgBackRest::Backup::Backup()->process(@stryCommandArg);
-            }
-
-            # Process expire command
-            # ----------------------------------------------------------------------------------------------------------------------
-            elsif (cfgCommandTest(CFGCMD_EXPIRE))
-            {
-                new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
             }
         }
 

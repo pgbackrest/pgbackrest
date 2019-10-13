@@ -32,7 +32,6 @@ static uint64_t timeMSecBegin;
 static const char *testExeData = NULL;
 static const char *testPathData = NULL;
 static const char *testRepoPathData = NULL;
-static const char *testExpectPathData = NULL;
 
 static char testUserData[64];
 static char testGroupData[64];
@@ -44,6 +43,30 @@ Extern functions
     void harnessLogInit(void);
     void harnessLogFinal(void);
 #endif
+
+/***********************************************************************************************************************************
+Is this test running in a container? i.e., can we use sudo and system paths with impunity?
+***********************************************************************************************************************************/
+static bool testContainerData = false;
+
+bool
+testContainer(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(BOOL, testContainerData);
+}
+
+void
+testContainerSet(bool testContainer)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(BOOL, testContainer);
+    FUNCTION_HARNESS_END();
+
+    testContainerData = testContainer;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
 
 /***********************************************************************************************************************************
 Get and set the test exe
@@ -65,6 +88,30 @@ testExeSet(const char *testExe)
     FUNCTION_HARNESS_END();
 
     testExeData = testExe;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Get and set the project exe
+***********************************************************************************************************************************/
+static const char *testProjectExeData = NULL;
+
+const char *
+testProjectExe(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(STRINGZ, testProjectExeData);
+}
+
+void
+testProjectExeSet(const char *testProjectExe)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, testProjectExe);
+    FUNCTION_HARNESS_END();
+
+    testProjectExeData = testProjectExe;
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -117,26 +164,48 @@ testPathSet(const char *testPath)
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
-/***********************************************************************************************************************************
-Get and set the expect path, i.e., the path where expect logs will be stored by the harnessLog module
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
+static const char *testDataPathData = NULL;
+
 const char *
-testExpectPath(void)
+testDataPath(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(STRINGZ, testExpectPathData);
+    FUNCTION_HARNESS_RESULT(STRINGZ, testDataPathData);
 }
 
 void
-testExpectPathSet(const char *testExpectPath)
+testDataPathSet(const char *testDataPath)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, testExpectPath);
-
-        FUNCTION_HARNESS_ASSERT(testExpectPath != NULL);
+        FUNCTION_HARNESS_PARAM(STRINGZ, testDataPath);
     FUNCTION_HARNESS_END();
 
-    testExpectPathData = testExpectPath;
+    testDataPathData = testDataPath;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Get and set test index
+***********************************************************************************************************************************/
+static unsigned int testIdxData = 0;
+
+unsigned int
+testIdx(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(UINT, testIdxData);
+}
+
+void
+testIdxSet(unsigned int testIdx)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(UINT, testIdx);
+    FUNCTION_HARNESS_END();
+
+    testIdxData = testIdx;
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -230,6 +299,41 @@ testAdd(int run, bool selected)
 }
 
 /***********************************************************************************************************************************
+Initialize harness
+***********************************************************************************************************************************/
+void
+testInit(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    // Set test user
+    const char *testUserTemp = getpwuid(getuid())->pw_name;
+
+    if (strlen(testUserTemp) > sizeof(testUserData) - 1)
+    {
+        fprintf(stderr, "ERROR: test user name must be less than %zu characters", sizeof(testUserData) - 1);
+        fflush(stderr);
+        exit(255);
+    }
+
+    strcpy(testUserData, testUserTemp);
+
+    // Set test group
+    const char *testGroupTemp = getgrgid(getgid())->gr_name;
+
+    if (strlen(testGroupTemp) > sizeof(testGroupData) - 1)
+    {
+        fprintf(stderr, "ERROR: test group name must be less than %zu characters", sizeof(testGroupData) - 1);
+        fflush(stderr);
+        exit(255);
+    }
+
+    strcpy(testGroupData, testGroupTemp);
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
 testBegin - should this test run?
 ***********************************************************************************************************************************/
 bool
@@ -246,25 +350,6 @@ testBegin(const char *name)
 
     if (testList[testRun - 1].selected)
     {
-        if (testFirst)
-        {
-            // Set test user
-            const char *testUserTemp = getpwuid(getuid())->pw_name;
-
-            if (strlen(testUserTemp) > sizeof(testUserData) - 1)
-                THROW_FMT(AssertError, "test user name must be less than %zu characters", sizeof(testUserData) - 1);
-
-            strcpy(testUserData, testUserTemp);
-
-            // Set test group
-            const char *testGroupTemp = getgrgid(getgid())->gr_name;
-
-            if (strlen(testGroupTemp) > sizeof(testGroupData) - 1)
-                THROW_FMT(AssertError, "test group name must be less than %zu characters", sizeof(testGroupData) - 1);
-
-            strcpy(testGroupData, testGroupTemp);
-        }
-
 #ifndef NO_LOG
         if (!testFirst)
         {
@@ -273,11 +358,21 @@ testBegin(const char *name)
 
             // Clear out the test directory so the next test starts clean
             char buffer[2048];
-            snprintf(buffer, sizeof(buffer), "sudo rm -rf %s/" "*", testPath());
+            snprintf(buffer, sizeof(buffer), "%srm -rf %s/" "*", testContainer() ? "sudo " : "", testPath());
 
             if (system(buffer) != 0)
             {
                 fprintf(stderr, "ERROR: unable to clear test path '%s'\n", testPath());
+                fflush(stderr);
+                exit(255);
+            }
+
+            // Clear out the data directory so the next test starts clean
+            snprintf(buffer, sizeof(buffer), "%srm -rf %s/" "*", testContainer() ? "sudo " : "", testDataPath());
+
+            if (system(buffer) != 0)
+            {
+                fprintf(stderr, "ERROR: unable to clear data path '%s'\n", testDataPath());
                 fflush(stderr);
                 exit(255);
             }
@@ -385,8 +480,10 @@ hrnReplaceKey(const char *string)
 
     strcpy(harnessReplaceKeyBuffer, string);
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[path]}", testPath());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[path-data]}", testDataPath());
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[user]}", testUser());
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[group]}", testGroup());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[project-exe]}", testProjectExe());
 
     FUNCTION_HARNESS_RESULT(STRINGZ, harnessReplaceKeyBuffer);
 }
@@ -456,17 +553,17 @@ hrnDiff(const char *actual, const char *expected)
 
     // Write actual file
     char actualFile[1024];
-    snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", testExpectPath());
+    snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", testDataPath());
     hrnFileWrite(actualFile, (unsigned char *)actual, strlen(actual));
 
     // Write expected file
     char expectedFile[1024];
-    snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", testExpectPath());
+    snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", testDataPath());
     hrnFileWrite(expectedFile, (unsigned char *)expected, strlen(expected));
 
     // Perform diff
-    char command[2048];
-    snprintf(command, sizeof(command), "diff -u %s %s > %s/diff.result", actualFile, expectedFile, testExpectPath());
+    char command[2560];
+    snprintf(command, sizeof(command), "diff -u %s %s > %s/diff.result", actualFile, expectedFile, testDataPath());
 
     if (system(command) == 2)
     {
@@ -477,7 +574,7 @@ hrnDiff(const char *actual, const char *expected)
 
     // Read result
     char resultFile[1024];
-    snprintf(resultFile, sizeof(resultFile), "%s/diff.result", testExpectPath());
+    snprintf(resultFile, sizeof(resultFile), "%s/diff.result", testDataPath());
     hrnFileRead(resultFile, (unsigned char *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
 
     // Remove last linefeed from diff output

@@ -274,7 +274,7 @@
 
         # Install PostgreSQL
         RUN RELEASE_CODENAME=`lsb_release -c | awk '{print $2}'` &amp;&amp; \
-            echo 'deb http://apt.postgresql.org/pub/repos/apt/ '${RELEASE_CODENAME?}'-pgdg main 12' | \
+            echo 'deb http://apt.postgresql.org/pub/repos/apt/ '${RELEASE_CODENAME?}'-pgdg main' | \
                 tee -a /etc/apt/sources.list.d/pgdg.list &amp;&amp; \
             wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - &amp;&amp; \
             apt-get update &amp;&amp; \
@@ -1393,15 +1393,7 @@
 
         <p>Monitoring is an important part of any production system.  There are many tools available and <backrest/> can be monitored on any of them with a little work.</p>
 
-        <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.  A script is needed to extract information in a format that the monitoring system can understand.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Get <backrest/> info in JSON format</title>
-
-            <execute user="postgres" show="y">
-                <exe-cmd>pgbackrest --output=json info</exe-cmd>
-            </execute>
-        </execute-list>
+        <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.</p>
 
         <section id="postgresql">
             <title>In <postgres/></title>
@@ -1489,6 +1481,7 @@
             </execute-list>
 
             <admonition type="note">This syntax requires <proper>jq v1.5</proper>.</admonition>
+            <admonition type="note"><proper>jq</proper> may round large numbers such as system identifiers.  Test your queries carefully.</admonition>
         </section>
     </section>
 
@@ -2786,7 +2779,7 @@
 
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
-                    <exe-highlight>because no primary was found</exe-highlight>
+                    <exe-highlight>because this is a standby</exe-highlight>
                 </execute>
             </execute-list>
         </section>

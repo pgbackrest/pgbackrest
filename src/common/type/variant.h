@@ -208,7 +208,7 @@ By convention all variant constant identifiers are appended with _VAR.
     static const Variant *const name = VARSTRDEF(dataParam)
 
 // Create a UInt Variant constant inline from an unsigned int
-#define VARUINT(dataParam)                                                                                                       \
+#define VARUINT(dataParam)                                                                                                         \
     ((const Variant *)&(const VariantUIntConst){.type = varTypeUInt, .data = dataParam})
 
 // Create a UInt64 Variant constant inline from a uint64_t

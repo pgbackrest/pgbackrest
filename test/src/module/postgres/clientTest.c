@@ -278,7 +278,7 @@ testRun(void)
             " order by relname");
 
         TEST_RESULT_STR(
-            strPtr(jsonFromVar(varNewVarLst(pgClientQuery(client, query)), 0)),
+            strPtr(jsonFromVar(varNewVarLst(pgClientQuery(client, query)))),
             "[[1259,null,\"pg_class\",true],[1255,\"\",\"pg_proc\",false]]", "simple query");
 
         // Close connection

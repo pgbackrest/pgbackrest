@@ -63,7 +63,7 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     storageRemoveNP(
         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
 
-    // Remove the backup from the info file
+    // Remove the backup from the info object
     infoBackupDataDelete(infoBackup, removeBackupLabel);
 
     if (strSize(backupExpired) == 0)
@@ -632,7 +632,7 @@ cmdExpire(void)
         storageRepo();
 
         // Load the backup.info
-        InfoBackup *infoBackup = infoBackupLoadFile(
+        InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 

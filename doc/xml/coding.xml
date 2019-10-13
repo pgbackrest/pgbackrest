@@ -12,6 +12,50 @@
             <p>Indentation is four spaces -- no tabs.  Only file types that absolutely require tabs (e.g. `Makefile`) may use them.</p>
         </section>
 
+        <section id="line-length">
+            <title>Line Length</title>
+
+            <p>With the exception of documentation code, no line of any code or test file shall exceed 132 characters. If a line break is required, then it shall be after the first function parenthesis:</p>
+
+            <code-block>
+// CORRECT - location of line break after first function parenthesis if line length is greater than 132
+StringList *removeList = infoBackupDataLabelList(
+    infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
+
+// INCORRECT
+StringList *removeList = infoBackupDataLabelList(infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList,
+    fullIdx))));
+            </code-block>
+
+            <p>If a conditional, then after a completed conditional, for example:</p>
+
+            <code-block>
+// CORRECT - location of line break after a completed conditional if line length is greater than 132
+if (archiveInfoPgHistory.id != backupInfoPgHistory.id ||
+    archiveInfoPgHistory.systemId != backupInfoPgHistory.systemId ||
+    archiveInfoPgHistory.version != backupInfoPgHistory.version)
+
+// INCORRECT
+if (archiveInfoPgHistory.id != backupInfoPgHistory.id || archiveInfoPgHistory.systemId !=
+    backupInfoPgHistory.systemId || archiveInfoPgHistory.version != backupInfoPgHistory.version)
+            </code-block>
+        </section>
+
+        <section id="inline-comment">
+            <title>Inline Comment</title>
+
+            <p>Inline comments shall start at character 69 and must not exceed the line length of 132. For example:</p>
+
+            <code-block>
+typedef struct InlineCommentExample
+{
+    const String *comment;                                          // Inline comment example
+    const String *longComment;                                      // Inline comment example that exceeds 132 characters should
+                                                                    // then go to next line but this should be avoided
+} InlineCommentExample;
+            </code-block>
+        </section>
+
         <section id="naming">
             <title>Naming</title>
 

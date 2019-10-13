@@ -14,6 +14,9 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // The tests expect the timezone to be UTC
+    setenv("TZ", "UTC", true);
+
     // Create the repo directories
     String *repoPath = strNewFmt("%s/repo", testPath());
     String *archivePath = strNewFmt("%s/%s", strPtr(repoPath), "archive");
@@ -25,19 +28,17 @@ testRun(void)
     if (testBegin("infoRender()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));
-        strLstAddZ(argList, "info");
         StringList *argListText = strLstDup(argList);
 
         strLstAddZ(argList, "--output=json");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         // No stanzas have been created
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "json - repo but no stanzas");
+        TEST_RESULT_STR(strPtr(infoRender()), "[]", "json - repo but no stanzas");
 
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()), "No stanzas exist in the repository.\n", "text - no stanzas");
 
         storagePathCreateNP(storageLocalWrite(), archivePath);
@@ -52,21 +53,21 @@ testRun(void)
             "    status: error (missing stanza data)\n"
             "    cipher: none\n", "text - missing stanza data");
 
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
         TEST_RESULT_STR(strPtr(infoRender()),
-            "[\n"
-            "    {\n"
-            "        \"archive\" : [],\n"
-            "        \"backup\" : [],\n"
-            "        \"cipher\" : \"none\",\n"
-            "        \"db\" : [],\n"
-            "        \"name\" : \"stanza1\",\n"
-            "        \"status\" : {\n"
-            "            \"code\" : 3,\n"
-            "            \"message\" : \"missing stanza data\"\n"
-            "        }\n"
-            "    }\n"
-            "]\n", "json - missing stanza data");
+            "["
+                "{"
+                    "\"archive\":[],"
+                    "\"backup\":[],"
+                    "\"cipher\":\"none\","
+                    "\"db\":[],"
+                    "\"name\":\"stanza1\","
+                    "\"status\":{"
+                        "\"code\":3,"
+                        "\"message\":\"missing stanza data\""
+                        "}"
+                "}"
+            "]", "json - missing stanza data");
 
         // backup.info file exists, but archive.info does not
         //--------------------------------------------------------------------------------------------------------------------------
@@ -128,41 +129,41 @@ testRun(void)
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
         // backup.info
         TEST_RESULT_STR(strPtr(infoRender()),
-            "[\n"
-            "    {\n"
-            "        \"archive\" : [\n"
-            "            {\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 2\n"
-            "                },\n"
-            "                \"id\" : \"9.4-3\",\n"
-            "                \"max\" : null,\n"
-            "                \"min\" : null\n"
-            "            }\n"
-            "        ],\n"
-            "        \"backup\" : [],\n"
-            "        \"cipher\" : \"aes-256-cbc\",\n"
-            "        \"db\" : [\n"
-            "            {\n"
-            "                \"id\" : 1,\n"
-            "                \"system-id\" : 6569239123849665666,\n"
-            "                \"version\" : \"9.3\"\n"
-            "            },\n"
-            "            {\n"
-            "                \"id\" : 2,\n"
-            "                \"system-id\" : 6569239123849665679,\n"
-            "                \"version\" : \"9.4\"\n"
-            "            }\n"
-            "        ],\n"
-            "        \"name\" : \"stanza1\",\n"
-            "        \"status\" : {\n"
-            "            \"code\" : 2,\n"
-            "            \"message\" : \"no valid backups\"\n"
-            "        }\n"
-            "    }\n"
-            "]\n", "json - single stanza, no valid backups");
+            "["
+                "{"
+                    "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"id\":\"9.4-3\","
+                            "\"max\":null,"
+                            "\"min\":null"
+                        "}"
+                    "],"
+                     "\"backup\":[],"
+                     "\"cipher\":\"aes-256-cbc\","
+                     "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"system-id\":6569239123849665666,"
+                            "\"version\":\"9.3\""
+                        "},"
+                        "{"
+                            "\"id\":2,"
+                            "\"system-id\":6569239123849665679,"
+                            "\"version\":\"9.4\""
+                        "}"
+                    "],"
+                     "\"name\":\"stanza1\","
+                     "\"status\":{"
+                        "\"code\":2,"
+                        "\"message\":\"no valid backups\""
+                    "}"
+                "}"
+            "]", "json - single stanza, no valid backups");
 
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
             "    status: error (no valid backups)\n"
@@ -183,7 +184,7 @@ testRun(void)
 
         StringList *argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
@@ -216,7 +217,7 @@ testRun(void)
         String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strPtr(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
 
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
         content = strNew
         (
             "[db]\n"
@@ -249,84 +250,84 @@ testRun(void)
                 harnessInfoChecksum(content)), "put backup info to file");
 
         TEST_RESULT_STR(strPtr(infoRender()),
-            "[\n"
-            "    {\n"
-            "        \"archive\" : [\n"
-            "            {\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 1\n"
-            "                },\n"
-            "                \"id\" : \"9.4-1\",\n"
-            "                \"max\" : \"000000020000000000000003\",\n"
-            "                \"min\" : \"000000010000000000000002\"\n"
-            "            },\n"
-            "            {\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 3\n"
-            "                },\n"
-            "                \"id\" : \"9.4-3\",\n"
-            "                \"max\" : null,\n"
-            "                \"min\" : null\n"
-            "            }\n"
-            "        ],\n"
-            "        \"backup\" : [\n"
-            "            {\n"
-            "                \"archive\" : {\n"
-            "                    \"start\" : null,\n"
-            "                    \"stop\" : null\n"
-            "                },\n"
-            "                \"backrest\" : {\n"
-            "                    \"format\" : 5,\n"
-            "                    \"version\" : \"2.04\"\n"
-            "                },\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 1\n"
-            "                },\n"
-            "                \"info\" : {\n"
-            "                    \"delta\" : 26897030,\n"
-            "                    \"repository\" : {\n"
-            "                        \"delta\" : 3159,\n"
-            "                        \"size\" : 3159776\n"
-            "                    },\n"
-            "                    \"size\" : 26897030\n"
-            "                },\n"
-            "                \"label\" : \"20181116-154756F\",\n"
-            "                \"prior\" : null,\n"
-            "                \"reference\" : null,\n"
-            "                \"timestamp\" : {\n"
-            "                    \"start\" : 1542383276,\n"
-            "                    \"stop\" : 1542383289\n"
-            "                },\n"
-            "                \"type\" : \"full\"\n"
-            "            }\n"
-            "        ],\n"
-            "        \"cipher\" : \"none\",\n"
-            "        \"db\" : [\n"
-            "            {\n"
-            "                \"id\" : 1,\n"
-            "                \"system-id\" : 6569239123849665679,\n"
-            "                \"version\" : \"9.4\"\n"
-            "            },\n"
-            "            {\n"
-            "                \"id\" : 2,\n"
-            "                \"system-id\" : 6569239123849665666,\n"
-            "                \"version\" : \"9.3\"\n"
-            "            },\n"
-            "            {\n"
-            "                \"id\" : 3,\n"
-            "                \"system-id\" : 6569239123849665679,\n"
-            "                \"version\" : \"9.4\"\n"
-            "            }\n"
-            "        ],\n"
-            "        \"name\" : \"stanza1\",\n"
-            "        \"status\" : {\n"
-            "            \"code\" : 0,\n"
-            "            \"message\" : \"ok\"\n"
-            "        }\n"
-            "    }\n"
-            "]\n", "json - single stanza, valid backup, no priors, no archives in latest DB");
+            "["
+                "{"
+                     "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"id\":\"9.4-1\","
+                            "\"max\":\"000000020000000000000003\","
+                            "\"min\":\"000000010000000000000002\""
+                        "},"
+                        "{"
+                            "\"database\":{"
+                                "\"id\":3"
+                            "},"
+                            "\"id\":\"9.4-3\","
+                            "\"max\":null,"
+                            "\"min\":null"
+                        "}"
+                    "],"
+                     "\"backup\":["
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":null,"
+                                "\"stop\":null"
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.04\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":26897030,"
+                                "\"repository\":{"
+                                    "\"delta\":3159,"
+                                    "\"size\":3159776"
+                                "},"
+                                "\"size\":26897030"
+                            "},"
+                            "\"label\":\"20181116-154756F\","
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"timestamp\":{"
+                                "\"start\":1542383276,"
+                                "\"stop\":1542383289"
+                            "},"
+                            "\"type\":\"full\""
+                        "}"
+                    "],"
+                     "\"cipher\":\"none\","
+                     "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"system-id\":6569239123849665679,"
+                            "\"version\":\"9.4\""
+                        "},"
+                        "{"
+                            "\"id\":2,"
+                            "\"system-id\":6569239123849665666,"
+                            "\"version\":\"9.3\""
+                        "},"
+                        "{"
+                            "\"id\":3,"
+                            "\"system-id\":6569239123849665679,"
+                            "\"version\":\"9.4\""
+                        "}"
+                    "],"
+                     "\"name\":\"stanza1\","
+                     "\"status\":{"
+                        "\"code\":0,"
+                        "\"message\":\"ok\""
+                    "}"
+                "}"
+            "]", "json - single stanza, valid backup, no priors, no archives in latest DB");
 
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
             "    status: ok\n"
@@ -572,170 +573,170 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
                 harnessInfoChecksum(content)), "put backup info to file - stanza2");
 
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
         TEST_RESULT_STR(strPtr(infoRender()),
-            "[\n"
-            "    {\n"
-            "        \"archive\" : [\n"
-            "            {\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 1\n"
-            "                },\n"
-            "                \"id\" : \"9.4-1\",\n"
-            "                \"max\" : \"000000020000000000000003\",\n"
-            "                \"min\" : \"000000010000000000000002\"\n"
-            "            },\n"
-            "            {\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 2\n"
-            "                },\n"
-            "                \"id\" : \"9.5-2\",\n"
-            "                \"max\" : null,\n"
-            "                \"min\" : null\n"
-            "            }\n"
-            "        ],\n"
-            "        \"backup\" : [\n"
-            "            {\n"
-            "                \"archive\" : {\n"
-            "                    \"start\" : \"000000010000000000000002\",\n"
-            "                    \"stop\" : \"000000010000000000000002\"\n"
-            "                },\n"
-            "                \"backrest\" : {\n"
-            "                    \"format\" : 5,\n"
-            "                    \"version\" : \"2.08dev\"\n"
-            "                },\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 1\n"
-            "                },\n"
-            "                \"info\" : {\n"
-            "                    \"delta\" : 20162900,\n"
-            "                    \"repository\" : {\n"
-            "                        \"delta\" : 2369186,\n"
-            "                        \"size\" : 2369186\n"
-            "                    },\n"
-            "                    \"size\" : 20162900\n"
-            "                },\n"
-            "                \"label\" : \"20181119-152138F\",\n"
-            "                \"prior\" : null,\n"
-            "                \"reference\" : null,\n"
-            "                \"timestamp\" : {\n"
-            "                    \"start\" : 1542640898,\n"
-            "                    \"stop\" : 1542640911\n"
-            "                },\n"
-            "                \"type\" : \"full\"\n"
-            "            },\n"
-            "            {\n"
-            "                \"archive\" : {\n"
-            "                    \"start\" : \"000000010000000000000003\",\n"
-            "                    \"stop\" : \"000000010000000000000003\"\n"
-            "                },\n"
-            "                \"backrest\" : {\n"
-            "                    \"format\" : 5,\n"
-            "                    \"version\" : \"2.08dev\"\n"
-            "                },\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 1\n"
-            "                },\n"
-            "                \"info\" : {\n"
-            "                    \"delta\" : 8428,\n"
-            "                    \"repository\" : {\n"
-            "                        \"delta\" : 346,\n"
-            "                        \"size\" : 2369186\n"
-            "                    },\n"
-            "                    \"size\" : 20162900\n"
-            "                },\n"
-            "                \"label\" : \"20181119-152138F_20181119-152152D\",\n"
-            "                \"prior\" : \"20181119-152138F\",\n"
-            "                \"reference\" : [\n"
-            "                    \"20181119-152138F\"\n"
-            "                ],\n"
-            "                \"timestamp\" : {\n"
-            "                    \"start\" : 1542640912,\n"
-            "                    \"stop\" : 1542640915\n"
-            "                },\n"
-            "                \"type\" : \"diff\"\n"
-            "            },\n"
-            "            {\n"
-            "                \"archive\" : {\n"
-            "                    \"start\" : \"000000010000000000000003\",\n"
-            "                    \"stop\" : null\n"
-            "                },\n"
-            "                \"backrest\" : {\n"
-            "                    \"format\" : 5,\n"
-            "                    \"version\" : \"2.08dev\"\n"
-            "                },\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 1\n"
-            "                },\n"
-            "                \"info\" : {\n"
-            "                    \"delta\" : 8428,\n"
-            "                    \"repository\" : {\n"
-            "                        \"delta\" : 346,\n"
-            "                        \"size\" : 2369186\n"
-            "                    },\n"
-            "                    \"size\" : 20162900\n"
-            "                },\n"
-            "                \"label\" : \"20181119-152138F_20181119-152152I\",\n"
-            "                \"prior\" : \"20181119-152138F_20181119-152152D\",\n"
-            "                \"reference\" : [\n"
-            "                    \"20181119-152138F\",\n"
-            "                    \"20181119-152138F_20181119-152152D\"\n"
-            "                ],\n"
-            "                \"timestamp\" : {\n"
-            "                    \"start\" : 1542640912,\n"
-            "                    \"stop\" : 1542640915\n"
-            "                },\n"
-            "                \"type\" : \"incr\"\n"
-            "            }\n"
-            "        ],\n"
-            "        \"cipher\" : \"none\",\n"
-            "        \"db\" : [\n"
-            "            {\n"
-            "                \"id\" : 1,\n"
-            "                \"system-id\" : 6625592122879095702,\n"
-            "                \"version\" : \"9.4\"\n"
-            "            },\n"
-            "            {\n"
-            "                \"id\" : 2,\n"
-            "                \"system-id\" : 6626363367545678089,\n"
-            "                \"version\" : \"9.5\"\n"
-            "            }\n"
-            "        ],\n"
-            "        \"name\" : \"stanza1\",\n"
-            "        \"status\" : {\n"
-            "            \"code\" : 0,\n"
-            "            \"message\" : \"ok\"\n"
-            "        }\n"
-            "    },\n"
-            "    {\n"
-            "        \"archive\" : [\n"
-            "            {\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 1\n"
-            "                },\n"
-            "                \"id\" : \"9.4-1\",\n"
-            "                \"max\" : null,\n"
-            "                \"min\" : null\n"
-            "            }\n"
-            "        ],\n"
-            "        \"backup\" : [],\n"
-            "        \"cipher\" : \"none\",\n"
-            "        \"db\" : [\n"
-            "            {\n"
-            "                \"id\" : 1,\n"
-            "                \"system-id\" : 6625633699176220261,\n"
-            "                \"version\" : \"9.4\"\n"
-            "            }\n"
-            "        ],\n"
-            "        \"name\" : \"stanza2\",\n"
-            "        \"status\" : {\n"
-            "            \"code\" : 2,\n"
-            "            \"message\" : \"no valid backups\"\n"
-            "        }\n"
-            "    }\n"
-            "]\n", "json - multiple stanzas, one with valid backups, archives in latest DB");
+            "["
+                "{"
+                     "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"id\":\"9.4-1\","
+                            "\"max\":\"000000020000000000000003\","
+                            "\"min\":\"000000010000000000000002\""
+                        "},"
+                        "{"
+                            "\"database\":{"
+                                "\"id\":2"
+                            "},"
+                            "\"id\":\"9.5-2\","
+                            "\"max\":null,"
+                            "\"min\":null"
+                        "}"
+                    "],"
+                     "\"backup\":["
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000002\","
+                                "\"stop\":\"000000010000000000000002\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.08dev\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":20162900,"
+                                "\"repository\":{"
+                                    "\"delta\":2369186,"
+                                    "\"size\":2369186"
+                                "},"
+                                "\"size\":20162900"
+                            "},"
+                            "\"label\":\"20181119-152138F\","
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"timestamp\":{"
+                                "\"start\":1542640898,"
+                                "\"stop\":1542640911"
+                            "},"
+                            "\"type\":\"full\""
+                        "},"
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000003\","
+                                "\"stop\":\"000000010000000000000003\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.08dev\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":8428,"
+                                "\"repository\":{"
+                                    "\"delta\":346,"
+                                    "\"size\":2369186"
+                                "},"
+                                "\"size\":20162900"
+                            "},"
+                            "\"label\":\"20181119-152138F_20181119-152152D\","
+                            "\"prior\":\"20181119-152138F\","
+                            "\"reference\":["
+                                "\"20181119-152138F\""
+                            "],"
+                            "\"timestamp\":{"
+                                "\"start\":1542640912,"
+                                "\"stop\":1542640915"
+                            "},"
+                            "\"type\":\"diff\""
+                        "},"
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000003\","
+                                "\"stop\":null"
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.08dev\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":8428,"
+                                "\"repository\":{"
+                                    "\"delta\":346,"
+                                    "\"size\":2369186"
+                                "},"
+                                "\"size\":20162900"
+                            "},"
+                            "\"label\":\"20181119-152138F_20181119-152152I\","
+                            "\"prior\":\"20181119-152138F_20181119-152152D\","
+                            "\"reference\":["
+                                "\"20181119-152138F\","
+                                "\"20181119-152138F_20181119-152152D\""
+                            "],"
+                            "\"timestamp\":{"
+                                "\"start\":1542640912,"
+                                "\"stop\":1542640915"
+                            "},"
+                            "\"type\":\"incr\""
+                        "}"
+                    "],"
+                     "\"cipher\":\"none\","
+                     "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"system-id\":6625592122879095702,"
+                            "\"version\":\"9.4\""
+                        "},"
+                        "{"
+                            "\"id\":2,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.5\""
+                        "}"
+                    "],"
+                     "\"name\":\"stanza1\","
+                     "\"status\":{"
+                        "\"code\":0,"
+                        "\"message\":\"ok\""
+                    "}"
+                "},"
+                "{"
+                     "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"id\":\"9.4-1\","
+                            "\"max\":null,"
+                            "\"min\":null"
+                        "}"
+                    "],"
+                     "\"backup\":[],"
+                     "\"cipher\":\"none\","
+                     "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"system-id\":6625633699176220261,"
+                            "\"version\":\"9.4\""
+                        "}"
+                    "],"
+                     "\"name\":\"stanza2\","
+                     "\"status\":{"
+                        "\"code\":2,"
+                        "\"message\":\"no valid backups\""
+                    "}"
+                "}"
+            "]", "json - multiple stanzas, one with valid backups, archives in latest DB");
 
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
             "    status: ok\n"
@@ -780,7 +781,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR(strPtr(infoRender()),
 
@@ -807,7 +808,7 @@ testRun(void)
             , "text - backup set requested");
 
         strLstAddZ(argList2, "--output=json");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_ERROR(strPtr(infoRender()), ConfigError, "option 'set' is currently only valid for text output");
 
@@ -816,7 +817,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_TARGET_NO_LINK                                                                                       \
             "\n"                                                                                                                   \
@@ -866,7 +867,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_NO_DB                                                                                                \
             "\n"                                                                                                                   \
@@ -915,23 +916,23 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argList);
         strLstAddZ(argList2, "--stanza=silly");
-        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+        harnessCfgLoad(cfgCmdInfo, argList2);
         TEST_RESULT_STR(strPtr(infoRender()),
-            "[\n"
-            "    {\n"
-            "        \"backup\" : [],\n"
-            "        \"db\" : [],\n"
-            "        \"name\" : \"silly\",\n"
-            "        \"status\" : {\n"
-            "            \"code\" : 1,\n"
-            "            \"message\" : \"missing stanza path\"\n"
-            "        }\n"
-            "    }\n"
-            "]\n", "json - missing stanza path");
+            "["
+                "{"
+                     "\"backup\":[],"
+                     "\"db\":[],"
+                     "\"name\":\"silly\","
+                     "\"status\":{"
+                        "\"code\":1,"
+                        "\"message\":\"missing stanza path\""
+                    "}"
+                "}"
+            "]", "json - missing stanza path");
 
         StringList *argListText2 = strLstDup(argListText);
         strLstAddZ(argListText2, "--stanza=silly");
-        harnessCfgLoad(strLstSize(argListText2), strLstPtr(argListText2));
+        harnessCfgLoad(cfgCmdInfo, argListText2);
         TEST_RESULT_STR(strPtr(infoRender()),
         "stanza: silly\n"
         "    status: error (missing stanza path)\n"
@@ -940,40 +941,39 @@ testRun(void)
         // Stanza found
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--stanza=stanza2");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
         TEST_RESULT_STR(strPtr(infoRender()),
-            "[\n"
-            "    {\n"
-            "        \"archive\" : [\n"
-            "            {\n"
-            "                \"database\" : {\n"
-            "                    \"id\" : 1\n"
-            "                },\n"
-            "                \"id\" : \"9.4-1\",\n"
-            "                \"max\" : null,\n"
-            "                \"min\" : null\n"
-            "            }\n"
-            "        ],\n"
-            "        \"backup\" : [],\n"
-            "        \"cipher\" : \"none\",\n"
-            "        \"db\" : [\n"
-            "            {\n"
-            "                \"id\" : 1,\n"
-            "                \"system-id\" : 6625633699176220261,\n"
-            "                \"version\" : \"9.4\"\n"
-            "            }\n"
-            "        ],\n"
-            "        \"name\" : \"stanza2\",\n"
-            "        \"status\" : {\n"
-            "            \"code\" : 2,\n"
-            "            \"message\" : \"no valid backups\"\n"
-            "        }\n"
-            "    }\n"
-            "]\n"
-            , "json - multiple stanzas - selected found");
+            "["
+                "{"
+                     "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":1"
+                            "},"
+                            "\"id\":\"9.4-1\","
+                            "\"max\":null,"
+                            "\"min\":null"
+                        "}"
+                    "],"
+                     "\"backup\":[],"
+                     "\"cipher\":\"none\","
+                     "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"system-id\":6625633699176220261,"
+                            "\"version\":\"9.4\""
+                        "}"
+                    "],"
+                     "\"name\":\"stanza2\","
+                     "\"status\":{"
+                        "\"code\":2,"
+                        "\"message\":\"no valid backups\""
+                    "}"
+                "}"
+            "]", "json - multiple stanzas - selected found");
 
         strLstAddZ(argListText, "--stanza=stanza2");
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza2\n"
             "    status: error (no valid backups)\n"
@@ -996,7 +996,7 @@ testRun(void)
                 BUFSTR(content)), "put pgbackrest.conf file");
         strLstAddZ(argListText, "--repo-cipher-type=aes-256-cbc");
         strLstAdd(argListText, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
-        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_ERROR_FMT(
             infoRender(), CryptoError,
             "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
@@ -1067,10 +1067,8 @@ testRun(void)
     if (testBegin("cmdInfo()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
-        strLstAddZ(argList, "info");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         storagePathCreateNP(storageLocalWrite(), archivePath);
         storagePathCreateNP(storageLocalWrite(), backupPath);
@@ -1097,12 +1095,11 @@ testRun(void)
         strLstAddZ(argList, "--set=bogus");
 
         TEST_ERROR_FMT(
-            harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
-            "option 'set' not valid without option 'stanza'");
+            harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--stanza=stanza1");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ERROR_FMT(
                 cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"

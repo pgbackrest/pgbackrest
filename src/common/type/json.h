@@ -22,10 +22,10 @@ VariantList *jsonToVarLst(const String *json);
 const String *jsonFromBool(bool value);
 String *jsonFromInt(int number);
 String *jsonFromInt64(int64_t number);
-String *jsonFromKv(const KeyValue *kv, unsigned int indent);
+String *jsonFromKv(const KeyValue *kv);
 String *jsonFromStr(const String *string);
 String *jsonFromUInt(unsigned int number);
 String *jsonFromUInt64(uint64_t number);
-String *jsonFromVar(const Variant *var, unsigned int indent);
+String *jsonFromVar(const Variant *var);
 
 #endif

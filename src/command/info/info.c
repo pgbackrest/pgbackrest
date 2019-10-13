@@ -800,7 +800,7 @@ infoRender(void)
         }
         // Format json output
         else
-            resultStr = jsonFromVar(varNewVarLst(infoList), 4);
+            resultStr = jsonFromVar(varNewVarLst(infoList));
 
         memContextSwitch(MEM_CONTEXT_OLD());
         result = strDup(resultStr);

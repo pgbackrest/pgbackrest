@@ -127,7 +127,6 @@ main(int argListSize, const char *argList[])
                     cmdBegin(true);
 
                     // Run expire
-                    perlExec();
                     cmdExpire();
 
                     break;
@@ -137,8 +136,6 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdCheck:
                 {
-                    // Functionality is currently split between Perl and C
-                    perlExec();
                     cmdCheck();
                     break;
                 }

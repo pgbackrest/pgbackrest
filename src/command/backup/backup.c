@@ -348,7 +348,7 @@ cmdBackup(void)
         kvPut(paramKv, VARSTRDEF("backupLabelHalted"), backupLabelHalted ? VARSTR(backupLabelHalted) : NULL);
 
         StringList *paramList = strLstNew();
-        strLstAdd(paramList, jsonFromVar(varNewKv(paramKv), 0));
+        strLstAdd(paramList, jsonFromVar(varNewKv(paramKv)));
         cfgCommandParamSet(paramList);
 
         // Do this so Perl does not need to reconstruct backup.info

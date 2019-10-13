@@ -475,7 +475,7 @@ testRun(void)
         // config default and config-include-path passed - but no config files in the include path - only in the default path
         // rm command is split below because code counter is confused by what looks like a comment.
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s/" "*", strPtr(configIncludePath)))), 0, "remove all include files");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/" "*", strPtr(configIncludePath)))), 0, "remove all include files");
 
         value = strLstNew();
         strLstAdd(value, configIncludePath);

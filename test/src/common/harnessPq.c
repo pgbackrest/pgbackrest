@@ -46,7 +46,7 @@ static HarnessPq *
 harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *parent)
 {
     // Convert params to json for comparison and reporting
-    String *paramStr = param ? jsonFromVar(varNewVarLst(param), 0) : strNew("");
+    String *paramStr = param ? jsonFromVar(varNewVarLst(param)) : strNew("");
 
     // Ensure script has not ended
     if (harnessPqScript == NULL)

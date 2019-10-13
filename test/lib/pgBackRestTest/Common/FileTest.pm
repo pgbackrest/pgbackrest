@@ -32,6 +32,7 @@ use pgBackRest::Storage::Base;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::LogTest;
+use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
@@ -83,7 +84,7 @@ sub testPathRemove
     my $strPath = shift;
     my $bSuppressError = shift;
 
-    executeTest('sudo rm -rf ' . $strPath, {bSuppressError => $bSuppressError});
+    executeTest('rm -rf ' . $strPath, {bSuppressError => $bSuppressError});
 }
 
 push(@EXPORT, qw(testPathRemove));
@@ -169,7 +170,7 @@ sub forceStorageMode
     # Mode commands are ignored on S3
     if ($oStorage->type() ne STORAGE_S3)
     {
-        executeTest('sudo chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
+        executeTest('chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any
@@ -204,14 +205,39 @@ sub forceStorageMove
     # If S3 then use storage commands to remove
     if ($oStorage->type() eq STORAGE_S3)
     {
-        hostGroupGet()->hostGet(HOST_S3)->executeS3(
-            'mv' . ($bRecurse ? ' --recursive' : '') . ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strSourcePathExp) .
-                ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strDestinationPathExp));
+        if ($bRecurse)
+        {
+            my $rhManifest = $oStorage->manifest($strSourcePathExp);
+
+            foreach my $strName (sort(keys(%{$rhManifest})))
+            {
+                if ($rhManifest->{$strName}{type} eq 'f')
+                {
+                    $oStorage->put(
+                        new pgBackRest::Storage::StorageWrite(
+                            $oStorage,
+                            pgBackRest::LibC::StorageWrite->new(
+                                $oStorage->{oStorageC}, "${strDestinationPathExp}/${strName}", 0, undef, undef, 0, true, false)),
+                        ${$oStorage->get(
+                            new pgBackRest::Storage::StorageRead(
+                                $oStorage,
+                                pgBackRest::LibC::StorageRead->new(
+                                    $oStorage->{oStorageC}, "${strSourcePathExp}/${strName}", false)))});
+
+                    $oStorage->remove("${strSourcePathExp}/${strName}");
+                }
+            }
+        }
+        else
+        {
+            $oStorage->put($strDestinationPathExp, ${$oStorage->get($strSourcePathExp)});
+            $oStorage->remove($strSourcePathExp);
+        }
     }
     # Else remove using filesystem commands
     else
     {
-        executeTest('sudo mv ' . $oStorage->pathGet($strSourcePathExp) . ' ' . $oStorage->pathGet($strDestinationPathExp));
+        executeTest('mv ' . $oStorage->pathGet($strSourcePathExp) . ' ' . $oStorage->pathGet($strDestinationPathExp));
     }
 
     # Return from function and log return values if any
@@ -246,7 +272,7 @@ sub forceStorageOwner
     # Owner commands are ignored on S3
     if ($oStorage->type() ne STORAGE_S3)
     {
-        executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
+        executeTest('chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any
@@ -292,7 +318,7 @@ sub forceStorageRemove
     }
     else
     {
-        executeTest('sudo rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
+        executeTest('rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any

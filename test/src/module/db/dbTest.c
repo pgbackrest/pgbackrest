@@ -31,26 +31,24 @@ testRun(void)
 
                 // Set options
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "pgbackrest");
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--pg1-path=/path/to/pg");
                 strLstAddZ(argList, "--command=backup");
                 strLstAddZ(argList, "--type=db");
                 strLstAddZ(argList, "--process=0");
-                strLstAddZ(argList, "remote");
-                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+                harnessCfgLoad(cfgCmdRemote, argList);
 
                 // Set script
                 harnessPqScriptSet((HarnessPq [])
                 {
                     HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, "/pgdata"),
+                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, "/pgdata", NULL, NULL),
                     HRNPQ_MACRO_CLOSE(1),
 
                     HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, "/pgdata"),
+                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, "/pgdata", NULL, NULL),
                     HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
                     HRNPQ_MACRO_CLOSE(1),
 
@@ -106,12 +104,10 @@ testRun(void)
         // Error connecting to primary
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/path/to/pg");
-        strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -132,7 +128,7 @@ testRun(void)
         {
             HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
-            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, "/pgdata"),
+            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, "/pgdata", NULL, NULL),
             HRNPQ_MACRO_SET_APPLICATION_NAME(1),
             HRNPQ_MACRO_IS_STANDBY_QUERY(1, true),
             HRNPQ_MACRO_CLOSE(1),
@@ -145,7 +141,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_84(1, "dbname='postgres' port=5432", "/pgdata"),
+            HRNPQ_MACRO_OPEN_84(1, "dbname='postgres' port=5432", "/pgdata", NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -164,19 +160,17 @@ testRun(void)
         // More than one primary found
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/path/to/pg1");
         strLstAddZ(argList, "--pg8-path=/path/to/pg2");
         strLstAddZ(argList, "--pg8-port=5433");
-        strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_84(1, "dbname='postgres' port=5432", "/pgdata"),
-            HRNPQ_MACRO_OPEN_84(8, "dbname='postgres' port=5433", "/pgdata"),
+            HRNPQ_MACRO_OPEN_84(1, "dbname='postgres' port=5432", "/pgdata", NULL, NULL),
+            HRNPQ_MACRO_OPEN_84(8, "dbname='postgres' port=5433", "/pgdata", NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_CLOSE(8),
@@ -190,8 +184,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true),
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", "/pgdata", true),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", "/pgdata", true, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -205,8 +199,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true),
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", "/pgdata", true),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5433", "/pgdata", true, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -226,7 +220,6 @@ testRun(void)
         // Primary and standby found
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/path/to/pg1");
@@ -237,12 +230,11 @@ testRun(void)
         strLstAddZ(argList, "--pg5-path=/path/to/pg5");
         strLstAddZ(argList, "--pg8-path=/path/to/pg8");
         strLstAddZ(argList, "--pg8-port=5434");
-        strLstAddZ(argList, "backup");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true),
+            HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", "/pgdata", true, NULL, NULL),
 
             // pg-4 error
             {.session = 4, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
@@ -250,7 +242,7 @@ testRun(void)
             {.session = 4, .function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
             {.session = 4, .function = HRNPQ_FINISH},
 
-            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5434", "/pgdata", false),
+            HRNPQ_MACRO_OPEN_92(8, "dbname='postgres' port=5434", "/pgdata", false, NULL, NULL),
 
             HRNPQ_MACRO_CREATE_RESTORE_POINT(8, "2/3"),
             HRNPQ_MACRO_WAL_SWITCH(8, "xlog", "000000010000000200000003"),
@@ -269,6 +261,8 @@ testRun(void)
 
         TEST_RESULT_INT(result.primaryId, 8, "    check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
+        TEST_RESULT_STR(strPtr(dbArchiveMode(result.primary)), "on", "    dbArchiveMode");
+        TEST_RESULT_STR(strPtr(dbArchiveCommand(result.primary)), PROJECT_BIN, "    dbArchiveCommand");
         TEST_RESULT_STR(strPtr(dbWalSwitch(result.primary)), "000000010000000200000003", "    wal switch");
         TEST_RESULT_INT(result.standbyId, 1, "    check standby id");
         TEST_RESULT_BOOL(result.standby != NULL, true, "    check standby");

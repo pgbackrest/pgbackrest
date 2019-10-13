@@ -24,6 +24,7 @@ use lib dirname(dirname($0)) . '/lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::VmTest;
 
@@ -70,9 +71,18 @@ sub processBegin
     $lProcessBegin = time();
 }
 
+sub processExec
+{
+    my $strCommand = shift;
+    my $rhParam = shift;
+
+    &log(INFO, "    Exec ${strCommand}");
+    executeTest($strCommand, $rhParam);
+}
+
 sub processEnd
 {
-    &log(INFO, "End ${strProcessTitle} (" . (time() - $lProcessBegin) . 's)');
+    &log(INFO, "    End ${strProcessTitle} (" . (time() - $lProcessBegin) . 's)');
 }
 
 ####################################################################################################################################
@@ -97,6 +107,12 @@ eval
         pod2usage();
     }
 
+    # VM must be defined
+    if (!defined($strVm))
+    {
+        confess &log(ERROR, '--vm is required');
+    }
+
     ################################################################################################################################
     # Paths
     ################################################################################################################################
@@ -106,20 +122,29 @@ eval
 
     logLevelSet(INFO, INFO, OFF);
 
+    processBegin('install common packages');
+    processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
+    processExec(
+        'sudo apt-get install -y rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libxml-checker-perl libyaml-libyaml-perl',
+        {bSuppressStdErr => true});
+    processEnd();
+
     ################################################################################################################################
     # Build documentation
     ################################################################################################################################
     if ($ARGV[0] eq 'doc')
     {
-        processBegin('LaTeX install');
-        executeTest(
-            'sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended',
-            {bSuppressStdErr => true});
-        executeTest('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
-        processEnd();
+        if ($strVm eq VM_CO7)
+        {
+            processBegin('LaTeX install');
+            processExec(
+                'sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended',
+                {bSuppressStdErr => true});
+            processExec('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
+        }
 
-        processBegin('release documentation doc');
-        executeTest("${strReleaseExe} --build --no-gen", {bShowOutputAsync => true});
+        processBegin('release documentation');
+        processExec("${strReleaseExe} --build --no-gen --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }
 
@@ -128,21 +153,73 @@ eval
     ################################################################################################################################
     elsif ($ARGV[0] eq 'test')
     {
-        # VM must be defined
-        if (!defined($strVm))
+        my $strParam = "";
+        my $strVmHost = VM_U14;
+
+        # Build list of packages that need to be installed
+        my $strPackage = "libperl-dev";
+
+        if (vmCoverageC($strVm))
         {
-            confess &log(ERROR, '--vm is required');
+            $strPackage .= " lcov";
         }
 
-        processBegin("${strVm} build");
-        executeTest("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true});
+        if ($strVm eq VM_NONE)
+        {
+            $strPackage .= " valgrind";
+        }
+        else
+        {
+            $strPackage .= " libdbd-pg-perl";
+        }
+
+        processBegin('install test packages');
+        processExec("sudo apt-get install -y ${strPackage}", {bSuppressStdErr => true});
         processEnd();
 
-        processBegin("${strVm} test");
-        executeTest(
-            "${strTestExe} --no-gen --no-package --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" .
-                ($strVm eq "u18" ? " --c-only --no-coverage  --module=info --module=command" : " --module=mock --test=all"),
-            {bShowOutputAsync => true});
+        # Run tests that can be run without a container
+        if ($strVm eq VM_NONE)
+        {
+            processBegin('/tmp/pgbackrest owned by root so tests cannot use it');
+            processExec('sudo mkdir -p /tmp/pgbackrest && sudo chown root:root /tmp/pgbackrest && sudo chmod 700 /tmp/pgbackrest');
+            processEnd();
+
+            # Set local timezone to make sure tests work in any timezone
+            $ENV{'TZ'} = 'America/New_York';
+
+            processBegin('remove sudo');
+            processExec('sudo rm /etc/sudoers.d/travis');
+            processEnd();
+
+            $strVmHost = VM_U18;
+        }
+        # Else run tests that require a container
+        else
+        {
+            # Build the container
+            processBegin("${strVm} build");
+            processExec("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
+            processEnd();
+
+            # Run tests
+            if ($strVm eq VM_U18)
+            {
+                $strParam .= " --container-only";
+            }
+            elsif ($strVm eq VM_F30)
+            {
+                $strParam .= " --no-package --c-only";
+            }
+            elsif ($strVm ne VM_U12)
+            {
+                $strParam .= " --module=real";
+            }
+        }
+
+        processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
+        processExec(
+            "${strTestExe} --no-gen --vm-host=${strVmHost} --vm-max=2 --vm=${strVm}${strParam}",
+            {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }
 
@@ -169,7 +246,7 @@ or do
     exit $EVAL_ERROR->code() if (isException(\$EVAL_ERROR));
 
     # Else output the unhandled error
-    # print $EVAL_ERROR;
+    print $EVAL_ERROR;
     exit ERROR_UNHANDLED;
 };
 

@@ -258,7 +258,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR, VARBOOL(backupData.optionOnline));
 
             infoSaveValue(
-                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel, jsonFromKv(backupDataKv, 0));
+                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel, jsonFromKv(backupDataKv));
         }
     }
 
@@ -361,7 +361,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
     ASSERT(this != NULL);
     ASSERT(manifest != NULL);
-// CSHANG Originally there was a save parameter and the default was true to SAVE this to disk at the end - used by Backup.pm
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const ManifestData *manData = manifestData(manifest);
@@ -380,12 +380,13 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
             backupSize += file->size;
             backupRepoSize += file->sizeRepo > 0 ? file->sizeRepo : file->size;
 
+            // If a reference to a file exists, then it is in a previous backup and the delta calculation was already done
             if (file->reference != NULL)
                 strLstAdd(referenceList, file->reference);
             else
             {
                 backupSizeDelta += file->size;
-                backupRepoSizeDelta += file->sizeRepo > 0 ? file->sizeRepo : file->size;;
+                backupRepoSizeDelta += file->sizeRepo > 0 ? file->sizeRepo : file->size;
             }
         }
 
@@ -411,7 +412,8 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .optionArchiveCheck = manData->backupOptionArchiveCheck,
                 .optionArchiveCopy = manData->backupOptionArchiveCopy,
                 .optionBackupStandby = manData->backupOptionStandby != NULL ? varBool(manData->backupOptionStandby) : false,
-                .optionChecksumPage = manData->backupOptionChecksumPage != NULL ? varBool(manData->backupOptionChecksumPage) : false,
+                .optionChecksumPage = manData->backupOptionChecksumPage != NULL ?
+                    varBool(manData->backupOptionChecksumPage) : false,
                 .optionCompress = manData->backupOptionCompress,
                 .optionHardlink = manData->backupOptionHardLink,
                 .optionOnline = manData->backupOptionOnline,
@@ -621,7 +623,6 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
-// CSHANG Originally there was a save parameter for the reconstruct function and the default was true to SAVE this to disk at the end. This was done every time the backup.info NEW was called unless bValidate was passed to NEW as false - which seems to have only been done in expire. So we should think about how this is really called and if we want to autosave here or not.
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
@@ -645,12 +646,12 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
         {
             String *backupLabel = strLstGet(backupList, backupIdx);
 
-            // If it does not exists in the list of current backups, then if it is valid, add it
+            // If it does not exist in the list of current backups, then if it is valid, add it
             if (!strLstExists(backupCurrentList, backupLabel))
             {
                 String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
-                // Check if a completed backup (backup.manifest only) exists
+                // Check if a completed backup exists (backup.manifest only - ignore .copy)
                 if (storageExistsNP(storage, manifestFileName))
                 {
                     bool found = false;
@@ -681,7 +682,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
             }
         }
 
-        // Get the updated list of current backups and remove backups that are no longer in the repository
+        // Get the updated list of current backups and remove backups from current that are no longer in the repository
         backupCurrentList = infoBackupDataLabelList(infoBackup, NULL);
 
         for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
@@ -689,6 +690,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
             String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
             String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
+            // Remove backup from the current list in the infoBackup object
             if (!storageExistsNP(storage, manifestFileName))
             {
                 LOG_WARN("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(backupLabel));

@@ -59,7 +59,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         String *dirLock = strNewFmt("%s/dir" LOCK_FILE_EXT, testPath());
 
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo mkdir -p 750 %s", strPtr(dirLock)))), 0, "create dirtest.lock dir");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("mkdir -p 750 %s", strPtr(dirLock)))), 0, "create dirtest.lock dir");
 
         TEST_ERROR(
             lockAcquireFile(dirLock, 0, true), LockAcquireError,
@@ -67,7 +67,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *noPermLock = strNewFmt("%s/noperm/noperm", testPath());
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo mkdir -p 700 %s", strPtr(strPath(noPermLock))))), 0, "create noperm dir");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("mkdir -p 750 %s", strPtr(strPath(noPermLock))))), 0, "create noperm dir");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("chmod 000 %s", strPtr(strPath(noPermLock))))), 0, "chmod noperm dir");
 
         TEST_ERROR(
             lockAcquireFile(noPermLock, 100, true), LockAcquireError,

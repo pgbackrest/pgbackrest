@@ -38,12 +38,10 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         // Create pg_control file
         storagePutNP(
@@ -127,12 +125,10 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         // Create pg_control file
         storagePutNP(
@@ -222,15 +218,13 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
-        strLstAddZ(argList, "archive-get-async");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         storagePathCreateNP(storageTest, strNew("spool/archive/test1/in"));
@@ -255,12 +249,10 @@ testRun(void)
     if (testBegin("queueNeed()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--archive-async");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         size_t queueSize = 16 * 1024 * 1024;
         size_t walSegmentSize = 16 * 1024 * 1024;
@@ -330,13 +322,11 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         StringList *argCleanList = strLstNew();
-        strLstAddZ(argCleanList, "pgbackrest");
         strLstAdd(argCleanList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argCleanList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argCleanList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAddZ(argCleanList, "--stanza=test2");
-        strLstAddZ(argCleanList, "archive-get-async");
-        harnessCfgLoad(strLstSize(argCleanList), strLstPtr(argCleanList));
+        harnessCfgLoad(cfgCmdArchiveGetAsync, argCleanList);
 
         TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
 
@@ -359,7 +349,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstDup(argCleanList);
         strLstAddZ(argList, "000000010000000100000001");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
 
         storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
 
@@ -388,7 +378,7 @@ testRun(void)
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "000000010000000100000002");
         strLstAddZ(argList, "000000010000000100000003");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
 
         storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
 
@@ -455,7 +445,7 @@ testRun(void)
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "000000010000000100000002");
         strLstAddZ(argList, "000000010000000100000003");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(
             cmdArchiveGetAsync(), ExecuteError,
@@ -489,12 +479,13 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest-bogus");                    // Break this until async tests are setup correctly
         strLstAddZ(argList, "--archive-timeout=1");
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testPath()));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--log-level-file=debug"));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         HARNESS_FORK_BEGIN()
         {
@@ -510,7 +501,7 @@ testRun(void)
         StringList *argListTemp = strLstDup(argList);
         String *walSegment = strNew("000000010000000100000001");
         strLstAdd(argListTemp, walSegment);
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoadRaw(strLstSize(argListTemp), strLstPtr(argListTemp));
 
         HARNESS_FORK_BEGIN()
         {
@@ -532,7 +523,7 @@ testRun(void)
         String *walFile = strNewFmt("%s/db/pg_wal/RECOVERYXLOG", testPath());
         strLstAdd(argListTemp, walFile);
         strLstAdd(argListTemp, strNewFmt("--pg1-path=%s/db", testPath()));
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoadRaw(strLstSize(argListTemp), strLstPtr(argListTemp));
 
         // Test this in a fork so we can use different Perl options in later tests
         HARNESS_FORK_BEGIN()
@@ -563,7 +554,7 @@ testRun(void)
         strLstAddZ(argListTemp, "00000001.history");
         strLstAdd(argListTemp, walFile);
         strLstAddZ(argListTemp, "--archive-async");
-        harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
+        harnessCfgLoadRaw(strLstSize(argListTemp), strLstPtr(argListTemp));
 
         // Test this in a fork so we can use different Perl options in later tests
         HARNESS_FORK_BEGIN()
@@ -595,7 +586,7 @@ testRun(void)
         strLstAdd(argList, walSegment);
         strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         HARNESS_FORK_BEGIN()
         {
@@ -657,7 +648,7 @@ testRun(void)
         // Write more WAL segments (in this case queue should be full)
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--archive-get-queue-max=48");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         String *walSegment2 = strNew("000000010000000100000002");
 
@@ -702,7 +693,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, BOGUS_STR);
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(cmdArchiveGet(), ParamInvalidError, "extra parameters found");
     }

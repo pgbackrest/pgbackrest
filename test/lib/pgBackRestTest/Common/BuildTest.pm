@@ -273,7 +273,6 @@ sub buildMakefile
         ('#' x 132) . "\n" .
         buildMakefileObjectCompile($oStorage, {rhOption => $rhOption});
 
-
     # Return from function and log return values if any
     return logDebugReturn
     (
