@@ -26,8 +26,8 @@ matrix:
     - env: PGB_CI="--vm=co7 doc"
 
 install:
-  - umask 0022
-  - cd ~ && pwd && whoami && umask && groups
+  - umask 0022 && cd ~ && pwd && whoami && umask && groups
+  - df -Th && top -bn1
 
 script:
   - ${TRAVIS_BUILD_DIR?}/test/travis.pl ${PGB_CI?}
