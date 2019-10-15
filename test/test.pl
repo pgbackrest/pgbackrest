@@ -1074,8 +1074,8 @@ eval
                         executeTest("rsync -r --exclude .vagrant --exclude .git ${strBackRestBase}/ ${strBuildPath}/");
                         executeTest(
                             ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                            "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER .
-                            " ${strBuildPath}");
+                            "bash -c 'cp -r /root/package-src/debian ${strBuildPath} && sudo chown -R " . TEST_USER .
+                            " ${strBuildPath}'");
 
                         # Patch files in debian package builds
                         #
