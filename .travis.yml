@@ -13,17 +13,19 @@ services:
 
 matrix:
   include:
-    - env: PGB_CI="--vm=u12 test"
-    - env: PGB_CI="--vm=f30 test"
-    - env: PGB_CI="--vm=co6 test"
-    - env: PGB_CI="--vm=u18 test"
-    - env: PGB_CI="--vm=u18 doc"
-    - env: PGB_CI="--vm=co7 test"
+    - env: PGB_CI="test --vm=u12 --sudo"
+    - env: PGB_CI="test --vm=f30 --param=no-package --param=c-only"
+    - env: PGB_CI="test --vm=co6 --param=module=real"
+    - env: PGB_CI="test --vm=u18 --sudo --param=container-only"
+    - env: PGB_CI=" doc --vm=u18"
+    - env: PGB_CI="test --vm=co7 --param=module=real"
     - dist: bionic
-      env: PGB_CI="--vm=none test"
+      env:
+        - PGB_CI="test --vm=none"
+        - TZ="America/New_York"
       services:
-    - env: PGB_CI="--vm=co6 doc"
-    - env: PGB_CI="--vm=co7 doc"
+    - env: PGB_CI=" doc --vm=co6"
+    - env: PGB_CI=" doc --vm=co7"
 
 install:
   - umask 0022 && cd ~ && pwd && whoami && umask && groups
