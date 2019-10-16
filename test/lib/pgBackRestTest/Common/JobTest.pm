@@ -413,7 +413,7 @@ sub run
 
                     $strTestInit .=
                         (defined($strTestInit) ? "\n    " : '') .
-                        sprintf("testAdd(%3d, %8s);" , $iTestIdx, ($bSelected ? 'true' : 'false'));
+                        sprintf("hrnAdd(%3d, %8s);" , $iTestIdx, ($bSelected ? 'true' : 'false'));
                 }
 
                 $strTestC =~ s/\{\[C\_TEST\_LIST\]\}/$strTestInit/g;

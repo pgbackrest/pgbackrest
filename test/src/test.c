@@ -28,14 +28,7 @@ The test code is included directly so it can freely interact with the included C
 #endif
 
 #include "common/harnessDebug.h"
-#include "common/harnessTest.h"
-
-void testInit(void);
-void testContainerSet(bool testContainer);
-void testDataPathSet(const char *testDataPath);
-void testIdxSet(unsigned int testIdx);
-void testScaleSet(uint64_t testScale);
-void testProjectExeSet(const char *testProjectExe);
+#include "common/harnessTest.intern.h"
 
 #ifndef NO_LOG
     #include "common/harnessLog.h"
@@ -84,15 +77,15 @@ main(int argListSize, const char *argList[])
     signal(SIGPIPE, SIG_IGN);
 
     // Set globals
-    testInit();
-    testExeSet(argList[0]);
-    testProjectExeSet("{[C_TEST_PROJECT_EXE]}");
-    testContainerSet({[C_TEST_CONTAINER]});
-    testPathSet("{[C_TEST_PATH]}");
-    testRepoPathSet("{[C_TEST_REPO_PATH]}");
-    testDataPathSet("{[C_TEST_DATA_PATH]}");
-    testIdxSet({[C_TEST_IDX]});
-    testScaleSet({[C_TEST_SCALE]});
+    hrnInit(
+        argList[0],                 // Test exe
+        "{[C_TEST_PROJECT_EXE]}",   // Project exe
+        {[C_TEST_CONTAINER]},       // Is this test running in a container?
+        {[C_TEST_IDX]},             // The 0-based index of this test
+        {[C_TEST_SCALE]},           // Scaling factor for performance tests
+        "{[C_TEST_PATH]}",          // Path where tests write data
+        "{[C_TEST_DATA_PATH]}",     // Path where the harness stores temp files (expect, diff, etc.)
+        "{[C_TEST_REPO_PATH]}");    // Path with a copy of the repository
 
     // Set default test log level
 #ifndef NO_LOG
@@ -111,7 +104,7 @@ main(int argListSize, const char *argList[])
         testRun();
 
         // End test run and make sure all tests completed
-        testComplete();
+        hrnComplete();
 
         printf("\nTESTS COMPLETED SUCCESSFULLY\n");
         fflush(stdout);
