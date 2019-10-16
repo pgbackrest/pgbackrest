@@ -13,10 +13,10 @@ services:
 
 matrix:
   include:
-    - env: PGB_CI="test --vm=u12 --sudo"
+    - env: PGB_CI="test --vm=u12"
     - env: PGB_CI="test --vm=f30 --param=no-package --param=c-only"
     - env: PGB_CI="test --vm=co6 --param=module=real"
-    - env: PGB_CI="test --vm=u18 --sudo --param=container-only"
+    - env: PGB_CI="test --vm=u18 --param=container-only"
     - env: PGB_CI=" doc --vm=u18"
     - env: PGB_CI="test --vm=co7 --param=module=real"
     - dist: bionic

@@ -156,7 +156,8 @@ sub run
 
         if (!$bRemote)
         {
-            executeTest('sudo chown 7777 ' . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION);
+            $oHostDbMaster->executeSimple(
+                'chown 7777 ' . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION, undef, 'root');
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
                       {&MANIFEST_SUBKEY_USER} = INI_FALSE;
         }
@@ -173,7 +174,8 @@ sub run
 
         if (!$bRemote)
         {
-            executeTest('sudo chown :7777 ' . $oHostDbMaster->dbBasePath() . '/base/16384/' . DB_FILE_PGVERSION);
+            $oHostDbMaster->executeSimple(
+                'chown :7777 ' . $oHostDbMaster->dbBasePath() . '/base/16384/' . DB_FILE_PGVERSION, undef, 'root');
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
                       {&MANIFEST_SUBKEY_GROUP} = INI_FALSE;
         }
@@ -514,8 +516,8 @@ sub run
         # Set ownership on base directory to bogus values
         if (!$bRemote)
         {
-            executeTest('sudo chown 7777:7777 ' . $oHostDbMaster->dbBasePath());
-            executeTest('sudo chmod 777 ' . $oHostDbMaster->dbBasePath());
+            $oHostDbMaster->executeSimple('chown 7777:7777 ' . $oHostDbMaster->dbBasePath(), undef, 'root');
+            $oHostDbMaster->executeSimple('chmod 777 ' . $oHostDbMaster->dbBasePath(), undef, 'root');
             $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER} = INI_FALSE;
             $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP} = INI_FALSE;
             $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE} = '0777';
@@ -574,8 +576,10 @@ sub run
         # Munge permissions/modes on files that will be fixed by the restore
         if (!$bRemote)
         {
-            executeTest("sudo chown :7777 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION);
-            executeTest("sudo chmod 600 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION);
+            $oHostDbMaster->executeSimple(
+                "chown :7777 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION, undef, 'root');
+            $oHostDbMaster->executeSimple(
+                "chmod 600 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION, undef, 'root');
         }
 
         # Create a path and file that are not in the manifest
@@ -612,7 +616,8 @@ sub run
         if (!$bRemote)
         {
             # Reset the base path user and group for the next restore so files will be reset to the base path user/group
-            executeTest('sudo chown ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostDbMaster->dbBasePath());
+            $oHostDbMaster->executeSimple(
+                'chown ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostDbMaster->dbBasePath(), undef, 'root');
 
             $oHostBackup->manifestMunge(
                 $strFullBackup,
@@ -637,8 +642,8 @@ sub run
                     strOptionalParam => ' --link-all --log-level-console=detail'});
 
             # Fix and remove files that are now owned by root
-            executeTest('sudo chown -R ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostBackup->logPath());
-            executeTest('sudo rm -rf ' . $oHostDbMaster->lockPath() . '/*');
+            $oHostBackup->executeSimple('chown -R ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostBackup->logPath(), undef, 'root');
+            $oHostDbMaster->executeSimple('rm -rf ' . $oHostDbMaster->lockPath() . '/*', undef, 'root');
         }
 
         # Change an existing link to the wrong directory
@@ -1366,7 +1371,7 @@ sub run
                 $strType, 'config file not validated on remote', {oExpectedManifest => \%oManifest,
                     strOptionalParam => '--log-level-console=info'});
 
-            executeTest('sudo rm '. $oHostDbMaster->backrestConfig());
+            $oHostDbMaster->executeSimple('rm '. $oHostDbMaster->backrestConfig(), undef, 'root');
             executeTest("mv " . $oHostDbMaster->backrestConfig() . ".save" . " " . $oHostDbMaster->backrestConfig());
         }
         else
@@ -1379,7 +1384,7 @@ sub run
                 $strType, 'config file warning on local', {oExpectedManifest => \%oManifest,
                     strOptionalParam => '--log-level-console=info 2>&1'});
 
-            executeTest('sudo rm '. $oHostBackup->backrestConfig());
+            $oHostBackup->executeSimple('rm '. $oHostBackup->backrestConfig(), undef, 'root');
             executeTest("mv " . $oHostBackup->backrestConfig() . ".save" . " " . $oHostBackup->backrestConfig());
         }
 
