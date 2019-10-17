@@ -562,16 +562,20 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                         // Remove archive log if it is not used in a backup
                                         if (removeArchive)
                                         {
-                                            storageRemoveNP(
-                                                storageRepoWrite(),
-                                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s",
-                                                    strPtr(archiveId), strPtr(walPath), strPtr(walSubPath)));
-
-                                            // Track that this archive was removed
-                                            archiveExpire.total++;
-                                            archiveExpire.stop = strDup(strSubN(walSubPath, 0, 24));
-                                            if (archiveExpire.start == NULL)
+                                          // // execute the real expiration and deletion only if the dry-run mode is disabled
+                                          if (!cfgOptionBool(cfgOptDryRun))
+                                            {
+                                              storageRemoveNP(
+                                                              storageRepoWrite(),
+                                                              strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s",
+                                                                        strPtr(archiveId), strPtr(walPath), strPtr(walSubPath)));
+                                            }
+                                              // Track that this archive was removed
+                                              archiveExpire.total++;
+                                              archiveExpire.stop = strDup(strSubN(walSubPath, 0, 24));
+                                              if (archiveExpire.start == NULL)
                                                 archiveExpire.start = strDup(strSubN(walSubPath, 0, 24));
+
                                         }
                                         else
                                             logExpire(&archiveExpire, archiveId);
