@@ -516,10 +516,11 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 {
                                   // execute the real expiration and deletion
                                   // only if the dry-run mode is disabled
-                                  if ( ! cfgOptionBool(cfgOptDryRun) )
+                                  if ( ! cfgOptionBool(cfgOptDryRun) ){
                                     storagePathRemoveP(
                                                        storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
                                                                                      strPtr(walPath)), .recurse = true);
+                                  }
 
                                     archiveExpire.total++;
                                     archiveExpire.start = strDup(walPath);
