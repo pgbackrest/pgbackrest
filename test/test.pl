@@ -356,6 +356,11 @@ eval
     {
         $strVm = VM_ALL;
     }
+    # Else make sure vm is valid
+    elsif ($strVm ne VM_ALL)
+    {
+        vmValid($strVm);
+    }
 
     # Get the base backrest path
     my $strBackRestBase = dirname(dirname(abs_path($0)));
@@ -1547,7 +1552,11 @@ or do
     # If a backrest exception then return the code
     if (isException(\$EVAL_ERROR))
     {
-        syswrite(*STDOUT, $EVAL_ERROR->message() . "\n" . $EVAL_ERROR->trace());
+        if ($EVAL_ERROR->code() != ERROR_OPTION_INVALID_VALUE)
+        {
+            syswrite(*STDOUT, $EVAL_ERROR->message() . "\n" . $EVAL_ERROR->trace());
+        }
+
         exit $EVAL_ERROR->code();
     }
 

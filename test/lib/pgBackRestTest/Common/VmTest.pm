@@ -13,6 +13,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::DbVersion;
 
@@ -495,6 +496,21 @@ foreach my $strPgVersion (versionSupport())
         confess &log(ASSERT, "PostgreSQL ${strPgVersion} ${strErrorSuffix}");
     }
 }
+
+####################################################################################################################################
+# vmValid
+####################################################################################################################################
+sub vmValid
+{
+    my $strVm = shift;
+
+    if (!defined($oyVm->{$strVm}))
+    {
+        confess &log(ERROR, "no definition for vm '${strVm}'", ERROR_OPTION_INVALID_VALUE);
+    }
+}
+
+push @EXPORT, qw(vmValid);
 
 ####################################################################################################################################
 # vmGet
