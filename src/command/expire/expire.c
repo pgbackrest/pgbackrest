@@ -661,9 +661,13 @@ cmdExpire(void)
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
 
-        infoBackupSaveFile(
-            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
+        // store the new backup info only if not in dry-run mode
+        if ( ! cfgOptionBool(cfgOptDryRun) )
+          {
+            infoBackupSaveFile(
+                               infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                               cfgOptionStr(cfgOptRepoCipherPass));
+          }
 
         removeExpiredBackup(infoBackup);
         removeExpiredArchive(infoBackup);
