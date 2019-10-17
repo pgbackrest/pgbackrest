@@ -625,8 +625,7 @@ removeExpiredBackup(InfoBackup *infoBackup)
         {
             LOG_INFO("remove expired backup %s", strPtr(strLstGet(backupList, backupIdx)));
 
-            // execute the real expiration and deletion
-            // only if the dry-run mode is disabled
+            // execute the real expiration and deletion only if the dry-run mode is disabled
             if ( ! cfgOptionBool(cfgOptDryRun) )
               storagePathRemoveP(
                                  storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(strLstGet(backupList, backupIdx))),
