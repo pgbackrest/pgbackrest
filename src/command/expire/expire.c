@@ -65,6 +65,7 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
       storageRemoveNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
       storageRemoveNP(
                       storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
+    }
 
       // Remove the backup from the info file
       infoBackupDataDelete(infoBackup, removeBackupLabel);
@@ -73,7 +74,7 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
         strCat(backupExpired, strPtr(removeBackupLabel));
       else
         strCatFmt(backupExpired, ", %s", strPtr(removeBackupLabel));
-    }
+
 
     FUNCTION_LOG_RETURN_VOID();
 }
