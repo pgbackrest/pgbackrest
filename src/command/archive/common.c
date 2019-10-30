@@ -6,6 +6,7 @@ Archive Common
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "command/archive/common.h"
 #include "common/debug.h"
@@ -228,35 +229,25 @@ walIsPartial(const String *walSegment)
 }
 
 /***********************************************************************************************************************************
-Generates the location of the wal directory using a relative wal path and the supplied pg path
+Generates the location of the wal directory using either an absolute path or cwd() and a relative path
 ***********************************************************************************************************************************/
 String *
-walPath(const String *walFile, const String *pgPath, const String *command)
+walPath(const String *walFile)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walFile);
-        FUNCTION_LOG_PARAM(STRING, pgPath);
-        FUNCTION_LOG_PARAM(STRING, command);
     FUNCTION_LOG_END();
 
     ASSERT(walFile != NULL);
-    ASSERT(command != NULL);
 
     String *result = NULL;
 
     if (!strBeginsWithZ(walFile, "/"))
     {
-        if (pgPath == NULL)
-        {
-            THROW_FMT(
-                OptionRequiredError,
-                "option '" CFGOPT_PG1_PATH "' must be specified when relative wal paths are used\n"
-                    "HINT: is %%f passed to %s instead of %%p?\n"
-                    "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
-                strPtr(command));
-        }
+        char currentWorkDir[4096];
 
-        result = strNewFmt("%s/%s", strPtr(pgPath), strPtr(walFile));
+        THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
+        result = strNewFmt("%s/%s", currentWorkDir, strPtr(walFile));
     }
     else
         result = strDup(walFile);

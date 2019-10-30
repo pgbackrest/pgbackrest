@@ -181,23 +181,12 @@ testRun(void)
 
         TEST_ERROR(cmdArchivePush(), ParamRequiredError, "WAL segment to push required");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argListTemp = strLstDup(argList);
-        strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
-
-        TEST_ERROR(
-            cmdArchivePush(), OptionRequiredError,
-            "option 'pg1-path' must be specified when relative wal paths are used"
-            "\nHINT: is %f passed to archive-push instead of %p?"
-            "\nHINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
-
         // Create pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
 
-        argListTemp = strLstDup(argList);
+        StringList *argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
@@ -222,6 +211,8 @@ testRun(void)
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
 
         storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
+
+        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
@@ -424,6 +415,8 @@ testRun(void)
         strLstAddZ(argList, "pg_wal/bogus");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
+        THROW_ON_SYS_ERROR(chdir(testPath()) != 0, PathMissingError, "unable to chdir()");
+
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,
             "unable to push WAL file 'bogus' to the archive asynchronously after 1 second(s)");
@@ -474,6 +467,8 @@ testRun(void)
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
         strLstAddZ(argListTemp, "--archive-timeout=1");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
+        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
         HARNESS_FORK_BEGIN()
         {
