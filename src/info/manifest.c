@@ -5,6 +5,7 @@ Backup Manifest Handler
 
 #include <ctype.h>
 #include <string.h>
+#include <time.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
@@ -774,14 +775,14 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
 
 Manifest *
 manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList, const Manifest *manifestPrior)
+    const Storage *storagePg, unsigned int pgVersion, bool online, bool delta, const StringList *excludeList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(BOOL, online);
+        FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
-        FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
     FUNCTION_LOG_END();
 
     ASSERT(storagePg != NULL);
@@ -794,6 +795,7 @@ manifestNewBuild(
         this = manifestNewInternal();
         this->info = infoNew(NULL);
         this->data.pgVersion = pgVersion;
+        this->data.backupOptionDelta = delta;
 
         // Data needed to build the manifest
         ManifestBuildData buildData =
@@ -932,6 +934,53 @@ manifestNewBuild(
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(MANIFEST, this);
+}
+
+/***********************************************************************************************************************************
+Delta the manifest against a prior manifest
+***********************************************************************************************************************************/
+void
+manifestDelta(Manifest *this, const Manifest *prior)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(MANIFEST, prior);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(prior != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Wait for the remainder of the second when doing online backups.  This is done because most filesystems only have a one
+        // second resolution and Postgres will still be modifying files during the second that the manifest is built and this could
+        // lead to an invalid diff/incr backup later when using timestamps to determine which files have changed.  Offline backups
+        // do not wait because it makes testing much faster and Postgres should not be running (if it is the backup will not be
+        // consistent anyway and the one-second resolution problem is the least of our worries).
+        // !!! ACTUALLY DO THIS (NEED A PROTOCOL COMMAND TO DO IT)
+        this->data.backupTimestampCopyStart = time(NULL);
+
+        // !!! NEED A PLAN TO STORE DATABASE MAP INFO (SHOULD BE SET DIRECTLY FROM BACKUP)
+
+        // Check the manifest for timestamp anomolies that require a delta backup (if delta is not already specified)
+        if (!this->data.backupOptionDelta)
+        {
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
+            {
+                const ManifestFile *file = manifestFile(this, fileIdx);
+
+                if (file->timestamp > this->data.backupTimestampCopyStart)
+                {
+                    LOG_WARN("file '%s' has timestamp in the future, enabling delta checksum", strPtr(file->name));
+                    delta = true;
+                    break;
+                }
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
