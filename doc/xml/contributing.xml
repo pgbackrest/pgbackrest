@@ -1,12 +1,176 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="{[project]}" subtitle="Contributing to {[project]}" toc="y">
+<doc title="{[project]}" subtitle="Contributing to {[project]}" toc="y" cmd-line-len="132">
     <description>{[project]} Contributing Guidelines.</description>
 
+    <!-- Variables used by the rest of the script ============================================================================== -->
+    <variable-list>
+        <variable key="host-contrib-id">contrib</variable>
+        <variable key="host-contrib">pgbackrest-dev</variable>
+        <variable key="host-contrib-user">{[host-user]}</variable>
+        <variable key="host-contrib-image">pgbackrest/doc:contrib</variable>
+
+        <variable key="cwd" eval="y">use Cwd qw(cwd); cwd()</variable>
+    </variable-list>
+
+    <!-- Setup hosts used to build the documentation =========================================================================== -->
+    <host-define if="{[os-type-is-debian]}" image="{[host-contrib-image]}" from="ubuntu:19.04">
+        {[copy-ca-cert]}
+
+        # Fix root tty
+        RUN sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile &amp;&amp; \
+
+        # Suppress dpkg interactive output
+            rm /etc/apt/apt.conf.d/70debconf
+
+        # Install base packages
+        RUN apt-get update &amp;&amp; \
+            apt-get install -y sudo ssh curl vim 2>&amp;1
+
+        # Add test user with sudo privileges
+        RUN adduser --disabled-password --gecos "" {[host-user]} &amp;&amp; \
+            echo '%{[host-user]} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+        WORKDIR /home/{[host-user]}
+
+        ENTRYPOINT service ssh restart &amp;&amp; bash
+    </host-define>
+
+    <!-- ======================================================================================================================= -->
     <section id="introduction">
         <title>Introduction</title>
 
         <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.  Coding standards to follow are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link>. At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the <link section="/testing">Testing</link> section below for details.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="environment">
+        <title>Building a Development Environment</title>
+
+        <p>This example is based on <proper>Ubuntu 19.04</proper>, but it should work on many versions of <proper>Debian</proper> and <proper>Ubuntu</proper>.</p>
+
+        <host-add id="{[host-contrib-id]}" name="{[host-contrib]}" user="{[host-contrib-user]}" image="{[host-contrib-image]}" os="u19" option="-v /var/run/docker.sock:/var/run/docker.sock -v {[cwd]}/test:{[cwd]}/test" mount="{[host-repo-path]}:/home/{[host-contrib-user]}/pgbackrest"/>
+
+        <execute-list host="{[host-contrib]}">
+            <title>Install development tools</title>
+
+            <execute user="root" pre="y">
+                <exe-cmd>
+                    apt-get install rsync git devscripts build-essential valgrind autoconf
+                    libssl-dev zlib1g-dev libperl-dev libxml2-dev libpq-dev libxml-checker-perl
+                    libyaml-libyaml-perl libdbd-pg-perl
+                </exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <p>Coverage testing is an important component of <backrest/> testing and is integrated directly into the test harness.  Unfortunately, the default version of <proper>lcov</proper> is often not compatible with <proper>gcc</proper>.  <proper>lcov 1.14</proper> works up to <proper>gcc 8</proper>.</p>
+
+        <execute-list host="{[host-contrib]}">
+            <title>Build lcov 2.14</title>
+
+            <execute pre="y">
+                <exe-cmd>
+                    curl -fsSL
+                        https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz |
+                        tar zx
+                </exe-cmd>
+            </execute>
+
+            <execute user="root" pre="y">
+                <exe-cmd>make -C lcov-1.14 install</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Some unit tests and all the integration test require <proper>Docker</proper>.  Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
+
+        <execute-list host="{[host-contrib]}">
+            <title>Install Docker</title>
+
+            <execute pre="y">
+                <exe-cmd>curl -fsSL https://get.docker.com | sudo sh</exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>
+                    usermod -aG docker `whoami`
+                </exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>This clone of the <backrest/> repository is sufficient for experimentation.  For development, create a fork and clone that instead.</p>
+
+        <execute-list host="{[host-contrib]}">
+            <title>Clone <backrest/> repository</title>
+
+            <execute err-suppress="y">
+                <exe-cmd>
+                    git clone https://github.com/pgbackrest/pgbackrest.git
+                </exe-cmd>
+            </execute>
+        </execute-list>
+    </section>
+
+    <section id="running">
+        <title>Running Tests</title>
+
+        <section id="without-docker">
+            <title>Without Docker</title>
+
+            <p>If <proper>Docker</proper> is not installed, then the available tests can be listed using <setting>--vm-none</setting>.</p>
+
+            <execute-list host="{[host-contrib]}">
+                <title>List tests that don't require a container</title>
+
+                <execute output="y">
+                    <exe-cmd>pgbackrest/test/test.pl --vm=none --dry-run</exe-cmd>
+                    <exe-highlight>[0-9]+ tests selected|DRY RUN COMPLETED SUCCESSFULLY</exe-highlight>
+                </execute>
+            </execute-list>
+
+            <p>Once a test has been selected it can be run by specifying the module and test.  The <setting>--dev</setting> option sets several flags that are appropriate for development rather than test.  Most importantly, it reuses object files from the previous test run to speed testing.  The <setting>--vm-out</setting> option displays the test output.</p>
+
+            <execute-list host="{[host-contrib]}">
+                <title>Run a test</title>
+
+                <execute output="y">
+                    <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>An entire module can be run by using only the <setting>--module</setting> option.</p>
+
+            <execute-list host="{[host-contrib]}">
+                <title>Run a module</title>
+
+                <execute output="y">
+                    <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --module=postgres</exe-cmd>
+                </execute>
+            </execute-list>
+        </section>
+
+        <section id="with-docker" depend="/environment">
+            <title>With Docker</title>
+
+            <p>Build a container to run tests.  The vm must be pre-configured but a variety are available.  The vm names are all three character abbreviations, e.g. <id>u19</id> for <proper>Ubuntu 19.04</proper>.</p>
+
+            <execute-list host="{[host-contrib]}">
+                <title>Build a VM</title>
+
+                <execute output="y">
+                    <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u19</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <execute-list host="{[host-contrib]}">
+                <title>Run a Test</title>
+
+                <execute output="y">
+                    <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u19 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
+                </execute>
+            </execute-list>
+        </section>
     </section>
 
     <section id="option">

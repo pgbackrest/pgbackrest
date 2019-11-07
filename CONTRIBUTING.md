@@ -4,6 +4,165 @@
 
 This documentation is intended to assist contributors to pgBackRest by outlining some basic steps and guidelines for contributing to the project. Coding standards to follow are defined in [CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md). At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the [Testing](#testing) section below for details.
 
+## Building a Development Environment
+
+This example is based on Ubuntu 19.04, but it should work on many versions of Debian and Ubuntu.
+
+pgbackrest-dev => Install development tools
+```
+sudo apt-get install rsync git devscripts build-essential valgrind autoconf \
+       libssl-dev zlib1g-dev libperl-dev libxml2-dev libpq-dev libxml-checker-perl \
+       libyaml-libyaml-perl libdbd-pg-perl
+```
+
+Coverage testing is an important component of pgBackRest testing and is integrated directly into the test harness. Unfortunately, the default version of lcov is often not compatible with gcc. lcov 1.14 works up to gcc 8.
+
+pgbackrest-dev => Build lcov 2.14
+```
+curl -fsSL \
+       https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz | \
+       tar zx
+sudo make -C lcov-1.14 install
+```
+
+Some unit tests and all the integration test require Docker. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of PostgreSQL, and use sudo without affecting the host system.
+
+pgbackrest-dev => Install Docker
+```
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker `whoami`
+```
+
+This clone of the pgBackRest repository is sufficient for experimentation. For development, create a fork and clone that instead.
+
+pgbackrest-dev => Clone pgBackRest repository
+```
+git clone https://github.com/pgbackrest/pgbackrest.git
+```
+
+## Running Tests
+
+### Without Docker
+
+If Docker is not installed, then the available tests can be listed using `--vm-none`.
+
+pgbackrest-dev => List tests that don't require a container
+```
+pgbackrest/test/test.pl --vm=none --dry-run
+
+--- output ---
+
+           [filtered 2 lines of output]
+    2019-10-30 10:16:44.828 P00   INFO: check version info
+    2019-10-30 10:16:45.318 P00   INFO: builds required: bin
+--> 2019-10-30 10:16:45.319 P00   INFO: 64 tests selected
+                                            
+    2019-10-30 10:16:45.319 P00   INFO: P1-T01/64 - vm=none, module=common, test=error
+           [filtered 61 lines of output]
+    2019-10-30 10:16:45.334 P00   INFO: P1-T63/64 - vm=none, module=command, test=storage
+    2019-10-30 10:16:45.334 P00   INFO: P1-T64/64 - vm=none, module=performance, test=type
+--> 2019-10-30 10:16:45.389 P00   INFO: DRY RUN COMPLETED SUCCESSFULLY (1s)
+```
+
+Once a test has been selected it can be run by specifying the module and test. The `--dev` option sets several flags that are appropriate for development rather than test. Most importantly, it reuses object files from the previous test run to speed testing. The `--vm-out` option displays the test output.
+
+pgbackrest-dev => Run a test
+```
+pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
+
+--- output ---
+
+    2019-10-30 10:16:46.166 P00   INFO: test begin - log level info
+    2019-10-30 10:16:46.743 P00   INFO: check code autogenerate
+    2019-10-30 10:16:46.743 P00   INFO: cleanup old data
+    2019-10-30 10:16:47.278 P00   INFO: builds required: none
+    2019-10-30 10:16:47.282 P00   INFO: 1 test selected
+                                            
+    2019-10-30 10:16:47.283 P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
+                                            
+        run 001 - waitNew(), waitMore, and waitFree()
+            000.004s l0018 -     expect AssertError: assertion 'waitTime >= 100 && waitTime <= 999999000' failed
+            000.020s l0019 -     expect AssertError: assertion 'waitTime >= 100 && waitTime <= 999999000' failed
+            000.024s l0024 -     new wait = 0.2 sec
+            000.032s l0025 -         check wait time
+            000.046s l0026 -         check sleep time
+            000.049s l0027 -         check sleep prev time
+            000.053s l0028 -         check begin time
+            000.259s l0034 -         lower range check
+            000.262s l0035 -         upper range check
+            000.265s l0037 -         free wait
+            000.270s l0042 -     new wait = 1.1 sec
+            000.273s l0043 -         check wait time
+            000.276s l0044 -         check sleep time
+            000.279s l0045 -         check sleep prev time
+            000.282s l0046 -         check begin time
+            001.375s l0052 -         lower range check
+            001.379s l0053 -         upper range check
+            001.382s l0055 -         free wait
+        
+        TESTS COMPLETED SUCCESSFULLY
+    
+    2019-10-30 10:16:51.145 P00   INFO: P1-T1/1 - vm=none, module=common, test=wait (3.87s)
+    2019-10-30 10:16:51.209 P00   INFO: writing C coverage report
+    2019-10-30 10:16:51.674 P00   INFO: TESTS COMPLETED SUCCESSFULLY (5s)
+```
+
+An entire module can be run by using only the `--module` option.
+
+pgbackrest-dev => Run a module
+```
+pgbackrest/test/test.pl --vm=none --dev --module=postgres
+
+--- output ---
+
+    2019-10-30 10:16:52.449 P00   INFO: test begin - log level info
+    2019-10-30 10:16:52.979 P00   INFO: check code autogenerate
+    2019-10-30 10:16:52.979 P00   INFO: cleanup old data
+    2019-10-30 10:16:53.513 P00   INFO: builds required: none
+    2019-10-30 10:16:53.517 P00   INFO: 3 tests selected
+                                            
+    2019-10-30 10:16:57.501 P00   INFO: P1-T1/3 - vm=none, module=postgres, test=client (3.99s)
+    2019-10-30 10:17:00.957 P00   INFO: P1-T2/3 - vm=none, module=postgres, test=interface (3.46s)
+    2019-10-30 10:17:03.325 P00   INFO: P1-T3/3 - vm=none, module=postgres, test=page-checksum (2.37s)
+    2019-10-30 10:17:03.382 P00   INFO: writing C coverage report
+    2019-10-30 10:17:03.944 P00   INFO: TESTS COMPLETED SUCCESSFULLY (11s)
+```
+
+### With Docker
+
+Build a container to run tests. The vm must be pre-configured but a variety are available. The vm names are all three character abbreviations, e.g. `u19` for Ubuntu 19.04.
+
+pgbackrest-dev => Build a VM
+```
+pgbackrest/test/test.pl --vm-build --vm=u19
+
+--- output ---
+
+    2019-10-30 10:17:04.779 P00   INFO: test begin - log level info
+    2019-10-30 10:17:04.812 P00   INFO: Using cached pgbackrest/test:u19-base-20191012A image (32d78710c7f60872ee4a8b2374d0110e015e2c24) ...
+    2019-10-30 10:17:05.225 P00   INFO: Building pgbackrest/test:u19-build image ...
+    2019-10-30 10:17:05.641 P00   INFO: Building pgbackrest/test:u19-test image ...
+    2019-10-30 10:17:06.013 P00   INFO: Build Complete
+```
+
+pgbackrest-dev => Run a Test
+```
+pgbackrest/test/test.pl --vm=u19 --dev --module=mock --test=archive --run=2
+
+--- output ---
+
+    2019-10-30 10:17:06.768 P00   INFO: test begin - log level info
+    2019-10-30 10:17:07.346 P00   INFO: check code autogenerate
+    2019-10-30 10:17:07.346 P00   INFO: cleanup old data and containers
+    2019-10-30 10:17:08.403 P00   INFO: builds required: bin, libc host
+    2019-10-30 10:17:08.615 P00   INFO: 1 test selected
+                                            
+    2019-10-30 10:17:41.992 P00   INFO: P1-T1/1 - vm=u19, module=mock, test=archive, run=2 (33.38s)
+    2019-10-30 10:17:42.163 P00   INFO: no code modules had all tests run required for coverage
+    2019-10-30 10:17:42.163 P00   INFO: writing C coverage report
+    2019-10-30 10:17:42.224 P00   INFO: TESTS COMPLETED SUCCESSFULLY (36s)
+```
+
 ## Adding an Option
 
 Options can be added to a command or multiple commands. Options can be configuration file only, command-line only or valid for both. Once an option is added, `config.auto.*`, `define.auto.*` and `parse.auto.*` files will automatically be generated by the build system.
