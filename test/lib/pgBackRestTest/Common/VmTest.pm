@@ -13,6 +13,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::DbVersion;
 
@@ -495,6 +496,38 @@ foreach my $strPgVersion (versionSupport())
         confess &log(ASSERT, "PostgreSQL ${strPgVersion} ${strErrorSuffix}");
     }
 }
+
+####################################################################################################################################
+# vmValid
+####################################################################################################################################
+sub vmValid
+{
+    my $strVm = shift;
+
+    if (!defined($oyVm->{$strVm}))
+    {
+        confess &log(ERROR, "no definition for vm '${strVm}'", ERROR_OPTION_INVALID_VALUE);
+    }
+}
+
+push @EXPORT, qw(vmValid);
+
+####################################################################################################################################
+# Which vm to use for the test matrix.  If one of the standard four, then use that, else use VM4.
+####################################################################################################################################
+sub vmTest
+{
+    my $strVm = shift;
+
+    if (grep(/^$strVm$/, VM_LIST))
+    {
+        return $strVm;
+    }
+
+    return VM4;
+}
+
+push @EXPORT, qw(vmTest);
 
 ####################################################################################################################################
 # vmGet

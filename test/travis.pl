@@ -17,6 +17,7 @@ $SIG{__DIE__} = sub { Carp::confess @_ };
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Cwd qw(abs_path);
+use Pod::Usage qw(pod2usage);
 
 use lib dirname($0) . '/lib';
 use lib dirname(dirname($0)) . '/lib';
@@ -42,6 +43,8 @@ test.pl [options] doc|test
 
  VM Options:
    --vm                 docker container to build/test
+   --param              parameters to pass to test.pl
+   --sudo               test requires sudo
 
  General Options:
    --help               display usage and exit
@@ -51,9 +54,13 @@ test.pl [options] doc|test
 # Command line parameters
 ####################################################################################################################################
 my $strVm;
+my @stryParam;
+my $bSudo;
 my $bHelp;
 
 GetOptions ('help' => \$bHelp,
+            'param=s@' => \@stryParam,
+            'sudo' => \$bSudo,
             'vm=s' => \$strVm)
     or pod2usage(2);
 
@@ -129,6 +136,12 @@ eval
         {bSuppressStdErr => true});
     processEnd();
 
+    processBegin('mount tmpfs');
+    processExec('mkdir -p -m 770 test');
+    processExec('sudo mount -t tmpfs -o size=2560m tmpfs test');
+    processExec('df -h test', {bShowOutputAsync => true});
+    processEnd();
+
     ################################################################################################################################
     # Build documentation
     ################################################################################################################################
@@ -143,6 +156,10 @@ eval
             processExec('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
         }
 
+        processBegin('remove sudo');
+        processExec('sudo rm /etc/sudoers.d/travis');
+        processEnd();
+
         processBegin('release documentation');
         processExec("${strReleaseExe} --build --no-gen --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
@@ -153,9 +170,6 @@ eval
     ################################################################################################################################
     elsif ($ARGV[0] eq 'test')
     {
-        my $strParam = "";
-        my $strVmHost = VM_U14;
-
         # Build list of packages that need to be installed
         my $strPackage = "libperl-dev";
 
@@ -173,52 +187,33 @@ eval
             $strPackage .= " libdbd-pg-perl";
         }
 
+        processBegin('/tmp/pgbackrest owned by root so tests cannot use it');
+        processExec('sudo mkdir -p /tmp/pgbackrest && sudo chown root:root /tmp/pgbackrest && sudo chmod 700 /tmp/pgbackrest');
+        processEnd();
+
         processBegin('install test packages');
         processExec("sudo apt-get install -y ${strPackage}", {bSuppressStdErr => true});
         processEnd();
 
-        # Run tests that can be run without a container
-        if ($strVm eq VM_NONE)
+        if (!$bSudo)
         {
-            processBegin('/tmp/pgbackrest owned by root so tests cannot use it');
-            processExec('sudo mkdir -p /tmp/pgbackrest && sudo chown root:root /tmp/pgbackrest && sudo chmod 700 /tmp/pgbackrest');
-            processEnd();
-
-            # Set local timezone to make sure tests work in any timezone
-            $ENV{'TZ'} = 'America/New_York';
-
             processBegin('remove sudo');
             processExec('sudo rm /etc/sudoers.d/travis');
             processEnd();
-
-            $strVmHost = VM_U18;
         }
-        # Else run tests that require a container
-        else
+
+        # Build the container
+        if ($strVm ne VM_NONE)
         {
-            # Build the container
             processBegin("${strVm} build");
             processExec("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
             processEnd();
-
-            # Run tests
-            if ($strVm eq VM_U18)
-            {
-                $strParam .= " --container-only";
-            }
-            elsif ($strVm eq VM_F30)
-            {
-                $strParam .= " --no-package --c-only";
-            }
-            elsif ($strVm ne VM_U12)
-            {
-                $strParam .= " --module=real";
-            }
         }
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --no-gen --vm-host=${strVmHost} --vm-max=2 --vm=${strVm}${strParam}",
+            "${strTestExe} --no-gen --vm-host=none --vm-max=2 --vm=${strVm}" .
+            (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }

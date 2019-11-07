@@ -13,11 +13,11 @@ services:
 
 matrix:
   include:
-    - env: PGB_CI="--vm=f30 test"
+    - env: PGB_CI="test --vm=f30 --param=no-package --param=c-only"
 
 install:
-  - umask 0022
-  - cd ~ && pwd && whoami && umask && groups
+  - umask 0022 && cd ~ && pwd && whoami && umask && groups
+  - df -Th && top -bn1
 
 script:
   - ${TRAVIS_BUILD_DIR?}/test/travis.pl ${PGB_CI?}

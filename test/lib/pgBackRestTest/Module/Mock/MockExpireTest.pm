@@ -85,7 +85,7 @@ sub run
     )
     {
         # Only run tests for this vm
-        next if ($rhRun->{vm} ne $self->vm());
+        next if ($rhRun->{vm} ne vmTest($self->vm()));
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bS3 = $rhRun->{s3};

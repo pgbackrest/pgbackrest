@@ -17,22 +17,51 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void testAdd(int run, bool selected);
+// Begin a test if this function returns true, otherwise the user has skipped it
 bool testBegin(const char *name);
-void testComplete(void);
 
+// Read a file (max 256k) into a buffer
+void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize);
+
+// Write a buffer to a file
+void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize);
+
+// Replace common test values in a string and return a buffer with the replacements.
+//
+// Note that the returned buffer will be overwritten with each call.  Values that can be replaced are:
+//
+// {[path]} - the current test path
+// {[path-data]} - the current test data path
+// {[user]} - the current test user
+// {[group]} - the current test group
+// {[project-exe]} - the project exe
+const char *hrnReplaceKey(const char *string);
+
+// Diff two strings using command-line diff tool
+const char *hrnDiff(const char *actual, const char *expected);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+// Time in MS
 uint64_t testTimeMSec(void);
+
+// Time in MS at the beginning of the test run (since testBegin() was called)
 uint64_t testTimeMSecBegin(void);
 
+// The path and name of the test executable
 const char *testExe(void);
-void testExeSet(const char *testExe);
 
+// Path where test data is written
 const char *testPath(void);
-void testPathSet(const char *testPath);
-const char *testRepoPath(void);
-void testRepoPathSet(const char *testRepoPath);
 
+// Path to a copy of the repository
+const char *testRepoPath(void);
+
+// Test OS user
 const char *testUser(void);
+
+// Test OS group
 const char *testGroup(void);
 
 // Is this test running in a container?
@@ -50,24 +79,6 @@ const char *testProjectExe(void);
 
 // For scaling performance tests
 uint64_t testScale(void);
-
-// Read a file (max 256k) into a buffer
-void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize);
-
-// Write a buffer to a file
-void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize);
-
-// Replace common test values in a string and return a buffer with the replacements.
-//
-// Note that the returned buffer will be overwritten with each call.  Values that can be replaced are:
-//
-// {[path]} - the current test path
-// {[user]} - the current test user
-// {[group]} - the current test group
-const char *hrnReplaceKey(const char *string);
-
-// Diff two strings using command-line diff tool
-const char *hrnDiff(const char *actual, const char *expected);
 
 /***********************************************************************************************************************************
 Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies

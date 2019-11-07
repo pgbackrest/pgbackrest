@@ -248,6 +248,14 @@ eval
     }
 
     ################################################################################################################################
+    # Disable code generation on dry-run
+    ################################################################################################################################
+    if ($bDryRun)
+    {
+        $bNoGen = true;
+    }
+
+    ################################################################################################################################
     # Update options for --coverage-summary
     ################################################################################################################################
     if ($bCoverageSummary)
@@ -347,6 +355,11 @@ eval
     if (!defined($strVm))
     {
         $strVm = VM_ALL;
+    }
+    # Else make sure vm is valid
+    elsif ($strVm ne VM_ALL)
+    {
+        vmValid($strVm);
     }
 
     # Get the base backrest path
@@ -1074,8 +1087,8 @@ eval
                         executeTest("rsync -r --exclude .vagrant --exclude .git ${strBackRestBase}/ ${strBuildPath}/");
                         executeTest(
                             ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                            "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER .
-                            " ${strBuildPath}");
+                            "bash -c 'cp -r /root/package-src/debian ${strBuildPath} && sudo chown -R " . TEST_USER .
+                            " ${strBuildPath}'");
 
                         # Patch files in debian package builds
                         #
@@ -1539,7 +1552,11 @@ or do
     # If a backrest exception then return the code
     if (isException(\$EVAL_ERROR))
     {
-        syswrite(*STDOUT, $EVAL_ERROR->message() . "\n" . $EVAL_ERROR->trace());
+        if ($EVAL_ERROR->code() != ERROR_OPTION_INVALID_VALUE)
+        {
+            syswrite(*STDOUT, $EVAL_ERROR->message() . "\n" . $EVAL_ERROR->trace());
+        }
+
         exit $EVAL_ERROR->code();
     }
 

@@ -112,7 +112,8 @@
         <render type="markdown">
             <render-source key="index" file="../../../README.md"/>
             <render-source key="coding" file="../../../CODING.md"/>
-            <render-source key="contributing" file="../../../CONTRIBUTING.md"/>
+            <!-- This needs to be uncommented when generating the contributing doc.  We are currently unable to get Docker in Docker running correctly in CI. -->
+            <!-- <render-source key="contributing" file="../../../CONTRIBUTING.md"/> -->
             <render-source key="test" file="../../../test/README.md"/>
             <render-source key="documentation" file="../../README.md"/>
         </render>
