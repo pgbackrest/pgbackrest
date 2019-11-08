@@ -176,7 +176,7 @@ storageWriteRemoteNew(
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(STRING, user);
         FUNCTION_LOG_PARAM(STRING, group);
-        FUNCTION_LOG_PARAM(INT64, timeModified);
+        FUNCTION_LOG_PARAM(TIME, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
