@@ -9,6 +9,7 @@ Convert Base Data Types
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "common/debug.h"
 #include "common/type/convert.h"
@@ -375,6 +376,28 @@ cvtSSizeToZ(ssize_t value, char *buffer, size_t bufferSize)
     size_t result = (size_t)snprintf(buffer, bufferSize, "%zd", value);
 
     if (result >= bufferSize)
+        THROW(AssertError, "buffer overflow");
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Convert time to zero-terminated string
+***********************************************************************************************************************************/
+size_t
+cvtTimeToZ(time_t value, char *buffer, size_t bufferSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TIME, value);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
+        FUNCTION_TEST_PARAM(SIZE, bufferSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+
+    size_t result = strftime(buffer, bufferSize, "%s", gmtime(&value));
+
+    if (result == 0)
         THROW(AssertError, "buffer overflow");
 
     FUNCTION_TEST_RETURN(result);

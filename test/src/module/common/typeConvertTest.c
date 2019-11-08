@@ -109,6 +109,17 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("cvtTimeToZ()"))
+    {
+        char buffer[STACK_TRACE_PARAM_MAX];
+
+        TEST_ERROR(cvtTimeToZ(9999, buffer, 4), AssertError, "buffer overflow");
+
+        TEST_RESULT_UINT(cvtTimeToZ(1573222014, buffer, STACK_TRACE_PARAM_MAX), 10, "convert time to string");
+        TEST_RESULT_STR(buffer, "1573222014", "    check buffer");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cvtUIntToZ() and cvtZToUInt()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];

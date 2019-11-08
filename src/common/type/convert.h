@@ -36,6 +36,8 @@ mode_t cvtZToMode(const char *value);
 size_t cvtSizeToZ(size_t value, char *buffer, size_t bufferSize);
 size_t cvtSSizeToZ(ssize_t value, char *buffer, size_t bufferSize);
 
+size_t cvtTimeToZ(time_t value, char *buffer, size_t bufferSize);
+
 size_t cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize);
 unsigned int cvtZToUInt(const char *value);
 unsigned int cvtZToUIntBase(const char *value, int base);
