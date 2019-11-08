@@ -38,11 +38,11 @@ restoreFile(
         FUNCTION_LOG_PARAM(STRING, pgFileChecksum);
         FUNCTION_LOG_PARAM(BOOL, pgFileZero);
         FUNCTION_LOG_PARAM(UINT64, pgFileSize);
-        FUNCTION_LOG_PARAM(INT64, pgFileModified);
+        FUNCTION_LOG_PARAM(TIME, pgFileModified);
         FUNCTION_LOG_PARAM(MODE, pgFileMode);
         FUNCTION_LOG_PARAM(STRING, pgFileUser);
         FUNCTION_LOG_PARAM(STRING, pgFileGroup);
-        FUNCTION_LOG_PARAM(INT64, copyTimeBegin);
+        FUNCTION_LOG_PARAM(TIME, copyTimeBegin);
         FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(BOOL, deltaForce);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
