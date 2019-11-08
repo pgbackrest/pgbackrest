@@ -794,6 +794,7 @@ manifestNewBuild(
         this = manifestNewInternal();
         this->info = infoNew(NULL);
         this->data.pgVersion = pgVersion;
+        this->data.backupOptionOnline = online;
 
         // Data needed to build the manifest
         ManifestBuildData buildData =
@@ -935,10 +936,10 @@ manifestNewBuild(
 }
 
 /***********************************************************************************************************************************
-Complete the manifest build by providing a copy start time
+Validate the timestamps in the manifest given a copy start time, i.e. all times should be <= the copy start time
 ***********************************************************************************************************************************/
 void
-manifestBuildComplete(Manifest *this, bool delta, time_t copyStart)
+manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -946,34 +947,18 @@ manifestBuildComplete(Manifest *this, bool delta, time_t copyStart)
         FUNCTION_LOG_PARAM(TIME, copyStart);
     FUNCTION_LOG_END();
 
-    this->data.backupOptionDelta = varNewBool(delta);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Create a diff/incr backup by comparing to a previous backup manifest
-***********************************************************************************************************************************/
-void
-manifestBuildCompare(Manifest *this, const Manifest *prior)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, this);
-        FUNCTION_LOG_PARAM(MANIFEST, prior);
-    FUNCTION_LOG_END();
-
     ASSERT(this != NULL);
-    ASSERT(prior != NULL);
+    ASSERT(copyStart > 0);
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    MEM_CONTEXT_BEGIN(this->memContext)
     {
-        // Wait for the remainder of the second when doing online backups.  This is done because most filesystems only have a one
-        // second resolution and Postgres will still be modifying files during the second that the manifest is built and this could
-        // lead to an invalid diff/incr backup later when using timestamps to determine which files have changed.  Offline backups
-        // do not wait because it makes testing much faster and Postgres should not be running (if it is the backup will not be
-        // consistent anyway and the one-second resolution problem is the least of our worries).
-        // !!! ACTUALLY DO THIS (NEED A PROTOCOL COMMAND TO DO IT)
-        this->data.backupTimestampCopyStart = time(NULL);
+        // Store the delta option.  If true we can skip checks that automatically enable delta.
+        this->data.backupOptionDelta = varNewBool(delta);
+
+        // If online then add one second to the copy start time to allow for database updates during the last second that the
+        // manifest was being built.  It's up to the caller to actually wait the remainder of the second, but for comparison
+        // purposes we want the time when the waiting started.
+        this->data.backupTimestampCopyStart = copyStart + (this->data.backupOptionOnline ? 1 : 0);
 
         // !!! NEED A PLAN TO STORE DATABASE MAP INFO (SHOULD BE SET DIRECTLY FROM BACKUP)
 
@@ -993,7 +978,24 @@ manifestBuildCompare(Manifest *this, const Manifest *prior)
             }
         }
     }
-    MEM_CONTEXT_TEMP_END();
+    MEM_CONTEXT_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Create a diff/incr backup by comparing to a previous backup manifest
+***********************************************************************************************************************************/
+void
+manifestBuildCompare(Manifest *this, const Manifest *prior)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(MANIFEST, prior);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(prior != NULL);
 
     FUNCTION_LOG_RETURN_VOID();
 }
