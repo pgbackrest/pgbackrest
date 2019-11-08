@@ -775,13 +775,12 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
 
 Manifest *
 manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, bool online, bool delta, const StringList *excludeList)
+    const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(BOOL, online);
-        FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
     FUNCTION_LOG_END();
 
@@ -795,7 +794,6 @@ manifestNewBuild(
         this = manifestNewInternal();
         this->info = infoNew(NULL);
         this->data.pgVersion = pgVersion;
-        this->data.backupOptionDelta = delta;
 
         // Data needed to build the manifest
         ManifestBuildData buildData =
@@ -937,10 +935,27 @@ manifestNewBuild(
 }
 
 /***********************************************************************************************************************************
-Delta the manifest against a prior manifest
+Complete the manifest build by providing a copy start time
 ***********************************************************************************************************************************/
 void
-manifestDelta(Manifest *this, const Manifest *prior)
+manifestBuildComplete(Manifest *this, bool delta, time_t copyStart)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(BOOL, delta);
+        FUNCTION_LOG_PARAM(TIME, copyStart);
+    FUNCTION_LOG_END();
+
+    this->data.backupOptionDelta = varNewBool(delta);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Create a diff/incr backup by comparing to a previous backup manifest
+***********************************************************************************************************************************/
+void
+manifestBuildCompare(Manifest *this, const Manifest *prior)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -963,7 +978,7 @@ manifestDelta(Manifest *this, const Manifest *prior)
         // !!! NEED A PLAN TO STORE DATABASE MAP INFO (SHOULD BE SET DIRECTLY FROM BACKUP)
 
         // Check the manifest for timestamp anomolies that require a delta backup (if delta is not already specified)
-        if (!this->data.backupOptionDelta)
+        if (!varBool(this->data.backupOptionDelta))
         {
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
             {
@@ -972,7 +987,7 @@ manifestDelta(Manifest *this, const Manifest *prior)
                 if (file->timestamp > this->data.backupTimestampCopyStart)
                 {
                     LOG_WARN("file '%s' has timestamp in the future, enabling delta checksum", strPtr(file->name));
-                    delta = true;
+                    this->data.backupOptionDelta = BOOL_TRUE_VAR;
                     break;
                 }
             }
