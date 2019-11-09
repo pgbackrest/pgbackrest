@@ -69,12 +69,12 @@ sub new
     my $strFakeCertPath = "${strProjectPath}/doc/resource/fake-cert";
 
     my $self = $class->SUPER::new(
-        HOST_S3, 'test-' . testRunGet()->vmId() . '-s3-server', 'minio/minio:RELEASE.2019-06-04T01-15-58Z', 'root', 'u18',
+        HOST_S3, 'test-' . testRunGet()->vmId() . '-s3-server', 'minio/minio:RELEASE.2019-10-12T01-39-57Z', 'root', 'u18',
         ["${strFakeCertPath}/s3-server.crt:/root/.minio/certs/public.crt:ro",
             "${strFakeCertPath}/s3-server.key:/root/.minio/certs/private.key:ro"],
         '-e MINIO_REGION=' . HOST_S3_REGION . ' -e MINIO_DOMAIN=' . HOST_S3_ENDPOINT . ' -e MINIO_BROWSER=off' .
             ' -e MINIO_ACCESS_KEY=' . HOST_S3_ACCESS_KEY . ' -e MINIO_SECRET_KEY=' . HOST_S3_ACCESS_SECRET_KEY,
-        'server /data --address :443 --compat', false);
+        'server /data --address :443', false);
     bless $self, $class;
 
     # Return from function and log return values if any

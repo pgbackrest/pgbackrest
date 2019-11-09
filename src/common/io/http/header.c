@@ -93,14 +93,28 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    // Make sure the key does not already exist
+    // Check if the key already exists
     const Variant *keyVar = VARSTR(key);
+    const Variant *valueVar = kvGet(this->kv, keyVar);
 
-    if (kvGet(this->kv, keyVar) != NULL)
-        THROW_FMT(AssertError, "key '%s' already exists", strPtr(key));
+    // If the key exists then append the new value.  The HTTP spec (RFC 2616, Section 4.2) says that if a header appears more than
+    // once then it is equivalent to a single comma-separated header.  There appear to be a few exceptions such as Set-Cookie, but
+    // they should not be of concern to us here.
+    if (valueVar != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            String *valueAppend = strDup(varStr(valueVar));
+            strCat(valueAppend, ", ");
+            strCat(valueAppend, strPtr(value));
 
-    // Store the key
-    kvPut(this->kv, keyVar, VARSTR(value));
+            kvPut(this->kv, keyVar, VARSTR(valueAppend));
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+    // Else store the key
+    else
+        kvPut(this->kv, keyVar, VARSTR(value));
 
     FUNCTION_TEST_RETURN(this);
 }

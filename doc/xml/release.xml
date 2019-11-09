@@ -25,6 +25,16 @@
 
                         <p>When performing a delta restore on a largely unchanged cluster the remote could timeout if no files were fetched from the repository within <br-option>protocol-timeout</br-option>.  Add keep-alives to prevent remote timeout.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="donicrosby"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix handling of repeated HTTP headers.</p>
+
+                        <p>When HTTP headers are repeated they should be considered equivalent to a single comma-separated header rather than generating an error, which was the prior behavior.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -7556,6 +7566,11 @@
         <contributor id="dmitry.didovicher">
             <contributor-name-display>Dmitry Didovicher</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
+        </contributor>
+
+        <contributor id="donicrosby">
+            <contributor-name-display>donicrosby</contributor-name-display>
+            <contributor-id type="github">donicrosby</contributor-id>
         </contributor>
 
         <contributor id="douglas.j.hunley">
