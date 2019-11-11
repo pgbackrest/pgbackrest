@@ -159,7 +159,13 @@ So can we use this to validate? Or maybe we need to run it through another funct
                 // If converting results returns NULL or all the input was not consumed, then error
                 if (lastChar == NULL || *lastChar != '\0'))
                     THROW(some error);
+                // Else find the newest backup set with a stop time greater than the target recovery time
                 else
+                {
+                    for (unsigned int keyIdx = infoBackupDataTotal(info) - 1; (int)keyIdx >= 0; keyIdx--)
+                    {
+                        // Get the backup data
+                        InfoBackupData backupData = infoBackupData(info, keyIdx);
                 // CSHANG Here we need to seach backup.info for the stop time that is less than timeRecoveryTarget starting from newest to oldest.
             }
 
