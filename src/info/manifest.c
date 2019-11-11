@@ -1069,7 +1069,7 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
                 {
                     // Copy reference from prior file if it exists, else reference the prior backup
                     file->reference = strLstAddIfMissing(
-                        this->referenceList, filePrior->reference ? filePrior->reference : prior->data.backupLabel);
+                        this->referenceList, filePrior->reference != NULL ? filePrior->reference : prior->data.backupLabel);
 
                     // Copy checksum from prior file
                     memcpy(file->checksumSha1, filePrior->checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);

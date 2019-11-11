@@ -332,10 +332,11 @@ testRun(void)
         #define TEST_MANIFEST_HEADER_PRE                                                                                           \
             "[backup]\n"                                                                                                           \
             "backup-label=null\n"                                                                                                  \
+            "backup-prior=\"20190101-010101F\"\n"                                                                                  \
             "backup-timestamp-copy-start=0\n"                                                                                      \
             "backup-timestamp-start=0\n"                                                                                           \
             "backup-timestamp-stop=0\n"                                                                                            \
-            "backup-type=\"diff\"\n"                                                                                               \
+            "backup-type=\"incr\"\n"                                                                                               \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
             "db-catalog-version=201608131\n"                                                                                       \
@@ -383,16 +384,43 @@ testRun(void)
         manifestFileAdd(
             manifest,
             &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         Manifest *manifestPrior = manifestNewInternal();
+        manifestPrior->data.backupLabel = strNew("20190101-010101F");
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860});
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .checksumSha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709"});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182860,
+                .checksumSha1 = "ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd"});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
 
-        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeDiff), "incremental manifest");
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr), "incremental manifest");
 
         Buffer *contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -407,7 +435,151 @@ testRun(void)
                 "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1482182860}\n"
+                "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
+                "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
+                "pg_data/FILE4={\"size\":55,\"timestamp\":1482182861}\n"
+                "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"reference\":\"20190101-010101F\","
+                    "\"size\":4,\"timestamp\":1482182860}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta enabled before validation");
+
+        manifest->data.backupOptionDelta = BOOL_TRUE_VAR;
+        lstClear(manifest->fileList);
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .reference = STRDEF("20190101-010101F_20190202-010101D"),
+                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
+
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr), "incremental manifest");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER_PRE
+                "option-delta=true\n"
+                TEST_MANIFEST_HEADER_POST
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\","
+                    "\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,\"timestamp\":1482182860}\n"
+                "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"reference\":\"20190101-010101F\","
+                    "\"size\":4,\"timestamp\":1482182860}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta enabled by timestamp validation");
+
+        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+        lstClear(manifest->fileList);
+
+        VariantList *checksumPageErrorList = varLstNew();
+        varLstAdd(checksumPageErrorList, varNewUInt(77));
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"), .checksumPage = true, .checksumPageError = true,
+                .checksumPageErrorList = checksumPageErrorList});
+
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr), "incremental manifest");
+
+        TEST_RESULT_LOG("P00   WARN: file 'FILE1' has timestamp earlier than prior backup, enabling delta checksum");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER_PRE
+                "option-delta=true\n"
+                TEST_MANIFEST_HEADER_POST
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":true,"
+                    "\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,"
+                    "\"timestamp\":1482182859}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta enabled by size validation");
+
+        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+        lstClear(manifest->fileList);
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .reference = STRDEF("20190101-010101F_20190202-010101D"),
+                .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
+
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr), "incremental manifest");
+
+        TEST_RESULT_LOG("P00   WARN: file 'FILE2' has same timestamp as prior but different size, enabling delta checksum");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER_PRE
+                "option-delta=true\n"
+                TEST_MANIFEST_HEADER_POST
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
+                "pg_data/FILE2={\"size\":6,\"timestamp\":1482182860}\n"
                 TEST_MANIFEST_FILE_DEFAULT
                 "\n"
                 "[target:path]\n"
