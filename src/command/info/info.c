@@ -259,8 +259,8 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
         // timestamp section
         KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
 
-        kvAdd(timeInfo, KEY_START_VAR, VARUINT64(backupData.backupTimestampStart));
-        kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64(backupData.backupTimestampStop));
+        kvAdd(timeInfo, KEY_START_VAR, VARUINT64((uint64_t)backupData.backupTimestampStart));
+        kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64((uint64_t)backupData.backupTimestampStop));
 
         // If a backup label was specified and this is that label, then get the manifest
         if (backupLabel != NULL && strEq(backupData.backupLabel, backupLabel))
