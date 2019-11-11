@@ -959,26 +959,28 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
         // manifest was being built.  It's up to the caller to actually wait the remainder of the second, but for comparison
         // purposes we want the time when the waiting started.
         this->data.backupTimestampCopyStart = copyStart + (this->data.backupOptionOnline ? 1 : 0);
+    }
+    MEM_CONTEXT_END();
 
-        // !!! NEED A PLAN TO STORE DATABASE MAP INFO (SHOULD BE SET DIRECTLY FROM BACKUP)
-
-        // Check the manifest for timestamp anomolies that require a delta backup (if delta is not already specified)
-        if (!varBool(this->data.backupOptionDelta))
+    // Check the manifest for timestamp anomolies that require a delta backup (if delta is not already specified)
+    if (!varBool(this->data.backupOptionDelta))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
         {
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
             {
                 const ManifestFile *file = manifestFile(this, fileIdx);
 
-                if (file->timestamp > this->data.backupTimestampCopyStart)
+                if (file->timestamp > copyStart)
                 {
-                    LOG_WARN("file '%s' has timestamp in the future, enabling delta checksum", strPtr(file->name));
+                    LOG_WARN("file '%s' has timestamp in the future, enabling delta checksum", strPtr(manifestPgPath(file->name)));
                     this->data.backupOptionDelta = BOOL_TRUE_VAR;
                     break;
                 }
             }
         }
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -987,18 +989,114 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
 Create a diff/incr backup by comparing to a previous backup manifest
 ***********************************************************************************************************************************/
 void
-manifestBuildCompare(Manifest *this, const Manifest *prior)
+manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(MANIFEST, prior);
+        FUNCTION_LOG_PARAM(ENUM, type);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(prior != NULL);
+    ASSERT(type == backupTypeDiff || type == backupTypeIncr);
+    ASSERT(type != backupTypeDiff || prior->data.backupType == backupTypeFull);
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        // Set prior backup label
+        this->data.backupLabelPrior = strDup(prior->data.backupLabel);
+
+        // Set diff/incr backup type
+        this->data.backupType = type;
+    }
+    MEM_CONTEXT_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Check for anomolies between manifests if delta is not already enabled.  This can't be combined with the main comparison
+        // loop below because delta changes the behavior of that loop.
+        if (!varBool(this->data.backupOptionDelta))
+        {
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
+            {
+                const ManifestFile *file = manifestFile(this, fileIdx);
+                const ManifestFile *filePrior = manifestFileFindDefault(prior, file->name, NULL);
+
+                // If file was found in prior manifest then perform checks
+                if (filePrior != NULL)
+                {
+                    // Check for timestamp earlier than the prior backup
+                    if (file->timestamp < filePrior->timestamp)
+                    {
+                        LOG_WARN(
+                            "file '%s' has timestamp earlier than prior backup, enabling delta checksum",
+                            strPtr(manifestPgPath(file->name)));
+
+                        this->data.backupOptionDelta = BOOL_TRUE_VAR;
+                        break;
+                    }
+
+                    // Check for size change with no timestamp change
+                    if (file->size != filePrior->size && file->timestamp == filePrior->timestamp)
+                    {
+                        LOG_WARN(
+                            "file '%s' has same timestamp as prior but different size, enabling delta checksum",
+                            strPtr(manifestPgPath(file->name)));
+
+                        this->data.backupOptionDelta = BOOL_TRUE_VAR;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Find files in the prior manifest:
+        // 1) that don't need to be copied because delta is disabled and the size and timestamp match or size matches and is zero
+        // 2) where delta is enabled and size matches so checkum will be verified during backup and the file copied on mismatch
+        bool delta = varBool(this->data.backupOptionDelta);
+
+        for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
+        {
+            ManifestFile *file = lstGet(this->fileList, fileIdx);
+            const ManifestFile *filePrior = manifestFileFindDefault(prior, file->name, NULL);
+
+            // Check if prior file can be used
+            if (filePrior != NULL &&
+                file->size == filePrior->size && (delta || (file->size == 0 || file->timestamp == filePrior->timestamp)))
+            {
+                MEM_CONTEXT_BEGIN(this->memContext)
+                {
+                    // Copy reference from prior file if it exists, else reference the prior backup
+                    file->reference = strLstAddIfMissing(
+                        this->referenceList, filePrior->reference ? filePrior->reference : prior->data.backupLabel);
+
+                    // Copy checksum from prior file
+                    memcpy(file->checksumSha1, filePrior->checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+                    // Copy repo size from prior file
+                    file->sizeRepo = filePrior->sizeRepo;
+
+                    // Copy checksum page info from the previous file if it exists
+                    if (filePrior->checksumPage)
+                    {
+                        file->checksumPage = true;
+                        file->checksumPageError = filePrior->checksumPageError;
+                        file->checksumPageErrorList = varLstDup(filePrior->checksumPageErrorList);
+                    }
+                }
+                MEM_CONTEXT_END();
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
+
+/***********************************************************************************************************************************
+!!! NEED A PLAN TO STORE DATABASE MAP INFO (SHOULD BE SET DIRECTLY FROM BACKUP)
+***********************************************************************************************************************************/
 
 /***********************************************************************************************************************************
 Load manifest

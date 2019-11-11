@@ -30,7 +30,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("infoManifestNewBuild()"))
+    if (testBegin("manifestNewBuild()"))
     {
         #define TEST_MANIFEST_HEADER                                                                                               \
             "[backup]\n"                                                                                                           \
@@ -270,11 +270,6 @@ testRun(void)
                 TEST_MANIFEST_PATH_DEFAULT))),
             "check manifest");
 
-        #undef TEST_MANIFEST_HEADER
-        #undef TEST_MANIFEST_FILE_DEFAULT
-        #undef TEST_MANIFEST_LINK_DEFAULT
-        #undef TEST_MANIFEST_PATH_DEFAULT
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link in pg_data");
 
@@ -285,6 +280,145 @@ testRun(void)
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), LinkDestinationError,
             hrnReplaceKey("link 'link' ({[path]}/pg/base) destination is in PGDATA"));
+
+        #undef TEST_MANIFEST_HEADER
+        #undef TEST_MANIFEST_DB_83
+        #undef TEST_MANIFEST_DB_94
+        #undef TEST_MANIFEST_OPTION
+        #undef TEST_MANIFEST_FILE_DEFAULT
+        #undef TEST_MANIFEST_LINK_DEFAULT
+        #undef TEST_MANIFEST_PATH_DEFAULT
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("manifestBuildValidate()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("don't check for delta if already enabled and test online timestamp");
+
+        Manifest *manifest = manifestNewInternal();
+        manifest->data.backupOptionOnline = true;
+
+        TEST_RESULT_VOID(manifestBuildValidate(manifest, true, 1482182860), "validate manifest");
+        TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182861, "check copy start");
+        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timestamp in past does not force delta");
+
+        manifest->data.backupOptionOnline = false;
+
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860});
+
+        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182860), "validate manifest");
+        TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182860, "check copy start");
+        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), false, "check delta");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timestamp in future forces delta");
+
+        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859), "validate manifest");
+        TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182859, "check copy start");
+        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
+
+        TEST_RESULT_LOG("P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("manifestBuildIncr()"))
+    {
+        #define TEST_MANIFEST_HEADER_PRE                                                                                           \
+            "[backup]\n"                                                                                                           \
+            "backup-label=null\n"                                                                                                  \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"diff\"\n"                                                                                               \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201608131\n"                                                                                       \
+            "db-control-version=960\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"9.6\"\n"                                                                                                 \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "option-archive-check=false\n"                                                                                         \
+            "option-archive-copy=false\n"                                                                                          \
+            "option-compress=false\n"
+
+        #define TEST_MANIFEST_HEADER_POST                                                                                          \
+            "option-hardlink=false\n"                                                                                              \
+            "option-online=false\n"
+
+        #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:file:default]\n"                                                                                              \
+            "group=\"test\"\n"                                                                                                     \
+            "master=false\n"                                                                                                       \
+            "mode=\"0600\"\n"                                                                                                      \
+            "user=\"test\"\n"
+
+        #define TEST_MANIFEST_PATH_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:path:default]\n"                                                                                              \
+            "group=\"test\"\n"                                                                                                     \
+            "mode=\"0700\"\n"                                                                                                      \
+            "user=\"test\"\n"
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta disabled and not enabled during validation");
+
+        Manifest *manifest = manifestNewInternal();
+        manifest->info = infoNew(NULL);
+        manifest->data.pgVersion = PG_VERSION_96;
+        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+
+        manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
+        manifestPathAdd(
+            manifest,
+            &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+
+        Manifest *manifestPrior = manifestNewInternal();
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860});
+
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeDiff), "incremental manifest");
+
+        Buffer *contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER_PRE
+                "option-delta=false\n"
+                TEST_MANIFEST_HEADER_POST
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1482182860}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        #undef TEST_MANIFEST_HEADER_PRE
+        #undef TEST_MANIFEST_HEADER_POST
+        #undef TEST_MANIFEST_FILE_DEFAULT
+        #undef TEST_MANIFEST_PATH_DEFAULT
     }
 
     // *****************************************************************************************************************************
