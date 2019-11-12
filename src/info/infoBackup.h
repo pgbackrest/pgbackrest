@@ -45,8 +45,8 @@ typedef struct InfoBackupData
     unsigned int backupPgId;
     const String *backupPrior;
     StringList *backupReference;
-    uint64_t backupTimestampStart;                                  // ??? Need to fix this so it is time_t
-    uint64_t backupTimestampStop;                                   // ??? Need to fix this so it is time_t
+    time_t backupTimestampStart;
+    time_t backupTimestampStop;
     const String *backupType;
     bool optionArchiveCheck;
     bool optionArchiveCopy;
