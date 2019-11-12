@@ -57,10 +57,8 @@ cmdStanzaCreate(void)
         // then create the stanza
         if (!archiveInfoFileExists && !archiveInfoFileCopyExists && !backupInfoFileExists && !backupInfoFileCopyExists)
         {
-            bool archiveNotEmpty = strLstSize(
-                storageListNP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE))) > 0 ? true : false;
-            bool backupNotEmpty = strLstSize(
-                storageListNP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP))) > 0 ? true : false;
+            bool archiveNotEmpty = strLstSize(storageListNP(storageRepoReadStanza, STORAGE_REPO_ARCHIVE_STR)) > 0 ? true : false;
+            bool backupNotEmpty = strLstSize(storageListNP(storageRepoReadStanza, STORAGE_REPO_BACKUP_STR)) > 0 ? true : false;
 
             // If something else exists in the backup or archive directories for this stanza, then error
             if (archiveNotEmpty || backupNotEmpty)
