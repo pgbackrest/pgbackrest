@@ -12,6 +12,7 @@ Backup Command
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
 // #include "common/crypto/cipherBlock.h"
+#include "common/compress/gzip/common.h"
 #include "common/debug.h"
 #include "common/log.h"
 // #include "common/regExp.h"
@@ -30,6 +31,124 @@ Backup Command
 #include "storage/helper.h"
 // #include "storage/write.intern.h"
 #include "version.h"
+
+/***********************************************************************************************************************************
+Backup path constants
+***********************************************************************************************************************************/
+#define BACKUP_PATH_HISTORY                                         "backup.history"
+
+/***********************************************************************************************************************************
+Format backup label
+***********************************************************************************************************************************/
+static String *
+backupLabelFormat(BackupType type, const String *backupLabelLast, time_t timestamp)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING, backupLabelLast);
+        FUNCTION_LOG_PARAM(TIME, timestamp);
+    FUNCTION_LOG_END();
+
+    ASSERT((type == backupTypeFull && backupLabelLast == NULL) || (type != backupTypeFull && backupLabelLast != NULL));
+    ASSERT(timestamp > 0);
+
+    // Format the timestamp
+    char buffer[16];
+    THROW_ON_SYS_ERROR(
+        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&timestamp)) == 0, AssertError, "unable to format time");
+
+    // If full label
+    String *result = NULL;
+
+    if (type == backupTypeFull)
+    {
+        result = strNewFmt("%sF", buffer);
+    }
+    // Else diff or incr label
+    else
+    {
+        // Get the full backup portion of the last backup label
+        result = strSubN(backupLabelLast, 0, 16);
+
+        // Append the diff/incr timestamp
+        strCatFmt(result, "_%s%s", buffer, type == backupTypeDiff ? "D" : "I");
+    }
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
+/**********************************************************************************************************************************/
+// Generate unique backup label
+static String *
+backupLabel(const Storage *storageRepo, BackupType type, const String *backupLabelLast, time_t timestamp)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE, storageRepo);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING, backupLabelLast);
+        FUNCTION_LOG_PARAM(TIME, timestamp);
+    FUNCTION_LOG_END();
+
+    ASSERT(storageRepo != NULL);
+    ASSERT((type == backupTypeFull && backupLabelLast == NULL) || (type != backupTypeFull && backupLabelLast != NULL));
+    ASSERT(timestamp > 0);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        while (true)
+        {
+            // Get the current year to use for searching the history.  Put this in the loop since we could theoretically roll over to
+            // a new year while searching for a valid label.
+            char year[5];
+            THROW_ON_SYS_ERROR(
+                strftime(year, sizeof(year), "%Y", localtime(&timestamp)) == 0, AssertError, "unable to format year");
+
+            // Create regular expression for search.  We can't just search on the label because we want to be sure that no other
+            // backup uses the same timestamp, no matter what type it is.
+            String *timestampStr = strSubN(backupLabelFormat(backupTypeFull, NULL, timestamp), 0, 15);
+            String *timestampExp = strNewFmt("(^%sF$)|(_%s(D|I)$)", strPtr(timestampStr), strPtr(timestampStr));
+
+            // Check for the timestamp in the backup path
+            if (strLstSize(storageListP(storageRepo, STORAGE_REPO_BACKUP_STR, .expression = timestampExp)) == 0)
+            {
+                // Now check in the backup.history
+                String *historyPath = strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", year);
+                String *historyExp = strNewFmt(
+                    "(^%sF\\.manifest\\." GZIP_EXT "$)|(_%s(D|I)\\.manifest\\." GZIP_EXT "$)", strPtr(timestampStr),
+                    strPtr(timestampStr));
+
+                // If the timestamp also does not appear in the history then it is safe to use
+                if (strLstSize(storageListP(storageRepo, historyPath, .expression = historyExp)) == 0)
+                    break;
+            }
+
+            timestamp++;
+        }
+
+    // // # Make sure that the timestamp has not already been used by a prior backup.  This is unlikely for online backups since there is
+    // // # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
+    // // # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
+    // // # be skipped by dealing with any backup label collisions here.
+    // if ($oStorageRepo->list(
+    //     STORAGE_REPO_BACKUP,
+    //          {strExpression =>
+    //             ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
+    //             ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
+    //     $oStorageRepo->list(
+    //         STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStart),
+    //          {strExpression =>
+    //             ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
+    //             ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . COMPRESS_EXT . qw{$}),
+    //             bIgnoreMissing => true}))
+    // {
+    //     timestamp++;
+    //     $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, time());
+    // }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING, backupLabelFormat(type, backupLabelLast, timestamp));
+}
 
 /***********************************************************************************************************************************
 Get the postgres database and storage objects
@@ -270,7 +389,7 @@ backupHalted(const InfoBackup *infoBackup, const Manifest *manifestPrior, String
                 // If the backup is usable then return the manifest
                 if (usable)
                 {
-                    // HACKY BIT TO MAKE PERL HAPPY
+                    // !!! HACKY BIT TO MAKE PERL HAPPY
                     memContextSwitch(MEM_CONTEXT_OLD());
                     *backupLabelHalted = strDup(backupLabel);
                     memContextSwitch(MEM_CONTEXT_TEMP());
@@ -333,6 +452,8 @@ cmdBackup(void)
         String *backupLabelHalted = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
         const Manifest *manifestHalted = backupHalted(infoBackup, manifestPrior, &backupLabelHalted);
         (void)manifestHalted; // !!! REMOVE
+
+        (void)backupLabel;
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
 

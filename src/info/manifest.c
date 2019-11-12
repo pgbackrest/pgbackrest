@@ -1009,6 +1009,25 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
 
         // Set diff/incr backup type
         this->data.backupType = type;
+
+    // # !!! Determine if a timeline switch has occurred
+    // if (defined($strTimelineLast) && defined($strTimelineCurrent))
+    // {
+    //     # If there is a prior backup, check if a timeline switch has occurred since then
+    //     if ($strTimelineLast ne $strTimelineCurrent)
+    //     {
+    //         &log(WARN, "a timeline switch has occurred since the ${strLastBackupSource} backup, enabling delta checksum");
+    //         $bDelta = true;
+    //     }
+    // }
+    //
+    // # If delta was not set above and there is a change in the online option, then set delta option
+    // if (!$bDelta && !$bOnlineSame)
+    // {
+    //     &log(WARN, "the online option has changed since the ${strLastBackupSource} backup, enabling delta checksum");
+    //     $bDelta = true;
+    // }
+
     }
     MEM_CONTEXT_END();
 
