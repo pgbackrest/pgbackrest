@@ -23,6 +23,9 @@ Storage path constants
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
 
+STRING_EXTERN(STORAGE_REPO_ARCHIVE_STR,                             STORAGE_REPO_ARCHIVE);
+STRING_EXTERN(STORAGE_REPO_BACKUP_STR,                              STORAGE_REPO_BACKUP);
+
 STRING_EXTERN(STORAGE_PATH_ARCHIVE_STR,                             STORAGE_PATH_ARCHIVE);
 STRING_EXTERN(STORAGE_PATH_BACKUP_STR,                              STORAGE_PATH_BACKUP);
 
@@ -278,7 +281,7 @@ storageRepoPathExpression(const String *expression, const String *path)
 
     String *result = NULL;
 
-    if (strEqZ(expression, STORAGE_REPO_ARCHIVE))
+    if (strEq(expression, STORAGE_REPO_ARCHIVE_STR))
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)
@@ -298,7 +301,7 @@ storageRepoPathExpression(const String *expression, const String *path)
                 strCatFmt(result, "/%s", strPtr(path));
         }
     }
-    else if (strEqZ(expression, STORAGE_REPO_BACKUP))
+    else if (strEq(expression, STORAGE_REPO_BACKUP_STR))
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)

@@ -31,8 +31,10 @@ manifestDelete(const Storage *storageRepoWriteStanza)
     // Get the list of backup directories from newest to oldest since don't want to invalidate a backup before
     // invalidating any backups that depend on it.
     StringList *backupList = strLstSort(
-        storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true,
-            .differential = true, .incremental = true)), sortOrderDesc);
+        storageListP(
+            storageRepo(), STORAGE_REPO_BACKUP_STR,
+            .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+        sortOrderDesc);
 
     // Delete all manifest files
     for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
@@ -108,10 +110,10 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
 
         // Recursively remove the entire stanza repo if exists. S3 will attempt to remove even if not.
         if (archiveList != NULL)
-            storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_ARCHIVE), .recurse = true);
+            storagePathRemoveP(storageRepoWriteStanza, STORAGE_REPO_ARCHIVE_STR, .recurse = true);
 
         if (backupList != NULL)
-            storagePathRemoveP(storageRepoWriteStanza, STRDEF(STORAGE_REPO_BACKUP), .recurse = true);
+            storagePathRemoveP(storageRepoWriteStanza, STORAGE_REPO_BACKUP_STR, .recurse = true);
 
         // Remove the stop file - this will not error if the stop file does not exist. If the stanza directories existed but nothing
         // was in them, then no pgbackrest commands can be in progress without the info files so a stop is technically not necessary
@@ -141,9 +143,8 @@ cmdStanzaDelete(void)
         const Storage *storageRepoReadStanza = storageRepo();
 
         stanzaDelete(
-            storageRepoWrite(),
-            storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_ARCHIVE), .nullOnMissing = true),
-            storageListP(storageRepoReadStanza, STRDEF(STORAGE_REPO_BACKUP), .nullOnMissing = true));
+            storageRepoWrite(), storageListP(storageRepoReadStanza, STORAGE_REPO_ARCHIVE_STR, .nullOnMissing = true),
+            storageListP(storageRepoReadStanza, STORAGE_REPO_BACKUP_STR, .nullOnMissing = true));
     }
     MEM_CONTEXT_TEMP_END();
 

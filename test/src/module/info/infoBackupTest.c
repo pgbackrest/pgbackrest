@@ -669,7 +669,7 @@ testRun(void)
             "create backup on disk that is in current but no manifest");
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
+            strPtr(strLstJoin(strLstSort(storageListP(storageRepo(), STORAGE_REPO_BACKUP_STR,
             .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderAsc), ", ")),
             "20190818-084444F, 20190818-084502F, 20190818-084555F, 20190818-084666F, 20190818-084777F, 20190923-164324F",
             "confirm backups on disk");

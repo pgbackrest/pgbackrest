@@ -274,8 +274,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                 // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
                 StringList *listArchiveDisk = strLstSort(
                     strLstComparatorSet(
-                        storageListP(
-                            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE), .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                        storageListP(storageRepo(), STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
                         archiveIdComparator),
                     sortOrderAsc);
 
@@ -598,8 +597,8 @@ removeExpiredBackup(InfoBackup *infoBackup)
     StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
     StringList *backupList = strLstSort(
         storageListP(
-            storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true,
-            .incremental = true)),
+            storageRepo(), STORAGE_REPO_BACKUP_STR,
+            .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
         sortOrderDesc);
 
     // Remove non-current backups from disk

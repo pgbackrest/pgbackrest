@@ -634,8 +634,8 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
         // Get a list of backups in the repo
         StringList *backupList = strLstSort(
             storageListP(
-                storage, STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true,
-                .incremental = true)),
+                storage, STORAGE_REPO_BACKUP_STR,
+                .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderAsc);
 
         // Get the current list of backups from backup.info

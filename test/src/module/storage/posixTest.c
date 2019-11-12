@@ -1079,7 +1079,7 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), testPath(), "check base path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE))), strPtr(strNewFmt("%s/archive/db", testPath())),
+            strPtr(storagePathNP(storage, STORAGE_REPO_ARCHIVE_STR)), strPtr(strNewFmt("%s/archive/db", testPath())),
             "check archive path");
         TEST_RESULT_STR(
             strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE "/simple"))),
@@ -1095,7 +1095,7 @@ testRun(void)
             strPtr(strNewFmt("%s/archive/db/9.4-1/000000010000014C/000000010000014C0000001A.00000028.backup", testPath())),
             "check archive backup path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP))), strPtr(strNewFmt("%s/backup/db", testPath())),
+            strPtr(storagePathNP(storage, STORAGE_REPO_BACKUP_STR)), strPtr(strNewFmt("%s/backup/db", testPath())),
             "check backup path");
 
         // Change the stanza to NULL with the stanzaInit flag still true, make sure helper does not fail when stanza option not set
@@ -1108,13 +1108,13 @@ testRun(void)
         TEST_RESULT_PTR(storageHelper.stanza, NULL, "stanza NULL");
 
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE))), strPtr(strNewFmt("%s/archive", testPath())),
+            strPtr(storagePathNP(storage, STORAGE_REPO_ARCHIVE_STR)), strPtr(strNewFmt("%s/archive", testPath())),
             "check archive path - NULL stanza");
         TEST_RESULT_STR(
             strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE "/simple"))),
             strPtr(strNewFmt("%s/archive/simple", testPath())), "check simple archive path - NULL stanza");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP))), strPtr(strNewFmt("%s/backup", testPath())),
+            strPtr(storagePathNP(storage, STORAGE_REPO_BACKUP_STR)), strPtr(strNewFmt("%s/backup", testPath())),
             "check backup path - NULL stanza");
         TEST_RESULT_STR(
             strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP "/simple"))),

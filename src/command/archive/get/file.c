@@ -167,7 +167,7 @@ archiveGetFile(
             // Copy the file
             storageCopyNP(
                 storageNewReadP(
-                    storageRepo(), strNewFmt("%s/%s", STORAGE_REPO_ARCHIVE, strPtr(archiveGetCheckResult.archiveFileActual)),
+                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveGetCheckResult.archiveFileActual)),
                     .compressible = compressible),
                 destination);
 
