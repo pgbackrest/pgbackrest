@@ -474,6 +474,47 @@ testRun(void)
         harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreBackupSet(infoBackup), BackupSetInvalidError, "backup set BOGUS is not valid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("target time");
+
+        infoBackup = infoBackupNewLoad(
+            ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB)));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--type=time");
+        strLstAddZ(argList, "--target=20161219T162757Z");
+/* CSHANG If I use https://www.freeformatter.com/epoch-timestamp-to-date-converter.html with
+Year	Month	Date	Hours	Minutes	Seconds	Time Zone
+2016    Dec     19      16      27      57      Local
+I get:        1482182877   - and this value is the start time of the incr backup so the full will not be chosen but incr should
+but
+        time_t timeRecoveryTarget = time(NULL);
+        char *lastChar = strptime(strPtr(cfgOptionStr(cfgOptTarget)), "%Y%m%dT%H%M%SZ", localtime(&timeRecoveryTarget));
+        LOG_WARN("input %s, timeRecoveryTarget %" PRId64, strPtr(cfgOptionStr(cfgOptTarget)), timeRecoveryTarget);
+        if (lastChar == NULL || *lastChar != '\0')
+            LOG_WARN("unable to convert target time %s", strPtr(cfgOptionStr(cfgOptTarget)));
+displays:
+    P00   WARN: input 20161219T162757Z, timeRecoveryTarget 1573586679
+If I use the converter on timeRecoveryTarget 1573586679, I get 11/12/2019, 2:24:39 PM
+
+If I remove the Z in the format and the input I get:
+  P00   WARN: input 20161219T162757, timeRecoveryTarget 1573586740
+which, again is no where near the right time
+
+If I use gmtime instead of localtime
+    char *lastChar = strptime(strPtr(cfgOptionStr(cfgOptTarget)), "%Y%m%dT%H%M%SZ", gmtime(&timeRecoveryTarget));
+I get a different value for timeRecoveryTarget
+   P00   WARN: input 20161219T162757Z, timeRecoveryTarget 1573586986
+
+ So it is not erroring but the timeRecoveryTarget is being set to the current date and time and ignoring the input.
+*/
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212918I", "backup set chosen");
     }
 
     // *****************************************************************************************************************************

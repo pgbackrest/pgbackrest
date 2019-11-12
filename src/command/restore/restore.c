@@ -133,6 +133,7 @@ restoreBackupSet(InfoBackup *infoBackup)
                 THROW(BackupSetInvalidError, "no backup sets to restore");
 
 /* CSHANG check to see if the type=time then parse the target=DATETIME with * char *strptime(const char *s, const char *format, struct tm *tm);
+BUT in the following, it would not be valid since we're requiring no spaces
 pgbackrest --stanza=demo --delta  --type=time "--target=2019-10-01 15:24:27.503516+00"
 
 1) The format "%Y%m%dT%H%M%SZ" however doesn't have any hyphens, colons or spaces - won't it need to? Or will we have to require them to put in 20191001T152427-503516 or something? ISO8601: A single point in time can be represented by concatenating a complete date expression, the letter "T" as a delimiter, and a valid time expression. For example, "2007-04-05T14:30". It is permitted to omit the "T" character by mutual agreement as in "200704051430".[30] Separating date and time parts with other characters such as space is not allowed in ISO 8601, but allowed in its profile RFC 3339.[31]. If a time zone designator is required, it follows the combined date and time. For example, "2007-04-05T14:30Z" or "2007-04-05T12:30-02:00".
@@ -150,26 +151,60 @@ So can we use this to validate? Or maybe we need to run it through another funct
 3) ISO 8601: Midnight is a special case and may be referred to as either "00:00" or "24:00". The notation "00:00" is used at the beginning of a calendar day and is the more frequently used. At the end of a day use "24:00". "2007-04-05T24:00" is the same instant as "2007-04-06T00:00".
 
 4) Decimal fractions may be added to any of the three time elements. However, a fraction may only be added to the lowest order time element in the representation. A decimal mark, either a comma or a dot (without any preference as stated in resolution 10 of the 22nd General Conference CGPM in 2003,[24] but with a preference for a comma according to ISO 8601:2004)[25] is used as a separator between the time element and its fraction. To denote "14 hours, 30 and one half minutes", do not include a seconds figure. Represent it as "14:30,5", "1430,5", "14:30.5", or "1430.5". There is no limit on the number of decimal places for the decimal fraction. However, the number of decimal places needs to be agreed to by the communicating parties. For example, in Microsoft SQL Server, the precision of a decimal fraction is 3, i.e., "yyyy-mm-ddThh:mm:ss[.mmm]"
+
+5) In the following the start/stop time are the number of seconds since 00:00:00 UTC, January 1, 1970
+20191112-173146F={"backrest-format":5,"backrest-version":"2.19dev","backup-archive-start":"000000010000000000000002","ba
+ckup-archive-stop":"000000010000000000000002","backup-info-repo-size":2765713,"backup-info-repo-size-delta":2765713,"bac
+kup-info-size":23521617,"backup-info-size-delta":23521617,"backup-timestamp-start":1573579906,"backup-timestamp-stop":15
+73579919,"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":
+false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
 */
             if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
             {
-                time_t timeRecoveryTarget = time(NULL);
-                char *lastChar = strptime(strPtr(cfgOptionStr(cfgOptTarget)), "%Y%m%dT%H%M%SZ", localtime(&timeRecoveryTarget)); // CSHANG check localtime just converts and doesn't change the time any
+// CSHANG Do we have to worry about --target-timeline?
+                time_t timeRecoveryTarget;
+                struct tm tm;
 
-                // If converting results returns NULL or all the input was not consumed, then error
-                if (lastChar == NULL || *lastChar != '\0'))
-                    THROW(some error);
-                // Else find the newest backup set with a stop time greater than the target recovery time
+                char *lastChar = strptime("20161219T162757Z", "%Y%m%dT%H%M%SZ", &tm);
+                // char *lastChar = strptime(strPtr(cfgOptionStr(cfgOptTarget)), "%Y%m%dT%H%M%SZ", gmtime(&timeRecoveryTarget)); // CSHANG should localtime be gmttime? It seems to matter.
+
+                // CSHANG If converting results returns NULL or all the input was not consumed, then error? Or maybe WARN? May need to split up as NULL means an error and *lastChar != '\0' would mean all of the input was not consumed - so what do we really want to do here?
+                if (lastChar == NULL || *lastChar != '\0')
+                    // LOG_WARN("unable to convert target time %s, lastchar=%c", strPtr(cfgOptionStr(cfgOptTarget)), (lastChar == NULL ? 'n' : *lastChar));
+                    THROW(BackupSetInvalidError, "strptime error");
+                // Else find the newest backup set with a stop time before the target recovery time
                 else
                 {
-                    for (unsigned int keyIdx = infoBackupDataTotal(info) - 1; (int)keyIdx >= 0; keyIdx--)
+//                 timeRecoveryTarget = mktime(&tm); // CSHANG This seems to be a problem
+// LOG_WARN("input %s, timeRecoveryTarget %" PRId64, strPtr(cfgOptionStr(cfgOptTarget)), timeRecoveryTarget);
+                    // Search current backups from newest to oldest
+                    for (unsigned int keyIdx = infoBackupDataTotal(infoBackup) - 1; (int)keyIdx >= 0; keyIdx--)
                     {
                         // Get the backup data
-                        InfoBackupData backupData = infoBackupData(info, keyIdx);
-                // CSHANG Here we need to seach backup.info for the stop time that is less than timeRecoveryTarget starting from newest to oldest.
+                        InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
+                        // CSHANG Should this be <= ?
+                        if (backupData.backupTimestampStop < timeRecoveryTarget)
+                        {
+                            backupSet = backupData.backupLabel;
+                            break;
+                        }
+                    }
+
+                    if (backupSet == NULL)
+                    {
+                        char timeBufferStop[20];
+                        // CSHANG Which should we use? If we want them to put in a purely numeric value, then I'd argue for the first one
+                        cvtTimeToZ(timeRecoveryTarget, timeBufferStop, sizeof(timeBufferStop));
+                        // strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime(&timeRecoveryTarget));
+
+                        // CSHANG Right now the second %s is for debugging
+                        THROW_FMT(BackupSetInvalidError, "unable to find backup set with stop time less than %s for target time %s", timeBufferStop, strPtr(cfgOptionStr(cfgOptTarget)));
+                    }
+                }
             }
 
-            backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+            if (backupSet == NULL)
+                backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
         }
         // Otherwise check to make sure the specified backup set is valid
         else
