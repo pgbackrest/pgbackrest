@@ -168,7 +168,7 @@ sub codeCountScan
         my $strYaml = executeTest(
             "cloc --yaml ${strBasePath}/${strFile}" .
             " --read-lang-def=${strBasePath}/test/code-count/code.def" .
-            " --force-lang='${strForceLang}'");
+            " --force-lang='${strForceLang}'", {bSuppressStdErr => true});
 
         # Error if the file was ignored
         if ($strYaml =~ '1 file ignored')
