@@ -326,17 +326,17 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key2"), strNew("value2")), header, "add header");
-        TEST_ERROR(httpHeaderAdd(header, strNew("key2"), strNew("value2")), AssertError, "key 'key2' already exists");
         TEST_RESULT_PTR(httpHeaderPut(header, strNew("key2"), strNew("value2a")), header, "put header");
+        TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key2"), strNew("value2b")), header, "add header");
 
         TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key1"), strNew("value1")), header, "add header");
         TEST_RESULT_STR(strPtr(strLstJoin(httpHeaderList(header), ", ")), "key1, key2", "header list");
 
         TEST_RESULT_STR(strPtr(httpHeaderGet(header, strNew("key1"))), "value1", "get value");
-        TEST_RESULT_STR(strPtr(httpHeaderGet(header, strNew("key2"))), "value2a", "get value");
+        TEST_RESULT_STR(strPtr(httpHeaderGet(header, strNew("key2"))), "value2a, value2b", "get value");
         TEST_RESULT_PTR(httpHeaderGet(header, strNew(BOGUS_STR)), NULL, "get missing value");
 
-        TEST_RESULT_STR(strPtr(httpHeaderToLog(header)), "{key1: 'value1', key2: 'value2a'}", "log output");
+        TEST_RESULT_STR(strPtr(httpHeaderToLog(header)), "{key1: 'value1', key2: 'value2a, value2b'}", "log output");
 
         TEST_RESULT_VOID(httpHeaderFree(header), "free header");
 
