@@ -259,6 +259,7 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
         // timestamp section
         KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
 
+        // time_t is considered a signed int so cast it here to uint64 since it can never be negative (before 1970) in our system
         kvAdd(timeInfo, KEY_START_VAR, VARUINT64((uint64_t)backupData.backupTimestampStart));
         kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64((uint64_t)backupData.backupTimestampStop));
 
