@@ -1,5 +1,10 @@
 [
     {
+        "commit": "2d10293d041cbbc72e4a2bac32401f6f384ecb1a",
+        "date": "2019-11-12 15:51:28 -0500",
+        "subject": "v2.19: C Migrations and Bug Fixes"
+    },
+    {
         "commit": "a44c5d0315e49c42eb908a4ed0605bee0c509f6d",
         "date": "2019-11-12 13:12:07 -0500",
         "subject": "Add Strings for STORAGE_REPO_ARCHIVE and STORAGE_REPO_BACKUP.",
