@@ -79,16 +79,14 @@ backupLabelFormat(BackupType type, const String *backupLabelLast, time_t timesta
 }
 
 static String *
-backupLabel(const Storage *storageRepo, BackupType type, const String *backupLabelLast, time_t timestamp)
+backupLabel(BackupType type, const String *backupLabelLast, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE, storageRepo);
         FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(STRING, backupLabelLast);
         FUNCTION_LOG_PARAM(TIME, timestamp);
     FUNCTION_LOG_END();
 
-    ASSERT(storageRepo != NULL);
     ASSERT((type == backupTypeFull && backupLabelLast == NULL) || (type != backupTypeFull && backupLabelLast != NULL));
     ASSERT(timestamp > 0);
 
@@ -108,7 +106,7 @@ backupLabel(const Storage *storageRepo, BackupType type, const String *backupLab
             String *timestampExp = strNewFmt("(^%sF$)|(_%s(D|I)$)", strPtr(timestampStr), strPtr(timestampStr));
 
             // Check for the timestamp in the backup path
-            if (strLstSize(storageListP(storageRepo, STORAGE_REPO_BACKUP_STR, .expression = timestampExp)) == 0)
+            if (strLstSize(storageListP(storageRepo(), STORAGE_REPO_BACKUP_STR, .expression = timestampExp)) == 0)
             {
                 // Now check in the backup.history
                 String *historyPath = strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", year);
@@ -117,7 +115,7 @@ backupLabel(const Storage *storageRepo, BackupType type, const String *backupLab
                     strPtr(timestampStr));
 
                 // If the timestamp also does not appear in the history then it is safe to use
-                if (strLstSize(storageListP(storageRepo, historyPath, .expression = historyExp)) == 0)
+                if (strLstSize(storageListP(storageRepo(), historyPath, .expression = historyExp)) == 0)
                     break;
             }
 
@@ -269,11 +267,11 @@ backupPrior(const InfoBackup *infoBackup)
 Check for a halted backup that can be resumed
 ***********************************************************************************************************************************/
 static const Manifest *
-backupHalted(const InfoBackup *infoBackup, const Manifest *manifestPrior, String **backupLabelHalted)
+backupHalted(const InfoBackup *infoBackup, const Manifest *manifest, String **backupLabelHalted)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
-        FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM_P(STRING, backupLabelHalted);
     FUNCTION_LOG_END();
 
@@ -332,13 +330,13 @@ backupHalted(const InfoBackup *infoBackup, const Manifest *manifestPrior, String
                         }
                         else if (!strEq(
                                     manifestHaltedData->backupLabelPrior,
-                                    manifestPrior ? manifestData(manifestPrior)->backupLabel : NULL))
+                                    manifestData(manifest)->backupLabelPrior ? manifestData(manifest)->backupLabelPrior : NULL))
                         {
                             reason = strNewFmt(
                                 "new prior backup label '%s' does not match halted prior backup label '%s'",
                                 manifestHaltedData->backupLabelPrior ? strPtr(manifestHaltedData->backupLabelPrior) : "<undef>",
-                                manifestData(manifestPrior)->backupLabel ?
-                                    strPtr(manifestData(manifestPrior)->backupLabel) : "<undef>");
+                                manifestData(manifest)->backupLabelPrior ?
+                                    strPtr(manifestData(manifest)->backupLabelPrior) : "<undef>");
                         }
                         // Check compression
                         else if (manifestHaltedData->backupOptionCompress != cfgOptionBool(cfgOptCompress))
@@ -444,10 +442,26 @@ cmdBackup(void)
 
         // Check for a halted backup
         String *backupLabelHalted = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
-        const Manifest *manifestHalted = backupHalted(infoBackup, manifestPrior, &backupLabelHalted);
+        const Manifest *manifestHalted = backupHalted(infoBackup, manifest, &backupLabelHalted);
         (void)manifestHalted; // !!! REMOVE
 
-        (void)backupLabel;
+        // If a halted backup was found set the label and cipher subpass
+        if (manifestHalted)
+        {
+            manifestBackupLabelSet(manifest, manifestData(manifestHalted)->backupLabel);
+            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifest));
+        }
+        // If no halted backup was found then generate a backup label and a cipher subpass (if needed)
+        else
+        {
+            manifestBackupLabelSet(manifest, backupLabel(type, manifestData(manifest)->backupLabelPrior, timestampStart));
+
+            if (cipherType(cfgOptionStr(cfgOptRepoCipherType)))
+                manifestCipherSubPassSet(manifest, STRDEF("!!!TOBECHANGED!!!"));
+        }
+
+        // Set the values required to complete the manifest
+        manifestBuildComplete(manifest, timestampStart);
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
 
@@ -464,6 +478,12 @@ cmdBackup(void)
         StringList *paramList = strLstNew();
         strLstAdd(paramList, jsonFromVar(varNewKv(paramKv)));
         cfgCommandParamSet(paramList);
+
+        // Save the manifest so the Perl code can read it
+        IoWrite *write = storageWriteIo(
+            storageNewWriteNP(
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, manifestData(manifest)->backupLabel)));
+        manifestSave(manifest, write);
 
         // Do this so Perl does not need to reconstruct backup.info
         infoBackupSaveFile(

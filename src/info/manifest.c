@@ -935,9 +935,7 @@ manifestNewBuild(
     FUNCTION_LOG_RETURN(MANIFEST, this);
 }
 
-/***********************************************************************************************************************************
-Validate the timestamps in the manifest given a copy start time, i.e. all times should be <= the copy start time
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
 {
@@ -985,9 +983,7 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Create a diff/incr backup by comparing to a previous backup manifest
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
 {
@@ -1116,6 +1112,20 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
 /***********************************************************************************************************************************
 !!! NEED A PLAN TO STORE DATABASE MAP INFO (SHOULD BE SET DIRECTLY FROM BACKUP)
 ***********************************************************************************************************************************/
+
+/**********************************************************************************************************************************/
+void
+manifestBuildComplete(Manifest *this, time_t timestampStart)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(TIME, timestampStart);
+    FUNCTION_LOG_END();
+
+    this->data.backupTimestampStart = timestampStart;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Load manifest
@@ -2243,36 +2253,6 @@ manifestPgPath(const String *manifestPath)
 }
 
 /***********************************************************************************************************************************
-Get the cipher sub-passphrase
-***********************************************************************************************************************************/
-const String *
-manifestCipherSubPass(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(infoCipherPass(this->info));
-}
-
-/***********************************************************************************************************************************
-Return manifest configuration and options
-***********************************************************************************************************************************/
-const ManifestData *
-manifestData(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(&this->data);
-}
-
-/***********************************************************************************************************************************
 Db functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestDb *
@@ -2672,6 +2652,73 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 
         if (!strEq(target->file, file))
             target->file = strDup(file);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Get/set the cipher sub-passphrase
+***********************************************************************************************************************************/
+const String *
+manifestCipherSubPass(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(infoCipherPass(this->info));
+}
+
+void
+manifestCipherSubPassSet(Manifest *this, const String *cipherSubPass)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, cipherSubPass);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    infoCipherPassSet(this->info, cipherSubPass);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Return manifest configuration and options
+***********************************************************************************************************************************/
+const ManifestData *
+manifestData(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(&this->data);
+}
+
+/***********************************************************************************************************************************
+Setters
+***********************************************************************************************************************************/
+void
+manifestBackupLabelSet(Manifest *this, const String *backupLabel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->data.backupLabel = strDup(backupLabel);
     }
     MEM_CONTEXT_END();
 

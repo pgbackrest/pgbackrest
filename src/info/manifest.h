@@ -153,10 +153,20 @@ Manifest *manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, boo
 Manifest *manifestNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
+Build functions
+***********************************************************************************************************************************/
+// Validate the timestamps in the manifest given a copy start time, i.e. all times should be <= the copy start time
+void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart);
+
+// Create a diff/incr backup by comparing to a previous backup manifest
+void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type);
+
+// Set all remaining values required to complete the manifest
+void manifestBuildComplete(Manifest *this, time_t timestampStart);
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type);
-void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart);
 void manifestLinkCheck(const Manifest *this);
 Manifest *manifestMove(Manifest *this, MemContext *parentNew);
 void manifestSave(Manifest *this, IoWrite *write);
@@ -206,13 +216,15 @@ unsigned int manifestTargetTotal(const Manifest *this);
 void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 const String *manifestCipherSubPass(const Manifest *this);
+void manifestCipherSubPassSet(Manifest *this, const String *cipherSubPass);
 const ManifestData *manifestData(const Manifest *this);
 String *manifestPgPath(const String *manifestPath);
 const ManifestTarget *manifestTargetBase(const Manifest *this);
 String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
+void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
 
 /***********************************************************************************************************************************
 Destructor
