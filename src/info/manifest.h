@@ -155,6 +155,8 @@ Manifest *manifestNewLoad(IoRead *read);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type);
+void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart);
 void manifestLinkCheck(const Manifest *this);
 Manifest *manifestMove(Manifest *this, MemContext *parentNew);
 void manifestSave(Manifest *this, IoWrite *write);

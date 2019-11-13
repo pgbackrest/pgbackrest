@@ -37,9 +37,10 @@ Backup path constants
 ***********************************************************************************************************************************/
 #define BACKUP_PATH_HISTORY                                         "backup.history"
 
-/***********************************************************************************************************************************
-Format backup label
+/**********************************************************************************************************************************
+Generate a unique backup label that does not contain a timestamp from a previous backup
 ***********************************************************************************************************************************/
+// Helper to format the backup label
 static String *
 backupLabelFormat(BackupType type, const String *backupLabelLast, time_t timestamp)
 {
@@ -77,8 +78,6 @@ backupLabelFormat(BackupType type, const String *backupLabelLast, time_t timesta
     FUNCTION_LOG_RETURN(STRING, result);
 }
 
-/**********************************************************************************************************************************/
-// Generate unique backup label
 static String *
 backupLabel(const Storage *storageRepo, BackupType type, const String *backupLabelLast, time_t timestamp)
 {
@@ -124,26 +123,6 @@ backupLabel(const Storage *storageRepo, BackupType type, const String *backupLab
 
             timestamp++;
         }
-
-    // // # Make sure that the timestamp has not already been used by a prior backup.  This is unlikely for online backups since there is
-    // // # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
-    // // # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
-    // // # be skipped by dealing with any backup label collisions here.
-    // if ($oStorageRepo->list(
-    //     STORAGE_REPO_BACKUP,
-    //          {strExpression =>
-    //             ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
-    //             ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
-    //     $oStorageRepo->list(
-    //         STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStart),
-    //          {strExpression =>
-    //             ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
-    //             ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . COMPRESS_EXT . qw{$}),
-    //             bIgnoreMissing => true}))
-    // {
-    //     timestamp++;
-    //     $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, time());
-    // }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -431,6 +410,9 @@ cmdBackup(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Get the requested backup type
+        BackupType type = backupType(cfgOptionStr(cfgOptType));
+
         // Load backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
@@ -441,12 +423,24 @@ cmdBackup(void)
         BackupPg pg = backupPgGet(infoBackup);
         (void)pg; // !!! REMOVE
 
-        // Get the prior manifest if one exists
-        Manifest *manifestPrior = backupPrior(infoBackup);
+        // !!! BACKUP NEEDS TO START HERE
 
-        // Build the new manifest
-        // Manifest *manifest = manifestNewBuild(pg.storagePrimary, manifestPrior);
-        // manifestFree(manifestPrior);
+        // Build the manifest
+        Manifest *manifest = manifestNewBuild(
+            pg.storagePrimary, infoPg.version, false, strLstNewVarLst(cfgOptionLst(cfgOptExclude)));
+
+        // !!! NEED TO GET THIS FROM THE REMOTE AND WAIT REMAINDER WHEN ONLINE
+        time_t timestampCopyStart = time(NULL);
+
+        manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), timestampCopyStart);
+
+        // Get the prior manifest if one exists
+        if (type != backupTypeFull)
+        {
+            Manifest *manifestPrior = backupPrior(infoBackup);
+            manifestBuildIncr(manifest, manifestPrior, type);
+            manifestFree(manifestPrior);
+        }
 
         // Check for a halted backup
         String *backupLabelHalted = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
@@ -465,7 +459,6 @@ cmdBackup(void)
         kvPut(paramKv, VARSTRDEF("pgSystemId"), VARUINT64(infoPg.systemId));
         kvPut(paramKv, VARSTRDEF("pgControlVersion"), VARUINT(pgControlVersion(infoPg.version)));
         kvPut(paramKv, VARSTRDEF("pgCatalogVersion"), VARUINT(pgCatalogVersion(infoPg.version)));
-        kvPut(paramKv, VARSTRDEF("backupLabelPrior"), manifestPrior ? VARSTR(manifestData(manifestPrior)->backupLabel) : NULL);
         kvPut(paramKv, VARSTRDEF("backupLabelHalted"), backupLabelHalted ? VARSTR(backupLabelHalted) : NULL);
 
         StringList *paramList = strLstNew();
