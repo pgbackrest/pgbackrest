@@ -427,6 +427,14 @@ cmdBackup(void)
         Manifest *manifest = manifestNewBuild(
             pg.storagePrimary, infoPg.version, false, strLstNewVarLst(cfgOptionLst(cfgOptExclude)));
 
+        // If checksum-page is not explicitly enabled then disable it.  Even if the version is high enough to have checksums we
+        // can't know if they are enabled without asking the database.  When pg_control can be reliably parsed then this decision
+        // could be based on that.
+        if (!cfgOptionBool(cfgOptOnline) && !cfgOptionTest(cfgOptChecksumPage))
+        {
+            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+        }
+
         // !!! NEED TO GET THIS FROM THE REMOTE AND WAIT REMAINDER WHEN ONLINE
         time_t timestampCopyStart = time(NULL);
 
@@ -437,8 +445,38 @@ cmdBackup(void)
         {
             Manifest *manifestPrior = backupPrior(infoBackup);
             manifestBuildIncr(manifest, manifestPrior, type);
+
+            // If not defined this backup was done in a version prior to page checksums being introduced.  Just set checksum-page to
+            // false and move on without a warning.  Page checksums will start on the next full backup.
+            if (manifestData(manifestPrior)->backupOptionChecksumPage == NULL)
+            {
+                manifestChecksumPageSet(manifest, false);
+                cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+            }
+            // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain
+            // files would be checksummed and the list could be incomplete during reporting.
+            else
+            {
+                bool checksumPagePrior = varBool(manifestData(manifestPrior)->backupOptionChecksumPage);
+
+                if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
+                {
+                    LOG_WARN(
+                        "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
+                        strPtr(backupTypeStr(type)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
+                        cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(manifestPrior)->backupLabel));
+
+                    manifestChecksumPageSet(manifest, checksumPagePrior);
+                    cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
+                }
+            }
+
             manifestFree(manifestPrior);
         }
+
+        // Set delta if it is not already set and the manifest requires it
+        if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
+            cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
         // Check for a halted backup
         String *backupLabelHalted = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
@@ -464,6 +502,7 @@ cmdBackup(void)
         manifestBuildComplete(manifest, timestampStart);
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
+        // !!! ---------------------------------------------------------------------------------------------------------------------
 
         // Parameters that must be passed to Perl during migration
         KeyValue *paramKv = kvNew();
@@ -473,6 +512,7 @@ cmdBackup(void)
         kvPut(paramKv, VARSTRDEF("pgSystemId"), VARUINT64(infoPg.systemId));
         kvPut(paramKv, VARSTRDEF("pgControlVersion"), VARUINT(pgControlVersion(infoPg.version)));
         kvPut(paramKv, VARSTRDEF("pgCatalogVersion"), VARUINT(pgCatalogVersion(infoPg.version)));
+        kvPut(paramKv, VARSTRDEF("backupLabel"), VARSTR(manifestData(manifest)->backupLabel));
         kvPut(paramKv, VARSTRDEF("backupLabelHalted"), backupLabelHalted ? VARSTR(backupLabelHalted) : NULL);
 
         StringList *paramList = strLstNew();
@@ -480,10 +520,17 @@ cmdBackup(void)
         cfgCommandParamSet(paramList);
 
         // Save the manifest so the Perl code can read it
+        const String *labelToSave = backupLabelHalted ? backupLabelHalted : manifestData(manifest)->backupLabel;
+
         IoWrite *write = storageWriteIo(
             storageNewWriteNP(
-                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, manifestData(manifest)->backupLabel)));
+                storageRepoWrite(),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE ".copy", strPtr(labelToSave))));
         manifestSave(manifest, write);
+
+        // Save an original copy so we can see what the C code wrote out
+        // write = storageWriteIo(storageNewWriteNP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".orig")));
+        // manifestSave(manifest, write);
 
         // Do this so Perl does not need to reconstruct backup.info
         infoBackupSaveFile(

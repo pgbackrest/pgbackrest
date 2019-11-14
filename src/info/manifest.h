@@ -218,6 +218,7 @@ void manifestTargetUpdate(const Manifest *this, const String *name, const String
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+void manifestChecksumPageSet(Manifest *this, bool checksumPage);
 const String *manifestCipherSubPass(const Manifest *this);
 void manifestCipherSubPassSet(Manifest *this, const String *cipherSubPass);
 const ManifestData *manifestData(const Manifest *this);

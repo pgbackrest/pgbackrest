@@ -61,26 +61,8 @@ full backup - error on identical link destinations (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: exclude special file 'apipe' from backup
-P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
-P00   INFO: exclude pg_log2 from backup using 'pg_log2' exclusion
-P00   INFO: exclude pg_log2/logfile from backup using 'pg_log2' exclusion
-P00   INFO: exclude postgresql.auto.conf from backup using 'postgresql.auto.conf' exclusion
-P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/pg_hba.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
-P00   INFO: backup command end: aborted with exception [070]
-
-full backup - error on link to a link (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
-            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: exclude special file 'apipe' from backup
-P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
-P00   INFO: exclude pg_log2 from backup using 'pg_log2' exclusion
-P00   INFO: exclude pg_log2/logfile from backup using 'pg_log2' exclusion
-P00   INFO: exclude postgresql.auto.conf from backup using 'postgresql.auto.conf' exclusion
-P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
+P00   WARN: exclude special file '[TEST_PATH]/db-master/db/base/apipe' from backup
+P00  ERROR: [070]: link 'pg_config_bad/pg_hba.conf.link' ([TEST_PATH]/db-master/db/base/pg_config_bad/.) destination is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
 
 full backup - create pg_stat link, pg_clog dir (db-master host)
@@ -89,11 +71,10 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=16384 --checksum-page --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --manifest-save-threshold=3 --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --repo1-type=cifs --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: exclude special file 'apipe' from backup
-P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
-P00   INFO: exclude pg_log2 from backup using 'pg_log2' exclusion
-P00   INFO: exclude pg_log2/logfile from backup using 'pg_log2' exclusion
-P00   INFO: exclude postgresql.auto.conf from backup using 'postgresql.auto.conf' exclusion
+P00   WARN: exclude special file '[TEST_PATH]/db-master/db/base/apipe' from backup
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/pg_log2' from backup using 'pg_log2' exclusion
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/postgresql.auto.conf' from backup using 'postgresql.auto.conf' exclusion
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P00   WARN: invalid page checksums found in file [TEST_PATH]/db-master/db/base/base/32768/33001 at pages 0, 3-5, 7
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
@@ -286,11 +267,10 @@ full backup - abort backup - local (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=5 --test-point=backup-start=y --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: exclude apipe from backup using 'apipe' exclusion
-P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
-P00   INFO: exclude pg_log2 from backup using 'pg_log2' exclusion
-P00   INFO: exclude pg_log2/logfile from backup using 'pg_log2' exclusion
-P00   INFO: exclude postgresql.auto.conf from backup using 'postgresql.auto.conf' exclusion
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/apipe' from backup using 'apipe' exclusion
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/pg_log2' from backup using 'pg_log2' exclusion
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/postgresql.auto.conf' from backup using 'postgresql.auto.conf' exclusion
 P00   TEST:         PgBaCkReStTeSt-BACKUP-START-PgBaCkReStTeSt
 P00   INFO: backup command end: terminated on signal [SIGTERM]
 
@@ -351,12 +331,11 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --checksum-page --no-compre
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-FULL-1]' missing manifest removed from backup.info
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/apipe' from backup using 'apipe' exclusion
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/pg_log2' from backup using 'pg_log2' exclusion
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/postgresql.auto.conf' from backup using 'postgresql.auto.conf' exclusion
 P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
-P00   INFO: exclude apipe from backup using 'apipe' exclusion
-P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
-P00   INFO: exclude pg_log2 from backup using 'pg_log2' exclusion
-P00   INFO: exclude pg_log2/logfile from backup using 'pg_log2' exclusion
-P00   INFO: exclude postgresql.auto.conf from backup using 'postgresql.auto.conf' exclusion
 P00   WARN: aborted backup [BACKUP-FULL-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00 DETAIL: clean resumed backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
@@ -1027,9 +1006,8 @@ incr backup - invalid path in pg_tblspc (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [069]: pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00  ERROR: [069]: 'pg_data/pg_tblspc/path' is not a symlink - pg_tblspc should contain only symlinks
 P00   INFO: backup command end: aborted with exception [069]
 
 incr backup - invalid relative tablespace is ../ (db-master host)
@@ -1049,10 +1027,9 @@ incr backup - invalid relative tablespace is .. (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink .. destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base) destination is in PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1093,10 +1070,9 @@ incr backup - invalid relative tablespace in $PGDATA (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base/invalid_tblspc) destination is in PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - $PGDATA is a substring of valid tblspc excluding / (file missing err expected) (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1104,10 +1080,9 @@ incr backup - $PGDATA is a substring of valid tblspc excluding / (file missing e
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [073]: unable to list file info for missing path '[TEST_PATH]/db-master/db/base_tbs'
-P00   INFO: backup command end: aborted with exception [073]
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00  ERROR: [041]: unable to get info for missing path/file '[TEST_PATH]/db-master/db/base/pg_tblspc/99999/[TS_PATH-1]': [2] No such file or directory
+P00   INFO: backup command end: aborted with exception [041]
 
 incr backup - invalid tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1115,10 +1090,9 @@ incr backup - invalid tablespace in $PGDATA (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink [TEST_PATH]/db-master/db/base/invalid_tblspc destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base/invalid_tblspc) destination is in PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - add tablespace 1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --test --stanza=db backup
@@ -1126,6 +1100,7 @@ incr backup - add tablespace 1 (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 50%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -1304,6 +1279,7 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-le
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-1]' missing manifest removed from backup.info
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
@@ -1513,9 +1489,10 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-le
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-2]' missing manifest removed from backup.info
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: halted backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match halted backup type 'incr'
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
+P00   WARN: halted backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match halted backup type 'incr'
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1713,9 +1690,10 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-le
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-DIFF-1]' missing manifest removed from backup.info
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: halted backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
+P00   WARN: halted backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -2076,6 +2054,7 @@ incr backup - add files and remove tablespace 2 (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-DIFF-2], version = 0.00
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-DIFF-2]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 61%) checksum e324463005236d83e6e54795dbddd20a74533bf3
@@ -2296,9 +2275,10 @@ incr backup - update files (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
+P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
-P00   WARN: file pg_data/base/16384/17000 timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -2496,6 +2476,7 @@ diff backup - updates since last full (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
@@ -2700,6 +2681,7 @@ incr backup - remove files - but won't affect manifest (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-DIFF-3], version = [VERSION-1]
 P00   WARN: incr backup cannot alter compress option to 'true', reset to value in [BACKUP-DIFF-3]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-DIFF-3]
@@ -2883,6 +2865,7 @@ diff backup - remove files during backup (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [BACKUP-FULL-2]
@@ -3088,6 +3071,7 @@ full backup - update file (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -3303,6 +3287,7 @@ diff backup - add file (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --checksum-page --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00 DETAIL: hardlink pg_data/PG_VERSION to [BACKUP-FULL-3]
@@ -3740,12 +3725,13 @@ WARN: configuration file contains invalid option 'bogus'
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
+P00   INFO: expire command begin [BACKREST-VERSION]: --checksum-page --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3919,6 +3905,7 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the primary
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B

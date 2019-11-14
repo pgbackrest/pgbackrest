@@ -400,6 +400,7 @@ typedef struct ManifestBuildData
     const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
+    RegExp *standbyExp;                                             // Identify files that must be copied from the primary
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
 
@@ -407,6 +408,27 @@ typedef struct ManifestBuildData
     const String *pgPath;
     bool dbPath;                                                    // Does this path contain relations?
 } ManifestBuildData;
+
+// Helper to determine if a file should be copied from the primary
+static bool
+manifestBuildCopyFromPrimary(RegExp *standbyExp, const String *manifestName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(REGEXP, standbyExp);
+        FUNCTION_TEST_PARAM(STRING, manifestName);
+    FUNCTION_TEST_END();
+
+    ASSERT(manifestName != NULL);
+
+    if (standbyExp != NULL)
+    {
+        FUNCTION_TEST_RETURN(
+            strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+            !regExpMatch(standbyExp, manifestName));
+    }
+
+    FUNCTION_TEST_RETURN(false);
+}
 
 void manifestBuildCallback(void *data, const StorageInfo *info)
 {
@@ -458,6 +480,14 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypePath:
         {
+            // There should not be any paths in pg_tblspc
+            if (strEqZ(buildData->manifestParentName, MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC))
+            {
+                THROW_FMT(
+                    LinkExpectedError, "'%s' is not a symlink - " MANIFEST_TARGET_PGTBLSPC " should contain only symlinks",
+                    strPtr(manifestName));
+            }
+
             // Add path to manifest
             ManifestPath path =
             {
@@ -473,7 +503,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             if (buildData->excludeContent != NULL && strLstExists(buildData->excludeContent, manifestName))
             {
                 LOG_INFO(
-                    "exclude '%s/%s' from backup using '%s/' exclusion", strPtr(buildData->pgPath), strPtr(info->name),
+                    "exclude contents of '%s/%s' from backup using '%s/' exclusion", strPtr(buildData->pgPath), strPtr(info->name),
                     strPtr(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
                 FUNCTION_TEST_RETURN_VOID();
@@ -604,6 +634,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 .mode = info->mode,
                 .user = info->user,
                 .group = info->group,
+                .primary = manifestBuildCopyFromPrimary(buildData->standbyExp, manifestName),
                 .size = info->size,
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
@@ -670,12 +701,15 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 // stored so we can just store it as dummy path.
                 if (buildData->tablespaceId != NULL)
                 {
+                    const ManifestPath *pathTblSpc = manifestPathFind(
+                        buildData->manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC));
+
                     ManifestPath path =
                     {
                         .name = manifestName,
-                        .mode = pathBase->mode,
-                        .user = pathBase->user,
-                        .group = pathBase->group,
+                        .mode = pathTblSpc->mode,
+                        .user = pathTblSpc->user,
+                        .group = pathTblSpc->group,
                     };
 
                     manifestPathAdd(buildData->manifest, &path);
@@ -690,52 +724,69 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             }
 
             // Add info about the linked file/path
-            StorageInfo linkedInfo = storageInfoP(buildData->storagePg, buildDataSub.pgPath, .followLink = true);
+            StorageInfo linkedInfo = storageInfoP(
+                buildData->storagePg, buildDataSub.pgPath, .followLink = true, .ignoreMissing = true);
 
-            // If a file link
-            if (linkedInfo.type == storageTypeFile)
+            // If the link destination exists then proceed as usual
+            if (linkedInfo.exists)
             {
-                // Tablespace links should never be to a file
-                CHECK(target.tablespaceId == 0);
-
-                // Identify target as a file
-                target.path = strPath(info->linkDestination);
-                target.file = strBase(info->linkDestination);
-
-                // Add file to manifest
-                ManifestFile file =
+                // If a file link
+                if (linkedInfo.type == storageTypeFile)
                 {
-                    .name = manifestName,
-                    .mode = linkedInfo.mode,
-                    .user = linkedInfo.user,
-                    .group = linkedInfo.group,
-                    .size = linkedInfo.size,
-                    .sizeRepo = linkedInfo.size,
-                    .timestamp = linkedInfo.timeModified,
-                };
+                    // Tablespace links should never be to a file
+                    CHECK(target.tablespaceId == 0);
 
-                manifestFileAdd(buildData->manifest, &file);
+                    // Identify target as a file
+                    target.path = strPath(info->linkDestination);
+                    target.file = strBase(info->linkDestination);
+
+                    // Add file to manifest
+                    ManifestFile file =
+                    {
+                        .name = manifestName,
+                        .mode = linkedInfo.mode,
+                        .user = linkedInfo.user,
+                        .group = linkedInfo.group,
+                        .primary = manifestBuildCopyFromPrimary(buildData->standbyExp, manifestName),
+                        .size = linkedInfo.size,
+                        .sizeRepo = linkedInfo.size,
+                        .timestamp = linkedInfo.timeModified,
+                    };
+
+                    manifestFileAdd(buildData->manifest, &file);
+                }
+                // Else if a path link
+                else
+                {
+                    target.path = info->linkDestination;
+
+                    // Add linked path info
+                    ManifestPath path =
+                    {
+                        .name = manifestName,
+                        .mode = linkedInfo.mode,
+                        .user = linkedInfo.user,
+                        .group = linkedInfo.group,
+                    };
+
+                    manifestPathAdd(buildData->manifest, &path);
+                }
             }
-            // Else if a path link
+            // Else dummy up the target with a destination so manifestLinkCheck() can be run.  This is so errors about links with
+            // destinations in PGDATA will take precedence over missing destination.
             else
-            {
                 target.path = info->linkDestination;
-
-                // Add linked path info
-                ManifestPath path =
-                {
-                    .name = manifestName,
-                    .mode = linkedInfo.mode,
-                    .user = linkedInfo.user,
-                    .group = linkedInfo.group,
-                };
-
-                manifestPathAdd(buildData->manifest, &path);
-            }
 
             // Add target and link
             manifestTargetAdd(buildData->manifest, &target);
             manifestLinkAdd(buildData->manifest, &link);
+
+            // Make sure the link is valid
+            manifestLinkCheck(buildData->manifest);
+
+            // If the link check was successful but the destination does not exist then check it again to generate an error
+            if (!linkedInfo.exists)
+                storageInfoP(buildData->storagePg, buildDataSub.pgPath, .followLink = true);
 
             // Now recurse into the path
             if (linkedInfo.type == storageTypePath)
@@ -744,8 +795,6 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 lstSort(buildData->manifest->targetList, sortOrderAsc);
                 lstSort(buildData->manifest->linkList, sortOrderAsc);
                 lstSort(buildData->manifest->pathList, sortOrderAsc);
-
-                manifestLinkCheck(buildData->manifest);
 
                 // Now it should be safe to recurse
                 if (buildData->dbPathExp != NULL)
@@ -820,6 +869,17 @@ manifestNewBuild(
 
             // Expression to find temp relations
             buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
+        }
+
+        // Build expression to identify files that can be copied from the standby when standby backup is supported
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (pgVersion >= PG_VERSION_BACKUP_STANDBY)
+        {
+            buildData.standbyExp = regExpNew(
+                strNewFmt(
+                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
+                        MANIFEST_TARGET_PGTBLSPC ")/",
+                    strPtr(pgXactPath(pgVersion))));
         }
 
         // Build list of exclusions
@@ -2654,6 +2714,24 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
             target->file = strDup(file);
     }
     MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Set checksum page flag
+***********************************************************************************************************************************/
+void
+manifestChecksumPageSet(Manifest *this, bool checksumPage)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(BOOL, checksumPage);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    this->data.backupOptionChecksumPage = checksumPage ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
 
     FUNCTION_TEST_RETURN_VOID();
 }

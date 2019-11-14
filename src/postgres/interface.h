@@ -39,6 +39,7 @@ Defines for various Postgres paths and files
 #define PG_PATH_BASE                                                "base"
 #define PG_PATH_GLOBAL                                              "global"
     STRING_DECLARE(PG_PATH_GLOBAL_STR);
+#define PG_PATH_PGMULTIXACT                                         "pg_multixact"
 #define PG_PATH_PGDYNSHMEM                                          "pg_dynshmem"
 #define PG_PATH_PGNOTIFY                                            "pg_notify"
 #define PG_PATH_PGREPLSLOT                                          "pg_replslot"
@@ -122,6 +123,9 @@ PgWal pgWalFromBuffer(const Buffer *walBuffer);
 String *pgTablespaceId(unsigned int pgVersion);
 
 const String *pgWalName(unsigned int pgVersion);
+
+// Get transaction commit log path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
+const String *pgXactPath(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
 Test Functions

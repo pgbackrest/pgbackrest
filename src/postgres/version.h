@@ -42,6 +42,9 @@ Version where various PostgreSQL capabilities were introduced
 // pause_at_recovery_target is supported
 #define PG_VERSION_RECOVERY_TARGET_PAUSE                            PG_VERSION_91
 
+// Backup from standby is supported
+#define PG_VERSION_BACKUP_STANDBY                                   PG_VERSION_92
+
 // tablespace_map is created during backup
 #define PG_VERSION_TABLESPACE_MAP                                   PG_VERSION_95
 

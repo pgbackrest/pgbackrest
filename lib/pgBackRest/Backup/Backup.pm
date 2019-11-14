@@ -512,31 +512,12 @@ sub process
 
     my $rhParam = (JSON::PP->new()->allow_nonref())->decode($stryCommandArg[0]);
 
-    # Find the previous backup based on the type
+    # Load backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
-    my $strBackupLastPath = $rhParam->{backupLabelPrior};
-    my $oLastManifest;
-    my $strTimelineLast;
-    my $strCipherPassBackupSet;
-
-    if (defined($strBackupLastPath))
-    {
-        $oLastManifest = new pgBackRest::Manifest(
-            storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLastPath}/" . FILE_MANIFEST),
-            {strCipherPass => $oBackupInfo->cipherPassSub()});
-
-        # If the repo is encrypted then use the passphrase in this manifest for the backup set
-        $strCipherPassBackupSet = $oLastManifest->cipherPassSub();
-
-        # Get archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online backup.
-        if ($oLastManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
-        {
-            $strTimelineLast = substr($oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
-        }
-    }
 
     # Search cluster directory for an aborted backup
     my $strBackupLabel = $rhParam->{backupLabelHalted};
+    my $strCipherPassBackupSet;
     my $oAbortedManifest;
     my $strBackupPath;
     my $strTimelineAborted;
@@ -547,12 +528,6 @@ sub process
 
         $oAbortedManifest = new pgBackRest::Manifest(
             storageRepo()->pathGet("${strBackupPath}/" . FILE_MANIFEST), {strCipherPass => $oBackupInfo->cipherPassSub()});
-
-        # If the repo is encrypted, set the backup set passphrase from this manifest
-        if (defined($oBackupInfo->cipherPassSub()))
-        {
-            $strCipherPassBackupSet = $oAbortedManifest->cipherPassSub();
-        }
 
         # Get the archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online
         # backup.
@@ -566,19 +541,10 @@ sub process
         }
     }
 
-    # Generate a passphrase for the backup set if the repo is encrypted
-    if (defined($oBackupInfo->cipherPassSub()) && !defined($strCipherPassBackupSet) &&
-        cfgOption(CFGOPT_TYPE) eq CFGOPTVAL_BACKUP_TYPE_FULL)
-    {
-        $strCipherPassBackupSet = cipherPassGen();
-    }
-
-    # If backup label is not defined then create the label and path.
-    my $lTimestampStart = $rhParam->{timestampStart};
-
+    # Get the backup label path
     if (!defined($strBackupLabel))
     {
-        $strBackupLabel = backupLabel(storageRepo(), cfgOption(CFGOPT_TYPE), $strBackupLastPath, $lTimestampStart);
+        $strBackupLabel = $rhParam->{backupLabel};
         $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
     }
 
@@ -587,14 +553,10 @@ sub process
     # encrypted (undefined if not).
     my $strDbVersion = $rhParam->{pgVersion};
 
-    my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
-        {bLoad => false, strDbVersion => $strDbVersion, iDbCatalogVersion => $rhParam->{pgCatalogVersion},
-        strCipherPass => defined($oBackupInfo->cipherPassSub()) ? $oBackupInfo->cipherPassSub() : undef,
-        strCipherPassSub => defined($oBackupInfo->cipherPassSub()) ? $strCipherPassBackupSet : undef});
+    my $oBackupManifest = new pgBackRest::Manifest(
+        STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST, {oStorage => storageRepo()});
 
     # Backup settings
-    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, cfgOption(CFGOPT_TYPE));
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef, $lTimestampStart);
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef, cfgOption(CFGOPT_BACKUP_STANDBY));
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BUFFER_SIZE, undef, cfgOption(CFGOPT_BUFFER_SIZE));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, cfgOption(CFGOPT_COMPRESS));
@@ -676,10 +638,13 @@ sub process
     # Else start the backup normally
     else
     {
+        confess &log(ASSERT, "ONLINE BACKUPS DISABLED DURING DEVELOPMENT");
+
         # Start the backup
         ($strArchiveStart, $strLsnStart, $iWalSegmentSize) =
             $oDbMaster->backupStart(
-                PROJECT_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), cfgOption(CFGOPT_START_FAST));
+                PROJECT_NAME . ' backup started at ' . timestampFormat(undef, $rhParam->{timestampStart}),
+                cfgOption(CFGOPT_START_FAST));
 
         # Record the archive start location
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
@@ -718,39 +683,8 @@ sub process
         }
     }
 
-    # Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain files would
-    # be checksummed and the list could be incomplete during reporting.
-    if (cfgOption(CFGOPT_TYPE) ne CFGOPTVAL_BACKUP_TYPE_FULL && defined($strBackupLastPath))
-    {
-        # If not defined this backup was done in a version prior to page checksums being introduced.  Just set checksum-page to
-        # false and move on without a warning.  Page checksums will start on the next full backup.
-        if (!$oLastManifest->test(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE))
-        {
-            cfgOptionSet(CFGOPT_CHECKSUM_PAGE, false);
-        }
-        else
-        {
-            my $bChecksumPageLast =
-                $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE);
-
-            if ($bChecksumPageLast != cfgOption(CFGOPT_CHECKSUM_PAGE))
-            {
-                &log(WARN,
-                    cfgOption(CFGOPT_TYPE) . " backup cannot alter '" . cfgOptionName(CFGOPT_CHECKSUM_PAGE) . "' option to '" .
-                        boolFormat(cfgOption(CFGOPT_CHECKSUM_PAGE)) . "', reset to '" . boolFormat($bChecksumPageLast) .
-                        "' from ${strBackupLastPath}");
-                cfgOptionSet(CFGOPT_CHECKSUM_PAGE, $bChecksumPageLast);
-            }
-        }
-    }
-
     # Record checksum-page option in the manifest
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, cfgOption(CFGOPT_CHECKSUM_PAGE));
-
-    # Build the manifest. The delta option may have changed from false to true during the manifest build so set it to the result.
-    cfgOptionSet(CFGOPT_DELTA, $oBackupManifest->build(
-        $oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $hTablespaceMap,
-        $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false), $strTimelineCurrent, $strTimelineLast));
 
     &log(TEST, TEST_MANIFEST_BUILD);
 
@@ -764,12 +698,6 @@ sub process
         # so set it to the result.
         cfgOptionSet(CFGOPT_DELTA, $self->resumeClean(storageRepo(), $strBackupLabel, $oBackupManifest, $oAbortedManifest,
             cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $strTimelineCurrent, $strTimelineAborted));
-    }
-    # Else create the backup path
-    else
-    {
-        logDebugMisc($strOperation, "create backup path ${strBackupPath}");
-        storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
     }
 
     # Set the delta option in the manifest
