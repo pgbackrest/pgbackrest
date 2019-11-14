@@ -196,8 +196,8 @@ pageChecksumResult(THIS_VOID)
         kvPut(result, varNewStrZ("error"), varNewVarLst(errorList));
     }
 
-    kvPut(result, varNewStrZ("valid"), varNewBool(this->valid));
-    kvPut(result, varNewStrZ("align"), varNewBool(this->align));
+    kvPut(result, VARSTRDEF("valid"), VARBOOL(this->valid));
+    kvPut(result, VARSTRDEF("align"), VARBOOL(this->align));
 
     FUNCTION_LOG_RETURN(VARIANT, varNewKv(result));
 }
