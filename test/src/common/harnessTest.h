@@ -32,7 +32,9 @@ void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t buff
 //
 // {[path]} - the current test path
 // {[path-data]} - the current test data path
+// {[user-id]} - the current test user id
 // {[user]} - the current test user
+// {[group-id]} - the current test group id
 // {[group]} - the current test group
 // {[project-exe]} - the project exe
 const char *hrnReplaceKey(const char *string);
