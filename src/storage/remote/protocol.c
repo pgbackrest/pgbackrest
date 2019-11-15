@@ -94,6 +94,7 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
 /***********************************************************************************************************************************
 Write storage info into the protocol
 ***********************************************************************************************************************************/
+// Helper to write storage type into the protocol
 static void
 storageRemoteInfoWriteType(StorageType type, IoWrite *write)
 {
