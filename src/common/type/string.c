@@ -635,8 +635,18 @@ strPathAbsolute(const String *this, const String *base)
             {
                 const String *pathPart = strLstGet(pathList, 0);
 
+                // If the last part is empty
                 if (strSize(pathPart) == 0)
+                {
+                    // Allow when this is the last part since it just means there was a trailing /
+                    if (strLstSize(pathList) == 1)
+                    {
+                        strLstRemoveIdx(pathList, 0);
+                        break;
+                    }
+
                     THROW_FMT(AssertError, "'%s' is not a valid relative path", strPtr(this));
+                }
 
                 if (strEq(pathPart, DOTDOT_STR))
                 {
