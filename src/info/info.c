@@ -141,7 +141,7 @@ infoNew(const String *cipherPass)
         this = infoNewInternal();
 
         // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
-        this->cipherPass = strDup(cipherPass);
+        infoCipherPassSet(this, cipherPass);
         this->backrestVersion = STRDEF(PROJECT_VERSION);
     }
     MEM_CONTEXT_NEW_END();
@@ -460,6 +460,25 @@ infoCipherPass(const Info *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->cipherPass);
+}
+
+void
+infoCipherPassSet(Info *this, const String *cipherPass)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->cipherPass = strDup(cipherPass);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 const String *
