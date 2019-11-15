@@ -486,7 +486,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--type=time");
-        strLstAddZ(argList, "--target=20161219T162757Z");
+        strLstAddZ(argList, "--target=2019-11-14 13:02:49-0500");
 /* CSHANG If I use https://www.freeformatter.com/epoch-timestamp-to-date-converter.html with
 Year	Month	Date	Hours	Minutes	Seconds	Time Zone
 2016    Dec     19      16      27      57      Local

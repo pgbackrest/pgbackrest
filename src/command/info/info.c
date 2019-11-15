@@ -583,6 +583,11 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
 
                 strftime(timeBufferStart, sizeof(timeBufferStart), "%Y-%m-%d %H:%M:%S", localtime(&timeStart));
                 strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime(&timeStop));
+char testtimeBufferStart[20];
+char testtimeBufferStop[20];
+strftime(testtimeBufferStart, sizeof(testtimeBufferStart), "%Y-%m-%d %H:%M:%S", gmtime(&timeStart));
+strftime(testtimeBufferStop, sizeof(testtimeBufferStop), "%Y-%m-%d %H:%M:%S", gmtime(&timeStop));
+LOG_WARN("gmstart %s, gmstop %s", testtimeBufferStart, testtimeBufferStop);
 
                 strCatFmt(
                     backupResult, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
