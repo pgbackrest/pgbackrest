@@ -317,7 +317,12 @@ jsonToStr(const String *json)
     unsigned int jsonPos = 0;
     jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
 
-    String *result = jsonToStrInternal(strPtr(json), &jsonPos);
+    String *result = NULL;
+
+    if (strncmp(strPtr(json), "null", 4) == 0)
+        jsonPos += 4;
+    else
+        result = jsonToStrInternal(strPtr(json), &jsonPos);
 
     jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
 
