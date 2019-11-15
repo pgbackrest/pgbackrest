@@ -7,6 +7,7 @@ Remote Storage
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
+#include "common/type/json.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
 #include "storage/remote/storage.intern.h"
@@ -60,6 +61,58 @@ storageRemoteExists(THIS_VOID, const String *file)
 /***********************************************************************************************************************************
 File/path info
 ***********************************************************************************************************************************/
+// Helper to convert protocol storage type to an enum
+static StorageType
+storageRemoteInfoParseType(const char type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHAR, type);
+    FUNCTION_TEST_END();
+
+    switch (type)
+    {
+        case 'f':
+            FUNCTION_TEST_RETURN(storageTypeFile);
+
+        case 'p':
+            FUNCTION_TEST_RETURN(storageTypePath);
+
+        case 'l':
+            FUNCTION_TEST_RETURN(storageTypeLink);
+
+        case 's':
+            FUNCTION_TEST_RETURN(storageTypeSpecial);
+    }
+
+    THROW_FMT(AssertError, "unknown storage type '%c'", type);
+}
+
+// Helper to parse storage info from the protocol output
+static void
+storageRemoteInfoParse(StorageInfo *info, IoRead *read)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+        FUNCTION_TEST_PARAM(IO_READ, read);
+    FUNCTION_TEST_END();
+
+    info->type = storageRemoteInfoParseType(strPtr(ioReadLine(read))[0]);
+    info->userId = jsonToUInt(ioReadLine(read));
+    info->user = jsonToStr(ioReadLine(read));
+    info->groupId = jsonToUInt(ioReadLine(read));
+    info->group = jsonToStr(ioReadLine(read));
+    info->mode = jsonToUInt(ioReadLine(read));
+    info->timeModified = (time_t)jsonToUInt64(ioReadLine(read));
+
+    if (info->type == storageTypeFile)
+        info->size = jsonToUInt64(ioReadLine(read));
+
+    if (info->type == storageTypeLink)
+        info->linkDestination = jsonToStr(ioReadLine(read));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static StorageInfo
 storageRemoteInfo(THIS_VOID, const String *file, bool followLink)
 {
@@ -72,11 +125,37 @@ storageRemoteInfo(THIS_VOID, const String *file, bool followLink)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(file != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    StorageInfo result = {.exists = false};
 
-    FUNCTION_LOG_RETURN(STORAGE_INFO, (StorageInfo){0});
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_STR);
+        protocolCommandParamAdd(command, VARSTR(file));
+        protocolCommandParamAdd(command, VARBOOL(followLink));
+
+        result.exists = varBool(protocolClientExecute(this->client, command, true));
+
+        if (result.exists)
+        {
+            // Read info from protocol
+            storageRemoteInfoParse(&result, protocolClientIoRead(this->client));
+
+            // Acknowledge command completed
+            protocolClientReadOutput(this->client, false);
+
+            // Duplicate strings into the calling context
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result.name = strDup(result.name);
+            result.linkDestination = strDup(result.linkDestination);
+            result.user = strDup(result.user);
+            result.group = strDup(result.group);
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
 /***********************************************************************************************************************************

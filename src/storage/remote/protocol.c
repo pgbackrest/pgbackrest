@@ -15,6 +15,7 @@ Remote Storage Protocol Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/type/json.h"
 #include "config/config.h"
 #include "storage/remote/protocol.h"
 #include "storage/helper.h"
@@ -25,6 +26,7 @@ Constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_EXISTS_STR,                  PROTOCOL_COMMAND_STORAGE_EXISTS);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
+STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_STR,                    PROTOCOL_COMMAND_STORAGE_INFO);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_LIST_STR,                    PROTOCOL_COMMAND_STORAGE_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
@@ -90,6 +92,76 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
 }
 
 /***********************************************************************************************************************************
+Write storage info into the protocol
+***********************************************************************************************************************************/
+static void
+storageRemoteInfoWriteType(StorageType type, IoWrite *write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+    FUNCTION_TEST_END();
+
+    const String *typeWrite = NULL;
+
+    switch (type)
+    {
+        case storageTypeFile:
+        {
+            typeWrite = STRDEF("f");
+            break;
+        }
+
+        case storageTypePath:
+        {
+            typeWrite = STRDEF("p");
+            break;
+        }
+
+        case storageTypeLink:
+        {
+            typeWrite = STRDEF("l");
+            break;
+        }
+
+        case storageTypeSpecial:
+        {
+            typeWrite = STRDEF("s");
+            break;
+        }
+    }
+
+    ioWriteStrLine(write, typeWrite);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+storageRemoteInfoWrite(const StorageInfo *info, IoWrite *write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+    FUNCTION_TEST_END();
+
+    storageRemoteInfoWriteType(info->type, write);
+    ioWriteStrLine(write, jsonFromUInt(info->userId));
+    ioWriteStrLine(write, jsonFromStr(info->user));
+    ioWriteStrLine(write, jsonFromUInt(info->groupId));
+    ioWriteStrLine(write, jsonFromStr(info->group));
+    ioWriteStrLine(write, jsonFromUInt(info->mode));
+    ioWriteStrLine(write, jsonFromInt64(info->timeModified));
+
+    if (info->type == storageTypeFile)
+        ioWriteStrLine(write, jsonFromUInt64(info->size));
+
+    if (info->type == storageTypeLink)
+        ioWriteStrLine(write, jsonFromStr(info->linkDestination));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Process storage protocol requests
 ***********************************************************************************************************************************/
 bool
@@ -121,6 +193,20 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
         {
             protocolServerResponse(server, varNewUInt64(interface.feature));
+        }
+        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
+        {
+            // Get info
+            StorageInfo info = interface.info(
+                driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)));
+
+            protocolServerResponse(server, VARBOOL(info.exists));
+
+            if (info.exists)
+            {
+                storageRemoteInfoWrite(&info, protocolServerIoWrite(server));
+                protocolServerResponse(server, NULL);
+            }
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
         {

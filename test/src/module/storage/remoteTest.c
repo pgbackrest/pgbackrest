@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Remote Storage
 ***********************************************************************************************************************************/
+#include <utime.h>
+
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
@@ -107,6 +109,171 @@ testRun(void)
 
         cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("db"));
         cfgOptionValidSet(cfgOptType, true);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageInfo()"))
+    {
+        Storage *storageRemote = NULL;
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage types that are not tested elsewhere");
+
+        TEST_RESULT_UINT(storageRemoteInfoParseType('s'), storageTypeSpecial, "read special type");
+        TEST_ERROR(storageRemoteInfoParseType('z'), AssertError, "unknown storage type 'z'");
+
+        Buffer *buffer = bufNew(0);
+        IoWrite *write = ioBufferWriteNew(buffer);
+        ioWriteOpen(write);
+
+        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypePath, write), "write path type");
+        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypeLink, write), "write link type");
+        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypeSpecial, write), "write special type");
+
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "p\nl\ns\n", "check path types");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("missing file/path");
+
+        TEST_ERROR(
+            storageInfoNP(storageRemote, strNew(BOGUS_STR)), FileOpenError, "unable to get info for missing path/file 'BOGUS'");
+        TEST_RESULT_BOOL(storageInfoP(storageRemote, strNew(BOGUS_STR), .ignoreMissing = true).exists, false, "missing file/path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path info");
+
+        storagePathCreateNP(storageTest, strNew("repo"));
+        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
+        THROW_ON_SYS_ERROR(
+            utime(strPtr(storagePath(storageTest, strNew("repo"))), &utimeTest) != 0, FileWriteError, "unable to set time");
+
+        StorageInfo info = {.exists = false};
+        TEST_ASSIGN(info, storageInfoP(storageRemote, NULL), "valid path");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypePath, "    check type");
+        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_INT(info.mode, 0750, "    check mode");
+        TEST_RESULT_UINT(info.timeModified, 1555160000, "    check mod time");
+        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file info");
+
+        storagePutNP(storageNewWriteP(storageRemote, strNew("test"), .timeModified = 1555160001), BUFSTRDEF("TESTME"));
+
+        TEST_ASSIGN(info, storageInfoNP(storageRemote, strNew("test")), "valid file");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
+        TEST_RESULT_INT(info.size, 6, "    check size");
+        TEST_RESULT_INT(info.mode, 0640, "    check mode");
+        TEST_RESULT_UINT(info.timeModified, 1555160001, "    check mod time");
+        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("special info");
+
+        TEST_SYSTEM_FMT("mkfifo -m 666 %s", strPtr(storagePath(storageTest, strNew("repo/fifo"))));
+
+        TEST_ASSIGN(info, storageInfoNP(storageRemote, strNew("fifo")), "valid fifo");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
+        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_INT(info.mode, 0666, "    check mode");
+        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("link info");
+
+        TEST_SYSTEM_FMT("ln -s ../repo/test %s", strPtr(storagePath(storageTest, strNew("repo/link"))));
+
+        TEST_ASSIGN(info, storageInfoNP(storageRemote, strNew("link")), "valid link");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
+        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_INT(info.mode, 0777, "    check mode");
+        TEST_RESULT_STR_Z(info.linkDestination, "../repo/test", "    check link destination");
+        TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("link info follow");
+
+        TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("link"), .followLink = true), "valid link follow");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
+        TEST_RESULT_INT(info.size, 6, "    check size");
+        TEST_RESULT_INT(info.mode, 0640, "    check mode");
+        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("protocol output that is not tested elsewhere");
+
+        buffer = bufNew(0);
+        write = ioBufferWriteNew(buffer);
+        ioWriteOpen(write);
+
+        info = (StorageInfo){.type = storageTypeLink, .linkDestination = STRDEF("../")};
+        TEST_RESULT_VOID(storageRemoteInfoWrite(&info, write), "write link info");
+
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "l\n0\nnull\n0\nnull\n0\n0\n\"../\"\n", "check protocol output");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly with missing path/file");
+
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStrZ(BOGUS_STR));
+        varLstAdd(paramList, varNewBool(false));
+
+        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
+        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly with a file");
+
+        paramList = varLstNew();
+        varLstAdd(paramList, varNewStrZ("test"));
+        varLstAdd(paramList, varNewBool(false));
+
+        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(serverWrite)),
+            hrnReplaceKey(
+                "{\"out\":true}\n"
+                "f\n{[user-id]}\n\"{[user]}\"\n{[group-id]}\n\"{[group]}\"\n416\n1555160001\n6\n"
+                "{}\n"),
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -617,15 +784,6 @@ testRun(void)
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), PathMissingError,
             "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_PATH_SYNC_MISSING,
             strPtr(strNewFmt("%s/repo/anewpath", testPath())));
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("UNIMPLEMENTED"))
-    {
-        Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
-
-        TEST_ERROR(storageInfoNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
     }
 
     protocolFree();
