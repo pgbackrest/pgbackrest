@@ -554,7 +554,8 @@ sub process
     my $strDbVersion = $rhParam->{pgVersion};
 
     my $oBackupManifest = new pgBackRest::Manifest(
-        STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST, {oStorage => storageRepo()});
+        STORAGE_REPO_BACKUP . "/" . FILE_MANIFEST . '.pass', {oStorage => storageRepo()});
+    $oBackupManifest->{strFileName} = STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST;
 
     # Backup settings
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef, cfgOption(CFGOPT_BACKUP_STANDBY));

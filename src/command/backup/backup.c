@@ -520,12 +520,11 @@ cmdBackup(void)
         cfgCommandParamSet(paramList);
 
         // Save the manifest so the Perl code can read it
-        const String *labelToSave = backupLabelHalted ? backupLabelHalted : manifestData(manifest)->backupLabel;
+        if (!backupLabelHalted)
+            storagePathCreateNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)));
 
         IoWrite *write = storageWriteIo(
-            storageNewWriteNP(
-                storageRepoWrite(),
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE ".copy", strPtr(labelToSave))));
+            storageNewWriteNP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".pass")));
         manifestSave(manifest, write);
 
         // Save an original copy so we can see what the C code wrote out

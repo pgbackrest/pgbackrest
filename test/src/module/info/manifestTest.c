@@ -67,11 +67,19 @@ testRun(void)
             "option-hardlink=false\n"                                                                                              \
             "option-online=false\n"
 
-        #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
+        #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE                                                                           \
             "\n"                                                                                                                   \
             "[target:file:default]\n"                                                                                              \
             "group=\"{[group]}\"\n"                                                                                                \
             "master=false\n"                                                                                                       \
+            "mode=\"0400\"\n"                                                                                                      \
+            "user=\"{[user]}\"\n"
+
+        #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE                                                                            \
+            "\n"                                                                                                                   \
+            "[target:file:default]\n"                                                                                              \
+            "group=\"{[group]}\"\n"                                                                                                \
+            "master=true\n"                                                                                                       \
             "mode=\"0400\"\n"                                                                                                      \
             "user=\"{[user]}\"\n"
 
@@ -141,7 +149,7 @@ testRun(void)
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
                 "pg_data/global/t1_1={\"size\":0,\"timestamp\":1565282114}\n"
-                TEST_MANIFEST_FILE_DEFAULT
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -151,7 +159,7 @@ testRun(void)
             "check manifest");
 
         TEST_RESULT_LOG(
-            "P00   INFO: exclude '{[path]}/pg/base' from backup using 'base/' exclusion\n"
+            "P00   INFO: exclude contents of '{[path]}/pg/base' from backup using 'base/' exclusion\n"
             "P00   INFO: exclude '{[path]}/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -236,11 +244,11 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
                 "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
-                "pg_tblspc/1/PG_9.4_201409291/1/16384={\"size\":8,\"timestamp\":1565282115}\n"
-                TEST_MANIFEST_FILE_DEFAULT
+                "pg_tblspc/1/PG_9.4_201409291/1/16384={\"master\":false,\"size\":8,\"timestamp\":1565282115}\n"
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
@@ -285,7 +293,8 @@ testRun(void)
         #undef TEST_MANIFEST_DB_83
         #undef TEST_MANIFEST_DB_94
         #undef TEST_MANIFEST_OPTION
-        #undef TEST_MANIFEST_FILE_DEFAULT
+        #undef TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
+        #undef TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
         #undef TEST_MANIFEST_LINK_DEFAULT
         #undef TEST_MANIFEST_PATH_DEFAULT
     }
