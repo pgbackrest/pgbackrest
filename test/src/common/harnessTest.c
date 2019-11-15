@@ -38,7 +38,9 @@ static const char *testPathData = NULL;
 static const char *testDataPathData = NULL;
 static const char *testRepoPathData = NULL;
 
+static char testUserIdData[32];
 static char testUserData[64];
+static char testGroupIdData[32];
 static char testGroupData[64];
 
 /***********************************************************************************************************************************
@@ -69,6 +71,9 @@ hrnInit(
     testDataPathData = testDataPath;
     testRepoPathData = testRepoPath;
 
+    // Set test user id
+    snprintf(testUserIdData, sizeof(testUserIdData), "%u", getuid());
+
     // Set test user
     const char *testUserTemp = getpwuid(getuid())->pw_name;
 
@@ -80,6 +85,9 @@ hrnInit(
     }
 
     strcpy(testUserData, testUserTemp);
+
+    // Set test group id
+    snprintf(testGroupIdData, sizeof(testGroupIdData), "%u", getgid());
 
     // Set test group
     const char *testGroupTemp = getgrgid(getgid())->gr_name;
@@ -268,7 +276,9 @@ hrnReplaceKey(const char *string)
     strcpy(harnessReplaceKeyBuffer, string);
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[path]}", testPath());
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[path-data]}", testDataPath());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[user-id]}", testUserIdData);
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[user]}", testUser());
+    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[group-id]}", testGroupIdData);
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[group]}", testGroup());
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[project-exe]}", testProjectExe());
 
