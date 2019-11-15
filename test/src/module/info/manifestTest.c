@@ -79,7 +79,7 @@ testRun(void)
             "\n"                                                                                                                   \
             "[target:file:default]\n"                                                                                              \
             "group=\"{[group]}\"\n"                                                                                                \
-            "master=true\n"                                                                                                       \
+            "master=true\n"                                                                                                        \
             "mode=\"0400\"\n"                                                                                                      \
             "user=\"{[user]}\"\n"
 
