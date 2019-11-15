@@ -808,14 +808,14 @@ sub run
 
         if (!$bRemote)
         {
-            # # Create a relative link in PGDATA
-            # testLinkCreate("${strTblSpcPath}/99999", '../');
-            #
-            # $oHostBackup->backup(
-            #     $strType, 'invalid relative tablespace is ../',
-            #     {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
-            #
-            # testFileRemove("${strTblSpcPath}/99999");
+            # Create a relative link in PGDATA
+            testLinkCreate("${strTblSpcPath}/99999", '../');
+
+            $oHostBackup->backup(
+                $strType, 'invalid relative tablespace is ../',
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
+
+            testFileRemove("${strTblSpcPath}/99999");
 
             testLinkCreate("${strTblSpcPath}/99999", '..');
 
@@ -825,13 +825,13 @@ sub run
 
             testFileRemove("${strTblSpcPath}/99999");
 
-            # testLinkCreate("${strTblSpcPath}/99999", '../../base/');
-            #
-            # $oHostBackup->backup(
-            #     $strType, 'invalid relative tablespace is ../../$PGDATA',
-            #     {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
-            #
-            # testFileRemove("${strTblSpcPath}/99999");
+            testLinkCreate("${strTblSpcPath}/99999", '../../base/');
+
+            $oHostBackup->backup(
+                $strType, 'invalid relative tablespace is ../../$PGDATA',
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
+
+            testFileRemove("${strTblSpcPath}/99999");
 
             testLinkCreate("${strTblSpcPath}/99999", '../../base');
 
@@ -840,17 +840,6 @@ sub run
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
             testFileRemove("${strTblSpcPath}/99999");
-
-            # Create a link to a link
-            # testLinkCreate($oHostDbMaster->dbPath() . "/intermediate_link", $oHostDbMaster->dbPath() . '/tablespace/ts1');
-            # testLinkCreate("${strTblSpcPath}/99999", $oHostDbMaster->dbPath() . "/intermediate_link");
-            #
-            # $oHostBackup->backup(
-            #     $strType, 'tablespace link references a link',
-            #     {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
-            #
-            # testFileRemove($oHostDbMaster->dbPath() . "/intermediate_link");
-            # testFileRemove("${strTblSpcPath}/99999");
         }
 
         # Create a relative link in PGDATA

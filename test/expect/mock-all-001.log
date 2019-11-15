@@ -1016,10 +1016,9 @@ incr backup - invalid relative tablespace is ../ (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink ../ destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base) destination is in PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace is .. (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1037,10 +1036,9 @@ incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink ../../base/ destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base) destination is in PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1048,20 +1046,8 @@ incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink ../../base destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
-
-incr backup - tablespace link references a link (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
-            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/pg_tblspc/99999' -> '[TEST_PATH]/db-master/db/intermediate_link' cannot reference another link
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base) destination is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace in $PGDATA (db-master host)
