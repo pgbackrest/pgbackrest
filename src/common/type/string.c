@@ -769,7 +769,7 @@ strSub(const String *this, size_t start)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(start < this->size);
+    ASSERT(start <= this->size);
 
     FUNCTION_TEST_RETURN(strSubN(this, start, this->size - start));
 }
@@ -787,7 +787,7 @@ strSubN(const String *this, size_t start, size_t size)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(start < this->size);
+    ASSERT(start <= this->size);
     ASSERT(start + size <= this->size);
 
     FUNCTION_TEST_RETURN(strNewN(this->buffer + start, size));

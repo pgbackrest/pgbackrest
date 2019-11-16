@@ -195,7 +195,9 @@ testRun(void)
     if (testBegin("strSub() and strSubN()"))
     {
         TEST_RESULT_STR(strPtr(strSub(STRDEF("ABCD"), 2)), "CD", "sub string");
+        TEST_RESULT_STR_Z(strSub(STRDEF("AB"), 2), "", "zero sub string");
         TEST_RESULT_STR(strPtr(strSubN(STRDEF("ABCD"), 1, 2)), "BC", "sub string with length");
+        TEST_RESULT_STR_Z(strSubN(STRDEF("D"), 1, 0), "", "zero sub string with length");
     }
 
     // *****************************************************************************************************************************
