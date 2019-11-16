@@ -62,13 +62,15 @@ testRun(void)
         TEST_RESULT_UINT(storageInterface(storageRemote).feature, storageInterface(storageTest).feature, "    check features");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeatureCompress), true, "    check compress feature");
+        TEST_RESULT_STR_STR(storagePath(storageRemote, NULL), strNewFmt("%s/repo", testPath()), "    check path");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_FEATURE_STR, varLstNew(), server), true, "protocol feature");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)), strPtr(strNewFmt("{\"out\":%" PRIu64 "}\n", storageInterface(storageTest).feature)),
+        TEST_RESULT_STR_STR(
+            strNewBuf(serverWrite),
+            strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -97,7 +99,7 @@ testRun(void)
         cfgOptionValidSet(cfgOptType, true);
 
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNew("test.txt")));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_EXISTS_STR, paramList, server), true, "protocol exists");
@@ -131,7 +133,7 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, NULL);
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo", testPath())));
         varLstAdd(paramList, varNewStr(strNew("^testy$")));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_LIST_STR, paramList, server), true, "protocol list");
@@ -170,7 +172,7 @@ testRun(void)
         TEST_ASSIGN(fileRead, storageNewReadNP(storageRemote, strNew("test.txt")), "new file");
         TEST_RESULT_BOOL(bufEq(storageGetNP(fileRead), contentBuf), true, "get file");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
-        TEST_RESULT_STR(strPtr(storageReadName(fileRead)), "test.txt", "check name");
+        TEST_RESULT_STR_Z(storageReadName(fileRead), hrnReplaceKey("{[path]}/repo/test.txt"), "check name");
         TEST_RESULT_SIZE(
             storageReadRemote(storageRead(fileRead), bufNew(32), false), 0,
             "nothing more to read");
@@ -213,7 +215,7 @@ testRun(void)
         ioBufferSizeSet(4);
 
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNew("test.txt")));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
 
         // Create filters to test filter logic
@@ -246,7 +248,7 @@ testRun(void)
         // Check protocol function directly (file exists but all data goes to sink)
         // -------------------------------------------------------------------------------------------------------------------------
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNew("test.txt")));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
 
         // Create filters to test filter logic
@@ -270,7 +272,7 @@ testRun(void)
         // Check for error on a bogus filter
         // -------------------------------------------------------------------------------------------------------------------------
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNew("test.txt")));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvAdd(kvNew(), varNewStrZ("bogus"), NULL)))));
 
@@ -309,7 +311,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
         TEST_RESULT_UINT(storageWriteModeFile(write), STORAGE_MODE_FILE_DEFAULT, "file mode is default");
         TEST_RESULT_UINT(storageWriteModePath(write), STORAGE_MODE_PATH_DEFAULT, "path mode is default");
-        TEST_RESULT_STR(strPtr(storageWriteName(write)), "test.txt", "check file name");
+        TEST_RESULT_STR(strPtr(storageWriteName(write)), hrnReplaceKey("{[path]}/repo/test.txt"), "check file name");
         TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
@@ -350,7 +352,7 @@ testRun(void)
         ioBufferSizeSet(10);
 
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNew("test3.txt")));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test3.txt", testPath())));
         varLstAdd(paramList, varNewUInt64(0640));
         varLstAdd(paramList, varNewUInt64(0750));
         varLstAdd(paramList, NULL);
@@ -391,7 +393,7 @@ testRun(void)
         ioBufferSizeSet(10);
 
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNew("test4.txt")));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test4.txt", testPath())));
         varLstAdd(paramList, varNewUInt64(0640));
         varLstAdd(paramList, varNewUInt64(0750));
         varLstAdd(paramList, NULL);
@@ -432,7 +434,7 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNew("test")));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR, paramList, server), true, "protocol path exists");
@@ -460,7 +462,7 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(path));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
         varLstAdd(paramList, varNewBool(true));     // errorOnExists
         varLstAdd(paramList, varNewBool(true));     // noParentCreate (true=error if it does not have a parent, false=create parent)
         varLstAdd(paramList, varNewUInt64(0));      // path mode
@@ -473,7 +475,7 @@ testRun(void)
         // Error if parent path not exist
         path = strNew("parent/testpath");
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(path));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
         varLstAdd(paramList, varNewBool(false));    // errorOnExists
         varLstAdd(paramList, varNewBool(true));     // noParentCreate (true=error if it does not have a parent, false=create parent)
         varLstAdd(paramList, varNewUInt64(0));      // path mode
@@ -485,7 +487,7 @@ testRun(void)
 
         // Create parent and path with default mode
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(path));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
         varLstAdd(paramList, varNewBool(true));     // errorOnExists
         varLstAdd(paramList, varNewBool(false));    // noParentCreate (true=error if it does not have a parent, false=create parent)
         varLstAdd(paramList, varNewUInt64(0777));   // path mode
@@ -517,7 +519,7 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(path));      // path
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
         varLstAdd(paramList, varNewBool(true));    // recurse
 
         TEST_RESULT_BOOL(
@@ -560,7 +562,7 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(file));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(file))));
         varLstAdd(paramList, varNewBool(true));
 
         TEST_ERROR_FMT(
@@ -569,7 +571,7 @@ testRun(void)
             "[2] No such file or directory", testPath());
 
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(file));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(file))));
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(
@@ -603,7 +605,7 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(path));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strPtr(path))));
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), true,
@@ -612,7 +614,7 @@ testRun(void)
         bufUsedSet(serverWrite, 0);
 
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNew("anewpath")));
+        varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/anewpath", testPath())));
         TEST_ERROR_FMT(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), PathMissingError,
             "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_PATH_SYNC_MISSING,

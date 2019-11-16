@@ -7,6 +7,7 @@ Remote Storage
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
+#include "common/type/json.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
 #include "storage/remote/storage.intern.h"
@@ -94,6 +95,7 @@ storageRemoteList(THIS_VOID, const String *path, const String *expression)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     StringList *result = NULL;
 
@@ -126,6 +128,7 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, bool com
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
@@ -216,6 +219,7 @@ storageRemotePathExists(THIS_VOID, const String *path)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     bool result = false;
 
@@ -352,17 +356,30 @@ storageRemoteNew(
         driver->compressLevel = compressLevel;
 
         uint64_t feature = 0;
+        const String *path = NULL;
 
         // Get storage features from the remote
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            feature = varUInt64(
-                protocolClientExecute(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR), true));
+            // Send command
+            protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR));
+
+            // Read values
+            path = jsonToStr(protocolClientReadLine(driver->client));
+            feature = jsonToUInt64(protocolClientReadLine(driver->client));
+
+            // Acknowledge command completed
+            protocolClientReadOutput(driver->client, false);
+
+            // Dup path into parent context
+            memContextSwitch(MEM_CONTEXT_OLD());
+            path = strDup(path);
+            memContextSwitch(MEM_CONTEXT_TEMP());
         }
         MEM_CONTEXT_TEMP_END();
 
         this = storageNewP(
-            STORAGE_REMOTE_TYPE_STR, NULL, modeFile, modePath, write, pathExpressionFunction, driver, .feature = feature,
+            STORAGE_REMOTE_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, driver, .feature = feature,
             .exists = storageRemoteExists, .info = storageRemoteInfo, .list = storageRemoteList, .newRead = storageRemoteNewRead,
             .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate, .pathExists = storageRemotePathExists,
             .pathRemove = storageRemotePathRemove, .pathSync = storageRemotePathSync, .remove = storageRemoteRemove);

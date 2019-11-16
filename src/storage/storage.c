@@ -56,7 +56,7 @@ storageNew(
     FUNCTION_LOG_END();
 
     ASSERT(type != NULL);
-    ASSERT(path == NULL || (strSize(path) >= 1 && strPtr(path)[0] == '/'));
+    ASSERT(strSize(path) >= 1 && strPtr(path)[0] == '/');
     ASSERT(driver != NULL);
     ASSERT(interface.exists != NULL);
     ASSERT(interface.list != NULL);
@@ -666,7 +666,7 @@ storagePath(const Storage *this, const String *pathExp)
         if ((strPtr(pathExp))[0] == '/')
         {
             // Make sure the base storage path is contained within the path expression
-            if (this->path != NULL && !strEqZ(this->path, "/"))
+            if (!strEqZ(this->path, "/"))
             {
                 if (this->pathEnforce && (!strBeginsWith(pathExp, this->path) ||
                     !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/')))
@@ -730,9 +730,7 @@ storagePath(const Storage *this, const String *pathExp)
                 strFree(path);
             }
 
-            if (this->path == NULL)
-                result = strDup(pathExp);
-            else if (strEqZ(this->path, "/"))
+            if (strEqZ(this->path, "/"))
                 result = strNewFmt("/%s", strPtr(pathExp));
             else
                 result = strNewFmt("%s/%s", strPtr(this->path), strPtr(pathExp));
