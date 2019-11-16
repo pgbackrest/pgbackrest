@@ -97,36 +97,36 @@ Write storage info into the protocol
 ***********************************************************************************************************************************/
 // Helper to write storage type into the protocol
 static void
-storageRemoteInfoWriteType(StorageType type, IoWrite *write)
+storageRemoteInfoWriteType(StorageType type, ProtocolServer *server)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(IO_WRITE, write);
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_TEST_END();
 
     switch (type)
     {
         case storageTypeFile:
         {
-            ioWriteStrLine(write, STRDEF("f"));
+            protocolServerWriteLine(server, STRDEF("f"));
             break;
         }
 
         case storageTypePath:
         {
-            ioWriteStrLine(write, STRDEF("p"));
+            protocolServerWriteLine(server, STRDEF("p"));
             break;
         }
 
         case storageTypeLink:
         {
-            ioWriteStrLine(write, STRDEF("l"));
+            protocolServerWriteLine(server, STRDEF("l"));
             break;
         }
 
         case storageTypeSpecial:
         {
-            ioWriteStrLine(write, STRDEF("s"));
+            protocolServerWriteLine(server, STRDEF("s"));
             break;
         }
     }
@@ -135,26 +135,26 @@ storageRemoteInfoWriteType(StorageType type, IoWrite *write)
 }
 
 static void
-storageRemoteInfoWrite(const StorageInfo *info, IoWrite *write)
+storageRemoteInfoWrite(const StorageInfo *info, ProtocolServer *server)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
-        FUNCTION_TEST_PARAM(IO_WRITE, write);
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_TEST_END();
 
-    storageRemoteInfoWriteType(info->type, write);
-    ioWriteStrLine(write, jsonFromUInt(info->userId));
-    ioWriteStrLine(write, jsonFromStr(info->user));
-    ioWriteStrLine(write, jsonFromUInt(info->groupId));
-    ioWriteStrLine(write, jsonFromStr(info->group));
-    ioWriteStrLine(write, jsonFromUInt(info->mode));
-    ioWriteStrLine(write, jsonFromInt64(info->timeModified));
+    storageRemoteInfoWriteType(info->type, server);
+    protocolServerWriteLine(server, jsonFromUInt(info->userId));
+    protocolServerWriteLine(server, jsonFromStr(info->user));
+    protocolServerWriteLine(server, jsonFromUInt(info->groupId));
+    protocolServerWriteLine(server, jsonFromStr(info->group));
+    protocolServerWriteLine(server, jsonFromUInt(info->mode));
+    protocolServerWriteLine(server, jsonFromInt64(info->timeModified));
 
     if (info->type == storageTypeFile)
-        ioWriteStrLine(write, jsonFromUInt64(info->size));
+        protocolServerWriteLine(server, jsonFromUInt64(info->size));
 
     if (info->type == storageTypeLink)
-        ioWriteStrLine(write, jsonFromStr(info->linkDestination));
+        protocolServerWriteLine(server, jsonFromStr(info->linkDestination));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -163,15 +163,15 @@ storageRemoteInfoWrite(const StorageInfo *info, IoWrite *write)
 Callback to write info list into the protocol
 ***********************************************************************************************************************************/
 static void
-storageRemoteProtocolInfoListCallback(void *write, const StorageInfo *info)
+storageRemoteProtocolInfoListCallback(void *server, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(IO_WRITE, write);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    ioWriteStrLine(write, jsonFromStr(info->name));
-    storageRemoteInfoWrite(info, write);
+    protocolServerWriteLine(server, jsonFromStr(info->name));
+    storageRemoteInfoWrite(info, server);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -206,10 +206,8 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
         {
-            IoWrite *write = protocolServerIoWrite(server);
-
-            ioWriteStrLine(write, jsonFromStr(storagePath(storage, NULL)));
-            ioWriteStrLine(write, jsonFromUInt64(interface.feature));
+            protocolServerWriteLine(server, jsonFromStr(storagePathNP(storage, NULL)));
+            protocolServerWriteLine(server, jsonFromUInt64(interface.feature));
 
             protocolServerResponse(server, NULL);
         }
@@ -221,7 +219,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
 
             if (info.exists)
             {
-                storageRemoteInfoWrite(&info, protocolServerIoWrite(server));
+                storageRemoteInfoWrite(&info, server);
                 protocolServerResponse(server, NULL);
             }
         }

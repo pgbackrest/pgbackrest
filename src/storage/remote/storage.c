@@ -89,26 +89,26 @@ storageRemoteInfoParseType(const char type)
 
 // Helper to parse storage info from the protocol output
 static void
-storageRemoteInfoParse(StorageInfo *info, IoRead *read)
+storageRemoteInfoParse(StorageInfo *info, ProtocolClient *client)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
-        FUNCTION_TEST_PARAM(IO_READ, read);
+        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, client);
     FUNCTION_TEST_END();
 
-    info->type = storageRemoteInfoParseType(strPtr(ioReadLine(read))[0]);
-    info->userId = jsonToUInt(ioReadLine(read));
-    info->user = jsonToStr(ioReadLine(read));
-    info->groupId = jsonToUInt(ioReadLine(read));
-    info->group = jsonToStr(ioReadLine(read));
-    info->mode = jsonToUInt(ioReadLine(read));
-    info->timeModified = (time_t)jsonToUInt64(ioReadLine(read));
+    info->type = storageRemoteInfoParseType(strPtr(protocolClientReadLine(client))[0]);
+    info->userId = jsonToUInt(protocolClientReadLine(client));
+    info->user = jsonToStr(protocolClientReadLine(client));
+    info->groupId = jsonToUInt(protocolClientReadLine(client));
+    info->group = jsonToStr(protocolClientReadLine(client));
+    info->mode = jsonToUInt(protocolClientReadLine(client));
+    info->timeModified = (time_t)jsonToUInt64(protocolClientReadLine(client));
 
     if (info->type == storageTypeFile)
-        info->size = jsonToUInt64(ioReadLine(read));
+        info->size = jsonToUInt64(protocolClientReadLine(client));
 
     if (info->type == storageTypeLink)
-        info->linkDestination = jsonToStr(ioReadLine(read));
+        info->linkDestination = jsonToStr(protocolClientReadLine(client));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -139,7 +139,7 @@ storageRemoteInfo(THIS_VOID, const String *file, bool followLink)
         if (result.exists)
         {
             // Read info from protocol
-            storageRemoteInfoParse(&result, protocolClientIoRead(this->client));
+            storageRemoteInfoParse(&result, this->client);
 
             // Acknowledge command completed
             protocolClientReadOutput(this->client, false);
@@ -189,18 +189,17 @@ storageRemoteInfoList(THIS_VOID, const String *path, StorageInfoListCallback cal
 
         // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
         // since the filename is json-encoded so will always include quotes.
-        IoRead *read = protocolClientIoRead(this->client);
-        const String *name = ioReadLine(read);
+        const String *name = protocolClientReadLine(this->client);
 
         while (strSize(name) != 0)
         {
             StorageInfo info = {.exists = true, .name = jsonToStr(name)};
 
-            storageRemoteInfoParse(&info, read);
+            storageRemoteInfoParse(&info, this->client);
             callback(callbackData, &info);
 
             // Read the next item
-            name = ioReadLine(read);
+            name = protocolClientReadLine(this->client);
         }
 
         // Acknowledge command completed
@@ -496,10 +495,8 @@ storageRemoteNew(
             protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR));
 
             // Read values
-            IoRead *read = protocolClientIoRead(driver->client);
-
-            path = jsonToStr(ioReadLine(read));
-            feature = jsonToUInt64(ioReadLine(read));
+            path = jsonToStr(protocolClientReadLine(driver->client));
+            feature = jsonToUInt64(protocolClientReadLine(driver->client));
 
             // Acknowledge command completed
             protocolClientReadOutput(driver->client, false);

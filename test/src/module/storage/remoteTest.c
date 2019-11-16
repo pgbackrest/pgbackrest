@@ -73,7 +73,7 @@ testRun(void)
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_FEATURE_STR, varLstNew(), server), true, "protocol feature");
         TEST_RESULT_STR_STR(
             strNewBuf(serverWrite),
-            strNewFmt("\"%s/repo\"\n%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
+            strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
             "check result");
 
         bufUsedSet(serverWrite, 0);
