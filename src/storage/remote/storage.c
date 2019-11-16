@@ -182,14 +182,14 @@ storageRemoteInfoList(THIS_VOID, const String *path, StorageInfoListCallback cal
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
-        protocolCommandParamAdd(command, VARSTR(file));
+        protocolCommandParamAdd(command, VARSTR(path));
 
         // Send command
-        protocolClientWriteCommand(driver->client, command);
+        protocolClientWriteCommand(this->client, command);
 
         // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
         // since the filename is json-encoded so will always include quotes.
-        IoRead *read = protocolClientIoRead(driver->client);
+        IoRead *read = protocolClientIoRead(this->client);
         const String *name = ioReadLine(read);
 
         while (strSize(name) != 0)
@@ -201,7 +201,7 @@ storageRemoteInfoList(THIS_VOID, const String *path, StorageInfoListCallback cal
         }
 
         // Acknowledge command completed
-        result = varBool(protocolClientReadOutput(driver->client, true));
+        result = varBool(protocolClientReadOutput(this->client, true));
     }
     MEM_CONTEXT_TEMP_END();
 
