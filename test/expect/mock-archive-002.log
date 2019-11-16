@@ -4,7 +4,7 @@ run 002 - rmt 1, s3 1, enc 0
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001] --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
-P00  ERROR: [055]: unable to load info file 'archive/db/archive.info' or 'archive/db/archive.info.copy':
+P00  ERROR: [055]: unable to load info file '/archive/db/archive.info' or '/archive/db/archive.info.copy':
             FileMissingError: raised from remote-0 protocol on 'backup': unable to open '/archive/db/archive.info': No such file or directory
             FileMissingError: raised from remote-0 protocol on 'backup': unable to open '/archive/db/archive.info.copy': No such file or directory
             HINT: archive.info cannot be opened but is required to push/get WAL segments.
@@ -16,7 +16,7 @@ P00   INFO: archive-push command end: aborted with exception [055]
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000001, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
-P00  ERROR: [055]: unable to load info file 'archive/db/archive.info' or 'archive/db/archive.info.copy':
+P00  ERROR: [055]: unable to load info file '/archive/db/archive.info' or '/archive/db/archive.info.copy':
             FileMissingError: raised from remote-0 protocol on 'backup': unable to open '/archive/db/archive.info': No such file or directory
             FileMissingError: raised from remote-0 protocol on 'backup': unable to open '/archive/db/archive.info.copy': No such file or directory
             HINT: archive.info cannot be opened but is required to push/get WAL segments.
