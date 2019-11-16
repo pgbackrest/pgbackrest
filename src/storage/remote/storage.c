@@ -61,6 +61,58 @@ storageRemoteExists(THIS_VOID, const String *file)
 /***********************************************************************************************************************************
 File/path info
 ***********************************************************************************************************************************/
+// Helper to convert protocol storage type to an enum
+static StorageType
+storageRemoteInfoParseType(const char type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHAR, type);
+    FUNCTION_TEST_END();
+
+    switch (type)
+    {
+        case 'f':
+            FUNCTION_TEST_RETURN(storageTypeFile);
+
+        case 'p':
+            FUNCTION_TEST_RETURN(storageTypePath);
+
+        case 'l':
+            FUNCTION_TEST_RETURN(storageTypeLink);
+
+        case 's':
+            FUNCTION_TEST_RETURN(storageTypeSpecial);
+    }
+
+    THROW_FMT(AssertError, "unknown storage type '%c'", type);
+}
+
+// Helper to parse storage info from the protocol output
+static void
+storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, client);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    info->type = storageRemoteInfoParseType(strPtr(protocolClientReadLine(client))[0]);
+    info->userId = jsonToUInt(protocolClientReadLine(client));
+    info->user = jsonToStr(protocolClientReadLine(client));
+    info->groupId = jsonToUInt(protocolClientReadLine(client));
+    info->group = jsonToStr(protocolClientReadLine(client));
+    info->mode = jsonToUInt(protocolClientReadLine(client));
+    info->timeModified = (time_t)jsonToUInt64(protocolClientReadLine(client));
+
+    if (info->type == storageTypeFile)
+        info->size = jsonToUInt64(protocolClientReadLine(client));
+
+    if (info->type == storageTypeLink)
+        info->linkDestination = jsonToStr(protocolClientReadLine(client));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static StorageInfo
 storageRemoteInfo(THIS_VOID, const String *file, bool followLink)
 {
@@ -73,11 +125,37 @@ storageRemoteInfo(THIS_VOID, const String *file, bool followLink)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(file != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    StorageInfo result = {.exists = false};
 
-    FUNCTION_LOG_RETURN(STORAGE_INFO, (StorageInfo){0});
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_STR);
+        protocolCommandParamAdd(command, VARSTR(file));
+        protocolCommandParamAdd(command, VARBOOL(followLink));
+
+        result.exists = varBool(protocolClientExecute(this->client, command, true));
+
+        if (result.exists)
+        {
+            // Read info from protocol
+            storageRemoteInfoParse(this->client, &result);
+
+            // Acknowledge command completed
+            protocolClientReadOutput(this->client, false);
+
+            // Duplicate strings into the calling context
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result.name = strDup(result.name);
+            result.linkDestination = strDup(result.linkDestination);
+            result.user = strDup(result.user);
+            result.group = strDup(result.group);
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
 /***********************************************************************************************************************************

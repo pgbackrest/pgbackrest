@@ -26,6 +26,7 @@ Constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_EXISTS_STR,                  PROTOCOL_COMMAND_STORAGE_EXISTS);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
+STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_STR,                    PROTOCOL_COMMAND_STORAGE_INFO);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_LIST_STR,                    PROTOCOL_COMMAND_STORAGE_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
@@ -91,6 +92,73 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
 }
 
 /***********************************************************************************************************************************
+Write storage info into the protocol
+***********************************************************************************************************************************/
+// Helper to write storage type into the protocol
+static void
+storageRemoteInfoWriteType(ProtocolServer *server, StorageType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    switch (type)
+    {
+        case storageTypeFile:
+        {
+            protocolServerWriteLine(server, STRDEF("f"));
+            break;
+        }
+
+        case storageTypePath:
+        {
+            protocolServerWriteLine(server, STRDEF("p"));
+            break;
+        }
+
+        case storageTypeLink:
+        {
+            protocolServerWriteLine(server, STRDEF("l"));
+            break;
+        }
+
+        case storageTypeSpecial:
+        {
+            protocolServerWriteLine(server, STRDEF("s"));
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    storageRemoteInfoWriteType(server, info->type);
+    protocolServerWriteLine(server, jsonFromUInt(info->userId));
+    protocolServerWriteLine(server, jsonFromStr(info->user));
+    protocolServerWriteLine(server, jsonFromUInt(info->groupId));
+    protocolServerWriteLine(server, jsonFromStr(info->group));
+    protocolServerWriteLine(server, jsonFromUInt(info->mode));
+    protocolServerWriteLine(server, jsonFromInt64(info->timeModified));
+
+    if (info->type == storageTypeFile)
+        protocolServerWriteLine(server, jsonFromUInt64(info->size));
+
+    if (info->type == storageTypeLink)
+        protocolServerWriteLine(server, jsonFromStr(info->linkDestination));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Process storage protocol requests
 ***********************************************************************************************************************************/
 bool
@@ -124,6 +192,18 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             protocolServerWriteLine(server, jsonFromUInt64(interface.feature));
 
             protocolServerResponse(server, NULL);
+        }
+        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
+        {
+            StorageInfo info = interface.info(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)));
+
+            protocolServerResponse(server, VARBOOL(info.exists));
+
+            if (info.exists)
+            {
+                storageRemoteInfoWrite(server, &info);
+                protocolServerResponse(server, NULL);
+            }
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
         {
