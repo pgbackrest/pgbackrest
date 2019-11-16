@@ -64,13 +64,15 @@ testRun(void)
         TEST_RESULT_UINT(storageInterface(storageRemote).feature, storageInterface(storageTest).feature, "    check features");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeatureCompress), true, "    check compress feature");
+        TEST_RESULT_STR_STR(storagePath(storageRemote, NULL), strNewFmt("%s/repo", testPath()), "    check path");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_FEATURE_STR, varLstNew(), server), true, "protocol feature");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)), strPtr(strNewFmt("{\"out\":%" PRIu64 "}\n", storageInterface(storageTest).feature)),
+        TEST_RESULT_STR_STR(
+            strNewBuf(serverWrite),
+            strNewFmt("\"%s/repo\"\n%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -139,7 +141,8 @@ testRun(void)
         TEST_TITLE("missing file/path");
 
         TEST_ERROR(
-            storageInfoNP(storageRemote, strNew(BOGUS_STR)), FileOpenError, "unable to get info for missing path/file 'BOGUS'");
+            storageInfoNP(storageRemote, strNew(BOGUS_STR)), FileOpenError,
+            hrnReplaceKey("unable to get info for missing path/file '{[path]}/repo/BOGUS'"));
         TEST_RESULT_BOOL(storageInfoP(storageRemote, strNew(BOGUS_STR), .ignoreMissing = true).exists, false, "missing file/path");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -337,7 +340,7 @@ testRun(void)
         TEST_ASSIGN(fileRead, storageNewReadNP(storageRemote, strNew("test.txt")), "new file");
         TEST_RESULT_BOOL(bufEq(storageGetNP(fileRead), contentBuf), true, "get file");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
-        TEST_RESULT_STR(strPtr(storageReadName(fileRead)), "test.txt", "check name");
+        TEST_RESULT_STR_Z(storageReadName(fileRead), hrnReplaceKey("{[path]}/repo/test.txt"), "check name");
         TEST_RESULT_SIZE(
             storageReadRemote(storageRead(fileRead), bufNew(32), false), 0,
             "nothing more to read");
@@ -476,7 +479,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
         TEST_RESULT_UINT(storageWriteModeFile(write), STORAGE_MODE_FILE_DEFAULT, "file mode is default");
         TEST_RESULT_UINT(storageWriteModePath(write), STORAGE_MODE_PATH_DEFAULT, "path mode is default");
-        TEST_RESULT_STR(strPtr(storageWriteName(write)), "test.txt", "check file name");
+        TEST_RESULT_STR(strPtr(storageWriteName(write)), hrnReplaceKey("{[path]}/repo/test.txt"), "check file name");
         TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 

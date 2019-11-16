@@ -56,7 +56,7 @@ storageNew(
     FUNCTION_LOG_END();
 
     ASSERT(type != NULL);
-    ASSERT(path == NULL || (strSize(path) >= 1 && strPtr(path)[0] == '/'));
+    ASSERT(strSize(path) >= 1 && strPtr(path)[0] == '/');
     ASSERT(driver != NULL);
     ASSERT(interface.exists != NULL);
     ASSERT(interface.list != NULL);
