@@ -264,7 +264,7 @@ testRun(void)
         TEST_TITLE("check protocol function directly with a file");
 
         paramList = varLstNew();
-        varLstAdd(paramList, varNewStrZ("test"));
+        varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo/test")));
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
