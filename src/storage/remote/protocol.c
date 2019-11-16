@@ -103,36 +103,32 @@ storageRemoteInfoWriteType(StorageType type, IoWrite *write)
         FUNCTION_TEST_PARAM(IO_WRITE, write);
     FUNCTION_TEST_END();
 
-    const String *typeWrite = NULL;
-
     switch (type)
     {
         case storageTypeFile:
         {
-            typeWrite = STRDEF("f");
+            ioWriteStrLine(write, STRDEF("f"));
             break;
         }
 
         case storageTypePath:
         {
-            typeWrite = STRDEF("p");
+            ioWriteStrLine(write, STRDEF("p"));
             break;
         }
 
         case storageTypeLink:
         {
-            typeWrite = STRDEF("l");
+            ioWriteStrLine(write, STRDEF("l"));
             break;
         }
 
         case storageTypeSpecial:
         {
-            typeWrite = STRDEF("s");
+            ioWriteStrLine(write, STRDEF("s"));
             break;
         }
     }
-
-    ioWriteStrLine(write, typeWrite);
 
     FUNCTION_TEST_RETURN_VOID();
 }
