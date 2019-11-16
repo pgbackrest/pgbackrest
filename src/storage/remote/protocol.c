@@ -226,9 +226,9 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
         {
             bool result = interface.infoList(
-                driver, varStr(varLstGet(paramList, 0)), storageRemoteProtocolInfoListCallback, protocolServerIoWrite(server));
+                driver, varStr(varLstGet(paramList, 0)), storageRemoteProtocolInfoListCallback, server);
 
-            ioWrite(protocolServerIoWrite(server), LF_BUF);
+            protocolServerWriteLine(server, NULL);
             protocolServerResponse(server, VARBOOL(result));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))

@@ -126,18 +126,6 @@ testRun(void)
         TEST_RESULT_UINT(storageRemoteInfoParseType('s'), storageTypeSpecial, "read special type");
         TEST_ERROR(storageRemoteInfoParseType('z'), AssertError, "unknown storage type 'z'");
 
-        Buffer *buffer = bufNew(0);
-        IoWrite *write = ioBufferWriteNew(buffer);
-        ioWriteOpen(write);
-
-        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypePath, write), "write path type");
-        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypeLink, write), "write link type");
-        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypeSpecial, write), "write special type");
-
-        ioWriteClose(write);
-
-        TEST_RESULT_STR_Z(strNewBuf(buffer), "p\nl\ns\n", "check path types");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing file/path");
 
@@ -236,18 +224,26 @@ testRun(void)
         TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("protocol storage types that are not tested elsewhere");
+
+        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypePath, server), "write path type");
+        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypeSpecial, server), "write special type");
+
+        ioWriteFlush(serverWriteIo);
+        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), ".p\n.s\n", "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("protocol output that is not tested elsewhere");
 
-        buffer = bufNew(0);
-        write = ioBufferWriteNew(buffer);
-        ioWriteOpen(write);
-
         info = (StorageInfo){.type = storageTypeLink, .linkDestination = STRDEF("../")};
-        TEST_RESULT_VOID(storageRemoteInfoWrite(&info, write), "write link info");
+        TEST_RESULT_VOID(storageRemoteInfoWrite(&info, server), "write link info");
 
-        ioWriteClose(write);
+        ioWriteFlush(serverWriteIo);
+        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), ".l\n.0\n.null\n.0\n.null\n.0\n.0\n.\"../\"\n", "check result");
 
-        TEST_RESULT_STR_Z(strNewBuf(buffer), "l\n0\nnull\n0\nnull\n0\n0\n\"../\"\n", "check protocol output");
+        bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check protocol function directly with missing path/file");
@@ -273,7 +269,7 @@ testRun(void)
             strPtr(strNewBuf(serverWrite)),
             hrnReplaceKey(
                 "{\"out\":true}\n"
-                "f\n{[user-id]}\n\"{[user]}\"\n{[group-id]}\n\"{[group]}\"\n416\n1555160001\n6\n"
+                ".f\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n.1555160001\n.6\n"
                 "{}\n"),
             "check result");
 
@@ -331,9 +327,9 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(strNewBuf(serverWrite)),
             hrnReplaceKey(
-                "\".\"\np\n{[user-id]}\n\"{[user]}\"\n{[group-id]}\n\"{[group]}\"\n488\n1555160000\n"
-                "\"test\"\nf\n{[user-id]}\n\"{[user]}\"\n{[group-id]}\n\"{[group]}\"\n416\n1555160001\n6\n"
-                "\n"
+                ".\".\"\n.p\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n.1555160000\n"
+                ".\"test\"\n.f\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n.1555160001\n.6\n"
+                ".\n"
                 "{\"out\":true}\n"),
             "check result");
 
