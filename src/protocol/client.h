@@ -50,6 +50,7 @@ Functions
 const Variant *protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool outputRequired);
 ProtocolClient *protocolClientMove(ProtocolClient *this, MemContext *parentNew);
 void protocolClientNoOp(ProtocolClient *this);
+String *protocolClientReadLine(ProtocolClient *this);
 const Variant *protocolClientReadOutput(ProtocolClient *this, bool outputRequired);
 void protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command);
 

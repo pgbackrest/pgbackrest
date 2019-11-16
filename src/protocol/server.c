@@ -224,6 +224,32 @@ protocolServerResponse(ProtocolServer *this, const Variant *output)
 }
 
 /***********************************************************************************************************************************
+Write a line
+***********************************************************************************************************************************/
+void
+protocolServerWriteLine(const ProtocolServer *this, const String *line)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_LOG_PARAM(STRING, line);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // Dot indicates the start of an lf-terminated line
+    ioWrite(this->write, DOT_BUF);
+
+    // Write the line if it exists
+    if (line != NULL)
+        ioWriteStr(this->write, line);
+
+    // Terminate with a linefeed
+    ioWrite(this->write, LF_BUF);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Get read interface
 ***********************************************************************************************************************************/
 IoRead *

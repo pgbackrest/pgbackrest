@@ -43,7 +43,8 @@ testServerProtocol(const String *command, const VariantList *paramList, Protocol
         else if (strEq(command, strNew("request-complex")))
         {
             protocolServerResponse(server, varNewBool(false));
-            ioWriteStrLine(protocolServerIoWrite(server), strNew("LINEOFTEXT"));
+            protocolServerWriteLine(server, strNew("LINEOFTEXT"));
+            protocolServerWriteLine(server, NULL);
             ioWriteFlush(protocolServerIoWrite(server));
         }
         else
@@ -403,7 +404,29 @@ testRun(void)
 
                 // Send output
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"test\"}", "test command");
+                ioWriteStrLine(write, strNew(".OUTPUT"));
                 ioWriteStrLine(write, strNew("{\"out\":[\"value1\",\"value2\"]}"));
+                ioWriteFlush(write);
+
+                // invalid line
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"invalid-line\"}", "invalid line command");
+                ioWrite(write, LF_BUF);
+                ioWriteFlush(write);
+
+                // error instead of output
+                TEST_RESULT_STR(
+                    strPtr(ioReadLine(read)), "{\"cmd\":\"error-instead-of-output\"}", "error instead of output command");
+                ioWriteStrLine(write, strNew("{\"err\":255}"));
+                ioWriteFlush(write);
+
+                // unexpected output
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"unexpected-output\"}", "unexpected output");
+                ioWriteStrLine(write, strNew("{}"));
+                ioWriteFlush(write);
+
+                // invalid prefix
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"invalid-prefix\"}", "invalid prefix");
+                ioWriteStrLine(write, strNew("~line"));
                 ioWriteFlush(write);
 
                 // Wait for exit
@@ -472,13 +495,37 @@ testRun(void)
                 // Get command output
                 const VariantList *output = NULL;
 
-                TEST_ASSIGN(
-                    output,
-                    varVarLst(protocolClientExecute(client, protocolCommandNew(strNew("test")), true)),
-                    "execute command with output");
+                TEST_RESULT_VOID(
+                    protocolClientWriteCommand(client, protocolCommandNew(strNew("test"))), "execute command with output");
+                TEST_RESULT_STR_Z(protocolClientReadLine(client), "OUTPUT", "check output");
+                TEST_ASSIGN(output, varVarLst(protocolClientReadOutput(client, true)), "execute command with output");
                 TEST_RESULT_UINT(varLstSize(output), 2, "check output size");
                 TEST_RESULT_STR(strPtr(varStr(varLstGet(output, 0))), "value1", "check value1");
                 TEST_RESULT_STR(strPtr(varStr(varLstGet(output, 1))), "value2", "check value2");
+
+                // Invalid line
+                TEST_RESULT_VOID(
+                    protocolClientWriteCommand(client, protocolCommandNew(strNew("invalid-line"))),
+                    "execute command that returns invalid line");
+                TEST_ERROR(protocolClientReadLine(client), FormatError, "unexpected empty line");
+
+                // Error instead of output
+                TEST_RESULT_VOID(
+                    protocolClientWriteCommand(client, protocolCommandNew(strNew("error-instead-of-output"))),
+                    "execute command that returns error instead of output");
+                TEST_ERROR(protocolClientReadLine(client), UnknownError, "raised from test client: no details available");
+
+                // Unexpected output
+                TEST_RESULT_VOID(
+                    protocolClientWriteCommand(client, protocolCommandNew(strNew("unexpected-output"))),
+                    "execute command that returns unexpected output");
+                TEST_ERROR(protocolClientReadLine(client), FormatError, "expected error but got output");
+
+                // Invalid prefix
+                TEST_RESULT_VOID(
+                    protocolClientWriteCommand(client, protocolCommandNew(strNew("invalid-prefix"))),
+                    "execute command that returns an invalid prefix");
+                TEST_ERROR(protocolClientReadLine(client), FormatError, "invalid prefix in '~line'");
 
                 // Free client
                 TEST_RESULT_VOID(protocolClientFree(client), "free client");
@@ -537,7 +584,8 @@ testRun(void)
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"request-complex\"}")), "write complex request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush complex request");
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"out\":false}", "complex request result");
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "LINEOFTEXT", "complex request result");
+                TEST_RESULT_STR_Z(ioReadLine(read), ".LINEOFTEXT", "complex request result");
+                TEST_RESULT_STR_Z(ioReadLine(read), ".", "complex request result");
 
                 // Exit
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
