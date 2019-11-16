@@ -223,6 +223,7 @@ storageRemoteList(THIS_VOID, const String *path, const String *expression)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     StringList *result = NULL;
 
@@ -255,6 +256,7 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, bool com
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
@@ -345,6 +347,7 @@ storageRemotePathExists(THIS_VOID, const String *path)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     bool result = false;
 
