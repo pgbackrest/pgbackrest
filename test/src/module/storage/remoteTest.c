@@ -10,6 +10,7 @@ Test Remote Storage
 #include "postgres/interface.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessStorage.h"
 #include "common/harnessTest.h"
 
 /***********************************************************************************************************************************
@@ -274,6 +275,66 @@ testRun(void)
                 "{\"out\":true}\n"
                 "f\n{[user-id]}\n\"{[user]}\"\n{[group-id]}\n\"{[group]}\"\n416\n1555160001\n6\n"
                 "{}\n"),
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageInfoList()"))
+    {
+        Storage *storageRemote = NULL;
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path not found");
+
+        HarnessStorageInfoListCallbackData callbackData =
+        {
+            .content = strNew(""),
+        };
+
+        TEST_RESULT_BOOL(
+            storageInfoListP(
+                storageRemote, STRDEF(BOGUS_STR), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+            false, "info list");
+        TEST_RESULT_STR_Z(
+            callbackData.content, "", "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list path and file");
+
+        storagePathCreateNP(storageRemote, NULL);
+        storagePutNP(storageNewWriteP(storageRemote, strNew("test"), .timeModified = 1555160001), BUFSTRDEF("TESTME"));
+
+        // Path timestamp must be set after file is created since file creation updates it
+        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
+        THROW_ON_SYS_ERROR(utime(strPtr(storagePath(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
+
+        TEST_RESULT_BOOL(
+            storageInfoListP(storageRemote, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+            true, "info list");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            hrnReplaceKey(
+                ". {path, m=0750, u={[user]}, g={[group]}}\n"
+                "test {file, s=6, m=0640, t=1555160001, u={[user]}, g={[group]}}\n"),
+            "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly with a file");
+
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
+
+        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(serverWrite)),
+            hrnReplaceKey(
+                "\".\"\np\n{[user-id]}\n\"{[user]}\"\n{[group-id]}\n\"{[group]}\"\n488\n1555160000\n"
+                "\"test\"\nf\n{[user-id]}\n\"{[user]}\"\n{[group-id]}\n\"{[group]}\"\n416\n1555160001\n6\n"
+                "\n"
+                "{\"out\":true}\n"),
             "check result");
 
         bufUsedSet(serverWrite, 0);

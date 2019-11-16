@@ -514,6 +514,7 @@ sub process
 
     # Load backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
+    my $strCipherPassManifest = $oBackupInfo->cipherPassSub();
 
     # Search cluster directory for an aborted backup
     my $strBackupLabel = $rhParam->{backupLabelHalted};
@@ -554,7 +555,8 @@ sub process
     my $strDbVersion = $rhParam->{pgVersion};
 
     my $oBackupManifest = new pgBackRest::Manifest(
-        STORAGE_REPO_BACKUP . "/" . FILE_MANIFEST . '.pass', {oStorage => storageRepo()});
+        STORAGE_REPO_BACKUP . "/" . FILE_MANIFEST . '.pass', {oStorage => storageRepo(),
+        strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef});
     $oBackupManifest->{strFileName} = STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST;
 
     # Backup settings

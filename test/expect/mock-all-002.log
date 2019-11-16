@@ -52,14 +52,7 @@ full backup - error on identical link destinations (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/pg_hba.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
-
-full backup - error on link to a link (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
-------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
-            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
+P00  ERROR: [070]: link 'pg_config_bad/pg_hba.conf.link' ([TEST_PATH]/db-master/db/base/pg_config_bad/.) destination is in PGDATA
 
 full backup - create pg_stat link, pg_clog dir (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --protocol-timeout=2 --db-timeout=1 --cmd-ssh=/usr/bin/ssh --pg1-port=9999 --pg1-socket-path=/test_socket_path --buffer-size=16384 --checksum-page --process-max=1 --type=full --stanza=db backup
@@ -519,24 +512,21 @@ incr backup - invalid path in pg_tblspc (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [069]: pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
+P00  ERROR: [069]: 'pg_data/pg_tblspc/path' is not a symlink - pg_tblspc should contain only symlinks
 
 incr backup - invalid relative tablespace in $PGDATA (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base/invalid_tblspc) destination is in PGDATA
 
 incr backup - invalid tablespace in $PGDATA (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink [TEST_PATH]/db-master/db/base/invalid_tblspc destination must not be in $PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base/invalid_tblspc) destination is in PGDATA
 
 incr backup - add tablespace 1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --test --stanza=db backup
@@ -745,8 +735,8 @@ incr backup - resume and add tablespace 2 (backup host)
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-1]' missing manifest removed from backup.info
+P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
@@ -960,9 +950,9 @@ diff backup - cannot resume - new diff (backup host)
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-2]' missing manifest removed from backup.info
-P00   WARN: halted backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match halted backup type 'incr'
+P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: halted backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match halted backup type 'incr'
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 
@@ -1171,9 +1161,9 @@ diff backup - cannot resume - disabled / no repo link (backup host)
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-DIFF-1]' missing manifest removed from backup.info
-P00   WARN: halted backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
+P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: halted backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 
@@ -1614,8 +1604,8 @@ incr backup - update files (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
-P00   WARN: file pg_data/base/16384/17000 timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -1824,8 +1814,8 @@ diff backup - updates since last full (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: file pg_data/base/16384/17000 timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/base/base2.txt: file size 5 is not divisible by page size 8192
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
@@ -2251,8 +2241,8 @@ diff backup - remove files during backup (backup host)
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [BACKUP-FULL-2]
+P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00   TEST:         PgBaCkReStTeSt-MANIFEST-BUILD-PgBaCkReStTeSt
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192

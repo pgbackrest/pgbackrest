@@ -194,10 +194,13 @@ storageRemoteInfoList(THIS_VOID, const String *path, StorageInfoListCallback cal
 
         while (strSize(name) != 0)
         {
-            StorageInfo info = {.exists = true, .name = jsonFromStr(name)};
+            StorageInfo info = {.exists = true, .name = jsonToStr(name)};
 
             storageRemoteInfoParse(&info, read);
             callback(callbackData, &info);
+
+            // Read the next item
+            name = ioReadLine(read);
         }
 
         // Acknowledge command completed

@@ -11,7 +11,8 @@ Backup Command
 #include "command/control/common.h"
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
-// #include "common/crypto/cipherBlock.h"
+#include "command/stanza/common.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/compress/gzip/common.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -471,8 +472,15 @@ cmdBackup(void)
                 }
             }
 
+            // Set the cipher subpass
+            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
+
+            // Free the prior manifest now since it might use a lot of memory
             manifestFree(manifestPrior);
         }
+        // Else generate cipher subpass if encryption is enabled
+        else if (cipherType(cfgOptionStr(cfgOptRepoCipherType)))
+            manifestCipherSubPassSet(manifest, cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
@@ -487,16 +495,13 @@ cmdBackup(void)
         if (manifestHalted)
         {
             manifestBackupLabelSet(manifest, manifestData(manifestHalted)->backupLabel);
-            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifest));
+
+            // !!! THIS IS REQUIRED FOR FULL BACKUP RESUMES -- SEEMS LIKE THIS COULD ALL BE A BIT MORE STREAMLINED?
+            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestHalted));
         }
         // If no halted backup was found then generate a backup label and a cipher subpass (if needed)
         else
-        {
             manifestBackupLabelSet(manifest, backupLabel(type, manifestData(manifest)->backupLabelPrior, timestampStart));
-
-            if (cipherType(cfgOptionStr(cfgOptRepoCipherType)))
-                manifestCipherSubPassSet(manifest, STRDEF("!!!TOBECHANGED!!!"));
-        }
 
         // Set the values required to complete the manifest
         manifestBuildComplete(manifest, timestampStart);
@@ -520,11 +525,14 @@ cmdBackup(void)
         cfgCommandParamSet(paramList);
 
         // Save the manifest so the Perl code can read it
-        if (!backupLabelHalted)
+        if (!backupLabelHalted && storageFeature(storageRepoWrite(), storageFeaturePath))
             storagePathCreateNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)));
 
         IoWrite *write = storageWriteIo(
             storageNewWriteNP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".pass")));
+        cipherBlockFilterGroupAdd(
+            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+            infoPgCipherPass(infoBackupPg(infoBackup)));
         manifestSave(manifest, write);
 
         // Save an original copy so we can see what the C code wrote out

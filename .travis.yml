@@ -14,7 +14,10 @@ services:
 matrix:
   include:
     - env: PGB_CI="test --vm=f30 --param=no-package --param=c-only"
-    - env: PGB_CI="test --vm=co7 --param=no-package --param=module=mock --param=test=all --param=run=1"
+    - env: PGB_CI="test --vm=co7 --param=no-package --param=module=mock --param=test=all"
+    - env: PGB_CI="test --vm=co6 --param=no-package --param=module=mock --param=test=all"
+    - env: PGB_CI="test --vm=u12 --param=no-package --param=module=mock --param=test=all"
+    - env: PGB_CI="test --vm=u18 --param=no-package --param=module=mock --param=test=all"
 
 install:
   - umask 0022 && cd ~ && pwd && whoami && umask && groups

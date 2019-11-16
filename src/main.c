@@ -119,7 +119,8 @@ main(int argListSize, const char *argList[])
                     cmdBackup();
                     perlExec();  // !!! RUN BOTH COMMANDS DURNG MIGRATION
                     storageRemoveP( // !!! REMOVE MANIFEST FILE THAT WAS PASSED FROM C TO PERL
-                        storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/backup.manifest.pass"), .errorOnMissing = true);
+                        storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/backup.manifest.pass"),
+                        .errorOnMissing = storageFeature(storageRepoWrite(), storageFeaturePath));
                     cfgCommandParamSet(strLstNew()); // !!! CLEAR OPTIONS THAT WERE PASSED TO PERL
 
                     // Switch to expire command
