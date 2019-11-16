@@ -19,6 +19,8 @@ Constants
     STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_FEATURE_STR);
 #define PROTOCOL_COMMAND_STORAGE_INFO                               "storageInfo"
     STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_INFO_STR);
+#define PROTOCOL_COMMAND_STORAGE_INFO_LIST                          "storageInfoList"
+    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
 #define PROTOCOL_COMMAND_STORAGE_LIST                               "storageList"
     STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_LIST_STR);
 #define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          "storageOpenRead"

@@ -27,6 +27,7 @@ Constants
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_EXISTS_STR,                  PROTOCOL_COMMAND_STORAGE_EXISTS);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_STR,                    PROTOCOL_COMMAND_STORAGE_INFO);
+STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR,               PROTOCOL_COMMAND_STORAGE_INFO_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_LIST_STR,                    PROTOCOL_COMMAND_STORAGE_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
@@ -159,6 +160,23 @@ storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
 }
 
 /***********************************************************************************************************************************
+Callback to write info list into the protocol
+***********************************************************************************************************************************/
+static void
+storageRemoteProtocolInfoListCallback(void *server, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    protocolServerWriteLine(server, jsonFromStr(info->name));
+    storageRemoteInfoWrite(server, info);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Process storage protocol requests
 ***********************************************************************************************************************************/
 bool
@@ -204,6 +222,14 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 storageRemoteInfoWrite(server, &info);
                 protocolServerResponse(server, NULL);
             }
+        }
+        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
+        {
+            bool result = interface.infoList(
+                driver, varStr(varLstGet(paramList, 0)), storageRemoteProtocolInfoListCallback, server);
+
+            protocolServerWriteLine(server, NULL);
+            protocolServerResponse(server, VARBOOL(result));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
         {
