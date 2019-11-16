@@ -159,6 +159,56 @@ storageRemoteInfo(THIS_VOID, const String *file, bool followLink)
 }
 
 /***********************************************************************************************************************************
+Info for all files/paths in a path
+***********************************************************************************************************************************/
+static bool
+storageRemoteInfoList(THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData)
+{
+    THIS(StorageRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+    ASSERT(callback != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
+        protocolCommandParamAdd(command, VARSTR(file));
+
+        // Send command
+        protocolClientWriteCommand(driver->client, command);
+
+        // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
+        // since the filename is json-encoded so will always include quotes.
+        IoRead *read = protocolClientIoRead(driver->client);
+        const String *name = ioReadLine(read);
+
+        while (strSize(name) != 0)
+        {
+            StorageInfo info = {.exists = true, .name = jsonFromStr(name)};
+
+            storageRemoteInfoParse(&info, read);
+            callback(callbackData, &info);
+        }
+
+        // Acknowledge command completed
+        result = varBool(protocolClientReadOutput(driver->client, true));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 static StringList *
@@ -457,9 +507,10 @@ storageRemoteNew(
 
         this = storageNewP(
             STORAGE_REMOTE_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, driver, .feature = feature,
-            .exists = storageRemoteExists, .info = storageRemoteInfo, .list = storageRemoteList, .newRead = storageRemoteNewRead,
-            .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate, .pathExists = storageRemotePathExists,
-            .pathRemove = storageRemotePathRemove, .pathSync = storageRemotePathSync, .remove = storageRemoteRemove);
+            .exists = storageRemoteExists, .info = storageRemoteInfo, .infoList = storageRemoteInfoList, .list = storageRemoteList,
+            .newRead = storageRemoteNewRead, .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate,
+            .pathExists = storageRemotePathExists, .pathRemove = storageRemotePathRemove, .pathSync = storageRemotePathSync,
+            .remove = storageRemoteRemove);
     }
     MEM_CONTEXT_NEW_END();
 
