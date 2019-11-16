@@ -202,8 +202,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
     {
         if (strEq(command, PROTOCOL_COMMAND_STORAGE_EXISTS_STR))
         {
-            protocolServerResponse(server, VARBOOL(             // The unusual line break is to make coverage happy -- not sure why
-                interface.exists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
+            protocolServerResponse(server, VARBOOL(interface.exists(driver, varStr(varLstGet(paramList, 0)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
         {
@@ -216,9 +215,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
         {
-            // Get info
-            StorageInfo info = interface.info(
-                driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)));
+            StorageInfo info = interface.info(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)));
 
             protocolServerResponse(server, VARBOOL(info.exists));
 
@@ -242,16 +239,13 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             protocolServerResponse(
                 server,
                 varNewVarLst(
-                    varLstNewStrLst(
-                        interface.list(
-                            driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varStr(varLstGet(paramList, 1))))));
+                    varLstNewStrLst(interface.list(driver, varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {
             // Create the read object
             IoRead *fileRead = storageReadIo(
-                interface.newRead(
-                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)), false));
+                interface.newRead(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), false));
 
             // Set filter group based on passed filters
             storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 2));
@@ -296,7 +290,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             // Create the write object
             IoWrite *fileWrite = storageWriteIo(
                 interface.newWrite(
-                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varUIntForce(varLstGet(paramList, 1)),
+                    driver, varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)),
                     varUIntForce(varLstGet(paramList, 2)), varStr(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
                     (time_t)varIntForce(varLstGet(paramList, 5)), varBool(varLstGet(paramList, 6)),
                     varBool(varLstGet(paramList, 7)), varBool(varLstGet(paramList, 8)), varBool(varLstGet(paramList, 9)), false));
@@ -356,8 +350,8 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR))
         {
             interface.pathCreate(
-                driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)),
-                varBool(varLstGet(paramList, 2)), varUIntForce(varLstGet(paramList, 3)));
+                driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varBool(varLstGet(paramList, 2)),
+                varUIntForce(varLstGet(paramList, 3)));
 
             protocolServerResponse(server, NULL);
         }
@@ -366,25 +360,22 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             // Not all drivers implement pathExists()
             CHECK(interface.pathExists != NULL);
 
-            protocolServerResponse(server, VARBOOL(             // The unusual line break is to make coverage happy -- not sure why
-                interface.pathExists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
+            protocolServerResponse(server, VARBOOL(interface.pathExists(driver, varStr(varLstGet(paramList, 0)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {
             protocolServerResponse(server,
-                VARBOOL(
-                    interface.pathRemove(
-                        driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)))));
+                VARBOOL(interface.pathRemove(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
         {
-            interface.pathSync(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))));
+            interface.pathSync(driver, varStr(varLstGet(paramList, 0)));
 
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_REMOVE_STR))
         {
-            interface.remove(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)));
+            interface.remove(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)));
 
             protocolServerResponse(server, NULL);
         }
