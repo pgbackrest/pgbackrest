@@ -89,11 +89,11 @@ storageRemoteInfoParseType(const char type)
 
 // Helper to parse storage info from the protocol output
 static void
-storageRemoteInfoParse(StorageInfo *info, ProtocolClient *client)
+storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
         FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, client);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
     info->type = storageRemoteInfoParseType(strPtr(protocolClientReadLine(client))[0]);
@@ -139,7 +139,7 @@ storageRemoteInfo(THIS_VOID, const String *file, bool followLink)
         if (result.exists)
         {
             // Read info from protocol
-            storageRemoteInfoParse(&result, this->client);
+            storageRemoteInfoParse(this->client, &result);
 
             // Acknowledge command completed
             protocolClientReadOutput(this->client, false);
@@ -195,7 +195,7 @@ storageRemoteInfoList(THIS_VOID, const String *path, StorageInfoListCallback cal
         {
             StorageInfo info = {.exists = true, .name = jsonToStr(name)};
 
-            storageRemoteInfoParse(&info, this->client);
+            storageRemoteInfoParse(this->client, &info);
             callback(callbackData, &info);
 
             // Read the next item

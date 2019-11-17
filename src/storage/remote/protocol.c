@@ -97,11 +97,11 @@ Write storage info into the protocol
 ***********************************************************************************************************************************/
 // Helper to write storage type into the protocol
 static void
-storageRemoteInfoWriteType(StorageType type, ProtocolServer *server)
+storageRemoteInfoWriteType(ProtocolServer *server, StorageType type)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
     switch (type)
@@ -135,14 +135,14 @@ storageRemoteInfoWriteType(StorageType type, ProtocolServer *server)
 }
 
 static void
-storageRemoteInfoWrite(const StorageInfo *info, ProtocolServer *server)
+storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
         FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    storageRemoteInfoWriteType(info->type, server);
+    storageRemoteInfoWriteType(server, info->type);
     protocolServerWriteLine(server, jsonFromUInt(info->userId));
     protocolServerWriteLine(server, jsonFromStr(info->user));
     protocolServerWriteLine(server, jsonFromUInt(info->groupId));
@@ -171,7 +171,7 @@ storageRemoteProtocolInfoListCallback(void *server, const StorageInfo *info)
     FUNCTION_TEST_END();
 
     protocolServerWriteLine(server, jsonFromStr(info->name));
-    storageRemoteInfoWrite(info, server);
+    storageRemoteInfoWrite(server, info);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -219,7 +219,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
 
             if (info.exists)
             {
-                storageRemoteInfoWrite(&info, server);
+                storageRemoteInfoWrite(server, &info);
                 protocolServerResponse(server, NULL);
             }
         }

@@ -226,8 +226,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("protocol storage types that are not tested elsewhere");
 
-        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypePath, server), "write path type");
-        TEST_RESULT_VOID(storageRemoteInfoWriteType(storageTypeSpecial, server), "write special type");
+        TEST_RESULT_VOID(storageRemoteInfoWriteType(server, storageTypePath), "write path type");
+        TEST_RESULT_VOID(storageRemoteInfoWriteType(server, storageTypeSpecial), "write special type");
 
         ioWriteFlush(serverWriteIo);
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), ".p\n.s\n", "check result");
@@ -238,7 +238,7 @@ testRun(void)
         TEST_TITLE("protocol output that is not tested elsewhere");
 
         info = (StorageInfo){.type = storageTypeLink, .linkDestination = STRDEF("../")};
-        TEST_RESULT_VOID(storageRemoteInfoWrite(&info, server), "write link info");
+        TEST_RESULT_VOID(storageRemoteInfoWrite(server, &info), "write link info");
 
         ioWriteFlush(serverWriteIo);
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), ".l\n.0\n.null\n.0\n.null\n.0\n.0\n.\"../\"\n", "check result");
