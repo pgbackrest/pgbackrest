@@ -20,10 +20,10 @@ cmdStart(void)
         String *stopFile = lockStopFileName(cfgOptionStr(cfgOptStanza));
 
         // If the stop file exists, then remove it
-        if (storageExistsNP(storageLocal(), stopFile))
+        if (storageExistsP(storageLocal(), stopFile))
         {
             // If the file cannot be removed, storageRemove() will throw an error if the error is not ENOENT
-            storageRemoveNP(storageLocalWrite(), stopFile);
+            storageRemoveP(storageLocalWrite(), stopFile);
         }
         else
         {

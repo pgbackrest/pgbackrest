@@ -152,7 +152,7 @@ testRun(void)
                 protocolClientNoOp(client);
 
                 TEST_RESULT_BOOL(
-                    storageExistsNP(
+                    storageExistsP(
                         storagePosixNew(strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL),
                         STRDEF("lock/test-archive" LOCK_FILE_EXT)),
                     true, "lock exists");

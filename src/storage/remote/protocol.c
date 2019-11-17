@@ -208,7 +208,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
         {
-            protocolServerWriteLine(server, jsonFromStr(storagePathNP(storage, NULL)));
+            protocolServerWriteLine(server, jsonFromStr(storagePathP(storage, NULL)));
             protocolServerWriteLine(server, jsonFromUInt64(interface.feature));
 
             protocolServerResponse(server, NULL);

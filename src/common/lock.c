@@ -67,7 +67,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
                 // If the path does not exist then create it
                 if (errNo == ENOENT)
                 {
-                    storagePathCreateNP(storageLocalWrite(), strPath(lockFile));
+                    storagePathCreateP(storageLocalWrite(), strPath(lockFile));
                     retry = true;
                 }
             }
@@ -138,7 +138,7 @@ lockReleaseFile(int lockHandle, const String *lockFile)
 
     // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
     // right before the delete which means the file locked by the other process will get deleted.
-    storageRemoveNP(storageLocalWrite(), lockFile);
+    storageRemoveP(storageLocalWrite(), lockFile);
     close(lockHandle);
 
     FUNCTION_LOG_RETURN_VOID();

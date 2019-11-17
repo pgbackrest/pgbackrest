@@ -15,6 +15,7 @@ List object
 typedef struct List List;
 
 #include "common/memContext.h"
+#include "common/type/param.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -54,12 +55,13 @@ List *lstNew(size_t itemSize);
 
 typedef struct ListParam
 {
+    VAR_PARAM_HEADER;
     SortOrder sortOrder;
     ListComparator *comparator;
 } ListParam;
 
 #define lstNewP(itemSize, ...)                                                                                                     \
-    lstNewParam(itemSize, (ListParam){__VA_ARGS__})
+    lstNewParam(itemSize, (ListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 List *lstNewParam(size_t itemSize, ListParam param);
 

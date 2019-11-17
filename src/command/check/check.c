@@ -36,7 +36,7 @@ checkManifest(void)
             {
                 result++;
                 // ??? Placeholder for manifest build
-                storageListNP(storagePgId(pgIdx + 1), varStr(cfgOption(cfgOptPgPath + pgIdx)));
+                storageListP(storagePgId(pgIdx + 1), varStr(cfgOption(cfgOptPgPath + pgIdx)));
             }
         }
     }

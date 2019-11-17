@@ -39,9 +39,9 @@ manifestDelete(const Storage *storageRepoWriteStanza)
     // Delete all manifest files
     for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
     {
-        storageRemoveNP(
+        storageRemoveP(
             storageRepoWriteStanza, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(strLstGet(backupList, idx))));
-        storageRemoveNP(
+        storageRemoveP(
             storageRepoWriteStanza,
             strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(strLstGet(backupList, idx))));
     }
@@ -73,7 +73,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
         if (archiveNotEmpty || backupNotEmpty)
         {
             // If the stop file does not exist, then error. This check is required even when --force is issued.
-            if (!storageExistsNP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))))
+            if (!storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))))
             {
                 THROW_FMT(
                     FileMissingError, "stop file does not exist for stanza '%s'\n"
@@ -82,7 +82,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
             }
 
             // If a force has not been issued and Postgres is running, then error
-            if (!cfgOptionBool(cfgOptForce) && storageExistsNP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
+            if (!cfgOptionBool(cfgOptForce) && storageExistsP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
             {
                 THROW_FMT(
                     PostmasterRunningError, PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running. "
@@ -93,15 +93,15 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
             // Delete the archive info files
             if (archiveNotEmpty)
             {
-                storageRemoveNP(storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR);
-                storageRemoveNP(storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);
+                storageRemoveP(storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR);
+                storageRemoveP(storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);
             }
 
             // Delete the backup info files
             if (backupNotEmpty)
             {
-                storageRemoveNP(storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR);
-                storageRemoveNP(storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_COPY_STR);
+                storageRemoveP(storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR);
+                storageRemoveP(storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_COPY_STR);
             }
 
             // Remove manifest files
@@ -117,7 +117,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
 
         // Remove the stop file - this will not error if the stop file does not exist. If the stanza directories existed but nothing
         // was in them, then no pgbackrest commands can be in progress without the info files so a stop is technically not necessary
-        storageRemoveNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza)));
+        storageRemoveP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza)));
 
         result = true;
     }

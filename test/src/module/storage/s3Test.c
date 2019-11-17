@@ -751,19 +751,19 @@ testRun(void)
 
         // Coverage for noop functions
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathSyncNP(s3, strNew("path")), "path sync is a noop");
+        TEST_RESULT_VOID(storagePathSyncP(s3, strNew("path")), "path sync is a noop");
 
         // storageS3NewRead() and StorageS3FileRead
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(
-            storageGetNP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "ignore missing file");
+            storageGetP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "ignore missing file");
         TEST_ERROR(
-            storageGetNP(storageNewReadNP(s3, strNew("file.txt"))), FileMissingError,
+            storageGetP(storageNewReadP(s3, strNew("file.txt"))), FileMissingError,
             "unable to open '/file.txt': No such file or directory");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(s3, strNew("file.txt"))))), "this is a sample file",
+            strPtr(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file.txt"))))), "this is a sample file",
             "get file");
-        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(s3, strNew("file0.txt"))))), "", "get zero-length file");
+        TEST_RESULT_STR(strPtr(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file0.txt"))))), "", "get zero-length file");
 
         StorageRead *read = NULL;
         TEST_ASSIGN(read, storageNewReadP(s3, strNew("file.txt"), .ignoreMissing = true), "new read file");
@@ -790,8 +790,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         // File is written all at once
         StorageWrite *write = NULL;
-        TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");
-        TEST_RESULT_VOID(storagePutNP(write, BUFSTRDEF("ABCD")), "put file all at once");
+        TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write file");
+        TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "put file all at once");
 
         TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
         TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
@@ -804,32 +804,32 @@ testRun(void)
         TEST_RESULT_VOID(storageWriteS3Close((StorageWriteS3 *)storageWriteDriver(write)), "close file again");
 
         // Zero-length file
-        TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");
-        TEST_RESULT_VOID(storagePutNP(write, NULL), "write zero-length file");
+        TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write file");
+        TEST_RESULT_VOID(storagePutP(write, NULL), "write zero-length file");
 
         // File is written in chunks with nothing left over on close
-        TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");
+        TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write file");
         TEST_RESULT_VOID(
-            storagePutNP(write, BUFSTRDEF("12345678901234567890123456789012")),
+            storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")),
             "write file in chunks -- nothing left on close");
 
         // File is written in chunks with something left over on close
-        TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");
+        TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write file");
         TEST_RESULT_VOID(
-            storagePutNP(write, BUFSTRDEF("12345678901234567890")),
+            storagePutP(write, BUFSTRDEF("12345678901234567890")),
             "write file in chunks -- something left on close");
 
         // storageDriverExists()
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(storageExistsNP(s3, strNew("BOGUS")), false, "file does not exist");
-        TEST_RESULT_BOOL(storageExistsNP(s3, strNew("subdir/file1.txt")), true, "file exists");
+        TEST_RESULT_BOOL(storageExistsP(s3, strNew("BOGUS")), false, "file does not exist");
+        TEST_RESULT_BOOL(storageExistsP(s3, strNew("subdir/file1.txt")), true, "file exists");
 
         // Info()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(storageInfoP(s3, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
 
         StorageInfo info;
-        TEST_ASSIGN(info, storageInfoNP(s3, strNew("subdir/file1.txt")), "file exists");
+        TEST_ASSIGN(info, storageInfoP(s3, strNew("subdir/file1.txt")), "file exists");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
         TEST_RESULT_UINT(info.size, 9999, "    check exists");
@@ -841,7 +841,7 @@ testRun(void)
             AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
         TEST_RESULT_VOID(
-            storageInfoListNP(s3, strNew("/path/to"), testStorageInfoListCallback, (void *)memContextCurrent()), "info list files");
+            storageInfoListP(s3, strNew("/path/to"), testStorageInfoListCallback, (void *)memContextCurrent()), "info list files");
 
         TEST_RESULT_UINT(testStorageInfoListSize, 2, "    file and path returned");
         TEST_RESULT_STR(strPtr(testStorageInfoList[0].name), "test_path", "    check name");
@@ -856,7 +856,7 @@ testRun(void)
         TEST_ERROR(
             storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError,
             "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
-        TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
+        TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
             "S3 request failed with 344: Another bad status\n"
             "*** URI/Query ***:\n"
             "/?delimiter=%2F&list-type=2\n"
@@ -866,7 +866,7 @@ testRun(void)
             "host: " S3_TEST_HOST "\n"
             "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
             "x-amz-date: <redacted>");
-        TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
+        TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
             "S3 request failed with 344: Another bad status with xml\n"
             "*** URI/Query ***:\n"
             "/?delimiter=%2F&list-type=2\n"
@@ -880,7 +880,7 @@ testRun(void)
             "content-length: 79\n"
             "*** Response Content ***:\n"
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>SomeOtherCode</Code></Error>");
-        TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
+        TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
             "S3 request failed with 403: Forbidden\n"
             "*** URI/Query ***:\n"
             "/?delimiter=%2F&list-type=2\n"
@@ -896,12 +896,12 @@ testRun(void)
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>RequestTimeTooSkewed</Code>"
                 "<Message>The difference between the request time and the current time is too large.</Message></Error>");
 
-        TEST_RESULT_STR(strPtr(strLstJoin(storageListNP(s3, strNew("/")), ",")), "path1,test1.txt", "list a file/path in root");
+        TEST_RESULT_STR(strPtr(strLstJoin(storageListP(s3, strNew("/")), ",")), "path1,test1.txt", "list a file/path in root");
         TEST_RESULT_STR(
             strPtr(strLstJoin(storageListP(s3, strNew("/"), .expression = strNew("^test.*$")), ",")), "test1.txt",
             "list a file in root with expression");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(storageListNP(s3, strNew("/path/to")), ",")),
+            strPtr(strLstJoin(storageListP(s3, strNew("/path/to")), ",")),
             "path1,test1.txt,test2.txt,path2,test3.txt", "list files with continuation");
         TEST_RESULT_STR(
             strPtr(strLstJoin(storageListP(s3, strNew("/path/to"), .expression = strNew("^test(1|3)")), ",")),
@@ -910,7 +910,7 @@ testRun(void)
         // storageDriverPathRemove()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            storagePathRemoveNP(s3, strNew("/")), AssertError,
+            storagePathRemoveP(s3, strNew("/")), AssertError,
             "assertion 'param.recurse || storageFeature(this, storageFeaturePath)' failed");
         TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/"), .recurse = true), "remove root path");
         TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path"), .recurse = true), "nothing to do in empty subpath");
@@ -921,7 +921,7 @@ testRun(void)
 
         // storageDriverRemove()
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveNP(s3, strNew("/path/to/test.txt")), "remove file");
+        TEST_RESULT_VOID(storageRemoveP(s3, strNew("/path/to/test.txt")), "remove file");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

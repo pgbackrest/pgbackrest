@@ -414,7 +414,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
+            storagePutP(storageNewWriteP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
         TEST_RESULT_STR(strPtr(manifestData(manifest)->backrestVersion), PROJECT_VERSION, "    check backrest version");
@@ -422,7 +422,7 @@ testRun(void)
         storageRemoveP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");
+            storagePutP(storageNewWriteP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
     }

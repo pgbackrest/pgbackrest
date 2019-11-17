@@ -50,20 +50,20 @@ testRun(void)
 
         // Create the stop file
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
         TEST_ERROR_FMT(cmdStanzaCreate(), StopError, "stop file exists for stanza %s", strPtr(stanza));
         TEST_RESULT_VOID(
-            storageRemoveNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "    remove the stop file");
+            storageRemoveP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "    remove the stop file");
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - no files exist");
@@ -79,17 +79,17 @@ testRun(void)
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to test file");
 
         TEST_RESULT_BOOL(
             (bufEq(
-                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName))))) &&
+                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName))))) &&
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest, fileName)))),
+                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+                storageGetP(storageNewReadP(storageTest, fileName)))),
             true, "    test and stanza archive info files are equal");
 
         String *contentBackup = strNew
@@ -106,17 +106,17 @@ testRun(void)
                 "\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to test file");
 
         TEST_RESULT_BOOL(
             (bufEq(
-                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
+                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest, fileName)))),
+                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+                storageGetP(storageNewReadP(storageTest, fileName)))),
             true, "    test and stanza backup info files are equal");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -128,8 +128,8 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaCreate(), "    stanza create - success with archive.info files and only backup.info.copy");
         TEST_RESULT_BOOL(
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))),
+                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))),
             true, "backup.info recreated from backup.info.copy");
 
         // Remove archive.info
@@ -137,8 +137,8 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaCreate(), "    stanza create - success with backup.info files and only archive.info.copy");
         TEST_RESULT_BOOL(
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName))))),
+                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName))))),
             true, "archive.info recreated from archive.info.copy");
 
         // Remove info files
@@ -147,11 +147,11 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - success with copy files only");
         TEST_RESULT_BOOL(
             (bufEq(
-                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
+                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))))),
+                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))))),
             true, "info files recreated from copy files");
 
         // Remove copy files
@@ -164,11 +164,11 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - success with info files only");
         TEST_RESULT_BOOL(
             (bufEq(
-                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
+                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))))),
+                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))))),
             true, "info files recreated from info files");
 
         // Errors
@@ -192,9 +192,9 @@ testRun(void)
 
         // Archive files removed - backup.info exists
         TEST_RESULT_VOID(
-            storageMoveNP(storageTest,
-                storageNewReadNP(storageTest, backupInfoFileName),
-                storageNewWriteNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)))),
+            storageMoveP(storageTest,
+                storageNewReadP(storageTest, backupInfoFileName),
+                storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)))),
             "backup.info moved to backup.info.copy");
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileMissingError, "backup.info exists but archive.info is missing\n"
@@ -202,8 +202,8 @@ testRun(void)
 
         // Backup files removed - archive.info file exists
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to file");
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)), .errorOnMissing = true),
@@ -214,9 +214,9 @@ testRun(void)
 
         // Backup files removed - archive.info.copy file exists
         TEST_RESULT_VOID(
-            storageMoveNP(storageTest,
-                storageNewReadNP(storageTest, archiveInfoFileName),
-                storageNewWriteNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))),
+            storageMoveP(storageTest,
+                storageNewReadP(storageTest, archiveInfoFileName),
+                storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)))),
                 "archive.info moved to archive.info.copy");
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing\n"
@@ -224,8 +224,8 @@ testRun(void)
 
         // Backup files removed - archive.info and archive.info.copy exist
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to file");
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing\n"
@@ -248,8 +248,8 @@ testRun(void)
                 "\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file - bad db-id");
 
         TEST_ERROR_FMT(
@@ -260,8 +260,8 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         // Copy files may or may not exist - remove
-        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
-        storageRemoveNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
+        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName)));
+        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName)));
 
         // Create an archive.info file and backup.info files that match but do not match the current database version
         contentBackup = strNew
@@ -278,8 +278,8 @@ testRun(void)
                 "\"db-version\":\"9.5\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
         contentArchive = strNew
@@ -293,8 +293,8 @@ testRun(void)
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info file");
 
         TEST_ERROR_FMT(
@@ -314,8 +314,8 @@ testRun(void)
             "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to file");
 
         contentBackup = strNew
@@ -332,8 +332,8 @@ testRun(void)
                 "\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
         TEST_ERROR_FMT(
@@ -346,20 +346,20 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
 
         TEST_RESULT_VOID(
-            storagePathCreateNP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))),
+            storagePathCreateP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))),
             "create directory in backup");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "backup directory not empty");
 
         // File in archive, directory in backup
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, strNewFmt("%s/somefile", strPtr(archiveStanzaPath))), BUFSTRDEF("some content")),
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("%s/somefile", strPtr(archiveStanzaPath))), BUFSTRDEF("some content")),
             "create file in archive");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "backup directory and/or archive directory not empty");
 
         // File in archive, backup empty
         TEST_RESULT_VOID(
-            storagePathRemoveNP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))), "remove backup subdir");
+            storagePathRemoveP(storageTest, strNewFmt("%s/backup.history", strPtr(backupStanzaPath))), "remove backup subdir");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
 
         // Repeat last test using --force (deprecated)
@@ -386,8 +386,8 @@ testRun(void)
         // pgControl and database match
         //--------------------------------------------------------------------------------------------------------------------------
         // Create pg_control
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
 
         harnessPqScriptSet((HarnessPq [])
@@ -399,7 +399,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - db online");
         TEST_RESULT_BOOL(
-            storageExistsNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), true, "    stanza created");
+            storageExistsP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), true, "    stanza created");
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -414,8 +414,8 @@ testRun(void)
         // Version mismatch
         //--------------------------------------------------------------------------------------------------------------------------
         // Create pg_control with different version
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_91, .systemId = 6569239123849665699}));
 
         harnessPqScriptSet((HarnessPq [])
@@ -435,8 +435,8 @@ testRun(void)
         // Path mismatch
         //--------------------------------------------------------------------------------------------------------------------------
         // Create pg_control
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
 
         harnessPqScriptSet((HarnessPq [])
@@ -464,13 +464,13 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for master
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
 
         // Create pg_control for standby
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, testPath())),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, testPath())),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 6569239123849665700}));
 
         harnessPqScriptSet((HarnessPq [])
@@ -497,8 +497,8 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");
@@ -537,12 +537,12 @@ testRun(void)
 
         // Create the stop file
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
         TEST_ERROR_FMT(cmdStanzaUpgrade(), StopError, "stop file exists for stanza %s", strPtr(stanza));
         TEST_RESULT_VOID(
-            storageRemoveNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "    remove the stop file");
+            storageRemoveP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "    remove the stop file");
 
         //--------------------------------------------------------------------------------------------------------------------------
         // Load Parameters
@@ -550,8 +550,8 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
@@ -580,8 +580,8 @@ testRun(void)
             "2={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to file");
 
         TEST_ERROR_FMT(
@@ -608,8 +608,8 @@ testRun(void)
                 "\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
         contentArchive = strNew
@@ -623,8 +623,8 @@ testRun(void)
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to file");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - version");
@@ -640,16 +640,16 @@ testRun(void)
             "2={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
                 "    put archive info to test file");
         TEST_RESULT_BOOL(
             (bufEq(
-                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName))))) &&
+                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName))))) &&
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest, fileName)))),
+                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+                storageGetP(storageNewReadP(storageTest, fileName)))),
             true, "    test and stanza archive info files are equal");
 
         // archive info up to date but backup info version is not
@@ -668,8 +668,8 @@ testRun(void)
                 "\"db-version\":\"9.5\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - version");
@@ -689,17 +689,17 @@ testRun(void)
                 "\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
                 "    put backup info to test file");
 
         TEST_RESULT_BOOL(
             (bufEq(
-                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
+                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest, fileName)))),
+                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+                storageGetP(storageNewReadP(storageTest, fileName)))),
             true, "    test and stanza backup info files are equal");
 
         // backup info up to date but archive info system-id is not
@@ -720,8 +720,8 @@ testRun(void)
                 "\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
         contentArchive = strNew
@@ -735,8 +735,8 @@ testRun(void)
             "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to file");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - system-id");
@@ -752,16 +752,16 @@ testRun(void)
             "2={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
+            storagePutP(
+                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
                 "    put archive info to test file");
         TEST_RESULT_BOOL(
             (bufEq(
-                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName))))) &&
+                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(archiveInfoFileName))))) &&
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, archiveInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest, fileName)))),
+                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+                storageGetP(storageNewReadP(storageTest, fileName)))),
             true, "    test and stanza archive info files are equal");
 
         // archive info up to date but backup info system-id is not
@@ -780,8 +780,8 @@ testRun(void)
                 "\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - system-id");
@@ -801,17 +801,17 @@ testRun(void)
                 "\"db-version\":\"9.6\"}\n"
         );
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
+            storagePutP(
+                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
                 "    put backup info to test file");
 
         TEST_RESULT_BOOL(
             (bufEq(
-                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
+                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strPtr(backupInfoFileName))))) &&
             bufEq(
-                storageGetNP(storageNewReadNP(storageTest, backupInfoFileName)),
-                storageGetNP(storageNewReadNP(storageTest, fileName)))),
+                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+                storageGetP(storageNewReadP(storageTest, fileName)))),
             true, "    test and stanza backup info files are equal");
     }
 
@@ -842,8 +842,8 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for stanza-create
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanzaOther))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanzaOther))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza that will not be deleted");
@@ -870,13 +870,13 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for stanza-create
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza to be deleted");
         TEST_RESULT_BOOL(
-            storageExistsNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), true, "    stanza created");
+            storageExistsP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), true, "    stanza created");
 
         argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
@@ -889,127 +889,127 @@ testRun(void)
 
         // Create the stop file
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
 
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete");
         TEST_RESULT_BOOL(
-            storagePathExistsNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), false, "    stanza deleted");
+            storagePathExistsP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), false, "    stanza deleted");
         TEST_RESULT_BOOL(
-            storageExistsNP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))), false, "    stop file removed");
+            storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))), false, "    stop file removed");
 
         // Create stanza with directories only
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePathCreateNP(storageTest, strNewFmt("repo/archive/%s/9.6-1/1234567812345678", strPtr(stanza))),
+            storagePathCreateP(storageTest, strNewFmt("repo/archive/%s/9.6-1/1234567812345678", strPtr(stanza))),
             "create archive sub directory");
         TEST_RESULT_VOID(
-            storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))),
+            storagePathCreateP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))),
             "create backup sub directory");
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
         TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - sub directories only");
         TEST_RESULT_BOOL(
-            storagePathExistsNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), false, "    stanza archive deleted");
+            storagePathExistsP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), false, "    stanza archive deleted");
         TEST_RESULT_BOOL(
-            storagePathExistsNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza backup deleted");
+            storagePathExistsP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza backup deleted");
 
         // Create stanza archive only
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanza))), BUFSTRDEF("")),
                 "create archive.info");
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
         TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - archive only");
         TEST_RESULT_BOOL(
-            storagePathExistsNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), false, "    stanza deleted");
+            storagePathExistsP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), false, "    stanza deleted");
 
         // Create stanza backup only
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, strNewFmt("repo/backup/%s/backup.info", strPtr(stanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("repo/backup/%s/backup.info", strPtr(stanza))), BUFSTRDEF("")),
                 "create backup.info");
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
         TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - backup only");
         TEST_RESULT_BOOL(
-            storagePathExistsNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza deleted");
+            storagePathExistsP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza deleted");
 
         // Create a backup file that matches the regex for a backup directory
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))), BUFSTRDEF("")),
                 "backup file that looks like a directory");
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
         TEST_ERROR_FMT(
             cmdStanzaDelete(), FileRemoveError,
             "unable to remove '%s/repo/backup/%s/20190708-154306F/backup.manifest': [20] Not a directory", testPath(),
             strPtr(stanza));
         TEST_RESULT_VOID(
-            storageRemoveNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))), "remove backup directory");
+            storageRemoveP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strPtr(stanza))), "remove backup directory");
 
         // Create backup manifest
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F/backup.manifest", strPtr(stanza))),
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F/backup.manifest", strPtr(stanza))),
                 BUFSTRDEF("")), "create backup.manifest only");
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191726I/backup.manifest.copy",
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191726I/backup.manifest.copy",
                 strPtr(stanza))), BUFSTRDEF("")), "create backup.manifest.copy only");
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191800D/backup.manifest",
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191800D/backup.manifest",
                 strPtr(stanza))), BUFSTRDEF("")), "create backup.manifest");
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191800D/backup.manifest.copy",
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191800D/backup.manifest.copy",
                 strPtr(stanza))), BUFSTRDEF("")), "create backup.manifest.copy");
         TEST_RESULT_VOID(manifestDelete(storageRepoWrite()), "delete manifests");
         TEST_RESULT_BOOL(
-            (storageExistsNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F/backup.manifest", strPtr(stanza))) &&
-            storageExistsNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191726I/backup.manifest.copy",
+            (storageExistsP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F/backup.manifest", strPtr(stanza))) &&
+            storageExistsP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191726I/backup.manifest.copy",
             strPtr(stanza))) &&
-            storageExistsNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191800D/backup.manifest",
+            storageExistsP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191800D/backup.manifest",
             strPtr(stanza))) &&
-            storageExistsNP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191800D/backup.manifest.copy",
+            storageExistsP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F_20190716-191800D/backup.manifest.copy",
             strPtr(stanza)))), false, "    all manifests deleted");
 
         // Create only stanza paths
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete");
         TEST_RESULT_VOID(
-            storagePathCreateNP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), "create empty stanza archive path");
+            storagePathCreateP(storageTest, strNewFmt("repo/archive/%s", strPtr(stanza))), "create empty stanza archive path");
         TEST_RESULT_VOID(
-            storagePathCreateNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), "create empty stanza backup path");
+            storagePathCreateP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), "create empty stanza backup path");
         TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - empty directories");
 
         // Create postmaster.pid
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageTest, strNewFmt("repo/backup/%s/backup.info", strPtr(stanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("repo/backup/%s/backup.info", strPtr(stanza))), BUFSTRDEF("")),
                 "create backup.info");
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/" PG_FILE_POSTMASTERPID, strPtr(stanza))), BUFSTRDEF("")),
+            storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/" PG_FILE_POSTMASTERPID, strPtr(stanza))), BUFSTRDEF("")),
             "create postmaster file");
         TEST_ERROR_FMT(
             cmdStanzaDelete(), PostmasterRunningError, PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running. "
@@ -1020,12 +1020,12 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaDelete, argList);
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete --force");
         TEST_RESULT_BOOL(
-            storagePathExistsNP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza deleted");
+            storagePathExistsP(storageTest, strNewFmt("repo/backup/%s", strPtr(stanza))), false, "    stanza deleted");
 
         // Ensure other stanza never deleted
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(
-            storageExistsNP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanzaOther))), true,
+            storageExistsP(storageTest, strNewFmt("repo/archive/%s/archive.info", strPtr(stanzaOther))), true,
             "otherstanza exists");
     }
 
