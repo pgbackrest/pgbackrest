@@ -158,7 +158,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
         do
         {
             // Call driver function
-            result = this->interface.exists(this->driver, path, (StorageInterfaceExistsParam){false});
+            result = storageInterfaceExistsP(this->driver, path);
         }
         while (!result && wait != NULL && waitMore(wait));
     }
@@ -253,7 +253,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         String *file = storagePathP(this, fileExp);
 
         // Call driver function
-        result = this->interface.info(this->driver, file, (StorageInterfaceInfoParam){.followLink = param.followLink});
+        result = storageInterfaceInfoP(this->driver, file, .followLink = param.followLink);
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
@@ -329,7 +329,7 @@ storageInfoListSort(
         // If no sorting then use the callback directly
         if (sortOrder == sortOrderNone)
         {
-            result = this->interface.infoList(this->driver, path, callback, callbackData, (StorageInterfaceInfoListParam){false});
+            result = storageInterfaceInfoListP(this->driver, path, callback, callbackData);
         }
         // Else sort the info before sending it to the callback
         else
@@ -341,8 +341,7 @@ storageInfoListSort(
                 .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
             };
 
-            result = this->interface.infoList(
-                this->driver, path, storageInfoListSortCallback, &data, (StorageInterfaceInfoListParam){false});
+            result = storageInterfaceInfoListP(this->driver, path, storageInfoListSortCallback, &data);
             lstSort(data.infoList, sortOrder);
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -508,7 +507,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
         String *path = storagePathP(this, pathExp);
 
         // Get the list
-        result = this->interface.list(this->driver, path, (StorageInterfaceListParam){.expression = param.expression});
+        result = storageInterfaceListP(this->driver, path, .expression = param.expression);
 
         // If the path does not exist
         if (result == NULL)
@@ -553,19 +552,19 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file can't be moved it will need to be copied
-        if (!this->interface.move(this->driver, source, destination, (StorageInterfaceMoveParam){false}))
+        if (!storageInterfaceMoveP(this->driver, source, destination))
         {
             // Perform the copy
             storageCopyP(source, destination);
 
             // Remove the source file
-            this->interface.remove(this->driver, storageReadName(source), (StorageInterfaceRemoveParam){.errorOnMissing = false});
+            storageInterfaceRemoveP(this->driver, storageReadName(source));
 
             // Sync source path if the destination path was synced.  We know the source and destination paths are different because
             // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented because there's
             // no way to get coverage on it now.
             if (storageWriteSyncPath(destination))
-                this->interface.pathSync(this->driver, strPath(storageReadName(source)), (StorageInterfacePathSyncParam){false});
+                storageInterfacePathSyncP(this->driver, strPath(storageReadName(source)));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -593,9 +592,8 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
     MEM_CONTEXT_TEMP_BEGIN()
     {
         result = storageReadMove(
-            this->interface.newRead(
-                this->driver, storagePathP(this, fileExp), param.ignoreMissing,
-                (StorageInterfaceNewReadParam){.compressible = param.compressible}),
+            storageInterfaceNewReadP(
+                this->driver, storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible),
             MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
@@ -632,13 +630,11 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     MEM_CONTEXT_TEMP_BEGIN()
     {
         result = storageWriteMove(
-            this->interface.newWrite(
-                this->driver, storagePathP(this, fileExp),
-                (StorageInterfaceNewWriteParam){
-                    .modeFile = param.modeFile != 0 ? param.modeFile : this->modeFile,
-                    .modePath = param.modePath != 0 ? param.modePath : this->modePath, .user = param.user, .group = param.group,
-                    .timeModified = param.timeModified, .createPath = !param.noCreatePath, .syncFile = !param.noSyncFile,
-                    .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .compressible = param.compressible}),
+            storageInterfaceNewWriteP(
+                this->driver, storagePathP(this, fileExp), .modeFile = param.modeFile != 0 ? param.modeFile : this->modeFile,
+                .modePath = param.modePath != 0 ? param.modePath : this->modePath, .user = param.user, .group = param.group,
+                .timeModified = param.timeModified, .createPath = !param.noCreatePath, .syncFile = !param.noSyncFile,
+                .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .compressible = param.compressible),
             MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
@@ -772,9 +768,8 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
         String *path = storagePathP(this, pathExp);
 
         // Call driver function
-        this->interface.pathCreate(
-            this->driver, path, param.errorOnExists, param.noParentCreate, param.mode != 0 ? param.mode : this->modePath,
-            (StorageInterfacePathCreateParam){false});
+        storageInterfacePathCreateP(
+            this->driver, path, param.errorOnExists, param.noParentCreate, param.mode != 0 ? param.mode : this->modePath);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -799,7 +794,7 @@ storagePathExists(const Storage *this, const String *pathExp)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = this->interface.pathExists(this->driver, storagePathP(this, pathExp), (StorageInterfacePathExistsParam){false});
+        result = storageInterfacePathExistsP(this->driver, storagePathP(this, pathExp));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -830,8 +825,7 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
         String *path = storagePathP(this, pathExp);
 
         // Call driver function
-        if (!this->interface.pathRemove(this->driver, path, param.recurse, (StorageInterfacePathRemoveParam){false}) &&
-            param.errorOnMissing)
+        if (!storageInterfacePathRemoveP(this->driver, path, param.recurse) && param.errorOnMissing)
         {
             THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_MISSING, strPtr(path));
         }
@@ -859,7 +853,7 @@ void storagePathSync(const Storage *this, const String *pathExp)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            this->interface.pathSync(this->driver, storagePathP(this, pathExp), (StorageInterfacePathSyncParam){false});
+            storageInterfacePathSyncP(this->driver, storagePathP(this, pathExp));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -908,7 +902,7 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
         String *file = storagePathP(this, fileExp);
 
         // Call driver function
-        this->interface.remove(this->driver, file, (StorageInterfaceRemoveParam){.errorOnMissing = param.errorOnMissing});
+        storageInterfaceRemoveP(this->driver, file, .errorOnMissing = param.errorOnMissing);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -38,8 +38,8 @@ Object type
 ***********************************************************************************************************************************/
 struct StoragePosix
 {
+    STORAGE_COMMON_MEMBER;
     MemContext *memContext;                                         // Object memory context
-    StorageInterface interface;                                     // Storage interface
 };
 
 /**********************************************************************************************************************************/
@@ -161,7 +161,7 @@ storagePosixInfoListEntry(
     {
         String *pathInfo = strEqZ(name, ".") ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name));
 
-        StorageInfo storageInfo = storagePosixInfo(this, pathInfo, (StorageInterfaceInfoParam){.followLink = false});
+        StorageInfo storageInfo = storageInterfaceInfoP(this, pathInfo);
 
         if (storageInfo.exists)
         {
@@ -338,7 +338,7 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination, Sto
             // Determine which file/path is missing
             if (errno == ENOENT)
             {
-                if (!storagePosixExists(this, sourceFile, (StorageInterfaceExistsParam){false}))
+                if (!storageInterfaceExistsP(this, sourceFile))
                     THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
 
                 if (!storageWriteCreatePath(destination))
@@ -347,10 +347,8 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination, Sto
                         PathMissingError, "unable to move '%s' to missing path '%s'", strPtr(sourceFile), strPtr(destinationPath));
                 }
 
-                storagePosixPathCreate(
-                    this, destinationPath, false, false, storageWriteModePath(destination),
-                    (StorageInterfacePathCreateParam){false});
-                result = storagePosixMove(this, source, destination, (StorageInterfaceMoveParam){false});
+                storageInterfacePathCreateP(this, destinationPath, false, false, storageWriteModePath(destination));
+                result = storageInterfaceMoveP(this, source, destination);
             }
             // Else the destination is on a different device so a copy will be needed
             else if (errno == EXDEV)
@@ -369,7 +367,7 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination, Sto
                 String *sourcePath = strPath(sourceFile);
 
                 if (!strEq(destinationPath, sourcePath))
-                    storagePosixPathSync(this, sourcePath, (StorageInterfacePathSyncParam){false});
+                    storageInterfacePathSyncP(this, sourcePath);
             }
         }
     }
@@ -452,9 +450,8 @@ storagePosixPathCreate(
         // If the parent path does not exist then create it if allowed
         if (errno == ENOENT && !noParentCreate)
         {
-            storagePosixPathCreate(
-                this, strPath(path), errorOnExists, noParentCreate, mode, (StorageInterfacePathCreateParam){false});
-            storagePosixPathCreate(this, path, errorOnExists, noParentCreate, mode, (StorageInterfacePathCreateParam){false});
+            storageInterfacePathCreateP(this, strPath(path), errorOnExists, noParentCreate, mode);
+            storageInterfacePathCreateP(this, path, errorOnExists, noParentCreate, mode);
         }
         // Ignore path exists if allowed
         else if (errno != EEXIST || errorOnExists)
@@ -521,7 +518,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
         if (recurse)
         {
             // Get a list of files in this path
-            StringList *fileList = storagePosixList(this, path, (StorageInterfaceListParam){.expression = NULL});
+            StringList *fileList = storageInterfaceListP(this, path);
 
             // Only continue if the path exists
             if (fileList != NULL)
@@ -536,7 +533,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
                     {
                         // These errors indicate that the entry is actually a path so we'll try to delete it that way
                         if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
-                            storagePosixPathRemove(this, file, true, (StorageInterfacePathRemoveParam){false});
+                            storageInterfacePathRemoveP(this, file, true);
                         // Else error
                         else
                             THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strPtr(file));
@@ -633,6 +630,24 @@ storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
 /***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
+static const StorageInterface storageInterfacePosix =
+{
+    .feature = (1 << storageFeaturePath | 1 << storageFeatureCompress),
+
+    .exists = storagePosixExists,
+    .info = storagePosixInfo,
+    .infoList = storagePosixInfoList,
+    .list = storagePosixList,
+    .move = storagePosixMove,
+    .newRead = storagePosixNewRead,
+    .newWrite = storagePosixNewWrite,
+    .pathCreate = storagePosixPathCreate,
+    .pathExists = storagePosixPathExists,
+    .pathRemove = storagePosixPathRemove,
+    .pathSync = storagePosixPathSync,
+    .remove = storagePosixRemove,
+};
+
 Storage *
 storagePosixNewInternal(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
@@ -663,15 +678,11 @@ storagePosixNewInternal(
     {
         StoragePosix *driver = memNew(sizeof(StoragePosix));
         driver->memContext = MEM_CONTEXT_NEW();
+        driver->interface = storageInterfacePosix;
 
-        driver->interface = (StorageInterface)
-        {
-            .feature = (1 << storageFeaturePath | 1 << storageFeatureCompress), .exists = storagePosixExists,
-            .info = storagePosixInfo, .infoList = storagePosixInfoList, .list = storagePosixList, .move = storagePosixMove,
-            .newRead = storagePosixNewRead, .newWrite = storagePosixNewWrite, .pathCreate = storagePosixPathCreate,
-            .pathExists = storagePosixPathExists, .pathRemove = storagePosixPathRemove,
-            .pathSync = pathSync ? storagePosixPathSync : NULL, .remove = storagePosixRemove
-        };
+        // Disable path sync when not supported
+        if (!pathSync)
+            driver->interface.pathSync = NULL;
 
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }

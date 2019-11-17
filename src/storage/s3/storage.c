@@ -86,6 +86,7 @@ Object type
 ***********************************************************************************************************************************/
 struct StorageS3
 {
+    STORAGE_COMMON_MEMBER;
     MemContext *memContext;
     HttpClientCache *httpClientCache;                               // Http client cache to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
@@ -880,6 +881,18 @@ storageS3Remove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param
 /***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
+static const StorageInterface storageInterfaceS3 =
+{
+    .exists = storageS3Exists,
+    .info = storageS3Info,
+    .infoList = storageS3InfoList,
+    .list = storageS3List,
+    .newRead = storageS3NewRead,
+    .newWrite = storageS3NewWrite,
+    .pathRemove = storageS3PathRemove,
+    .remove = storageS3Remove,
+};
+
 Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
@@ -919,6 +932,7 @@ storageS3New(
     {
         StorageS3 *driver = memNew(sizeof(StorageS3));
         driver->memContext = MEM_CONTEXT_NEW();
+        driver->interface = storageInterfaceS3;
 
         driver->bucket = strDup(bucket);
         driver->region = strDup(region);
@@ -941,11 +955,8 @@ storageS3New(
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, S3_HEADER_AUTHORIZATION_STR);
 
-        this = storageNewP(
-            STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver,
-            .exists = storageS3Exists, .info = storageS3Info, .infoList = storageS3InfoList, .list = storageS3List,
-            .newRead = storageS3NewRead, .newWrite = storageS3NewWrite, .pathRemove = storageS3PathRemove,
-            .remove = storageS3Remove);
+        this = storageNew(
+            STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 

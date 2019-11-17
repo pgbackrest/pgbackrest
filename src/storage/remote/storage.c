@@ -23,6 +23,7 @@ Object type
 ***********************************************************************************************************************************/
 struct StorageRemote
 {
+    STORAGE_COMMON_MEMBER;
     MemContext *memContext;
     ProtocolClient *client;                                         // Protocol client
     unsigned int compressLevel;                                     // Protocol compression level
@@ -444,6 +445,21 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
 /***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
+static const StorageInterface storageInterfaceRemote =
+{
+    .exists = storageRemoteExists,
+    .info = storageRemoteInfo,
+    .infoList = storageRemoteInfoList,
+    .list = storageRemoteList,
+    .newRead = storageRemoteNewRead,
+    .newWrite = storageRemoteNewWrite,
+    .pathCreate = storageRemotePathCreate,
+    .pathExists = storageRemotePathExists,
+    .pathRemove = storageRemotePathRemove,
+    .pathSync = storageRemotePathSync,
+    .remove = storageRemoteRemove,
+};
+
 Storage *
 storageRemoteNew(
     mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
@@ -470,8 +486,8 @@ storageRemoteNew(
         driver->memContext = MEM_CONTEXT_NEW();
         driver->client = client;
         driver->compressLevel = compressLevel;
+        driver->interface = storageInterfaceRemote;
 
-        uint64_t feature = 0;
         const String *path = NULL;
 
         // Get storage features from the remote
@@ -482,7 +498,7 @@ storageRemoteNew(
 
             // Read values
             path = jsonToStr(protocolClientReadLine(driver->client));
-            feature = jsonToUInt64(protocolClientReadLine(driver->client));
+            driver->interface.feature = jsonToUInt64(protocolClientReadLine(driver->client));
 
             // Acknowledge command completed
             protocolClientReadOutput(driver->client, false);
@@ -494,12 +510,8 @@ storageRemoteNew(
         }
         MEM_CONTEXT_TEMP_END();
 
-        this = storageNewP(
-            STORAGE_REMOTE_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, driver, .feature = feature,
-            .exists = storageRemoteExists, .info = storageRemoteInfo, .infoList = storageRemoteInfoList, .list = storageRemoteList,
-            .newRead = storageRemoteNewRead, .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate,
-            .pathExists = storageRemotePathExists, .pathRemove = storageRemotePathRemove, .pathSync = storageRemotePathSync,
-            .remove = storageRemoteRemove);
+        this = storageNew(
+            STORAGE_REMOTE_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 
