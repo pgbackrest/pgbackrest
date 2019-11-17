@@ -47,7 +47,154 @@ Error messages
 /***********************************************************************************************************************************
 Path expression callback function type - used to modify paths based on expressions enclosed in <>
 ***********************************************************************************************************************************/
-typedef String *(*StoragePathExpressionCallback)(const String *expression, const String *path);
+typedef String *StoragePathExpressionCallback(const String *expression, const String *path);
+
+/***********************************************************************************************************************************
+Required interface functions
+***********************************************************************************************************************************/
+// Does a file exist? This function is only for files, not paths.
+typedef struct StorageInterfaceExistsParam
+{
+    bool dummy;                                                     // No optional parameters
+} StorageInterfaceExistsParam;
+
+typedef bool StorageInterfaceExists(void *thisVoid, const String *file, StorageInterfaceExistsParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Get information about a file
+typedef struct StorageInterfaceInfoParam
+{
+    // Should symlinks be followed?  Only required on storage that supports symlinks.
+    bool followLink;
+} StorageInterfaceInfoParam;
+
+typedef StorageInfo StorageInterfaceInfo(void *thisVoid, const String *file, StorageInterfaceInfoParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Get a list of files
+typedef struct StorageInterfaceListParam
+{
+    // Regular expression used to filter the results
+    const String *expression;
+} StorageInterfaceListParam;
+
+typedef StringList *StorageInterfaceList(void *thisVoid, const String *path, StorageInterfaceListParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Create a file read object.  The file should not be opened immediately -- open() will be called on the IoRead interface when the
+// file needs to be opened.
+typedef struct StorageInterfaceNewReadParam
+{
+    // Is the file compressible?  This is useful when the file must be moved across a network and some temporary compression is
+    // helpful.
+    bool compressible;
+} StorageInterfaceNewReadParam;
+
+typedef StorageRead *StorageInterfaceNewRead(
+    void *thisVoid, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Create a file write object.  The file should not be opened immediately -- open() will be called on the IoWrite interface when the
+// file needs to be opened.
+typedef struct StorageInterfaceNewWriteParam
+{
+    // File/path mode for storage that supports Posix-style permissions.  modePath is only used in conjunction with createPath.
+    mode_t modeFile;
+    mode_t modePath;
+
+    // User/group name
+    const String *user;
+    const String *group;
+
+    // Modified time
+    time_t timeModified;
+
+    // Will paths be created as needed?
+    bool createPath;
+
+    // Sync file/path when required by the storage
+    bool syncFile;
+    bool syncPath;
+
+    // Ensure the file written atomically.  If this is false it's OK to write atomically if that's all the storage supperts
+    // (e.g. S3).  Non-atomic writes are used in some places where there is a performance advantage and atomicity is not needed.
+    bool atomic;
+
+    // Is the file compressible?  This is useful when the file must be moved across a network and some temporary compression is
+    // helpful.
+    bool compressible;
+} StorageInterfaceNewWriteParam;
+
+typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *file, StorageInterfaceNewWriteParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Get info for a path and all paths/files in the path (does not recurse)
+typedef struct StorageInterfaceInfoListParam
+{
+    bool dummy;                                                     // No optional parameters
+} StorageInterfaceInfoListParam;
+
+typedef bool StorageInterfaceInfoList(
+    void *thisVoid, const String *file, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Remove a path (and optionally recurse)
+typedef struct StorageInterfacePathRemoveParam
+{
+    bool dummy;                                                     // No optional parameters
+} StorageInterfacePathRemoveParam;
+
+typedef bool StorageInterfacePathRemove(void *thisVoid, const String *path, bool recurse, StorageInterfacePathRemoveParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Remove a file
+typedef struct StorageInterfaceRemoveParam
+{
+    // Error when the file to delete is missing
+    bool errorOnMissing;
+} StorageInterfaceRemoveParam;
+
+typedef void StorageInterfaceRemove(void *thisVoid, const String *file, StorageInterfaceRemoveParam param);
+
+/***********************************************************************************************************************************
+Optional interface functions
+***********************************************************************************************************************************/
+// Move a file atomically
+typedef struct StorageInterfaceMoveParam
+{
+    bool dummy;                                                     // No optional parameters
+} StorageInterfaceMoveParam;
+
+typedef bool StorageInterfaceMove(void *thisVoid, StorageRead *source, StorageWrite *destination, StorageInterfaceMoveParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Create a path
+typedef struct StorageInterfacePathCreateParam
+{
+    bool dummy;                                                     // No optional parameters
+} StorageInterfacePathCreateParam;
+
+typedef void StorageInterfacePathCreate(
+    void *thisVoid, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode,
+    StorageInterfacePathCreateParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Does a path exist?
+typedef struct StorageInterfacePathExistsParam
+{
+    bool dummy;                                                     // No optional parameters
+} StorageInterfacePathExistsParam;
+
+typedef bool StorageInterfacePathExists(void *thisVoid, const String *path, StorageInterfacePathExistsParam param);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Sync a path
+typedef struct StorageInterfacePathSyncParam
+{
+    bool dummy;                                                     // No optional parameters
+} StorageInterfacePathSyncParam;
+
+typedef void StorageInterfacePathSync(void *thisVoid, const String *path, StorageInterfacePathSyncParam param);
 
 /***********************************************************************************************************************************
 Constructor
@@ -57,21 +204,21 @@ typedef struct StorageInterface
     // Features implemented by the storage driver
     uint64_t feature;
 
-    bool (*copy)(StorageRead *source, StorageWrite *destination);
-    bool (*exists)(void *driver, const String *file);
-    StorageInfo (*info)(void *driver, const String *path, bool followLink);
-    bool (*infoList)(void *driver, const String *file, StorageInfoListCallback callback, void *callbackData);
-    StringList *(*list)(void *driver, const String *path, const String *expression);
-    bool (*move)(void *driver, StorageRead *source, StorageWrite *destination);
-    StorageRead *(*newRead)(void *driver, const String *file, bool ignoreMissing, bool compressible);
-    StorageWrite *(*newWrite)(
-        void *driver, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-        time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible);
-    void (*pathCreate)(void *driver, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
-    bool (*pathExists)(void *driver, const String *path);
-    bool (*pathRemove)(void *driver, const String *path, bool recurse);
-    void (*pathSync)(void *driver, const String *path);
-    void (*remove)(void *driver, const String *file, bool errorOnMissing);
+    // Required functions
+    StorageInterfaceExists *exists;
+    StorageInterfaceInfo *info;
+    StorageInterfaceInfoList *infoList;
+    StorageInterfaceList *list;
+    StorageInterfaceNewRead *newRead;
+    StorageInterfaceNewWrite *newWrite;
+    StorageInterfacePathRemove *pathRemove;
+    StorageInterfaceRemove *remove;
+
+    // Optional functions
+    StorageInterfaceMove *move;
+    StorageInterfacePathCreate *pathCreate;
+    StorageInterfacePathExists *pathExists;
+    StorageInterfacePathSync *pathSync;
 } StorageInterface;
 
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \
