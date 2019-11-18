@@ -559,7 +559,7 @@ cmdBackup(void)
             manifestBackupLabelSet(manifest, backupLabel(type, manifestData(manifest)->backupLabelPrior, timestampStart));
 
         // Set the values required to complete the manifest
-        manifestBuildComplete(manifest, timestampStart);
+        manifestBuildComplete(manifest, timestampStart, infoPg.id, infoPg.systemId, cfgOptionBool(cfgOptBackupStandby));
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
         // !!! ---------------------------------------------------------------------------------------------------------------------
@@ -569,9 +569,6 @@ cmdBackup(void)
         kvPut(paramKv, VARSTRDEF("timestampStart"), VARUINT64((uint64_t)timestampStart));
         kvPut(paramKv, VARSTRDEF("pgId"), VARUINT(infoPg.id));
         kvPut(paramKv, VARSTRDEF("pgVersion"), VARSTR(pgVersionToStr(infoPg.version)));
-        kvPut(paramKv, VARSTRDEF("pgSystemId"), VARUINT64(infoPg.systemId));
-        kvPut(paramKv, VARSTRDEF("pgControlVersion"), VARUINT(pgControlVersion(infoPg.version)));
-        kvPut(paramKv, VARSTRDEF("pgCatalogVersion"), VARUINT(pgCatalogVersion(infoPg.version)));
         kvPut(paramKv, VARSTRDEF("backupLabel"), VARSTR(manifestData(manifest)->backupLabel));
         kvPut(paramKv, VARSTRDEF("backupLabelResume"), backupLabelResume ? VARSTR(backupLabelResume) : NULL);
 

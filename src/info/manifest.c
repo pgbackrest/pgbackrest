@@ -1175,14 +1175,24 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
 
 /**********************************************************************************************************************************/
 void
-manifestBuildComplete(Manifest *this, time_t timestampStart)
+manifestBuildComplete(Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool backupOptionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(TIME, timestampStart);
+        FUNCTION_LOG_PARAM(UINT, pgId);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(BOOL, backupOptionStandby);
     FUNCTION_LOG_END();
 
-    this->data.backupTimestampStart = timestampStart;
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->data.backupTimestampStart = timestampStart;
+        this->data.pgId = pgId;
+        this->data.pgSystemId = pgSystemId;
+        this->data.backupOptionStandby = varNewBool(backupOptionStandby);
+    }
+    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

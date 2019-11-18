@@ -549,18 +549,13 @@ sub process
         $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
     }
 
-    # Declare the backup manifest. Since the manifest could be an aborted backup, don't load it from the file here.
-    # Instead just instantiate it. Pass the passphrases to open the manifest and one to encrypt the backup files if the repo is
-    # encrypted (undefined if not).
-    my $strDbVersion = $rhParam->{pgVersion};
-
+    # Load manifest passed from C
     my $oBackupManifest = new pgBackRest::Manifest(
         STORAGE_REPO_BACKUP . "/" . FILE_MANIFEST . '.pass', {oStorage => storageRepo(),
-        strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef});
+        strCipherPass => defined($oBackupInfo->cipherPassSub()) ? $oBackupInfo->cipherPassSub() : undef});
     $oBackupManifest->{strFileName} = STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST;
 
     # Backup settings
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef, cfgOption(CFGOPT_BACKUP_STANDBY));
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BUFFER_SIZE, undef, cfgOption(CFGOPT_BUFFER_SIZE));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, cfgOption(CFGOPT_COMPRESS));
     $oBackupManifest->numericSet(
@@ -576,13 +571,8 @@ sub process
                               !cfgOption(CFGOPT_ONLINE) || cfgOption(CFGOPT_ARCHIVE_CHECK));
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_PROCESS_MAX, undef, cfgOption(CFGOPT_PROCESS_MAX));
 
-    # Database settings
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $rhParam->{pgId});
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $rhParam->{pgControlVersion});
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $rhParam->{pgSystemId});
-
     # Backup from standby can only be used on PostgreSQL >= 9.1
-    if (cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_BACKUP_STANDBY) && $strDbVersion < PG_VERSION_BACKUP_STANDBY)
+    if (cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_BACKUP_STANDBY) && $rhParam->{pgVersion} < PG_VERSION_BACKUP_STANDBY)
     {
         confess &log(ERROR,
             'option \'' . cfgOptionName(CFGOPT_BACKUP_STANDBY) . '\' not valid for PostgreSQL < ' . PG_VERSION_BACKUP_STANDBY,
@@ -712,7 +702,7 @@ sub process
     # Perform the backup
     my $lBackupSizeTotal =
         $self->processManifest(
-            $strDbMasterPath, $strDbCopyPath, cfgOption(CFGOPT_TYPE), $strDbVersion, cfgOption(CFGOPT_COMPRESS),
+            $strDbMasterPath, $strDbCopyPath, cfgOption(CFGOPT_TYPE), $rhParam->{pgVersion}, cfgOption(CFGOPT_COMPRESS),
             cfgOption(CFGOPT_REPO_HARDLINK), $oBackupManifest, $strBackupLabel, $strLsnStart);
     &log(INFO, cfgOption(CFGOPT_TYPE) . " backup size = " . fileSizeFormat($lBackupSizeTotal));
 
@@ -789,7 +779,7 @@ sub process
 
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
         my $strArchiveId = $oArchiveInfo->archiveId();
-        my @stryArchive = lsnFileRange($strLsnStart, $strLsnStop, $strDbVersion, $iWalSegmentSize);
+        my @stryArchive = lsnFileRange($strLsnStart, $strLsnStop, $rhParam->{pgVersion}, $iWalSegmentSize);
 
         foreach my $strArchive (@stryArchive)
         {

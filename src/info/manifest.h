@@ -162,7 +162,7 @@ void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart);
 void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type);
 
 // Set all remaining values required to complete the manifest
-void manifestBuildComplete(Manifest *this, time_t timestampStart);
+void manifestBuildComplete(Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool backupOptionStandby);
 
 /***********************************************************************************************************************************
 Functions
