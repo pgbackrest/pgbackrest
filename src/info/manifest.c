@@ -1175,14 +1175,24 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
 
 /**********************************************************************************************************************************/
 void
-manifestBuildComplete(Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool backupOptionStandby)
+manifestBuildComplete(
+    Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
+    size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
+    bool optionHardLink, bool optionOnline, bool optionProcessMax, bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(TIME, timestampStart);
         FUNCTION_LOG_PARAM(UINT, pgId);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(BOOL, backupOptionStandby);
+        FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
+        FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
+        FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
+        FUNCTION_LOG_PARAM(BOOL, optionCompress);
+        FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
+        FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
+        FUNCTION_LOG_PARAM(BOOL, optionProcessMax);
+        FUNCTION_LOG_PARAM(BOOL, optionStandby);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_BEGIN(this->memContext)
@@ -1190,7 +1200,16 @@ manifestBuildComplete(Manifest *this, time_t timestampStart, unsigned int pgId, 
         this->data.backupTimestampStart = timestampStart;
         this->data.pgId = pgId;
         this->data.pgSystemId = pgSystemId;
-        this->data.backupOptionStandby = varNewBool(backupOptionStandby);
+        this->data.backupOptionArchiveCheck = optionArchiveCheck;
+        this->data.backupOptionArchiveCopy = optionArchiveCopy;
+        this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
+        this->data.backupOptionCompress = optionCompress;
+        this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
+        this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
+        this->data.backupOptionHardLink = optionHardLink;
+        this->data.backupOptionOnline = optionOnline;
+        this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
+        this->data.backupOptionStandby = varNewBool(optionStandby);
     }
     MEM_CONTEXT_END();
 

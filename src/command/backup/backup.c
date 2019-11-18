@@ -559,7 +559,13 @@ cmdBackup(void)
             manifestBackupLabelSet(manifest, backupLabel(type, manifestData(manifest)->backupLabelPrior, timestampStart));
 
         // Set the values required to complete the manifest
-        manifestBuildComplete(manifest, timestampStart, infoPg.id, infoPg.systemId, cfgOptionBool(cfgOptBackupStandby));
+        manifestBuildComplete(
+            // !!! SEEMS LIKE THE ARCHIVE CHECK CALCULATION SHOULD BE ONLINE ONLY (COPIED FROM PERL, THOUGH)
+            manifest, timestampStart, infoPg.id, infoPg.systemId, !cfgOptionBool(cfgOptOnline) || cfgOptionBool(cfgOptArchiveCheck),
+            !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
+            cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptCompress),
+            cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
+            cfgOptionBool(cfgOptOnline), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
         // !!! ---------------------------------------------------------------------------------------------------------------------
