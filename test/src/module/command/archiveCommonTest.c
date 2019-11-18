@@ -45,36 +45,36 @@ testRun(void)
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             BUFSTRDEF(BOGUS_STR));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError,
             "000000010000000100000001.ok content must have at least two lines");
 
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             BUFSTRDEF(BOGUS_STR "\n"));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError, "000000010000000100000001.ok message must be > 0");
 
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             BUFSTRDEF(BOGUS_STR "\nmessage"));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError, "unable to convert base 10 string 'BOGUS' to int");
 
-        storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), NULL);
+        storagePutP(storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), NULL);
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file");
 
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             BUFSTRDEF("0\nwarning"));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file with warning");
         harnessLogResult("P00   WARN: warning");
 
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             BUFSTRDEF("25\nerror"));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "error status renamed to ok");
         harnessLogResult(
@@ -85,22 +85,22 @@ testRun(void)
             "remove ok");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), bufNew(0));
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), bufNew(0));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, true), AssertError,
             "status file '000000010000000100000001.error' has no content");
 
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
             BUFSTRDEF("25\nmessage"));
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true), AssertError, "message");
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "suppress error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")),
+        storagePutP(
+            storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")),
             BUFSTRDEF("102\nexecute error"));
 
         TEST_ERROR(archiveAsyncStatus(archiveModePush, strNew("anyfile"), true), ExecuteError, "execute error");
@@ -120,7 +120,7 @@ testRun(void)
         TEST_RESULT_VOID(
             archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 25, strNew("error message")), "write error");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.error"))))),
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("archive/db/in/000000010000000100000001.error"))))),
             "25\nerror message", "check error");
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNew("archive/db/in/000000010000000100000001.error"), .errorOnMissing = true),
@@ -129,7 +129,7 @@ testRun(void)
         TEST_RESULT_VOID(
             archiveAsyncStatusErrorWrite(archiveModeGet, NULL, 25, strNew("global error message")), "write global error");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/global.error"))))),
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("archive/db/in/global.error"))))),
             "25\nglobal error message", "check global error");
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNew("archive/db/in/global.error"), .errorOnMissing = true),
@@ -138,7 +138,7 @@ testRun(void)
         TEST_RESULT_VOID(
             archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL), "write ok file");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"))))),
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"))))),
             "", "check ok");
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"), .errorOnMissing = true),
@@ -147,7 +147,7 @@ testRun(void)
         TEST_RESULT_VOID(
             archiveAsyncStatusOkWrite(archiveModeGet, walSegment, strNew("WARNING")), "write ok file with warning");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"))))),
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"))))),
             "0\nWARNING", "check ok warning");
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"), .errorOnMissing = true),
@@ -190,7 +190,7 @@ testRun(void)
 
         TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no path");
 
-        storagePathCreateNP(storageTest, strNew("archive/db/9.6-2/1234567812345678"));
+        storagePathCreateP(storageTest, strNew("archive/db/9.6-2/1234567812345678"));
         TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no segment");
         TEST_RESULT_PTR(
             walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 500), NULL,
@@ -203,8 +203,8 @@ testRun(void)
             {
                 sleepMSec(250);
 
-                storagePutNP(
-                    storageNewWriteNP(
+                storagePutP(
+                    storageNewWriteP(
                         storageTest,
                         strNew(
                             "archive/db/9.6-2/1234567812345678/123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
@@ -222,8 +222,8 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        storagePutNP(
-            storageNewWriteNP(
+        storagePutP(
+            storageNewWriteP(
                 storageTest,
                 strNew("archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz")),
             NULL);

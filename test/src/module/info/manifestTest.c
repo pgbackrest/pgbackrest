@@ -107,7 +107,7 @@ testRun(void)
         TEST_TITLE("8.3 with custom exclusions and special file");
 
         // Version
-        storagePutNP(
+        storagePutP(
             storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
             BUFSTRDEF("8.3\n"));
 
@@ -117,8 +117,8 @@ testRun(void)
 
         // global directory
         storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_GLOBAL), .mode = 0700, .noParentCreate = true);
-        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT)), NULL);
-        storagePutNP(
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT)), NULL);
+        storagePutP(
             storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/t1_1"), .modeFile = 0400, .timeModified = 1565282114), NULL);
 
         // base/1 directory
@@ -166,19 +166,19 @@ testRun(void)
         TEST_TITLE("manifest with all features");
 
         // Version
-        storagePutNP(
+        storagePutP(
             storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
             BUFSTRDEF("9.4\n"));
 
         // Temp relations to ignore
-        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1")), NULL);
-        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1.1")), NULL);
-        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm")), NULL);
-        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm.999999")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1.1")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm.999999")), NULL);
 
         // Unlogged relations
-        storagePutNP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555")), NULL);
-        storagePutNP(
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555")), NULL);
+        storagePutP(
             storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_init"), .modeFile = 0400, .timeModified = 1565282114),
             NULL);
 
@@ -189,7 +189,7 @@ testRun(void)
         THROW_ON_SYS_ERROR(
             symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
-        storagePutNP(
+        storagePutP(
             storageNewWriteP(
                 storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/16384"), .modeFile = 0400,  .timeModified = 1565282115),
             BUFSTRDEF("TESTDATA"));
@@ -199,13 +199,13 @@ testRun(void)
         THROW_ON_SYS_ERROR(
             symlink("../config/postgresql.conf", strPtr(strNewFmt("%s/pg/postgresql.conf", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
-        storagePutNP(
+        storagePutP(
             storageNewWriteP(storageTest, strNew("config/postgresql.conf"), .modeFile = 0400,  .timeModified = 1565282116),
             BUFSTRDEF("POSTGRESQLCONF"));
         THROW_ON_SYS_ERROR(
             symlink("../config/pg_hba.conf", strPtr(strNewFmt("%s/pg/pg_hba.conf", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
-        storagePutNP(
+        storagePutP(
             storageNewWriteP(storageTest, strNew("config/pg_hba.conf"), .modeFile = 0400,  .timeModified = 1565282117),
             BUFSTRDEF("PGHBACONF"));
 
@@ -989,7 +989,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
+            storagePutP(storageNewWriteP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
         TEST_RESULT_STR(strPtr(manifestData(manifest)->backrestVersion), PROJECT_VERSION, "    check backrest version");
@@ -997,7 +997,7 @@ testRun(void)
         storageRemoveP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");
+            storagePutP(storageNewWriteP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
     }

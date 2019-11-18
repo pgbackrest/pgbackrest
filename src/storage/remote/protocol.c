@@ -202,18 +202,19 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
     {
         if (strEq(command, PROTOCOL_COMMAND_STORAGE_EXISTS_STR))
         {
-            protocolServerResponse(server, VARBOOL(interface.exists(driver, varStr(varLstGet(paramList, 0)))));
+            protocolServerResponse(server, VARBOOL(storageInterfaceExistsP(driver, varStr(varLstGet(paramList, 0)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
         {
-            protocolServerWriteLine(server, jsonFromStr(storagePathNP(storage, NULL)));
+            protocolServerWriteLine(server, jsonFromStr(storagePathP(storage, NULL)));
             protocolServerWriteLine(server, jsonFromUInt64(interface.feature));
 
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
         {
-            StorageInfo info = interface.info(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)));
+            StorageInfo info = storageInterfaceInfoP(
+                driver, varStr(varLstGet(paramList, 0)), .followLink = varBool(varLstGet(paramList, 1)));
 
             protocolServerResponse(server, VARBOOL(info.exists));
 
@@ -225,7 +226,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
         {
-            bool result = interface.infoList(
+            bool result = storageInterfaceInfoListP(
                 driver, varStr(varLstGet(paramList, 0)), storageRemoteProtocolInfoListCallback, server);
 
             protocolServerWriteLine(server, NULL);
@@ -236,13 +237,15 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             protocolServerResponse(
                 server,
                 varNewVarLst(
-                    varLstNewStrLst(interface.list(driver, varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1))))));
+                    varLstNewStrLst(
+                        storageInterfaceListP(
+                            driver, varStr(varLstGet(paramList, 0)), .expression = varStr(varLstGet(paramList, 1))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {
             // Create the read object
             IoRead *fileRead = storageReadIo(
-                interface.newRead(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), false));
+                storageInterfaceNewReadP(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1))));
 
             // Set filter group based on passed filters
             storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 2));
@@ -286,11 +289,12 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         {
             // Create the write object
             IoWrite *fileWrite = storageWriteIo(
-                interface.newWrite(
-                    driver, varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)),
-                    varUIntForce(varLstGet(paramList, 2)), varStr(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
-                    (time_t)varIntForce(varLstGet(paramList, 5)), varBool(varLstGet(paramList, 6)),
-                    varBool(varLstGet(paramList, 7)), varBool(varLstGet(paramList, 8)), varBool(varLstGet(paramList, 9)), false));
+                storageInterfaceNewWriteP(
+                    driver, varStr(varLstGet(paramList, 0)), .modeFile = varUIntForce(varLstGet(paramList, 1)),
+                    .modePath = varUIntForce(varLstGet(paramList, 2)), .user = varStr(varLstGet(paramList, 3)),
+                    .group = varStr(varLstGet(paramList, 4)), .timeModified = (time_t)varUInt64Force(varLstGet(paramList, 5)),
+                    .createPath = varBool(varLstGet(paramList, 6)), .syncFile = varBool(varLstGet(paramList, 7)),
+                    .syncPath = varBool(varLstGet(paramList, 8)), .atomic = varBool(varLstGet(paramList, 9))));
 
             // Set filter group based on passed filters
             storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), varLstGet(paramList, 10));
@@ -346,7 +350,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR))
         {
-            interface.pathCreate(
+            storageInterfacePathCreateP(
                 driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varBool(varLstGet(paramList, 2)),
                 varUIntForce(varLstGet(paramList, 3)));
 
@@ -357,22 +361,22 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             // Not all drivers implement pathExists()
             CHECK(interface.pathExists != NULL);
 
-            protocolServerResponse(server, VARBOOL(interface.pathExists(driver, varStr(varLstGet(paramList, 0)))));
+            protocolServerResponse(server, VARBOOL(storageInterfacePathExistsP(driver, varStr(varLstGet(paramList, 0)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {
             protocolServerResponse(server,
-                VARBOOL(interface.pathRemove(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)))));
+                VARBOOL(storageInterfacePathRemoveP(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
         {
-            interface.pathSync(driver, varStr(varLstGet(paramList, 0)));
+            storageInterfacePathSyncP(driver, varStr(varLstGet(paramList, 0)));
 
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_REMOVE_STR))
         {
-            interface.remove(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)));
+            storageInterfaceRemoveP(driver, varStr(varLstGet(paramList, 0)), .errorOnMissing = varBool(varLstGet(paramList, 1)));
 
             protocolServerResponse(server, NULL);
         }

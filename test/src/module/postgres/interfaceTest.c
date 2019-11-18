@@ -67,8 +67,8 @@ testRun(void)
         TEST_ERROR(pgControlTestToBuffer((PgControl){.version = 0}), AssertError, "invalid PostgreSQL version 0");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageTest, controlFile),
+        storagePutP(
+            storageNewWriteP(storageTest, controlFile),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACE, .walSegmentSize = 1024 * 1024}));
 
         PgControl info = {0};
@@ -77,23 +77,23 @@ testRun(void)
         TEST_RESULT_INT(info.version, PG_VERSION_11, "   check version");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageTest, controlFile),
+        storagePutP(
+            storageNewWriteP(storageTest, controlFile),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .walSegmentSize = 1024 * 1024}));
 
         TEST_ERROR(
             pgControlFromFile(storageTest), FormatError, "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageTest, controlFile),
+        storagePutP(
+            storageNewWriteP(storageTest, controlFile),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .pageSize = 32 * 1024}));
 
         TEST_ERROR(pgControlFromFile(storageTest), FormatError, "page size is 32768 but must be 8192");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageTest, controlFile),
+        storagePutP(
+            storageNewWriteP(storageTest, controlFile),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF}));
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
@@ -143,7 +143,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAF}, result);
-        storagePutNP(storageNewWriteNP(storageTest, walFile), result);
+        storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         PgWal info = {0};
         TEST_ASSIGN(info, pgWalFromFile(walFile), "get wal info v11");
@@ -153,7 +153,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_83, .systemId = 0xEAEAEAEA}, result);
-        storagePutNP(storageNewWriteNP(storageTest, walFile), result);
+        storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         TEST_ASSIGN(info, pgWalFromFile(walFile), "get wal info v8.3");
         TEST_RESULT_INT(info.systemId, 0xEAEAEAEA, "   check system id");

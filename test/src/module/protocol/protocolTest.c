@@ -187,7 +187,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolRemoteParam()"))
     {
-        storagePutNP(storageNewWriteNP(storageTest, strNew("pgbackrest.conf")), bufNew(0));
+        storagePutP(storageNewWriteP(storageTest, strNew("pgbackrest.conf")), bufNew(0));
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -859,7 +859,7 @@ testRun(void)
         // Start protocol with local encryption settings
         // -------------------------------------------------------------------------------------------------------------------------
         storagePut(
-            storageNewWriteNP(storageTest, strNew("pgbackrest.conf")),
+            storageNewWriteP(storageTest, strNew("pgbackrest.conf")),
             BUFSTRDEF(
                 "[global]\n"
                 "repo1-cipher-type=aes-256-cbc\n"
@@ -888,7 +888,7 @@ testRun(void)
         // Start protocol with remote encryption settings
         // -------------------------------------------------------------------------------------------------------------------------
         storagePut(
-            storageNewWriteNP(storageTest, strNew("pgbackrest.conf")),
+            storageNewWriteP(storageTest, strNew("pgbackrest.conf")),
             BUFSTRDEF(
                 "[global]\n"
                 "repo1-cipher-type=aes-256-cbc\n"

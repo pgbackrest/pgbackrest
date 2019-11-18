@@ -129,12 +129,12 @@ backupFile(
                 // will remove it from the manifest)
                 if (result.backupCopyResult == backupCopyResultSkip)
                 {
-                    storageRemoveNP(storageRepoWrite(), repoPathFile);
+                    storageRemoveP(storageRepoWrite(), repoPathFile);
                 }
                 else if (!delta || pgFileMatch)
                 {
                     // Generate checksum/size for the repo file
-                    IoRead *read = storageReadIo(storageNewReadNP(storageRepo(), repoPathFile));
+                    IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoPathFile));
 
                     if (cipherType != cipherTypeNone)
                     {
@@ -243,7 +243,7 @@ backupFile(
                 storageFeature(storageRepo(), storageFeatureCompress)) ||
             result.backupCopyResult == backupCopyResultChecksum)
         {
-            result.repoSize = storageInfoNP(storageRepo(), repoPathFile).size;
+            result.repoSize = storageInfoP(storageRepo(), repoPathFile).size;
         }
     }
     MEM_CONTEXT_TEMP_END();

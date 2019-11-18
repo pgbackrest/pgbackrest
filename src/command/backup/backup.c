@@ -295,8 +295,8 @@ backupHalted(const InfoBackup *infoBackup, const Manifest *manifest, String **ba
             const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
             // Halted backups have a copy of the manifest but no main
-            if (storageExistsNP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strPtr(manifestFile))) &&
-                !storageExistsNP(storageRepo(), manifestFile))
+            if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strPtr(manifestFile))) &&
+                !storageExistsP(storageRepo(), manifestFile))
             {
                 bool usable = false;
                 const String *reason = STRDEF("resume is disabled");
@@ -526,17 +526,17 @@ cmdBackup(void)
 
         // Save the manifest so the Perl code can read it
         if (!backupLabelHalted && storageFeature(storageRepoWrite(), storageFeaturePath))
-            storagePathCreateNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)));
+            storagePathCreateP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)));
 
         IoWrite *write = storageWriteIo(
-            storageNewWriteNP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".pass")));
+            storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".pass")));
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
             infoPgCipherPass(infoBackupPg(infoBackup)));
         manifestSave(manifest, write);
 
         // Save an original copy so we can see what the C code wrote out
-        // write = storageWriteIo(storageNewWriteNP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".orig")));
+        // write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".orig")));
         // manifestSave(manifest, write);
 
         // Do this so Perl does not need to reconstruct backup.info

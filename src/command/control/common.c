@@ -37,12 +37,12 @@ lockStopTest(void)
         // Check the current stanza (if any)
         if (cfgOptionTest(cfgOptStanza))
         {
-            if (storageExistsNP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))))
+            if (storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))))
                 THROW_FMT(StopError, "stop file exists for stanza %s", strPtr(cfgOptionStr(cfgOptStanza)));
         }
 
         // Check all stanzas
-        if (storageExistsNP(storageLocal(), lockStopFileName(NULL)))
+        if (storageExistsP(storageLocal(), lockStopFileName(NULL)))
             THROW(StopError, "stop file exists for all stanzas");
     }
     MEM_CONTEXT_TEMP_END();

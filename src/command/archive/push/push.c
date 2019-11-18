@@ -62,7 +62,7 @@ archivePushDrop(const String *walPath, const StringList *const processList)
 
     for (unsigned int processIdx = 0; processIdx < strLstSize(processList); processIdx++)
     {
-        queueSize += storageInfoNP(
+        queueSize += storageInfoP(
             storagePg(), strNewFmt("%s/%s", strPtr(walPath), strPtr(strLstGet(processList, processIdx)))).size;
 
         if (queueSize > queueMax)
@@ -136,7 +136,7 @@ archivePushProcessList(const String *walPath)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create the spool out path if it does not already exist
-        storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
+        storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
         // Read the status files from the spool directory, then remove any files that do not end in ok and create a list of the
         // ok files for further processing

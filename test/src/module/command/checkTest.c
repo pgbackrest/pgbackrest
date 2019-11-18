@@ -143,8 +143,8 @@ testRun(void)
         // Standby and primary database
         // -------------------------------------------------------------------------------------------------------------------------
         // Create pg_control for standby
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
 
         argList = strLstNew();
@@ -203,13 +203,13 @@ testRun(void)
         // Standby - Stanza created
         // -------------------------------------------------------------------------------------------------------------------------
         // Create pg_control for primary
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg8))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg8))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
 
         // Create info files
-        storagePutNP(
-            storageNewWriteNP(storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR),
+        storagePutP(
+            storageNewWriteP(storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR),
             harnessInfoChecksum(
                 strNew(
                     "[db]\n"
@@ -220,8 +220,8 @@ testRun(void)
                     "[db:history]\n"
                     "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n")));
 
-        storagePutNP(
-            storageNewWriteNP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
+        storagePutP(
+            storageNewWriteP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
             harnessInfoChecksum(
                 strNew(
                     "[db]\n"
@@ -290,8 +290,8 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        storagePutNP(
-            storageNewWriteNP(
+        storagePutP(
+            storageNewWriteP(
                 storageRepoWrite(),
                 strNew(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
             buffer);
@@ -504,8 +504,8 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        storagePutNP(
-            storageNewWriteNP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(stanza))),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         // Create info files

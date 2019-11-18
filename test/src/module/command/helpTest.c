@@ -416,7 +416,7 @@ testRun(void)
 
         Storage *storage = storagePosixNew(
             strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
-        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), generalHelp, "    check text");
+        TEST_RESULT_STR(strPtr(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile)))), generalHelp, "    check text");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

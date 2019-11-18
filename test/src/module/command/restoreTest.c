@@ -177,24 +177,24 @@ testRun(void)
                 repoFile1, repoFileReferenceFull, false, strNew("sparse-zero"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
                 true, 0x10000000000UL, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
             false, "zero sparse 1TB file");
-        TEST_RESULT_UINT(storageInfoNP(storagePg(), strNew("sparse-zero")).size, 0x10000000000UL, "    check size");
+        TEST_RESULT_UINT(storageInfoP(storagePg(), strNew("sparse-zero")).size, 0x10000000000UL, "    check size");
 
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoFileReferenceFull, false, strNew("normal-zero"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
                 false, 0, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, false, false, NULL),
             true, "zero-length file");
-        TEST_RESULT_UINT(storageInfoNP(storagePg(), strNew("normal-zero")).size, 0, "    check size");
+        TEST_RESULT_UINT(storageInfoP(storagePg(), strNew("normal-zero")).size, 0, "    check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Create a compressed encrypted repo file
-        StorageWrite *ceRepoFile = storageNewWriteNP(
+        StorageWrite *ceRepoFile = storageNewWriteP(
             storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strPtr(repoFileReferenceFull), strPtr(repoFile1)));
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(ceRepoFile));
         ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpass"), NULL));
 
-        storagePutNP(ceRepoFile, BUFSTRDEF("acefile"));
+        storagePutP(ceRepoFile, BUFSTRDEF("acefile"));
 
         TEST_ERROR(
             restoreFile(
@@ -210,7 +210,7 @@ testRun(void)
                 false, 7, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, false, false, strNew("badpass")),
             true, "copy file");
 
-        StorageInfo info = storageInfoNP(storagePg(), strNew("normal"));
+        StorageInfo info = storageInfoP(storagePg(), strNew("normal"));
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_UINT(info.size, 7, "    check size");
         TEST_RESULT_UINT(info.mode, 0600, "    check mode");
@@ -218,12 +218,12 @@ testRun(void)
         TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
         TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storagePg(), strNew("normal"))))), "acefile", "    check contents");
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("normal"))))), "acefile", "    check contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Create a repo file
-        storagePutNP(
-            storageNewWriteNP(
+        storagePutP(
+            storageNewWriteP(
                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(repoFileReferenceFull), strPtr(repoFile1))),
             BUFSTRDEF("atestfile"));
 
@@ -233,7 +233,7 @@ testRun(void)
                 false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta missing");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
 
         size_t oldBufferSize = ioBufferSize();
         ioBufferSizeSet(4);
@@ -253,7 +253,7 @@ testRun(void)
             false, "sha1 delta force existing");
 
         // Change the existing file so it no longer matches by size
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("delta")), BUFSTRDEF("atestfile2"));
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("atestfile2"));
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -261,9 +261,9 @@ testRun(void)
                 false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, size differs");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("delta")), BUFSTRDEF("atestfile2"));
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("atestfile2"));
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -271,10 +271,10 @@ testRun(void)
                 false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
 
         // Change the existing file so it no longer matches by content
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("delta")), BUFSTRDEF("btestfile"));
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("btestfile"));
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -282,9 +282,9 @@ testRun(void)
                 false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, content differs");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("delta")), BUFSTRDEF("btestfile"));
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("btestfile"));
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -299,7 +299,7 @@ testRun(void)
             true, "delta force existing, timestamp after copy time");
 
         // Change the existing file to zero-length
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("delta")), BUFSTRDEF(""));
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF(""));
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -330,7 +330,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
-        info = storageInfoNP(storagePg(), strNew("protocol"));
+        info = storageInfoP(storagePg(), strNew("protocol"));
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_UINT(info.size, 9, "    check size");
         TEST_RESULT_UINT(info.mode, 0677, "    check mode");
@@ -338,7 +338,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
         TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storagePg(), strNew("protocol"))))), "atestfile", "    check contents");
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("protocol"))))), "atestfile", "    check contents");
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
@@ -384,12 +384,12 @@ testRun(void)
         TEST_ERROR_FMT(restorePathValidate(), PathMissingError, "$PGDATA directory '%s/pg' does not exist", testPath());
 
         // Create PGDATA
-        storagePathCreateNP(storagePgWrite(), NULL);
+        storagePathCreateP(storagePgWrite(), NULL);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on postmaster.pid is present");
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("postmaster.pid")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("postmaster.pid")), NULL);
 
         TEST_ERROR_FMT(
             restorePathValidate(), PostmasterRunningError,
@@ -418,7 +418,7 @@ testRun(void)
                 " exist in the destination directories the restore will be aborted.");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("backup.manifest")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("backup.manifest")), NULL);
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with valid PGDATA");
         storageRemoveP(storagePgWrite(), strNew("backup.manifest"), .errorOnMissing = true);
 
@@ -437,7 +437,7 @@ testRun(void)
                 " exist in the destination directories the restore will be aborted.");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew(PG_FILE_PGVERSION)), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew(PG_FILE_PGVERSION)), NULL);
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with valid PGDATA");
         storageRemoveP(storagePgWrite(), strNew(PG_FILE_PGVERSION), .errorOnMissing = true);
     }
@@ -901,13 +901,13 @@ testRun(void)
 
         TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
 
-        storagePathRemoveNP(storagePgWrite(), NULL);
+        storagePathRemoveP(storagePgWrite(), NULL);
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail on restore with directory not empty");
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
 
         TEST_ERROR_FMT(
             restoreCleanBuild(manifest), PathNotEmptyError,
@@ -920,7 +920,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty");
 
-        storageRemoveNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR);
+        storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR);
 
         manifestTargetAdd(
             manifest, &(ManifestTarget){
@@ -941,8 +941,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when linked file already exists without delta");
 
-        storageRemoveNP(storagePgWrite(), STRDEF("pg_hba.conf"));
-        storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF("../conf/pg_hba.conf")), NULL);
+        storageRemoveP(storagePgWrite(), STRDEF("pg_hba.conf"));
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("../conf/pg_hba.conf")), NULL);
 
         TEST_ERROR_FMT(
             restoreCleanBuild(manifest), FileExistsError,
@@ -977,7 +977,7 @@ testRun(void)
 
         TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "normal restore ignore recovery.conf");
 
         TEST_RESULT_LOG(
@@ -1006,9 +1006,9 @@ testRun(void)
 
         manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)});
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR), NULL);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR), NULL);
-        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR), NULL);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
@@ -1420,10 +1420,10 @@ testRun(void)
         restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
 
         TEST_RESULT_STR_Z(
-            strNewBuf(storageGetNP(storageNewReadNP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))),
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))),
             "", "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
 
         TEST_RESULT_LOG(
             "P00   WARN: postgresql.auto.conf does not exist -- creating to contain recovery settings\n"
@@ -1434,8 +1434,8 @@ testRun(void)
 
         TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
-        storagePutNP(
-            storageNewWriteNP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
             BUFSTRDEF(
                 "# DO NOT MODIFY\n"
                 "\t recovery_target_action='promote'\n\n"));
@@ -1443,12 +1443,12 @@ testRun(void)
         restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
 
         TEST_RESULT_STR_Z(
-            strNewBuf(storageGetNP(storageNewReadNP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))),
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))),
             "# DO NOT MODIFY\n"
             RECOVERY_SETTING_PREFIX "\t recovery_target_action='promote'\n\n",
             "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated {[path]}/pg/postgresql.auto.conf");
 
@@ -1457,8 +1457,8 @@ testRun(void)
 
         TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
-        storagePutNP(
-            storageNewWriteNP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
             BUFSTRDEF(
                 "# DO NOT MODIFY\n"
                 "recovery_target_name\t='name'\n"
@@ -1475,7 +1475,7 @@ testRun(void)
         restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
 
         TEST_RESULT_STR_Z(
-            strNewBuf(storageGetNP(storageNewReadNP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))),
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))),
             "# DO NOT MODIFY\n"
                 RECOVERY_SETTING_PREFIX "recovery_target_name\t='name'\n"
                 RECOVERY_SETTING_PREFIX "recovery_target_inclusive = false\n"
@@ -1483,8 +1483,8 @@ testRun(void)
                 RECOVERY_SETTING_HEADER
                 "restore_command = 'my_restore_command'\n",
             "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), true, "standby.signal missing");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), true, "standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated {[path]}/pg/postgresql.auto.conf");
 
@@ -1495,8 +1495,8 @@ testRun(void)
 
         TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR), BUFSTRDEF("# DO NOT MODIFY\n"));
-        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR), BUFSTRDEF("# DO NOT MODIFY\n"));
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR), NULL);
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -1508,18 +1508,18 @@ testRun(void)
         restoreRecoveryWrite(manifest);
 
         TEST_RESULT_STR_Z(
-            strNewBuf(storageGetNP(storageNewReadNP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))), "# DO NOT MODIFY\n",
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))), "# DO NOT MODIFY\n",
             "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), false, "recovery.signal missing");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), true, "standby.signal exists");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), false, "recovery.signal missing");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), true, "standby.signal exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type default");
 
         TEST_SYSTEM_FMT("rm -rf %s/*", strPtr(pgPath));
 
-        storagePutNP(
-            storageNewWriteNP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
             BUFSTRDEF("# DO NOT MODIFY\n"));
 
         argList = strLstNew();
@@ -1531,10 +1531,10 @@ testRun(void)
         restoreRecoveryWrite(manifest);
 
         TEST_RESULT_BOOL(
-            bufEq(storageGetNP(storageNewReadNP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)), BUFSTRDEF("# DO NOT MODIFY\n")),
+            bufEq(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)), BUFSTRDEF("# DO NOT MODIFY\n")),
             false, "check postgresql.auto.conf has changed");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
-        TEST_RESULT_BOOL(storageExistsNP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated {[path]}/pg/postgresql.auto.conf");
     }
@@ -1572,8 +1572,8 @@ testRun(void)
 
         // Write backup info
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
+        storagePutP(
+            storageNewWriteP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
             harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1606,7 +1606,7 @@ testRun(void)
             manifestPathAdd(
                 manifest,
                 &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
-            storagePathCreateNP(storagePgWrite(), NULL);
+            storagePathCreateP(storagePgWrite(), NULL);
 
             // Global directory
             manifestPathAdd(
@@ -1621,8 +1621,8 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "797e375b924134687cbf9eacd37a4355f3d825e4"});
-            storagePutNP(
-                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_84_STR "\n"));
+            storagePutP(
+                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_84_STR "\n"));
 
             // pg_tblspc/1
             manifestTargetAdd(
@@ -1661,7 +1661,7 @@ testRun(void)
         manifestSave(
             manifest,
             storageWriteIo(
-                storageNewWriteNP(storageRepoWrite(),
+                storageNewWriteP(storageRepoWrite(),
                 strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
@@ -1713,10 +1713,10 @@ testRun(void)
         harnessCfgLoad(cfgCmdRestore, argList);
 
         // Make sure existing backup.manifest file is ignored
-        storagePutNP(storageNewWriteNP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR), NULL);
 
         // Add a bogus file that will be removed
-        storagePutNP(storageNewWriteNP(storagePgWrite(), STRDEF("bogus-file")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("bogus-file")), NULL);
 
         // Add a special file that will be removed
         TEST_SYSTEM_FMT("mkfifo %s/pipe", strPtr(pgPath));
@@ -1735,7 +1735,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
-            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
 
             // pg_tblspc/1/16384/PG_VERSION
             manifestFileAdd(
@@ -1744,8 +1744,8 @@ testRun(void)
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION), .size = 4,
                     .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "797e375b924134687cbf9eacd37a4355f3d825e4"});
-            storagePutNP(
-                storageNewWriteNP(
+            storagePutP(
+                storageNewWriteP(
                     storageRepoWrite(),
                     STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION)),
                 BUFSTRDEF(PG_VERSION_84_STR "\n"));
@@ -1761,7 +1761,7 @@ testRun(void)
         manifestSave(
             manifest,
             storageWriteIo(
-                storageNewWriteNP(storageRepoWrite(),
+                storageNewWriteP(storageRepoWrite(),
                 strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         #undef TEST_LABEL
@@ -1840,7 +1840,7 @@ testRun(void)
             manifestPathAdd(
                 manifest,
                 &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
-            storagePathCreateNP(storagePgWrite(), NULL);
+            storagePathCreateP(storagePgWrite(), NULL);
 
             // global directory
             manifestPathAdd(
@@ -1859,8 +1859,8 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "5e2b96c19c4f5c63a5afa2de504d29fe64a4c908"});
-            storagePutNP(
-                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), fileBuffer);
+            storagePutP(
+                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), fileBuffer);
 
             // global/999
             manifestFileAdd(
@@ -1869,7 +1869,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/999"), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = HASH_TYPE_SHA1_ZERO, .reference = STRDEF(TEST_LABEL)});
-            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/999")), NULL);
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/999")), NULL);
 
             // PG_VERSION
             manifestFileAdd(
@@ -1878,8 +1878,8 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutNP(
-                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_94_STR "\n"));
+            storagePutP(
+                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_94_STR "\n"));
 
             // base directory
             manifestPathAdd(
@@ -1900,8 +1900,8 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutNP(
-                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION)),
+            storagePutP(
+                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION)),
                 BUFSTRDEF(PG_VERSION_94_STR "\n"));
 
             // base/1/2
@@ -1915,7 +1915,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/1/2"), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
-            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/2")), fileBuffer);
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/2")), fileBuffer);
 
             // base/16384 directory
             manifestPathAdd(
@@ -1930,8 +1930,8 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/16384/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutNP(
-                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION)),
+            storagePutP(
+                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION)),
                 BUFSTRDEF(PG_VERSION_94_STR "\n"));
 
             // base/16384/16385
@@ -1945,7 +1945,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/16384/16385"), .size = 16384, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f"});
-            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/16385")), fileBuffer);
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/16385")), fileBuffer);
 
             // base/32768 directory
             manifestPathAdd(
@@ -1960,8 +1960,8 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/32768/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutNP(
-                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION)),
+            storagePutP(
+                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION)),
                 BUFSTRDEF(PG_VERSION_94_STR "\n"));
 
             // base/32768/32769
@@ -1975,7 +1975,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/32768/32769"), .size = 32768, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "a40f0986acb1531ce0cc75a23dcf8aa406ae9081"});
-            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/32769")), fileBuffer);
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/32769")), fileBuffer);
 
             // File link to postgresql.conf
             const String *name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.conf");
@@ -1992,8 +1992,8 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "postgresql.conf"), .size = 15, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "98b8abb2e681e2a5a7d8ab082c0a79727887558d"});
-            storagePutNP(
-                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "postgresql.conf")), BUFSTRDEF("POSTGRESQL.CONF"));
+            storagePutP(
+                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "postgresql.conf")), BUFSTRDEF("POSTGRESQL.CONF"));
 
             // File link to pg_hba.conf
             name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_hba.conf");
@@ -2010,8 +2010,8 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "pg_hba.conf"), .size = 11, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "401215e092779574988a854d8c7caed7f91dba4b"});
-            storagePutNP(
-                storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "pg_hba.conf")), BUFSTRDEF("PG_HBA.CONF"));
+            storagePutP(
+                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "pg_hba.conf")), BUFSTRDEF("PG_HBA.CONF"));
 
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
@@ -2019,7 +2019,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
-            storagePutNP(storageNewWriteNP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
 
             // Path link to pg_wal
             name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_wal");
@@ -2068,12 +2068,12 @@ testRun(void)
         manifestSave(
             manifest,
             storageWriteIo(
-                storageNewWriteNP(storageRepoWrite(),
+                storageNewWriteP(storageRepoWrite(),
                 strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         // Add a few bogus paths/files/links to be removed in delta
-        storagePathCreateNP(storagePgWrite(), STRDEF("bogus1/bogus2"));
-        storagePathCreateNP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/bogus3"));
+        storagePathCreateP(storagePgWrite(), STRDEF("bogus1/bogus2"));
+        storagePathCreateP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/bogus3"));
 
         // Add a few bogus links to be deleted
         THROW_ON_SYS_ERROR(
@@ -2180,7 +2180,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdRestore, argList);
 
         // Write recovery.conf so we don't get a preserve warning
-        storagePutNP(storageNewWriteNP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), BUFSTRDEF("Some Settings"));
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), BUFSTRDEF("Some Settings"));
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 

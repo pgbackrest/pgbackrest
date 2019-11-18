@@ -59,8 +59,8 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
-    storageRemoveNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
-    storageRemoveNP(
+    storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
+    storageRemoveP(
         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
 
     // Remove the backup from the info object
@@ -545,7 +545,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                         // Remove archive log if it is not used in a backup
                                         if (removeArchive)
                                         {
-                                            storageRemoveNP(
+                                            storageRemoveP(
                                                 storageRepoWrite(),
                                                 strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s",
                                                     strPtr(archiveId), strPtr(walPath), strPtr(walSubPath)));

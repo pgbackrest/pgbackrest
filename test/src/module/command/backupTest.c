@@ -93,7 +93,7 @@ testRun(void)
             FileMissingError, "unable to open missing file '%s/pg/missing' for read", testPath());
 
         // Create a pg file to backup
-        storagePutNP(storageNewWriteNP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile"));
+        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
@@ -113,10 +113,10 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy file to repo success");
 
-        TEST_RESULT_VOID(storageRemoveNP(storageRepoWrite(), backupPathFile), "    remove repo file");
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), backupPathFile), "    remove repo file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Test pagechecksum
@@ -130,12 +130,12 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), backupPathFile)),
+                storageExistsP(storageRepo(), backupPathFile)),
             true,"    copy file to repo success");
         TEST_RESULT_PTR_NE(result.pageChecksumResult, NULL, "    pageChecksumResult is set");
         TEST_RESULT_BOOL(
             varBool(kvGet(result.pageChecksumResult, VARSTRDEF("valid"))), false, "    pageChecksumResult valid=false");
-        TEST_RESULT_VOID(storageRemoveNP(storageRepoWrite(), backupPathFile), "    remove repo file");
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), backupPathFile), "    remove repo file");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
@@ -176,7 +176,7 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultNoOp, "    noop file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    noop");
 
         // Check protocol function directly
@@ -216,7 +216,7 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -231,13 +231,13 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // File exists in repo and db, checksum not same in repo, delta set, ignoreMissing false, no hasReference - RECOPY
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageRepoWrite(), backupPathFile), BUFSTRDEF("adifferentfile")),
+            storagePutP(storageNewWriteP(storageRepoWrite(), backupPathFile), BUFSTRDEF("adifferentfile")),
             "create different file (size and checksum) with same name in repo");
         TEST_ASSIGN(
             result,
@@ -249,13 +249,13 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    recopy");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // File exists in repo but missing from db, checksum same in repo, delta set, ignoreMissing true, no hasReference - SKIP
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageRepoWrite(), backupPathFile), BUFSTRDEF("adifferentfile")),
+            storagePutP(storageNewWriteP(storageRepoWrite(), backupPathFile), BUFSTRDEF("adifferentfile")),
             "create different file with same name in repo");
         TEST_ASSIGN(
             result,
@@ -266,7 +266,7 @@ testRun(void)
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy=repo=0 size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "    skip file");
         TEST_RESULT_BOOL(
-            (result.copyChecksum == NULL && !storageExistsNP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+            (result.copyChecksum == NULL && !storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    skip and remove file from repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -281,7 +281,7 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strPtr(backupLabel), strPtr(pgFile))) &&
+                storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strPtr(backupLabel), strPtr(pgFile))) &&
                 result.pageChecksumResult == NULL),
             true, "    copy file to repo compress success");
 
@@ -299,7 +299,7 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultChecksum, "    checksum file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strPtr(backupLabel), strPtr(pgFile))) &&
+                storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strPtr(backupLabel), strPtr(pgFile))) &&
                 result.pageChecksumResult == NULL),
             true, "    compressed repo file matches");
 
@@ -330,7 +330,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("zerofile")), BUFSTRDEF(""));
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("zerofile")), BUFSTRDEF(""));
 
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
@@ -343,7 +343,7 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_PTR_NE(result.copyChecksum, NULL, "    checksum set");
         TEST_RESULT_BOOL(
-            (storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/zerofile", strPtr(backupLabel))) &&
+            (storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/zerofile", strPtr(backupLabel))) &&
                 result.pageChecksumResult == NULL),
             true, "    copy zero file to repo success");
 
@@ -370,7 +370,7 @@ testRun(void)
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
 
         // Create a pg file to backup
-        storagePutNP(storageNewWriteNP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile"));
+        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
@@ -386,7 +386,7 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-            storageExistsNP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+            storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy file to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -402,7 +402,7 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy file (size missmatch) to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -419,7 +419,7 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
         TEST_RESULT_BOOL(
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsNP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    recopy file to encrypted repo success");
 
         // Check protocol function directly

@@ -728,7 +728,7 @@ infoRender(void)
             if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
                 THROW(ConfigError, "option 'set' is currently only valid for text output");
 
-            if (!storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel))))
+            if (!storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel))))
             {
                 THROW_FMT(
                     FileMissingError, "manifest does not exist for backup '%s'\n"
@@ -737,7 +737,7 @@ infoRender(void)
         }
 
         // Get a list of stanzas in the backup directory.
-        StringList *stanzaList = storageListNP(storageRepo(), STORAGE_PATH_BACKUP_STR);
+        StringList *stanzaList = storageListP(storageRepo(), STORAGE_PATH_BACKUP_STR);
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 

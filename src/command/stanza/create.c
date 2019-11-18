@@ -48,17 +48,17 @@ cmdStanzaCreate(void)
         // Get the version and system information - validating it if the database is online
         PgControl pgControl = pgValidate();
 
-        bool archiveInfoFileExists = storageExistsNP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR);
-        bool archiveInfoFileCopyExists = storageExistsNP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);
-        bool backupInfoFileExists = storageExistsNP(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR);
-        bool backupInfoFileCopyExists = storageExistsNP(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_COPY_STR);
+        bool archiveInfoFileExists = storageExistsP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR);
+        bool archiveInfoFileCopyExists = storageExistsP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);
+        bool backupInfoFileExists = storageExistsP(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR);
+        bool backupInfoFileCopyExists = storageExistsP(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_COPY_STR);
 
         // If neither archive info nor backup info files exist and nothing else exists in the stanza directory
         // then create the stanza
         if (!archiveInfoFileExists && !archiveInfoFileCopyExists && !backupInfoFileExists && !backupInfoFileCopyExists)
         {
-            bool archiveNotEmpty = strLstSize(storageListNP(storageRepoReadStanza, STORAGE_REPO_ARCHIVE_STR)) > 0 ? true : false;
-            bool backupNotEmpty = strLstSize(storageListNP(storageRepoReadStanza, STORAGE_REPO_BACKUP_STR)) > 0 ? true : false;
+            bool archiveNotEmpty = strLstSize(storageListP(storageRepoReadStanza, STORAGE_REPO_ARCHIVE_STR)) > 0 ? true : false;
+            bool backupNotEmpty = strLstSize(storageListP(storageRepoReadStanza, STORAGE_REPO_BACKUP_STR)) > 0 ? true : false;
 
             // If something else exists in the backup or archive directories for this stanza, then error
             if (archiveNotEmpty || backupNotEmpty)
@@ -108,9 +108,9 @@ cmdStanzaCreate(void)
                 sourceFile = archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
                 destinationFile = !archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
 
-                storageCopyNP(
-                    storageNewReadNP(storageRepoReadStanza, sourceFile),
-                    storageNewWriteNP(storageRepoWriteStanza, destinationFile));
+                storageCopyP(
+                    storageNewReadP(storageRepoReadStanza, sourceFile),
+                    storageNewWriteP(storageRepoWriteStanza, destinationFile));
             }
 
             if (!backupInfoFileExists || !backupInfoFileCopyExists)
@@ -118,9 +118,9 @@ cmdStanzaCreate(void)
                 sourceFile = backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
                 destinationFile = !backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
 
-                storageCopyNP(
-                    storageNewReadNP(storageRepoReadStanza, sourceFile),
-                    storageNewWriteNP(storageRepoWriteStanza, destinationFile));
+                storageCopyP(
+                    storageNewReadP(storageRepoReadStanza, sourceFile),
+                    storageNewWriteP(storageRepoWriteStanza, destinationFile));
             }
 
             // If no files copied, then the stanza was already valid

@@ -282,7 +282,7 @@ infoArchiveLoadFileCallback(void *data, unsigned int try)
         const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strPtr(loadData->fileName));
 
         // Attempt to load the file
-        IoRead *read = storageReadIo(storageNewReadNP(loadData->storage, fileName));
+        IoRead *read = storageReadIo(storageNewReadP(loadData->storage, fileName));
         cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
 
         MEM_CONTEXT_BEGIN(loadData->memContext)
@@ -321,7 +321,7 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const char *fileNamePath = strPtr(storagePathNP(storage, fileName));
+        const char *fileNamePath = strPtr(storagePathP(storage, fileName));
 
         TRY_BEGIN()
         {
@@ -370,13 +370,13 @@ infoArchiveSaveFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Save the file
-        IoWrite *write = storageWriteIo(storageNewWriteNP(storage, fileName));
+        IoWrite *write = storageWriteIo(storageNewWriteP(storage, fileName));
         cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
         infoArchiveSave(infoArchive, write);
 
         // Make a copy of the file
         storageCopy(
-            storageNewReadNP(storage, fileName), storageNewWriteNP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
+            storageNewReadP(storage, fileName), storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
     }
     MEM_CONTEXT_TEMP_END();
 

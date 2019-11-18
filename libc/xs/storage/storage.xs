@@ -74,7 +74,7 @@ INPUT:
     pgBackRest::LibC::StorageRead source
     pgBackRest::LibC::StorageWrite destination
 CODE:
-    RETVAL = storageCopyNP(source, destination);
+    RETVAL = storageCopyP(source, destination);
 OUTPUT:
     RETVAL
 CLEANUP:
@@ -91,7 +91,7 @@ INPUT:
     pgBackRest::LibC::Storage self
     const String *fileExp = STR_NEW_SV($arg);
 CODE:
-    RETVAL = storageExistsNP(self, fileExp);
+    RETVAL = storageExistsP(self, fileExp);
 OUTPUT:
     RETVAL
 CLEANUP:
@@ -108,7 +108,7 @@ INPUT:
     pgBackRest::LibC::StorageRead read
 CODE:
     RETVAL = NULL;
-    Buffer *buffer = storageGetNP(read);
+    Buffer *buffer = storageGetP(read);
 
     if (buffer != NULL)
     {
@@ -247,7 +247,7 @@ CODE:
     RETVAL = true;
 
     if (storageFeature(self, storageFeaturePath))
-        RETVAL = storagePathExistsNP(self, pathExp);
+        RETVAL = storagePathExistsP(self, pathExp);
 OUTPUT:
     RETVAL
 CLEANUP:
@@ -264,7 +264,7 @@ INPUT:
     pgBackRest::LibC::Storage self
     const String *pathExp = STR_NEW_SV($arg);
 CODE:
-    String *path = storagePathNP(self, pathExp);
+    String *path = storagePathP(self, pathExp);
     RETVAL = newSVpv((char *)strPtr(path), strSize(path));
 OUTPUT:
     RETVAL
@@ -300,7 +300,7 @@ INPUT:
     pgBackRest::LibC::Storage self
     const String *pathExp = STR_NEW_SV($arg);
 CODE:
-    storagePathSyncNP(self, pathExp);
+    storagePathSyncP(self, pathExp);
 CLEANUP:
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -315,7 +315,7 @@ INPUT:
     pgBackRest::LibC::StorageWrite write
     const Buffer *buffer = BUF_CONST_SV($arg);
 CODE:
-    storagePutNP(write, buffer);
+    storagePutP(write, buffer);
     RETVAL = buffer ? bufUsed(buffer) : 0;
 OUTPUT:
     RETVAL

@@ -70,20 +70,20 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
         const String *spoolQueue = archiveAsyncSpoolQueue(archiveMode);
 
         String *okFile = strNewFmt("%s" STATUS_EXT_OK, strPtr(walSegment));
-        bool okFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(okFile)));
+        bool okFileExists = storageExistsP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(okFile)));
 
         // If the ok file does not exist then check to see if a file-specific or global error exists
         if (!okFileExists)
         {
             // Check for a file-specific error first
             errorFile = strNewFmt("%s" STATUS_EXT_ERROR, strPtr(walSegment));
-            errorFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
+            errorFileExists = storageExistsP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
 
             // If that doesn't exist then check for a global error
             if (!errorFileExists)
             {
                 errorFile = STATUS_FILE_GLOBAL_ERROR_STR;
-                errorFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
+                errorFileExists = storageExistsP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
             }
         }
 
@@ -94,7 +94,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
             const String *statusFile = okFileExists ? okFile: errorFile;
 
             String *content = strNewBuf(
-                storageGetNP(storageNewReadNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(statusFile)))));
+                storageGetP(storageNewReadP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(statusFile)))));
 
             // Get the code and message if the file has content
             int code = 0;
@@ -173,8 +173,8 @@ archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, 
     {
         const String *errorFile = walSegment == NULL ? STATUS_FILE_GLOBAL_STR : walSegment;
 
-        storagePutNP(
-            storageNewWriteNP(
+        storagePutP(
+            storageNewWriteP(
                 storageSpoolWrite(),
                 strNewFmt("%s/%s" STATUS_EXT_ERROR, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(errorFile))),
             BUFSTR(strNewFmt("%d\n%s", code, strPtr(message))));
@@ -201,8 +201,8 @@ archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, con
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write file
-        storagePutNP(
-            storageNewWriteNP(
+        storagePutP(
+            storageNewWriteP(
                 storageSpoolWrite(),
                 strNewFmt("%s/%s" STATUS_EXT_OK, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))),
             warning == NULL ? NULL : BUFSTR(strNewFmt("0\n%s", strPtr(warning))));

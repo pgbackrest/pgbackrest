@@ -62,9 +62,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         cfgOptionSet(cfgOptSort, cfgSourceParam, VARSTRDEF("asc"));
 
-        storagePathCreateNP(storageTest, strNew("repo/bbb"));
-        storagePutNP(storageNewWriteNP(storageTest, strNew("repo/aaa")), BUFSTRDEF("TESTDATA"));
-        storagePutNP(storageNewWriteNP(storageTest, strNew("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
+        storagePathCreateP(storageTest, strNew("repo/bbb"));
+        storagePutP(storageNewWriteP(storageTest, strNew("repo/aaa")), BUFSTRDEF("TESTDATA"));
+        storagePutP(storageNewWriteP(storageTest, strNew("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
 
         ASSERT(system(strPtr(strNewFmt("ln -s ../bbb %s/repo/link", testPath()))) == 0);
         ASSERT(system(strPtr(strNewFmt("mkfifo %s/repo/pipe", testPath()))) == 0);
@@ -141,7 +141,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, stdoutFile)))), "ccc\n", "    check text");
+        TEST_RESULT_STR(strPtr(strNewBuf(storageGetP(storageNewReadP(storageTest, stdoutFile)))), "ccc\n", "    check text");
 
         // Too many paths
         // -------------------------------------------------------------------------------------------------------------------------

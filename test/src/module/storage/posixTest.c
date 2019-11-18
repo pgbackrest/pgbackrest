@@ -96,27 +96,27 @@ testRun(void)
         TEST_CREATE_NOPERM();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, strNew("missing")), false, "file does not exist");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing")), false, "file does not exist");
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing"), .timeout = 100), false, "file does not exist");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, strNew("missing")), false, "path does not exist");
-        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, NULL), true, "test path exists");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNew("missing")), false, "path does not exist");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, NULL), true, "test path exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageExistsNP(storageTest, fileNoPerm), FileOpenError,
+            storageExistsP(storageTest, fileNoPerm), FileOpenError,
             "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
         TEST_ERROR_FMT(
-            storagePathExistsNP(storageTest, fileNoPerm), PathOpenError,
+            storagePathExistsP(storageTest, fileNoPerm), PathOpenError,
             "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileExists = strNewFmt("%s/exists", testPath());
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
 
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, fileExists), true, "file exists");
-        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, fileExists), false, "not a path");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists), true, "file exists");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, fileExists), false, "not a path");
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -146,14 +146,14 @@ testRun(void)
         TEST_CREATE_NOPERM();
 
         TEST_ERROR_FMT(
-            storageInfoNP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO ": [13] Permission denied",
+            storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO ": [13] Permission denied",
             strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/fileinfo", testPath());
 
         TEST_ERROR_FMT(
-            storageInfoNP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING ": [2] No such file or directory",
+            storageInfoP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING ": [2] No such file or directory",
             strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -165,7 +165,7 @@ testRun(void)
         struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
         THROW_ON_SYS_ERROR_FMT(utime(testPath(), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
 
-        TEST_ASSIGN(info, storageInfoNP(storageTest, strNew(testPath())), "get path info");
+        TEST_ASSIGN(info, storageInfoP(storageTest, strNew(testPath())), "get path info");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypePath, "    check type");
@@ -180,14 +180,14 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *buffer = BUFSTRDEF("TESTFILE");
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), buffer), "put test file");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, fileName), buffer), "put test file");
 
         utimeTest.modtime = 1555155555;
         THROW_ON_SYS_ERROR_FMT(utime(strPtr(fileName), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
 
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown 99999:99999 %s", strPtr(fileName)))), 0, "set invalid user/group");
 
-        TEST_ASSIGN(info, storageInfoNP(storageTest, fileName), "get file info");
+        TEST_ASSIGN(info, storageInfoP(storageTest, fileName), "get file info");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
@@ -204,7 +204,7 @@ testRun(void)
         String *linkName = strNewFmt("%s/testlink", testPath());
         TEST_RESULT_INT(system(strPtr(strNewFmt("ln -s /tmp %s", strPtr(linkName)))), 0, "create link");
 
-        TEST_ASSIGN(info, storageInfoNP(storageTest, linkName), "get link info");
+        TEST_ASSIGN(info, storageInfoP(storageTest, linkName), "get link info");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
@@ -230,7 +230,7 @@ testRun(void)
         String *pipeName = strNewFmt("%s/testpipe", testPath());
         TEST_RESULT_INT(system(strPtr(strNewFmt("mkfifo -m 666 %s", strPtr(pipeName)))), 0, "create pipe");
 
-        TEST_ASSIGN(info, storageInfoNP(storageTest, pipeName), "get info from pipe (special file)");
+        TEST_ASSIGN(info, storageInfoP(storageTest, pipeName), "get info from pipe (special file)");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
@@ -254,15 +254,15 @@ testRun(void)
             PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(strNewFmt("%s/BOGUS", testPath())));
 
         TEST_RESULT_BOOL(
-            storageInfoListNP(storageTest, strNew(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
+            storageInfoListP(storageTest, strNew(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
 
         TEST_ERROR_FMT(
-            storageInfoListNP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
+            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
             STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
-            storageInfoListNP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
+            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
             STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -294,7 +294,7 @@ testRun(void)
         storagePathCreateP(storageTest, strNew("pg/.include"), .mode = 0755);
         ASSERT(system(strPtr(strNewFmt("sudo chown 77777:77777 %s/pg/.include", testPath()))) == 0);
 
-        storagePutNP(storageNewWriteP(storageTest, strNew("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
+        storagePutP(storageNewWriteP(storageTest, strNew("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
 
         ASSERT(system(strPtr(strNewFmt("ln -s ../file %s/pg/link", testPath()))) == 0);
         ASSERT(system(strPtr(strNewFmt("mkfifo -m 777 %s/pg/pipe", testPath()))) == 0);
@@ -325,7 +325,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ASSERT(system(strPtr(strNewFmt("sudo rmdir %s/pg/.include", testPath()))) == 0);
         storagePathCreateP(storageTest, strNew("pg/path"), .mode = 0700);
-        storagePutNP(storageNewWriteP(storageTest, strNew("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+        storagePutP(storageNewWriteP(storageTest, strNew("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
 
         callbackData.content = strNew("");
 
@@ -368,27 +368,27 @@ testRun(void)
              strPtr(strNewFmt("%s/BOGUS", testPath())));
 
         TEST_RESULT_PTR(storageListP(storageTest, strNew(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
-        TEST_RESULT_UINT(strLstSize(storageListNP(storageTest, strNew(BOGUS_STR))), 0, "empty list for missing dir");
+        TEST_RESULT_UINT(strLstSize(storageListP(storageTest, strNew(BOGUS_STR))), 0, "empty list for missing dir");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageListNP(storageTest, pathNoPerm), PathOpenError,
+            storageListP(storageTest, pathNoPerm), PathOpenError,
             STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
-            storageListNP(storageTest, pathNoPerm), PathOpenError,
+            storageListP(storageTest, pathNoPerm), PathOpenError,
             STORAGE_ERROR_LIST ": [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew(".aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
+            storagePutP(storageNewWriteP(storageTest, strNew(".aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListNP(storageTest, NULL), sortOrderAsc), ", ")), ".aaa.txt, noperm",
+            strPtr(strLstJoin(strLstSort(storageListP(storageTest, NULL), sortOrderAsc), ", ")), ".aaa.txt, noperm",
             "dir list");
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew("bbb.txt")), BUFSTRDEF("bbb")), "write bbb.text");
+            storagePutP(storageNewWriteP(storageTest, strNew("bbb.txt")), BUFSTRDEF("bbb")), "write bbb.text");
         TEST_RESULT_STR(
             strPtr(strLstJoin(storageListP(storageTest, NULL, .expression = strNew("^bbb")), ", ")), "bbb.txt", "dir list");
     }
@@ -399,24 +399,24 @@ testRun(void)
         String *sourceFile = strNewFmt("%s/source.txt", testPath());
         String *destinationFile = strNewFmt("%s/destination.txt", testPath());
 
-        StorageRead *source = storageNewReadNP(storageTest, sourceFile);
-        StorageWrite *destination = storageNewWriteNP(storageTest, destinationFile);
+        StorageRead *source = storageNewReadP(storageTest, sourceFile);
+        StorageWrite *destination = storageNewWriteP(storageTest, destinationFile);
 
-        TEST_ERROR_FMT(storageCopyNP(source, destination), FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(sourceFile));
+        TEST_ERROR_FMT(storageCopyP(source, destination), FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(sourceFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
         source = storageNewReadP(storageTest, sourceFile, .ignoreMissing = true);
 
-        TEST_RESULT_BOOL(storageCopyNP(source, destination), false, "copy and ignore missing file");
+        TEST_RESULT_BOOL(storageCopyP(source, destination), false, "copy and ignore missing file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *expectedBuffer = BUFSTRDEF("TESTFILE\n");
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, sourceFile), expectedBuffer), "write source file");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, sourceFile), expectedBuffer), "write source file");
 
-        source = storageNewReadNP(storageTest, sourceFile);
+        source = storageNewReadP(storageTest, sourceFile);
 
-        TEST_RESULT_BOOL(storageCopyNP(source, destination), true, "copy file");
-        TEST_RESULT_BOOL(bufEq(expectedBuffer, storageGetNP(storageNewReadNP(storageTest, destinationFile))), true, "check file");
+        TEST_RESULT_BOOL(storageCopyP(source, destination), true, "copy file");
+        TEST_RESULT_BOOL(bufEq(expectedBuffer, storageGetP(storageNewReadP(storageTest, destinationFile))), true, "check file");
 
         storageRemoveP(storageTest, sourceFile, .errorOnMissing = true);
         storageRemoveP(storageTest, destinationFile, .errorOnMissing = true);
@@ -430,79 +430,79 @@ testRun(void)
         String *sourceFile = strNewFmt("%s/source.txt", testPath());
         String *destinationFile = strNewFmt("%s/sub/destination.txt", testPath());
 
-        StorageRead *source = storageNewReadNP(storageTest, sourceFile);
-        StorageWrite *destination = storageNewWriteNP(storageTest, destinationFile);
+        StorageRead *source = storageNewReadP(storageTest, sourceFile);
+        StorageWrite *destination = storageNewWriteP(storageTest, destinationFile);
 
         TEST_ERROR_FMT(
-            storageMoveNP(storageTest, source, destination), FileMissingError,
+            storageMoveP(storageTest, source, destination), FileMissingError,
             "unable to move missing file '%s': [2] No such file or directory", strPtr(sourceFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        source = storageNewReadNP(storageTest, fileNoPerm);
+        source = storageNewReadP(storageTest, fileNoPerm);
 
         TEST_ERROR_FMT(
-            storageMoveNP(storageTest, source, destination), FileMoveError,
+            storageMoveP(storageTest, source, destination), FileMoveError,
             "unable to move '%s' to '%s': [13] Permission denied", strPtr(fileNoPerm), strPtr(destinationFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *buffer = BUFSTRDEF("TESTFILE");
-        storagePutNP(storageNewWriteNP(storageTest, sourceFile), buffer);
+        storagePutP(storageNewWriteP(storageTest, sourceFile), buffer);
 
-        source = storageNewReadNP(storageTest, sourceFile);
+        source = storageNewReadP(storageTest, sourceFile);
         destination = storageNewWriteP(storageTest, destinationFile, .noCreatePath = true);
 
         TEST_ERROR_FMT(
-            storageMoveNP(storageTest, source, destination), PathMissingError,
+            storageMoveP(storageTest, source, destination), PathMissingError,
             "unable to move '%s' to missing path '%s': [2] No such file or directory", strPtr(sourceFile),
             strPtr(strPath(destinationFile)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        destination = storageNewWriteNP(storageTest, destinationFile);
+        destination = storageNewWriteP(storageTest, destinationFile);
 
-        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to subpath");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, sourceFile), false, "check source file not exists");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, destinationFile), true, "check destination file exists");
+        TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to subpath");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, sourceFile), false, "check source file not exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, destinationFile), true, "check destination file exists");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, destinationFile)))), "TESTFILE",
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storageTest, destinationFile)))), "TESTFILE",
             "check destination contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
         sourceFile = destinationFile;
-        source = storageNewReadNP(storageTest, sourceFile);
+        source = storageNewReadP(storageTest, sourceFile);
         destinationFile = strNewFmt("%s/sub/destination2.txt", testPath());
-        destination = storageNewWriteNP(storageTest, destinationFile);
+        destination = storageNewWriteP(storageTest, destinationFile);
 
-        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to same path");
+        TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to same path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         sourceFile = destinationFile;
-        source = storageNewReadNP(storageTest, sourceFile);
+        source = storageNewReadP(storageTest, sourceFile);
         destinationFile = strNewFmt("%s/source.txt", testPath());
         destination = storageNewWriteP(storageTest, destinationFile, .noSyncPath = true);
 
-        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to parent path (no sync)");
+        TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to parent path (no sync)");
 
         // Move across filesystems
         // -------------------------------------------------------------------------------------------------------------------------
         sourceFile = destinationFile;
-        source = storageNewReadNP(storageTest, sourceFile);
+        source = storageNewReadP(storageTest, sourceFile);
         destinationFile = strNewFmt("/tmp/destination.txt");
-        destination = storageNewWriteNP(storageTmp, destinationFile);
+        destination = storageNewWriteP(storageTmp, destinationFile);
 
-        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to another filesystem");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, sourceFile), false, "check source file not exists");
-        TEST_RESULT_BOOL(storageExistsNP(storageTmp, destinationFile), true, "check destination file exists");
+        TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to another filesystem");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, sourceFile), false, "check source file not exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTmp, destinationFile), true, "check destination file exists");
 
         // Move across filesystems without syncing the paths
         // -------------------------------------------------------------------------------------------------------------------------
         sourceFile = destinationFile;
-        source = storageNewReadNP(storageTmp, sourceFile);
+        source = storageNewReadP(storageTmp, sourceFile);
         destinationFile = strNewFmt("%s/source.txt", testPath());
         destination = storageNewWriteP(storageTest, destinationFile, .noSyncPath = true);
 
-        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to another filesystem without path sync");
-        TEST_RESULT_BOOL(storageExistsNP(storageTmp, sourceFile), false, "check source file not exists");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, destinationFile), true, "check destination file exists");
+        TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to another filesystem without path sync");
+        TEST_RESULT_BOOL(storageExistsP(storageTmp, sourceFile), false, "check source file not exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, destinationFile), true, "check destination file exists");
 
         storageRemoveP(storageTest, destinationFile, .errorOnMissing = true);
     }
@@ -513,65 +513,65 @@ testRun(void)
         Storage *storageTest = NULL;
 
         TEST_ASSIGN(storageTest, storagePosixNew(strNew("/"), 0640, 0750, false, NULL), "new storage /");
-        TEST_RESULT_STR(strPtr(storagePathNP(storageTest, NULL)), "/", "    root dir");
-        TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("/"))), "/", "    same as root dir");
-        TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("subdir"))), "/subdir", "    simple subdir");
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, NULL)), "/", "    root dir");
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("/"))), "/", "    same as root dir");
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("subdir"))), "/subdir", "    simple subdir");
 
         TEST_ERROR(
-            storagePathNP(storageTest, strNew("<TEST>")), AssertError, "expression '<TEST>' not valid without callback function");
+            storagePathP(storageTest, strNew("<TEST>")), AssertError, "expression '<TEST>' not valid without callback function");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             storageTest, storagePosixNew(strNew("/path/to"), 0640, 0750, false, storageTestPathExpression),
             "new storage /path/to with expression");
-        TEST_RESULT_STR(strPtr(storagePathNP(storageTest, NULL)), "/path/to", "    root dir");
-        TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("/path/to"))), "/path/to", "    absolute root dir");
-        TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("is/a/subdir"))), "/path/to/is/a/subdir", "    subdir");
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, NULL)), "/path/to", "    root dir");
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("/path/to"))), "/path/to", "    absolute root dir");
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("is/a/subdir"))), "/path/to/is/a/subdir", "    subdir");
 
         TEST_ERROR(
-            storagePathNP(storageTest, strNew("/bogus")), AssertError, "absolute path '/bogus' is not in base path '/path/to'");
+            storagePathP(storageTest, strNew("/bogus")), AssertError, "absolute path '/bogus' is not in base path '/path/to'");
         TEST_ERROR(
-            storagePathNP(storageTest, strNew("/path/toot")), AssertError,
+            storagePathP(storageTest, strNew("/path/toot")), AssertError,
             "absolute path '/path/toot' is not in base path '/path/to'");
 
         // Path enforcement disabled
         storagePathEnforceSet(storageTest, false);
-        TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("/bogus"))), "/bogus", "path enforce disabled");
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("/bogus"))), "/bogus", "path enforce disabled");
         storagePathEnforceSet(storageTest, true);
 
-        TEST_ERROR(storagePathNP(storageTest, strNew("<TEST")), AssertError, "end > not found in path expression '<TEST'");
+        TEST_ERROR(storagePathP(storageTest, strNew("<TEST")), AssertError, "end > not found in path expression '<TEST'");
         TEST_ERROR(
-            storagePathNP(storageTest, strNew("<TEST>" BOGUS_STR)), AssertError,
+            storagePathP(storageTest, strNew("<TEST>" BOGUS_STR)), AssertError,
             "'/' should separate expression and path '<TEST>BOGUS'");
 
-        TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("<TEST>"))), "/path/to/test", "    expression");
-        TEST_ERROR(strPtr(storagePathNP(storageTest, strNew("<TEST>/"))), AssertError, "path '<TEST>/' should not end in '/'");
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("<TEST>"))), "/path/to/test", "    expression");
+        TEST_ERROR(strPtr(storagePathP(storageTest, strNew("<TEST>/"))), AssertError, "path '<TEST>/' should not end in '/'");
 
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storageTest, strNew("<TEST>/something"))), "/path/to/test/something", "    expression with path");
+            strPtr(storagePathP(storageTest, strNew("<TEST>/something"))), "/path/to/test/something", "    expression with path");
 
-        TEST_ERROR(storagePathNP(storageTest, strNew("<NULL>")), AssertError, "evaluated path '<NULL>' cannot be null");
+        TEST_ERROR(storagePathP(storageTest, strNew("<NULL>")), AssertError, "evaluated path '<NULL>' cannot be null");
 
-        TEST_ERROR(storagePathNP(storageTest, strNew("<WHATEVS>")), AssertError, "invalid expression '<WHATEVS>'");
+        TEST_ERROR(storagePathP(storageTest, strNew("<WHATEVS>")), AssertError, "invalid expression '<WHATEVS>'");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("storagePathCreate()"))
     {
-        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub1")), "create sub1");
-        TEST_RESULT_INT(storageInfoNP(storageTest, strNew("sub1")).mode, 0750, "check sub1 dir mode");
-        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub1")), "create sub1 again");
+        TEST_RESULT_VOID(storagePathCreateP(storageTest, strNew("sub1")), "create sub1");
+        TEST_RESULT_INT(storageInfoP(storageTest, strNew("sub1")).mode, 0750, "check sub1 dir mode");
+        TEST_RESULT_VOID(storagePathCreateP(storageTest, strNew("sub1")), "create sub1 again");
         TEST_ERROR_FMT(
             storagePathCreateP(storageTest, strNew("sub1"), .errorOnExists = true), PathCreateError,
             "unable to create path '%s/sub1': [17] File exists", testPath());
 
         TEST_RESULT_VOID(storagePathCreateP(storageTest, strNew("sub2"), .mode = 0777), "create sub2 with custom mode");
-        TEST_RESULT_INT(storageInfoNP(storageTest, strNew("sub2")).mode, 0777, "check sub2 dir mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, strNew("sub2")).mode, 0777, "check sub2 dir mode");
 
         TEST_ERROR_FMT(
             storagePathCreateP(storageTest, strNew("sub3/sub4"), .noParentCreate = true), PathCreateError,
             "unable to create path '%s/sub3/sub4': [2] No such file or directory", testPath());
-        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub3/sub4")), "create sub3/sub4");
+        TEST_RESULT_VOID(storagePathCreateP(storageTest, strNew("sub3/sub4")), "create sub3/sub4");
 
         TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/sub*", testPath()))), 0, "remove sub paths");
     }
@@ -593,7 +593,7 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo mkdir -p -m 700 %s", strPtr(pathRemove2)))), 0, "create noperm paths");
 
         TEST_ERROR_FMT(
-            storagePathRemoveNP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE ": [13] Permission denied",
+            storagePathRemoveP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE ": [13] Permission denied",
             strPtr(pathRemove2));
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
@@ -625,7 +625,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");
         TEST_RESULT_BOOL(
-            storageExistsNP(storageTest, pathRemove1), false, "path is removed");
+            storageExistsP(storageTest, pathRemove1), false, "path is removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(system(strPtr(strNewFmt("mkdir -p %s", strPtr(pathRemove2)))), 0, "create subpaths");
@@ -633,7 +633,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");
         TEST_RESULT_BOOL(
-            storageExistsNP(storageTest, pathRemove1), false, "path is removed");
+            storageExistsP(storageTest, pathRemove1), false, "path is removed");
     }
 
     // *****************************************************************************************************************************
@@ -642,24 +642,24 @@ testRun(void)
         TEST_CREATE_NOPERM();
 
         TEST_ERROR_FMT(
-            storagePathSyncNP(storageTest, fileNoPerm), PathOpenError, STORAGE_ERROR_PATH_SYNC_OPEN ": [13] Permission denied",
+            storagePathSyncP(storageTest, fileNoPerm), PathOpenError, STORAGE_ERROR_PATH_SYNC_OPEN ": [13] Permission denied",
             strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *pathName = strNewFmt("%s/testpath", testPath());
 
         TEST_ERROR_FMT(
-            storagePathSyncNP(storageTest, pathName), PathMissingError, STORAGE_ERROR_PATH_SYNC_MISSING, strPtr(pathName));
+            storagePathSyncP(storageTest, pathName), PathMissingError, STORAGE_ERROR_PATH_SYNC_MISSING, strPtr(pathName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storagePathSyncNP(
+            storagePathSyncP(
                 storagePosixNew(strNew("/"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL), strNew("/proc")),
             PathSyncError, STORAGE_ERROR_PATH_SYNC ": [22] Invalid argument", "/proc");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathCreateNP(storageTest, pathName), "create path to sync");
-        TEST_RESULT_VOID(storagePathSyncNP(storageTest, pathName), "sync path");
+        TEST_RESULT_VOID(storagePathCreateP(storageTest, pathName), "create path to sync");
+        TEST_RESULT_VOID(storagePathSyncP(storageTest, pathName), "sync path");
     }
 
     // *****************************************************************************************************************************
@@ -668,7 +668,7 @@ testRun(void)
         StorageRead *file = NULL;
         String *fileName = strNewFmt("%s/readtest.txt", testPath());
 
-        TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new read file (defaults)");
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -702,9 +702,9 @@ testRun(void)
         TEST_RESULT_INT(
             ioWriteHandle(storageWriteIo(file)), ((StorageWritePosix *)file->driver)->handle, "check write handle");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
-        TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
-        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0640, "    check file mode");
-        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).timeModified, 1, "    check file modified times");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "    check file mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).timeModified, 1, "    check file modified times");
 
         // Test that a premature free (from error or otherwise) does not rename the file
         // -------------------------------------------------------------------------------------------------------------------------
@@ -718,9 +718,9 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteFlush(storageWriteIo(file)), "flush data");
         TEST_RESULT_VOID(ioWriteFree(storageWriteIo(file)), "   free file");
 
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, fileName), false, "destination file does not exist");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, fileNameTmp), true, "destination tmp file exists");
-        TEST_RESULT_INT(storageInfoNP(storageTest, fileNameTmp).size, 8, "    check temp file size");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, fileName), false, "destination file does not exist");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, fileNameTmp), true, "destination tmp file exists");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileNameTmp).size, 8, "    check temp file size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         fileName = strNewFmt("%s/sub2/testfile", testPath());
@@ -731,8 +731,8 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
         TEST_RESULT_VOID(storageWritePosixClose(storageWriteDriver(file)), "   close file again");
-        TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
-        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0600, "    check file mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "    check file mode");
     }
 
     // *****************************************************************************************************************************
@@ -741,48 +741,48 @@ testRun(void)
         Storage *storageTest = storagePosixNew(strNew("/"), 0640, 0750, true, NULL);
 
         TEST_ERROR_FMT(
-            storageGetNP(storageNewReadNP(storageTest, strNew(testPath()))), FileReadError,
+            storageGetP(storageNewReadP(storageTest, strNew(testPath()))), FileReadError,
             "unable to read '%s': [21] Is a directory", testPath());
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *emptyFile = strNewFmt("%s/test.empty", testPath());
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, emptyFile), NULL), "put empty file");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, emptyFile), true, "check empty file exists");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), "put empty file");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, emptyFile), true, "check empty file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *buffer = BUFSTRDEF("TESTFILE\n");
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/test.txt", testPath())), buffer), "put test file");
+            storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/test.txt", testPath())), buffer), "put test file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(
-            storageGetNP(storageNewReadP(storageTest, strNewFmt("%s/%s", testPath(), BOGUS_STR), .ignoreMissing = true)),
+            storageGetP(storageNewReadP(storageTest, strNewFmt("%s/%s", testPath(), BOGUS_STR), .ignoreMissing = true)),
             NULL, "get missing file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(buffer, storageGetNP(storageNewReadNP(storageTest, strNewFmt("%s/test.empty", testPath()))), "get empty");
+        TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.empty", testPath()))), "get empty");
         TEST_RESULT_INT(bufSize(buffer), 0, "size is 0");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(buffer, storageGetNP(storageNewReadNP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
+        TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
         TEST_RESULT_INT(bufSize(buffer), 9, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            buffer, storageGetP(storageNewReadNP(storageTest, strNewFmt("%s/test.txt", testPath())), .exactSize = 4), "get exact");
+            buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath())), .exactSize = 4), "get exact");
         TEST_RESULT_INT(bufSize(buffer), 4, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST", bufSize(buffer)) == 0, true, "check content");
 
         TEST_ERROR_FMT(
-            storageGetP(storageNewReadNP(storageTest, strNewFmt("%s/test.txt", testPath())), .exactSize = 64), FileReadError,
+            storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath())), .exactSize = 64), FileReadError,
             "unable to read 64 byte(s) from '%s/test.txt'", testPath());
 
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(2);
 
-        TEST_ASSIGN(buffer, storageGetNP(storageNewReadNP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
+        TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
         TEST_RESULT_INT(bufSize(buffer), 9, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
     }
@@ -793,7 +793,7 @@ testRun(void)
         TEST_CREATE_NOPERM();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveNP(storageTest, strNew("missing")), "remove missing file");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, strNew("missing")), "remove missing file");
         TEST_ERROR_FMT(
             storageRemoveP(storageTest, strNew("missing"), .errorOnMissing = true), FileRemoveError,
             "unable to remove '%s/missing': [2] No such file or directory", testPath());
@@ -802,11 +802,11 @@ testRun(void)
         String *fileExists = strNewFmt("%s/exists", testPath());
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
 
-        TEST_RESULT_VOID(storageRemoveNP(storageTest, fileExists), "remove exists file");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, fileExists), "remove exists file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageRemoveNP(storageTest, fileNoPerm), FileRemoveError,
+            storageRemoveP(storageTest, fileNoPerm), FileRemoveError,
             "unable to remove '%s': [13] Permission denied", strPtr(fileNoPerm));
     }
 
@@ -822,14 +822,14 @@ testRun(void)
         TEST_RESULT_STR(strPtr(storageReadName(file)), strPtr(fileNoPerm), "    check name");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(file, storageNewReadNP(storageTest, fileNoPerm), "new no perm read file");
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm), "new no perm read file");
         TEST_ERROR_FMT(
             ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN ": [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/test.file", testPath());
 
-        TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new missing read file");
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new missing read file");
         TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -839,9 +839,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *outBuffer = bufNew(2);
         const Buffer *expectedBuffer = BUFSTRDEF("TESTFILE\n");
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), expectedBuffer), "write test file");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, fileName), expectedBuffer), "write test file");
 
-        TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new read file");
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "   open file");
 
         // Close the file handle so operations will fail
@@ -859,7 +859,7 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(file, storageReadMove(storageNewReadNP(storageTest, fileName), MEM_CONTEXT_OLD()), "new read file");
+            TEST_ASSIGN(file, storageReadMove(storageNewReadP(storageTest, fileName), MEM_CONTEXT_OLD()), "new read file");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -900,7 +900,7 @@ testRun(void)
 
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "    close file");
 
-        TEST_RESULT_VOID(storageReadFree(storageNewReadNP(storageTest, fileName)), "   free file");
+        TEST_RESULT_VOID(storageReadFree(storageNewReadP(storageTest, fileName)), "   free file");
 
         TEST_RESULT_VOID(storageReadMove(NULL, memContextTop()), "   move null file");
     }
@@ -944,7 +944,7 @@ testRun(void)
         ioBufferSizeSet(10);
         const Buffer *buffer = BUFSTRDEF("TESTFILE\n");
 
-        TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(strPtr(storageWriteName(file)), strPtr(fileName), "    check file name");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
 
@@ -970,7 +970,7 @@ testRun(void)
         ((StorageWritePosix *)file->driver)->handle = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(strPtr(storageWriteName(file)), strPtr(fileName), "    check file name");
         TEST_RESULT_STR(strPtr(storageWriteType(file)), "posix", "    check file type");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
@@ -989,7 +989,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(file, storageWriteMove(storageNewWriteNP(storageTest, fileName), MEM_CONTEXT_OLD()), "new write file");
+            TEST_ASSIGN(file, storageWriteMove(storageNewWriteP(storageTest, fileName), MEM_CONTEXT_OLD()), "new write file");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -998,13 +998,13 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), bufNew(0)), "   write zero buffer to file");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), buffer), "   write to file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
-        TEST_RESULT_VOID(storageWriteFree(storageNewWriteNP(storageTest, fileName)), "   free file");
+        TEST_RESULT_VOID(storageWriteFree(storageNewWriteP(storageTest, fileName)), "   free file");
         TEST_RESULT_VOID(storageWriteMove(NULL, memContextTop()), "   move null file");
 
-        Buffer *expectedBuffer = storageGetNP(storageNewReadNP(storageTest, fileName));
+        Buffer *expectedBuffer = storageGetP(storageNewReadP(storageTest, fileName));
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents");
-        TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
-        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0640, "    check file mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "    check file mode");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
@@ -1021,10 +1021,10 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), buffer), "   write to file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
 
-        expectedBuffer = storageGetNP(storageNewReadNP(storageTest, fileName));
+        expectedBuffer = storageGetP(storageNewReadP(storageTest, fileName));
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents");
-        TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
-        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0600, "    check file mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "    check file mode");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
     }
@@ -1039,9 +1039,9 @@ testRun(void)
         TEST_RESULT_PTR(storageHelper.storageLocal, storage, "local storage cached");
         TEST_RESULT_PTR(storageLocal(), storage, "get cached storage");
 
-        TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), "/", "check base path");
+        TEST_RESULT_STR(strPtr(storagePathP(storage, NULL)), "/", "check base path");
 
-        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "assertion 'this->write' failed");
+        TEST_ERROR(storageNewWriteP(storage, writeFile), AssertError, "assertion 'this->write' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(storageHelper.storageLocalWrite, NULL, "local storage not cached");
@@ -1049,9 +1049,9 @@ testRun(void)
         TEST_RESULT_PTR(storageHelper.storageLocalWrite, storage, "local storage cached");
         TEST_RESULT_PTR(storageLocalWrite(), storage, "get cached storage");
 
-        TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), "/", "check base path");
+        TEST_RESULT_STR(strPtr(storagePathP(storage, NULL)), "/", "check base path");
 
-        TEST_RESULT_VOID(storageNewWriteNP(storage, writeFile), "writes are allowed");
+        TEST_RESULT_VOID(storageNewWriteP(storage, writeFile), "writes are allowed");
     }
 
     // *****************************************************************************************************************************
@@ -1074,28 +1074,28 @@ testRun(void)
         TEST_RESULT_PTR(storageRepo(), storage, "get cached storage");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(storagePathNP(storage, strNew("<BOGUS>/path")), AssertError, "invalid expression '<BOGUS>'");
-        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "assertion 'this->write' failed");
+        TEST_ERROR(storagePathP(storage, strNew("<BOGUS>/path")), AssertError, "invalid expression '<BOGUS>'");
+        TEST_ERROR(storageNewWriteP(storage, writeFile), AssertError, "assertion 'this->write' failed");
 
-        TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), testPath(), "check base path");
+        TEST_RESULT_STR(strPtr(storagePathP(storage, NULL)), testPath(), "check base path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, STORAGE_REPO_ARCHIVE_STR)), strPtr(strNewFmt("%s/archive/db", testPath())),
+            strPtr(storagePathP(storage, STORAGE_REPO_ARCHIVE_STR)), strPtr(strNewFmt("%s/archive/db", testPath())),
             "check archive path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE "/simple"))),
+            strPtr(storagePathP(storage, strNew(STORAGE_REPO_ARCHIVE "/simple"))),
             strPtr(strNewFmt("%s/archive/db/simple", testPath())), "check simple path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE "/9.4-1/700000007000000070000000"))),
+            strPtr(storagePathP(storage, strNew(STORAGE_REPO_ARCHIVE "/9.4-1/700000007000000070000000"))),
             strPtr(strNewFmt("%s/archive/db/9.4-1/7000000070000000/700000007000000070000000", testPath())), "check segment path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE "/9.4-1/00000008.history"))),
+            strPtr(storagePathP(storage, strNew(STORAGE_REPO_ARCHIVE "/9.4-1/00000008.history"))),
             strPtr(strNewFmt("%s/archive/db/9.4-1/00000008.history", testPath())), "check history path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE "/9.4-1/000000010000014C0000001A.00000028.backup"))),
+            strPtr(storagePathP(storage, strNew(STORAGE_REPO_ARCHIVE "/9.4-1/000000010000014C0000001A.00000028.backup"))),
             strPtr(strNewFmt("%s/archive/db/9.4-1/000000010000014C/000000010000014C0000001A.00000028.backup", testPath())),
             "check archive backup path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, STORAGE_REPO_BACKUP_STR)), strPtr(strNewFmt("%s/backup/db", testPath())),
+            strPtr(storagePathP(storage, STORAGE_REPO_BACKUP_STR)), strPtr(strNewFmt("%s/backup/db", testPath())),
             "check backup path");
 
         // Change the stanza to NULL with the stanzaInit flag still true, make sure helper does not fail when stanza option not set
@@ -1108,16 +1108,16 @@ testRun(void)
         TEST_RESULT_PTR(storageHelper.stanza, NULL, "stanza NULL");
 
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, STORAGE_REPO_ARCHIVE_STR)), strPtr(strNewFmt("%s/archive", testPath())),
+            strPtr(storagePathP(storage, STORAGE_REPO_ARCHIVE_STR)), strPtr(strNewFmt("%s/archive", testPath())),
             "check archive path - NULL stanza");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE "/simple"))),
+            strPtr(storagePathP(storage, strNew(STORAGE_REPO_ARCHIVE "/simple"))),
             strPtr(strNewFmt("%s/archive/simple", testPath())), "check simple archive path - NULL stanza");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, STORAGE_REPO_BACKUP_STR)), strPtr(strNewFmt("%s/backup", testPath())),
+            strPtr(storagePathP(storage, STORAGE_REPO_BACKUP_STR)), strPtr(strNewFmt("%s/backup", testPath())),
             "check backup path - NULL stanza");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP "/simple"))),
+            strPtr(storagePathP(storage, strNew(STORAGE_REPO_BACKUP "/simple"))),
             strPtr(strNewFmt("%s/backup/simple", testPath())), "check simple backup path - NULL stanza");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1149,24 +1149,24 @@ testRun(void)
         TEST_RESULT_PTR(storageSpool(), storage, "get cached storage");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), testPath(), "check base path");
+        TEST_RESULT_STR(strPtr(storagePathP(storage, NULL)), testPath(), "check base path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_SPOOL_ARCHIVE_OUT))), strPtr(strNewFmt("%s/archive/db/out", testPath())),
+            strPtr(storagePathP(storage, strNew(STORAGE_SPOOL_ARCHIVE_OUT))), strPtr(strNewFmt("%s/archive/db/out", testPath())),
             "check spool out path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_OUT, "file.ext"))),
+            strPtr(storagePathP(storage, strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_OUT, "file.ext"))),
             strPtr(strNewFmt("%s/archive/db/out/file.ext", testPath())), "check spool out file");
 
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNew(STORAGE_SPOOL_ARCHIVE_IN))), strPtr(strNewFmt("%s/archive/db/in", testPath())),
+            strPtr(storagePathP(storage, strNew(STORAGE_SPOOL_ARCHIVE_IN))), strPtr(strNewFmt("%s/archive/db/in", testPath())),
             "check spool in path");
         TEST_RESULT_STR(
-            strPtr(storagePathNP(storage, strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_IN, "file.ext"))),
+            strPtr(storagePathP(storage, strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_IN, "file.ext"))),
             strPtr(strNewFmt("%s/archive/db/in/file.ext", testPath())), "check spool in file");
 
-        TEST_ERROR(storagePathNP(storage, strNew("<" BOGUS_STR ">")), AssertError, "invalid expression '<BOGUS>'");
+        TEST_ERROR(storagePathP(storage, strNew("<" BOGUS_STR ">")), AssertError, "invalid expression '<BOGUS>'");
 
-        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "assertion 'this->write' failed");
+        TEST_ERROR(storageNewWriteP(storage, writeFile), AssertError, "assertion 'this->write' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(storageHelper.storageSpoolWrite, NULL, "storage not cached");
@@ -1174,7 +1174,7 @@ testRun(void)
         TEST_RESULT_PTR(storageHelper.storageSpoolWrite, storage, "storage cached");
         TEST_RESULT_PTR(storageSpoolWrite(), storage, "get cached storage");
 
-        TEST_RESULT_VOID(storageNewWriteNP(storage, writeFile), "writes are allowed");
+        TEST_RESULT_VOID(storageNewWriteP(storage, writeFile), "writes are allowed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(storageHelper.storagePg, NULL, "pg storage not cached");

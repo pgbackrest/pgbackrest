@@ -82,7 +82,7 @@ storageWritePosixOpen(THIS_VOID)
     if (this->handle == -1 && errno == ENOENT && this->interface.createPath)
     {
          // Create the path
-        storagePosixPathCreate(this->storage, this->path, false, false, this->interface.modePath);
+        storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
         this->handle = open(strPtr(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
@@ -193,7 +193,7 @@ storageWritePosixClose(THIS_VOID)
 
         // Sync the path
         if (this->interface.syncPath)
-            storagePosixPathSync(this->storage, this->path);
+            storageInterfacePathSyncP(this->storage, this->path);
     }
 
     FUNCTION_LOG_RETURN_VOID();

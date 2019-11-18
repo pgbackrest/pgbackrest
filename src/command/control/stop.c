@@ -28,7 +28,7 @@ cmdStop(void)
         String *stopFile = lockStopFileName(cfgOptionStr(cfgOptStanza));
 
         // If the stop file does not already exist, then create it
-        if (!storageExistsNP(storageLocal(), stopFile))
+        if (!storageExistsP(storageLocal(), stopFile))
         {
             // Create the lock path (ignore if already created)
             storagePathCreateP(storageLocalWrite(), strPath(stopFile), .mode = 0770);

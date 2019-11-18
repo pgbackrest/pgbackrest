@@ -73,7 +73,7 @@ archivePushFile(
         if (isSegment)
         {
             // Generate a sha1 checksum for the wal segment
-            IoRead *read = storageReadIo(storageNewReadNP(storageLocal(), walSource));
+            IoRead *read = storageReadIo(storageNewReadP(storageLocal(), walSource));
             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
             ioReadDrain(read);
 
@@ -106,7 +106,7 @@ archivePushFile(
         // Only copy if the file was not found in the archive
         if (walSegmentFile == NULL)
         {
-            StorageRead *source = storageNewReadNP(storageLocal(), walSource);
+            StorageRead *source = storageNewReadP(storageLocal(), walSource);
 
             // Is the file compressible during the copy?
             bool compressible = true;
@@ -129,7 +129,7 @@ archivePushFile(
             }
 
             // Copy the file
-            storageCopyNP(
+            storageCopyP(
                 source,
                 storageNewWriteP(
                     storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(archiveDestination)),

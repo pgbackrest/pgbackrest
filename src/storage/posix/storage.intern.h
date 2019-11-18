@@ -17,8 +17,9 @@ Storage *storagePosixNewInternal(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void storagePosixPathCreate(THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
-void storagePosixPathSync(THIS_VOID, const String *path);
+void storagePosixPathCreate(
+    THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode, StorageInterfacePathCreateParam param);
+void storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging

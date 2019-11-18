@@ -84,7 +84,7 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
 
             // Else delete it
             else
-                storageRemoveNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(file)));
+                storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(file)));
         }
 
         // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
@@ -158,13 +158,13 @@ cmdArchiveGet(void)
                 }
 
                 // Check if the WAL segment is already in the queue
-                found = storageExistsNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
+                found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
 
                 // If found then move the WAL segment to the destination directory
                 if (found)
                 {
                     // Source is the WAL segment in the spool queue
-                    StorageRead *source = storageNewReadNP(
+                    StorageRead *source = storageNewReadP(
                         storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
 
                     // A move will be attempted but if the spool queue and the WAL path are on different file systems then a copy
@@ -179,7 +179,7 @@ cmdArchiveGet(void)
                         .noAtomic = true);
 
                     // Move (or copy if required) the file
-                    storageMoveNP(storageSpoolWrite(), source, destination);
+                    storageMoveP(storageSpoolWrite(), source, destination);
 
                     // Return success
                     result = 0;
@@ -191,7 +191,7 @@ cmdArchiveGet(void)
                     if (strLstSize(queue) > 0)
                     {
                         // Get size of the WAL segment
-                        uint64_t walSegmentSize = storageInfoNP(storageLocal(), walDestination).size;
+                        uint64_t walSegmentSize = storageInfoP(storageLocal(), walDestination).size;
 
                         // Use WAL segment size to estimate queue size and determine if the async process should be launched
                         queueFull = strLstSize(queue) * walSegmentSize > cfgOptionUInt64(cfgOptArchiveGetQueueMax) / 2;
@@ -208,7 +208,7 @@ cmdArchiveGet(void)
                     PgControl pgControl = pgControlFromFile(storagePg());
 
                     // Create the queue
-                    storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
+                    storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
 
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();

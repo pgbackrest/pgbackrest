@@ -189,26 +189,21 @@ This project implements variadic functions using macros (which are exempt from t
 ```c
 typedef struct StoragePathCreateParam
 {
+    VAR_PARAM_HEADER;
     bool errorOnExists;
     bool noParentCreate;
     mode_t mode;
 } StoragePathCreateParam;
 
-#define storagePathCreateP(this, pathExp, ...)                              \
-    storagePathCreate(this, pathExp, (StoragePathCreateParam){__VA_ARGS__})
-#define storagePathCreateNP(this, pathExp)                                  \
-    storagePathCreate(this, pathExp, (StoragePathCreateParam){0})
+#define storagePathCreateP(this, pathExp, ...) \
+    storagePathCreate(this, pathExp, (StoragePathCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 ```
 Continuation characters should be aligned at column 132 (unlike the example above that has been shortened for display purposes).
 
-This function can be called without variable parameters:
-```c
-storagePathCreateNP(storageLocal(), "/tmp/pgbackrest");
+This function can now be called with variable parameters using the macro:
 ```
-Or with variable parameters:
-```c
 storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mode = 0777);
 ```
 If the majority of functions in a module or object are variadic it is best to provide macros for all functions even if they do not have variable parameters. Do not use the base function when variadic macros exist.

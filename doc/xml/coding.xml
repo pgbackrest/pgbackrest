@@ -257,7 +257,7 @@ typedef struct StoragePathCreateParam
 
 #define storagePathCreateP(this, pathExp, ...)                              \
     storagePathCreate(this, pathExp, (StoragePathCreateParam){__VA_ARGS__})
-#define storagePathCreateNP(this, pathExp)                                  \
+#define storagePathCreateP(this, pathExp)                                  \
     storagePathCreate(this, pathExp, (StoragePathCreateParam){0})
 
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
@@ -268,7 +268,7 @@ void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCr
             <p>This function can be called without variable parameters:</p>
 
             <code-block type="c">
-storagePathCreateNP(storageLocal(), "/tmp/pgbackrest");
+storagePathCreateP(storageLocal(), "/tmp/pgbackrest");
             </code-block>
 
             <p>Or with variable parameters:</p>

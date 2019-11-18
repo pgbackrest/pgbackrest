@@ -27,7 +27,7 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(archiveLock)))), 0, "touch lock file");
         TEST_ASSIGN(lockHandleTest, lockAcquireFile(archiveLock, 0, true), "get lock");
         TEST_RESULT_BOOL(lockHandleTest != -1, true, "lock succeeds");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, archiveLock), true, "lock file was created");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLock), true, "lock file was created");
         TEST_ERROR(lockAcquireFile(archiveLock, 0, true), LockAcquireError,
             strPtr(
                 strNewFmt(
@@ -44,17 +44,17 @@ testRun(void)
         TEST_RESULT_VOID(lockReleaseFile(lockHandleTest, archiveLock), "release lock");
 
         TEST_RESULT_VOID(lockReleaseFile(lockHandleTest, archiveLock), "release lock");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, archiveLock), false, "lock file was removed");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLock), false, "lock file was removed");
         TEST_RESULT_VOID(lockReleaseFile(lockHandleTest, archiveLock), "release lock again without error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *subPathLock = strNewFmt("%s/sub1/sub2/db-backup" LOCK_FILE_EXT, testPath());
 
         TEST_ASSIGN(lockHandleTest, lockAcquireFile(subPathLock, 0, true), "get lock in subpath");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, subPathLock), true, "lock file was created");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, subPathLock), true, "lock file was created");
         TEST_RESULT_BOOL(lockHandleTest != -1, true, "lock succeeds");
         TEST_RESULT_VOID(lockReleaseFile(lockHandleTest, subPathLock), "release lock");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, subPathLock), false, "lock file was removed");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, subPathLock), false, "lock file was removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *dirLock = strNewFmt("%s/dir" LOCK_FILE_EXT, testPath());
@@ -139,7 +139,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, lockTypeArchive, 0, true), true, "archive lock");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, archiveLockFile), true, "archive lock file was created");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
         TEST_ERROR(lockAcquire(lockPath, stanza, lockTypeArchive, 0, false), AssertError, "lock is already held by this process");
         TEST_RESULT_VOID(lockRelease(true), "release archive lock");
 
@@ -160,8 +160,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, lockTypeAll, 0, true), true, "all lock");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, archiveLockFile), true, "archive lock file was created");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, backupLockFile), true, "backup lock file was created");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
         TEST_ERROR(
             lockAcquire(lockPath, stanza, lockTypeAll, 0, false), AssertError,
             "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
@@ -174,14 +174,14 @@ testRun(void)
         String *lockFileTest = strDup(lockFile[lockTypeBackup]);
 
         TEST_RESULT_VOID(lockClear(true), "clear backup lock");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, backupLockFile), true, "backup lock file still exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file still exists");
         lockReleaseFile(lockHandleTest, lockFileTest);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, lockTypeAll, 0, true), true, "all lock");
         TEST_RESULT_VOID(lockClear(true), "clear all lock");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, archiveLockFile), true, "archive lock file still exists");
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, backupLockFile), true, "backup lock file still exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file still exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file still exists");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

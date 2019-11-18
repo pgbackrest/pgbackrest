@@ -436,7 +436,7 @@ pgControlFromFile(const Storage *storage)
     {
         // Read control file
         Buffer *controlFile = storageGetP(
-            storageNewReadNP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), .exactSize = PG_CONTROL_DATA_SIZE);
+            storageNewReadP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), .exactSize = PG_CONTROL_DATA_SIZE);
 
         result = pgControlFromBuffer(controlFile);
     }
@@ -532,7 +532,7 @@ pgWalFromFile(const String *walFile)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Read WAL segment header
-        Buffer *walBuffer = storageGetP(storageNewReadNP(storageLocal(), walFile), .exactSize = PG_WAL_HEADER_SIZE);
+        Buffer *walBuffer = storageGetP(storageNewReadP(storageLocal(), walFile), .exactSize = PG_WAL_HEADER_SIZE);
 
         result = pgWalFromBuffer(walBuffer);
     }

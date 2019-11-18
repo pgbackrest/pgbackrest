@@ -854,7 +854,7 @@ manifestNewBuild(
             .online = online,
             .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
             .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/pg_%s", strPtr(pgWalName(pgVersion))),
-            .pgPath = storagePathNP(storagePg, NULL),
+            .pgPath = storagePathP(storagePg, NULL),
         };
 
         // We won't identify db paths for PostgreSQL < 9.0.  This means that temp relations will not be excluded but it doesn't seem
@@ -911,7 +911,7 @@ manifestNewBuild(
 
         // Build manifest
         // -------------------------------------------------------------------------------------------------------------------------
-        StorageInfo info = storageInfoNP(storagePg, buildData.pgPath);
+        StorageInfo info = storageInfoP(storagePg, buildData.pgPath);
 
         ManifestPath path =
         {
@@ -2835,7 +2835,7 @@ manifestLoadFileCallback(void *data, unsigned int try)
         const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strPtr(loadData->fileName));
 
         // Attempt to load the file
-        IoRead *read = storageReadIo(storageNewReadNP(loadData->storage, fileName));
+        IoRead *read = storageReadIo(storageNewReadP(loadData->storage, fileName));
         cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
 
         MEM_CONTEXT_BEGIN(loadData->memContext)
@@ -2874,7 +2874,7 @@ manifestLoadFile(const Storage *storage, const String *fileName, CipherType ciph
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const char *fileNamePath = strPtr(storagePathNP(storage, fileName));
+        const char *fileNamePath = strPtr(storagePathP(storage, fileName));
 
         infoLoad(
             strNewFmt("unable to load backup manifest file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),

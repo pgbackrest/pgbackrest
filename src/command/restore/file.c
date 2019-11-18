@@ -86,7 +86,7 @@ restoreFile(
 
                         if (info.size != 0)
                         {
-                            read = storageReadIo(storageNewReadNP(storagePgWrite(), pgFile));
+                            read = storageReadIo(storageNewReadP(storagePgWrite(), pgFile));
                             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                             ioReadDrain(read);
                         }
@@ -166,7 +166,7 @@ restoreFile(
                 ioFilterGroupAdd(filterGroup, ioSizeNew());
 
                 // Copy file
-                storageCopyNP(
+                storageCopyP(
                     storageNewReadP(
                         storageRepo(),
                         strNewFmt(
