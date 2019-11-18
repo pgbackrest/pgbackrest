@@ -517,7 +517,7 @@ sub process
     my $strCipherPassManifest = $oBackupInfo->cipherPassSub();
 
     # Search cluster directory for an aborted backup
-    my $strBackupLabel = $rhParam->{backupLabelHalted};
+    my $strBackupLabel = $rhParam->{backupLabelResume};
     my $strCipherPassBackupSet;
     my $oAbortedManifest;
     my $strBackupPath;

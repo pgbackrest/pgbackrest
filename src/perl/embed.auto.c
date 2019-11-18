@@ -1314,7 +1314,7 @@ static const EmbeddedModule embeddedModule[] =
             "my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));\n"
             "my $strCipherPassManifest = $oBackupInfo->cipherPassSub();\n"
             "\n\n"
-            "my $strBackupLabel = $rhParam->{backupLabelHalted};\n"
+            "my $strBackupLabel = $rhParam->{backupLabelResume};\n"
             "my $strCipherPassBackupSet;\n"
             "my $oAbortedManifest;\n"
             "my $strBackupPath;\n"

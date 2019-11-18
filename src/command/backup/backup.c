@@ -181,10 +181,11 @@ backupPgGet(const InfoBackup *infoBackup)
 }
 
 /***********************************************************************************************************************************
-Check for a prior backup and promote to full if diff/incr and a prior backup does not exist
+Create an incremental backup if type is not full and a prior backup exists
 ***********************************************************************************************************************************/
+// Helper to find a compatible prior backup
 static Manifest *
-backupPrior(const InfoBackup *infoBackup)
+backupBuildIncrPrior(const InfoBackup *infoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -264,19 +265,80 @@ backupPrior(const InfoBackup *infoBackup)
     FUNCTION_LOG_RETURN(MANIFEST, result);
 }
 
-/***********************************************************************************************************************************
-Check for a halted backup that can be resumed
-***********************************************************************************************************************************/
-static const Manifest *
-backupHalted(const InfoBackup *infoBackup, const Manifest *manifest, String **backupLabelHalted)
+static bool
+backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, BackupType type)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM_P(STRING, backupLabelHalted);
+        FUNCTION_LOG_PARAM(ENUM, type);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
+    ASSERT(manifest != NULL);
+
+    bool result = false;
+
+    if (type != backupTypeFull)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
+            manifestBuildIncr(manifest, manifestPrior, type);
+
+            // !!! SHOULDN'T THIS LOGIC BE IN backupBuildIncrPrior()?
+            // If not defined this backup was done in a version prior to page checksums being introduced.  Just set checksum-page to
+            // false and move on without a warning.  Page checksums will start on the next full backup.
+            if (manifestData(manifestPrior)->backupOptionChecksumPage == NULL)
+            {
+                manifestChecksumPageSet(manifest, false);
+                cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+            }
+            // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain
+            // files would be checksummed and the list could be incomplete during reporting.
+            else
+            {
+                bool checksumPagePrior = varBool(manifestData(manifestPrior)->backupOptionChecksumPage);
+
+                if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
+                {
+                    LOG_WARN(
+                        "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
+                        strPtr(backupTypeStr(type)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
+                        cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(manifestPrior)->backupLabel));
+
+                    manifestChecksumPageSet(manifest, checksumPagePrior);
+                    cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
+                }
+            }
+
+            // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
+            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Incremental was built
+        result = true;
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
+Check for a backup that can be resumed and merge into the manifest if found
+***********************************************************************************************************************************/
+// Helper to find a resumable backup
+static const Manifest *
+backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String **backupLabelResume)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM_P(STRING, backupLabelResume);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+    ASSERT(manifest != NULL);
 
     Manifest *result = NULL;
 
@@ -294,66 +356,66 @@ backupHalted(const InfoBackup *infoBackup, const Manifest *manifest, String **ba
             const String *backupLabel = strLstGet(backupList, 0);
             const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
-            // Halted backups have a copy of the manifest but no main
+            // Resumable backups have a copy of the manifest but no main
             if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strPtr(manifestFile))) &&
                 !storageExistsP(storageRepo(), manifestFile))
             {
                 bool usable = false;
                 const String *reason = STRDEF("resume is disabled");
-                Manifest *manifestHalted = NULL;
+                Manifest *manifestResume = NULL;
 
-                // Attempt to read the manifest file in the halted backup to see if it can be used.  If any error at all occurs then
-                // the backup will be considered unusable and a resume will not be attempted.
+                // Attempt to read the manifest file in the resumable backup to see if it can be used.  If any error at all occurs
+                // then the backup will be considered unusable and a resume will not be attempted.
                 if (cfgOptionBool(cfgOptResume))
                 {
                     reason = strNewFmt("unable to read %s", strPtr(manifestFile));
 
                     TRY_BEGIN()
                     {
-                        manifestHalted = manifestLoadFile(
+                        manifestResume = manifestLoadFile(
                             storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                             infoPgCipherPass(infoBackupPg(infoBackup)));
-                        const ManifestData *manifestHaltedData = manifestData(manifestHalted);
+                        const ManifestData *manifestResumeData = manifestData(manifestResume);
 
                         // Check version
-                        if (!strEqZ(manifestHaltedData->backrestVersion, PROJECT_VERSION))
+                        if (!strEqZ(manifestResumeData->backrestVersion, PROJECT_VERSION))
                         {
                             reason = strNewFmt(
-                                "new " PROJECT_NAME " version '%s' does not match halted " PROJECT_NAME " version '%s'",
-                                PROJECT_VERSION, strPtr(manifestHaltedData->backrestVersion));
+                                "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
+                                PROJECT_VERSION, strPtr(manifestResumeData->backrestVersion));
                         }
                         // Check backup type
-                        else if (manifestHaltedData->backupType != backupType(cfgOptionStr(cfgOptType)))
+                        else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
                         {
                             reason = strNewFmt(
-                                "new backup type '%s' does not match halted backup type '%s'", strPtr(cfgOptionStr(cfgOptType)),
-                                strPtr(backupTypeStr(manifestHaltedData->backupType)));
+                                "new backup type '%s' does not match resumable backup type '%s'", strPtr(cfgOptionStr(cfgOptType)),
+                                strPtr(backupTypeStr(manifestResumeData->backupType)));
                         }
                         else if (!strEq(
-                                    manifestHaltedData->backupLabelPrior,
+                                    manifestResumeData->backupLabelPrior,
                                     manifestData(manifest)->backupLabelPrior ? manifestData(manifest)->backupLabelPrior : NULL))
                         {
                             reason = strNewFmt(
-                                "new prior backup label '%s' does not match halted prior backup label '%s'",
-                                manifestHaltedData->backupLabelPrior ? strPtr(manifestHaltedData->backupLabelPrior) : "<undef>",
+                                "new prior backup label '%s' does not match resumable prior backup label '%s'",
+                                manifestResumeData->backupLabelPrior ? strPtr(manifestResumeData->backupLabelPrior) : "<undef>",
                                 manifestData(manifest)->backupLabelPrior ?
                                     strPtr(manifestData(manifest)->backupLabelPrior) : "<undef>");
                         }
                         // Check compression
-                        else if (manifestHaltedData->backupOptionCompress != cfgOptionBool(cfgOptCompress))
+                        else if (manifestResumeData->backupOptionCompress != cfgOptionBool(cfgOptCompress))
                         {
                             reason = strNewFmt(
-                                "new compress option '%s' does not match halted compress option '%s'",
+                                "new compress option '%s' does not match resumable compress option '%s'",
                                 cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
-                                cvtBoolToConstZ(manifestHaltedData->backupOptionCompress));
+                                cvtBoolToConstZ(manifestResumeData->backupOptionCompress));
                         }
                         // Check hardlink
-                        else if (manifestHaltedData->backupOptionHardLink != cfgOptionBool(cfgOptRepoHardlink))
+                        else if (manifestResumeData->backupOptionHardLink != cfgOptionBool(cfgOptRepoHardlink))
                         {
                             reason = strNewFmt(
-                                "new hardlink option '%s' does not match halted hardlink option '%s'",
+                                "new hardlink option '%s' does not match resumable hardlink option '%s'",
                                 cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
-                                cvtBoolToConstZ(manifestHaltedData->backupOptionHardLink));
+                                cvtBoolToConstZ(manifestResumeData->backupOptionHardLink));
                         }
                         else
                             usable = true;
@@ -369,15 +431,15 @@ backupHalted(const InfoBackup *infoBackup, const Manifest *manifest, String **ba
                 {
                     // !!! HACKY BIT TO MAKE PERL HAPPY
                     memContextSwitch(MEM_CONTEXT_OLD());
-                    *backupLabelHalted = strDup(backupLabel);
+                    *backupLabelResume = strDup(backupLabel);
                     memContextSwitch(MEM_CONTEXT_TEMP());
 
-                    result = manifestMove(manifestHalted, MEM_CONTEXT_OLD());
+                    result = manifestMove(manifestResume, MEM_CONTEXT_OLD());
                 }
-                // Else warn and remove the unusable halted backup
+                // Else warn and remove the unusable backup
                 else
                 {
-                    LOG_WARN("halted backup '%s' cannot be resumed: %s", strPtr(backupLabel), strPtr(reason));
+                    LOG_WARN("backup '%s' cannot be resumed: %s", strPtr(backupLabel), strPtr(reason));
 
                     storagePathRemoveP(
                         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel)), .recurse = true);
@@ -388,6 +450,48 @@ backupHalted(const InfoBackup *infoBackup, const Manifest *manifest, String **ba
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(MANIFEST, result);
+}
+
+static bool
+backupResume(const InfoBackup *infoBackup, Manifest *manifest, String **backupLabelResume)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM_P(STRING, backupLabelResume);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+    ASSERT(manifest != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const Manifest *manifestResume = backupResumeFind(infoBackup, manifest, backupLabelResume);
+
+        // If a resumable backup was found set the label and cipher subpass
+        if (manifestResume)
+        {
+            // Resuming
+            result = true;
+
+            // Reuse the resumed backup label
+            manifestBackupLabelSet(manifest, manifestData(manifestResume)->backupLabel);
+
+            // If resuming a full backup then copy cipher subpass since it was used to encrypt the resumable files
+            if (manifestData(manifest)->backupType == backupTypeFull)
+                manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
+
+            // !!! HACKY BIT TO MAKE PERL HAPPY
+            memContextSwitch(MEM_CONTEXT_OLD());
+            *backupLabelResume = strDup(*backupLabelResume);
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -420,7 +524,6 @@ cmdBackup(void)
 
         // Get pg storage and database objects
         BackupPg pg = backupPgGet(infoBackup);
-        (void)pg; // !!! REMOVE
 
         // !!! BACKUP NEEDS TO START HERE
 
@@ -441,66 +544,18 @@ cmdBackup(void)
 
         manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), timestampCopyStart);
 
-        // Get the prior manifest if one exists
-        if (type != backupTypeFull)
-        {
-            Manifest *manifestPrior = backupPrior(infoBackup);
-            manifestBuildIncr(manifest, manifestPrior, type);
-
-            // If not defined this backup was done in a version prior to page checksums being introduced.  Just set checksum-page to
-            // false and move on without a warning.  Page checksums will start on the next full backup.
-            if (manifestData(manifestPrior)->backupOptionChecksumPage == NULL)
-            {
-                manifestChecksumPageSet(manifest, false);
-                cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
-            }
-            // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain
-            // files would be checksummed and the list could be incomplete during reporting.
-            else
-            {
-                bool checksumPagePrior = varBool(manifestData(manifestPrior)->backupOptionChecksumPage);
-
-                if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
-                {
-                    LOG_WARN(
-                        "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
-                        strPtr(backupTypeStr(type)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
-                        cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(manifestPrior)->backupLabel));
-
-                    manifestChecksumPageSet(manifest, checksumPagePrior);
-                    cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
-                }
-            }
-
-            // Set the cipher subpass
-            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
-
-            // Free the prior manifest now since it might use a lot of memory
-            manifestFree(manifestPrior);
-        }
-        // Else generate cipher subpass if encryption is enabled
-        else if (cipherType(cfgOptionStr(cfgOptRepoCipherType)))
+        // Build an incremental backup if type is not full
+        if (!backupBuildIncr(infoBackup, manifest, type))
             manifestCipherSubPassSet(manifest, cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
-        // Check for a halted backup
-        String *backupLabelHalted = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
-        const Manifest *manifestHalted = backupHalted(infoBackup, manifest, &backupLabelHalted);
-        (void)manifestHalted; // !!! REMOVE
+        // Resume a backup when possible
+        String *backupLabelResume = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
 
-        // If a halted backup was found set the label and cipher subpass
-        if (manifestHalted)
-        {
-            manifestBackupLabelSet(manifest, manifestData(manifestHalted)->backupLabel);
-
-            // !!! THIS IS REQUIRED FOR FULL BACKUP RESUMES -- SEEMS LIKE THIS COULD ALL BE A BIT MORE STREAMLINED?
-            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestHalted));
-        }
-        // If no halted backup was found then generate a backup label and a cipher subpass (if needed)
-        else
+        if (!backupResume(infoBackup, manifest, &backupLabelResume))
             manifestBackupLabelSet(manifest, backupLabel(type, manifestData(manifest)->backupLabelPrior, timestampStart));
 
         // Set the values required to complete the manifest
@@ -518,15 +573,18 @@ cmdBackup(void)
         kvPut(paramKv, VARSTRDEF("pgControlVersion"), VARUINT(pgControlVersion(infoPg.version)));
         kvPut(paramKv, VARSTRDEF("pgCatalogVersion"), VARUINT(pgCatalogVersion(infoPg.version)));
         kvPut(paramKv, VARSTRDEF("backupLabel"), VARSTR(manifestData(manifest)->backupLabel));
-        kvPut(paramKv, VARSTRDEF("backupLabelHalted"), backupLabelHalted ? VARSTR(backupLabelHalted) : NULL);
+        kvPut(paramKv, VARSTRDEF("backupLabelResume"), backupLabelResume ? VARSTR(backupLabelResume) : NULL);
 
         StringList *paramList = strLstNew();
         strLstAdd(paramList, jsonFromVar(varNewKv(paramKv)));
         cfgCommandParamSet(paramList);
 
         // Save the manifest so the Perl code can read it
-        if (!backupLabelHalted && storageFeature(storageRepoWrite(), storageFeaturePath))
-            storagePathCreateP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)));
+        if (!backupLabelResume && storageFeature(storageRepoWrite(), storageFeaturePath))
+        {
+            storagePathCreateP(
+                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)));
+        }
 
         IoWrite *write = storageWriteIo(
             storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".pass")));

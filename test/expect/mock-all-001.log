@@ -1478,7 +1478,7 @@ P00   WARN: backup '[BACKUP-INCR-2]' missing manifest removed from backup.info
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: halted backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match halted backup type 'incr'
+P00   WARN: backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match resumable backup type 'incr'
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1679,7 +1679,7 @@ P00   WARN: backup '[BACKUP-DIFF-1]' missing manifest removed from backup.info
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: halted backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
+P00   WARN: backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
