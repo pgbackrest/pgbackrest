@@ -266,12 +266,11 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 }
 
 static bool
-backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, BackupType type)
+backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(ENUM, type);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
@@ -279,46 +278,51 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, BackupType typ
 
     bool result = false;
 
-    if (type != backupTypeFull)
+    // No incremental if backup type is full
+    if (backupType(cfgOptionStr(cfgOptType)) != backupTypeFull)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
             Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
-            manifestBuildIncr(manifest, manifestPrior, type);
 
-            // !!! SHOULDN'T THIS LOGIC BE IN backupBuildIncrPrior()?
-            // If not defined this backup was done in a version prior to page checksums being introduced.  Just set checksum-page to
-            // false and move on without a warning.  Page checksums will start on the next full backup.
-            if (manifestData(manifestPrior)->backupOptionChecksumPage == NULL)
+            if (backupType(cfgOptionStr(cfgOptType)) != backupTypeFull)
             {
-                manifestChecksumPageSet(manifest, false);
-                cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
-            }
-            // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain
-            // files would be checksummed and the list could be incomplete during reporting.
-            else
-            {
-                bool checksumPagePrior = varBool(manifestData(manifestPrior)->backupOptionChecksumPage);
+                manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)));
 
-                if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
+                // !!! SHOULDN'T THIS LOGIC BE IN backupBuildIncrPrior()?
+                // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
+                // checksum-page to false and move on without a warning.  Page checksums will start on the next full backup.
+                if (manifestData(manifestPrior)->backupOptionChecksumPage == NULL)
                 {
-                    LOG_WARN(
-                        "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
-                        strPtr(backupTypeStr(type)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
-                        cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(manifestPrior)->backupLabel));
-
-                    manifestChecksumPageSet(manifest, checksumPagePrior);
-                    cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
+                    manifestChecksumPageSet(manifest, false);
+                    cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
                 }
-            }
+                // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain
+                // files would be checksummed and the list could be incomplete during reporting.
+                else
+                {
+                    bool checksumPagePrior = varBool(manifestData(manifestPrior)->backupOptionChecksumPage);
 
-            // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
-            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
+                    if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
+                    {
+                        LOG_WARN(
+                            "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
+                            strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
+                            cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(manifestPrior)->backupLabel));
+
+                        manifestChecksumPageSet(manifest, checksumPagePrior);
+                        cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
+                    }
+                }
+
+                // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
+                manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
+
+                // Incremental was built
+                result = true;
+            }
         }
         MEM_CONTEXT_TEMP_END();
-
-        // Incremental was built
-        result = true;
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -513,9 +517,6 @@ cmdBackup(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the requested backup type
-        BackupType type = backupType(cfgOptionStr(cfgOptType));
-
         // Load backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
@@ -545,7 +546,7 @@ cmdBackup(void)
         manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), timestampCopyStart);
 
         // Build an incremental backup if type is not full
-        if (!backupBuildIncr(infoBackup, manifest, type))
+        if (!backupBuildIncr(infoBackup, manifest))
             manifestCipherSubPassSet(manifest, cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
 
         // Set delta if it is not already set and the manifest requires it
@@ -556,7 +557,11 @@ cmdBackup(void)
         String *backupLabelResume = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
 
         if (!backupResume(infoBackup, manifest, &backupLabelResume))
-            manifestBackupLabelSet(manifest, backupLabel(type, manifestData(manifest)->backupLabelPrior, timestampStart));
+        {
+            manifestBackupLabelSet(
+                manifest,
+                backupLabel(backupType(cfgOptionStr(cfgOptType)), manifestData(manifest)->backupLabelPrior, timestampStart));
+        }
 
         // Set the values required to complete the manifest
         manifestBuildComplete(
