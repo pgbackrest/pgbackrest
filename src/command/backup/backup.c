@@ -560,12 +560,20 @@ cmdBackup(void)
 
         // Set the values required to complete the manifest
         manifestBuildComplete(
-            // !!! SEEMS LIKE THE ARCHIVE CHECK CALCULATION SHOULD BE ONLINE ONLY (COPIED FROM PERL, THOUGH)
+            // !!! SEEMS LIKE THE ARCHIVE CHECK CALCULATION SHOULD BE ONLINE ONLY (WAS COPIED FROM PERL, THOUGH)
             manifest, timestampStart, infoPg.id, infoPg.systemId, !cfgOptionBool(cfgOptOnline) || cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
             cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptCompress),
             cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
             cfgOptionBool(cfgOptOnline), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
+
+        // Backup from standby can only be used on PostgreSQL >= 9.1
+        if (cfgOption(cfgOptOnline) && cfgOption(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
+        {
+            THROW_FMT(
+                ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",
+                strPtr(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
+        }
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
         // !!! ---------------------------------------------------------------------------------------------------------------------

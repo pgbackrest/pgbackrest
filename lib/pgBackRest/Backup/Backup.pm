@@ -558,14 +558,6 @@ sub process
     ################################################################################################################################
     # ALL THE ABOVE EXISTS ONLY FOR MIGRATION
     ################################################################################################################################
-    # Backup from standby can only be used on PostgreSQL >= 9.1
-    if (cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_BACKUP_STANDBY) && $rhParam->{pgVersion} < PG_VERSION_BACKUP_STANDBY)
-    {
-        confess &log(ERROR,
-            'option \'' . cfgOptionName(CFGOPT_BACKUP_STANDBY) . '\' not valid for PostgreSQL < ' . PG_VERSION_BACKUP_STANDBY,
-            ERROR_CONFIG);
-    }
-
     # Start backup (unless --no-online is set)
     my $strArchiveStart = undef;
     my $strLsnStart = undef;
