@@ -499,6 +499,94 @@ backupResume(const InfoBackup *infoBackup, Manifest *manifest, String **backupLa
 }
 
 /***********************************************************************************************************************************
+Start the backup
+***********************************************************************************************************************************/
+static void
+backupStart(BackupPg *pg)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+    FUNCTION_LOG_END();
+
+    // If this is an offline backup
+    if (!cfgOptionBool(cfgOptOnline))
+    {
+        // If checksum-page is not explicitly enabled then disable it.  We can now detect checksums by reading pg_control directly
+        // but the integration tests can't properly enable checksums.
+        if (!cfgOptionTest(cfgOptChecksumPage))
+            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+
+        // Check if Postgres is running and if so only continue when forced
+        if (storageExistsP(pg->storagePrimary, PG_FILE_POSTMASTERPID_STR))
+        {
+            if (cfgOptionBool(cfgOptForce))
+            {
+                LOG_WARN(
+                    "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMASTERPID " exists but --" CFGOPT_FORCE " was passed so backup"
+                    " will continue though it looks like the postmaster is running and the backup will probably not be consistent");
+            }
+            else
+            {
+                THROW(
+                    PostmasterRunningError,
+                    "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running."
+                    " Shutdown the postmaster and try again, or use --force.");
+            }
+        }
+    }
+    // Else start the backup normally
+    else
+    {
+        THROW(AssertError, "ONLINE BACKUPS DISABLED DURING DEVELOPMENT");
+
+        // # Start the backup
+        // ($strArchiveStart, $strLsnStart, $iWalSegmentSize) =
+        //     $oDbMaster->backupStart(
+        //         PROJECT_NAME . ' backup started at ' . timestampFormat(undef, $rhParam->{timestampStart}),
+        //         cfgOption(CFGOPT_START_FAST));
+        //
+        // # Record the archive start location
+        // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
+        // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strLsnStart);
+        // &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
+        //
+        // # Get the timeline from the archive
+        // $strTimelineCurrent = substr($strArchiveStart, 0, 8);
+        //
+        // # Get tablespace map
+        // $hTablespaceMap = $oDbMaster->tablespaceMapGet();
+        //
+        // # Get database map
+        // $hDatabaseMap = $oDbMaster->databaseMapGet();
+        //
+        // # Wait for replay on the standby to catch up
+        // if (cfgOption(CFGOPT_BACKUP_STANDBY))
+        // {
+        //     my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
+        //     $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
+        //
+        //     $oDbStandby->configValidate();
+        //
+        //     &log(INFO, "wait for replay on the standby to reach ${strLsnStart}");
+        //
+        //     my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strLsnStart);
+        //
+        //     &log(
+        //         INFO,
+        //         "replay on the standby reached ${strReplayedLSN}" .
+        //             (defined($strCheckpointLSN) ? ", checkpoint ${strCheckpointLSN}" : ''));
+        //
+        //     # The standby db object won't be used anymore so undef it to catch any subsequent references
+        //     undef($oDbStandby);
+        //     protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
+        // }
+        // !!! NEED TO SET START LSN HERE
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Make a backup
 ***********************************************************************************************************************************/
 void
@@ -526,19 +614,12 @@ cmdBackup(void)
         // Get pg storage and database objects
         BackupPg pg = backupPgGet(infoBackup);
 
-        // !!! BACKUP NEEDS TO START HERE
+        // Start the backup
+        backupStart(&pg);
 
         // Build the manifest
         Manifest *manifest = manifestNewBuild(
             pg.storagePrimary, infoPg.version, false, strLstNewVarLst(cfgOptionLst(cfgOptExclude)));
-
-        // If checksum-page is not explicitly enabled then disable it.  Even if the version is high enough to have checksums we
-        // can't know if they are enabled without asking the database.  When pg_control can be reliably parsed then this decision
-        // could be based on that.
-        if (!cfgOptionBool(cfgOptOnline) && !cfgOptionTest(cfgOptChecksumPage))
-        {
-            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
-        }
 
         // !!! NEED TO GET THIS FROM THE REMOTE AND WAIT REMAINDER WHEN ONLINE
         time_t timestampCopyStart = time(NULL);
