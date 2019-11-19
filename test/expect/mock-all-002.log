@@ -952,7 +952,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
 P00   WARN: backup '[BACKUP-INCR-2]' missing manifest removed from backup.info
 P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: halted backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match halted backup type 'incr'
+P00   WARN: backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match resumable backup type 'incr'
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 
@@ -1163,7 +1163,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
 P00   WARN: backup '[BACKUP-DIFF-1]' missing manifest removed from backup.info
 P00   WARN: file 'changetime.txt' has timestamp earlier than prior backup, enabling delta checksum
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: halted backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
+P00   WARN: backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 
