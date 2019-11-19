@@ -1219,17 +1219,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdStanzaCreate)
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Force stanza creation.")
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
-                (
-                    "CAUTION: Use --force only as a last resort, when all else fails. If data is missing from the repository then "
-                        "the recreated .info files will likely be corrupt.\n"
-                    "\n"
-                    "If the required stanza .info files do not exist in the repository but backups or WAL segments do exist, then "
-                        "this option can be used to force the stanza to be created from the existing data in the repository. This "
-                        "is most likely to be useful after corruption or an incomplete restore of the repository from elsewhere."
-                )
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE

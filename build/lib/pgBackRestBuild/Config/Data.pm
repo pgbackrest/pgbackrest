@@ -789,6 +789,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE =>
             {
                 &CFGDEF_DEFAULT => false,
+                &CFGDEF_INTERNAL => true,
             },
 
             &CFGCMD_STANZA_DELETE =>
