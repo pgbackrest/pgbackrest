@@ -15,6 +15,7 @@ Remote Storage Protocol Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/type/json.h"
 #include "config/config.h"
 #include "storage/remote/protocol.h"
 #include "storage/helper.h"
@@ -25,6 +26,8 @@ Constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_EXISTS_STR,                  PROTOCOL_COMMAND_STORAGE_EXISTS);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
+STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_STR,                    PROTOCOL_COMMAND_STORAGE_INFO);
+STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR,               PROTOCOL_COMMAND_STORAGE_INFO_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_LIST_STR,                    PROTOCOL_COMMAND_STORAGE_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
@@ -90,6 +93,90 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
 }
 
 /***********************************************************************************************************************************
+Write storage info into the protocol
+***********************************************************************************************************************************/
+// Helper to write storage type into the protocol
+static void
+storageRemoteInfoWriteType(ProtocolServer *server, StorageType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    switch (type)
+    {
+        case storageTypeFile:
+        {
+            protocolServerWriteLine(server, STRDEF("f"));
+            break;
+        }
+
+        case storageTypePath:
+        {
+            protocolServerWriteLine(server, STRDEF("p"));
+            break;
+        }
+
+        case storageTypeLink:
+        {
+            protocolServerWriteLine(server, STRDEF("l"));
+            break;
+        }
+
+        case storageTypeSpecial:
+        {
+            protocolServerWriteLine(server, STRDEF("s"));
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+storageRemoteInfoWrite(ProtocolServer *server, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    storageRemoteInfoWriteType(server, info->type);
+    protocolServerWriteLine(server, jsonFromUInt(info->userId));
+    protocolServerWriteLine(server, jsonFromStr(info->user));
+    protocolServerWriteLine(server, jsonFromUInt(info->groupId));
+    protocolServerWriteLine(server, jsonFromStr(info->group));
+    protocolServerWriteLine(server, jsonFromUInt(info->mode));
+    protocolServerWriteLine(server, jsonFromInt64(info->timeModified));
+
+    if (info->type == storageTypeFile)
+        protocolServerWriteLine(server, jsonFromUInt64(info->size));
+
+    if (info->type == storageTypeLink)
+        protocolServerWriteLine(server, jsonFromStr(info->linkDestination));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Callback to write info list into the protocol
+***********************************************************************************************************************************/
+static void
+storageRemoteProtocolInfoListCallback(void *server, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    protocolServerWriteLine(server, jsonFromStr(info->name));
+    storageRemoteInfoWrite(server, info);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Process storage protocol requests
 ***********************************************************************************************************************************/
 bool
@@ -115,12 +202,35 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
     {
         if (strEq(command, PROTOCOL_COMMAND_STORAGE_EXISTS_STR))
         {
-            protocolServerResponse(server, VARBOOL(             // The unusual line break is to make coverage happy -- not sure why
-                interface.exists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
+            protocolServerResponse(server, VARBOOL(storageInterfaceExistsP(driver, varStr(varLstGet(paramList, 0)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
         {
-            protocolServerResponse(server, varNewUInt64(interface.feature));
+            protocolServerWriteLine(server, jsonFromStr(storagePathP(storage, NULL)));
+            protocolServerWriteLine(server, jsonFromUInt64(interface.feature));
+
+            protocolServerResponse(server, NULL);
+        }
+        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
+        {
+            StorageInfo info = storageInterfaceInfoP(
+                driver, varStr(varLstGet(paramList, 0)), .followLink = varBool(varLstGet(paramList, 1)));
+
+            protocolServerResponse(server, VARBOOL(info.exists));
+
+            if (info.exists)
+            {
+                storageRemoteInfoWrite(server, &info);
+                protocolServerResponse(server, NULL);
+            }
+        }
+        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
+        {
+            bool result = storageInterfaceInfoListP(
+                driver, varStr(varLstGet(paramList, 0)), storageRemoteProtocolInfoListCallback, server);
+
+            protocolServerWriteLine(server, NULL);
+            protocolServerResponse(server, VARBOOL(result));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
         {
@@ -128,15 +238,14 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 server,
                 varNewVarLst(
                     varLstNewStrLst(
-                        interface.list(
-                            driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varStr(varLstGet(paramList, 1))))));
+                        storageInterfaceListP(
+                            driver, varStr(varLstGet(paramList, 0)), .expression = varStr(varLstGet(paramList, 1))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {
             // Create the read object
             IoRead *fileRead = storageReadIo(
-                interface.newRead(
-                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)), false));
+                storageInterfaceNewReadP(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1))));
 
             // Set filter group based on passed filters
             storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 2));
@@ -180,11 +289,12 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         {
             // Create the write object
             IoWrite *fileWrite = storageWriteIo(
-                interface.newWrite(
-                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varUIntForce(varLstGet(paramList, 1)),
-                    varUIntForce(varLstGet(paramList, 2)), varStr(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
-                    (time_t)varIntForce(varLstGet(paramList, 5)), varBool(varLstGet(paramList, 6)),
-                    varBool(varLstGet(paramList, 7)), varBool(varLstGet(paramList, 8)), varBool(varLstGet(paramList, 9)), false));
+                storageInterfaceNewWriteP(
+                    driver, varStr(varLstGet(paramList, 0)), .modeFile = varUIntForce(varLstGet(paramList, 1)),
+                    .modePath = varUIntForce(varLstGet(paramList, 2)), .user = varStr(varLstGet(paramList, 3)),
+                    .group = varStr(varLstGet(paramList, 4)), .timeModified = (time_t)varUInt64Force(varLstGet(paramList, 5)),
+                    .createPath = varBool(varLstGet(paramList, 6)), .syncFile = varBool(varLstGet(paramList, 7)),
+                    .syncPath = varBool(varLstGet(paramList, 8)), .atomic = varBool(varLstGet(paramList, 9))));
 
             // Set filter group based on passed filters
             storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), varLstGet(paramList, 10));
@@ -240,9 +350,9 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR))
         {
-            interface.pathCreate(
-                driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)),
-                varBool(varLstGet(paramList, 2)), varUIntForce(varLstGet(paramList, 3)));
+            storageInterfacePathCreateP(
+                driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varBool(varLstGet(paramList, 2)),
+                varUIntForce(varLstGet(paramList, 3)));
 
             protocolServerResponse(server, NULL);
         }
@@ -251,25 +361,22 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             // Not all drivers implement pathExists()
             CHECK(interface.pathExists != NULL);
 
-            protocolServerResponse(server, VARBOOL(             // The unusual line break is to make coverage happy -- not sure why
-                interface.pathExists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
+            protocolServerResponse(server, VARBOOL(storageInterfacePathExistsP(driver, varStr(varLstGet(paramList, 0)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {
             protocolServerResponse(server,
-                varNewBool(
-                    interface.pathRemove(
-                        driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)))));
+                VARBOOL(storageInterfacePathRemoveP(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
         {
-            interface.pathSync(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))));
+            storageInterfacePathSyncP(driver, varStr(varLstGet(paramList, 0)));
 
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_REMOVE_STR))
         {
-            interface.remove(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)));
+            storageInterfaceRemoveP(driver, varStr(varLstGet(paramList, 0)), .errorOnMissing = varBool(varLstGet(paramList, 1)));
 
             protocolServerResponse(server, NULL);
         }

@@ -7,6 +7,7 @@ Remote Storage
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
+#include "common/type/json.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
 #include "storage/remote/storage.intern.h"
@@ -22,22 +23,22 @@ Object type
 ***********************************************************************************************************************************/
 struct StorageRemote
 {
+    STORAGE_COMMON_MEMBER;
     MemContext *memContext;
     ProtocolClient *client;                                         // Protocol client
     unsigned int compressLevel;                                     // Protocol compression level
 };
 
-/***********************************************************************************************************************************
-Does a file exist? This function is only for files, not paths.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static bool
-storageRemoteExists(THIS_VOID, const String *file)
+storageRemoteExists(THIS_VOID, const String *file, StorageInterfaceExistsParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -57,43 +58,170 @@ storageRemoteExists(THIS_VOID, const String *file)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-File/path info
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
+// Helper to convert protocol storage type to an enum
+static StorageType
+storageRemoteInfoParseType(const char type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHAR, type);
+    FUNCTION_TEST_END();
+
+    switch (type)
+    {
+        case 'f':
+            FUNCTION_TEST_RETURN(storageTypeFile);
+
+        case 'p':
+            FUNCTION_TEST_RETURN(storageTypePath);
+
+        case 'l':
+            FUNCTION_TEST_RETURN(storageTypeLink);
+
+        case 's':
+            FUNCTION_TEST_RETURN(storageTypeSpecial);
+    }
+
+    THROW_FMT(AssertError, "unknown storage type '%c'", type);
+}
+
+// Helper to parse storage info from the protocol output
+static void
+storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, client);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    info->type = storageRemoteInfoParseType(strPtr(protocolClientReadLine(client))[0]);
+    info->userId = jsonToUInt(protocolClientReadLine(client));
+    info->user = jsonToStr(protocolClientReadLine(client));
+    info->groupId = jsonToUInt(protocolClientReadLine(client));
+    info->group = jsonToStr(protocolClientReadLine(client));
+    info->mode = jsonToUInt(protocolClientReadLine(client));
+    info->timeModified = (time_t)jsonToUInt64(protocolClientReadLine(client));
+
+    if (info->type == storageTypeFile)
+        info->size = jsonToUInt64(protocolClientReadLine(client));
+
+    if (info->type == storageTypeLink)
+        info->linkDestination = jsonToStr(protocolClientReadLine(client));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static StorageInfo
-storageRemoteInfo(THIS_VOID, const String *file, bool followLink)
+storageRemoteInfo(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, followLink);
+        FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(file != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    StorageInfo result = {.exists = false};
 
-    FUNCTION_LOG_RETURN(STORAGE_INFO, (StorageInfo){0});
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_STR);
+        protocolCommandParamAdd(command, VARSTR(file));
+        protocolCommandParamAdd(command, VARBOOL(param.followLink));
+
+        result.exists = varBool(protocolClientExecute(this->client, command, true));
+
+        if (result.exists)
+        {
+            // Read info from protocol
+            storageRemoteInfoParse(this->client, &result);
+
+            // Acknowledge command completed
+            protocolClientReadOutput(this->client, false);
+
+            // Duplicate strings into the calling context
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result.name = strDup(result.name);
+            result.linkDestination = strDup(result.linkDestination);
+            result.user = strDup(result.user);
+            result.group = strDup(result.group);
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
-/***********************************************************************************************************************************
-Get a list of files from a directory
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
+static bool
+storageRemoteInfoList(
+    THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData, StorageInterfaceInfoListParam param)
+{
+    THIS(StorageRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+        (void)param;                                                // No parameters are used
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+    ASSERT(callback != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
+        protocolCommandParamAdd(command, VARSTR(path));
+
+        // Send command
+        protocolClientWriteCommand(this->client, command);
+
+        // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
+        // since the filename is json-encoded so will always include quotes.
+        const String *name = protocolClientReadLine(this->client);
+
+        while (strSize(name) != 0)
+        {
+            StorageInfo info = {.exists = true, .name = jsonToStr(name)};
+
+            storageRemoteInfoParse(this->client, &info);
+            callback(callbackData, &info);
+
+            // Read the next item
+            name = protocolClientReadLine(this->client);
+        }
+
+        // Acknowledge command completed
+        result = varBool(protocolClientReadOutput(this->client, true));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
 static StringList *
-storageRemoteList(THIS_VOID, const String *path, const String *expression)
+storageRemoteList(THIS_VOID, const String *path, StorageInterfaceListParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(STRING, expression);
+        FUNCTION_LOG_PARAM(STRING, param.expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     StringList *result = NULL;
 
@@ -101,7 +229,7 @@ storageRemoteList(THIS_VOID, const String *path, const String *expression)
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LIST_STR);
         protocolCommandParamAdd(command, VARSTR(path));
-        protocolCommandParamAdd(command, VARSTR(expression));
+        protocolCommandParamAdd(command, VARSTR(param.expression));
 
         result = strLstMove(strLstNewVarLst(varVarLst(protocolClientExecute(this->client, command, true))), MEM_CONTEXT_OLD());
     }
@@ -110,11 +238,9 @@ storageRemoteList(THIS_VOID, const String *path, const String *expression)
     FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
-/***********************************************************************************************************************************
-New file read object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static StorageRead *
-storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, bool compressible)
+storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
 {
     THIS(StorageRemote);
 
@@ -122,40 +248,38 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, bool com
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_LOG_PARAM(BOOL, compressible);
+        FUNCTION_LOG_PARAM(BOOL, param.compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
         storageReadRemoteNew(
-            this, this->client, file, ignoreMissing, this->compressLevel > 0 ? compressible : false, this->compressLevel));
+            this, this->client, file, ignoreMissing, this->compressLevel > 0 ? param.compressible : false, this->compressLevel));
 }
 
-/***********************************************************************************************************************************
-New file write object
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static StorageWrite *
 storageRemoteNewWrite(
-    THIS_VOID, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group, time_t timeModified,
-    bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible)
+    THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(MODE, modeFile);
-        FUNCTION_LOG_PARAM(MODE, modePath);
-        FUNCTION_LOG_PARAM(STRING, user);
-        FUNCTION_LOG_PARAM(STRING, group);
-        FUNCTION_LOG_PARAM(TIME, timeModified);
-        FUNCTION_LOG_PARAM(BOOL, createPath);
-        FUNCTION_LOG_PARAM(BOOL, syncFile);
-        FUNCTION_LOG_PARAM(BOOL, syncPath);
-        FUNCTION_LOG_PARAM(BOOL, atomic);
-        FUNCTION_LOG_PARAM(BOOL, compressible);
+        FUNCTION_LOG_PARAM(MODE, param.modeFile);
+        FUNCTION_LOG_PARAM(MODE, param.modePath);
+        FUNCTION_LOG_PARAM(STRING, param.user);
+        FUNCTION_LOG_PARAM(STRING, param.group);
+        FUNCTION_LOG_PARAM(TIME, param.timeModified);
+        FUNCTION_LOG_PARAM(BOOL, param.createPath);
+        FUNCTION_LOG_PARAM(BOOL, param.syncFile);
+        FUNCTION_LOG_PARAM(BOOL, param.syncPath);
+        FUNCTION_LOG_PARAM(BOOL, param.atomic);
+        FUNCTION_LOG_PARAM(BOOL, param.compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -164,15 +288,15 @@ storageRemoteNewWrite(
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE,
         storageWriteRemoteNew(
-            this, this->client, file, modeFile, modePath, user, group, timeModified, createPath, syncFile, syncPath, atomic,
-            this->compressLevel > 0 ? compressible : false, this->compressLevel));
+            this, this->client, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
+            param.syncFile, param.syncPath, param.atomic, this->compressLevel > 0 ? param.compressible : false,
+            this->compressLevel));
 }
 
-/***********************************************************************************************************************************
-Create a path.  There are no physical paths on S3 so just return success.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static void
-storageRemotePathCreate(THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
+storageRemotePathCreate(
+    THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode, StorageInterfacePathCreateParam param)
 {
     THIS(StorageRemote);
 
@@ -182,6 +306,7 @@ storageRemotePathCreate(THIS_VOID, const String *path, bool errorOnExists, bool 
         FUNCTION_LOG_PARAM(BOOL, errorOnExists);
         FUNCTION_LOG_PARAM(BOOL, noParentCreate);
         FUNCTION_LOG_PARAM(MODE, mode);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -202,20 +327,20 @@ storageRemotePathCreate(THIS_VOID, const String *path, bool errorOnExists, bool 
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Does a path exist?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static bool
-storageRemotePathExists(THIS_VOID, const String *path)
+storageRemotePathExists(THIS_VOID, const String *path, StorageInterfacePathExistsParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     bool result = false;
 
@@ -231,11 +356,9 @@ storageRemotePathExists(THIS_VOID, const String *path)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Remove a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static bool
-storageRemotePathRemove(THIS_VOID, const String *path, bool recurse)
+storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
 {
     THIS(StorageRemote);
 
@@ -243,6 +366,7 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse)
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, recurse);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -263,17 +387,16 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-/***********************************************************************************************************************************
-Sync a path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static void
-storageRemotePathSync(THIS_VOID, const String *path)
+storageRemotePathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -291,18 +414,16 @@ storageRemotePathSync(THIS_VOID, const String *path)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Remove a file
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 static void
-storageRemoteRemove(THIS_VOID, const String *file, bool errorOnMissing)
+storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -312,7 +433,7 @@ storageRemoteRemove(THIS_VOID, const String *file, bool errorOnMissing)
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE_STR);
         protocolCommandParamAdd(command, VARSTR(file));
-        protocolCommandParamAdd(command, VARBOOL(errorOnMissing));
+        protocolCommandParamAdd(command, VARBOOL(param.errorOnMissing));
 
         protocolClientExecute(this->client, command, false);
     }
@@ -324,6 +445,21 @@ storageRemoteRemove(THIS_VOID, const String *file, bool errorOnMissing)
 /***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
+static const StorageInterface storageInterfaceRemote =
+{
+    .exists = storageRemoteExists,
+    .info = storageRemoteInfo,
+    .infoList = storageRemoteInfoList,
+    .list = storageRemoteList,
+    .newRead = storageRemoteNewRead,
+    .newWrite = storageRemoteNewWrite,
+    .pathCreate = storageRemotePathCreate,
+    .pathExists = storageRemotePathExists,
+    .pathRemove = storageRemotePathRemove,
+    .pathSync = storageRemotePathSync,
+    .remove = storageRemoteRemove,
+};
+
 Storage *
 storageRemoteNew(
     mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
@@ -350,22 +486,32 @@ storageRemoteNew(
         driver->memContext = MEM_CONTEXT_NEW();
         driver->client = client;
         driver->compressLevel = compressLevel;
+        driver->interface = storageInterfaceRemote;
 
-        uint64_t feature = 0;
+        const String *path = NULL;
 
         // Get storage features from the remote
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            feature = varUInt64(
-                protocolClientExecute(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR), true));
+            // Send command
+            protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR));
+
+            // Read values
+            path = jsonToStr(protocolClientReadLine(driver->client));
+            driver->interface.feature = jsonToUInt64(protocolClientReadLine(driver->client));
+
+            // Acknowledge command completed
+            protocolClientReadOutput(driver->client, false);
+
+            // Dup path into parent context
+            memContextSwitch(MEM_CONTEXT_OLD());
+            path = strDup(path);
+            memContextSwitch(MEM_CONTEXT_TEMP());
         }
         MEM_CONTEXT_TEMP_END();
 
-        this = storageNewP(
-            STORAGE_REMOTE_TYPE_STR, NULL, modeFile, modePath, write, pathExpressionFunction, driver, .feature = feature,
-            .exists = storageRemoteExists, .info = storageRemoteInfo, .list = storageRemoteList, .newRead = storageRemoteNewRead,
-            .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate, .pathExists = storageRemotePathExists,
-            .pathRemove = storageRemotePathRemove, .pathSync = storageRemotePathSync, .remove = storageRemoteRemove);
+        this = storageNew(
+            STORAGE_REMOTE_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 

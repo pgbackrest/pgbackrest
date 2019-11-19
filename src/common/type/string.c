@@ -635,8 +635,18 @@ strPathAbsolute(const String *this, const String *base)
             {
                 const String *pathPart = strLstGet(pathList, 0);
 
+                // If the last part is empty
                 if (strSize(pathPart) == 0)
+                {
+                    // Allow when this is the last part since it just means there was a trailing /
+                    if (strLstSize(pathList) == 1)
+                    {
+                        strLstRemoveIdx(pathList, 0);
+                        break;
+                    }
+
                     THROW_FMT(AssertError, "'%s' is not a valid relative path", strPtr(this));
+                }
 
                 if (strEq(pathPart, DOTDOT_STR))
                 {
@@ -759,7 +769,7 @@ strSub(const String *this, size_t start)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(start < this->size);
+    ASSERT(start <= this->size);
 
     FUNCTION_TEST_RETURN(strSubN(this, start, this->size - start));
 }
@@ -777,7 +787,7 @@ strSubN(const String *this, size_t start, size_t size)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(start < this->size);
+    ASSERT(start <= this->size);
     ASSERT(start + size <= this->size);
 
     FUNCTION_TEST_RETURN(strNewN(this->buffer + start, size));

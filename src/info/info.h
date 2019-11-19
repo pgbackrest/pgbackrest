@@ -54,6 +54,7 @@ void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *
 Getters
 ***********************************************************************************************************************************/
 const String *infoCipherPass(const Info *this);
+void infoCipherPassSet(Info *this, const String *cipherPass);
 const String *infoBackrestVersion(const Info *this);
 
 /***********************************************************************************************************************************

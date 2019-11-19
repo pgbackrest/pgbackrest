@@ -57,6 +57,9 @@ cmdBegin(bool logOption)
             {
                 strCatFmt(info, " %s:", PROJECT_VERSION);
 
+                // Get command define id used to determine which options are valid for this command
+                ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
+
                 // Add command parameters if they exist
                 const StringList *commandParamList = cfgCommandParam();
 
@@ -83,8 +86,10 @@ cmdBegin(bool logOption)
                 // Loop though options and add the ones that are interesting
                 for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    // Skip the option if it is not valid
-                    if (!cfgOptionValid(optionId))
+                    // Skip the option if not valid for this command.  Generally only one command runs at a time, but sometimes
+                    // commands are chained together (e.g. backup and expire) and the second command may not use all the options of
+                    // the first command.  Displaying them is harmless but might cause confusion.
+                    if (!cfgDefOptionValid(commandDefId, cfgOptionDefIdFromId(optionId)))
                         continue;
 
                     // If option was negated

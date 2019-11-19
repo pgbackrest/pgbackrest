@@ -492,7 +492,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-           storagePutNP(storageNewWriteNP(storageRepoWrite(),
+           storagePutP(storageNewWriteP(storageRepoWrite(),
            strNew(STORAGE_REPO_BACKUP "/20190923-164324F/" BACKUP_MANIFEST_FILE)), manifestContent),
            "write main manifest for pgId=2 - valid backup to add");
 
@@ -531,7 +531,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageRepoWrite(),
+            storagePutP(storageNewWriteP(storageRepoWrite(),
             strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
             manifestContent), "write manifest copy for pgId=1");
 
@@ -574,7 +574,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageRepoWrite(),
+            storagePutP(storageNewWriteP(storageRepoWrite(),
             strNew(STORAGE_REPO_BACKUP "/20190818-084555F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup pgId mismatch");
 
@@ -617,7 +617,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageRepoWrite(),
+            storagePutP(storageNewWriteP(storageRepoWrite(),
             strNew(STORAGE_REPO_BACKUP "/20190818-084666F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup system-id mismatch");
 
@@ -660,16 +660,16 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageRepoWrite(),
+            storagePutP(storageNewWriteP(storageRepoWrite(),
             strNew(STORAGE_REPO_BACKUP "/20190818-084777F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup version mismatch");
 
         TEST_RESULT_VOID(
-            storagePathCreateNP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F")),
+            storagePathCreateP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F")),
             "create backup on disk that is in current but no manifest");
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
+            strPtr(strLstJoin(strLstSort(storageListP(storageRepo(), STORAGE_REPO_BACKUP_STR,
             .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderAsc), ", ")),
             "20190818-084444F, 20190818-084502F, 20190818-084555F, 20190818-084666F, 20190818-084777F, 20190923-164324F",
             "confirm backups on disk");
@@ -702,9 +702,9 @@ testRun(void)
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info");
 
         TEST_RESULT_VOID(
-            storageCopyNP(
-                storageNewReadNP(storageRepo(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
-                storageNewWriteNP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
+            storageCopyP(
+                storageNewReadP(storageRepo(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
+                storageNewWriteP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
                 "write manifest from copy-only for pgId=1");
 
         TEST_RESULT_VOID(

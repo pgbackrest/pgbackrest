@@ -78,9 +78,10 @@ testRun(void)
         TEST_ERROR(strPathAbsolute(STRDEF(".."), STRDEF("path1")), AssertError, "base path 'path1' is not absolute");
         TEST_ERROR(
             strPathAbsolute(STRDEF(".."), STRDEF("/")), AssertError, "relative path '..' goes back too far in base path '/'");
-        TEST_ERROR(strPathAbsolute(STRDEF("path1/"), STRDEF("/")), AssertError, "'path1/' is not a valid relative path");
+        TEST_ERROR(strPathAbsolute(STRDEF("path1//"), STRDEF("/")), AssertError, "'path1//' is not a valid relative path");
         TEST_RESULT_STR_Z(strPathAbsolute(STRDEF("/"), NULL), "/", "path is already absolute");
         TEST_RESULT_STR_Z(strPathAbsolute(STRDEF(".."), STRDEF("/path1")), "/", "simple relative path");
+        TEST_RESULT_STR_Z(strPathAbsolute(STRDEF("../"), STRDEF("/path1")), "/", "simple relative path with trailing /");
         TEST_RESULT_STR_Z(
             strPathAbsolute(STRDEF("../path2/../path3"), STRDEF("/base1/base2")), "/base1/path3", "complex relative path");
     }
@@ -194,7 +195,9 @@ testRun(void)
     if (testBegin("strSub() and strSubN()"))
     {
         TEST_RESULT_STR(strPtr(strSub(STRDEF("ABCD"), 2)), "CD", "sub string");
+        TEST_RESULT_STR_Z(strSub(STRDEF("AB"), 2), "", "zero sub string");
         TEST_RESULT_STR(strPtr(strSubN(STRDEF("ABCD"), 1, 2)), "BC", "sub string with length");
+        TEST_RESULT_STR_Z(strSubN(STRDEF("D"), 1, 0), "", "zero sub string with length");
     }
 
     // *****************************************************************************************************************************

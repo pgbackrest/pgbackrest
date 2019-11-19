@@ -59,8 +59,8 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
-    storageRemoveNP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
-    storageRemoveNP(
+    storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
+    storageRemoveP(
         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(removeBackupLabel)));
 
     // Remove the backup from the info object
@@ -274,8 +274,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                 // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
                 StringList *listArchiveDisk = strLstSort(
                     strLstComparatorSet(
-                        storageListP(
-                            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE), .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                        storageListP(storageRepo(), STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
                         archiveIdComparator),
                     sortOrderAsc);
 
@@ -546,7 +545,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                         // Remove archive log if it is not used in a backup
                                         if (removeArchive)
                                         {
-                                            storageRemoveNP(
+                                            storageRemoveP(
                                                 storageRepoWrite(),
                                                 strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s",
                                                     strPtr(archiveId), strPtr(walPath), strPtr(walSubPath)));
@@ -598,8 +597,8 @@ removeExpiredBackup(InfoBackup *infoBackup)
     StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
     StringList *backupList = strLstSort(
         storageListP(
-            storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true,
-            .incremental = true)),
+            storageRepo(), STORAGE_REPO_BACKUP_STR,
+            .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
         sortOrderDesc);
 
     // Remove non-current backups from disk

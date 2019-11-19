@@ -1,5 +1,333 @@
 [
     {
+        "commit": "2d10293d041cbbc72e4a2bac32401f6f384ecb1a",
+        "date": "2019-11-12 15:51:28 -0500",
+        "subject": "v2.19: C Migrations and Bug Fixes"
+    },
+    {
+        "commit": "a44c5d0315e49c42eb908a4ed0605bee0c509f6d",
+        "date": "2019-11-12 13:12:07 -0500",
+        "subject": "Add Strings for STORAGE_REPO_ARCHIVE and STORAGE_REPO_BACKUP.",
+        "body": "These constants are used often enough that they deserve to have String constants rather than repeatedly calling STRDEF()."
+    },
+    {
+        "commit": "10c8eeaf6c0413da265047aeb02a047209ef9d69",
+        "date": "2019-11-08 18:58:45 -0500",
+        "subject": "Fix handling of repeated HTTP headers.",
+        "body": "When HTTP headers are repeated they should be considered equivalent to a single comma-separated header rather than generating an error, which was the prior behavior."
+    },
+    {
+        "commit": "43171786336733d8e1efe672b801236fd3e2d829",
+        "date": "2019-11-08 17:56:34 -0500",
+        "subject": "Update MinIO to newest release.",
+        "body": "We had some problems with newer versions so had held off on updating.  Those problems appear to have been resolved.\n\nIn addition, the --compat flag is no longer required.  Prior versions of MinIO required all parts of a multi-part upload (except the last) to be of equal size.  The --compat flag was introduced to restore the default S3 behavior.  Now --compat is only required when ETag is being used for MD5 verification, which we don't do."
+    },
+    {
+        "commit": "edcc7306a39852ddff507d384555230001442bf4",
+        "date": "2019-11-08 09:46:00 -0500",
+        "subject": "Add TIME parameter debug type.",
+        "body": "Previously we were using int64_t to debug time_t but this may not be right depending on how the compiler represents time_t, e.g. it could be a float.\n\nSince a mismatch would have caused a compiler error we are not worried that this has actually happened, and anyway the worst case is that the debug log would be wonky.\n\nThe primary benefit, aside from correctness, is that it makes choosing a parameter debug type for time_t obvious."
+    },
+    {
+        "commit": "eca00e0be00bcd692b10de1b89a700f6525d51a7",
+        "date": "2019-11-07 13:11:01 -0500",
+        "subject": "Add building a development environment to contributing documentation.",
+        "body": "This documentation shows how to build a development environment on Ubuntu 19.04 and should work for other Debian-based distros.\n\nNote that this document is not included in automated testing due to some unresolved issues with Docker in Docker on Travis CI.  We'll address this in the future when we add contributing documentation to the website."
+    },
+    {
+        "commit": "8b682b75d2ade2e52c75b417fad2eb61150616d1",
+        "date": "2019-11-02 10:35:48 +0100",
+        "subject": "Allow mock integration tests for all VM types.",
+        "body": "Previously the mock integration tests would be skipped for VMs other than the standard four used in CI.  Now VMs outside the standard four will run the same tests as VM4 (currently U18)."
+    },
+    {
+        "commit": "b3e5d88304860fbcb566059d08cbf85e2c3cd95a",
+        "date": "2019-11-02 09:59:39 +0100",
+        "subject": "Add markdown renderer for execute-list block."
+    },
+    {
+        "commit": "7168e0744018d7d27668d59bfe9b6deafe923efa",
+        "date": "2019-10-30 14:55:25 +0100",
+        "subject": "Use getcwd() to construct path when WAL path is relative.",
+        "body": "Using pg1-path, as we were doing previously, could lead to WAL being copied to/from unexpected places.  PostgreSQL sets the current working directory to PGDATA so we can use that to resolve relative paths."
+    },
+    {
+        "commit": "e06db21e35f701b62c625b9f25436459b8fd5c26",
+        "date": "2019-10-17 14:00:18 +0200",
+        "subject": "Error when specified vm is invalid."
+    },
+    {
+        "commit": "a52faf83a502427a7079ec2bae0593b318c2594c",
+        "date": "2019-10-17 11:56:45 +0200",
+        "subject": "Disable code generation on dry-run."
+    },
+    {
+        "commit": "fa6a54bb4503efdc8e02a98089a935b6d52a3797",
+        "date": "2019-10-16 17:05:24 +0200",
+        "subject": "Update last tests that required sudo.",
+        "body": "All tests should now run in a sudo-less environment."
+    },
+    {
+        "commit": "48bd9e22f124163aa61574027476af8b3737dc39",
+        "date": "2019-10-16 15:48:33 +0200",
+        "subject": "C test harness refactor.",
+        "body": "Consolidate setting configuration into hrnInit() and rename other functions for consistency.\n\nSplit out internal functions into a new header."
+    },
+    {
+        "commit": "b4aeb217e665a166cb75577e07f80b01bc0345d1",
+        "date": "2019-10-15 17:19:42 +0200",
+        "subject": "Allow parameters to be passed to travis.pl.",
+        "body": "This makes configuring tests easier.\n\nAlso add a parameter for tests that require sudo.  This should be retired at some point but some tests still require it."
+    },
+    {
+        "commit": "f3b2189659a7f0e8e660c1be42175f0ff82cffb0",
+        "date": "2019-10-15 13:27:03 +0200",
+        "subject": "Remove package build sudo into the container.",
+        "body": "By running this in the container we no longer need sudo on the host system for package builds."
+    },
+    {
+        "commit": "67dde73727d2b30ce3f329054398a1f516a65899",
+        "date": "2019-10-14 11:51:14 +0200",
+        "subject": "Run tests in tmpfs.",
+        "body": "This will likely improve performance, but it also makes the filesystem consistent between platforms.\n\nA number of tests were failing on shiftfs, which was the default for arm64 on Travis."
+    },
+    {
+        "commit": "b1dc5a6d269b858960061e59f3885303d2417051",
+        "date": "2019-10-13 14:02:52 -0400",
+        "subject": "Add disk/mem info for Travis.",
+        "body": "This is helpful for determining the virtual machine resources."
+    },
+    {
+        "commit": "64c6102a1536ba94f4957fe950038f31525748b5",
+        "date": "2019-10-12 14:47:01 -0400",
+        "subject": "Update packages required for Travis-CI builds.",
+        "body": "These packages are expected on the arm64 build even though we are using the same os image as amd64.  It appears the arm64 image is slimmer."
+    },
+    {
+        "commit": "35eef2b8676115036b9d68b14223629dd1e1b773",
+        "date": "2019-10-12 14:16:22 -0400",
+        "subject": "Use a lower user id for posix storage tests.",
+        "body": "arm64 was not happy with the old user id, so use something smaller."
+    },
+    {
+        "commit": "827e95944a2f13301fa14af5a8f11324e17a1cd9",
+        "date": "2019-10-12 13:52:45 -0400",
+        "subject": "Use < 0 and > 0 for strCmp() tests.",
+        "body": "Using -1 and 1 was a bit sloppy since the spec only guarantees that the values will be < 0 and > 0.\n\nFound on arm64 where the values were -64 and 64."
+    },
+    {
+        "commit": "a2fa1d04b0cbd6dbedaa2447273371c20bd46e56",
+        "date": "2019-10-12 11:26:13 -0400",
+        "subject": "Update container images to PostgreSQL 12 GA."
+    },
+    {
+        "commit": "397a41e0f9f82987952912b8127a5e6929e29752",
+        "date": "2019-10-12 11:24:55 -0400",
+        "subject": "Add Ubuntu 19.04 container definition."
+    },
+    {
+        "commit": "93656db186e6da286bd704dc65235fcc209bb19d",
+        "date": "2019-10-12 11:24:21 -0400",
+        "subject": "Update lcov to 1.14.",
+        "body": "1.13 is not compatible with gcc 8 which is what ships with newer distributions.  Build from source to get a more recent version.\n\n1.13 is not compatible with gcc 9 so we'll need to address that at a later date."
+    },
+    {
+        "commit": "11c7c8fabb1e3eb9dadce2231fbb9cb3d76d553f",
+        "date": "2019-10-12 09:45:18 -0400",
+        "subject": "Remove pgbackrest test user.",
+        "body": "This user was created before we tested in containers to ensure isolation between the pg and repo hosts which were then just directories.  The downside is that this resulted in a lot of sudos to set the pgbackrest user and to remove files which did not belong to the main test user.\n\nContainers provide isolation without needing separate users so we can now safely remove the pgbackrest user.  This allows us to remove most sudos, except where they are explicitly needed in tests.\n\nWhile we're at it, remove the code that installed the Perl C library (which also required sudo) and simply add the build path to @INC instead."
+    },
+    {
+        "commit": "6f0e7f00af3e83d071713a671a6f155cd1fa3b88",
+        "date": "2019-10-12 09:26:19 -0400",
+        "subject": "Fix recovery test failing in PostgreSQL 12.0.",
+        "body": "This test was not creating recovery.signal when testing with --type=preserve.  The preserve recovery type only keeps existing files and does not create any.\n\nRC1 was just ignoring recovery.signal and going right into recovery.  Weirdly, 12.0 used restore_command to do crash recovery which made the problem harder to diagnose, but this has now been fixed in PostgreSQL and should be released in 12.1."
+    },
+    {
+        "commit": "59a4a0c1b1726812126a13e57bee29689b0a8fdc",
+        "date": "2019-10-11 13:14:47 -0400",
+        "subject": "Add a warning about jq rounding numbers to the documentation."
+    },
+    {
+        "commit": "db1dc4f275667903f560c140c2c61cce7f9b4020",
+        "date": "2019-10-11 13:03:52 -0400",
+        "subject": "Remove pretty-printing from jsonFromKv() and jsonFromVar().",
+        "body": "Now that pretty-printing has been removed from the info command it no longer has a purpose, so remove it."
+    },
+    {
+        "commit": "d90b2724f883686afdae386c1350abfdcfb0d5fa",
+        "date": "2019-10-11 12:56:03 -0400",
+        "subject": "JSON output from the info command is no longer pretty-printed.",
+        "body": "Monitoring systems can more easily ingest the JSON without linefeeds.\n\nExternal tools such as jq can be used to pretty-print if desired."
+    },
+    {
+        "commit": "29725805668656a920283401ef144a98cee2c5f9",
+        "date": "2019-10-11 12:38:03 -0400",
+        "subject": "Remove info expect tests from mock/all and mock/stanza.",
+        "body": "These tests are redundant now that we have full coverage in the unit tests are are not worth maintaining anymore."
+    },
+    {
+        "commit": "e4408c7dd390b13bb022b29e8f0b151fa0526362",
+        "date": "2019-10-11 12:28:47 -0400",
+        "subject": "Refactor --pre option in documentation.",
+        "body": "Mark all pre commands as skip so they won't be run again after the container is built.\n\nEnsure that pre commands added to the container are run as the container user if they are not intended to run as root."
+    },
+    {
+        "commit": "642ce003c8e8f59ec67d3bda4c18decb4aa21ae2",
+        "date": "2019-10-11 11:32:51 -0400",
+        "subject": "Don't autogenerate embedded libc code by default.",
+        "body": "This is only needed when new code is added to the Perl C library, which is becoming rare as the migration progresses.\n\nAlso, the code will vary slightly based on the Perl version used for generation so for normal users it is just noise."
+    },
+    {
+        "commit": "bcd3e4953aa1c8e8ccfadd141f38473b2ecbaff6",
+        "date": "2019-10-10 22:10:20 -0400",
+        "subject": "Make perl/exec test container required.",
+        "body": "This test fails in some cases when --vm=none but it's not worth investigating since this code will be going away soon."
+    },
+    {
+        "commit": "e3d87ebace36984728ae571a77ca1e11ae383d5b",
+        "date": "2019-10-10 19:43:42 -0400",
+        "subject": "Fix mismatched timezone in expect test.",
+        "body": "Also run the --vm-none tests in a non-UTC timezone to prevent regressions."
+    },
+    {
+        "commit": "6db4e59a6631eb47758fd0dff772e2ca086e924b",
+        "date": "2019-10-10 16:13:43 -0400",
+        "subject": "Allow tests that use ports to run in parallel.",
+        "body": "Set the test index in the C unit test code so it can assign port numbers that won't conflict between tests."
+    },
+    {
+        "commit": "13fcbb24e940084710acc13627515522215369dc",
+        "date": "2019-10-10 15:09:11 -0400",
+        "subject": "Fix container test path being used when --vm=none."
+    },
+    {
+        "commit": "e732720d855cffa0e4bb80997529254323fd7767",
+        "date": "2019-10-10 11:28:37 -0400",
+        "subject": "Disable docker service for --vm=none test.",
+        "body": "Starting this service wastes time and this will help catch any regressions where containers are being built when they should not be."
+    },
+    {
+        "commit": "9a3ba649e111f3529bb6fe09238d9fcb81454487",
+        "date": "2019-10-10 11:25:59 -0400",
+        "subject": "Remove code to generate .travis.yml.",
+        "body": "Most of the logic has been moved to test/travis.pl so there wasn't much purpose to this code anymore."
+    },
+    {
+        "commit": "696e6a7c444ba0ec3a28f8762b6a7266751faa0f",
+        "date": "2019-10-10 11:21:09 -0400",
+        "subject": "Don't require sudo to run tests with --vm=none.",
+        "body": "Run these tests without sudo privileges on Travis to prevent regressions."
+    },
+    {
+        "commit": "50d1d0a4e8f232842a27c4998cb6af3f1d906bf3",
+        "date": "2019-10-10 09:28:50 -0400",
+        "subject": "Move release note to correct section."
+    },
+    {
+        "commit": "47e0ba2502e5c3e8eb088ffcbd774144741b599b",
+        "date": "2019-10-10 09:27:46 -0400",
+        "subject": "Fix remote timeout in delta restore.",
+        "body": "When performing a delta restore on a largely unchanged cluster the remote could timeout if no files were fetched from the repository within protocol-timeout.\n\nAdd keep-alives to prevent remote timeout."
+    },
+    {
+        "commit": "82baf1e521e2a1ed7b27403478aa4a1dc4a6afcc",
+        "date": "2019-10-10 08:33:40 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "7f369006b5c812d0d3e05f4735d03623c3873b45",
+        "date": "2019-10-09 15:03:03 -0400",
+        "subject": "Add gcc 9 support.",
+        "body": "A number of tests have been updated and Fedora 30 has been added to the test suite so the unit tests can run on gcc 9.\n\nStop running unit tests on co6/7 since we appear to have ample unit test coverage."
+    },
+    {
+        "commit": "528f4c4347d89a0c05b0a9521e8ef91432616b0c",
+        "date": "2019-10-09 14:38:24 -0400",
+        "subject": "Remove dependency on aws cli for testing.",
+        "body": "This tool was only being used it a few places but was a pretty large dependency.\n\nRework the forceStorageMove() code using our storage layer and replace one aws cli cp with a storage put.\n\nAlso, remove the Dockerfile that was once used to build the Scality S3 test container."
+    },
+    {
+        "commit": "ac870b42de5a51436a4a08c6ad405ac4f1dd0763",
+        "date": "2019-10-09 08:43:30 -0400",
+        "subject": "Refactor error logic to make sure Db object gets freed immediately.",
+        "body": "Because db can be reset to NULL on an error in the try block we need nested try blocks to ensure that db is non-NULL and can be freed on an error after being created.\n\nThis is not a production issue because the db will be freed when the temp mem context is freed, but it does affect reproducibility in the tests and is a bit tidier."
+    },
+    {
+        "commit": "61c4f64895497da4cbe1e9225f274d255dd5133e",
+        "date": "2019-10-08 18:56:55 -0400",
+        "subject": "Be smarter about which packages are loaded for testing.",
+        "body": "Now that our tests are more diversified it makes sense to load only the packages that are needed for each test.\n\nMove the package loads from .travis.yaml to test/travis.pl where we have more control over what is loaded."
+    },
+    {
+        "commit": "a1c13a50dd0886076a1f32e58901eec271d9ec9a",
+        "date": "2019-10-08 18:04:09 -0400",
+        "subject": "The check command is implemented entirely in C.",
+        "body": "Note that building the manifest on each host has been temporarily removed.\n\nThis feature will likely be brought back as a non-default option (after the manifest code has been fully migrated to C) since it can be fairly expensive."
+    },
+    {
+        "commit": "ecae5e34e5063838bb55d55b1752c6b2eaaaa75b",
+        "date": "2019-10-08 17:30:33 -0400",
+        "subject": "Update expire command to use C backup.info reconstruct.",
+        "body": "This was still being done in Perl until the C Manifest object was available."
+    },
+    {
+        "commit": "4e4d1f414a153232079f2e2e9ce203ffc5a2362c",
+        "date": "2019-10-08 16:04:27 -0400",
+        "subject": "Add infoBackupLoadFileReconstruct() to InfoBackup object.",
+        "body": "Check the backup.info file against the backup path.  Add any backups that are missing and remove any backups that no longer exist.\n\nIt's important to run this before backup or expire to be sure we are using the most up-to-date list of backups."
+    },
+    {
+        "commit": "b2825b82c7b8cf140969dd4e9fd04552e921bbfc",
+        "date": "2019-10-08 15:47:47 -0400",
+        "subject": "Add missing header file."
+    },
+    {
+        "commit": "6d8d0eeba71fa7cd00af6e40c0adf74638a371bd",
+        "date": "2019-10-08 15:37:08 -0400",
+        "subject": "Add pgBackRest version to Info and Manifest objects.",
+        "body": "This was not being exposed previously because it is primarily informational, but now it is needed to reconstruct the backup.info file."
+    },
+    {
+        "commit": "38b72eded4b0f295ed1f30f849f0a99f69e396d2",
+        "date": "2019-10-08 15:27:17 -0400",
+        "subject": "Document how to contribute to pgBackRest.",
+        "body": "There's a lot more to be done here, but this is a good start."
+    },
+    {
+        "commit": "a4152a0ea1dc5c28515aedf9690cab22765076cb",
+        "date": "2019-10-08 12:29:42 -0400",
+        "subject": "Update release instructions with a reminder to install latex.",
+        "body": "Latex is no longer installed by default in the Vagrantfile."
+    },
+    {
+        "commit": "45881c74aeff4bb25559ec0254fa7fc1960d9cab",
+        "date": "2019-10-08 12:06:30 -0400",
+        "subject": "Allow most unit tests to run outside of a container.",
+        "body": "Three major changes were required to get this working:\n\n1) Provide the path to pgbackrest in the build directory when running outside a container.  Tests in a container will continue to install and run against /usr/bin/pgbackrest.\n\n1) Set a per-test lock path so tests don't conflict on the default /tmp/pgbackrest path.  Also set a per-test log-path while we are at it.\n\n2) Use localhost instead of a custom host for TLS test connections.  Tests in containers will continue to update /etc/hosts and use the custom host.\n\nAdd infrastructure and update harnessCfgLoad*() to get the correct exe and paths loaded for testing.\n\nSince new tests are required to verify that running outside a container works, also rework the tests in Travis CI to provide coverage within a reasonable amount of time.  Mainly, break up to doc tests by VM and run an abbreviated unit test suite on co6 and co7."
+    },
+    {
+        "commit": "77b0c6c993a0e6ff45a6a99f343c3709a016d152",
+        "date": "2019-10-08 10:35:47 -0400",
+        "subject": "Add missing spaces."
+    },
+    {
+        "commit": "5394893e33a844991a913e3b3c8874b435ac88d1",
+        "date": "2019-10-03 11:14:22 -0400",
+        "subject": "Remove pgPath parameter from pgControlFromFile().",
+        "body": "In practice this function is always used with storagePg*() so pgPath is known."
+    },
+    {
+        "commit": "887ec97e0743f758a0a2d2222cd1553b91f0908d",
+        "date": "2019-10-03 06:58:52 -0400",
+        "subject": "Document maximum version for auto-stop option."
+    },
+    {
+        "commit": "008ec6b05c631adf08cba312d6bab972f02881ef",
+        "date": "2019-10-01 17:04:26 -0400",
+        "subject": "Begin v2.19 development."
+    },
+    {
         "commit": "4629237d6a308a250cd52fff49693cd0a1069253",
         "date": "2019-10-01 16:02:07 -0400",
         "subject": "v2.18: PostgreSQL 12 Support"

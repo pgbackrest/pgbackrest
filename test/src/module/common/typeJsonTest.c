@@ -38,7 +38,9 @@ testRun(void)
         TEST_ERROR(jsonToStr(strNew("\"\\j\"")), JsonFormatError, "invalid escape character 'j'");
         TEST_ERROR(jsonToStr(strNew("\"runonstring")), JsonFormatError, "expected '\"' but found null delimiter");
         TEST_ERROR(jsonToStr(strNew("\"normal\"L")), JsonFormatError, "unexpected characters after string at 'L'");
+        TEST_ERROR(jsonToStr(strNew("nullz")), JsonFormatError, "unexpected characters after string at 'z'");
 
+        TEST_RESULT_PTR(jsonToStr(strNew("null")), NULL, "null string");
         TEST_RESULT_STR(strPtr(jsonToStr(strNew(" \"test\""))), "test", "simple string");
         TEST_RESULT_STR(strPtr(jsonToStr(strNew("\"te\\\"st\" "))), "te\"st", "string with quote");
         TEST_RESULT_STR(strPtr(jsonToStr(strNew("\"\\\"\\\\\\/\\b\\n\\r\\t\\f\""))), "\"\\/\b\n\r\t\f", "string with escapes");

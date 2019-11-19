@@ -350,7 +350,7 @@ cfgFileLoad(                                                        // NOTE: Pas
             configFileName = optConfigDefault;
 
         // Load the config file
-        Buffer *buffer = storageGetNP(storageNewReadP(storageLocal(), configFileName, .ignoreMissing = !configRequired));
+        Buffer *buffer = storageGetP(storageNewReadP(storageLocal(), configFileName, .ignoreMissing = !configRequired));
 
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
@@ -358,7 +358,7 @@ cfgFileLoad(                                                        // NOTE: Pas
         else if (strEq(configFileName, optConfigDefaultCurrent))
         {
             // If confg is current default and it was not found, attempt to load the config file from the old default location
-            buffer = storageGetNP(storageNewReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
+            buffer = storageGetP(storageNewReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
 
             if (buffer != NULL)
                 result = strNewBuf(buffer);
@@ -398,7 +398,7 @@ cfgFileLoad(                                                        // NOTE: Pas
             {
                 cfgFileLoadPart(
                     &result,
-                    storageGetNP(
+                    storageGetP(
                         storageNewReadP(
                             storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))),
                             .ignoreMissing = true)));

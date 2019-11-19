@@ -138,6 +138,49 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 /***********************************************************************************************************************************
 Read the command output
 ***********************************************************************************************************************************/
+// Helper to process errors
+static void
+protocolClientProcessError(ProtocolClient *this, KeyValue *errorKv)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(KEY_VALUE, errorKv);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(errorKv != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Process error if any
+        const Variant *error = kvGet(errorKv, VARSTR(PROTOCOL_ERROR_STR));
+
+        if (error != NULL)
+        {
+            const ErrorType *type = errorTypeFromCode(varIntForce(error));
+            const String *message = varStr(kvGet(errorKv, VARSTR(PROTOCOL_OUTPUT_STR)));
+
+            // Required part of the message
+            String *throwMessage = strNewFmt(
+                "%s: %s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message));
+
+            // Add stack trace if the error is an assertion or debug-level logging is enabled
+            if (type == &AssertError || logAny(logLevelDebug))
+            {
+                const String *stack = varStr(kvGet(errorKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
+
+                strCat(throwMessage, "\n");
+                strCat(throwMessage, stack == NULL ? "no stack trace available" : strPtr(stack));
+            }
+
+            THROWP(type, strPtr(throwMessage));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 const Variant *
 protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
 {
@@ -157,28 +200,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
         KeyValue *responseKv = varKv(jsonToVar(response));
 
         // Process error if any
-        const Variant *error = kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STR));
-
-        if (error != NULL)
-        {
-            const ErrorType *type = errorTypeFromCode(varIntForce(error));
-            const String *message = varStr(kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR)));
-
-            // Required part of the message
-            String *throwMessage = strNewFmt(
-                "%s: %s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message));
-
-            // Add stack trace if the error is an assertion or debug-level logging is enabled
-            if (type == &AssertError || logAny(logLevelDebug))
-            {
-                const String *stack = varStr(kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
-
-                strCat(throwMessage, "\n");
-                strCat(throwMessage, stack == NULL ? "no stack trace available" : strPtr(stack));
-            }
-
-            THROWP(type, strPtr(throwMessage));
-        }
+        protocolClientProcessError(this, responseKv);
 
         // Get output
         result = kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR));
@@ -263,6 +285,50 @@ protocolClientNoOp(ProtocolClient *this)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Read a line
+***********************************************************************************************************************************/
+String *
+protocolClientReadLine(ProtocolClient *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = ioReadLine(this->read);
+
+        if (strSize(result) == 0)
+        {
+            THROW(FormatError, "unexpected empty line");
+        }
+        else if (strPtr(result)[0] == '{')
+        {
+            KeyValue *responseKv = varKv(jsonToVar(result));
+
+            // Process expected error
+            protocolClientProcessError(this, responseKv);
+
+            // If not an error then there is probably a protocol bug
+            THROW(FormatError, "expected error but got output");
+        }
+        else if (strPtr(result)[0] != '.')
+            THROW_FMT(FormatError, "invalid prefix in '%s'", strPtr(result));
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strSub(result, 1);
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************

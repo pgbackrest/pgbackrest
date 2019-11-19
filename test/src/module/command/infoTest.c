@@ -41,13 +41,13 @@ testRun(void)
         harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR(strPtr(infoRender()), "No stanzas exist in the repository.\n", "text - no stanzas");
 
-        storagePathCreateNP(storageLocalWrite(), archivePath);
-        storagePathCreateNP(storageLocalWrite(), backupPath);
+        storagePathCreateP(storageLocalWrite(), archivePath);
+        storagePathCreateP(storageLocalWrite(), backupPath);
 
         // Empty stanza
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), backupStanza1Path), "backup stanza1 directory");
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveStanza1Path), "archive stanza1 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup stanza1 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive stanza1 directory");
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
             "    status: error (missing stanza data)\n"
@@ -91,7 +91,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
+            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
                 harnessInfoChecksum(content)), "put backup info to file");
 
         TEST_ERROR_FMT(infoRender(), FileMissingError,
@@ -123,7 +123,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
+            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
                 harnessInfoChecksum(content)), "put archive info to file");
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
@@ -176,11 +176,11 @@ testRun(void)
         // Add WAL segments
         //--------------------------------------------------------------------------------------------------------------------------
         String *archiveDb3 = strNewFmt("%s/9.4-3/0000000100000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb3), "create db3 archive WAL1 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb3), "create db3 archive WAL1 directory");
 
         String *archiveDb3Wal = strNewFmt(
             "%s/000000010000000000000004-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strPtr(archiveDb3));
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "touch WAL3 file");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "touch WAL3 file");
 
         StringList *argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
@@ -200,7 +200,7 @@ testRun(void)
         // Coverage for stanzaStatus branches
         //--------------------------------------------------------------------------------------------------------------------------
         String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
         TEST_RESULT_INT(system(
             strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             strPtr(archiveDb1_1)))))), 0, "touch WAL1 file");
@@ -209,13 +209,13 @@ testRun(void)
             strPtr(archiveDb1_1)))))), 0, "touch WAL1 file");
 
         String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
         TEST_RESULT_INT(system(
             strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             strPtr(archiveDb1_2)))))), 0, "touch WAL2 file");
 
         String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
 
         harnessCfgLoad(cfgCmdInfo, argList);
         content = strNew
@@ -246,7 +246,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
+            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
                 harnessInfoChecksum(content)), "put backup info to file");
 
         TEST_RESULT_STR(strPtr(infoRender()),
@@ -361,7 +361,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
+            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
                 harnessInfoChecksum(content)), "put archive info to file - stanza1");
 
         content = strNew
@@ -408,7 +408,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
+            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
                 harnessInfoChecksum(content)), "put backup info to file - stanza1");
 
         // Manifest with all features
@@ -531,14 +531,14 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(),
+            storagePutP(storageNewWriteP(storageLocalWrite(),
             strNewFmt("%s/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE, strPtr(backupStanza1Path))), contentLoad),
             "write manifest - stanza1");
 
         String *archiveStanza2Path = strNewFmt("%s/stanza2", strPtr(archivePath));
         String *backupStanza2Path = strNewFmt("%s/stanza2", strPtr(backupPath));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), backupStanza1Path), "backup stanza2 directory");
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveStanza1Path), "archive stanza2 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup stanza2 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive stanza2 directory");
 
         content = strNew
         (
@@ -552,7 +552,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza2Path))),
+            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza2Path))),
                 harnessInfoChecksum(content)), "put archive info to file - stanza2");
 
         content = strNew
@@ -570,7 +570,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
+            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
                 harnessInfoChecksum(content)), "put backup info to file - stanza2");
 
         harnessCfgLoad(cfgCmdInfo, argList);
@@ -838,8 +838,8 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(
+            storagePutP(
+                storageNewWriteP(
                     storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
                 "write manifest");
@@ -889,8 +889,8 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(
+            storagePutP(
+                storageNewWriteP(
                     storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
             "write manifest");
@@ -992,7 +992,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/pgbackrest.conf", testPath())),
+            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/pgbackrest.conf", testPath())),
                 BUFSTR(content)), "put pgbackrest.conf file");
         strLstAddZ(argListText, "--repo-cipher-type=aes-256-cbc");
         strLstAdd(argListText, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
@@ -1070,8 +1070,8 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        storagePathCreateNP(storageLocalWrite(), archivePath);
-        storagePathCreateNP(storageLocalWrite(), backupPath);
+        storagePathCreateP(storageLocalWrite(), archivePath);
+        storagePathCreateP(storageLocalWrite(), backupPath);
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
@@ -1088,7 +1088,7 @@ testRun(void)
         Storage *storage = storagePosixNew(
             strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), "No stanzas exist in the repository.\n",
+            strPtr(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile)))), "No stanzas exist in the repository.\n",
             "    check text");
 
         //--------------------------------------------------------------------------------------------------------------------------

@@ -56,7 +56,7 @@ pgbackrest/test/test.pl --vm=none --dry-run
     2019-10-30 10:16:44.828 P00   INFO: check version info
     2019-10-30 10:16:45.318 P00   INFO: builds required: bin
 --> 2019-10-30 10:16:45.319 P00   INFO: 64 tests selected
-                                            
+
     2019-10-30 10:16:45.319 P00   INFO: P1-T01/64 - vm=none, module=common, test=error
            [filtered 61 lines of output]
     2019-10-30 10:16:45.334 P00   INFO: P1-T63/64 - vm=none, module=command, test=storage
@@ -77,9 +77,9 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
     2019-10-30 10:16:46.743 P00   INFO: cleanup old data
     2019-10-30 10:16:47.278 P00   INFO: builds required: none
     2019-10-30 10:16:47.282 P00   INFO: 1 test selected
-                                            
+
     2019-10-30 10:16:47.283 P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
-                                            
+
         run 001 - waitNew(), waitMore, and waitFree()
             000.004s l0018 -     expect AssertError: assertion 'waitTime >= 100 && waitTime <= 999999000' failed
             000.020s l0019 -     expect AssertError: assertion 'waitTime >= 100 && waitTime <= 999999000' failed
@@ -99,9 +99,9 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
             001.375s l0052 -         lower range check
             001.379s l0053 -         upper range check
             001.382s l0055 -         free wait
-        
+
         TESTS COMPLETED SUCCESSFULLY
-    
+
     2019-10-30 10:16:51.145 P00   INFO: P1-T1/1 - vm=none, module=common, test=wait (3.87s)
     2019-10-30 10:16:51.209 P00   INFO: writing C coverage report
     2019-10-30 10:16:51.674 P00   INFO: TESTS COMPLETED SUCCESSFULLY (5s)
@@ -120,7 +120,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
     2019-10-30 10:16:52.979 P00   INFO: cleanup old data
     2019-10-30 10:16:53.513 P00   INFO: builds required: none
     2019-10-30 10:16:53.517 P00   INFO: 3 tests selected
-                                            
+
     2019-10-30 10:16:57.501 P00   INFO: P1-T1/3 - vm=none, module=postgres, test=client (3.99s)
     2019-10-30 10:17:00.957 P00   INFO: P1-T2/3 - vm=none, module=postgres, test=interface (3.46s)
     2019-10-30 10:17:03.325 P00   INFO: P1-T3/3 - vm=none, module=postgres, test=page-checksum (2.37s)
@@ -156,7 +156,7 @@ pgbackrest/test/test.pl --vm=u19 --dev --module=mock --test=archive --run=2
     2019-10-30 10:17:07.346 P00   INFO: cleanup old data and containers
     2019-10-30 10:17:08.403 P00   INFO: builds required: bin, libc host
     2019-10-30 10:17:08.615 P00   INFO: 1 test selected
-                                            
+
     2019-10-30 10:17:41.992 P00   INFO: P1-T1/1 - vm=u19, module=mock, test=archive, run=2 (33.38s)
     2019-10-30 10:17:42.163 P00   INFO: no code modules had all tests run required for coverage
     2019-10-30 10:17:42.163 P00   INFO: writing C coverage report
@@ -325,7 +325,7 @@ Sometimes it is necessary to store a file to the test directory. The following d
 ```
 String *content = strNew("bad content");
 TEST_RESULT_VOID(
-    storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/backup/demo/backup.info", strPtr(repoPath))),
+    storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strPtr(repoPath))),
         harnessInfoChecksum(content)), "store a corrupt backup.info file");
 ```
 **Testing a log message**

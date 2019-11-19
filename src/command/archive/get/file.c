@@ -78,7 +78,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
                 }
                 // Else if not a WAL segment, see if it exists in the archive dir
                 else if (
-                    storageExistsNP(
+                    storageExistsP(
                         storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(archiveFile))))
                 {
                     archiveFileActual = archiveFile;
@@ -165,9 +165,9 @@ archiveGetFile(
             }
 
             // Copy the file
-            storageCopyNP(
+            storageCopyP(
                 storageNewReadP(
-                    storageRepo(), strNewFmt("%s/%s", STORAGE_REPO_ARCHIVE, strPtr(archiveGetCheckResult.archiveFileActual)),
+                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveGetCheckResult.archiveFileActual)),
                     .compressible = compressible),
                 destination);
 

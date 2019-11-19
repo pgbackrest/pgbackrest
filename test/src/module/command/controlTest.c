@@ -44,9 +44,9 @@ testRun(void)
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - no stanza, no stop files");
         harnessLogResult("P00   WARN: stop file does not exist");
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageData, strNew("lock/all" STOP_FILE_EXT)), NULL), "create stop file");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageData, strNew("lock/all" STOP_FILE_EXT)), NULL), "create stop file");
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - no stanza, stop file exists");
-        TEST_RESULT_BOOL(storageExistsNP(storageData, strNew("lock/all" STOP_FILE_EXT)), false, "    stop file removed");
+        TEST_RESULT_BOOL(storageExistsP(storageData, strNew("lock/all" STOP_FILE_EXT)), false, "    stop file removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -57,15 +57,15 @@ testRun(void)
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - stanza, no stop files");
         harnessLogResult("P00   WARN: stop file does not exist for stanza db");
 
-        storagePutNP(storageNewWriteNP(storageData, strNew("lock/all" STOP_FILE_EXT)), NULL);
+        storagePutP(storageNewWriteP(storageData, strNew("lock/all" STOP_FILE_EXT)), NULL);
         TEST_ERROR(lockStopTest(), StopError, "stop file exists for all stanzas");
 
-        storagePutNP(storageNewWriteNP(storageData, strNew("lock/db" STOP_FILE_EXT)), NULL);
+        storagePutP(storageNewWriteP(storageData, strNew("lock/db" STOP_FILE_EXT)), NULL);
         TEST_ERROR(lockStopTest(), StopError, "stop file exists for stanza db");
 
         TEST_RESULT_VOID(cmdStart(), "cmdStart - stanza, stop file exists");
-        TEST_RESULT_BOOL(storageExistsNP(storageData, strNew("lock/db" STOP_FILE_EXT)), false, "    stanza stop file removed");
-        TEST_RESULT_BOOL(storageExistsNP(storageData, strNew("lock/all" STOP_FILE_EXT)), true, "    all stop file not removed");
+        TEST_RESULT_BOOL(storageExistsP(storageData, strNew("lock/db" STOP_FILE_EXT)), false, "    stanza stop file removed");
+        TEST_RESULT_BOOL(storageExistsP(storageData, strNew("lock/all" STOP_FILE_EXT)), true, "    all stop file not removed");
     }
 
     // *****************************************************************************************************************************
@@ -77,12 +77,12 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStop(), "no stanza, create stop file");
         StorageInfo info = {0};
-        TEST_ASSIGN(info, storageInfoNP(storageData, lockPath), "    get path info");
+        TEST_ASSIGN(info, storageInfoP(storageData, lockPath), "    get path info");
         TEST_RESULT_INT(info.mode, 0770, "    check path mode");
         TEST_RESULT_BOOL(
-            storageExistsNP(storageData, strNewFmt("%s/all" STOP_FILE_EXT, strPtr(lockPath))), true, "    all stop file created");
+            storageExistsP(storageData, strNewFmt("%s/all" STOP_FILE_EXT, strPtr(lockPath))), true, "    all stop file created");
         TEST_ASSIGN(
-            info, storageInfoNP(storageData, strNewFmt("%s/all" STOP_FILE_EXT, strPtr(lockPath))), "    get file info");
+            info, storageInfoP(storageData, strNewFmt("%s/all" STOP_FILE_EXT, strPtr(lockPath))), "    get file info");
         TEST_RESULT_INT(info.mode, 0640, "    check file mode");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ testRun(void)
         harnessLogResult("P00   WARN: stop file already exists for all stanzas");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveNP(storageData, strNew("lockpath/all" STOP_FILE_EXT)), "remove stop file");
+        TEST_RESULT_VOID(storageRemoveP(storageData, strNew("lockpath/all" STOP_FILE_EXT)), "remove stop file");
         TEST_RESULT_INT(system(strPtr(strNewFmt("chmod 444 %s", strPtr(lockPath)))), 0, "change perms");
         TEST_ERROR_FMT(
             cmdStop(), FileOpenError, "unable to stat '%s/all.stop': [13] Permission denied", strPtr(lockPath));
@@ -104,7 +104,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdStop, argList);
 
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file");
-        TEST_RESULT_BOOL(storageExistsNP(storageData, stanzaStopFile), true, "    stanza stop file created");
+        TEST_RESULT_BOOL(storageExistsP(storageData, stanzaStopFile), true, "    stanza stop file created");
 
         StringList *lockPathList = NULL;
         TEST_ASSIGN(lockPathList, storageListP(storageData, strNew("lock"), .errorOnMissing = true), "    get file list");
@@ -114,17 +114,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStop(), "stanza, stop file already exists");
         harnessLogResult("P00   WARN: stop file already exists for stanza db");
-        TEST_RESULT_VOID(storageRemoveNP(storageData, stanzaStopFile), "    remove stop file");
+        TEST_RESULT_VOID(storageRemoveP(storageData, stanzaStopFile), "    remove stop file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--force");
         harnessCfgLoad(cfgCmdStop, argList);
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file, force");
-        TEST_RESULT_VOID(storageRemoveNP(storageData, stanzaStopFile), "    remove stop file");
+        TEST_RESULT_VOID(storageRemoveP(storageData, stanzaStopFile), "    remove stop file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(
+            storagePutP(
                 storageNewWriteP(storageData, strNewFmt("%s/bad" LOCK_FILE_EXT, strPtr(lockPath)), .modeFile = 0222), NULL),
             "create a lock file that cannot be opened");
         TEST_RESULT_VOID(cmdStop(), "    stanza, create stop file but unable to open lock file");
@@ -134,19 +134,19 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), NULL),
+            storagePutP(storageNewWriteP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), NULL),
             "create empty lock file");
         TEST_RESULT_VOID(cmdStop(), "    stanza, create stop file, force - empty lock file");
-        TEST_RESULT_BOOL(storageExistsNP(storageData, stanzaStopFile), true, "    stanza stop file created");
+        TEST_RESULT_BOOL(storageExistsP(storageData, stanzaStopFile), true, "    stanza stop file created");
         TEST_RESULT_BOOL(
-            storageExistsNP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), false,
+            storageExistsP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), false,
             "    no other process lock, lock file was removed");
 
         // empty lock file with another process lock, processId == NULL
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveNP(storageData, stanzaStopFile), "remove stop file");
+        TEST_RESULT_VOID(storageRemoveP(storageData, stanzaStopFile), "remove stop file");
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), NULL),
+            storagePutP(storageNewWriteP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), NULL),
             "    create empty lock file");
 
         HARNESS_FORK_BEGIN()
@@ -188,7 +188,7 @@ testRun(void)
                     cmdStop(),
                     "    stanza, create stop file, force - empty lock file with another process lock, processId == NULL");
                 TEST_RESULT_BOOL(
-                    storageExistsNP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), false,
+                    storageExistsP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), false,
                     "    lock file was removed");
 
                 // Notify the child to release the lock
@@ -201,9 +201,9 @@ testRun(void)
 
         // not empty lock file with another process lock, processId size trimmed to 0
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveNP(storageData, stanzaStopFile), "remove stop file");
+        TEST_RESULT_VOID(storageRemoveP(storageData, stanzaStopFile), "remove stop file");
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), BUFSTRDEF(" ")),
+            storagePutP(storageNewWriteP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), BUFSTRDEF(" ")),
             "    create non-empty lock file");
 
         HARNESS_FORK_BEGIN()
@@ -244,7 +244,7 @@ testRun(void)
                 TEST_RESULT_VOID(
                     cmdStop(), "    stanza, create stop file, force - empty lock file with another process lock, processId size 0");
                 TEST_RESULT_BOOL(
-                    storageExistsNP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), false,
+                    storageExistsP(storageData, strNewFmt("%s/empty" LOCK_FILE_EXT, strPtr(lockPath))), false,
                     "    lock file was removed");
 
                 // Notify the child to release the lock
@@ -257,7 +257,7 @@ testRun(void)
 
         // lock file with another process lock, processId is valid
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveNP(storageData, stanzaStopFile), "remove stop file");
+        TEST_RESULT_VOID(storageRemoveP(storageData, stanzaStopFile), "remove stop file");
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
@@ -301,10 +301,10 @@ testRun(void)
 
         // lock file with another process lock, processId is invalid
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveNP(storageData, stanzaStopFile), "remove stop file");
+        TEST_RESULT_VOID(storageRemoveP(storageData, stanzaStopFile), "remove stop file");
         TEST_RESULT_VOID(
-            storagePutNP(
-                storageNewWriteNP(storageData, strNewFmt("%s/badpid" LOCK_FILE_EXT, strPtr(lockPath))), BUFSTRDEF("-32768")),
+            storagePutP(
+                storageNewWriteP(storageData, strNewFmt("%s/badpid" LOCK_FILE_EXT, strPtr(lockPath))), BUFSTRDEF("-32768")),
             "create lock file with invalid PID");
 
         HARNESS_FORK_BEGIN()
@@ -328,7 +328,7 @@ testRun(void)
                 ioReadLine(read);
 
                 // Remove the file and close the handle
-                storageRemoveNP(storageData, strNewFmt("%s/badpid" LOCK_FILE_EXT, strPtr(lockPath)));
+                storageRemoveP(storageData, strNewFmt("%s/badpid" LOCK_FILE_EXT, strPtr(lockPath)));
                 close(lockHandle);
             }
             HARNESS_FORK_CHILD_END();
@@ -346,7 +346,7 @@ testRun(void)
                 TEST_RESULT_VOID(
                     cmdStop(), "    stanza, create stop file, force - lock file with another process lock, processId is invalid");
                 harnessLogResult("P00   WARN: unable to send term signal to process -32768");
-                TEST_RESULT_BOOL(storageExistsNP(storageData, stanzaStopFile), true, "    stanza stop file not removed");
+                TEST_RESULT_BOOL(storageExistsP(storageData, stanzaStopFile), true, "    stanza stop file not removed");
 
                 // Notify the child to release the lock
                 ioWriteLine(write, bufNew(0));

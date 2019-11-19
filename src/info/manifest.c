@@ -1957,7 +1957,7 @@ manifestLoadFileCallback(void *data, unsigned int try)
         const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strPtr(loadData->fileName));
 
         // Attempt to load the file
-        IoRead *read = storageReadIo(storageNewReadNP(loadData->storage, fileName));
+        IoRead *read = storageReadIo(storageNewReadP(loadData->storage, fileName));
         cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
 
         MEM_CONTEXT_BEGIN(loadData->memContext)
@@ -1996,7 +1996,7 @@ manifestLoadFile(const Storage *storage, const String *fileName, CipherType ciph
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const char *fileNamePath = strPtr(storagePathNP(storage, fileName));
+        const char *fileNamePath = strPtr(storagePathP(storage, fileName));
 
         infoLoad(
             strNewFmt("unable to load backup manifest file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),

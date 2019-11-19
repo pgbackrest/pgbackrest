@@ -248,7 +248,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR, VARUINT64(backupData.backupInfoSize));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR, VARUINT64(backupData.backupInfoSizeDelta));
 
-            // When storing time_t treat as signed type
+            // When storing time_t treat as signed int to avoid casting
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR, VARINT64(backupData.backupTimestampStart));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARINT64(backupData.backupTimestampStop));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR, VARSTR(backupData.backupType));
@@ -551,7 +551,7 @@ infoBackupLoadFileCallback(void *data, unsigned int try)
         const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strPtr(loadData->fileName));
 
         // Attempt to load the file
-        IoRead *read = storageReadIo(storageNewReadNP(loadData->storage, fileName));
+        IoRead *read = storageReadIo(storageNewReadP(loadData->storage, fileName));
         cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
 
         MEM_CONTEXT_BEGIN(loadData->memContext)
@@ -590,7 +590,7 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const char *fileNamePath = strPtr(storagePathNP(storage, fileName));
+        const char *fileNamePath = strPtr(storagePathP(storage, fileName));
 
         TRY_BEGIN()
         {
@@ -638,8 +638,8 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
         // Get a list of backups in the repo
         StringList *backupList = strLstSort(
             storageListP(
-                storage, STRDEF(STORAGE_REPO_BACKUP), .expression = backupRegExpP(.full = true, .differential = true,
-                .incremental = true)),
+                storage, STORAGE_REPO_BACKUP_STR,
+                .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderAsc);
 
         // Get the current list of backups from backup.info
@@ -656,7 +656,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                 String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
                 // Check if a completed backup exists (backup.manifest only - ignore .copy)
-                if (storageExistsNP(storage, manifestFileName))
+                if (storageExistsP(storage, manifestFileName))
                 {
                     bool found = false;
                     const Manifest *manifest = manifestLoadFile(
@@ -695,7 +695,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
             String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel));
 
             // Remove backup from the current list in the infoBackup object
-            if (!storageExistsNP(storage, manifestFileName))
+            if (!storageExistsP(storage, manifestFileName))
             {
                 LOG_WARN("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(backupLabel));
                 infoBackupDataDelete(infoBackup, backupLabel);
@@ -730,13 +730,13 @@ infoBackupSaveFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Save the file
-        IoWrite *write = storageWriteIo(storageNewWriteNP(storage, fileName));
+        IoWrite *write = storageWriteIo(storageNewWriteP(storage, fileName));
         cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
         infoBackupSave(infoBackup, write);
 
         // Make a copy of the file
         storageCopy(
-            storageNewReadNP(storage, fileName), storageNewWriteNP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
+            storageNewReadP(storage, fileName), storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
     }
     MEM_CONTEXT_TEMP_END();
 

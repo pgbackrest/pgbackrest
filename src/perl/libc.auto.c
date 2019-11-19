@@ -960,7 +960,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_copy)
 			"pgBackRest::LibC::Storage::copy",
 			"destination", "pgBackRest::LibC::StorageWrite")
 ;
-    RETVAL = storageCopyNP(source, destination);
+    RETVAL = storageCopyP(source, destination);
 	ST(0) = boolSV(RETVAL);
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -991,7 +991,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_exists)
 			"pgBackRest::LibC::Storage::exists",
 			"self", "pgBackRest::LibC::Storage")
 ;
-    RETVAL = storageExistsNP(self, fileExp);
+    RETVAL = storageExistsP(self, fileExp);
 	ST(0) = boolSV(RETVAL);
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -1022,7 +1022,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_get)
 			"read", "pgBackRest::LibC::StorageRead")
 ;
     RETVAL = NULL;
-    Buffer *buffer = storageGetNP(read);
+    Buffer *buffer = storageGetP(read);
 
     if (buffer != NULL)
     {
@@ -1240,7 +1240,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathExists)
     RETVAL = true;
 
     if (storageFeature(self, storageFeaturePath))
-        RETVAL = storagePathExistsNP(self, pathExp);
+        RETVAL = storagePathExistsP(self, pathExp);
 	ST(0) = boolSV(RETVAL);
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -1271,7 +1271,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathGet)
 			"pgBackRest::LibC::Storage::pathGet",
 			"self", "pgBackRest::LibC::Storage")
 ;
-    String *path = storagePathNP(self, pathExp);
+    String *path = storagePathP(self, pathExp);
     RETVAL = newSVpv((char *)strPtr(path), strSize(path));
 	RETVAL = sv_2mortal(RETVAL);
 	ST(0) = RETVAL;
@@ -1337,7 +1337,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_pathSync)
 			"pgBackRest::LibC::Storage::pathSync",
 			"self", "pgBackRest::LibC::Storage")
 ;
-    storagePathSyncNP(self, pathExp);
+    storagePathSyncP(self, pathExp);
     }
     MEM_CONTEXT_XS_TEMP_END();
     }
@@ -1368,7 +1368,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_put)
 			"pgBackRest::LibC::Storage::put",
 			"write", "pgBackRest::LibC::StorageWrite")
 ;
-    storagePutNP(write, buffer);
+    storagePutP(write, buffer);
     RETVAL = buffer ? bufUsed(buffer) : 0;
 	XSprePUSH; PUSHu((UV)RETVAL);
     }

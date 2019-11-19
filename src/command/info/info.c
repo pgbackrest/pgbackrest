@@ -259,7 +259,7 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
         // timestamp section
         KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
 
-        // time_t is considered a signed int so cast it here to uint64 since it can never be negative (before 1970) in our system
+        // time_t is generally a signed int so cast it to uint64 since it can never be negative (before 1970) in our system
         kvAdd(timeInfo, KEY_START_VAR, VARUINT64((uint64_t)backupData.backupTimestampStart));
         kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64((uint64_t)backupData.backupTimestampStop));
 
@@ -583,11 +583,6 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
 
                 strftime(timeBufferStart, sizeof(timeBufferStart), "%Y-%m-%d %H:%M:%S", localtime(&timeStart));
                 strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime(&timeStop));
-char testtimeBufferStart[20];
-char testtimeBufferStop[20];
-strftime(testtimeBufferStart, sizeof(testtimeBufferStart), "%Y-%m-%d %H:%M:%S", gmtime(&timeStart));
-strftime(testtimeBufferStop, sizeof(testtimeBufferStop), "%Y-%m-%d %H:%M:%S", gmtime(&timeStop));
-LOG_WARN("gmstart %s, gmstop %s", testtimeBufferStart, testtimeBufferStop);
 
                 strCatFmt(
                     backupResult, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
@@ -733,7 +728,7 @@ infoRender(void)
             if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
                 THROW(ConfigError, "option 'set' is currently only valid for text output");
 
-            if (!storageExistsNP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel))))
+            if (!storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabel))))
             {
                 THROW_FMT(
                     FileMissingError, "manifest does not exist for backup '%s'\n"
@@ -742,7 +737,7 @@ infoRender(void)
         }
 
         // Get a list of stanzas in the backup directory.
-        StringList *stanzaList = storageListNP(storageRepo(), STORAGE_PATH_BACKUP_STR);
+        StringList *stanzaList = storageListP(storageRepo(), STORAGE_PATH_BACKUP_STR);
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 
