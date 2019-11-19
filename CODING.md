@@ -214,7 +214,7 @@ If the majority of functions in a module or object are variadic it is best to pr
 
 #### Uncoverable Code
 
-The `uncoverable` keyword marks code that can never be covered. For instance, a function that never returns because it always throws a error. Uncoverable code should be rare to non-existent outside the common libraries and test code.
+The `uncoverable` keyword marks code that can never be covered. For instance, a function that never returns because it always throws an error. Uncoverable code should be rare to non-existent outside the common libraries and test code.
 ```c
 }   // {uncoverable - function throws error so never returns}
 ```
