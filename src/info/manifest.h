@@ -165,7 +165,7 @@ void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type);
 void manifestBuildComplete(
     Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
     size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
-    bool optionHardLink, bool optionOnline, bool optionProcessMax, bool optionStandby);
+    bool optionHardLink, bool optionOnline, unsigned int optionProcessMax, bool optionStandby);
 
 /***********************************************************************************************************************************
 Functions
