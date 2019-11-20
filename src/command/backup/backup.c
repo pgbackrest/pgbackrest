@@ -287,7 +287,7 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest)
 
             if (backupType(cfgOptionStr(cfgOptType)) != backupTypeFull)
             {
-                manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)));
+                manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), NULL/* !!! ARCHIVE_START */);
 
                 // !!! SHOULDN'T THIS LOGIC BE IN backupBuildIncrPrior()?
                 // If not defined this backup was done in a version prior to page checksums being introduced.  Just set

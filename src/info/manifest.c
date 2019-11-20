@@ -1045,18 +1045,20 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
 
 /**********************************************************************************************************************************/
 void
-manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
+manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(MANIFEST, prior);
         FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING, archiveStart);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(prior != NULL);
     ASSERT(type == backupTypeDiff || type == backupTypeIncr);
     ASSERT(type != backupTypeDiff || prior->data.backupType == backupTypeFull);
+    ASSERT(archiveStart == NULL || strSize(archiveStart) == 24);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -1066,29 +1068,33 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
         // Set diff/incr backup type
         this->data.backupType = type;
 
-    // # !!! Determine if a timeline switch has occurred
-    // if (defined($strTimelineLast) && defined($strTimelineCurrent))
-    // {
-    //     # If there is a prior backup, check if a timeline switch has occurred since then
-    //     if ($strTimelineLast ne $strTimelineCurrent)
-    //     {
-    //         &log(WARN, "a timeline switch has occurred since the ${strLastBackupSource} backup, enabling delta checksum");
-    //         $bDelta = true;
-    //     }
-    // }
-    //
-    // # If delta was not set above and there is a change in the online option, then set delta option
-    // if (!$bDelta && !$bOnlineSame)
-    // {
-    //     &log(WARN, "the online option has changed since the ${strLastBackupSource} backup, enabling delta checksum");
-    //     $bDelta = true;
-    // }
-
+        // Set archive start
+        this->data.archiveStart = strDup(archiveStart);
     }
     MEM_CONTEXT_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Enable delta if timelines differ
+        if (manifestData(prior)->archiveStop != NULL && this->data.archiveStart != NULL &&
+            !strEq(strSubN(manifestData(prior)->archiveStop, 0, 8), strSubN(this->data.archiveStart, 0, 8)))
+        {
+            LOG_WARN(
+                "a timeline switch has occurred since the %s backup, enabling delta checksum",
+                strPtr(manifestData(prior)->backupLabel));
+
+            this->data.backupOptionDelta = BOOL_TRUE_VAR;
+        }
+        // Else enable delta if online differs
+        else if (manifestData(prior)->backupOptionOnline != this->data.backupOptionOnline)
+        {
+            LOG_WARN(
+                "the online option has changed since the %s backup, enabling delta checksum",
+                strPtr(manifestData(prior)->backupLabel));
+
+            this->data.backupOptionDelta = BOOL_TRUE_VAR;
+        }
+
         // Check for anomolies between manifests if delta is not already enabled.  This can't be combined with the main comparison
         // loop below because delta changes the behavior of that loop.
         if (!varBool(this->data.backupOptionDelta))
@@ -2501,7 +2507,9 @@ manifestFileUpdate(
 
     ASSERT(this != NULL);
     ASSERT(name != NULL);
-    // !!! ASSERT((!checksumPageError && checksumPageErrorList == NULL) || (checksumPageError && checksumPageErrorList != NULL));
+    ASSERT(
+        (!checksumPage && !checksumPageError && checksumPageErrorList == NULL) ||
+        (checksumPage && !checksumPageError && checksumPageErrorList == NULL) || (checksumPage && checksumPageError));
 
     ManifestFile *file = (ManifestFile *)manifestFileFind(this, name);
 
