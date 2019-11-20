@@ -1340,7 +1340,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             if (checksumPage != NULL)
             {
                 file.checksumPage = true;
-                file.checksumPageError = varBool(checksumPage);
+                file.checksumPageError = !varBool(checksumPage);
 
                 const Variant *checksumPageErrorList = kvGetDefault(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
 
@@ -1980,7 +1980,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
 
                 if (file->checksumPage)
                 {
-                    kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_VAR, VARBOOL(file->checksumPageError));
+                    kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_VAR, VARBOOL(!file->checksumPageError));
 
                     if (file->checksumPageErrorList != NULL)
                         kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, varNewVarLst(file->checksumPageErrorList));
