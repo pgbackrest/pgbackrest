@@ -429,7 +429,7 @@ testRun(void)
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                 .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
 
-        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr), "incremental manifest");
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
         Buffer *contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -479,7 +479,7 @@ testRun(void)
                 .reference = STRDEF("20190101-010101F_20190202-010101D"),
                 .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
 
-        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr), "incremental manifest");
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -520,7 +520,7 @@ testRun(void)
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"), .checksumPage = true, .checksumPageError = true,
                 .checksumPageErrorList = checksumPageErrorList});
 
-        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr), "incremental manifest");
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
         TEST_RESULT_LOG("P00   WARN: file 'FILE1' has timestamp earlier than prior backup, enabling delta checksum");
 
@@ -570,7 +570,7 @@ testRun(void)
                 .reference = STRDEF("20190101-010101F_20190202-010101D"),
                 .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
 
-        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr), "incremental manifest");
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
         TEST_RESULT_LOG("P00   WARN: file 'FILE2' has same timestamp as prior but different size, enabling delta checksum");
 
