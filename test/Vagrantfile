@@ -73,7 +73,7 @@ Vagrant.configure(2) do |config|
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build lcov' && date
         wget -q -O - https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz | tar zx -C /root
-        make -q -C /root/lcov-1.14 install
+        make -s -C /root/lcov-1.14 install
         rm -rf /root/lcov-1.14
 
         #---------------------------------------------------------------------------------------------------------------------------
