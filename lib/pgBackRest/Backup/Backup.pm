@@ -516,50 +516,18 @@ sub process
     my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
     my $strCipherPassManifest = $oBackupInfo->cipherPassSub();
 
-    # Search cluster directory for an aborted backup
-    my $strBackupLabel = $rhParam->{backupLabelResume};
-    my $strCipherPassBackupSet;
-    my $oAbortedManifest;
-    my $strBackupPath;
-    my $strTimelineAborted;
-
-    if (defined($strBackupLabel))
-    {
-        $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
-
-        $oAbortedManifest = new pgBackRest::Manifest(
-            storageRepo()->pathGet("${strBackupPath}/" . FILE_MANIFEST), {strCipherPass => $oBackupInfo->cipherPassSub()});
-
-        # Get the archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online
-        # backup.
-        if ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
-        {
-            $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
-        }
-        elsif ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
-        {
-            $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START), 0, 8);
-        }
-    }
-
-    # Get the backup label path
-    if (!defined($strBackupLabel))
-    {
-        $strBackupLabel = $rhParam->{backupLabel};
-        $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
-    }
-
     # Load manifest passed from C
+    my $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}");
+
     my $oBackupManifest = new pgBackRest::Manifest(
-        STORAGE_REPO_BACKUP . "/" . FILE_MANIFEST . '.pass', {oStorage => storageRepo(),
+        STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/" . FILE_MANIFEST, {oStorage => storageRepo(),
         strCipherPass => defined($oBackupInfo->cipherPassSub()) ? $oBackupInfo->cipherPassSub() : undef});
-    $oBackupManifest->{strFileName} = STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST;
+    my $strCipherPassBackupSet = $oBackupManifest->cipherPassSub();
 
     ################################################################################################################################
     # ALL THE ABOVE EXISTS ONLY FOR MIGRATION
     ################################################################################################################################
     # Start backup (unless --no-online is set)
-    my $strTimelineCurrent = undef;
     my $oDbMaster = undef;
     my $oDbStandby = undef;
 
@@ -577,29 +545,14 @@ sub process
 
     &log(TEST, TEST_MANIFEST_BUILD);
 
-    # If resuming from an aborted backup
-    if (defined($oAbortedManifest))
-    {
-        &log(WARN, "aborted backup ${strBackupLabel} of same type exists, will be cleaned to remove invalid files and resumed");
-        &log(TEST, TEST_BACKUP_RESUME);
-
-        # Clean the backup path before resuming. The delta option may have changed from false to true during the resume clean
-        # so set it to the result.
-        cfgOptionSet(CFGOPT_DELTA, $self->resumeClean(storageRepo(), $strBackupLabel, $oBackupManifest, $oAbortedManifest,
-            cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $strTimelineCurrent, $strTimelineAborted));
-    }
-
     # Set the delta option in the manifest
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
-
-    # Save the backup manifest
-    $oBackupManifest->saveCopy();
 
     # Perform the backup
     my $lBackupSizeTotal =
         $self->processManifest(
             $strDbMasterPath, $strDbCopyPath, cfgOption(CFGOPT_TYPE), $rhParam->{pgVersion}, cfgOption(CFGOPT_COMPRESS),
-            cfgOption(CFGOPT_REPO_HARDLINK), $oBackupManifest, $strBackupLabel, undef);
+            cfgOption(CFGOPT_REPO_HARDLINK), $oBackupManifest, $rhParam->{backupLabel}, undef);
     &log(INFO, cfgOption(CFGOPT_TYPE) . " backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Master file object no longer needed
@@ -636,7 +589,7 @@ sub process
                 # If the backups are encrypted, then the passphrase for the backup set from the manifest file is required to access
                 # the file in the repo
                 my $oDestinationFileIo = storageRepo()->openWrite(
-                    STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFile}" .
+                    STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/${strFile}" .
                         (cfgOption(CFGOPT_COMPRESS) ? qw{.} . COMPRESS_EXT : ''),
                     {rhyFilter => $rhyFilter,
                         strCipherPass => defined($strCipherPassBackupSet) ? $strCipherPassBackupSet : undef});
@@ -694,7 +647,7 @@ sub process
                 storageRepo()->copy(
                     storageRepo()->openRead(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
                         {strCipherPass => $oArchiveInfo->cipherPassSub()}),
-                    storageRepo()->openWrite(STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} .
+                    storageRepo()->openWrite(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} .
                         $oBackupManifest->walPath() . "/${strArchive}" . (cfgOption(CFGOPT_COMPRESS) ? qw{.} . COMPRESS_EXT : ''),
                         {bPathCreate => true, strCipherPass => $strCipherPassBackupSet})
                     );
@@ -713,17 +666,17 @@ sub process
     # Record timestamp stop in the config
     my $lTimestampStop = time();
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef, $lTimestampStop + 0);
-    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $rhParam->{backupLabel});
 
     # Sync backup path if supported
     if (storageRepo()->capability(STORAGE_CAPABILITY_PATH_SYNC))
     {
         # Sync all paths in the backup
-        storageRepo()->pathSync(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
+        storageRepo()->pathSync(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}");
 
         foreach my $strPath ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_PATH))
         {
-            my $strPathSync = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}/$strPath");
+            my $strPathSync = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/$strPath");
 
             # Not all paths are created for diff/incr backups, so only sync if this is a full backup or the path exists
             if (cfgOption(CFGOPT_TYPE) eq CFGOPTVAL_BACKUP_TYPE_FULL || storageRepo()->pathExists($strPathSync))
@@ -736,18 +689,18 @@ sub process
     # Final save of the backup manifest
     $oBackupManifest->save();
 
-    &log(INFO, "new backup label = ${strBackupLabel}");
+    &log(INFO, "new backup label = $rhParam->{backupLabel}");
 
     # Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest is
     # required.
     my $strHistoryPath = storageRepo()->pathGet(
-        STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . qw{/} . substr($strBackupLabel, 0, 4));
+        STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . qw{/} . substr($rhParam->{backupLabel}, 0, 4));
 
     storageRepo()->copy(
-        storageRepo()->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST,
+        storageRepo()->openRead(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/" . FILE_MANIFEST,
             {'strCipherPass' => $oBackupInfo->cipherPassSub()}),
         storageRepo()->openWrite(
-            "${strHistoryPath}/${strBackupLabel}.manifest." . COMPRESS_EXT,
+            "${strHistoryPath}/$rhParam->{backupLabel}.manifest." . COMPRESS_EXT,
             {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, 9]}],
                 bPathCreate => true, bAtomic => true,
                 strCipherPass => defined($oBackupInfo->cipherPassSub()) ? $oBackupInfo->cipherPassSub() : undef}));
@@ -765,7 +718,7 @@ sub process
     if (storageRepo()->capability(STORAGE_CAPABILITY_LINK))
     {
         storageRepo()->linkCreate(
-            STORAGE_REPO_BACKUP . "/${strBackupLabel}", STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST, {bRelative => true});
+            STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}", STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST, {bRelative => true});
     }
 
     # Save backup info

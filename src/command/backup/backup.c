@@ -457,12 +457,11 @@ backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String 
 }
 
 static bool
-backupResume(const InfoBackup *infoBackup, Manifest *manifest, String **backupLabelResume)
+backupResume(const InfoBackup *infoBackup, Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM_P(STRING, backupLabelResume);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
@@ -472,7 +471,8 @@ backupResume(const InfoBackup *infoBackup, Manifest *manifest, String **backupLa
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const Manifest *manifestResume = backupResumeFind(infoBackup, manifest, backupLabelResume);
+        String *backupLabelResume = NULL;
+        const Manifest *manifestResume = backupResumeFind(infoBackup, manifest, &backupLabelResume);
 
         // If a resumable backup was found set the label and cipher subpass
         if (manifestResume)
@@ -487,10 +487,9 @@ backupResume(const InfoBackup *infoBackup, Manifest *manifest, String **backupLa
             if (manifestData(manifest)->backupType == backupTypeFull)
                 manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
 
-            // !!! HACKY BIT TO MAKE PERL HAPPY
-            memContextSwitch(MEM_CONTEXT_OLD());
-            *backupLabelResume = strDup(*backupLabelResume);
-            memContextSwitch(MEM_CONTEXT_TEMP());
+            // Set the backup label to the resumed backup !!! WE SHOULD BE ABLE TO USE LABEL STORED IN RESUME MANIFEST BUT THE PERL
+            // TESTS ARE NOT SETTING THIS VALUE CORRECTLY.  SHOULD FIX BEFORE RELEASE.
+            manifestBackupLabelSet(manifest, backupLabelResume);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -635,9 +634,7 @@ cmdBackup(void)
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
         // Resume a backup when possible
-        String *backupLabelResume = NULL;  // !!! TEMPORARY HACKY THING TO DEAL WITH PERL TEST NOT SETTING LABEL CORRECTLY
-
-        if (!backupResume(infoBackup, manifest, &backupLabelResume))
+        if (!backupResume(infoBackup, manifest))
         {
             manifestBackupLabelSet(
                 manifest,
@@ -670,21 +667,17 @@ cmdBackup(void)
         kvPut(paramKv, VARSTRDEF("pgId"), VARUINT(infoPg.id));
         kvPut(paramKv, VARSTRDEF("pgVersion"), VARSTR(pgVersionToStr(infoPg.version)));
         kvPut(paramKv, VARSTRDEF("backupLabel"), VARSTR(manifestData(manifest)->backupLabel));
-        kvPut(paramKv, VARSTRDEF("backupLabelResume"), backupLabelResume ? VARSTR(backupLabelResume) : NULL);
 
         StringList *paramList = strLstNew();
         strLstAdd(paramList, jsonFromVar(varNewKv(paramKv)));
         cfgCommandParamSet(paramList);
 
         // Save the manifest so the Perl code can read it
-        if (!backupLabelResume && storageFeature(storageRepoWrite(), storageFeaturePath))
-        {
-            storagePathCreateP(
-                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)));
-        }
-
         IoWrite *write = storageWriteIo(
-            storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".pass")));
+            storageNewWriteP(
+                storageRepoWrite(),
+                strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(manifestData(manifest)->backupLabel))));
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
             infoPgCipherPass(infoBackupPg(infoBackup)));
