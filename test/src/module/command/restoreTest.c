@@ -487,30 +487,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=2019-11-14 13:02:49-0500");
-/* CSHANG If I use https://www.freeformatter.com/epoch-timestamp-to-date-converter.html with
-Year	Month	Date	Hours	Minutes	Seconds	Time Zone
-2016    Dec     19      16      27      57      Local
-I get:        1482182877   - and this value is the start time of the incr backup so the full will not be chosen but incr should
-but
-        time_t timeRecoveryTarget = time(NULL);
-        char *lastChar = strptime(strPtr(cfgOptionStr(cfgOptTarget)), "%Y%m%dT%H%M%SZ", localtime(&timeRecoveryTarget));
-        LOG_WARN("input %s, timeRecoveryTarget %" PRId64, strPtr(cfgOptionStr(cfgOptTarget)), timeRecoveryTarget);
-        if (lastChar == NULL || *lastChar != '\0')
-            LOG_WARN("unable to convert target time %s", strPtr(cfgOptionStr(cfgOptTarget)));
-displays:
-    P00   WARN: input 20161219T162757Z, timeRecoveryTarget 1573586679
-If I use the converter on timeRecoveryTarget 1573586679, I get 11/12/2019, 2:24:39 PM
-
-If I remove the Z in the format and the input I get:
-  P00   WARN: input 20161219T162757, timeRecoveryTarget 1573586740
-which, again is no where near the right time
-
-If I use gmtime instead of localtime
-    char *lastChar = strptime(strPtr(cfgOptionStr(cfgOptTarget)), "%Y%m%dT%H%M%SZ", gmtime(&timeRecoveryTarget));
-I get a different value for timeRecoveryTarget
-   P00   WARN: input 20161219T162757Z, timeRecoveryTarget 1573586986
-
- So it is not erroring but the timeRecoveryTarget is being set to the current date and time and ignoring the input.
+/* CSHANG How to change the system local so that localtime/mktime return epoch local time - the timezone offset - it isn't actually relevant unless the system is in UTC time (like our test systems). So if 2019-02-29 13:02:49-0500 is specified for EST then it gets interpreted correctly but on a system where the time is EST and we pass 2019-02-29 13:02:49-0500 then we must NOT add the hour/min time offset because strptime already knew it and returns the correct epoch so adding the hour/min offset produces an invalid result.
 */
         harnessCfgLoad(cfgCmdRestore, argList);
 

@@ -123,16 +123,6 @@ restoreBackupSet(InfoBackup *infoBackup)
 
     String *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // If backup set to restore is default (i.e. latest) then get the actual set
-        const String *backupSet = NULL;
-
-        if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
-        {
-            if (infoBackupDataTotal(infoBackup) == 0)
-                THROW(BackupSetInvalidError, "no backup sets to restore");
-
 /* CSHANG check to see if the type=time then parse the target=DATETIME with * char *strptime(const char *s, const char *format, struct tm *tm);
 BUT in the following, it would not be valid since we're requiring no spaces
 pgbackrest --stanza=demo --delta  --type=time "--target=2019-10-01 15:24:27.503516+00"
@@ -266,6 +256,8 @@ WHAT WE KNOW:
 * date needs to be validated so that 2019-02-31 is not accepted - strptime ACCEPTS it!
 * YYYY-MM-DD HH:MM:SS (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) - but this accepts 2019-31-31
 * there are time zones for GMT-12 all the way to GMT+14 1200 and 1400 are the max. 30 and 45 minutes are valid in between.
+* Time zones in ISO 8601 are represented as local time (with the location unspecified), as UTC, or as an offset from UTC. If no UTC relation information is given with a time representation, the time is assumed to be in local time. If the time is in UTC, add a Z directly after the time without a space. Z is the zone designator for the zero UTC offset. "09:30 UTC" is therefore represented as "09:30Z" or "0930Z". "14:45:15 UTC" would be "14:45:15Z" or "144515Z". The strings +hh:mm, +hhmm, or +hh can be added to the time to indicate that the used local time zone is hh hours and mm minutes ahead of UTC. For time zones west of the zero meridian, which are behind UTC, the notation -hh:mm, -hhmm, or -hh is used instead. For example, Central European Time (CET) is +0100 and U.S./Canadian Eastern Standard Time (EST) is -0500. The following strings all indicate the same point of time: 12:00Z = 13:00+01:00 = 0700-0500
+* According to POSIX.1-2004, localtime() is required to behave as though tzset() was called, while localtime_r() does not have this requirement. For portable code tzset() should be called before localtime_r()
 
 /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9](,[0-9]{1,6}|\.[0-9]{1,6})?)(\+|\-){1}([0-9]{2}|[0-9]{4})$/g
 
@@ -273,7 +265,9 @@ WHAT WE KNOW:
 
 ^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9](,[0-9]{1,6}|\.[0-9]{1,6})?)((\+[0-1][0-4](00|30|45)?)|(\-[0-1][0-2](00|30|45)?))$     -- must have a timezone
 
-^2[0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])(\,[0-9]{1,6}|\.[0-9]{1,6})?((\+(0[0-9]|1[0-4])(:?(00|30|45))?)|(\-(0[0-9]|1[0-2])(:?(00|30|45))?))?$    -- timezone optional and colon in timezone optional
+^2[0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])(\,[0-9]{1,6}|\.[0-9]{1,6})?
+(((\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\+(14)(:?00)?))|((\-(0[0-9]|1[0-1])(:?(00|30|45))?)|(\-12)(:?00)?)))?$    -- timezone optional and colon in timezone optional
+
 This accepts the following:
 2011-08-12 13:08:19
 2011-08-12 13:08:19.333068
@@ -282,7 +276,7 @@ This accepts the following:
 2011-08-12 13:08:19.333068+05:30
 2011-08-12 13:08:19.333068+0530
 
-The only thing it accepts that is not actually valid is 1430, 1445 or 1230, 1245. It also only accepts years 2000 - 2999. Did not use \d as I read not always supported.
+It maxes out at +1400 and -1200 It also only accepts years 2000 - 2999. Did not use \d as I read not always supported.
 
 
 1 minute	60 seconds
@@ -311,60 +305,69 @@ Fri Aug 12 13:10:19 IST 2011
 
                 */
 
-            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
-            {
 // CSHANG Do we have to worry about --target-timeline?
 // CSHANG What about showing gmtime in info output? How does one arrive at the time to recover to? I'm assuming the postgres logs must have some data formatted but I see things like COMMIT 2017-11-30 12:39:05.086674 UTC, so wouldn't it be feasible to see CET or something? I want to know how we instruct them on finding the time to recover to
-                time_t timeRecoveryTarget;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If backup set to restore is default (i.e. latest) then get the actual set
+        const String *backupSet = NULL;
+
+        if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
+        {
+            if (infoBackupDataTotal(infoBackup) == 0)
+                THROW(BackupSetInvalidError, "no backup sets to restore");
+
+            time_t timeTargetEpoch = 0;
+
+            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
+            {
                 struct tm tm = {0};
 
-                String *expression = strNew("^(2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])(\\,[0-9]{1,6}|\\.[0-9]{1,6})?((\\+(0[0-9]|1[0-4])(:?(00|30|45))?)|(\\-(0[0-9]|1[0-2])(:?(00|30|45))?))?$");
-                RegExp *regExp = regExpNew(expression); // CSHANG problem here is REG_NOSUB is used to compile the expression which means Don’t bother storing the contents of the matchptr array. But I WOULD like to store them. (or maybe not - see output from TESTREG section below)
-// instead, maybe split the string by getting the first 19 characters (date time) then getting what is after the +/- and pulling out the colon if any
+                String *expression = strNew("^(2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])(\\,[0-9]{1,6}|\\.[0-9]{1,6})?(((\\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\\+(14)(:?00)?))|((\\-(0[0-9]|1[0-1])(:?(00|30|45))?)|(\\-12)(:?00)?))?$");
+                RegExp *regExp = regExpNew(expression);
 
-
-// RegExp *regExp2 = regExpNewParse(expression);
-// LOG_WARN("SUBS %d", regExpParseN(regExp2));
-// TESTREG BEGIN
-// regex_t preg;
-// regcomp(&preg, strPtr(expression), REG_EXTENDED);
-// size_t nmatch = preg.re_nsub;
-// LOG_WARN("nmatch %d", nmatch);
-// regmatch_t pmatch[16];
-// const char *line = strPtr(cfgOptionStr(cfgOptTarget));
-// regexec(&preg, line, nmatch, pmatch, 0);
-// for(int i = 0; i < (int)nmatch; ++i) {
-//     LOG_WARN("match %d from index %d to %d: ", i, pmatch[i].rm_so, pmatch[i].rm_eo);
-//
-//     for(int j = pmatch[i].rm_so; j < pmatch[i].rm_eo; ++j) {
-//         LOG_WARN("%c", line[j]);
-//     }
-//
-// }
-// TESTREG END
-// regmatch_t
-//     // Test for a match
-//     int result = regexec(&this->regExp, strPtr(string), 0, NULL, 0);
-//
-// int regexec (const regex t *restrict compiled, const char *restrict [Function] string, size t nmatch, regmatch t matchptr[restrict], int eflags)
-                String *timeTarget = strDup(cfgOptionStr(cfgOptTarget));
-                if (regExpMatch(regExp, timeTarget))
+                // If the target-recovery time matches the regular expression then validate it
+                if (regExpMatch(regExp, cfgOptionStr(cfgOptTarget)))
                 {
-                    String *datetime = strSubN(timeTarget, 0, 19);
-                    timeTarget = strSub(timeTarget, 19);
-                    LOG_WARN("'%s' matches and datetime is '%s' and timetarget='%s'", strPtr(cfgOptionStr(cfgOptTarget)), strPtr(datetime), strPtr(timeTarget));
-                    int idxPlus = strChr(timeTarget, '+');
-                    int idxMinus = strChr(timeTarget, '-');
+                    // Strip off the date and time and put the remainder into another string
+                    String *datetime = strSubN(cfgOptionStr(cfgOptTarget), 0, 19);
+                    String *timeTargetZone = strSub(cfgOptionStr(cfgOptTarget), 19);
+/* CSHANG Because our system is UTC, strptim ignores the timezone. If our system was NOT UTC, then say it was EST then strptime("2019-11-14 13:02:49-0500", "%F %T%z", &tm); timeTargetEpoch = mktime(&tm) already knows it is in 0500 zone so the timeTargetEpoch is already correct and we DO NOT want to add the timezone HHMM
+*/
+                    // Check the format - if the values do not match after converting back and forth then date may be out of range,
+                    // e.g. entering 2019-02-31 is invalid and will be caught here but not by the regex. strptime ignores timezone
+                    // on some systems so handle that separately.
+                    strptime(strPtr(datetime), "%F %T", &tm);
+                    // The mktime() function shall convert the broken-down time, expressed as local time, in the structure pointed
+                    // to by timeptr, into a time since the Epoch value with the same encoding as that of the values returned by
+                    // time().
+                    timeTargetEpoch = mktime(&tm);
+                    char timeCheck[20];
+                    strftime(timeCheck, sizeof(timeCheck), "%F %T", &tm);
+
+                    if (strCmpZ(datetime, timeCheck) != 0)
+                    {
+                        // CSHANG What error should this be - I made it an error since it passed the regex but if not an error, then WARN but should also indicate that backup set will use latest?
+                        THROW_FMT(
+                            FormatError,
+                            "date %s is not valid\nHINT: is the month and day valid (example: MM-DD of 02-31 is not a valid date)?",
+                            strPtr(datetime));
+                    }
+
+                    LOG_WARN("'%s' matches and datetime is '%s' and timetarget='%s', timeTargetEpoch='%ld'", strPtr(cfgOptionStr(cfgOptTarget)), strPtr(datetime), strPtr(timeTargetZone), timeTargetEpoch);
+                    int idxPlus = strChr(timeTargetZone, '+');
+                    int idxMinus = strChr(timeTargetZone, '-');
                     if (idxPlus == -1 && idxMinus == -1)
                         LOG_WARN("NO TIME OFFSET");
                     else
                     {
                         LOG_WARN("idxPlus '%d', idxMinus %d'", idxPlus, idxMinus);
-                        String *timezoneOffset = strSub(timeTarget, (size_t)(idxPlus == -1 ? idxMinus : idxPlus)+1);
+                        String *timezoneOffset = strSub(timeTargetZone, (size_t)(idxPlus == -1 ? idxMinus : idxPlus)+1);
                         LOG_WARN("TIME OFFSET = '%s'", strPtr(timezoneOffset));
                         String *timezoneHour = strSubN(timezoneOffset, 0, 2);
-                        String *timezoneMinute = NULL;
-                        LOG_WARN("timezonHour = '%s'", strPtr(timezoneHour));
+                        String *timezoneMinute = strNew("00");
+                        LOG_WARN("timezoneHour = '%s'", strPtr(timezoneHour));
                         if (strSize(timezoneOffset) > 2)
                         {
                             int colonIdx = strChr(timezoneOffset, ':');
@@ -379,31 +382,43 @@ Fri Aug 12 13:10:19 IST 2011
                                 LOG_WARN("timezoneMinute= '%s'", strPtr(timezoneMinute));
                             }
                         }
+
+                        unsigned int timezoneHourN = cvtZToUInt(strPtr(timezoneHour)) * 3600;
+                        unsigned int timezoneMinuteN = cvtZToUInt(strPtr(timezoneMinute)) * 60;
+
+                        // Add (if a minus sign) or subtract (if a plus sign): the signs are opposite the calculation
+                        if (idxMinus != -1)
+                            timeTargetEpoch += (time_t)(timezoneHourN + timezoneMinuteN);
+                        else
+                            timeTargetEpoch -= (time_t)(timezoneHourN + timezoneMinuteN);
+
+                        char timeCheck2[26];
+                        // CSHANG Check the conversion is valid?
+                        strftime(timeCheck2, sizeof(timeCheck2), "%Y-%m-%d %H:%M:%S%z", gmtime(&timeTargetEpoch));
+                        LOG_WARN("gmtime=%s", timeCheck2);
+                        strftime(timeCheck2, sizeof(timeCheck2), "%Y-%m-%d %H:%M:%S%z", localtime(&timeTargetEpoch));
+                        LOG_WARN("localtime=%s", timeCheck2);
                     }
                 }
                 else
                     LOG_WARN("NO MATCH for %s", strPtr(cfgOptionStr(cfgOptTarget)));
-// CSHANG So strptime and mktime work correctly on MAC but here, the time offset is ignored and the datetime is considered simply UTC
-char *lastChar = strptime("2019-11-14 13:02:49-0500", "%F %H:%M:%S%z", &tm);  // 2019-11-14 13:02:49-0500 should return 1573754569 in mktime but it returns 1573736569 (less than 1573754569 by 18000 so take the datetime and ADD 5 * 3600)
-//                char *lastChar = strptime(strPtr(cfgOptionStr(cfgOptTarget)), "%F %H:%M:%S%z", &tm);
-                // CSHANG If converting results returns NULL or all the input was not consumed, then error? Or maybe WARN? May need to split up as NULL means an error and *lastChar != '\0' would mean all of the input was not consumed - so what do we really want to do here?
-                if (lastChar == NULL || *lastChar != '\0')
-                    LOG_WARN("unable to convert target time %s, lastchar=%c", strPtr(cfgOptionStr(cfgOptTarget)), (lastChar == NULL ? 'n' : *lastChar));
-                // Else find the newest backup set with a stop time before the target recovery time
-                else
+// // CSHANG So strptime and mktime work correctly on MAC but here, the time offset is ignored and the datetime is considered simply UTC
+// char *lastChar = strptime("2019-11-14 13:02:49-0500", "%F %H:%M:%S%z", &tm);  // 2019-11-14 13:02:49-0500 should return 1573754569 in mktime but it returns 1573736569 (less than 1573754569 by 18000 so take the datetime and ADD 5 * 3600)
+// //                char *lastChar = strptime(strPtr(cfgOptionStr(cfgOptTarget)), "%F %H:%M:%S%z", &tm);
+//                 // CSHANG If converting results returns NULL or all the input was not consumed, then error? Or maybe WARN? May need to split up as NULL means an error and *lastChar != '\0' would mean all of the input was not consumed - so what do we really want to do here?
+//                 if (lastChar == NULL || *lastChar != '\0')
+//                     LOG_WARN("unable to convert target time %s, lastchar=%c", strPtr(cfgOptionStr(cfgOptTarget)), (lastChar == NULL ? 'n' : *lastChar));
+//                 // Else find the newest backup set with a stop time before the target recovery time
+                if (timeTargetEpoch != 0)
                 {
-                    timeRecoveryTarget = mktime(&tm);
-                    if (timeRecoveryTarget == -1)
-                        THROW(BackupSetInvalidError, "why is this not working");
-                    else
-LOG_WARN("input %s, timeRecoveryTarget %" PRId64, strPtr(cfgOptionStr(cfgOptTarget)), timeRecoveryTarget);
+LOG_WARN("input %s, timeTargetEpoch %" PRId64, strPtr(cfgOptionStr(cfgOptTarget)), timeTargetEpoch);
                     // Search current backups from newest to oldest
                     for (unsigned int keyIdx = infoBackupDataTotal(infoBackup) - 1; (int)keyIdx >= 0; keyIdx--)
                     {
                         // Get the backup data
                         InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
                         // CSHANG Should this be <= ?
-                        if (backupData.backupTimestampStop < timeRecoveryTarget)
+                        if (backupData.backupTimestampStop < timeTargetEpoch)
                         {
                             backupSet = backupData.backupLabel;
                             break;
@@ -414,7 +429,7 @@ LOG_WARN("input %s, timeRecoveryTarget %" PRId64, strPtr(cfgOptionStr(cfgOptTarg
                     {
                         char timeBufferStop[20];
                         // CSHANG Which should we use? If we want them to put in a purely numeric value, then I'd argue for the first one
-                        cvtTimeToZ(timeRecoveryTarget, timeBufferStop, sizeof(timeBufferStop));
+                        cvtTimeToZ(timeTargetEpoch, timeBufferStop, sizeof(timeBufferStop));
                         // strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime(&timeRecoveryTarget));
 
                         // CSHANG Right now the second %s is for debugging
