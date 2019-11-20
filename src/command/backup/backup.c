@@ -331,6 +331,133 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest)
 /***********************************************************************************************************************************
 Check for a backup that can be resumed and merge into the manifest if found
 ***********************************************************************************************************************************/
+typedef struct BackupResumeData
+{
+    Manifest *manifest;                                             // New manifest
+    const Manifest *manifestResume;                                 // Resumed manifest
+    const bool compressed;                                          // Is the backup compressed?
+    const bool delta;                                               // Is this a delta backup?
+    const String *backupPath;                                       // Path to the current level of the backup being cleaned
+    const String *manifestParentName;                               // Parent manifest name used to construct manifest name
+} BackupResumeData;
+
+// Callback to clean invalid paths/files/links out of the repo
+void backupResumeCallback(void *data, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, *storageInfo);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(info != NULL);
+
+    BackupResumeData *resumeData = data;
+
+    // Skip all . paths because they have already been handled on the previous level of recursion
+    if (strEq(info->name, DOT_STR))
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    // Skip backup.manifest.copy -- it will never be in the manifest
+    if (resumeData->manifestParentName == NULL && strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    // Build the name used to lookup files in the manifest
+    const String *manifestName = resumeData->manifestParentName != NULL ?
+        strNewFmt("%s/%s", strPtr(resumeData->manifestParentName), strPtr(info->name)) : info->name;
+
+    // Build the backup path used to remove files/links/paths that are invalid
+    const String *backupPath = strNewFmt("%s/%s", strPtr(resumeData->backupPath), strPtr(info->name));
+
+    // Process file types
+    switch (info->type)
+    {
+        // Check paths
+        // -------------------------------------------------------------------------------------------------------------------------
+        case storageTypePath:
+        {
+            // If the path was not found remove it
+            if (manifestPathFindDefault(resumeData->manifest, manifestName, NULL) == NULL)
+            {
+                LOG_DETAIL("remove path '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
+                storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
+            }
+            // Else recurse into the path
+            {
+                BackupResumeData resumeDataSub = *resumeData;
+                resumeDataSub.manifestParentName = manifestName;
+                resumeDataSub.backupPath = backupPath;
+
+                storageInfoListP(
+                    storageRepo(), resumeDataSub.backupPath, backupResumeCallback, &resumeDataSub, .sortOrder = sortOrderAsc);
+            }
+
+            break;
+        }
+
+        // Check files
+        // -------------------------------------------------------------------------------------------------------------------------
+        case storageTypeFile:
+        {
+            // If the backup is compressed then strip off the extension before doing the lookup
+            if (resumeData->compressed)
+                manifestName = strSubN(manifestName, 0, strSize(manifestName) - sizeof(GZIP_EXT));
+
+            // Find the file in both manifests
+            const ManifestFile *file = manifestFileFindDefault(resumeData->manifest, manifestName, NULL);
+            const ManifestFile *fileResume = manifestFileFindDefault(resumeData->manifestResume, manifestName, NULL);
+
+            // To be preserved the file must:
+            // *) exist in the both manifests
+            // *) not be a reference to a previous backup in either manifest
+            // *) have the same size
+            // *) have the same timestamp if not a delta backup
+            if (file != NULL && file->reference == NULL &&
+                fileResume != NULL && fileResume->reference == NULL && fileResume->checksumSha1[0] != 0 &&
+                file->size == fileResume->size && (resumeData->delta || file->timestamp == fileResume->timestamp))
+            {
+                manifestFileUpdate(
+                    resumeData->manifest, manifestName, fileResume->sizeRepo, fileResume->checksumSha1, NULL,
+                    fileResume->checksumPage, fileResume->checksumPageError, fileResume->checksumPageErrorList);
+            }
+            // Else remove the file
+            else
+            {
+                LOG_DETAIL("remove file '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
+                storageRemoveP(storageRepoWrite(), backupPath);
+            }
+
+            break;
+        }
+
+        // Remove links.  We could check that the link has not changed and preserve it but it doesn't seem worth the extra testing.
+        // The link will be recreated during the backup if needed.
+        // -------------------------------------------------------------------------------------------------------------------------
+        case storageTypeLink:
+        {
+            storageRemoveP(storageRepoWrite(), backupPath);
+            break;
+        }
+
+        // Remove special files
+        // -------------------------------------------------------------------------------------------------------------------------
+        case storageTypeSpecial:
+        {
+            LOG_WARN("remove special file '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
+            storageRemoveP(storageRepoWrite(), backupPath);
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 // Helper to find a resumable backup
 static const Manifest *
 backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String **backupLabelResume)
@@ -480,16 +607,28 @@ backupResume(const InfoBackup *infoBackup, Manifest *manifest)
             // Resuming
             result = true;
 
-            // Reuse the resumed backup label
-            manifestBackupLabelSet(manifest, manifestData(manifestResume)->backupLabel);
+            // Set the backup label to the resumed backup !!! WE SHOULD BE ABLE TO USE LABEL STORED IN RESUME MANIFEST BUT THE PERL
+            // TESTS ARE NOT SETTING THIS VALUE CORRECTLY.  SHOULD FIX BEFORE RELEASE.
+            manifestBackupLabelSet(manifest, backupLabelResume);
+
+            LOG_WARN(
+                "resumable backup %s of same type exists -- remove invalid files and resume",
+                strPtr(manifestData(manifest)->backupLabel));
 
             // If resuming a full backup then copy cipher subpass since it was used to encrypt the resumable files
             if (manifestData(manifest)->backupType == backupTypeFull)
                 manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
 
-            // Set the backup label to the resumed backup !!! WE SHOULD BE ABLE TO USE LABEL STORED IN RESUME MANIFEST BUT THE PERL
-            // TESTS ARE NOT SETTING THIS VALUE CORRECTLY.  SHOULD FIX BEFORE RELEASE.
-            manifestBackupLabelSet(manifest, backupLabelResume);
+            // Clean resumed backup
+            BackupResumeData resumeData =
+            {
+                .manifest = manifest,
+                .manifestResume = manifestResume,
+                .compressed = cfgOptionBool(cfgOptCompress),
+                .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)),
+            };
+
+            storageInfoListP(storageRepo(), resumeData.backupPath, backupResumeCallback, &resumeData, .sortOrder = sortOrderAsc);
         }
     }
     MEM_CONTEXT_TEMP_END();

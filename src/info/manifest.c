@@ -2483,6 +2483,57 @@ manifestFileTotal(const Manifest *this)
     FUNCTION_TEST_RETURN(lstSize(this->fileList));
 }
 
+void
+manifestFileUpdate(
+    Manifest *this, const String *name, uint64_t sizeRepo, const char *checksumSha1, const String *reference,
+    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(UINT64, sizeRepo);
+        FUNCTION_TEST_PARAM(STRINGZ, checksumSha1);
+        FUNCTION_TEST_PARAM(STRING, reference);
+        FUNCTION_TEST_PARAM(BOOL, checksumPage);
+        FUNCTION_TEST_PARAM(BOOL, checksumPageError);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, checksumPageErrorList);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+    // !!! ASSERT((!checksumPageError && checksumPageErrorList == NULL) || (checksumPageError && checksumPageErrorList != NULL));
+
+    ManifestFile *file = (ManifestFile *)manifestFileFind(this, name);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->fileList))
+    {
+        // Copy reference if set
+        if (reference != NULL)
+            file->reference = strLstAddIfMissing(this->referenceList, reference);
+
+        // Copy checksum if set
+        if (checksumSha1 != NULL)
+            memcpy(file->checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+        // Copy repo size
+        file->sizeRepo = sizeRepo;
+
+        // Copy checksum page error if set
+        file->checksumPage = checksumPage;
+
+        if (file->checksumPage)
+        {
+            // !!! ASSERT(file->checksumPage);
+            // !!! THIS IS NOT RIGHT, SHOULD BE SET IN ADVANCE
+            file->checksumPageError = checksumPageError;
+            file->checksumPageErrorList = varLstDup(checksumPageErrorList);
+        }
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Link functions and getters/setters
 ***********************************************************************************************************************************/

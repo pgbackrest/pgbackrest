@@ -191,6 +191,9 @@ const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
 const ManifestFile *manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault);
 void manifestFileRemove(const Manifest *this, const String *name);
 unsigned int manifestFileTotal(const Manifest *this);
+void manifestFileUpdate(
+    Manifest *this, const String *name, uint64_t sizeRepo, const char *checksumSha1, const String *reference,
+    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters
