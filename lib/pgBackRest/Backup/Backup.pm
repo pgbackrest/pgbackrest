@@ -559,11 +559,6 @@ sub process
     # ALL THE ABOVE EXISTS ONLY FOR MIGRATION
     ################################################################################################################################
     # Start backup (unless --no-online is set)
-    my $strArchiveStart = undef;
-    my $strLsnStart = undef;
-    my $iWalSegmentSize = undef;
-    my $hTablespaceMap = undef;
-    my $hDatabaseMap = undef;
     my $strTimelineCurrent = undef;
     my $oDbMaster = undef;
     my $oDbStandby = undef;
@@ -579,9 +574,6 @@ sub process
 
     my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $self->{iMasterRemoteIdx}));
     my $strDbCopyPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $self->{iCopyRemoteIdx}));
-
-    # Record checksum-page option in the manifest
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, cfgOption(CFGOPT_CHECKSUM_PAGE));
 
     &log(TEST, TEST_MANIFEST_BUILD);
 
@@ -607,7 +599,7 @@ sub process
     my $lBackupSizeTotal =
         $self->processManifest(
             $strDbMasterPath, $strDbCopyPath, cfgOption(CFGOPT_TYPE), $rhParam->{pgVersion}, cfgOption(CFGOPT_COMPRESS),
-            cfgOption(CFGOPT_REPO_HARDLINK), $oBackupManifest, $strBackupLabel, $strLsnStart);
+            cfgOption(CFGOPT_REPO_HARDLINK), $oBackupManifest, $strBackupLabel, undef);
     &log(INFO, cfgOption(CFGOPT_TYPE) . " backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Master file object no longer needed
@@ -679,11 +671,11 @@ sub process
         my $lModificationTime = time();
 
         # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
-        logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
+        logDebugMisc($strOperation, "retrieve archive logs !!!START!!!:!!!STOP!!!");
 
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
         my $strArchiveId = $oArchiveInfo->archiveId();
-        my @stryArchive = lsnFileRange($strLsnStart, $strLsnStop, $rhParam->{pgVersion}, $iWalSegmentSize);
+        my @stryArchive = lsnFileRange('START', $strLsnStop, $rhParam->{pgVersion}, 16);
 
         foreach my $strArchive (@stryArchive)
         {

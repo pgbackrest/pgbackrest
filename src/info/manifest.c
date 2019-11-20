@@ -1169,16 +1169,13 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-!!! NEED A PLAN TO STORE DATABASE MAP INFO (SHOULD BE SET DIRECTLY FROM BACKUP)
-***********************************************************************************************************************************/
-
 /**********************************************************************************************************************************/
 void
 manifestBuildComplete(
     Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
-    size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
-    bool optionHardLink, bool optionOnline, unsigned int optionProcessMax, bool optionStandby)
+    size_t optionBufferSize, bool optionChecksumPage, bool optionCompress, unsigned int optionCompressLevel,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
+    bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -1188,6 +1185,7 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
         FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
+        FUNCTION_LOG_PARAM(BOOL, optionChecksumPage);
         FUNCTION_LOG_PARAM(BOOL, optionCompress);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
@@ -1203,6 +1201,7 @@ manifestBuildComplete(
         this->data.backupOptionArchiveCheck = optionArchiveCheck;
         this->data.backupOptionArchiveCopy = optionArchiveCopy;
         this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
+        this->data.backupOptionChecksumPage = varNewBool(optionChecksumPage);
         this->data.backupOptionCompress = optionCompress;
         this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
         this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);

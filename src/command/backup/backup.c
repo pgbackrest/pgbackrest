@@ -649,7 +649,7 @@ cmdBackup(void)
             // !!! SEEMS LIKE THE ARCHIVE CHECK CALCULATION SHOULD BE ONLINE ONLY (WAS COPIED FROM PERL, THOUGH)
             manifest, timestampStart, infoPg.id, infoPg.systemId, !cfgOptionBool(cfgOptOnline) || cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
-            cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptCompress),
+            cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptCompress),
             cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
             cfgOptionBool(cfgOptOnline), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
 
