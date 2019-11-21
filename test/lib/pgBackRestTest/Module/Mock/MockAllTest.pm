@@ -316,17 +316,6 @@ sub run
         my $strOptionalParam = '--manifest-save-threshold=3';
         my $strTestPoint;
 
-        if ($bRemote)
-        {
-            $strOptionalParam .= ' --protocol-timeout=2 --db-timeout=1';
-
-            # ??? This test is flapping and needs to implemented as a unit test instead
-            # if ($self->processMax() > 1)
-            # {
-            #     $strTestPoint = TEST_KEEP_ALIVE;
-            # }
-        }
-
         # Create the archive info file
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
@@ -412,17 +401,6 @@ sub run
             $oHostBackup->backup(
                 $strType, 'invalid cmd line',
                 {oExpectedManifest => \%oManifest, strStanza => BOGUS, iExpectedExitStatus => ERROR_OPTION_REQUIRED});
-        }
-
-        # Test protocol timeout
-        #---------------------------------------------------------------------------------------------------------------------------
-        if ($bRemote && !$bS3)
-        {
-            $oHostBackup->backup(
-                $strType, 'protocol timeout',
-                {oExpectedManifest => \%oManifest,
-                    strOptionalParam => '--protocol-timeout=1 --db-timeout=.1 --log-level-console=off',
-                    strTest => TEST_BACKUP_START, fTestDelay => 1, iExpectedExitStatus => ERROR_FILE_READ});
         }
 
         # Stop operations and make sure the correct error occurs
@@ -558,7 +536,7 @@ sub run
 
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
+            {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--force --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) . ($bDeltaBackup ? ' --delta' : '')});
 
         # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
@@ -775,7 +753,8 @@ sub run
         # Break the database version
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
+            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'},
+             &INFO_BACKUP_SECTION_DB_HISTORY => {"1" => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}}});
 
         $oHostBackup->backup(
             $strType, 'invalid database version',
@@ -784,28 +763,11 @@ sub run
         # Break the database system id
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
+            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999},
+             &INFO_BACKUP_SECTION_DB_HISTORY => {"1" => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}}});
 
         $oHostBackup->backup(
             $strType, 'invalid system id',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
-
-        # Break the control version
-        $oHostBackup->infoMunge(
-            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_CONTROL => 842}});
-
-        $oHostBackup->backup(
-            $strType, 'invalid control version',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
-
-        # Break the catalog version
-        $oHostBackup->infoMunge(
-            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_CATALOG => 197208141}});
-
-        $oHostBackup->backup(
-            $strType, 'invalid catalog version',
             {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
 
         # Restore the file to its original condition
@@ -1007,7 +969,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'resume and add tablespace 2',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
+            {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
@@ -1036,7 +998,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - new diff',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
+            {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
                 ($bDeltaBackup ? ' --delta' : '')});
 
@@ -1058,7 +1020,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
+            {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--no-resume --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
                 ($bDeltaBackup ? ' --delta' : '')});
 
