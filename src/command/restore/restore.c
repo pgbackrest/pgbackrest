@@ -964,7 +964,7 @@ restoreCleanBuild(Manifest *manifest)
 
             if (link != NULL)
             {
-                const String *pgPath = storagePathP(storagePg(), manifestPgPath(link->name));
+                const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
                 StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
                 // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
@@ -981,7 +981,7 @@ restoreCleanBuild(Manifest *manifest)
             // Create the path normally
             else
             {
-                const String *pgPath = storagePathP(storagePg(), manifestPgPath(path->name));
+                const String *pgPath = storagePathP(storagePg(), manifestPathPg(path->name));
                 StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
                 // Create the path if it is missing  If it exists it should already have the correct ownership and mode.
@@ -1001,7 +1001,7 @@ restoreCleanBuild(Manifest *manifest)
         {
             const ManifestLink *link = manifestLink(manifest, linkIdx);
 
-            const String *pgPath = storagePathP(storagePg(), manifestPgPath(link->name));
+            const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
             StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
             // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
@@ -1663,7 +1663,7 @@ restoreFilePgPath(const Manifest *manifest, const String *manifestName)
     ASSERT(manifest != NULL);
     ASSERT(manifestName != NULL);
 
-    String *result = strNewFmt("%s/%s", strPtr(manifestTargetBase(manifest)->path), strPtr(manifestPgPath(manifestName)));
+    String *result = strNewFmt("%s/%s", strPtr(manifestTargetBase(manifest)->path), strPtr(manifestPathPg(manifestName)));
 
     if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
         result = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(result));
@@ -1990,7 +1990,7 @@ cmdRestore(void)
             if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
                 continue;
 
-            const String *pgPath = storagePathP(storagePg(), manifestPgPath(manifestName));
+            const String *pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
 
             LOG_DETAIL("sync path '%s'", strPtr(pgPath));
             storagePathSyncP(storagePgWrite(), pgPath);

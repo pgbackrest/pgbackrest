@@ -225,9 +225,9 @@ testRun(void)
 
         TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
 
-        TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_data")), NULL, "check pg_data path");
-        TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
-        TEST_RESULT_STR_Z(manifestPgPath(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
+        TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data")), NULL, "check pg_data path");
+        TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
+        TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
 
         TEST_RESULT_PTR(manifestCipherSubPass(manifest), NULL, "    check cipher subpass");
 

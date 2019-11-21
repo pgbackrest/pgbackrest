@@ -187,13 +187,25 @@ Path functions and getters/setters
 const ManifestPath *manifestPath(const Manifest *this, unsigned int pathIdx);
 const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
 const ManifestPath *manifestPathFindDefault(const Manifest *this, const String *name, const ManifestPath *pathDefault);
+
+// Data directory relative path for any manifest file/link/path/target name
+String *manifestPathPg(const String *manifestPath);
+
 unsigned int manifestPathTotal(const Manifest *this);
 
 /***********************************************************************************************************************************
 Target functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestTarget *manifestTarget(const Manifest *this, unsigned int targetIdx);
+
+// Base target, i.e. the target that is the data directory
+const ManifestTarget *manifestTargetBase(const Manifest *this);
+
 const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
+
+// Absolute path to the target
+String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
+
 void manifestTargetRemove(const Manifest *this, const String *name);
 unsigned int manifestTargetTotal(const Manifest *this);
 void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
@@ -201,11 +213,11 @@ void manifestTargetUpdate(const Manifest *this, const String *name, const String
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+// Get cipher sub-passphrase
 const String *manifestCipherSubPass(const Manifest *this);
+
+// Get manifest configuration and options
 const ManifestData *manifestData(const Manifest *this);
-String *manifestPgPath(const String *manifestPath);
-const ManifestTarget *manifestTargetBase(const Manifest *this);
-String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
 
 /***********************************************************************************************************************************
 Helper functions

@@ -1394,8 +1394,8 @@ manifestLinkCheck(const Manifest *this)
                         THROW_FMT(
                             LinkDestinationError,
                             "link '%s' (%s) destination is a subdirectory of or the same directory as link '%s' (%s)",
-                            strPtr(manifestPgPath(link1->name)), strPtr(manifestTargetPath(this, link1)),
-                            strPtr(manifestPgPath(link2->name)), strPtr(manifestTargetPath(this, link2)));
+                            strPtr(manifestPathPg(link1->name)), strPtr(manifestTargetPath(this, link1)),
+                            strPtr(manifestPathPg(link2->name)), strPtr(manifestTargetPath(this, link2)));
                     }
                 }
             }
@@ -1403,120 +1403,6 @@ manifestLinkCheck(const Manifest *this)
     }
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Return the base target, i.e. the target that is the data directory
-***********************************************************************************************************************************/
-const ManifestTarget *
-manifestTargetBase(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR));
-}
-
-/***********************************************************************************************************************************
-Return an absolute path to the target
-***********************************************************************************************************************************/
-String *
-manifestTargetPath(const Manifest *this, const ManifestTarget *target)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(MANIFEST_TARGET, target);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(target != NULL);
-
-    // If the target path is already absolute then just return it
-    if (strBeginsWith(target->path, FSLASH_STR))
-        FUNCTION_TEST_RETURN(strDup(target->path));
-
-    // Construct it from the base pg path and a relative path
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *pgPath = strPath(manifestPgPath(target->name));
-
-        if (strSize(pgPath) != 0)
-            strCat(pgPath, "/");
-
-        strCat(pgPath, strPtr(target->path));
-
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strPathAbsolute(pgPath, manifestTargetBase(this)->path);
-        memContextSwitch(MEM_CONTEXT_TEMP());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/***********************************************************************************************************************************
-Return the data directory relative path for any manifest file/link/path/target name
-***********************************************************************************************************************************/
-String *
-manifestPgPath(const String *manifestPath)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, manifestPath);
-    FUNCTION_TEST_END();
-
-    ASSERT(manifestPath != NULL);
-
-    // If something in pg_data/
-    if (strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGDATA "/")))
-    {
-        FUNCTION_TEST_RETURN(strNew(strPtr(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
-    }
-    // Else not pg_data (this is faster since the length of everything else will be different than pg_data)
-    else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
-    {
-        // A tablespace target is the only valid option if not pg_data or pg_data/
-        ASSERT(
-            strEq(manifestPath, MANIFEST_TARGET_PGTBLSPC_STR) || strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGTBLSPC "/")));
-
-        FUNCTION_TEST_RETURN(strDup(manifestPath));
-    }
-
-    FUNCTION_TEST_RETURN(NULL);
-}
-
-/***********************************************************************************************************************************
-Get the cipher sub-passphrase
-***********************************************************************************************************************************/
-const String *
-manifestCipherSubPass(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(infoCipherPass(this->info));
-}
-
-/***********************************************************************************************************************************
-Return manifest configuration and options
-***********************************************************************************************************************************/
-const ManifestData *
-manifestData(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(&this->data);
 }
 
 /***********************************************************************************************************************************
@@ -1818,6 +1704,33 @@ manifestPathFindDefault(const Manifest *this, const String *name, const Manifest
     FUNCTION_TEST_RETURN(lstFindDefault(this->pathList, &name, (void *)pathDefault));
 }
 
+String *
+manifestPathPg(const String *manifestPath)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, manifestPath);
+    FUNCTION_TEST_END();
+
+    ASSERT(manifestPath != NULL);
+
+    // If something in pg_data/
+    if (strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGDATA "/")))
+    {
+        FUNCTION_TEST_RETURN(strNew(strPtr(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
+    }
+    // Else not pg_data (this is faster since the length of everything else will be different than pg_data)
+    else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
+    {
+        // A tablespace target is the only valid option if not pg_data or pg_data/
+        ASSERT(
+            strEq(manifestPath, MANIFEST_TARGET_PGTBLSPC_STR) || strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGTBLSPC "/")));
+
+        FUNCTION_TEST_RETURN(strDup(manifestPath));
+    }
+
+    FUNCTION_TEST_RETURN(NULL);
+}
+
 unsigned int
 manifestPathTotal(const Manifest *this)
 {
@@ -1847,6 +1760,18 @@ manifestTarget(const Manifest *this, unsigned int targetIdx)
 }
 
 const ManifestTarget *
+manifestTargetBase(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR));
+}
+
+const ManifestTarget *
 manifestTargetFind(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -1861,6 +1786,42 @@ manifestTargetFind(const Manifest *this, const String *name)
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strPtr(name));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+String *
+manifestTargetPath(const Manifest *this, const ManifestTarget *target)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(MANIFEST_TARGET, target);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+
+    // If the target path is already absolute then just return it
+    if (strBeginsWith(target->path, FSLASH_STR))
+        FUNCTION_TEST_RETURN(strDup(target->path));
+
+    // Construct it from the base pg path and a relative path
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *pgPath = strPath(manifestPathPg(target->name));
+
+        if (strSize(pgPath) != 0)
+            strCat(pgPath, "/");
+
+        strCat(pgPath, strPtr(target->path));
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strPathAbsolute(pgPath, manifestTargetBase(this)->path);
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -1923,6 +1884,33 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
     MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+const String *
+manifestCipherSubPass(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(infoCipherPass(this->info));
+}
+
+const ManifestData *
+manifestData(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(&this->data);
 }
 
 /***********************************************************************************************************************************
