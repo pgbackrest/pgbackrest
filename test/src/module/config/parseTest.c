@@ -637,6 +637,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, CFGCMD_ARCHIVE_PUSH_STR);
+        strLstAdd(argList, strNew("%p"));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), ParamInvalidError,
+            "invalid percent character in parameter 1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("help"));
         strLstAdd(argList, strNew("backup"));
         strLstAdd(argList, strNew("param1"));

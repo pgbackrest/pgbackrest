@@ -485,6 +485,14 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (commandParamList == NULL)
                             commandParamList = strLstNew();
 
+                        // Forbid parameters that contain % since they cause chaos downstream. Even printing % seems to cause
+                        // problems in the shell so spell it out instead.
+                        if (strchr(argList[optind - 1], '%') != NULL)
+                        {
+                            THROW_FMT(
+                                ParamInvalidError, "invalid percent character in parameter %u", strLstSize(commandParamList) + 1);
+                        }
+
                         strLstAdd(commandParamList, STR(argList[optind - 1]));
                     }
 
