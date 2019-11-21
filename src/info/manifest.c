@@ -1286,8 +1286,13 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
 
             file.sizeRepo = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.size)));
 
+            // If file size is zero then assign the static zero hash
             if (file.size == 0)
+            {
                 memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+            }
+            // Else if the key exists then load it.  The key might not exist if this is a partial save that was done during the
+            // backup to preserve checksums for already backed up files.
             else if (kvKeyExists(fileKv, MANIFEST_KEY_CHECKSUM_VAR))
             {
                 memcpy(
@@ -1934,6 +1939,8 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 const ManifestFile *file = manifestFile(manifest, fileIdx);
                 KeyValue *fileKv = kvNew();
 
+                // Save if the file size is not zero and the checksum exists.  The checksum might not exist if this is a partial
+                // save performed during a backup.
                 if (file->size != 0 && file->checksumSha1[0] != 0)
                     kvPut(fileKv, MANIFEST_KEY_CHECKSUM_VAR, VARSTRZ(file->checksumSha1));
 

@@ -667,7 +667,12 @@ testRun(void)
             "user=\"user1\"\n"
         );
 
-        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
+            TEST_RESULT_VOID(manifestMove(manifest, MEM_CONTEXT_OLD()), "move manifest");
+        }
+        MEM_CONTEXT_TEMP_END();
 
         TEST_ERROR(
             manifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
