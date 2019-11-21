@@ -660,7 +660,7 @@ strPathAbsolute(const String *this, const String *base)
 
                     strLstRemoveIdx(baseList, strLstSize(baseList) - 1);
                 }
-                else
+                else if (!strEq(pathPart, DOT_STR))
                     strLstAdd(baseList, pathPart);
 
                 strLstRemoveIdx(pathList, 0);
