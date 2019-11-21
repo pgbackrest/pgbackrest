@@ -648,6 +648,22 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeLink:
         {
+            // If the destination is another link then error.  In the future we'll allow is this by following the link chain to the
+            // eventual destination but for now we are trying to maintain compatibility during the migration.  To do this check we
+            // need to read outside of the data directory but it is a read-only operation so is considered safe.
+            const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, buildData->pgPath);
+
+            StorageInfo linkedCheck = storageInfoP(
+                buildData->storagePg, linkDestinationAbsolute, .followLink = false, .ignoreMissing = true, .noPathCheck = true);
+
+            if (linkedCheck.exists && linkedCheck.type == storageTypeLink)
+            {
+                THROW_FMT(
+                    LinkDestinationError, "link '%s/%s' cannot reference another link '%s'", strPtr(buildData->pgPath),
+                    strPtr(info->name), strPtr(linkDestinationAbsolute));
+            }
+
+            // Initialize link and target
             ManifestLink link =
             {
                 .name = manifestName,
@@ -667,21 +683,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             buildDataSub.manifestParentName = manifestName;
             buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData->pgPath), strPtr(info->name));
 
-            // If the destination is another link then error.  In the future we'll allow is this by following the link chain to the
-            // eventual destination but for now we are trying to maintain compatibility during the migration.
-            const String *linkDestination = strPathAbsolute(link.destination, buildData->pgPath);
-
-            StorageInfo linkedCheck = storageInfoP(
-                buildData->storagePg, linkDestination, .followLink = false, .ignoreMissing = true, .noPathCheck = true);
-
-            if (linkedCheck.exists && linkedCheck.type == storageTypeLink)
-            {
-                THROW_FMT(
-                    LinkDestinationError, "link '%s' cannot reference another link '%s'", strPtr(buildDataSub.pgPath),
-                    strPtr(linkDestination));
-            }
-
-            // Is this a tablespace
+            // Is this a tablespace?
             if (strEq(buildData->manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
             {
                 // Strip pg_data off the manifest name so it begins with pg_tblspc instead.  This reflects how the files are stored

@@ -287,7 +287,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), LinkDestinationError,
-            hrnReplaceKey("link 'link' ({[path]}/pg/base) destination is in PGDATA"));
+            hrnReplaceKey("link 'link' destination '{[path]}/pg/base' is in PGDATA"));
 
         #undef TEST_MANIFEST_HEADER
         #undef TEST_MANIFEST_DB_83
