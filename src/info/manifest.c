@@ -386,9 +386,7 @@ manifestNewInternal(void)
     FUNCTION_TEST_RETURN(this);
 }
 
-/***********************************************************************************************************************************
-Build a new manifest for a PostgreSQL path
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 typedef struct ManifestBuildData
 {
     Manifest *manifest;
@@ -402,8 +400,8 @@ typedef struct ManifestBuildData
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
 
-    const String *manifestParentName;
-    const String *pgPath;
+    const String *manifestParentName;                               // Manifest name of this file/link/path's parent
+    const String *pgPath;                                           // Current path in the PostgreSQL data directory
     bool dbPath;                                                    // Does this path contain relations?
 } ManifestBuildData;
 
@@ -428,6 +426,7 @@ manifestBuildCopyFromPrimary(RegExp *standbyExp, const String *manifestName)
     FUNCTION_TEST_RETURN(false);
 }
 
+// Callback to process files/links/paths and add them to the manifest
 void manifestBuildCallback(void *data, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
@@ -471,7 +470,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
         return;
     }
 
-    // Process file types
+    // Process storage types
     switch (info->type)
     {
         // Add paths
@@ -646,13 +645,13 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeLink:
         {
-            // If the destination is another link then error.  In the future we'll allow is this by following the link chain to the
+            // If the destination is another link then error.  In the future we'll allow this by following the link chain to the
             // eventual destination but for now we are trying to maintain compatibility during the migration.  To do this check we
             // need to read outside of the data directory but it is a read-only operation so is considered safe.
             const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, buildData->pgPath);
 
             StorageInfo linkedCheck = storageInfoP(
-                buildData->storagePg, linkDestinationAbsolute, .followLink = false, .ignoreMissing = true, .noPathEnforce = true);
+                buildData->storagePg, linkDestinationAbsolute, .ignoreMissing = true, .noPathEnforce = true);
 
             if (linkedCheck.exists && linkedCheck.type == storageTypeLink)
             {
@@ -925,7 +924,7 @@ manifestNewBuild(
 
         // Build manifest
         // -------------------------------------------------------------------------------------------------------------------------
-        StorageInfo info = storageInfoP(storagePg, buildData.pgPath);
+        StorageInfo info = storageInfoP(storagePg, buildData.pgPath, .followLink = true);
 
         ManifestPath path =
         {
@@ -1146,7 +1145,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             }
         }
 
-        // Find files in the prior manifest:
+        // Find files to reference in the prior manifest:
         // 1) that don't need to be copied because delta is disabled and the size and timestamp match or size matches and is zero
         // 2) where delta is enabled and size matches so checkum will be verified during backup and the file copied on mismatch
         bool delta = varBool(this->data.backupOptionDelta);

@@ -149,7 +149,10 @@ typedef struct ManifestTarget
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
+// Build a new manifest for a PostgreSQL data directory
 Manifest *manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList);
+
+// Load a manifest from IO
 Manifest *manifestNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
