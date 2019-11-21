@@ -453,17 +453,19 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
     }
 
     // Get build data
-    ManifestBuildData *buildData = data;
-    unsigned int pgVersion = buildData->manifest->data.pgVersion;
+    ManifestBuildData buildData = *(ManifestBuildData *)data;
+    unsigned int pgVersion = buildData.manifest->data.pgVersion;
 
     // Contruct the name used to identify this file/link/path in the manifest
-    const String *manifestName = strNewFmt("%s/%s", strPtr(buildData->manifestParentName), strPtr(info->name));
+    strPtr(info->name);
+    strPtr(buildData.manifestParentName);
+    const String *manifestName = strNewFmt("%s/%s", strPtr(buildData.manifestParentName), strPtr(info->name));
 
     // Skip excluded files/links/paths
-    if (buildData->excludeSingle != NULL && strLstExists(buildData->excludeSingle, manifestName))
+    if (buildData.excludeSingle != NULL && strLstExists(buildData.excludeSingle, manifestName))
     {
         LOG_INFO(
-            "exclude '%s/%s' from backup using '%s' exclusion", strPtr(buildData->pgPath), strPtr(info->name),
+            "exclude '%s/%s' from backup using '%s' exclusion", strPtr(buildData.pgPath), strPtr(info->name),
             strPtr(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
         FUNCTION_TEST_RETURN_VOID();
@@ -478,7 +480,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
         case storageTypePath:
         {
             // There should not be any paths in pg_tblspc
-            if (strEqZ(buildData->manifestParentName, MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC))
+            if (strEqZ(buildData.manifestParentName, MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC))
             {
                 THROW_FMT(
                     LinkExpectedError, "'%s' is not a symlink - " MANIFEST_TARGET_PGTBLSPC " should contain only symlinks",
@@ -494,13 +496,13 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 .group = info->group,
             };
 
-            manifestPathAdd(buildData->manifest, &path);
+            manifestPathAdd(buildData.manifest, &path);
 
             // Skip excluded path content
-            if (buildData->excludeContent != NULL && strLstExists(buildData->excludeContent, manifestName))
+            if (buildData.excludeContent != NULL && strLstExists(buildData.excludeContent, manifestName))
             {
                 LOG_INFO(
-                    "exclude contents of '%s/%s' from backup using '%s/' exclusion", strPtr(buildData->pgPath), strPtr(info->name),
+                    "exclude contents of '%s/%s' from backup using '%s/' exclusion", strPtr(buildData.pgPath), strPtr(info->name),
                     strPtr(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
                 FUNCTION_TEST_RETURN_VOID();
@@ -508,7 +510,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             }
 
             // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
-            if (strEq(buildData->manifestParentName, MANIFEST_TARGET_PGDATA_STR))
+            if (strEq(buildData.manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
                 if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
                 {
@@ -554,7 +556,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             }
 
             // Skip the contents of archive_status when online
-            if (buildData->online && strEq(buildData->manifestParentName, buildData->manifestWalName) &&
+            if (buildData.online && strEq(buildData.manifestParentName, buildData.manifestWalName) &&
                 strEqZ(info->name, PG_PATH_ARCHIVE_STATUS))
             {
                 FUNCTION_TEST_RETURN_VOID();
@@ -562,12 +564,12 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             }
 
             // Recurse into the path
-            ManifestBuildData buildDataSub = *buildData;
+            ManifestBuildData buildDataSub = buildData;
             buildDataSub.manifestParentName = manifestName;
-            buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData->pgPath), strPtr(info->name));
+            buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData.pgPath), strPtr(info->name));
 
-            if (buildData->dbPathExp != NULL)
-                buildDataSub.dbPath = regExpMatch(buildData->dbPathExp, manifestName);
+            if (buildData.dbPathExp != NULL)
+                buildDataSub.dbPath = regExpMatch(buildData.dbPathExp, manifestName);
 
             storageInfoListP(
                 buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
@@ -587,7 +589,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             }
 
             // Skip files in the root data path
-            if (strEq(buildData->manifestParentName, MANIFEST_TARGET_PGDATA_STR))
+            if (strEq(buildData.manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
                 // Skip recovery files
                 if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_RECOVERYSIGNAL)) &&
@@ -611,14 +613,14 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             }
 
             // Skip the contents of the wal path when online
-            if (buildData->online && strEq(buildData->manifestParentName, buildData->manifestWalName))
+            if (buildData.online && strEq(buildData.manifestParentName, buildData.manifestWalName))
             {
                 FUNCTION_TEST_RETURN_VOID();
                 return;
             }
 
             // Skip temp relations in db paths
-            if (buildData->dbPath && regExpMatch(buildData->tempRelationExp, info->name))
+            if (buildData.dbPath && regExpMatch(buildData.tempRelationExp, info->name))
             {
                 FUNCTION_TEST_RETURN_VOID();
                 return;
@@ -631,13 +633,13 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 .mode = info->mode,
                 .user = info->user,
                 .group = info->group,
-                .primary = manifestBuildCopyFromPrimary(buildData->standbyExp, manifestName),
+                .primary = manifestBuildCopyFromPrimary(buildData.standbyExp, manifestName),
                 .size = info->size,
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
             };
 
-            manifestFileAdd(buildData->manifest, &file);
+            manifestFileAdd(buildData.manifest, &file);
             break;
         }
 
@@ -648,15 +650,15 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             // If the destination is another link then error.  In the future we'll allow this by following the link chain to the
             // eventual destination but for now we are trying to maintain compatibility during the migration.  To do this check we
             // need to read outside of the data directory but it is a read-only operation so is considered safe.
-            const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, buildData->pgPath);
+            const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, buildData.pgPath);
 
             StorageInfo linkedCheck = storageInfoP(
-                buildData->storagePg, linkDestinationAbsolute, .ignoreMissing = true, .noPathEnforce = true);
+                buildData.storagePg, linkDestinationAbsolute, .ignoreMissing = true, .noPathEnforce = true);
 
             if (linkedCheck.exists && linkedCheck.type == storageTypeLink)
             {
                 THROW_FMT(
-                    LinkDestinationError, "link '%s/%s' cannot reference another link '%s'", strPtr(buildData->pgPath),
+                    LinkDestinationError, "link '%s/%s' cannot reference another link '%s'", strPtr(buildData.pgPath),
                     strPtr(info->name), strPtr(linkDestinationAbsolute));
             }
 
@@ -675,13 +677,11 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 .type = manifestTargetTypeLink,
             };
 
-            // Setup data for recursion
-            ManifestBuildData buildDataSub = *buildData;
-            buildDataSub.manifestParentName = manifestName;
-            buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData->pgPath), strPtr(info->name));
+            // Make a copy of the link name because it will need to be modified when there are tablespace ids
+            const String *linkName = info->name;
 
             // Is this a tablespace?
-            if (strEq(buildData->manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
+            if (strEq(buildData.manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
             {
                 // Strip pg_data off the manifest name so it begins with pg_tblspc instead.  This reflects how the files are stored
                 // in the backup directory.
@@ -694,10 +694,10 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
 
                 // Add a dummy pg_tblspc path entry if it does not already exist.  This entry will be ignored by restore but it is
                 // part of the original manifest format so we need to have it.
-                lstSort(buildData->manifest->pathList, sortOrderAsc);
-                const ManifestPath *pathBase = manifestPathFind(buildData->manifest, MANIFEST_TARGET_PGDATA_STR);
+                lstSort(buildData.manifest->pathList, sortOrderAsc);
+                const ManifestPath *pathBase = manifestPathFind(buildData.manifest, MANIFEST_TARGET_PGDATA_STR);
 
-                if (manifestPathFindDefault(buildData->manifest, MANIFEST_TARGET_PGTBLSPC_STR, NULL) == NULL)
+                if (manifestPathFindDefault(buildData.manifest, MANIFEST_TARGET_PGTBLSPC_STR, NULL) == NULL)
                 {
                     ManifestPath path =
                     {
@@ -707,15 +707,15 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                         .group = pathBase->group,
                     };
 
-                    manifestPathAdd(buildData->manifest, &path);
+                    manifestPathAdd(buildData.manifest, &path);
                 }
 
                 // If the tablespace id is present then the tablespace link destination path is not the path where data will be
                 // stored so we can just store it as dummy path.
-                if (buildData->tablespaceId != NULL)
+                if (buildData.tablespaceId != NULL)
                 {
                     const ManifestPath *pathTblSpc = manifestPathFind(
-                        buildData->manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC));
+                        buildData.manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC));
 
                     ManifestPath path =
                     {
@@ -725,26 +725,32 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                         .group = pathTblSpc->group,
                     };
 
-                    manifestPathAdd(buildData->manifest, &path);
+                    manifestPathAdd(buildData.manifest, &path);
 
-                    // Now append the tablespace id to the manifest name
-                    manifestName = strNewFmt("%s/%s", strPtr(manifestName), strPtr(buildData->tablespaceId));
-
-                    // Update data structure for recursion
-                    buildDataSub.manifestParentName = manifestName;
-                    buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildDataSub.pgPath), strPtr(buildData->tablespaceId));
+                    // Update build structure to reflect the path added above and the tablespace id
+                    buildData.manifestParentName = manifestName;
+                    manifestName = strNewFmt("%s/%s", strPtr(manifestName), strPtr(buildData.tablespaceId));
+                    buildData.pgPath = strNewFmt("%s/%s", strPtr(buildData.pgPath), strPtr(info->name));
+                    linkName = buildData.tablespaceId;
                 }
             }
 
             // Add info about the linked file/path
+            const String *linkPgPath = strNewFmt("%s/%s", strPtr(buildData.pgPath), strPtr(linkName));
             StorageInfo linkedInfo = storageInfoP(
-                buildData->storagePg, buildDataSub.pgPath, .followLink = true, .ignoreMissing = true);
+                buildData.storagePg, linkPgPath, .followLink = true, .ignoreMissing = true);
+            linkedInfo.name = linkName;
 
             // If the link destination exists then proceed as usual
             if (linkedInfo.exists)
             {
-                // If a file link
-                if (linkedInfo.type == storageTypeFile)
+                // If a path link then recurse
+                if (linkedInfo.type == storageTypePath)
+                {
+                    target.path = info->linkDestination;
+                }
+                // Else it must be a file or special (since we have already checked if it is a link)
+                else
                 {
                     // Tablespace links should never be to a file
                     CHECK(target.tablespaceId == 0);
@@ -752,70 +758,27 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                     // Identify target as a file
                     target.path = strPath(info->linkDestination);
                     target.file = strBase(info->linkDestination);
-
-                    // Add file to manifest
-                    ManifestFile file =
-                    {
-                        .name = manifestName,
-                        .mode = linkedInfo.mode,
-                        .user = linkedInfo.user,
-                        .group = linkedInfo.group,
-                        .primary = manifestBuildCopyFromPrimary(buildData->standbyExp, manifestName),
-                        .size = linkedInfo.size,
-                        .sizeRepo = linkedInfo.size,
-                        .timestamp = linkedInfo.timeModified,
-                    };
-
-                    manifestFileAdd(buildData->manifest, &file);
                 }
-                // Else if a path link
-                else
-                {
-                    target.path = info->linkDestination;
 
-                    // Add linked path info
-                    ManifestPath path =
-                    {
-                        .name = manifestName,
-                        .mode = linkedInfo.mode,
-                        .user = linkedInfo.user,
-                        .group = linkedInfo.group,
-                    };
-
-                    manifestPathAdd(buildData->manifest, &path);
-                }
+                // Use the callback to add and do all related checks
+                manifestBuildCallback(&buildData, &linkedInfo);
             }
             // Else dummy up the target with a destination so manifestLinkCheck() can be run.  This is so errors about links with
-            // destinations in PGDATA will take precedence over missing a destination.
+            // destinations in PGDATA will take precedence over missing a destination.  We will probably simplify this once the
+            // migration is done and it doesn't matter which error takes precedence
             else
                 target.path = info->linkDestination;
 
             // Add target and link
-            manifestTargetAdd(buildData->manifest, &target);
-            manifestLinkAdd(buildData->manifest, &link);
+            manifestTargetAdd(buildData.manifest, &target);
+            manifestLinkAdd(buildData.manifest, &link);
 
             // Make sure the link is valid
-            manifestLinkCheck(buildData->manifest);
+            manifestLinkCheck(buildData.manifest);
 
             // If the link check was successful but the destination does not exist then check it again to generate an error
             if (!linkedInfo.exists)
-                storageInfoP(buildData->storagePg, buildDataSub.pgPath, .followLink = true);
-
-            // Now recurse into the path
-            if (linkedInfo.type == storageTypePath)
-            {
-                // Before following a path link make sure it is valid so we don't have loops
-                lstSort(buildData->manifest->targetList, sortOrderAsc);
-                lstSort(buildData->manifest->linkList, sortOrderAsc);
-                lstSort(buildData->manifest->pathList, sortOrderAsc);
-
-                // Now it should be safe to recurse
-                if (buildData->dbPathExp != NULL)
-                    buildDataSub.dbPath = regExpMatch(buildData->dbPathExp, manifestName);
-
-                storageInfoListP(
-                    buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
-            }
+                storageInfoP(buildData.storagePg, linkPgPath, .followLink = true);
 
             break;
         }
@@ -824,7 +787,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
         {
-            LOG_WARN("exclude special file '%s/%s' from backup", strPtr(buildData->pgPath), strPtr(info->name));
+            LOG_WARN("exclude special file '%s/%s' from backup", strPtr(buildData.pgPath), strPtr(info->name));
             break;
         }
     }
