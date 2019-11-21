@@ -366,18 +366,19 @@ manifestNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    // Create object
-    Manifest *this = memNew(sizeof(Manifest));
-    this->memContext = memContextCurrent();
+    Manifest *this = memNewRaw(sizeof(Manifest));
 
-    // Create lists
-    this->dbList = lstNewP(sizeof(ManifestDb), .comparator = lstComparatorStr);
-    this->fileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr);
-    this->linkList = lstNewP(sizeof(ManifestLink), .comparator =  lstComparatorStr);
-    this->pathList = lstNewP(sizeof(ManifestPath), .comparator =  lstComparatorStr);
-    this->ownerList = strLstNew();
-    this->referenceList = strLstNew();
-    this->targetList = lstNewP(sizeof(ManifestTarget), .comparator =  lstComparatorStr);
+    *this = (Manifest)
+    {
+        .memContext = memContextCurrent(),
+        .dbList = lstNewP(sizeof(ManifestDb), .comparator = lstComparatorStr),
+        .fileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr),
+        .linkList = lstNewP(sizeof(ManifestLink), .comparator =  lstComparatorStr),
+        .pathList = lstNewP(sizeof(ManifestPath), .comparator =  lstComparatorStr),
+        .ownerList = strLstNew(),
+        .referenceList = strLstNew(),
+        .targetList = lstNewP(sizeof(ManifestTarget), .comparator =  lstComparatorStr),
+    };
 
     FUNCTION_TEST_RETURN(this);
 }
