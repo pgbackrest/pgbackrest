@@ -369,7 +369,6 @@ manifestNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    // Create object
     Manifest *this = memNewRaw(sizeof(Manifest));
 
     *this = (Manifest)
