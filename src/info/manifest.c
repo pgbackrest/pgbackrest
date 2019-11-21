@@ -8,6 +8,7 @@ Backup Manifest Handler
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
+#include "common/object.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "common/type/mcv.h"
@@ -155,6 +156,8 @@ struct Manifest
     List *linkList;                                                 // List of links
     List *dbList;                                                   // List of databases
 };
+
+OBJECT_DEFINE_MOVE(MANIFEST);
 
 /***********************************************************************************************************************************
 Internal functions to add types to their lists
