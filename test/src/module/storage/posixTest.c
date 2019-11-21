@@ -162,6 +162,16 @@ testRun(void)
         TEST_RESULT_BOOL(info.exists, false, "    check not exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info outside of base path");
+
+        TEST_ERROR(
+            storageInfoP(storageTest, STRDEF("/etc"), .ignoreMissing = true), AssertError,
+            hrnReplaceKey("absolute path '/etc' is not in base path '{[path]}'"));
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, STRDEF("/etc"), .ignoreMissing = true, .noPathEnforce = true).exists, true,
+            "path not enforced");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
         THROW_ON_SYS_ERROR_FMT(utime(testPath(), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
 
@@ -534,10 +544,13 @@ testRun(void)
             storagePathP(storageTest, strNew("/path/toot")), AssertError,
             "absolute path '/path/toot' is not in base path '/path/to'");
 
-        // Path enforcement disabled
+        // Path enforcement disabled globally
         storagePathEnforceSet(storageTest, false);
-        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("/bogus"))), "/bogus", "path enforce disabled");
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("/bogus"))), "/bogus", "path enforce disabled globally");
         storagePathEnforceSet(storageTest, true);
+
+        // Path enforcement disabled for a single call
+        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("/bogus"), .noEnforce = true)), "/bogus", "path enforce disabled");
 
         TEST_ERROR(storagePathP(storageTest, strNew("<TEST")), AssertError, "end > not found in path expression '<TEST'");
         TEST_ERROR(

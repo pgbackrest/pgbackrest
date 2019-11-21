@@ -654,7 +654,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, buildData->pgPath);
 
             StorageInfo linkedCheck = storageInfoP(
-                buildData->storagePg, linkDestinationAbsolute, .followLink = false, .ignoreMissing = true, .noPathCheck = true);
+                buildData->storagePg, linkDestinationAbsolute, .followLink = false, .ignoreMissing = true, .noPathEnforce = true);
 
             if (linkedCheck.exists && linkedCheck.type == storageTypeLink)
             {

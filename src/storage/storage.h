@@ -84,7 +84,7 @@ typedef struct StorageInfoParam
     VAR_PARAM_HEADER;
     bool ignoreMissing;
     bool followLink;
-    bool noPathCheck;
+    bool noPathEnforce;
 } StorageInfoParam;
 
 #define storageInfoP(this, fileExp, ...)                                                                                           \
@@ -180,7 +180,7 @@ storagePath
 typedef struct StoragePathParam
 {
     VAR_PARAM_HEADER;
-    bool noCheck;
+    bool noEnforce;
 } StoragePathParam;
 
 #define storagePathP(this, pathExp, ...)                                                                                                \
