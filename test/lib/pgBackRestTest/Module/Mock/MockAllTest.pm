@@ -316,17 +316,6 @@ sub run
         my $strOptionalParam = '--manifest-save-threshold=3';
         my $strTestPoint;
 
-        if ($bRemote)
-        {
-            $strOptionalParam .= ' --protocol-timeout=2 --db-timeout=1';
-
-            # ??? This test is flapping and needs to implemented as a unit test instead
-            # if ($self->processMax() > 1)
-            # {
-            #     $strTestPoint = TEST_KEEP_ALIVE;
-            # }
-        }
-
         # Create the archive info file
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
@@ -412,17 +401,6 @@ sub run
             $oHostBackup->backup(
                 $strType, 'invalid cmd line',
                 {oExpectedManifest => \%oManifest, strStanza => BOGUS, iExpectedExitStatus => ERROR_OPTION_REQUIRED});
-        }
-
-        # Test protocol timeout
-        #---------------------------------------------------------------------------------------------------------------------------
-        if ($bRemote && !$bS3)
-        {
-            $oHostBackup->backup(
-                $strType, 'protocol timeout',
-                {oExpectedManifest => \%oManifest,
-                    strOptionalParam => '--protocol-timeout=1 --db-timeout=.1 --log-level-console=off',
-                    strTest => TEST_BACKUP_START, fTestDelay => 1, iExpectedExitStatus => ERROR_FILE_READ});
         }
 
         # Stop operations and make sure the correct error occurs
@@ -775,7 +753,8 @@ sub run
         # Break the database version
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB_HISTORY => {"1" => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}}});
+            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'},
+             &INFO_BACKUP_SECTION_DB_HISTORY => {"1" => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}}});
 
         $oHostBackup->backup(
             $strType, 'invalid database version',
@@ -784,7 +763,8 @@ sub run
         # Break the database system id
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
-            {&INFO_BACKUP_SECTION_DB_HISTORY => {"1" => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}}});
+            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999},
+             &INFO_BACKUP_SECTION_DB_HISTORY => {"1" => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}}});
 
         $oHostBackup->backup(
             $strType, 'invalid system id',

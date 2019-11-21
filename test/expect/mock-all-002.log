@@ -62,7 +62,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
 P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' cannot reference another link '[TEST_PATH]/db-master/db/pg_config/postgresql.conf.link'
 
 full backup - create pg_stat link, pg_clog dir (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --protocol-timeout=2 --db-timeout=1 --cmd-ssh=/usr/bin/ssh --pg1-port=9999 --pg1-socket-path=/test_socket_path --buffer-size=16384 --checksum-page --process-max=1 --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --cmd-ssh=/usr/bin/ssh --pg1-port=9999 --pg1-socket-path=/test_socket_path --buffer-size=16384 --checksum-page --process-max=1 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
