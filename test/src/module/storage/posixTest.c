@@ -162,6 +162,16 @@ testRun(void)
         TEST_RESULT_BOOL(info.exists, false, "    check not exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info outside of base path");
+
+        TEST_ERROR(
+            storageInfoP(storageTest, STRDEF("/etc"), .ignoreMissing = true), AssertError,
+            hrnReplaceKey("absolute path '/etc' is not in base path '{[path]}'"));
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, STRDEF("/etc"), .ignoreMissing = true, .noPathEnforce = true).exists, true,
+            "path not enforced");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
         THROW_ON_SYS_ERROR_FMT(utime(testPath(), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
 
