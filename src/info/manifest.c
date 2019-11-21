@@ -160,7 +160,6 @@ struct Manifest
     List *dbList;                                                   // List of databases
 };
 
-OBJECT_DEFINE_FREE(MANIFEST);
 OBJECT_DEFINE_MOVE(MANIFEST);
 
 /***********************************************************************************************************************************

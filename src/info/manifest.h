@@ -235,11 +235,6 @@ String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
 void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
 
 /***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void manifestFree(Manifest *this);
-
-/***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 Manifest *manifestLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
