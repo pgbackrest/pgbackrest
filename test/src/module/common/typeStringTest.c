@@ -83,7 +83,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strPathAbsolute(STRDEF(".."), STRDEF("/path1")), "/", "simple relative path");
         TEST_RESULT_STR_Z(strPathAbsolute(STRDEF("../"), STRDEF("/path1")), "/", "simple relative path with trailing /");
         TEST_RESULT_STR_Z(
-            strPathAbsolute(STRDEF("../path2/../path3"), STRDEF("/base1/base2")), "/base1/path3", "complex relative path");
+            strPathAbsolute(STRDEF("../path2/.././path3"), STRDEF("/base1/base2")), "/base1/path3", "complex relative path");
     }
 
     // *****************************************************************************************************************************
