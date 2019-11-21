@@ -159,7 +159,7 @@ sizeQualifierToMultiplier(char qualifier)
     FUNCTION_TEST_RETURN(result);
 }
 
-void
+static void
 convertToByte(String **value, double *valueDbl)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
