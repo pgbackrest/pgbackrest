@@ -667,6 +667,20 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             buildDataSub.manifestParentName = manifestName;
             buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData->pgPath), strPtr(info->name));
 
+            // If the destination is another link then error.  In the future we'll allow is this by following the link chain to the
+            // eventual destination but for now we are trying to maintain compatibility during the migration.
+            const String *linkDestination = strPathAbsolute(link.destination, buildData->pgPath);
+
+            StorageInfo linkedCheck = storageInfoP(
+                buildData->storagePg, linkDestination, .followLink = false, .ignoreMissing = true, .noPathCheck = true);
+
+            if (linkedCheck.exists && linkedCheck.type == storageTypeLink)
+            {
+                THROW_FMT(
+                    LinkDestinationError, "link '%s' cannot reference another link '%s'", strPtr(buildDataSub.pgPath),
+                    strPtr(linkDestination));
+            }
+
             // Is this a tablespace
             if (strEq(buildData->manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
             {
@@ -773,7 +787,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 }
             }
             // Else dummy up the target with a destination so manifestLinkCheck() can be run.  This is so errors about links with
-            // destinations in PGDATA will take precedence over missing destination.
+            // destinations in PGDATA will take precedence over missing a destination.
             else
                 target.path = info->linkDestination;
 
@@ -2216,7 +2230,7 @@ manifestLinkCheck(const Manifest *this)
             {
                 THROW_FMT(
                     LinkDestinationError,
-                    "link '%s' (%s) destination is in PGDATA",
+                    "link '%s' destination '%s' is in PGDATA",
                     strPtr(manifestPgPath(link1->name)), strPtr(manifestTargetPath(this, link1)));
             }
 

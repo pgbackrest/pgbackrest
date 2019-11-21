@@ -358,16 +358,17 @@ sub run
         # Remove failing link
         $oHostDbMaster->manifestLinkRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_config_bad');
 
-        # # This link will fail because it points to a link
-        # $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad',
-        #                                       '../pg_config/postgresql.conf.link');
-        #
-        # $strFullBackup = $oHostBackup->backup(
-        #     $strType, 'error on link to a link',
-        #     {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
-        #
-        # # Remove failing link
-        # $oHostDbMaster->manifestLinkRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad');
+        # This link will fail because it points to a link
+        $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad',
+                                              '../pg_config/postgresql.conf.link');
+
+        # Fail because two links point to the same place
+        $strFullBackup = $oHostBackup->backup(
+            $strType, 'error on link to a link',
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
+
+        # Remove failing link
+        $oHostDbMaster->manifestLinkRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad');
 
         # Create stat directory link and file
         storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_stat', {strMode => '0700', bCreateParent => true});
@@ -839,6 +840,17 @@ sub run
                 $strType, 'invalid relative tablespace is ../../$PGDATA',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
+            testFileRemove("${strTblSpcPath}/99999");
+
+            # Create a link to a link
+            testLinkCreate($oHostDbMaster->dbPath() . "/intermediate_link", $oHostDbMaster->dbPath() . '/tablespace/ts1');
+            testLinkCreate("${strTblSpcPath}/99999", $oHostDbMaster->dbPath() . "/intermediate_link");
+
+            $oHostBackup->backup(
+                $strType, 'tablespace link references a link',
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
+
+            testFileRemove($oHostDbMaster->dbPath() . "/intermediate_link");
             testFileRemove("${strTblSpcPath}/99999");
         }
 

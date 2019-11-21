@@ -52,7 +52,14 @@ full backup - error on identical link destinations (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [070]: link 'pg_config_bad/pg_hba.conf.link' ([TEST_PATH]/db-master/db/base/pg_config_bad/.) destination is in PGDATA
+P00  ERROR: [070]: link 'pg_config_bad/pg_hba.conf.link' destination '[TEST_PATH]/db-master/db/base/pg_config_bad' is in PGDATA
+
+full backup - error on link to a link (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' cannot reference another link '[TEST_PATH]/db-master/db/pg_config/postgresql.conf.link'
 
 full backup - create pg_stat link, pg_clog dir (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --protocol-timeout=2 --db-timeout=1 --cmd-ssh=/usr/bin/ssh --pg1-port=9999 --pg1-socket-path=/test_socket_path --buffer-size=16384 --checksum-page --process-max=1 --type=full --stanza=db backup
@@ -519,14 +526,14 @@ incr backup - invalid relative tablespace in $PGDATA (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base/invalid_tblspc) destination is in PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base/invalid_tblspc' is in PGDATA
 
 incr backup - invalid tablespace in $PGDATA (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [070]: link 'pg_tblspc/99999' ([TEST_PATH]/db-master/db/base/invalid_tblspc) destination is in PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base/invalid_tblspc' is in PGDATA
 
 incr backup - add tablespace 1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --test --stanza=db backup
