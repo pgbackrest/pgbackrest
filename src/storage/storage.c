@@ -240,6 +240,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
+        FUNCTION_LOG_PARAM(BOOL, param.noPathCheck);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -250,7 +251,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the path
-        String *file = storagePathP(this, fileExp);
+        const String *file = param.noPathCheck ? fileExp : storagePathP(this, fileExp);
 
         // Call driver function
         result = storageInterfaceInfoP(this->driver, file, .followLink = param.followLink);
