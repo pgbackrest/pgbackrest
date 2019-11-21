@@ -537,7 +537,7 @@ testRun(void)
                 "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":true,"
+                "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false,"
                     "\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,"
                     "\"timestamp\":1482182859}\n"
                 TEST_MANIFEST_FILE_DEFAULT
