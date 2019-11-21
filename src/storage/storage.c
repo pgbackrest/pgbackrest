@@ -251,7 +251,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the path
-        const String *file = param.noPathCheck ? fileExp : storagePathP(this, fileExp);
+        const String *file = storagePathP(this, fileExp, .noCheck = param.noPathCheck);
 
         // Call driver function
         result = storageInterfaceInfoP(this->driver, file, .followLink = param.followLink);
@@ -647,11 +647,12 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 Get the absolute path in the storage
 ***********************************************************************************************************************************/
 String *
-storagePath(const Storage *this, const String *pathExp)
+storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, this);
         FUNCTION_TEST_PARAM(STRING, pathExp);
+        FUNCTION_TEST_PARAM(BOOL, param.noCheck);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -671,7 +672,7 @@ storagePath(const Storage *this, const String *pathExp)
             // Make sure the base storage path is contained within the path expression
             if (!strEqZ(this->path, "/"))
             {
-                if (this->pathEnforce && (!strBeginsWith(pathExp, this->path) ||
+                if ((this->pathEnforce && !param.noCheck) && (!strBeginsWith(pathExp, this->path) ||
                     !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/')))
                 {
                     THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(this->path));

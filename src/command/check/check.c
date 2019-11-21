@@ -139,7 +139,7 @@ checkPrimary(const DbGetResult dbGroup)
         {
             LOG_INFO(
                 "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
-                strPtr(storagePath(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
+                strPtr(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
                 strPtr(walSegmentFile)))));
         }
         else

@@ -65,7 +65,7 @@ testRun(void)
         TEST_RESULT_UINT(storageInterface(storageRemote).feature, storageInterface(storageTest).feature, "    check features");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeatureCompress), true, "    check compress feature");
-        TEST_RESULT_STR_STR(storagePath(storageRemote, NULL), strNewFmt("%s/repo", testPath()), "    check path");
+        TEST_RESULT_STR_STR(storagePathP(storageRemote, NULL), strNewFmt("%s/repo", testPath()), "    check path");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
@@ -140,7 +140,7 @@ testRun(void)
         storagePathCreateP(storageTest, strNew("repo"));
         struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
         THROW_ON_SYS_ERROR(
-            utime(strPtr(storagePath(storageTest, strNew("repo"))), &utimeTest) != 0, FileWriteError, "unable to set time");
+            utime(strPtr(storagePathP(storageTest, strNew("repo"))), &utimeTest) != 0, FileWriteError, "unable to set time");
 
         StorageInfo info = {.exists = false};
         TEST_ASSIGN(info, storageInfoP(storageRemote, NULL), "valid path");
@@ -177,7 +177,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("special info");
 
-        TEST_SYSTEM_FMT("mkfifo -m 666 %s", strPtr(storagePath(storageTest, strNew("repo/fifo"))));
+        TEST_SYSTEM_FMT("mkfifo -m 666 %s", strPtr(storagePathP(storageTest, strNew("repo/fifo"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("fifo")), "valid fifo");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
@@ -194,7 +194,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("link info");
 
-        TEST_SYSTEM_FMT("ln -s ../repo/test %s", strPtr(storagePath(storageTest, strNew("repo/link"))));
+        TEST_SYSTEM_FMT("ln -s ../repo/test %s", strPtr(storagePathP(storageTest, strNew("repo/link"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("link")), "valid link");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
@@ -305,7 +305,7 @@ testRun(void)
 
         // Path timestamp must be set after file is created since file creation updates it
         struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR(utime(strPtr(storagePath(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
+        THROW_ON_SYS_ERROR(utime(strPtr(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
 
         TEST_RESULT_BOOL(
             storageInfoListP(storageRemote, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),

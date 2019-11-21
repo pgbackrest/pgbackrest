@@ -355,7 +355,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                             if (currentPg.id != archivePgId)
                             {
-                                String *fullPath = storagePath(
+                                String *fullPath = storagePathP(
                                     storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)));
                                 storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
                                 LOG_INFO("remove archive path: %s", strPtr(fullPath));

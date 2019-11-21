@@ -1162,7 +1162,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_manifest)
     // Else a file is specified
     else
     {
-        info.name = strBase(storagePath(self, pathExp));
+        info.name = strBase(storagePathP(self, pathExp));
         strCat(data.json, strPtr(storageManifestXsInfo(NULL, &info)));
     }
 

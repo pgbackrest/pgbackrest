@@ -177,10 +177,16 @@ StorageWrite *storageNewWrite(const Storage *this, const String *fileExp, Storag
 /***********************************************************************************************************************************
 storagePath
 ***********************************************************************************************************************************/
-#define storagePathP(this, pathExp)                                                                                                \
-    storagePath(this, pathExp)
+typedef struct StoragePathParam
+{
+    VAR_PARAM_HEADER;
+    bool noCheck;
+} StoragePathParam;
 
-String *storagePath(const Storage *this, const String *pathExp);
+#define storagePathP(this, pathExp, ...)                                                                                                \
+    storagePath(this, pathExp, (StoragePathParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+String *storagePath(const Storage *this, const String *pathExp, StoragePathParam param);
 
 /***********************************************************************************************************************************
 storagePathCreate
