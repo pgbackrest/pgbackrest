@@ -1045,25 +1045,25 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
 
 /**********************************************************************************************************************************/
 void
-manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart)
+manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type, const String *archiveStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
-        FUNCTION_LOG_PARAM(MANIFEST, prior);
+        FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
         FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(STRING, archiveStart);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(prior != NULL);
+    ASSERT(manifestPrior != NULL);
     ASSERT(type == backupTypeDiff || type == backupTypeIncr);
-    ASSERT(type != backupTypeDiff || prior->data.backupType == backupTypeFull);
+    ASSERT(type != backupTypeDiff || manifestPrior->data.backupType == backupTypeFull);
     ASSERT(archiveStart == NULL || strSize(archiveStart) == 24);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         // Set prior backup label
-        this->data.backupLabelPrior = strDup(prior->data.backupLabel);
+        this->data.backupLabelPrior = strDup(manifestPrior->data.backupLabel);
 
         // Set diff/incr backup type
         this->data.backupType = type;
@@ -1076,21 +1076,21 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Enable delta if timelines differ
-        if (manifestData(prior)->archiveStop != NULL && this->data.archiveStart != NULL &&
-            !strEq(strSubN(manifestData(prior)->archiveStop, 0, 8), strSubN(this->data.archiveStart, 0, 8)))
+        if (manifestData(manifestPrior)->archiveStop != NULL && this->data.archiveStart != NULL &&
+            !strEq(strSubN(manifestData(manifestPrior)->archiveStop, 0, 8), strSubN(this->data.archiveStart, 0, 8)))
         {
             LOG_WARN(
                 "a timeline switch has occurred since the %s backup, enabling delta checksum",
-                strPtr(manifestData(prior)->backupLabel));
+                strPtr(manifestData(manifestPrior)->backupLabel));
 
             this->data.backupOptionDelta = BOOL_TRUE_VAR;
         }
         // Else enable delta if online differs
-        else if (manifestData(prior)->backupOptionOnline != this->data.backupOptionOnline)
+        else if (manifestData(manifestPrior)->backupOptionOnline != this->data.backupOptionOnline)
         {
             LOG_WARN(
                 "the online option has changed since the %s backup, enabling delta checksum",
-                strPtr(manifestData(prior)->backupLabel));
+                strPtr(manifestData(manifestPrior)->backupLabel));
 
             this->data.backupOptionDelta = BOOL_TRUE_VAR;
         }
@@ -1102,7 +1102,7 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const 
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
             {
                 const ManifestFile *file = manifestFile(this, fileIdx);
-                const ManifestFile *filePrior = manifestFileFindDefault(prior, file->name, NULL);
+                const ManifestFile *filePrior = manifestFileFindDefault(manifestPrior, file->name, NULL);
 
                 // If file was found in prior manifest then perform checks
                 if (filePrior != NULL)
@@ -1139,34 +1139,17 @@ manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const 
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
         {
-            ManifestFile *file = lstGet(this->fileList, fileIdx);
-            const ManifestFile *filePrior = manifestFileFindDefault(prior, file->name, NULL);
+            const ManifestFile *file = manifestFile(this, fileIdx);
+            const ManifestFile *filePrior = manifestFileFindDefault(manifestPrior, file->name, NULL);
 
             // Check if prior file can be used
-            if (filePrior != NULL &&
-                file->size == filePrior->size && (delta || (file->size == 0 || file->timestamp == filePrior->timestamp)))
+            if (filePrior != NULL && file->size == filePrior->size &&
+                (delta || file->size == 0 || file->timestamp == filePrior->timestamp))
             {
-                MEM_CONTEXT_BEGIN(this->memContext)
-                {
-                    // Copy reference from prior file if it exists, else reference the prior backup
-                    file->reference = strLstAddIfMissing(
-                        this->referenceList, filePrior->reference != NULL ? filePrior->reference : prior->data.backupLabel);
-
-                    // Copy checksum from prior file
-                    memcpy(file->checksumSha1, filePrior->checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
-
-                    // Copy repo size from prior file
-                    file->sizeRepo = filePrior->sizeRepo;
-
-                    // Copy checksum page info from the previous file if it exists
-                    if (filePrior->checksumPage)
-                    {
-                        file->checksumPage = true;
-                        file->checksumPageError = filePrior->checksumPageError;
-                        file->checksumPageErrorList = varLstDup(filePrior->checksumPageErrorList);
-                    }
-                }
-                MEM_CONTEXT_END();
+                manifestFileUpdate(
+                    this, file->name, file->size, filePrior->sizeRepo, filePrior->checksumSha1,
+                    filePrior->reference != NULL ? filePrior->reference : manifestPrior->data.backupLabel, filePrior->checksumPage,
+                    filePrior->checksumPageError, filePrior->checksumPageErrorList);
             }
         }
     }
@@ -2491,12 +2474,13 @@ manifestFileTotal(const Manifest *this)
 
 void
 manifestFileUpdate(
-    Manifest *this, const String *name, uint64_t sizeRepo, const char *checksumSha1, const String *reference,
+    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const String *reference,
     bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
         FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(UINT64, size);
         FUNCTION_TEST_PARAM(UINT64, sizeRepo);
         FUNCTION_TEST_PARAM(STRINGZ, checksumSha1);
         FUNCTION_TEST_PARAM(STRING, reference);
@@ -2515,27 +2499,22 @@ manifestFileUpdate(
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->fileList))
     {
-        // Copy reference if set
+        // Update reference if set
         if (reference != NULL)
             file->reference = strLstAddIfMissing(this->referenceList, reference);
 
-        // Copy checksum if set
+        // Update checksum if set
         if (checksumSha1 != NULL)
             memcpy(file->checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
 
-        // Copy repo size
+        // Update repo size
+        file->size = size;
         file->sizeRepo = sizeRepo;
 
-        // Copy checksum page error if set
+        // Update checksum page info
         file->checksumPage = checksumPage;
-
-        if (file->checksumPage)
-        {
-            // !!! ASSERT(file->checksumPage);
-            // !!! THIS IS NOT RIGHT, SHOULD BE SET IN ADVANCE
-            file->checksumPageError = checksumPageError;
-            file->checksumPageErrorList = varLstDup(checksumPageErrorList);
-        }
+        file->checksumPageError = checksumPageError;
+        file->checksumPageErrorList = varLstDup(checksumPageErrorList);
     }
     MEM_CONTEXT_END();
 

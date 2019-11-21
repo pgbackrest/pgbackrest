@@ -423,7 +423,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
                 file->size == fileResume->size && (resumeData->delta || file->timestamp == fileResume->timestamp))
             {
                 manifestFileUpdate(
-                    resumeData->manifest, manifestName, fileResume->sizeRepo, fileResume->checksumSha1, NULL,
+                    resumeData->manifest, manifestName, file->size, fileResume->sizeRepo, fileResume->checksumSha1, NULL,
                     fileResume->checksumPage, fileResume->checksumPageError, fileResume->checksumPageErrorList);
             }
             // Else remove the file

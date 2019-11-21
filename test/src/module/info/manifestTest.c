@@ -506,18 +506,29 @@ testRun(void)
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("delta enabled by timestamp validation");
+        TEST_TITLE("delta enabled by timestamp validation and copy checksum error");
 
+        // Clear manifest and add a single file
         manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
         lstClear(manifest->fileList);
 
-        VariantList *checksumPageErrorList = varLstNew();
-        varLstAdd(checksumPageErrorList, varNewUInt(77));
         manifestFileAdd(
             manifest,
             &(ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
-                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"), .checksumPage = true, .checksumPageError = true,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+
+        // Clear prior manifest and add a single file with later timestamp and checksum error
+        lstClear(manifestPrior->fileList);
+
+        VariantList *checksumPageErrorList = varLstNew();
+        varLstAdd(checksumPageErrorList, varNewUInt(77));
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .reference = STRDEF("20190101-010101F_20190202-010101D"),
+                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd", .checksumPage = true, .checksumPageError = true,
                 .checksumPageErrorList = checksumPageErrorList});
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
