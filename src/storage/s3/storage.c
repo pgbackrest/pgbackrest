@@ -360,7 +360,8 @@ storageS3Request(
                     {
                         strCat(error, "\n*** Response Headers ***:");
 
-                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
+                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
+                                responseHeaderIdx++)
                         {
                             const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
                             strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
@@ -378,7 +379,8 @@ storageS3Request(
             {
                 // On success move the buffer to the calling context
                 result.httpClient = httpClient;
-                result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientResponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
+                result.responseHeader = httpHeaderMove(
+                    httpHeaderDup(httpClientResponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
                 result.response = bufMove(response, MEM_CONTEXT_OLD());
             }
 
