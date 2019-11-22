@@ -400,34 +400,15 @@ typedef struct ManifestBuildData
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
 
+    // These change with each level of recursion
     const String *manifestParentName;                               // Manifest name of this file/link/path's parent
     const String *pgPath;                                           // Current path in the PostgreSQL data directory
     bool dbPath;                                                    // Does this path contain relations?
 } ManifestBuildData;
 
-// Helper to determine if a file should be copied from the primary
-static bool
-manifestBuildCopyFromPrimary(RegExp *standbyExp, const String *manifestName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, standbyExp);
-        FUNCTION_TEST_PARAM(STRING, manifestName);
-    FUNCTION_TEST_END();
-
-    ASSERT(manifestName != NULL);
-
-    if (standbyExp != NULL)
-    {
-        FUNCTION_TEST_RETURN(
-            strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-            !regExpMatch(standbyExp, manifestName));
-    }
-
-    FUNCTION_TEST_RETURN(false);
-}
-
 // Callback to process files/links/paths and add them to the manifest
-void manifestBuildCallback(void *data, const StorageInfo *info)
+static void
+manifestBuildCallback(void *data, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -633,11 +614,18 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 .mode = info->mode,
                 .user = info->user,
                 .group = info->group,
-                .primary = manifestBuildCopyFromPrimary(buildData.standbyExp, manifestName),
                 .size = info->size,
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
             };
+
+            // Determine if this file should be copied from the primary
+            if (buildData.standbyExp != NULL)
+            {
+                file.primary =
+                    strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+                    !regExpMatch(buildData.standbyExp, manifestName);
+            }
 
             manifestFileAdd(buildData.manifest, &file);
             break;
@@ -765,7 +753,7 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
             }
             // Else dummy up the target with a destination so manifestLinkCheck() can be run.  This is so errors about links with
             // destinations in PGDATA will take precedence over missing a destination.  We will probably simplify this once the
-            // migration is done and it doesn't matter which error takes precedence
+            // migration is done and it doesn't matter which error takes precedence.
             else
                 target.path = info->linkDestination;
 
@@ -795,8 +783,10 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// Regular expression constants
 #define RELATION_EXP                                                "[0-9]+(|_(fsm|vm)){0,1}(\\.[0-9]+){0,1}"
-#define DB_PATH_EXP                                                 "(pg_data/(global|base/[0-9]+)|pg_tblspc/[0-9]+/%s/[0-9]+)"
+#define DB_PATH_EXP                                                                                                                \
+    "(" MANIFEST_TARGET_PGDATA "/(" PG_PATH_GLOBAL "|" PG_PATH_BASE "/[0-9]+)|" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+)"
 
 Manifest *
 manifestNewBuild(
@@ -933,11 +923,13 @@ manifestNewBuild(
             {
                 const ManifestFile *file = manifestFile(this, fileIdx);
 
+                // If this file looks like a relation.  Note that this never matches on _init forks.
                 if (regExpMatch(relationExp, file->name))
                 {
                     String *fileName = strBase(file->name);
                     String *relationFileId = strNew("");
 
+                    // Strip off the numeric part of the relation
                     for (unsigned int nameIdx = 0; nameIdx < strSize(fileName); nameIdx++)
                     {
                         char nameChr = strPtr(fileName)[nameIdx];
@@ -948,13 +940,16 @@ manifestNewBuild(
                         strCatChr(relationFileId, nameChr);
                     }
 
+                    // Store the last relation so it does not need to be found everytime
                     if (lastRelationFileId == NULL || !strEq(lastRelationFileId, relationFileId))
                     {
+                        // Determine if the relation is unlogged
                         const String *relationInit = strNewFmt("%s/%s_init", strPtr(strPath(file->name)), strPtr(relationFileId));
                         lastRelationFileId = relationFileId;
                         lastRelationFileIdUnlogged = manifestFileFindDefault(this, relationInit, NULL) != NULL;
                     }
 
+                    // If relation is unlogged then remove it
                     if (lastRelationFileIdUnlogged)
                     {
                         manifestFileRemove(this, file->name);
@@ -1005,6 +1000,7 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
             {
                 const ManifestFile *file = manifestFile(this, fileIdx);
 
+                // Check for timestamp in the future
                 if (file->timestamp > copyStart)
                 {
                     LOG_WARN("file '%s' has timestamp in the future, enabling delta checksum", strPtr(manifestPathPg(file->name)));
@@ -2189,7 +2185,7 @@ manifestLinkCheck(const Manifest *this)
     {
         const ManifestTarget *link1 = manifestTarget(this, linkIdx1);
 
-        // Check that no link is a subpath of another link
+        // Only compare links
         if (link1->type == manifestTargetTypeLink)
         {
             // Check that the link is not inside the base data path
@@ -2203,6 +2199,7 @@ manifestLinkCheck(const Manifest *this)
                     strPtr(manifestPathPg(link1->name)), strPtr(manifestTargetPath(this, link1)));
             }
 
+            // Check that no link is a subpath of another link
             for (unsigned int linkIdx2 = 0; linkIdx2 < manifestTargetTotal(this); linkIdx2++)
             {
                 const ManifestTarget *link2 = manifestTarget(this, linkIdx2);
@@ -2759,7 +2756,7 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 }
 
 /***********************************************************************************************************************************
-Getter/Setters
+Getters/Setters
 ***********************************************************************************************************************************/
 void
 manifestChecksumPageSet(Manifest *this, bool checksumPage)
@@ -2776,7 +2773,6 @@ manifestChecksumPageSet(Manifest *this, bool checksumPage)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
 const String *
 manifestCipherSubPass(const Manifest *this)
 {
@@ -2789,7 +2785,6 @@ manifestCipherSubPass(const Manifest *this)
     FUNCTION_TEST_RETURN(infoCipherPass(this->info));
 }
 
-/**********************************************************************************************************************************/
 void
 manifestCipherSubPassSet(Manifest *this, const String *cipherSubPass)
 {
@@ -2805,7 +2800,6 @@ manifestCipherSubPassSet(Manifest *this, const String *cipherSubPass)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
 const ManifestData *
 manifestData(const Manifest *this)
 {
@@ -2818,7 +2812,6 @@ manifestData(const Manifest *this)
     FUNCTION_TEST_RETURN(&this->data);
 }
 
-/**********************************************************************************************************************************/
 void
 manifestBackupLabelSet(Manifest *this, const String *backupLabel)
 {
