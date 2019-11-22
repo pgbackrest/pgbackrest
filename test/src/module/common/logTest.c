@@ -164,7 +164,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("logInternal()"))
+    if (testBegin("logInternal() and logInternalFmt()"))
     {
         TEST_RESULT_VOID(logInit(logLevelOff, logLevelOff, logLevelOff, false, 1), "init logging to off");
         TEST_RESULT_VOID(
@@ -195,7 +195,7 @@ testRun(void)
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "format %d", 99), "log warn");
+            logInternalFmt(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "format %d", 99), "log warn");
         TEST_RESULT_STR(logBuffer, "P00   WARN: format 99\n", "    check log");
 
         // This won't be logged due to the range

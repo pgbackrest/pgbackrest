@@ -646,19 +646,19 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     // Warn if the option not found
                     if (optionList[optionIdx].name == NULL)
                     {
-                        LOG_WARN("environment contains invalid option '%s'", strPtr(key));
+                        LOG_WARN_FMT("environment contains invalid option '%s'", strPtr(key));
                         continue;
                     }
                     // Warn if negate option found in env
                     else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
                     {
-                        LOG_WARN("environment contains invalid negate option '%s'", strPtr(key));
+                        LOG_WARN_FMT("environment contains invalid negate option '%s'", strPtr(key));
                         continue;
                     }
                     // Warn if reset option found in env
                     else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
                     {
-                        LOG_WARN("environment contains invalid reset option '%s'", strPtr(key));
+                        LOG_WARN_FMT("environment contains invalid reset option '%s'", strPtr(key));
                         continue;
                     }
 
@@ -749,19 +749,19 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         // Warn if the option not found
                         if (optionList[optionIdx].name == NULL)
                         {
-                            LOG_WARN("configuration file contains invalid option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains invalid option '%s'", strPtr(key));
                             continue;
                         }
                         // Warn if negate option found in config
                         else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
                         {
-                            LOG_WARN("configuration file contains negate option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains negate option '%s'", strPtr(key));
                             continue;
                         }
                         // Warn if reset option found in config
                         else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
                         {
-                            LOG_WARN("configuration file contains reset option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains reset option '%s'", strPtr(key));
                             continue;
                         }
 
@@ -771,7 +771,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         /// Warn if this option should be command-line only
                         if (cfgDefOptionSection(optionDefId) == cfgDefSectionCommandLine)
                         {
-                            LOG_WARN("configuration file contains command-line only option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains command-line only option '%s'", strPtr(key));
                             continue;
                         }
 
@@ -794,7 +794,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             // Warn if it is in a command section
                             if (sectionIdx % 2 == 0)
                             {
-                                LOG_WARN(
+                                LOG_WARN_FMT(
                                     "configuration file contains option '%s' invalid for section '%s'", strPtr(key),
                                     strPtr(section));
                                 continue;
@@ -807,7 +807,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (cfgDefOptionSection(optionDefId) == cfgDefSectionStanza &&
                             strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
                         {
-                            LOG_WARN(
+                            LOG_WARN_FMT(
                                 "configuration file contains stanza-only option '%s' in global section '%s'", strPtr(key),
                                 strPtr(section));
                             continue;

@@ -61,7 +61,7 @@ cmdStop(void)
                     // If we cannot open the lock file for any reason then warn and continue to next file
                     if ((fileHandle = open(strPtr(lockFile), O_RDONLY, 0)) == -1)
                     {
-                        LOG_WARN( "unable to open lock file %s", strPtr(lockFile));
+                        LOG_WARN_FMT( "unable to open lock file %s", strPtr(lockFile));
                         continue;
                     }
 
@@ -83,9 +83,9 @@ cmdStop(void)
                     if (processId != NULL && strSize(processId) > 0)
                     {
                         if (kill(cvtZToInt(strPtr(processId)), SIGTERM) != 0)
-                            LOG_WARN("unable to send term signal to process %s", strPtr(processId));
+                            LOG_WARN_FMT("unable to send term signal to process %s", strPtr(processId));
                         else
-                            LOG_INFO("sent term signal to process %s", strPtr(processId));
+                            LOG_INFO_FMT("sent term signal to process %s", strPtr(processId));
                     }
                     else
                     {
@@ -97,7 +97,7 @@ cmdStop(void)
         }
         else
         {
-            LOG_WARN(
+            LOG_WARN_FMT(
                 "stop file already exists for %s",
                 cfgOptionTest(cfgOptStanza) ? strPtr(strNewFmt("stanza %s", strPtr(cfgOptionStr(cfgOptStanza)))) : "all stanzas");
         }

@@ -44,7 +44,7 @@ level is set to debug or trace.
 
     #define FUNCTION_LOG_END_BASE()                                                                                                \
             stackTraceTestStart();                                                                                                 \
-            LOG(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
+            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                           \
         }
 #else
     #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
@@ -55,7 +55,7 @@ level is set to debug or trace.
             stackTraceParamLog();
 
     #define FUNCTION_LOG_END_BASE()                                                                                                \
-            LOG(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
+            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                           \
         }
 #endif
 
@@ -236,7 +236,7 @@ Macros to return function results (or void)
             char buffer[STACK_TRACE_PARAM_MAX];                                                                                    \
                                                                                                                                    \
             FUNCTION_LOG_##typeMacroPrefix##_FORMAT(FUNCTION_LOG_RETURN_result, buffer, sizeof(buffer));                           \
-            LOG(FUNCTION_LOG_LEVEL(), 0, "=> %s", buffer);                                                                         \
+            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "=> %s", buffer);                                                                     \
         }                                                                                                                          \
                                                                                                                                    \
         return FUNCTION_LOG_RETURN_result;                                                                                         \

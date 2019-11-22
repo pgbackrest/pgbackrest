@@ -91,7 +91,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
     // If backup from standby is true then warn when a standby not found
     else if (cfgOptionBool(cfgOptBackupStandby))
     {
-        LOG_WARN("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
+        LOG_WARN_FMT("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -137,7 +137,7 @@ checkPrimary(const DbGetResult dbGroup)
 
         if (walSegmentFile != NULL)
         {
-            LOG_INFO(
+            LOG_INFO_FMT(
                 "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
                 strPtr(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
                 strPtr(walSegmentFile)))));

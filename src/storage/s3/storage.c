@@ -306,7 +306,7 @@ storageS3Request(
 
                         if (strEq(errorCode, S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
                         {
-                            LOG_DEBUG(
+                            LOG_DEBUG_FMT(
                                 "retry %s: %s", strPtr(errorCode),
                                 strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
 

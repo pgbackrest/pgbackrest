@@ -340,7 +340,7 @@ cmdArchivePush(void)
             }
 
             // Log success
-            LOG_INFO("pushed WAL file '%s' to the archive asynchronously", strPtr(archiveFile));
+            LOG_INFO_FMT("pushed WAL file '%s' to the archive asynchronously", strPtr(archiveFile));
         }
         else
         {
@@ -371,7 +371,7 @@ cmdArchivePush(void)
                     LOG_WARN(strPtr(warning));
 
                 // Log success
-                LOG_INFO("pushed WAL file '%s' to the archive", strPtr(archiveFile));
+                LOG_INFO_FMT("pushed WAL file '%s' to the archive", strPtr(archiveFile));
             }
         }
     }
@@ -463,7 +463,7 @@ cmdArchivePushAsync(void)
             if (strLstSize(jobData.walFileList) == 0)
                 THROW(AssertError, "no WAL files to process");
 
-            LOG_INFO(
+            LOG_INFO_FMT(
                 "push %u WAL file(s) to archive: %s%s", strLstSize(jobData.walFileList), strPtr(strLstGet(jobData.walFileList, 0)),
                 strLstSize(jobData.walFileList) == 1 ?
                     "" : strPtr(strNewFmt("...%s", strPtr(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1)))));
@@ -517,13 +517,13 @@ cmdArchivePushAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            LOG_DETAIL_PID(processId, "pushed WAL file '%s' to the archive", strPtr(walFile));
+                            LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strPtr(walFile));
                             archiveAsyncStatusOkWrite(archiveModePush, walFile, varStr(protocolParallelJobResult(job)));
                         }
                         // Else the job errored
                         else
                         {
-                            LOG_WARN_PID(
+                            LOG_WARN_PID_FMT(
                                 processId,
                                 "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strPtr(walFile),
                                 protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));

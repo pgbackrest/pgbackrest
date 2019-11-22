@@ -115,7 +115,7 @@ exitSafe(int result, bool error, SignalType signalType)
 
             // Assert errors always output a stack trace
             if (logLevel == logLevelAssert)
-                LOG(logLevel, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(), errorStackTrace());
+                LOG_FMT(logLevel, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(), errorStackTrace());
             else
             {
                 // Log just the error to non-debug levels
@@ -124,7 +124,7 @@ exitSafe(int result, bool error, SignalType signalType)
                 // Log the stack trace debug levels
                 if (logAny(logLevelDebug))
                 {
-                    LOG_INTERNAL(
+                    LOG_INTERNAL_FMT(
                         logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(),
                         errorStackTrace());
                 }
