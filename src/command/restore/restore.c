@@ -8,6 +8,8 @@ Restore Command
 #include <time.h>
 #include <unistd.h>
 #include <regex.h>  // CSHANG
+#include <stdlib.h> // CSHANG
+#include <stdio.h> // CSHANG
 
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
@@ -107,6 +109,118 @@ restorePathValidate(void)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+static time_t
+getEpoch(const String *targetTime)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, targetTime);
+    FUNCTION_LOG_END();
+
+    ASSERT(targetTime != NULL);
+
+    time_t result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        struct tm tm = {0};
+
+        // Build the regex to accept formats: YYYY-MM-DD HH:MM:SS with optional msec (up to 6 digits and separated from minutes by
+        // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boudaries are UTC-12 to UTC+14
+        String *expression = strNew("^(2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])(\\,[0-9]{1,6}|\\.[0-9]{1,6})?(((\\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\\+(14)(:?00)?))|((\\-(0[0-9]|1[0-1])(:?(00|30|45))?)|(\\-12)(:?00)?))?$");
+
+        RegExp *regExp = regExpNew(expression);
+
+        // If the target-recovery time matches the regular expression then validate it
+        if (regExpMatch(regExp, targetTime))
+        {
+            // Strip off the date and time and put the remainder into another string
+            String *datetime = strSubN(targetTime, 0, 19);
+            String *timeTargetZone = strSub(targetTime, 19);
+
+            // Check the format - if the values do not match after converting back and forth then date may be out of range,
+            // e.g. entering 2019-02-31 is invalid and will be caught here but not by the regex. strptime ignores timezone
+            // on some systems so handle that separately.
+            strptime(strPtr(datetime), "%F %T", &tm);
+            char timeCheck[20];
+            strftime(timeCheck, sizeof(timeCheck), "%F %T", &tm);
+            if (strCmpZ(datetime, timeCheck) != 0)
+            {
+                // CSHANG What error should this be - I made it an error since it passed the regex but if not an error, then WARN but should also indicate that backup set will use latest?
+                THROW_FMT(
+                    FormatError,
+                    "date %s is not valid\nHINT: is the month and day valid (example: MM-DD of 02-31 is not a valid date)?",
+                    strPtr(targetTime));
+            }
+            // Reset tm structure
+            tm = (const struct tm){0};
+
+            // Determine if the remainder contains a timezone offset. This offset is only valid if the system time is not UTC; if
+            // it is UTC then the offset is ignored.
+            int idxPlus = strChr(timeTargetZone, '+');
+            int idxMinus = strChr(timeTargetZone, '-');
+            if (idxPlus != -1 || idxMinus != -1)
+            {
+                String *timezoneOffset = strSub(timeTargetZone, (size_t)(idxPlus == -1 ? idxMinus : idxPlus)+1);
+                String *timezoneHour = strSubN(timezoneOffset, 0, 2);
+                String *timezoneMinute = strNew("00");
+                if (strSize(timezoneOffset) > 2)
+                {
+                    int colonIdx = strChr(timezoneOffset, ':');
+                    if (colonIdx != -1)
+                        timezoneMinute = strSubN(timezoneOffset, (size_t)colonIdx+1, 2);
+                    else
+                        timezoneMinute = strSubN(timezoneOffset, 2, 2);
+                }
+
+                // Add the offset in a 4 digit format so it can be interpreted by strptime
+                strCatFmt(datetime, "%c%s%s", (idxPlus == -1 ? '-' : '+'), strPtr(timezoneHour), strPtr(timezoneMinute));
+            }
+
+            // Convert the datetime with or without zone into local Epoch. set tm_isdst to -1 to force mktime to consider if DST.
+            // For example, if system time is America/New_York then 2019-09-14 20:02:49 was a time in DST so the Epoch value should
+            // be 1568505769 not 1568509369 which would be 2019-09-14 21:02:49 - an hour too late
+            strptime(strPtr(datetime), "%F %T%z", &tm);
+LOG_WARN("TM: %d-%d-%d %d:%d:%d DSF: %d, datetime: '%s'\n", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, strPtr(datetime));
+
+struct tm tmz = {0};
+// String *envTZ = strNew(getenv("TZ"));
+// setenv("TZ", "UTC", true);
+// LOG_WARN("TZ: %s, new TZ: %s", strPtr(envTZ), getenv("TZ"));
+strptime("2019-11-14 13:02:49-0200", "%F %T%z", &tmz);
+//CSHANG Maybe need to do something along these lines? NO, it doesn't matter because mktime will use the system time TZ
+// sscanf(
+//         "2019-11-14 13:02:49", "%d-%d-%d %d:%d:%d",
+//         &tmz.tm_year, &tmz.tm_mon, &tmz.tm_mday,
+//         &tmz.tm_hour, &tmz.tm_min, &tmz.tm_sec
+// );
+// tmz.tm_year -= 1900; /* years since 1900 */
+// tmz.tm_mon -= 1;     /* 0 - 11 range */
+// tmz.tm_isdst = -1;   /* automatically determine DST */
+tmz.tm_isdst = -1;
+time_t test = mktime(&tmz);
+char buffer[20];
+cvtTimeToZ(test, buffer, 20);
+LOG_WARN("cvtTimeToZ %s", buffer);
+// test += (2 * 3600);
+LOG_WARN("TMZ: %d-%d-%d %d:%d:%d DSF: %d for 2019-11-14 13:02:49-0200, mktime: %ld, plus offset: %ld\n", tmz.tm_year+1900, tmz.tm_mon+1, tmz.tm_mday, tmz.tm_hour, tmz.tm_min, tmz.tm_sec, tmz.tm_isdst, test, test + (2 * 3600));
+            tm.tm_isdst = -1;
+            result = mktime(&tm);
+// setenv("TZ", strPtr(envTZ), true);
+// LOG_WARN("Reset TZ: %s", getenv("TZ"));
+        }
+        else
+        {
+            LOG_WARN(
+                "automatic backup set selection cannot be performed with provided time format '%s', latest backup set will be used\n"
+                "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)",
+                strPtr(targetTime));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(TIME, result);
 }
 
 /***********************************************************************************************************************************
@@ -322,93 +436,8 @@ Fri Aug 12 13:10:19 IST 2011
 
             if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
             {
-                struct tm tm = {0};
-
-                String *expression = strNew("^(2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])(\\,[0-9]{1,6}|\\.[0-9]{1,6})?(((\\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\\+(14)(:?00)?))|((\\-(0[0-9]|1[0-1])(:?(00|30|45))?)|(\\-12)(:?00)?))?$");
-                RegExp *regExp = regExpNew(expression);
-
-                // If the target-recovery time matches the regular expression then validate it
-                if (regExpMatch(regExp, cfgOptionStr(cfgOptTarget)))
-                {
-                    // Strip off the date and time and put the remainder into another string
-                    String *datetime = strSubN(cfgOptionStr(cfgOptTarget), 0, 19);
-                    String *timeTargetZone = strSub(cfgOptionStr(cfgOptTarget), 19);
-/* CSHANG Because our system is UTC, strptim ignores the timezone. If our system was NOT UTC, then say it was EST then strptime("2019-11-14 13:02:49-0500", "%F %T%z", &tm); timeTargetEpoch = mktime(&tm) already knows it is in 0500 zone so the timeTargetEpoch is already correct and we DO NOT want to add the timezone HHMM
-*/
-                    // Check the format - if the values do not match after converting back and forth then date may be out of range,
-                    // e.g. entering 2019-02-31 is invalid and will be caught here but not by the regex. strptime ignores timezone
-                    // on some systems so handle that separately.
-                    strptime(strPtr(datetime), "%F %T", &tm);
-                    // The mktime() function shall convert the broken-down time, expressed as local time, in the structure pointed
-                    // to by timeptr, into a time since the Epoch value with the same encoding as that of the values returned by
-                    // time().
-                    timeTargetEpoch = mktime(&tm);
-                    char timeCheck[20];
-                    strftime(timeCheck, sizeof(timeCheck), "%F %T", &tm);
-
-                    if (strCmpZ(datetime, timeCheck) != 0)
-                    {
-                        // CSHANG What error should this be - I made it an error since it passed the regex but if not an error, then WARN but should also indicate that backup set will use latest?
-                        THROW_FMT(
-                            FormatError,
-                            "date %s is not valid\nHINT: is the month and day valid (example: MM-DD of 02-31 is not a valid date)?",
-                            strPtr(datetime));
-                    }
-
-                    LOG_WARN("'%s' matches and datetime is '%s' and timetarget='%s', timeTargetEpoch='%ld'", strPtr(cfgOptionStr(cfgOptTarget)), strPtr(datetime), strPtr(timeTargetZone), timeTargetEpoch);
-                    int idxPlus = strChr(timeTargetZone, '+');
-                    int idxMinus = strChr(timeTargetZone, '-');
-                    if (idxPlus == -1 && idxMinus == -1)
-                        LOG_WARN("NO TIME OFFSET");
-                    else
-                    {
-                        LOG_WARN("idxPlus '%d', idxMinus %d'", idxPlus, idxMinus);
-                        String *timezoneOffset = strSub(timeTargetZone, (size_t)(idxPlus == -1 ? idxMinus : idxPlus)+1);
-                        LOG_WARN("TIME OFFSET = '%s'", strPtr(timezoneOffset));
-                        String *timezoneHour = strSubN(timezoneOffset, 0, 2);
-                        String *timezoneMinute = strNew("00");
-                        LOG_WARN("timezoneHour = '%s'", strPtr(timezoneHour));
-                        if (strSize(timezoneOffset) > 2)
-                        {
-                            int colonIdx = strChr(timezoneOffset, ':');
-                            if (colonIdx != -1)
-                            {
-                                timezoneMinute = strSubN(timezoneOffset, (size_t)colonIdx+1, 2);
-                                LOG_WARN("COLON EXISTS timezoneMinute= '%s'", strPtr(timezoneMinute));
-                            }
-                            else
-                            {
-                                timezoneMinute = strSubN(timezoneOffset, 2, 2);
-                                LOG_WARN("timezoneMinute= '%s'", strPtr(timezoneMinute));
-                            }
-                        }
-
-                        unsigned int timezoneHourN = cvtZToUInt(strPtr(timezoneHour)) * 3600;
-                        unsigned int timezoneMinuteN = cvtZToUInt(strPtr(timezoneMinute)) * 60;
-
-                        // Add (if a minus sign) or subtract (if a plus sign): the signs are opposite the calculation
-                        if (idxMinus != -1)
-                            timeTargetEpoch += (time_t)(timezoneHourN + timezoneMinuteN);
-                        else
-                            timeTargetEpoch -= (time_t)(timezoneHourN + timezoneMinuteN);
-
-                        char timeCheck2[26];
-                        // CSHANG Check the conversion is valid?
-                        strftime(timeCheck2, sizeof(timeCheck2), "%Y-%m-%d %H:%M:%S%z", gmtime(&timeTargetEpoch));
-                        LOG_WARN("gmtime=%s", timeCheck2);
-                        strftime(timeCheck2, sizeof(timeCheck2), "%Y-%m-%d %H:%M:%S%z", localtime(&timeTargetEpoch));
-                        LOG_WARN("localtime=%s", timeCheck2);
-                    }
-                }
-                else
-                    LOG_WARN("NO MATCH for %s", strPtr(cfgOptionStr(cfgOptTarget)));
-// // CSHANG So strptime and mktime work correctly on MAC but here, the time offset is ignored and the datetime is considered simply UTC
-// char *lastChar = strptime("2019-11-14 13:02:49-0500", "%F %H:%M:%S%z", &tm);  // 2019-11-14 13:02:49-0500 should return 1573754569 in mktime but it returns 1573736569 (less than 1573754569 by 18000 so take the datetime and ADD 5 * 3600)
-// //                char *lastChar = strptime(strPtr(cfgOptionStr(cfgOptTarget)), "%F %H:%M:%S%z", &tm);
-//                 // CSHANG If converting results returns NULL or all the input was not consumed, then error? Or maybe WARN? May need to split up as NULL means an error and *lastChar != '\0' would mean all of the input was not consumed - so what do we really want to do here?
-//                 if (lastChar == NULL || *lastChar != '\0')
-//                     LOG_WARN("unable to convert target time %s, lastchar=%c", strPtr(cfgOptionStr(cfgOptTarget)), (lastChar == NULL ? 'n' : *lastChar));
-//                 // Else find the newest backup set with a stop time before the target recovery time
+                timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
+                // Else find the newest backup set with a stop time before the target recovery time
                 if (timeTargetEpoch != 0)
                 {
 LOG_WARN("input %s, timeTargetEpoch %" PRId64, strPtr(cfgOptionStr(cfgOptTarget)), timeTargetEpoch);

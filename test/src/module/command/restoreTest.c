@@ -443,6 +443,32 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("getEpoch()"))
+    {
+        TEST_TITLE("system time UTC");
+
+        // setenv("TZ", "UTC", true);
+        // TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49-0500")), 1573736569, "offset ignored");
+        // TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49")), 1573736569, "UTC");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("system time America/New_York");
+
+        setenv("TZ", "America/New_York", true);
+        // TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49-0500")), 1573754569, "offset ignored, GMT-0500");
+        // TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
+        // TEST_RESULT_UINT(getEpoch(strNew("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
+        TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49-0200")), 1573743769, "GMT-0200");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // setenv("TZ", "Pacific/Fiji", true);
+        //
+        // TEST_RESULT_UINT(getEpoch(strNew("2019-11-22 07:57:06")), 1574362626, "Pacific/Fiji");
+        //
+        // setenv("TZ", "UTC", true);
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("restoreBackupSet()"))
     {
         const String *pgPath = strNewFmt("%s/pg", testPath());
@@ -477,6 +503,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("target time");
+        setenv("TZ", "America/New_York", true);
 
         infoBackup = infoBackupNewLoad(
             ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB)));
@@ -487,11 +514,11 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=2019-11-14 13:02:49-0500");
-/* CSHANG How to change the system local so that localtime/mktime return epoch local time - the timezone offset - it isn't actually relevant unless the system is in UTC time (like our test systems). So if 2019-02-29 13:02:49-0500 is specified for EST then it gets interpreted correctly but on a system where the time is EST and we pass 2019-02-29 13:02:49-0500 then we must NOT add the hour/min time offset because strptime already knew it and returns the correct epoch so adding the hour/min offset produces an invalid result.
-*/
+
         harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212918I", "backup set chosen");
+        setenv("TZ", "UTC", true);
     }
 
     // *****************************************************************************************************************************
