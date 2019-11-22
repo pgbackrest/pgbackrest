@@ -176,6 +176,10 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(walPath(strNew("/absolute/path"))), "/absolute/path", "absolute path");
         TEST_RESULT_STR(strPtr(walPath(strNew("relative/path"))), "/tmp/relative/path", "relative path");
+
+        THROW_ON_SYS_ERROR(chdir("/") != 0, PathMissingError, "unable to chdir()");
+
+        TEST_RESULT_STR(strPtr(walPath(strNew("relative/path"))), "/relative/path", "relative path");
     }
 
     // *****************************************************************************************************************************
