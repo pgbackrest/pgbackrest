@@ -306,7 +306,7 @@ storageS3Request(
 
                         if (strEq(errorCode, S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
                         {
-                            LOG_DEBUG(
+                            LOG_DEBUG_FMT(
                                 "retry %s: %s", strPtr(errorCode),
                                 strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
 
@@ -360,7 +360,8 @@ storageS3Request(
                     {
                         strCat(error, "\n*** Response Headers ***:");
 
-                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
+                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
+                                responseHeaderIdx++)
                         {
                             const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
                             strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
@@ -378,7 +379,8 @@ storageS3Request(
             {
                 // On success move the buffer to the calling context
                 result.httpClient = httpClient;
-                result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientResponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
+                result.responseHeader = httpHeaderMove(
+                    httpHeaderDup(httpClientResponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
                 result.response = bufMove(response, MEM_CONTEXT_OLD());
             }
 

@@ -27,7 +27,7 @@ cmdStart(void)
         }
         else
         {
-            LOG_WARN("stop file does not exist%s",
+            LOG_WARN_FMT("stop file does not exist%s",
                 (cfgOptionTest(cfgOptStanza) ? strPtr(strNewFmt(" for stanza %s", strPtr(cfgOptionStr(cfgOptStanza)))) : ""));
         }
     }

@@ -247,7 +247,7 @@ walPath(const String *walFile)
         char currentWorkDir[4096];
 
         THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
-        result = strNewFmt("%s/%s", currentWorkDir, strPtr(walFile));
+        result = strNewFmt("%s/%s", strcmp(currentWorkDir, "/") != 0 ? currentWorkDir : "", strPtr(walFile));
     }
     else
         result = strDup(walFile);

@@ -131,7 +131,8 @@ expireDiffBackup(InfoBackup *infoBackup)
                     }
 
                     // If the message contains a comma, then prepend "set:"
-                    LOG_INFO("expire diff backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+                    LOG_INFO_FMT(
+                        "expire diff backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
                 }
             }
         }
@@ -187,7 +188,8 @@ expireFullBackup(InfoBackup *infoBackup)
                     }
 
                     // If the message contains a comma, then prepend "set:"
-                    LOG_INFO("expire full backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+                    LOG_INFO_FMT(
+                        "expire full backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
                 }
             }
         }
@@ -206,7 +208,7 @@ logExpire(ArchiveExpired *archiveExpire, String *archiveId)
     if (archiveExpire->start != NULL)
     {
         // Force out any remaining message
-        LOG_DETAIL(
+        LOG_DETAIL_FMT(
             "remove archive: archiveId = %s, start = %s, stop = %s", strPtr(archiveId), strPtr(archiveExpire->start),
             strPtr(archiveExpire->stop));
 
@@ -236,7 +238,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
         {
-             LOG_INFO("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
+             LOG_INFO_FMT("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
         }
         else
         {
@@ -358,7 +360,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 String *fullPath = storagePathP(
                                     storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)));
                                 storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
-                                LOG_INFO("remove archive path: %s", strPtr(fullPath));
+                                LOG_INFO_FMT("remove archive path: %s", strPtr(fullPath));
                             }
 
                             // Continue to next directory
@@ -394,7 +396,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         // forever.
                         else
                         {
-                            LOG_INFO(
+                            LOG_INFO_FMT(
                                 "full backup total < %u - using oldest full backup for %s archive retention", archiveRetention,
                                 strPtr(archiveId));
                             strLstAdd(localBackupArchiveRetentionList, strLstGet(localBackupRetentionList, 0));
@@ -461,7 +463,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                     else
                                         archiveExpireMax = strDup(archiveRange.start);
 
-                                    LOG_DETAIL(
+                                    LOG_DETAIL_FMT(
                                         "archive retention on backup %s, archiveId = %s, start = %s%s",
                                         strPtr(backupData->backupLabel),  strPtr(archiveId), strPtr(archiveRange.start),
                                         archiveRange.stop != NULL ?
@@ -565,7 +567,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             // Log if no archive was expired
                             if (archiveExpire.total == 0)
                             {
-                                LOG_DETAIL("no archive to remove, archiveId = %s", strPtr(archiveId));
+                                LOG_DETAIL_FMT("no archive to remove, archiveId = %s", strPtr(archiveId));
                             }
                             // Log if there is more to log
                             else
@@ -606,7 +608,7 @@ removeExpiredBackup(InfoBackup *infoBackup)
     {
         if (!strLstExists(currentBackupList, strLstGet(backupList, backupIdx)))
         {
-            LOG_INFO("remove expired backup %s", strPtr(strLstGet(backupList, backupIdx)));
+            LOG_INFO_FMT("remove expired backup %s", strPtr(strLstGet(backupList, backupIdx)));
 
             storagePathRemoveP(
                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(strLstGet(backupList, backupIdx))),

@@ -143,7 +143,7 @@ cfgLoadUpdateOption(void)
             // If the repo-type is defined, then see if corresponding retention-full is set
             if (cfgOptionTest(cfgOptRepoType + optionIdx) && !cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
             {
-                LOG_WARN(
+                LOG_WARN_FMT(
                     "option %s is not set, the repository may run out of space"
                         "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
                     cfgOptionName(cfgOptRepoRetentionFull + optionIdx),
@@ -187,7 +187,7 @@ cfgLoadUpdateOption(void)
                     }
                     else
                     {
-                        LOG_WARN("%s neither option '%s' nor option '%s' is set", strPtr(msgArchiveOff),
+                        LOG_WARN_FMT("%s neither option '%s' nor option '%s' is set", strPtr(msgArchiveOff),
                             cfgOptionName(cfgOptRepoRetentionArchive + optionIdx),
                             cfgOptionName(cfgOptRepoRetentionDiff + optionIdx));
                     }
@@ -196,7 +196,7 @@ cfgLoadUpdateOption(void)
                 {
                     CHECK(strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR));
 
-                    LOG_WARN("%s option '%s' is not set", strPtr(msgArchiveOff),
+                    LOG_WARN_FMT("%s option '%s' is not set", strPtr(msgArchiveOff),
                         cfgOptionName(cfgOptRepoRetentionArchive + optionIdx));
                 }
             }
@@ -208,7 +208,7 @@ cfgLoadUpdateOption(void)
                 if ((strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) &&
                     (!cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx)))
                 {
-                    LOG_WARN("option '%s' is not set for '%s=%s'\n"
+                    LOG_WARN_FMT("option '%s' is not set for '%s=%s'\n"
                         "HINT: to retain differential backups indefinitely (without warning), set option '%s' to the maximum.",
                         cfgOptionName(cfgOptRepoRetentionDiff + optionIdx),
                         cfgOptionName(cfgOptRepoRetentionArchiveType + optionIdx),

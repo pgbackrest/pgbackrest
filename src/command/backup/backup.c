@@ -230,13 +230,13 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
                 const ManifestData *manifestPriorData = manifestData(result);
 
-                LOG_INFO(
+                LOG_INFO_FMT(
                     "last backup label = %s, version = %s", strPtr(backupLabelPrior), strPtr(manifestPriorData->backrestVersion));
 
                 // Warn if compress option changed
                 if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
                 {
-                    LOG_WARN(
+                    LOG_WARN_FMT(
                         "%s backup cannot alter compress option to '%s', reset to value in %s", strPtr(cfgOptionStr(cfgOptType)),
                         cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)), strPtr(backupLabelPrior));
                     cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
@@ -245,7 +245,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                 // Warn if hardlink option changed
                 if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
                 {
-                    LOG_WARN(
+                    LOG_WARN_FMT(
                         "%s backup cannot alter hardlink option to '%s', reset to value in %s", strPtr(cfgOptionStr(cfgOptType)),
                         cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)), strPtr(backupLabelPrior));
                     cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
@@ -253,7 +253,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             }
             else
             {
-                LOG_WARN("no prior backup exists, %s backup has been changed to full", strPtr(cfgOptionStr(cfgOptType)));
+                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strPtr(cfgOptionStr(cfgOptType)));
                 cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(type)));
             }
         }
@@ -305,7 +305,7 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest)
 
                     if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
                     {
-                        LOG_WARN(
+                        LOG_WARN_FMT(
                             "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
                             strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
                             cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(manifestPrior)->backupLabel));
@@ -385,7 +385,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             // If the path was not found remove it
             if (manifestPathFindDefault(resumeData->manifest, manifestName, NULL) == NULL)
             {
-                LOG_DETAIL("remove path '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
+                LOG_DETAIL_FMT("remove path '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
                 storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
             }
             // Else recurse into the path
@@ -429,7 +429,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             // Else remove the file
             else
             {
-                LOG_DETAIL("remove file '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
+                LOG_DETAIL_FMT("remove file '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
                 storageRemoveP(storageRepoWrite(), backupPath);
             }
 
@@ -449,7 +449,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
         {
-            LOG_WARN("remove special file '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
+            LOG_WARN_FMT("remove special file '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
             storageRemoveP(storageRepoWrite(), backupPath);
             break;
         }
@@ -570,7 +570,7 @@ backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String 
                 // Else warn and remove the unusable backup
                 else
                 {
-                    LOG_WARN("backup '%s' cannot be resumed: %s", strPtr(backupLabel), strPtr(reason));
+                    LOG_WARN_FMT("backup '%s' cannot be resumed: %s", strPtr(backupLabel), strPtr(reason));
 
                     storagePathRemoveP(
                         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel)), .recurse = true);
@@ -611,7 +611,7 @@ backupResume(const InfoBackup *infoBackup, Manifest *manifest)
             // TESTS ARE NOT SETTING THIS VALUE CORRECTLY.  SHOULD FIX BEFORE RELEASE.
             manifestBackupLabelSet(manifest, backupLabelResume);
 
-            LOG_WARN(
+            LOG_WARN_FMT(
                 "resumable backup %s of same type exists -- remove invalid files and resume",
                 strPtr(manifestData(manifest)->backupLabel));
 
