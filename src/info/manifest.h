@@ -164,13 +164,6 @@ void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart);
 // Create a diff/incr backup by comparing to a previous backup manifest
 void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
 
-// Set all remaining values required to complete the manifest
-void manifestBuildComplete(
-    Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
-    size_t optionBufferSize, bool optionChecksumPage, bool optionCompress, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
-    bool optionStandby);
-
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/

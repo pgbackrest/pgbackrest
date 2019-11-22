@@ -406,29 +406,9 @@ typedef struct ManifestBuildData
     bool dbPath;                                                    // Does this path contain relations?
 } ManifestBuildData;
 
-// Helper to determine if a file should be copied from the primary
-static bool
-manifestBuildCopyFromPrimary(RegExp *standbyExp, const String *manifestName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, standbyExp);
-        FUNCTION_TEST_PARAM(STRING, manifestName);
-    FUNCTION_TEST_END();
-
-    ASSERT(manifestName != NULL);
-
-    if (standbyExp != NULL)
-    {
-        FUNCTION_TEST_RETURN(
-            strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-            !regExpMatch(standbyExp, manifestName));
-    }
-
-    FUNCTION_TEST_RETURN(false);
-}
-
 // Callback to process files/links/paths and add them to the manifest
-void manifestBuildCallback(void *data, const StorageInfo *info)
+static void
+manifestBuildCallback(void *data, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -634,11 +614,18 @@ void manifestBuildCallback(void *data, const StorageInfo *info)
                 .mode = info->mode,
                 .user = info->user,
                 .group = info->group,
-                .primary = manifestBuildCopyFromPrimary(buildData.standbyExp, manifestName),
                 .size = info->size,
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
             };
+
+            // Determine if this file should be copied from the primary
+            if (buildData.standbyExp != NULL)
+            {
+                file.primary =
+                    strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+                    !regExpMatch(buildData.standbyExp, manifestName);
+            }
 
             manifestFileAdd(buildData.manifest, &file);
             break;
@@ -1139,52 +1126,6 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         }
     }
     MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-manifestBuildComplete(
-    Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
-    size_t optionBufferSize, bool optionChecksumPage, bool optionCompress, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
-    bool optionStandby)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, this);
-        FUNCTION_LOG_PARAM(TIME, timestampStart);
-        FUNCTION_LOG_PARAM(UINT, pgId);
-        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
-        FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
-        FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
-        FUNCTION_LOG_PARAM(BOOL, optionChecksumPage);
-        FUNCTION_LOG_PARAM(BOOL, optionCompress);
-        FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
-        FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
-        FUNCTION_LOG_PARAM(BOOL, optionProcessMax);
-        FUNCTION_LOG_PARAM(BOOL, optionStandby);
-    FUNCTION_LOG_END();
-
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->data.backupTimestampStart = timestampStart;
-        this->data.pgId = pgId;
-        this->data.pgSystemId = pgSystemId;
-        this->data.backupOptionArchiveCheck = optionArchiveCheck;
-        this->data.backupOptionArchiveCopy = optionArchiveCopy;
-        this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
-        this->data.backupOptionChecksumPage = varNewBool(optionChecksumPage);
-        this->data.backupOptionCompress = optionCompress;
-        this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
-        this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
-        this->data.backupOptionHardLink = optionHardLink;
-        this->data.backupOptionOnline = optionOnline;
-        this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
-        this->data.backupOptionStandby = varNewBool(optionStandby);
-    }
-    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
