@@ -3,12 +3,15 @@ Backup Manifest Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <ctype.h>
 #include <string.h>
+#include <time.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/object.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "common/type/mcv.h"
@@ -383,6 +386,809 @@ manifestNewInternal(void)
     FUNCTION_TEST_RETURN(this);
 }
 
+/**********************************************************************************************************************************/
+typedef struct ManifestBuildData
+{
+    Manifest *manifest;
+    const Storage *storagePg;
+    const String *tablespaceId;                                     // Tablespace id if PostgreSQL version has one
+    bool online;                                                    // Is this an online backup?
+    const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
+    RegExp *dbPathExp;                                              // Identify paths containing relations
+    RegExp *tempRelationExp;                                        // Identify temp relations
+    RegExp *standbyExp;                                             // Identify files that must be copied from the primary
+    StringList *excludeContent;                                     // Exclude contents of directories
+    StringList *excludeSingle;                                      // Exclude a single file/link/path
+
+    // These change with each level of recursion
+    const String *manifestParentName;                               // Manifest name of this file/link/path's parent
+    const String *pgPath;                                           // Current path in the PostgreSQL data directory
+    bool dbPath;                                                    // Does this path contain relations?
+} ManifestBuildData;
+
+// Helper to determine if a file should be copied from the primary
+static bool
+manifestBuildCopyFromPrimary(RegExp *standbyExp, const String *manifestName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(REGEXP, standbyExp);
+        FUNCTION_TEST_PARAM(STRING, manifestName);
+    FUNCTION_TEST_END();
+
+    ASSERT(manifestName != NULL);
+
+    if (standbyExp != NULL)
+    {
+        FUNCTION_TEST_RETURN(
+            strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+            !regExpMatch(standbyExp, manifestName));
+    }
+
+    FUNCTION_TEST_RETURN(false);
+}
+
+// Callback to process files/links/paths and add them to the manifest
+void manifestBuildCallback(void *data, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, *storageInfo);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(info != NULL);
+
+    // Skip all . paths because they have already been recorded on the previous level of recursion
+    if (strEq(info->name, DOT_STR))
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
+    // are recreated.
+    if (strBeginsWithZ(info->name, PG_PREFIX_PGSQLTMP))
+    {
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    // Get build data
+    ManifestBuildData buildData = *(ManifestBuildData *)data;
+    unsigned int pgVersion = buildData.manifest->data.pgVersion;
+
+    // Contruct the name used to identify this file/link/path in the manifest
+    strPtr(info->name);
+    strPtr(buildData.manifestParentName);
+    const String *manifestName = strNewFmt("%s/%s", strPtr(buildData.manifestParentName), strPtr(info->name));
+
+    // Skip excluded files/links/paths
+    if (buildData.excludeSingle != NULL && strLstExists(buildData.excludeSingle, manifestName))
+    {
+        LOG_INFO(
+            "exclude '%s/%s' from backup using '%s' exclusion", strPtr(buildData.pgPath), strPtr(info->name),
+            strPtr(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
+
+        FUNCTION_TEST_RETURN_VOID();
+        return;
+    }
+
+    // Process storage types
+    switch (info->type)
+    {
+        // Add paths
+        // -------------------------------------------------------------------------------------------------------------------------
+        case storageTypePath:
+        {
+            // There should not be any paths in pg_tblspc
+            if (strEqZ(buildData.manifestParentName, MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC))
+            {
+                THROW_FMT(
+                    LinkExpectedError, "'%s' is not a symlink - " MANIFEST_TARGET_PGTBLSPC " should contain only symlinks",
+                    strPtr(manifestName));
+            }
+
+            // Add path to manifest
+            ManifestPath path =
+            {
+                .name = manifestName,
+                .mode = info->mode,
+                .user = info->user,
+                .group = info->group,
+            };
+
+            manifestPathAdd(buildData.manifest, &path);
+
+            // Skip excluded path content
+            if (buildData.excludeContent != NULL && strLstExists(buildData.excludeContent, manifestName))
+            {
+                LOG_INFO(
+                    "exclude contents of '%s/%s' from backup using '%s/' exclusion", strPtr(buildData.pgPath), strPtr(info->name),
+                    strPtr(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
+
+                FUNCTION_TEST_RETURN_VOID();
+                return;
+            }
+
+            // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
+            if (strEq(buildData.manifestParentName, MANIFEST_TARGET_PGDATA_STR))
+            {
+                if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGNOTIFY))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && pgVersion >= PG_VERSION_94)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSERIAL) && pgVersion >= PG_VERSION_91)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && pgVersion >= PG_VERSION_92)
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSTATTMP))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+
+                if (strEqZ(info->name, PG_PATH_PGSUBTRANS))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+            }
+
+            // Skip the contents of archive_status when online
+            if (buildData.online && strEq(buildData.manifestParentName, buildData.manifestWalName) &&
+                strEqZ(info->name, PG_PATH_ARCHIVE_STATUS))
+            {
+                FUNCTION_TEST_RETURN_VOID();
+                return;
+            }
+
+            // Recurse into the path
+            ManifestBuildData buildDataSub = buildData;
+            buildDataSub.manifestParentName = manifestName;
+            buildDataSub.pgPath = strNewFmt("%s/%s", strPtr(buildData.pgPath), strPtr(info->name));
+
+            if (buildData.dbPathExp != NULL)
+                buildDataSub.dbPath = regExpMatch(buildData.dbPathExp, manifestName);
+
+            storageInfoListP(
+                buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
+
+            break;
+        }
+
+        // Add files
+        // -------------------------------------------------------------------------------------------------------------------------
+        case storageTypeFile:
+        {
+            // Skip pg_internal.init since it is recreated on startup
+            if (strEqZ(info->name, PG_FILE_PGINTERNALINIT))
+            {
+                FUNCTION_TEST_RETURN_VOID();
+                return;
+            }
+
+            // Skip files in the root data path
+            if (strEq(buildData.manifestParentName, MANIFEST_TARGET_PGDATA_STR))
+            {
+                // Skip recovery files
+                if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_RECOVERYSIGNAL)) &&
+                        pgVersion >= PG_VERSION_12) ||
+                    ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
+                            pgVersion < PG_VERSION_12) ||
+                    // Skip temp file for safely writing postgresql.auto.conf
+                    (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP) && pgVersion >= PG_VERSION_94) ||
+                    // Skip backup_label in versions where non-exclusive backup is supported
+                    (strEqZ(info->name, PG_FILE_BACKUPLABEL) && pgVersion >= PG_VERSION_96) ||
+                    // Skip old backup labels
+                    strEqZ(info->name, PG_FILE_BACKUPLABELOLD) ||
+                    // Skip running postmaster options
+                    strEqZ(info->name, PG_FILE_POSTMASTEROPTS) ||
+                    // Skip process id file to avoid confusing postgres after restore
+                    strEqZ(info->name, PG_FILE_POSTMASTERPID))
+                {
+                    FUNCTION_TEST_RETURN_VOID();
+                    return;
+                }
+            }
+
+            // Skip the contents of the wal path when online
+            if (buildData.online && strEq(buildData.manifestParentName, buildData.manifestWalName))
+            {
+                FUNCTION_TEST_RETURN_VOID();
+                return;
+            }
+
+            // Skip temp relations in db paths
+            if (buildData.dbPath && regExpMatch(buildData.tempRelationExp, info->name))
+            {
+                FUNCTION_TEST_RETURN_VOID();
+                return;
+            }
+
+            // Add file to manifest
+            ManifestFile file =
+            {
+                .name = manifestName,
+                .mode = info->mode,
+                .user = info->user,
+                .group = info->group,
+                .primary = manifestBuildCopyFromPrimary(buildData.standbyExp, manifestName),
+                .size = info->size,
+                .sizeRepo = info->size,
+                .timestamp = info->timeModified,
+            };
+
+            manifestFileAdd(buildData.manifest, &file);
+            break;
+        }
+
+        // Add links
+        // -------------------------------------------------------------------------------------------------------------------------
+        case storageTypeLink:
+        {
+            // If the destination is another link then error.  In the future we'll allow this by following the link chain to the
+            // eventual destination but for now we are trying to maintain compatibility during the migration.  To do this check we
+            // need to read outside of the data directory but it is a read-only operation so is considered safe.
+            const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, buildData.pgPath);
+
+            StorageInfo linkedCheck = storageInfoP(
+                buildData.storagePg, linkDestinationAbsolute, .ignoreMissing = true, .noPathEnforce = true);
+
+            if (linkedCheck.exists && linkedCheck.type == storageTypeLink)
+            {
+                THROW_FMT(
+                    LinkDestinationError, "link '%s/%s' cannot reference another link '%s'", strPtr(buildData.pgPath),
+                    strPtr(info->name), strPtr(linkDestinationAbsolute));
+            }
+
+            // Initialize link and target
+            ManifestLink link =
+            {
+                .name = manifestName,
+                .user = info->user,
+                .group = info->group,
+                .destination = info->linkDestination,
+            };
+
+            ManifestTarget target =
+            {
+                .name = manifestName,
+                .type = manifestTargetTypeLink,
+            };
+
+            // Make a copy of the link name because it will need to be modified when there are tablespace ids
+            const String *linkName = info->name;
+
+            // Is this a tablespace?
+            if (strEq(buildData.manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
+            {
+                // Strip pg_data off the manifest name so it begins with pg_tblspc instead.  This reflects how the files are stored
+                // in the backup directory.
+                manifestName = strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA));
+
+                // Identify this target as a tablespace
+                target.name = manifestName;
+                target.tablespaceId = cvtZToUInt(strPtr(info->name));
+                target.tablespaceName = strNewFmt("ts%s", strPtr(info->name));
+
+                // Add a dummy pg_tblspc path entry if it does not already exist.  This entry will be ignored by restore but it is
+                // part of the original manifest format so we need to have it.
+                lstSort(buildData.manifest->pathList, sortOrderAsc);
+                const ManifestPath *pathBase = manifestPathFind(buildData.manifest, MANIFEST_TARGET_PGDATA_STR);
+
+                if (manifestPathFindDefault(buildData.manifest, MANIFEST_TARGET_PGTBLSPC_STR, NULL) == NULL)
+                {
+                    ManifestPath path =
+                    {
+                        .name = MANIFEST_TARGET_PGTBLSPC_STR,
+                        .mode = pathBase->mode,
+                        .user = pathBase->user,
+                        .group = pathBase->group,
+                    };
+
+                    manifestPathAdd(buildData.manifest, &path);
+                }
+
+                // If the tablespace id is present then the tablespace link destination path is not the path where data will be
+                // stored so we can just store it as dummy path.
+                if (buildData.tablespaceId != NULL)
+                {
+                    const ManifestPath *pathTblSpc = manifestPathFind(
+                        buildData.manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC));
+
+                    ManifestPath path =
+                    {
+                        .name = manifestName,
+                        .mode = pathTblSpc->mode,
+                        .user = pathTblSpc->user,
+                        .group = pathTblSpc->group,
+                    };
+
+                    manifestPathAdd(buildData.manifest, &path);
+
+                    // Update build structure to reflect the path added above and the tablespace id
+                    buildData.manifestParentName = manifestName;
+                    manifestName = strNewFmt("%s/%s", strPtr(manifestName), strPtr(buildData.tablespaceId));
+                    buildData.pgPath = strNewFmt("%s/%s", strPtr(buildData.pgPath), strPtr(info->name));
+                    linkName = buildData.tablespaceId;
+                }
+            }
+
+            // Add info about the linked file/path
+            const String *linkPgPath = strNewFmt("%s/%s", strPtr(buildData.pgPath), strPtr(linkName));
+            StorageInfo linkedInfo = storageInfoP(
+                buildData.storagePg, linkPgPath, .followLink = true, .ignoreMissing = true);
+            linkedInfo.name = linkName;
+
+            // If the link destination exists then proceed as usual
+            if (linkedInfo.exists)
+            {
+                // If a path link then recurse
+                if (linkedInfo.type == storageTypePath)
+                {
+                    target.path = info->linkDestination;
+                }
+                // Else it must be a file or special (since we have already checked if it is a link)
+                else
+                {
+                    // Tablespace links should never be to a file
+                    CHECK(target.tablespaceId == 0);
+
+                    // Identify target as a file
+                    target.path = strPath(info->linkDestination);
+                    target.file = strBase(info->linkDestination);
+                }
+
+                // Use the callback to add and do all related checks
+                manifestBuildCallback(&buildData, &linkedInfo);
+            }
+            // Else dummy up the target with a destination so manifestLinkCheck() can be run.  This is so errors about links with
+            // destinations in PGDATA will take precedence over missing a destination.  We will probably simplify this once the
+            // migration is done and it doesn't matter which error takes precedence.
+            else
+                target.path = info->linkDestination;
+
+            // Add target and link
+            manifestTargetAdd(buildData.manifest, &target);
+            manifestLinkAdd(buildData.manifest, &link);
+
+            // Make sure the link is valid
+            manifestLinkCheck(buildData.manifest);
+
+            // If the link check was successful but the destination does not exist then check it again to generate an error
+            if (!linkedInfo.exists)
+                storageInfoP(buildData.storagePg, linkPgPath, .followLink = true);
+
+            break;
+        }
+
+        // Skip special files
+        // -------------------------------------------------------------------------------------------------------------------------
+        case storageTypeSpecial:
+        {
+            LOG_WARN("exclude special file '%s/%s' from backup", strPtr(buildData.pgPath), strPtr(info->name));
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+// Regular expression constants
+#define RELATION_EXP                                                "[0-9]+(|_(fsm|vm)){0,1}(\\.[0-9]+){0,1}"
+#define DB_PATH_EXP                                                                                                                \
+    "(" MANIFEST_TARGET_PGDATA "/(" PG_PATH_GLOBAL "|" PG_PATH_BASE "/[0-9]+)|" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+)"
+
+Manifest *
+manifestNewBuild(
+    const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storagePg);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(BOOL, online);
+        FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
+    FUNCTION_LOG_END();
+
+    ASSERT(storagePg != NULL);
+    ASSERT(pgVersion != 0);
+
+    Manifest *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("Manifest")
+    {
+        this = manifestNewInternal();
+        this->info = infoNew(NULL);
+        this->data.pgVersion = pgVersion;
+        this->data.backupOptionOnline = online;
+
+        // Data needed to build the manifest
+        ManifestBuildData buildData =
+        {
+            .manifest = this,
+            .storagePg = storagePg,
+            .tablespaceId = pgTablespaceId(pgVersion),
+            .online = online,
+            .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
+            .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/pg_%s", strPtr(pgWalName(pgVersion))),
+            .pgPath = storagePathP(storagePg, NULL),
+        };
+
+        // We won't identify db paths for PostgreSQL < 9.0.  This means that temp relations will not be excluded but it doesn't seem
+        // worth supporting this feature on such old versions of PostgreSQL.
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (pgVersion >= PG_VERSION_90)
+        {
+            ASSERT(buildData.tablespaceId != NULL);
+
+            buildData.dbPathExp = regExpNew(
+                strNewFmt("^" DB_PATH_EXP "$", strPtr(buildData.tablespaceId)));
+
+            // Expression to find temp relations
+            buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
+        }
+
+        // Build expression to identify files that can be copied from the standby when standby backup is supported
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (pgVersion >= PG_VERSION_BACKUP_STANDBY)
+        {
+            buildData.standbyExp = regExpNew(
+                strNewFmt(
+                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
+                        MANIFEST_TARGET_PGTBLSPC ")/",
+                    strPtr(pgXactPath(pgVersion))));
+        }
+
+        // Build list of exclusions
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (excludeList != NULL)
+        {
+            for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
+            {
+                const String *exclude = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(strLstGet(excludeList, excludeIdx)));
+
+                // If the exclusions refers to the contents of a path
+                if (strEndsWithZ(exclude, "/"))
+                {
+                    if (buildData.excludeContent == NULL)
+                        buildData.excludeContent = strLstNew();
+
+                    strLstAdd(buildData.excludeContent, strSubN(exclude, 0, strSize(exclude) - 1));
+                }
+                // Otherwise exclude a single file/link/path
+                else
+                {
+                    if (buildData.excludeSingle == NULL)
+                        buildData.excludeSingle = strLstNew();
+
+                    strLstAdd(buildData.excludeSingle, exclude);
+                }
+            }
+        }
+
+        // Build manifest
+        // -------------------------------------------------------------------------------------------------------------------------
+        StorageInfo info = storageInfoP(storagePg, buildData.pgPath, .followLink = true);
+
+        ManifestPath path =
+        {
+            .name = MANIFEST_TARGET_PGDATA_STR,
+            .mode = info.mode,
+            .user = info.user,
+            .group = info.group,
+        };
+
+        manifestPathAdd(this, &path);
+
+        ManifestTarget target =
+        {
+            .name = MANIFEST_TARGET_PGDATA_STR,
+            .path = buildData.pgPath,
+            .type = manifestTargetTypePath,
+        };
+
+        manifestTargetAdd(this, &target);
+
+        // Gather info for the rest of the files/links/paths
+        storageInfoListP(
+            storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+
+        // These may not be in order even if the incoming data was sorted
+        lstSort(this->fileList, sortOrderAsc);
+        lstSort(this->linkList, sortOrderAsc);
+        lstSort(this->pathList, sortOrderAsc);
+        lstSort(this->targetList, sortOrderAsc);
+
+        // Remove unlogged relations from the manifest.  This can't be done during the initial build because of the requirement to
+        // check for _init files which will sort after the vast majority of the relation files.  We could check storage for each
+        // _init file but that would be expensive.
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (pgVersion >= PG_VERSION_91)
+        {
+            RegExp *relationExp = regExpNew(STRDEF("^" DB_PATH_EXP "/" RELATION_EXP "$"));
+            unsigned int fileIdx = 0;
+            const String *lastRelationFileId = NULL;
+            bool lastRelationFileIdUnlogged = false;
+
+            while (fileIdx < manifestFileTotal(this))
+            {
+                const ManifestFile *file = manifestFile(this, fileIdx);
+
+                // If this file looks like a relation.  Note that this never matches on _init forks.
+                if (regExpMatch(relationExp, file->name))
+                {
+                    String *fileName = strBase(file->name);
+                    String *relationFileId = strNew("");
+
+                    // Strip off the numeric part of the relation
+                    for (unsigned int nameIdx = 0; nameIdx < strSize(fileName); nameIdx++)
+                    {
+                        char nameChr = strPtr(fileName)[nameIdx];
+
+                        if (!isdigit(nameChr))
+                            break;
+
+                        strCatChr(relationFileId, nameChr);
+                    }
+
+                    // Store the last relation so it does not need to be found everytime
+                    if (lastRelationFileId == NULL || !strEq(lastRelationFileId, relationFileId))
+                    {
+                        // Determine if the relation is unlogged
+                        const String *relationInit = strNewFmt("%s/%s_init", strPtr(strPath(file->name)), strPtr(relationFileId));
+                        lastRelationFileId = relationFileId;
+                        lastRelationFileIdUnlogged = manifestFileFindDefault(this, relationInit, NULL) != NULL;
+                    }
+
+                    // If relation is unlogged then remove it
+                    if (lastRelationFileIdUnlogged)
+                    {
+                        manifestFileRemove(this, file->name);
+                        continue;
+                    }
+                }
+
+                fileIdx++;
+            }
+        }
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(MANIFEST, this);
+}
+
+/**********************************************************************************************************************************/
+void
+manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(BOOL, delta);
+        FUNCTION_LOG_PARAM(TIME, copyStart);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(copyStart > 0);
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        // Store the delta option.  If true we can skip checks that automatically enable delta.
+        this->data.backupOptionDelta = varNewBool(delta);
+
+        // If online then add one second to the copy start time to allow for database updates during the last second that the
+        // manifest was being built.  It's up to the caller to actually wait the remainder of the second, but for comparison
+        // purposes we want the time when the waiting started.
+        this->data.backupTimestampCopyStart = copyStart + (this->data.backupOptionOnline ? 1 : 0);
+    }
+    MEM_CONTEXT_END();
+
+    // Check the manifest for timestamp anomolies that require a delta backup (if delta is not already specified)
+    if (!varBool(this->data.backupOptionDelta))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
+            {
+                const ManifestFile *file = manifestFile(this, fileIdx);
+
+                // Check for timestamp in the future
+                if (file->timestamp > copyStart)
+                {
+                    LOG_WARN("file '%s' has timestamp in the future, enabling delta checksum", strPtr(manifestPathPg(file->name)));
+                    this->data.backupOptionDelta = BOOL_TRUE_VAR;
+                    break;
+                }
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type, const String *archiveStart)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING, archiveStart);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(manifestPrior != NULL);
+    ASSERT(type == backupTypeDiff || type == backupTypeIncr);
+    ASSERT(type != backupTypeDiff || manifestPrior->data.backupType == backupTypeFull);
+    ASSERT(archiveStart == NULL || strSize(archiveStart) == 24);
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        // Set prior backup label
+        this->data.backupLabelPrior = strDup(manifestPrior->data.backupLabel);
+
+        // Set diff/incr backup type
+        this->data.backupType = type;
+
+        // Set archive start
+        this->data.archiveStart = strDup(archiveStart);
+    }
+    MEM_CONTEXT_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Enable delta if timelines differ
+        if (manifestData(manifestPrior)->archiveStop != NULL && this->data.archiveStart != NULL &&
+            !strEq(strSubN(manifestData(manifestPrior)->archiveStop, 0, 8), strSubN(this->data.archiveStart, 0, 8)))
+        {
+            LOG_WARN(
+                "a timeline switch has occurred since the %s backup, enabling delta checksum",
+                strPtr(manifestData(manifestPrior)->backupLabel));
+
+            this->data.backupOptionDelta = BOOL_TRUE_VAR;
+        }
+        // Else enable delta if online differs
+        else if (manifestData(manifestPrior)->backupOptionOnline != this->data.backupOptionOnline)
+        {
+            LOG_WARN(
+                "the online option has changed since the %s backup, enabling delta checksum",
+                strPtr(manifestData(manifestPrior)->backupLabel));
+
+            this->data.backupOptionDelta = BOOL_TRUE_VAR;
+        }
+
+        // Check for anomolies between manifests if delta is not already enabled.  This can't be combined with the main comparison
+        // loop below because delta changes the behavior of that loop.
+        if (!varBool(this->data.backupOptionDelta))
+        {
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
+            {
+                const ManifestFile *file = manifestFile(this, fileIdx);
+                const ManifestFile *filePrior = manifestFileFindDefault(manifestPrior, file->name, NULL);
+
+                // If file was found in prior manifest then perform checks
+                if (filePrior != NULL)
+                {
+                    // Check for timestamp earlier than the prior backup
+                    if (file->timestamp < filePrior->timestamp)
+                    {
+                        LOG_WARN(
+                            "file '%s' has timestamp earlier than prior backup, enabling delta checksum",
+                            strPtr(manifestPathPg(file->name)));
+
+                        this->data.backupOptionDelta = BOOL_TRUE_VAR;
+                        break;
+                    }
+
+                    // Check for size change with no timestamp change
+                    if (file->size != filePrior->size && file->timestamp == filePrior->timestamp)
+                    {
+                        LOG_WARN(
+                            "file '%s' has same timestamp as prior but different size, enabling delta checksum",
+                            strPtr(manifestPathPg(file->name)));
+
+                        this->data.backupOptionDelta = BOOL_TRUE_VAR;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Find files to reference in the prior manifest:
+        // 1) that don't need to be copied because delta is disabled and the size and timestamp match or size matches and is zero
+        // 2) where delta is enabled and size matches so checkum will be verified during backup and the file copied on mismatch
+        bool delta = varBool(this->data.backupOptionDelta);
+
+        for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
+        {
+            const ManifestFile *file = manifestFile(this, fileIdx);
+            const ManifestFile *filePrior = manifestFileFindDefault(manifestPrior, file->name, NULL);
+
+            // Check if prior file can be used
+            if (filePrior != NULL && file->size == filePrior->size &&
+                (delta || file->size == 0 || file->timestamp == filePrior->timestamp))
+            {
+                manifestFileUpdate(
+                    this, file->name, file->size, filePrior->sizeRepo, filePrior->checksumSha1,
+                    filePrior->reference != NULL ? filePrior->reference : manifestPrior->data.backupLabel, filePrior->checksumPage,
+                    filePrior->checksumPageError, filePrior->checksumPageErrorList);
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+manifestBuildComplete(
+    Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
+    size_t optionBufferSize, bool optionChecksumPage, bool optionCompress, unsigned int optionCompressLevel,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
+    bool optionStandby)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(TIME, timestampStart);
+        FUNCTION_LOG_PARAM(UINT, pgId);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
+        FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
+        FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
+        FUNCTION_LOG_PARAM(BOOL, optionChecksumPage);
+        FUNCTION_LOG_PARAM(BOOL, optionCompress);
+        FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
+        FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
+        FUNCTION_LOG_PARAM(BOOL, optionProcessMax);
+        FUNCTION_LOG_PARAM(BOOL, optionStandby);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->data.backupTimestampStart = timestampStart;
+        this->data.pgId = pgId;
+        this->data.pgSystemId = pgSystemId;
+        this->data.backupOptionArchiveCheck = optionArchiveCheck;
+        this->data.backupOptionArchiveCopy = optionArchiveCopy;
+        this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
+        this->data.backupOptionChecksumPage = varNewBool(optionChecksumPage);
+        this->data.backupOptionCompress = optionCompress;
+        this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
+        this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
+        this->data.backupOptionHardLink = optionHardLink;
+        this->data.backupOptionOnline = optionOnline;
+        this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
+        this->data.backupOptionStandby = varNewBool(optionStandby);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Load manifest
 ***********************************************************************************************************************************/
@@ -489,9 +1295,14 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
 
             file.sizeRepo = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.size)));
 
+            // If file size is zero then assign the static zero hash
             if (file.size == 0)
+            {
                 memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
-            else
+            }
+            // Else if the key exists then load it.  The key might not exist if this is a partial save that was done during the
+            // backup to preserve checksums for already backed up files.
+            else if (kvKeyExists(fileKv, MANIFEST_KEY_CHECKSUM_VAR))
             {
                 memcpy(
                     file.checksumSha1, strPtr(varStr(kvGet(fileKv, MANIFEST_KEY_CHECKSUM_VAR))), HASH_TYPE_SHA1_SIZE_HEX + 1);
@@ -1137,7 +1948,9 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 const ManifestFile *file = manifestFile(manifest, fileIdx);
                 KeyValue *fileKv = kvNew();
 
-                if (file->size != 0)
+                // Save if the file size is not zero and the checksum exists.  The checksum might not exist if this is a partial
+                // save performed during a backup.
+                if (file->size != 0 && file->checksumSha1[0] != 0)
                     kvPut(fileKv, MANIFEST_KEY_CHECKSUM_VAR, VARSTRZ(file->checksumSha1));
 
                 if (file->checksumPage)
@@ -1378,12 +2191,28 @@ manifestLinkCheck(const Manifest *this)
 
     ASSERT(this != NULL);
 
+    // Base path used for link checks
+    const ManifestTarget *base = manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR);
+
     for (unsigned int linkIdx1 = 0; linkIdx1 < manifestTargetTotal(this); linkIdx1++)
     {
         const ManifestTarget *link1 = manifestTarget(this, linkIdx1);
 
+        // Only compare links
         if (link1->type == manifestTargetTypeLink)
         {
+            // Check that the link is not inside the base data path
+            if (strBeginsWith(
+                    strNewFmt("%s/", strPtr(manifestTargetPath(this, link1))),
+                    strNewFmt("%s/", strPtr(manifestTargetPath(this, base)))))
+            {
+                THROW_FMT(
+                    LinkDestinationError,
+                    "link '%s' destination '%s' is in PGDATA",
+                    strPtr(manifestPathPg(link1->name)), strPtr(manifestTargetPath(this, link1)));
+            }
+
+            // Check that no link is a subpath of another link
             for (unsigned int linkIdx2 = 0; linkIdx2 < manifestTargetTotal(this); linkIdx2++)
             {
                 const ManifestTarget *link2 = manifestTarget(this, linkIdx2);
@@ -1550,6 +2379,55 @@ manifestFileTotal(const Manifest *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(lstSize(this->fileList));
+}
+
+void
+manifestFileUpdate(
+    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const String *reference,
+    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(UINT64, size);
+        FUNCTION_TEST_PARAM(UINT64, sizeRepo);
+        FUNCTION_TEST_PARAM(STRINGZ, checksumSha1);
+        FUNCTION_TEST_PARAM(STRING, reference);
+        FUNCTION_TEST_PARAM(BOOL, checksumPage);
+        FUNCTION_TEST_PARAM(BOOL, checksumPageError);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, checksumPageErrorList);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+    ASSERT(
+        (!checksumPage && !checksumPageError && checksumPageErrorList == NULL) ||
+        (checksumPage && !checksumPageError && checksumPageErrorList == NULL) || (checksumPage && checksumPageError));
+
+    ManifestFile *file = (ManifestFile *)manifestFileFind(this, name);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->fileList))
+    {
+        // Update reference if set
+        if (reference != NULL)
+            file->reference = strLstAddIfMissing(this->referenceList, reference);
+
+        // Update checksum if set
+        if (checksumSha1 != NULL)
+            memcpy(file->checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+        // Update repo size
+        file->size = size;
+        file->sizeRepo = sizeRepo;
+
+        // Update checksum page info
+        file->checksumPage = checksumPage;
+        file->checksumPageError = checksumPageError;
+        file->checksumPageErrorList = varLstDup(checksumPageErrorList);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -1891,8 +2769,23 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 }
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
+void
+manifestChecksumPageSet(Manifest *this, bool checksumPage)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(BOOL, checksumPage);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    this->data.backupOptionChecksumPage = checksumPage ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 const String *
 manifestCipherSubPass(const Manifest *this)
 {
@@ -1905,6 +2798,21 @@ manifestCipherSubPass(const Manifest *this)
     FUNCTION_TEST_RETURN(infoCipherPass(this->info));
 }
 
+void
+manifestCipherSubPassSet(Manifest *this, const String *cipherSubPass)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, cipherSubPass);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    infoCipherPassSet(this->info, cipherSubPass);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 const ManifestData *
 manifestData(const Manifest *this)
 {
@@ -1915,6 +2823,25 @@ manifestData(const Manifest *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(&this->data);
+}
+
+void
+manifestBackupLabelSet(Manifest *this, const String *backupLabel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->data.backupLabel = strDup(backupLabel);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

@@ -149,7 +149,27 @@ typedef struct ManifestTarget
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
+// Build a new manifest for a PostgreSQL data directory
+Manifest *manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList);
+
+// Load a manifest from IO
 Manifest *manifestNewLoad(IoRead *read);
+
+/***********************************************************************************************************************************
+Build functions
+***********************************************************************************************************************************/
+// Validate the timestamps in the manifest given a copy start time, i.e. all times should be <= the copy start time
+void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart);
+
+// Create a diff/incr backup by comparing to a previous backup manifest
+void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
+
+// Set all remaining values required to complete the manifest
+void manifestBuildComplete(
+    Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
+    size_t optionBufferSize, bool optionChecksumPage, bool optionCompress, unsigned int optionCompressLevel,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
+    bool optionStandby);
 
 /***********************************************************************************************************************************
 Functions
@@ -174,6 +194,11 @@ const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
 const ManifestFile *manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault);
 void manifestFileRemove(const Manifest *this, const String *name);
 unsigned int manifestFileTotal(const Manifest *this);
+
+// Update a file with new data
+void manifestFileUpdate(
+    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const String *reference,
+    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters
@@ -215,13 +240,20 @@ unsigned int manifestTargetTotal(const Manifest *this);
 void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
-// Get cipher sub-passphrase
+// Set checksum page option
+void manifestChecksumPageSet(Manifest *this, bool checksumPage);
+
+// Get/set the cipher subpassphrase
 const String *manifestCipherSubPass(const Manifest *this);
+void manifestCipherSubPassSet(Manifest *this, const String *cipherSubPass);
 
 // Get manifest configuration and options
 const ManifestData *manifestData(const Manifest *this);
+
+// Set backup label
+void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
 
 /***********************************************************************************************************************************
 Helper functions

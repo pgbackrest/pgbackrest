@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Backup Manifest Handler
 ***********************************************************************************************************************************/
+#include <unistd.h>
+
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "info/infoBackup.h"
@@ -25,6 +27,590 @@ testRun(void)
         TEST_RESULT_UINT(sizeof(ManifestLoadFound), TEST_64BIT() ? 1 : 1, "check size of ManifestLoadFound");
         TEST_RESULT_UINT(sizeof(ManifestPath), TEST_64BIT() ? 32 : 16, "check size of ManifestPath");
         TEST_RESULT_UINT(sizeof(ManifestFile), TEST_64BIT() ? 120 : 92, "check size of ManifestFile");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("manifestNewBuild()"))
+    {
+        #define TEST_MANIFEST_HEADER                                                                                               \
+            "[backup]\n"                                                                                                           \
+            "backup-label=null\n"                                                                                                  \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"full\"\n"
+
+        #define TEST_MANIFEST_DB_83                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=200711281\n"                                                                                       \
+            "db-control-version=833\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"8.3\"\n"
+
+        #define TEST_MANIFEST_DB_94                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201409291\n"                                                                                       \
+            "db-control-version=942\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"9.4\"\n"
+
+        #define TEST_MANIFEST_OPTION                                                                                               \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "option-archive-check=false\n"                                                                                         \
+            "option-archive-copy=false\n"                                                                                          \
+            "option-compress=false\n"                                                                                              \
+            "option-hardlink=false\n"                                                                                              \
+            "option-online=false\n"
+
+        #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE                                                                           \
+            "\n"                                                                                                                   \
+            "[target:file:default]\n"                                                                                              \
+            "group=\"{[group]}\"\n"                                                                                                \
+            "master=false\n"                                                                                                       \
+            "mode=\"0400\"\n"                                                                                                      \
+            "user=\"{[user]}\"\n"
+
+        #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE                                                                            \
+            "\n"                                                                                                                   \
+            "[target:file:default]\n"                                                                                              \
+            "group=\"{[group]}\"\n"                                                                                                \
+            "master=true\n"                                                                                                        \
+            "mode=\"0400\"\n"                                                                                                      \
+            "user=\"{[user]}\"\n"
+
+        #define TEST_MANIFEST_LINK_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:link:default]\n"                                                                                              \
+            "group=\"{[group]}\"\n"                                                                                                \
+            "user=\"{[user]}\"\n"
+
+        #define TEST_MANIFEST_PATH_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:path:default]\n"                                                                                              \
+            "group=\"{[group]}\"\n"                                                                                                \
+            "mode=\"0700\"\n"                                                                                                      \
+            "user=\"{[user]}\"\n"
+
+        storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
+
+        Storage *storagePg = storagePosixNew(
+            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
+        Storage *storagePgWrite = storagePosixNew(
+            strNewFmt("%s/pg", testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("8.3 with custom exclusions and special file");
+
+        // Version
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
+            BUFSTRDEF("8.3\n"));
+
+        // Directories that will always be ignored
+        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
+
+        // global directory
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_GLOBAL), .mode = 0700, .noParentCreate = true);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT)), NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/t1_1"), .modeFile = 0400, .timeModified = 1565282114), NULL);
+
+        // base/1 directory
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE "/1"), .mode = 0700, .noParentCreate = true);
+
+        StringList *exclusionList = strLstNew();
+        strLstAddZ(exclusionList, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT);
+        strLstAddZ(exclusionList, "bogus");
+        strLstAddZ(exclusionList, PG_PATH_BASE "/");
+        strLstAddZ(exclusionList, "bogus/");
+
+        Manifest *manifest = NULL;
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_83, false, exclusionList), "build manifest");
+
+        Buffer *contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_83
+                TEST_MANIFEST_OPTION
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
+                "pg_data/global/t1_1={\"size\":0,\"timestamp\":1565282114}\n"
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/global={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: exclude contents of '{[path]}/pg/base' from backup using 'base/' exclusion\n"
+            "P00   INFO: exclude '{[path]}/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest with all features");
+
+        // Version
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
+            BUFSTRDEF("9.4\n"));
+
+        // Temp relations to ignore
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1.1")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm.999999")), NULL);
+
+        // Unlogged relations
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555")), NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_init"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL);
+
+        // Tablespace 1
+        storagePathCreateP(storageTest, STRDEF("ts/1"), .mode = 0777);
+        storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.4_201409291/1"), .mode = 0700);
+        storagePathCreateP(storagePgWrite, MANIFEST_TARGET_PGTBLSPC_STR, .mode = 0700, .noParentCreate = true);
+        THROW_ON_SYS_ERROR(
+            symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/16384"), .modeFile = 0400,  .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
+
+        // Config directory and file links
+        storagePathCreateP(storageTest, STRDEF("config"), .mode = 0700);
+        THROW_ON_SYS_ERROR(
+            symlink("../config/postgresql.conf", strPtr(strNewFmt("%s/pg/postgresql.conf", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("config/postgresql.conf"), .modeFile = 0400,  .timeModified = 1565282116),
+            BUFSTRDEF("POSTGRESQLCONF"));
+        THROW_ON_SYS_ERROR(
+            symlink("../config/pg_hba.conf", strPtr(strNewFmt("%s/pg/pg_hba.conf", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("config/pg_hba.conf"), .modeFile = 0400,  .timeModified = 1565282117),
+            BUFSTRDEF("PGHBACONF"));
+
+        // pg_xlog/wal link
+        storagePathCreateP(storageTest, STRDEF("wal"), .mode = 0700);
+        THROW_ON_SYS_ERROR(
+            symlink(strPtr(strNewFmt("%s/wal", testPath())), strPtr(strNewFmt("%s/pg/pg_xlog", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+
+        // Directories to ignore files for depending on the version
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSTATTMP), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
+
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), "build manifest");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_94
+                TEST_MANIFEST_OPTION
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_data/pg_xlog={\"path\":\"{[path]}/wal\",\"type\":\"link\"}\n"
+                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                "pg_tblspc/1/PG_9.4_201409291/1/16384={\"master\":false,\"size\":8,\"timestamp\":1565282115}\n"
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+                "\n"
+                "[target:link]\n"
+                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
+                "pg_data/pg_xlog={\"destination\":\"{[path]}/wal\"}\n"
+                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                TEST_MANIFEST_LINK_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_dynshmem={}\n"
+                "pg_data/pg_notify={}\n"
+                "pg_data/pg_replslot={}\n"
+                "pg_data/pg_serial={}\n"
+                "pg_data/pg_snapshots={}\n"
+                "pg_data/pg_stat_tmp={}\n"
+                "pg_data/pg_subtrans={}\n"
+                "pg_data/pg_tblspc={}\n"
+                "pg_data/pg_xlog={}\n"
+                "pg_tblspc={}\n"
+                "pg_tblspc/1={}\n"
+                "pg_tblspc/1/PG_9.4_201409291={}\n"
+                "pg_tblspc/1/PG_9.4_201409291/1={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on link in pg_data");
+
+        THROW_ON_SYS_ERROR(
+            symlink(strPtr(strNewFmt("%s/pg/base", testPath())), strPtr(strNewFmt("%s/pg/link", testPath()))) == -1,
+            FileOpenError, "unable to create symlink");
+
+        TEST_ERROR(
+            manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), LinkDestinationError,
+            hrnReplaceKey("link 'link' destination '{[path]}/pg/base' is in PGDATA"));
+
+        #undef TEST_MANIFEST_HEADER
+        #undef TEST_MANIFEST_DB_83
+        #undef TEST_MANIFEST_DB_94
+        #undef TEST_MANIFEST_OPTION
+        #undef TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
+        #undef TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+        #undef TEST_MANIFEST_LINK_DEFAULT
+        #undef TEST_MANIFEST_PATH_DEFAULT
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("manifestBuildValidate()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("don't check for delta if already enabled and test online timestamp");
+
+        Manifest *manifest = manifestNewInternal();
+        manifest->data.backupOptionOnline = true;
+
+        TEST_RESULT_VOID(manifestBuildValidate(manifest, true, 1482182860), "validate manifest");
+        TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182861, "check copy start");
+        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timestamp in past does not force delta");
+
+        manifest->data.backupOptionOnline = false;
+
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860});
+
+        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182860), "validate manifest");
+        TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182860, "check copy start");
+        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), false, "check delta");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timestamp in future forces delta");
+
+        TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859), "validate manifest");
+        TEST_RESULT_UINT(manifest->data.backupTimestampCopyStart, 1482182859, "check copy start");
+        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
+
+        TEST_RESULT_LOG("P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("manifestBuildIncr()"))
+    {
+        #define TEST_MANIFEST_HEADER_PRE                                                                                           \
+            "[backup]\n"                                                                                                           \
+            "backup-label=null\n"                                                                                                  \
+            "backup-prior=\"20190101-010101F\"\n"                                                                                  \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"incr\"\n"                                                                                               \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201608131\n"                                                                                       \
+            "db-control-version=960\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"9.6\"\n"                                                                                                 \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "option-archive-check=false\n"                                                                                         \
+            "option-archive-copy=false\n"                                                                                          \
+            "option-compress=false\n"
+
+        #define TEST_MANIFEST_HEADER_POST                                                                                          \
+            "option-hardlink=false\n"                                                                                              \
+            "option-online=false\n"
+
+        #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:file:default]\n"                                                                                              \
+            "group=\"test\"\n"                                                                                                     \
+            "master=false\n"                                                                                                       \
+            "mode=\"0600\"\n"                                                                                                      \
+            "user=\"test\"\n"
+
+        #define TEST_MANIFEST_PATH_DEFAULT                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:path:default]\n"                                                                                              \
+            "group=\"test\"\n"                                                                                                     \
+            "mode=\"0700\"\n"                                                                                                      \
+            "user=\"test\"\n"
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta disabled and not enabled during validation");
+
+        Manifest *manifest = manifestNewInternal();
+        manifest->info = infoNew(NULL);
+        manifest->data.pgVersion = PG_VERSION_96;
+        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+
+        manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
+        manifestPathAdd(
+            manifest,
+            &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+
+        Manifest *manifestPrior = manifestNewInternal();
+        manifestPrior->data.backupLabel = strNew("20190101-010101F");
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .checksumSha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709"});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182860,
+                .checksumSha1 = "ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd"});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
+
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
+
+        Buffer *contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER_PRE
+                "option-delta=false\n"
+                TEST_MANIFEST_HEADER_POST
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
+                "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
+                "pg_data/FILE4={\"size\":55,\"timestamp\":1482182861}\n"
+                "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"reference\":\"20190101-010101F\","
+                    "\"size\":4,\"timestamp\":1482182860}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta enabled before validation");
+
+        manifest->data.backupOptionDelta = BOOL_TRUE_VAR;
+        lstClear(manifest->fileList);
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .reference = STRDEF("20190101-010101F_20190202-010101D"),
+                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
+
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER_PRE
+                "option-delta=true\n"
+                TEST_MANIFEST_HEADER_POST
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\","
+                    "\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,\"timestamp\":1482182860}\n"
+                "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"reference\":\"20190101-010101F\","
+                    "\"size\":4,\"timestamp\":1482182860}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta enabled by timestamp validation and copy checksum error");
+
+        // Clear manifest and add a single file
+        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+        lstClear(manifest->fileList);
+
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+
+        // Clear prior manifest and add a single file with later timestamp and checksum error
+        lstClear(manifestPrior->fileList);
+
+        VariantList *checksumPageErrorList = varLstNew();
+        varLstAdd(checksumPageErrorList, varNewUInt(77));
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .reference = STRDEF("20190101-010101F_20190202-010101D"),
+                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd", .checksumPage = true, .checksumPageError = true,
+                .checksumPageErrorList = checksumPageErrorList});
+
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
+
+        TEST_RESULT_LOG("P00   WARN: file 'FILE1' has timestamp earlier than prior backup, enabling delta checksum");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER_PRE
+                "option-delta=true\n"
+                TEST_MANIFEST_HEADER_POST
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false,"
+                    "\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,"
+                    "\"timestamp\":1482182859}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta enabled by size validation");
+
+        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+        lstClear(manifest->fileList);
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .reference = STRDEF("20190101-010101F_20190202-010101D"),
+                .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
+
+        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
+
+        TEST_RESULT_LOG("P00   WARN: file 'FILE2' has same timestamp as prior but different size, enabling delta checksum");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER_PRE
+                "option-delta=true\n"
+                TEST_MANIFEST_HEADER_POST
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
+                "pg_data/FILE2={\"size\":6,\"timestamp\":1482182860}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        #undef TEST_MANIFEST_HEADER_PRE
+        #undef TEST_MANIFEST_HEADER_POST
+        #undef TEST_MANIFEST_FILE_DEFAULT
+        #undef TEST_MANIFEST_PATH_DEFAULT
     }
 
     // *****************************************************************************************************************************

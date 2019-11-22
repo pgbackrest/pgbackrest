@@ -21,6 +21,7 @@ STRING_EXTERN(PG_FILE_PGVERSION_STR,                                PG_FILE_PGVE
 STRING_EXTERN(PG_FILE_POSTGRESQLAUTOCONF_STR,                       PG_FILE_POSTGRESQLAUTOCONF);
 STRING_EXTERN(PG_FILE_POSTMASTERPID_STR,                            PG_FILE_POSTMASTERPID);
 STRING_EXTERN(PG_FILE_RECOVERYCONF_STR,                             PG_FILE_RECOVERYCONF);
+STRING_EXTERN(PG_FILE_RECOVERYDONE_STR,                             PG_FILE_RECOVERYDONE);
 STRING_EXTERN(PG_FILE_RECOVERYSIGNAL_STR,                           PG_FILE_RECOVERYSIGNAL);
 STRING_EXTERN(PG_FILE_STANDBYSIGNAL_STR,                            PG_FILE_STANDBYSIGNAL);
 
@@ -28,6 +29,10 @@ STRING_EXTERN(PG_PATH_GLOBAL_STR,                                   PG_PATH_GLOB
 
 STRING_EXTERN(PG_NAME_WAL_STR,                                      PG_NAME_WAL);
 STRING_EXTERN(PG_NAME_XLOG_STR,                                     PG_NAME_XLOG);
+
+// Transaction commit log path names depending on version
+STRING_STATIC(PG_PATH_PGCLOG_STR,                                   "pg_clog");
+STRING_STATIC(PG_PATH_PGXACT_STR,                                   "pg_xact");
 
 /***********************************************************************************************************************************
 Define default wal segment size
@@ -573,6 +578,17 @@ pgWalName(unsigned int pgVersion)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
+}
+
+/**********************************************************************************************************************************/
+const String *
+pgXactPath(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
 }
 
 /***********************************************************************************************************************************
