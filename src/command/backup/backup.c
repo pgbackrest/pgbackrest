@@ -727,6 +727,115 @@ backupStart(BackupPg *pg)
 /***********************************************************************************************************************************
 Process the backup manifest
 ***********************************************************************************************************************************/
+typedef struct BackupJobData
+{
+    Manifest *manifest;                                             // Backup manifest
+    List *queueList;                                                // List of processing queues
+    // const String *cipherSubPass;                                    // Passphrase used to encrypt files in the backup
+} BackupJobData;
+
+// Comparator to order ManifestFile objects by size then name
+static int
+backupProcessQueueComparator(const void *item1, const void *item2)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
+    FUNCTION_TEST_END();
+
+    ASSERT(item1 != NULL);
+    ASSERT(item2 != NULL);
+
+    // If the size differs then that's enough to determine order
+    if ((*(ManifestFile **)item1)->size < (*(ManifestFile **)item2)->size)
+        FUNCTION_TEST_RETURN(-1);
+    else if ((*(ManifestFile **)item1)->size > (*(ManifestFile **)item2)->size)
+        FUNCTION_TEST_RETURN(1);
+
+    // If size is the same then use name to generate a deterministic ordering (names must be unique)
+    FUNCTION_TEST_RETURN(strCmp((*(ManifestFile **)item1)->name, (*(ManifestFile **)item2)->name));
+}
+
+// Helper to generate the backup queues
+static uint64_t
+backupProcessQueue(Manifest *manifest, List **queueList)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM_P(LIST, queueList);
+    FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
+
+    uint64_t result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Create list of process queue
+        *queueList = lstNew(sizeof(List *));
+
+        // Generate the list of processing queues (there is always at least one)
+        StringList *targetList = strLstNew();
+        strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
+
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        {
+            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+
+            if (target->tablespaceId != 0)
+                strLstAdd(targetList, strNewFmt("%s/", strPtr(target->name)));
+        }
+
+        // Generate the processing queues
+        MEM_CONTEXT_BEGIN(lstMemContext(*queueList))
+        {
+            for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
+            {
+                List *queue = lstNewP(sizeof(ManifestFile *), .comparator = backupProcessQueueComparator);
+                lstAdd(*queueList, &queue);
+            }
+        }
+        MEM_CONTEXT_END();
+
+        // Now put all files into the processing queues
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+        {
+            const ManifestFile *file = manifestFile(manifest, fileIdx);
+
+            // Find the target that contains this file
+            unsigned int targetIdx = 0;
+
+            do
+            {
+                // A target should always be found
+                CHECK(targetIdx < strLstSize(targetList));
+
+                if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
+                    break;
+
+                targetIdx++;
+            }
+            while (1);
+
+            // Add file to queue
+            lstAdd(*(List **)lstGet(*queueList, targetIdx), &file);
+
+            // Add size to total
+            result += file->size;
+        }
+
+        // Sort the queues
+        for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
+            lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
+
+        // Move process queues to calling context
+        lstMove(*queueList, MEM_CONTEXT_OLD());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(UINT64, result);
+}
+
 static void
 backupProcess(BackupPg pg, Manifest *manifest)
 {
@@ -775,6 +884,12 @@ backupProcess(BackupPg pg, Manifest *manifest)
                 }
             }
         }
+
+        // Generate processing queues
+        BackupJobData jobData = {.manifest = manifest};
+
+        uint64_t sizeTotal = backupProcessQueue(jobData.manifest, &jobData.queueList);
+        (void)sizeTotal;
     }
 
     FUNCTION_LOG_RETURN_VOID();
