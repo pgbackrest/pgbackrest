@@ -753,7 +753,7 @@ backupProcess(BackupPg pg, Manifest *manifest)
         for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
         {
             storagePathCreateP(
-                storageRepo(), strNewFmt("%s/%s", strPtr(backupPathExp), strPtr(manifestPath(manifest, pathIdx)->name)));
+                storageRepoWrite(), strNewFmt("%s/%s", strPtr(backupPathExp), strPtr(manifestPath(manifest, pathIdx)->name)));
         }
 
         // Create tablespace symlinks when available
