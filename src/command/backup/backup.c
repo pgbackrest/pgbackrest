@@ -6,8 +6,8 @@ Backup Command
 // #include <string.h>
 // #include <sys/stat.h>
 #include <time.h>
-// #include <unistd.h>
-//
+#include <unistd.h>
+
 #include "command/control/common.h"
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
@@ -725,6 +725,62 @@ backupStart(BackupPg *pg)
 }
 
 /***********************************************************************************************************************************
+Process the backup manifest
+***********************************************************************************************************************************/
+static void
+backupProcess(BackupPg pg, Manifest *manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
+
+    // Get backup info
+    const BackupType backupType = manifestData(manifest)->backupType;
+    const String *const backupLabel = manifestData(manifest)->backupLabel;
+    const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel));
+
+    // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
+    // exist in to repo.  Also create tablspace symlinks when symlinks are available,  This makes it possible for the user to make a
+    // copy of the backup path and get a valid cluster.
+    if ((backupType == backupTypeFull ||
+            (cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepo(), storageFeatureHardLink))) &&
+        storageFeature(storageRepo(), storageFeaturePath))
+    {
+        // Create paths
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+        {
+            storagePathCreateP(
+                storageRepo(), strNewFmt("%s/%s", strPtr(backupPathExp), strPtr(manifestPath(manifest, pathIdx)->name)));
+        }
+
+        // Create tablespace symlinks when available
+        if (storageFeature(storageRepo(), storageFeatureSymLink))
+        {
+            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+            {
+                const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
+
+                if (target->tablespaceId != 0)
+                {
+                    const String *const link = storagePathP(
+                        storageRepo(), strNewFmt("%s/" MANIFEST_TARGET_PGDATA "/%s", strPtr(backupPathExp), strPtr(target->name)));
+                    const String *const linkDestination = strNewFmt("../../" MANIFEST_TARGET_PGTBLSPC "/%u", target->tablespaceId);
+
+                    THROW_ON_SYS_ERROR_FMT(
+                        symlink(strPtr(linkDestination), strPtr(link)) == -1, FileOpenError,
+                        "unable to create symlink '%s' to '%s'", strPtr(link), strPtr(linkDestination));
+                }
+            }
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Make a backup
 ***********************************************************************************************************************************/
 void
@@ -779,6 +835,9 @@ cmdBackup(void)
                 manifest,
                 backupLabel(backupType(cfgOptionStr(cfgOptType)), manifestData(manifest)->backupLabelPrior, timestampStart));
         }
+
+        // Process the backup manifest
+        backupProcess(pg, manifest);
 
         // Set the values required to complete the manifest
         manifestBuildComplete(

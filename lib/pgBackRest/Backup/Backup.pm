@@ -117,30 +117,6 @@ sub processManifest
     my $lFileTotal = 0;
     my $lSizeTotal = 0;
 
-    # If this is a full backup or hard-linked then create all paths and tablespace links
-    if ($bHardLink || $strType eq CFGOPTVAL_BACKUP_TYPE_FULL)
-    {
-        # Create paths
-        foreach my $strPath ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_PATH))
-        {
-            storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strPath}", {bIgnoreExists => true});
-        }
-
-        if (storageRepo()->capability(STORAGE_CAPABILITY_LINK))
-        {
-            for my $strTarget ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
-            {
-                if ($oBackupManifest->isTargetTablespace($strTarget))
-                {
-                    storageRepo()->linkCreate(
-                        STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strTarget}",
-                        STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . MANIFEST_TARGET_PGDATA . "/${strTarget}",
-                        {bRelative => true});
-                }
-            }
-        }
-    }
-
     # Iterate all files in the manifest
     foreach my $strRepoFile (
         sort {sprintf("%016d-%s", $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $b, MANIFEST_SUBKEY_SIZE), $b) cmp
