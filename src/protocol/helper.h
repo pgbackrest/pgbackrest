@@ -37,6 +37,10 @@ bool pgIsLocal(unsigned int hostId);
 bool repoIsLocal(void);
 void repoIsLocalVerify(void);
 
+// Get enum/string for protocol storage type
+ProtocolStorageType protocolStorageTypeEnum(const String *type);
+const String *protocolStorageTypeStr(ProtocolStorageType type);
+
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/

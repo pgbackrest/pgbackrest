@@ -101,6 +101,18 @@ testRun(void)
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
+    if (testBegin("protocolStorageTypeEnum() and protocolStorageTypeEnum()"))
+    {
+        TEST_RESULT_UINT(protocolStorageTypeEnum(PROTOCOL_STORAGE_TYPE_PG_STR), protocolStorageTypePg, "pg enum");
+        TEST_RESULT_UINT(protocolStorageTypeEnum(PROTOCOL_STORAGE_TYPE_REPO_STR), protocolStorageTypeRepo, "repo enum");
+        TEST_ERROR(protocolStorageTypeEnum(STRDEF(BOGUS_STR)), AssertError, "invalid protocol storage type 'BOGUS'");
+
+        TEST_RESULT_STR_STR(protocolStorageTypeStr(protocolStorageTypePg), PROTOCOL_STORAGE_TYPE_PG_STR, "pg str");
+        TEST_RESULT_STR_STR(protocolStorageTypeStr(protocolStorageTypeRepo), PROTOCOL_STORAGE_TYPE_REPO_STR, "repo str");
+        TEST_ERROR(protocolStorageTypeStr((ProtocolStorageType)999), AssertError, "invalid protocol storage type 999");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("repoIsLocal() and pgIsLocal()"))
     {
         StringList *argList = strLstNew();
