@@ -172,28 +172,30 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 0), "|")),
+            strPtr(strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 1, 0), "|")),
             strPtr(
                 strNew(
                     "--command=archive-get|--host-id=1|--log-level-file=off|--log-level-stderr=error|--process=0|--stanza=test1"
                         "|--type=backup|local")),
-            "local protocol params");
+            "local repo protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
+        strLstAddZ(argList, "--pg1-path=/pg");
+        strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--log-subprocess");
-        strLstAddZ(argList, "archive-get");
+        strLstAddZ(argList, "backup");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 1), "|")),
+            strPtr(strLstJoin(protocolLocalParam(protocolStorageTypePg, 2, 1), "|")),
             strPtr(
                 strNew(
-                    "--command=archive-get|--host-id=1|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--process=1"
-                        "|--stanza=test1|--type=backup|local")),
-            "local protocol params with replacements");
+                    "--command=backup|--host-id=2|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg"
+                        "|--process=1|--stanza=test1|--type=db|local")),
+            "local pg protocol params");
     }
 
     // *****************************************************************************************************************************
@@ -942,8 +944,8 @@ testRun(void)
         strLstAddZ(argList, "--process-max=2");
         harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
 
-        TEST_ASSIGN(client, protocolLocalGet(protocolStorageTypeRepo, 1), "get local protocol");
-        TEST_RESULT_PTR(protocolLocalGet(protocolStorageTypeRepo, 1), client, "get local cached protocol");
+        TEST_ASSIGN(client, protocolLocalGet(protocolStorageTypeRepo, 1, 1), "get local protocol");
+        TEST_RESULT_PTR(protocolLocalGet(protocolStorageTypeRepo, 1, 1), client, "get local cached protocol");
         TEST_RESULT_PTR(protocolHelper.clientLocal[0].client, client, "check location in cache");
 
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");

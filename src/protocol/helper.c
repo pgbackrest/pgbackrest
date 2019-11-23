@@ -102,10 +102,11 @@ pgIsLocal(unsigned int hostId)
 Get the command line required for local protocol execution
 ***********************************************************************************************************************************/
 static StringList *
-protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protocolId)
+protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
+        FUNCTION_LOG_PARAM(UINT, hostId);
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
 
@@ -120,10 +121,10 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
         kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
 
         // Add the process id -- used when more than one process will be called
-        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARINT((int)protocolId));
+        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(protocolId));
 
-        // Add the host id -- for now this is hard-coded to 1
-        kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), VARINT(1));
+        // Add the host id
+        kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), VARUINT(hostId));
 
         // Add the storage type
         kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
@@ -147,10 +148,11 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
 Get the local protocol client
 ***********************************************************************************************************************************/
 ProtocolClient *
-protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolId)
+protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
+        FUNCTION_LOG_PARAM(UINT, hostId);
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
 
@@ -179,7 +181,7 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolI
         {
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
-                cfgExe(), protocolLocalParam(protocolStorageType, protocolId),
+                cfgExe(), protocolLocalParam(protocolStorageType, hostId, protocolId),
                 strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u process", protocolId),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);

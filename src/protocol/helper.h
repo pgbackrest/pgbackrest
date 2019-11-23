@@ -27,7 +27,7 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 void protocolKeepAlive(void);
-ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolId);
+ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId);
 ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
 
 /***********************************************************************************************************************************
