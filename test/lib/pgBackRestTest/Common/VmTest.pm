@@ -44,6 +44,8 @@ use constant VM_OS_REPO                                             => 'os-repo'
     push @EXPORT, qw(VM_OS_REPO);
 use constant VMDEF_PGSQL_BIN                                        => 'pgsql-bin';
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
+use constant VMDEF_LCOV_VERSION                                     => 'lcov-version';
+    push @EXPORT, qw(VMDEF_LCOV_VERSION);
 use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
     push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
 
@@ -425,6 +427,7 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
+        &VMDEF_LCOV_VERSION => '1.14',
         &VMDEF_WITH_BACKTRACE => true,
 
         &VM_DB =>
