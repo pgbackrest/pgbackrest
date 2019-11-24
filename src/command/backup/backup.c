@@ -11,6 +11,7 @@ Backup Command
 #include "command/control/common.h"
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
+#include "command/backup/file.h"
 #include "command/backup/protocol.h"
 #include "command/stanza/common.h"
 #include "common/crypto/cipherBlock.h"
@@ -787,176 +788,187 @@ Log the results of a job and throw errors
 //             {name => 'lManifestSaveSize', trace => true},
 //             {name => 'lManifestSaveCurrent', trace => true}
 //         );
-//
-//     # Increment current backup progress
-//     $lSizeCurrent += $lSize;
-//
-//     # If the file is in a prior backup and nothing changed, then nothing needs to be done
-//     if ($iCopyResult == BACKUP_FILE_NOOP)
-//     {
-//         # File copy was not needed so just recopy the size and checksum to the manifest
-//         $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
-//         $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
-//
-//         &log(DETAIL,
-//             'match file from prior backup ' . (defined($strHost) ? "${strHost}:" : '') . "${strDbFile} (" .
-//                 fileSizeFormat($lSizeCopy) . ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%)' .
-//                 ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''),
-//              undef, undef, undef, $iLocalId);
-//     }
-//     # Else process the results
-//     else
-//     {
-//         # Log invalid checksum
-//         if ($iCopyResult == BACKUP_FILE_RECOPY)
-//         {
-//             &log(
-//                 WARN,
-//                 "resumed backup file ${strRepoFile} does not have expected checksum ${strChecksum}. The file will be recopied and" .
-//                 " backup will continue but this may be an issue unless the resumed backup path in the repository is known to be" .
-//                 " corrupted.\n" .
-//                 "NOTE: this does not indicate a problem with the PostgreSQL page checksums.");
-//         }
-//
-//         # If copy was successful store the checksum and size
-//         if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY || $iCopyResult == BACKUP_FILE_CHECKSUM)
-//         {
-//             # Log copy or checksum
-//             &log($iCopyResult == BACKUP_FILE_CHECKSUM ? DETAIL : INFO,
-//                  ($iCopyResult == BACKUP_FILE_CHECKSUM ?
-//                     'checksum resumed file ' : 'backup file ' . (defined($strHost) ? "${strHost}:" : '')) .
-//                  "${strDbFile} (" . fileSizeFormat($lSizeCopy) .
-//                  ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%)' .
-//                  ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''), undef, undef, undef, $iLocalId);
-//
-//             $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
-//
-//             if ($lSizeRepo != $lSizeCopy)
-//             {
-//                 $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REPO_SIZE, $lSizeRepo);
-//             }
-//
-//             if ($lSizeCopy > 0)
-//             {
-//                 $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
-//             }
-//
-//             # If the file was copied, then remove any reference to the file's existence in a prior backup.
-//             if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY)
-//             {
-//                 $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE);
-//             }
-//
-//             # If the file had page checksums calculated during the copy
-//             if ($bChecksumPage)
-//             {
-//                 # The valid flag should be set
-//                 if (defined($rExtra->{valid}))
-//                 {
-//                     # Store the valid flag
-//                     $oManifest->boolSet(
-//                         MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, $rExtra->{valid});
-//
-//                     # If the page was not valid
-//                     if (!$rExtra->{valid})
-//                     {
-//                         # Check for a page misalignment
-//                         if ($lSizeCopy % PG_PAGE_SIZE != 0)
-//                         {
-//                             # Make sure the align flag was set, otherwise there is a bug
-//                             if (!defined($rExtra->{align}) || $rExtra->{align})
-//                             {
-//                                 confess &log(ASSERT, 'align flag should have been set for misaligned page');
-//                             }
-//
-//                             # Emit a warning so the user knows something is amiss
-//                             &log(WARN,
-//                                 'page misalignment in file ' . (defined($strHost) ? "${strHost}:" : '') .
-//                                 "${strDbFile}: file size ${lSizeCopy} is not divisible by page size " . PG_PAGE_SIZE);
-//                         }
-//                         # Else process the page check errors
-//                         else
-//                         {
-//                             $oManifest->set(
-//                                 MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
-//                                 dclone($rExtra->{error}));
-//
-//                             # Build a pretty list of the page errors
-//                             my $strPageError;
-//                             my $iPageErrorTotal = 0;
-//
-//                             foreach my $iyPage (@{$rExtra->{error}})
-//                             {
-//                                 $strPageError .= (defined($strPageError) ? ', ' : '');
-//
-//                                 # If a range of pages
-//                                 if (ref($iyPage))
-//                                 {
-//                                     $strPageError .= $$iyPage[0] . '-' . $$iyPage[1];
-//                                     $iPageErrorTotal += ($$iyPage[1] - $$iyPage[0]) + 1;
-//                                 }
-//                                 # Else a single page
-//                                 else
-//                                 {
-//                                     $strPageError .= $iyPage;
-//                                     $iPageErrorTotal += 1;
-//                                 }
-//                             }
-//
-//                             # There should be at least one page in the error list
-//                             if ($iPageErrorTotal == 0)
-//                             {
-//                                 confess &log(ASSERT, 'page checksum error list should have at least one entry');
-//                             }
-//
-//                             # Emit a warning so the user knows something is amiss
-//                             &log(WARN,
-//                                 'invalid page checksum' . ($iPageErrorTotal > 1 ? 's' : '') .
-//                                 ' found in file ' . (defined($strHost) ? "${strHost}:" : '') . "${strDbFile} at page" .
-//                                 ($iPageErrorTotal > 1 ? 's' : '') . " ${strPageError}");
-//                         }
-//                     }
-//                 }
-//                 # If it's not set that's a bug in the code
-//                 elsif (!$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM_PAGE))
-//                 {
-//                     confess &log(ASSERT, "${strDbFile} should have calculated page checksums");
-//                 }
-//             }
-//         }
-//         # Else the file was removed during backup so remove from manifest
-//         elsif ($iCopyResult == BACKUP_FILE_SKIP)
-//         {
-//             &log(DETAIL, 'skip file removed by database ' . (defined($strHost) ? "${strHost}:" : '') . $strDbFile);
-//             $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile);
-//         }
-//     }
-//
-//     # Determine whether to save the manifest
-//     $lManifestSaveCurrent += $lSize;
-//
-//     if ($lManifestSaveCurrent >= $lManifestSaveSize)
-//     {
-//         $oManifest->saveCopy();
-//
-//         logDebugMisc
-//         (
-//             $strOperation, 'save manifest',
-//             {name => 'lManifestSaveSize', value => $lManifestSaveSize},
-//             {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
-//         );
-//
-//         $lManifestSaveCurrent = 0;
-//     }
-//
-//     # Return from function and log return values if any
-//     return logDebugReturn
-//     (
-//         $strOperation,
-//         {name => 'lSizeCurrent', value => $lSizeCurrent, trace => true},
-//         {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent, trace => true},
-//     );
-// }
+
+static uint64_t
+backupJobResult(Manifest *manifest, ProtocolParallelJob *job, uint64_t sizeTotal, uint64_t sizeCopied)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
+        FUNCTION_LOG_PARAM(UINT64, sizeTotal);
+        FUNCTION_LOG_PARAM(UINT64, sizeCopied);
+    FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
+
+    // The job was successful
+    if (protocolParallelJobErrorCode(job) == 0)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            const ManifestFile *file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
+            unsigned int processId = protocolParallelJobProcessId(job);
+
+            const VariantList *const jobResult = varVarLst(protocolParallelJobResult(job));
+            const BackupCopyResult copyResult = (BackupCopyResult)varUIntForce(varLstGet(jobResult, 0));
+            const uint64_t copySize = varUInt64(varLstGet(jobResult, 1));
+            const uint64_t repoSize = varUInt64(varLstGet(jobResult, 2));
+            const String *const copyChecksum = varStr(varLstGet(jobResult, 3));
+            const KeyValue *const checksumPageResult = varKv(varLstGet(jobResult, 4));
+
+            // Increment backup copy progress
+            sizeCopied += copySize;
+
+            // If the file is in a prior backup and nothing changed, then nothing needs to be done
+            if (copyResult == backupCopyResultNoOp)
+            {
+        //         # File copy was not needed so just recopy the size and checksum to the manifest
+        //         $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
+        //         $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
+        //
+        //         &log(DETAIL,
+        //             'match file from prior backup ' . (defined($strHost) ? "${strHost}:" : '') . "${strDbFile} (" .
+        //                 fileSizeFormat($lSizeCopy) . ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%)' .
+        //                 ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''),
+        //              undef, undef, undef, $iLocalId);
+            }
+            // Else if the file was removed during backup then remove from manifest
+            else if (copyResult == backupCopyResultSkip)
+            {
+                // &log(DETAIL, 'skip file removed by database ' . (defined($strHost) ? "${strHost}:" : '') . $strDbFile);
+                // $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile);
+            }
+            // Else file was copied so updated manifest
+            else
+            {
+                // Log invalid checksum
+                if (copyResult == backupCopyResultReCopy)
+                {
+        //             &log(
+        //                 WARN,
+        //                 "resumed backup file ${strRepoFile} does not have expected checksum ${strChecksum}. The file will be recopied and" .
+        //                 " backup will continue but this may be an issue unless the resumed backup path in the repository is known to be" .
+        //                 " corrupted.\n" .
+        //                 "NOTE: this does not indicate a problem with the PostgreSQL page checksums.");
+                }
+
+
+                // If copy was successful store the checksum and size
+                // # Log copy or checksum
+                // &log($iCopyResult == BACKUP_FILE_CHECKSUM ? DETAIL : INFO,
+                //      ($iCopyResult == BACKUP_FILE_CHECKSUM ?
+                //         'checksum resumed file ' : 'backup file ' . (defined($strHost) ? "${strHost}:" : '')) .
+                //      "${strDbFile} (" . fileSizeFormat($lSizeCopy) .
+                //      ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%)' .
+                //      ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''), undef, undef, undef, $iLocalId);
+                //
+                // $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
+                //
+                // if ($lSizeRepo != $lSizeCopy)
+                // {
+                //     $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REPO_SIZE, $lSizeRepo);
+                // }
+                //
+                // if ($lSizeCopy > 0)
+                // {
+                //     $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
+                // }
+                //
+                // # If the file was copied, then remove any reference to the file's existence in a prior backup.
+                // if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY)
+                // {
+                //     $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE);
+                // }
+                //
+
+                if (copyResult != backupCopyResultChecksum)
+                {
+                    // If the file had page checksums calculated during the copy
+                    bool checksumPageError = file->checksumPageError;
+                    const VariantList *checksumPageErrorList = file->checksumPageErrorList;
+
+                    if (checksumPageResult != NULL)
+                    {
+                        ASSERT(file->checksumPage);
+
+                        if (varBool(kvGet(checksumPageResult, VARSTRDEF("valid"))))
+                        {
+                            checksumPageError = false;
+                            checksumPageErrorList = NULL;
+                        }
+                        else
+                        {
+                            checksumPageError = true;
+
+                            if (!varBool(kvGet(checksumPageResult, VARSTRDEF("align"))))
+                            {
+                                checksumPageErrorList = NULL;
+
+                                LOG_WARN_PID_FMT(
+                                    processId, "page misalignment in '%s' -- file size %" PRIu64 " is not divisible by page size",
+                                    strPtr(manifestPathPg(file->name)), copySize);
+                            }
+                            else
+                            {
+                                checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
+
+                    //                 # Build a pretty list of the page errors
+                    //                 my $strPageError;
+                    //                 my $iPageErrorTotal = 0;
+                    //
+                    //                 foreach my $iyPage (@{$rExtra->{error}})
+                    //                 {
+                    //                     $strPageError .= (defined($strPageError) ? ', ' : '');
+                    //
+                    //                     # If a range of pages
+                    //                     if (ref($iyPage))
+                    //                     {
+                    //                         $strPageError .= $$iyPage[0] . '-' . $$iyPage[1];
+                    //                         $iPageErrorTotal += ($$iyPage[1] - $$iyPage[0]) + 1;
+                    //                     }
+                    //                     # Else a single page
+                    //                     else
+                    //                     {
+                    //                         $strPageError .= $iyPage;
+                    //                         $iPageErrorTotal += 1;
+                    //                     }
+                    //                 }
+                    //
+                    //                 # There should be at least one page in the error list
+                    //                 if ($iPageErrorTotal == 0)
+                    //                 {
+                    //                     confess &log(ASSERT, 'page checksum error list should have at least one entry');
+                    //                 }
+
+                    //                 # Emit a warning so the user knows something is amiss
+                    //                 &log(WARN,
+                    //                     'invalid page checksum' . ($iPageErrorTotal > 1 ? 's' : '') .
+                    //                     ' found in file ' . (defined($strHost) ? "${strHost}:" : '') . "${strDbFile} at page" .
+                    //                     ($iPageErrorTotal > 1 ? 's' : '') . " ${strPageError}");
+
+                                LOG_WARN_PID_FMT(
+                                    processId, "invalid page checksum? found in '%s' at page ???", strPtr(manifestPathPg(file->name)));
+                            }
+                        }
+                    }
+
+                    manifestFileUpdate(
+                        manifest, file->name, copySize, repoSize, copySize > 0 ? strPtr(copyChecksum) : "", NULL,
+                        file->checksumPage, checksumPageError, checksumPageErrorList);
+                }
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Free the job
+        protocolParallelJobFree(job);
+    }
+    // Else the job errored
+    else
+        THROW_CODE(protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+
+    FUNCTION_LOG_RETURN(UINT64, sizeCopied);
+}
 
 /***********************************************************************************************************************************
 Process the backup manifest
@@ -1163,7 +1175,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(command, VARBOOL(jobData->compressLevel));
                 protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
                 protocolCommandParamAdd(command, VARBOOL(jobData->delta));
-                protocolCommandParamAdd(command, VARBOOL(jobData->cipherSubPass));
+                protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);
@@ -1260,25 +1272,19 @@ backupProcess(BackupPg pg, Manifest *manifest)
         // Process jobs
         uint64_t sizeCopied = 0;
 
-        (void)sizeTotal;
-        (void)sizeCopied;
-
         do
         {
             unsigned int completed = protocolParallelProcess(parallelExec);
 
             for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
             {
-                // sizeCopied = backupJobResult(
-                //     jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeCopied);
+                sizeCopied = backupJobResult(manifest, protocolParallelResult(parallelExec), sizeTotal, sizeCopied);
             }
 
             // A keep-alive is required here for the remote holding open the backup connection
             protocolKeepAlive();
         }
         while (!protocolParallelDone(parallelExec));
-
-        // ASSERT("AS FAR AS WE GO");
 
         // # Determine how often the manifest will be saved
         // my $lManifestSaveCurrent = 0;
@@ -1289,6 +1295,23 @@ backupProcess(BackupPg pg, Manifest *manifest)
         // {
         //     $lManifestSaveSize = cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD);
         // }
+        //
+        //     # Determine whether to save the manifest
+        //     $lManifestSaveCurrent += $lSize;
+        //
+        //     if ($lManifestSaveCurrent >= $lManifestSaveSize)
+        //     {
+        //         $oManifest->saveCopy();
+        //
+        //         logDebugMisc
+        //         (
+        //             $strOperation, 'save manifest',
+        //             {name => 'lManifestSaveSize', value => $lManifestSaveSize},
+        //             {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
+        //         );
+        //
+        //         $lManifestSaveCurrent = 0;
+        //     }
 
         // &log(INFO, cfgOption(CFGOPT_TYPE) . " backup size = " . fileSizeFormat($lBackupSizeTotal));
     }

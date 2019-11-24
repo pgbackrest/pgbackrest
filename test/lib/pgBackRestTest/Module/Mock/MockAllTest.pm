@@ -407,17 +407,19 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bS3)
         {
-            # Test a backup abort
-            my $oExecuteBackup = $oHostBackup->backupBegin(
-                $strType, 'abort backup - local',
-                {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_START, fTestDelay => 5,
-                    iExpectedExitStatus => ERROR_TERM});
-
-            $oHostDbMaster->stop({bForce => true});
-
-            $oHostBackup->backupEnd($strType, $oExecuteBackup, {oExpectedManifest => \%oManifest});
+            # # Test a backup abort
+            # my $oExecuteBackup = $oHostBackup->backupBegin(
+            #     $strType, 'abort backup - local',
+            #     {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_START, fTestDelay => 5,
+            #         iExpectedExitStatus => ERROR_TERM});
+            #
+            # $oHostDbMaster->stop({bForce => true});
+            #
+            # $oHostBackup->backupEnd($strType, $oExecuteBackup, {oExpectedManifest => \%oManifest});
 
             # Test global stop
+            $oHostDbMaster->stop({bForce => true});
+
             $oHostBackup->backup(
                 $strType, 'global stop',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_STOP});

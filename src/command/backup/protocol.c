@@ -46,8 +46,7 @@ backupProtocol(const String *command, const VariantList *paramList, ProtocolServ
                 varUInt64(varLstGet(paramList, 5)) << 32 | varUInt64(varLstGet(paramList, 6)), varStr(varLstGet(paramList, 7)),
                 varBoolForce(varLstGet(paramList, 8)), varBoolForce(varLstGet(paramList, 9)),
                 varUIntForce(varLstGet(paramList, 10)), varStr(varLstGet(paramList, 11)), varBoolForce(varLstGet(paramList, 12)),
-                varLstSize(paramList) == 14 ? cipherTypeAes256Cbc : cipherTypeNone,
-                varLstSize(paramList) == 14 ? varStr(varLstGet(paramList, 13)) : NULL);
+                varStr(varLstGet(paramList, 13)) == NULL ? cipherTypeNone : cipherTypeAes256Cbc, varStr(varLstGet(paramList, 13)));
 
             // Return backup result
             VariantList *resultList = varLstNew();
