@@ -16,6 +16,7 @@ Defines for various Postgres paths and files
 #define PG_FILE_BACKUPLABEL                                         "backup_label"
 #define PG_FILE_BACKUPLABELOLD                                      "backup_label.old"
 #define PG_FILE_PGCONTROL                                           "pg_control"
+#define PG_FILE_PGFILENODEMAP                                       "pg_filenode.map"
 #define PG_FILE_PGINTERNALINIT                                      "pg_internal.init"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
     STRING_DECLARE(PG_FILE_PGVERSION_STR);

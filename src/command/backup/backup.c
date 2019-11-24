@@ -168,8 +168,16 @@ backupPgGet(const InfoBackup *infoBackup)
             infoPg.systemId);
     }
 
+    // Backup from standby can only be used on PostgreSQL >= 9.1
+    if (cfgOption(cfgOptOnline) && cfgOption(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
+    {
+        THROW_FMT(
+            ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",
+            strPtr(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
+    }
+
     // If backup from standby option is set but a standby was not configured in the config file or on the command line, then turn
-    // off backup-standby and warn that backups will be performed from the prinary.
+    // off backup-standby and warn that backups will be performed from the primary.
     if (result.dbStandby == NULL && cfgOptionBool(cfgOptBackupStandby))
     {
         cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
@@ -1141,10 +1149,12 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE_STR);
 
                 protocolCommandParamAdd(command, VARSTR(manifestPathPg(file->name)));
+
                 protocolCommandParamAdd(command, VARBOOL(true)); // !!! NEED EXCEPTION FOR PG_CONTROL
+
                 protocolCommandParamAdd(command, VARUINT64(file->size));
                 protocolCommandParamAdd(command, file->checksumSha1[0] != 0 ? VARSTRZ(file->checksumSha1) : NULL);
-                protocolCommandParamAdd(command, VARBOOL(file->checksumPage)); // !!! NEED TO SET THIS FLAG CORRECTLY
+                protocolCommandParamAdd(command, VARBOOL(file->checksumPage));
                 protocolCommandParamAdd(command, VARUINT(0xFFFFFFFF)); // !!! COMBINE INTO ONE PARAM
                 protocolCommandParamAdd(command, VARUINT(0xFFFFFFFF)); // !!! COMBINE INTO ONE PARAM
                 protocolCommandParamAdd(command, VARSTR(file->name));
@@ -1250,14 +1260,15 @@ backupProcess(BackupPg pg, Manifest *manifest)
         // Process jobs
         uint64_t sizeCopied = 0;
 
+        (void)sizeTotal;
+        (void)sizeCopied;
+
         do
         {
             unsigned int completed = protocolParallelProcess(parallelExec);
 
             for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
             {
-        (void)sizeTotal;
-        (void)sizeCopied;
                 // sizeCopied = backupJobResult(
                 //     jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeCopied);
             }
@@ -1268,12 +1279,6 @@ backupProcess(BackupPg pg, Manifest *manifest)
         while (!protocolParallelDone(parallelExec));
 
         // ASSERT("AS FAR AS WE GO");
-
-        // !!! Make sure that pg_control is not removed during the backup
-        // if ($strRepoFile eq MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL)
-        // {
-        //     $bIgnoreMissing = false;
-        // }
 
         // # Determine how often the manifest will be saved
         // my $lManifestSaveCurrent = 0;
@@ -1325,7 +1330,8 @@ cmdBackup(void)
 
         // Build the manifest
         Manifest *manifest = manifestNewBuild(
-            pg.storagePrimary, infoPg.version, false, strLstNewVarLst(cfgOptionLst(cfgOptExclude)));
+            pg.storagePrimary, infoPg.version, cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage),
+            strLstNewVarLst(cfgOptionLst(cfgOptExclude)));
 
         // !!! NEED TO GET THIS FROM THE REMOTE AND WAIT REMAINDER WHEN ONLINE
         time_t timestampCopyStart = time(NULL);
@@ -1356,17 +1362,9 @@ cmdBackup(void)
             // !!! SEEMS LIKE THE ARCHIVE CHECK CALCULATION SHOULD BE ONLINE ONLY (WAS COPIED FROM PERL, THOUGH)
             manifest, timestampStart, infoPg.id, infoPg.systemId, !cfgOptionBool(cfgOptOnline) || cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
-            cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptCompress),
-            cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
-            cfgOptionBool(cfgOptOnline), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
-
-        // Backup from standby can only be used on PostgreSQL >= 9.1
-        if (cfgOption(cfgOptOnline) && cfgOption(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
-        {
-            THROW_FMT(
-                ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",
-                strPtr(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
-        }
+            cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptCompress), cfgOptionUInt(cfgOptCompressLevel),
+            cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink), cfgOptionBool(cfgOptOnline),
+            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
 
         // !!! BELOW NEEDED FOR PERL MIGRATION
         // !!! ---------------------------------------------------------------------------------------------------------------------

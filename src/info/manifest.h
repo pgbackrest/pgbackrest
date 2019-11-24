@@ -150,7 +150,8 @@ typedef struct ManifestTarget
 Constructor
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
-Manifest *manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList);
+Manifest *manifestNewBuild(
+    const Storage *storagePg, unsigned int pgVersion, bool online, bool checksumPage, const StringList *excludeList);
 
 // Load a manifest from IO
 Manifest *manifestNewLoad(IoRead *read);
@@ -167,9 +168,8 @@ void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, c
 // Set all remaining values required to complete the manifest
 void manifestBuildComplete(
     Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
-    size_t optionBufferSize, bool optionChecksumPage, bool optionCompress, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
-    bool optionStandby);
+    size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
+    bool optionHardLink, bool optionOnline, unsigned int optionProcessMax, bool optionStandby);
 
 /***********************************************************************************************************************************
 Functions

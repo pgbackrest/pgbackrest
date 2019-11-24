@@ -393,6 +393,7 @@ typedef struct ManifestBuildData
     const Storage *storagePg;
     const String *tablespaceId;                                     // Tablespace id if PostgreSQL version has one
     bool online;                                                    // Is this an online backup?
+    bool checksumPage;                                              // Are page checksums being checked?
     const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
@@ -627,6 +628,14 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     !regExpMatch(buildData.standbyExp, manifestName);
             }
 
+            // Determine if this file should be page checksummed
+            if (buildData.dbPath && buildData.checksumPage)
+            {
+                file.checksumPage =
+                    !strEndsWithZ(manifestName, "/" PG_FILE_PGFILENODEMAP) && !strEndsWithZ(manifestName, "/" PG_FILE_PGVERSION) &&
+                    !strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
+            }
+
             manifestFileAdd(buildData.manifest, &file);
             break;
         }
@@ -789,13 +798,13 @@ manifestBuildCallback(void *data, const StorageInfo *info)
     "(" MANIFEST_TARGET_PGDATA "/(" PG_PATH_GLOBAL "|" PG_PATH_BASE "/[0-9]+)|" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+)"
 
 Manifest *
-manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList)
+manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, bool checksumPage, const StringList *excludeList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(BOOL, online);
+        FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
     FUNCTION_LOG_END();
 
@@ -810,6 +819,7 @@ manifestNewBuild(
         this->info = infoNew(NULL);
         this->data.pgVersion = pgVersion;
         this->data.backupOptionOnline = online;
+        this->data.backupOptionChecksumPage = varNewBool(checksumPage);
 
         // Data needed to build the manifest
         ManifestBuildData buildData =
@@ -818,6 +828,7 @@ manifestNewBuild(
             .storagePg = storagePg,
             .tablespaceId = pgTablespaceId(pgVersion),
             .online = online,
+            .checksumPage = checksumPage,
             .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
             .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/pg_%s", strPtr(pgWalName(pgVersion))),
             .pgPath = storagePathP(storagePg, NULL),
@@ -830,8 +841,8 @@ manifestNewBuild(
         {
             ASSERT(buildData.tablespaceId != NULL);
 
-            buildData.dbPathExp = regExpNew(
-                strNewFmt("^" DB_PATH_EXP "$", strPtr(buildData.tablespaceId)));
+            // Expression to identify database paths
+            buildData.dbPathExp = regExpNew(strNewFmt("^" DB_PATH_EXP "$", strPtr(buildData.tablespaceId)));
 
             // Expression to find temp relations
             buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
@@ -1108,7 +1119,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         // Find files to reference in the prior manifest:
         // 1) that don't need to be copied because delta is disabled and the size and timestamp match or size matches and is zero
-        // 2) where delta is enabled and size matches so checkum will be verified during backup and the file copied on mismatch
+        // 2) where delta is enabled and size matches so checksum will be verified during backup and the file copied on mismatch
         bool delta = varBool(this->data.backupOptionDelta);
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
@@ -1136,9 +1147,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 void
 manifestBuildComplete(
     Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
-    size_t optionBufferSize, bool optionChecksumPage, bool optionCompress, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
-    bool optionStandby)
+    size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
+    bool optionHardLink, bool optionOnline, unsigned int optionProcessMax, bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -1148,7 +1158,6 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
         FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
-        FUNCTION_LOG_PARAM(BOOL, optionChecksumPage);
         FUNCTION_LOG_PARAM(BOOL, optionCompress);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
@@ -1164,7 +1173,6 @@ manifestBuildComplete(
         this->data.backupOptionArchiveCheck = optionArchiveCheck;
         this->data.backupOptionArchiveCopy = optionArchiveCopy;
         this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
-        this->data.backupOptionChecksumPage = varNewBool(optionChecksumPage);
         this->data.backupOptionCompress = optionCompress;
         this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
         this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
