@@ -3,7 +3,7 @@ Backup Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-// #include <string.h>
+#include <string.h>
 // #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
@@ -11,6 +11,7 @@ Backup Command
 #include "command/control/common.h"
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
+#include "command/backup/protocol.h"
 #include "command/stanza/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/compress/gzip/common.h"
@@ -28,7 +29,7 @@ Backup Command
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
-// #include "protocol/parallel.h"
+#include "protocol/parallel.h"
 #include "storage/helper.h"
 // #include "storage/write.intern.h"
 #include "version.h"
@@ -725,7 +726,7 @@ backupStart(BackupPg *pg)
 }
 
 /***********************************************************************************************************************************
-Update file information in the manifest
+Log the results of a job and throw errors
 ***********************************************************************************************************************************/
 // sub backupManifestUpdate
 // {
@@ -785,7 +786,7 @@ Update file information in the manifest
 //     # If the file is in a prior backup and nothing changed, then nothing needs to be done
 //     if ($iCopyResult == BACKUP_FILE_NOOP)
 //     {
-//         # File copy was not needed so just restore the size and checksum to the manifest
+//         # File copy was not needed so just recopy the size and checksum to the manifest
 //         $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
 //         $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
 //
@@ -952,13 +953,6 @@ Update file information in the manifest
 /***********************************************************************************************************************************
 Process the backup manifest
 ***********************************************************************************************************************************/
-typedef struct BackupJobData
-{
-    Manifest *manifest;                                             // Backup manifest
-    List *queueList;                                                // List of processing queues
-    // const String *cipherSubPass;                                    // Passphrase used to encrypt files in the backup
-} BackupJobData;
-
 // Comparator to order ManifestFile objects by size then name
 static int
 backupProcessQueueComparator(const void *item1, const void *item2)
@@ -1055,6 +1049,20 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             result += file->size;
         }
 
+        // !!! pg_control should always be in the backup (unless this is an offline backup)
+        // if (!$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL) && cfgOption(CFGOPT_ONLINE))
+        // {
+        //     confess &log(ERROR, DB_FILE_PGCONTROL . " must be present in all online backups\n" .
+        //                  'HINT: is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
+        // }
+
+        // !!! If there are no files to backup then we'll exit with an error unless in test mode.  The other way this could happen is if
+        // !!! the database is down and backup is called with --no-online twice in a row.
+        // if ($lFileTotal == 0 && !cfgOption(CFGOPT_TEST))
+        // {
+        //     confess &log(ERROR, "no files have changed since the last backup - this seems unlikely", ERROR_FILE_MISSING);
+        // }
+
         // Sort the queues
         for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
             lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
@@ -1065,6 +1073,105 @@ backupProcessQueue(Manifest *manifest, List **queueList)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(UINT64, result);
+}
+
+// Helper to caculate the next queue to scan based on the client index
+static int
+backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+        FUNCTION_TEST_PARAM(INT, queueIdx);
+        FUNCTION_TEST_PARAM(UINT, queueTotal);
+    FUNCTION_TEST_END();
+
+    // Move (forward or back) to the next queue
+    queueIdx += clientIdx % 2 ? -1 : 1;
+
+    // Deal with wrapping on either end
+    if (queueIdx < 0)
+        FUNCTION_TEST_RETURN((int)queueTotal - 1);
+    else if (queueIdx == (int)queueTotal)
+        FUNCTION_TEST_RETURN(0);
+
+    FUNCTION_TEST_RETURN(queueIdx);
+}
+
+// Callback to fetch backup jobs for the parallel executor
+typedef struct BackupJobData
+{
+    const String *const backupLabel;                                // Backup label (defines the backup path)
+    const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
+    const bool compress;                                            // Is the backup compressed?
+    const unsigned int compressLevel;                               // Compress level if backup is compressed
+    const bool delta;                                               // Is this a checksum delta backup?
+
+    List *queueList;                                                // List of processing queues
+} BackupJobData;
+
+static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+
+    ProtocolParallelJob *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get a new job if there are any left
+        BackupJobData *jobData = data;
+
+        // Determine where to begin scanning the queue (we'll stop when we get back here)
+        int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
+        int queueEnd = queueIdx;
+
+        do
+        {
+            List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx);
+
+            if (lstSize(queue) > 0)
+            {
+                const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
+
+                // Create backup job
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE_STR);
+
+                protocolCommandParamAdd(command, VARSTR(manifestPathPg(file->name)));
+                protocolCommandParamAdd(command, VARBOOL(true)); // !!! NEED EXCEPTION FOR PG_CONTROL
+                protocolCommandParamAdd(command, VARUINT64(file->size));
+                protocolCommandParamAdd(command, file->checksumSha1[0] != 0 ? VARSTRZ(file->checksumSha1) : NULL);
+                protocolCommandParamAdd(command, VARBOOL(file->checksumPage)); // !!! NEED TO SET THIS FLAG CORRECTLY
+                protocolCommandParamAdd(command, VARUINT(0xFFFFFFFF)); // !!! COMBINE INTO ONE PARAM
+                protocolCommandParamAdd(command, VARUINT(0xFFFFFFFF)); // !!! COMBINE INTO ONE PARAM
+                protocolCommandParamAdd(command, VARSTR(file->name));
+                protocolCommandParamAdd(command, VARBOOL(file->reference != NULL));
+                protocolCommandParamAdd(command, VARBOOL(jobData->compress));
+                protocolCommandParamAdd(command, VARBOOL(jobData->compressLevel));
+                protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
+                protocolCommandParamAdd(command, VARBOOL(jobData->delta));
+                protocolCommandParamAdd(command, VARBOOL(jobData->cipherSubPass));
+
+                // Remove job from the queue
+                lstRemoveIdx(queue, 0);
+
+                // Assign job to result
+                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), MEM_CONTEXT_OLD());
+
+                // Break out of the loop early since we found a job
+                break;
+            }
+
+            queueIdx = backupJobQueueNext(clientIdx, queueIdx, lstSize(jobData->queueList));
+        }
+        while (queueIdx != queueEnd);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 static void
@@ -1122,14 +1229,47 @@ backupProcess(BackupPg pg, Manifest *manifest)
         }
 
         // Generate processing queues
-        BackupJobData jobData = {.manifest = manifest};
+        BackupJobData jobData =
+        {
+            .backupLabel = backupLabel,
+            .compress = cfgOptionBool(cfgOptCompress),
+            .compressLevel = cfgOptionUInt(cfgOptCompressLevel),
+            .cipherSubPass = cfgOptionStr(cfgOptRepoCipherPass),
+            .delta = cfgOptionBool(cfgOptDelta),
+        };
 
-        uint64_t sizeTotal = backupProcessQueue(jobData.manifest, &jobData.queueList);
+        uint64_t sizeTotal = backupProcessQueue(manifest, &jobData.queueList);
+
+        // Create the parallel executor
+        ProtocolParallel *parallelExec = protocolParallelNew(
+            (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, backupJobCallback, &jobData);
+
+        for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
+            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, 1, processIdx));
+
+        // Process jobs
+        uint64_t sizeCopied = 0;
+
+        do
+        {
+            unsigned int completed = protocolParallelProcess(parallelExec);
+
+            for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+            {
         (void)sizeTotal;
+        (void)sizeCopied;
+                // sizeCopied = backupJobResult(
+                //     jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeCopied);
+            }
 
-        ASSERT("AS FAR AS WE GO");
+            // A keep-alive is required here for the remote holding open the backup connection
+            protocolKeepAlive();
+        }
+        while (!protocolParallelDone(parallelExec));
 
-        // # Make sure that pg_control is not removed during the backup
+        // ASSERT("AS FAR AS WE GO");
+
+        // !!! Make sure that pg_control is not removed during the backup
         // if ($strRepoFile eq MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL)
         // {
         //     $bIgnoreMissing = false;
@@ -1143,50 +1283,6 @@ backupProcess(BackupPg pg, Manifest *manifest)
         //     $lManifestSaveSize < cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD))
         // {
         //     $lManifestSaveSize = cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD);
-        // }
-
-        // !!! DO PROCESSING HERE
-        // # Run the backup jobs and process results
-        // while (my $hyJob = $oBackupProcess->process())
-        // {
-        //     foreach my $hJob (@{$hyJob})
-        //     {
-        //         ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
-        //             $oBackupManifest, cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $hJob->{iHostConfigIdx}), false),
-        //             $hJob->{iProcessId}, @{$hJob->{rParam}}[0], @{$hJob->{rParam}}[7], @{$hJob->{rParam}}[2], @{$hJob->{rParam}}[3],
-        //             @{$hJob->{rParam}}[4], @{$hJob->{rResult}}, $lSizeTotal, $lSizeCurrent, $lManifestSaveSize,
-        //             $lManifestSaveCurrent);
-        //     }
-        //
-        //     # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
-        //     # then the remote might timeout while waiting for a command.
-        //     protocolKeepAlive();
-        // }
-
-        // # Queue for parallel backup
-        // $oBackupProcess->queueJob(
-        //     $iHostConfigIdx, $strQueueKey, $strRepoFile, OP_BACKUP_FILE,
-        //     [$strDbFile, $bIgnoreMissing, $lSize,
-        //         $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
-        //         cfgOption(CFGOPT_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false,
-        //         defined($strLsnStart) ? hex((split('/', $strLsnStart))[0]) : 0xFFFFFFFF,
-        //         defined($strLsnStart) ? hex((split('/', $strLsnStart))[1]) : 0xFFFFFFFF,
-        //         $strRepoFile, defined($strReference) ? true : false, $bCompress, cfgOption(CFGOPT_COMPRESS_LEVEL),
-        //         $strBackupLabel, cfgOption(CFGOPT_DELTA)],
-        //     {rParamSecure => $oBackupManifest->cipherPassSub() ? [$oBackupManifest->cipherPassSub()] : undef});
-
-        // # pg_control should always be in the backup (unless this is an offline backup)
-        // if (!$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL) && cfgOption(CFGOPT_ONLINE))
-        // {
-        //     confess &log(ERROR, DB_FILE_PGCONTROL . " must be present in all online backups\n" .
-        //                  'HINT: is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
-        // }
-
-        // # If there are no files to backup then we'll exit with an error unless in test mode.  The other way this could happen is if
-        // # the database is down and backup is called with --no-online twice in a row.
-        // if ($lFileTotal == 0 && !cfgOption(CFGOPT_TEST))
-        // {
-        //     confess &log(ERROR, "no files have changed since the last backup - this seems unlikely", ERROR_FILE_MISSING);
         // }
 
         // &log(INFO, cfgOption(CFGOPT_TYPE) . " backup size = " . fileSizeFormat($lBackupSizeTotal));

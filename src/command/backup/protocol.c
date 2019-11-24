@@ -39,6 +39,7 @@ backupProtocol(const String *command, const VariantList *paramList, ProtocolServ
         if (strEq(command, PROTOCOL_COMMAND_BACKUP_FILE_STR))
         {
             // Backup the file
+            // !!! CAN WE GET RID OF THE BOOL FORCES HERE?
             BackupFileResult result = backupFile(
                 varStr(varLstGet(paramList, 0)), varBoolForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
                 varStr(varLstGet(paramList, 3)), varBoolForce(varLstGet(paramList, 4)),
