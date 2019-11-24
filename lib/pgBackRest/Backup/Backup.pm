@@ -14,7 +14,6 @@ use JSON::PP;
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Backup::Common;
-use pgBackRest::Backup::File;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
@@ -57,221 +56,6 @@ sub new
 }
 
 ####################################################################################################################################
-# processManifest
-#
-# Process the file level backup.  Uses the information in the manifest to determine which files need to be copied.  Directories
-# and tablespace links are only created when needed, except in the case of a full backup or if hardlinks are requested.
-####################################################################################################################################
-sub processManifest
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strDbMasterPath,
-        $strDbCopyPath,
-        $strType,
-        $strDbVersion,
-        $bCompress,
-        $bHardLink,
-        $oBackupManifest,
-        $strBackupLabel,
-        $strLsnStart,
-    ) =
-        logDebugParam
-    (
-        __PACKAGE__ . '->processManifest', \@_,
-        {name => 'strDbMasterPath'},
-        {name => 'strDbCopyPath'},
-        {name => 'strType'},
-        {name => 'strDbVersion'},
-        {name => 'bCompress'},
-        {name => 'bHardLink'},
-        {name => 'oBackupManifest'},
-        {name => 'strBackupLabel'},
-        {name => 'strLsnStart', required => false},
-    );
-
-    # Start backup test point
-    &log(TEST, TEST_BACKUP_START);
-
-    # Get the master protocol for keep-alive
-    my $oProtocolMaster =
-        !isDbLocal({iRemoteIdx => $self->{iMasterRemoteIdx}}) ?
-            protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iMasterRemoteIdx}) : undef;
-    defined($oProtocolMaster) && $oProtocolMaster->noOp();
-
-    # Initialize the backup process
-    my $oBackupProcess = new pgBackRest::Protocol::Local::Process(CFGOPTVAL_LOCAL_TYPE_DB);
-
-    if ($self->{iCopyRemoteIdx} != $self->{iMasterRemoteIdx})
-    {
-        $oBackupProcess->hostAdd($self->{iMasterRemoteIdx}, 1);
-    }
-
-    $oBackupProcess->hostAdd($self->{iCopyRemoteIdx}, cfgOption(CFGOPT_PROCESS_MAX));
-
-    # Variables used for parallel copy
-    my $lFileTotal = 0;
-    my $lSizeTotal = 0;
-
-    # Iterate all files in the manifest
-    foreach my $strRepoFile (
-        sort {sprintf("%016d-%s", $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $b, MANIFEST_SUBKEY_SIZE), $b) cmp
-              sprintf("%016d-%s", $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $a, MANIFEST_SUBKEY_SIZE), $a)}
-        ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_FILE, INI_SORT_NONE)))
-    {
-        # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup - unless
-        # the option to checksum all files is set.  However, if hardlinking is enabled the link will need to be created
-        my $strReference = $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false);
-
-        if (defined($strReference))
-        {
-            # If the delta option to checksum all files is not set or it is set and the file size of the referenced file is zero
-            # then skip checking/copying this file
-            if (!cfgOption(CFGOPT_DELTA) ||
-                $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE) == 0)
-            {
-                # This file will not need to be copied
-                next;
-            }
-        }
-
-        # By default put everything into a single queue
-        my $strQueueKey = MANIFEST_TARGET_PGDATA;
-
-        # If the file belongs in a tablespace then put in a tablespace-specific queue
-        if (index($strRepoFile, DB_PATH_PGTBLSPC . '/') == 0)
-        {
-            $strQueueKey = DB_PATH_PGTBLSPC . '/' . (split('\/', $strRepoFile))[1];
-        }
-
-        # Create the file hash
-        my $bIgnoreMissing = true;
-        my $strDbFile = $oBackupManifest->dbPathGet($strDbCopyPath, $strRepoFile);
-        my $iHostConfigIdx = $self->{iCopyRemoteIdx};
-
-        # Certain files must be copied from the master
-        if ($oBackupManifest->boolGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_MASTER))
-        {
-            $strDbFile = $oBackupManifest->dbPathGet($strDbMasterPath, $strRepoFile);
-            $iHostConfigIdx = $self->{iMasterRemoteIdx};
-        }
-
-        # Make sure that pg_control is not removed during the backup
-        if ($strRepoFile eq MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL)
-        {
-            $bIgnoreMissing = false;
-        }
-
-        # Increment file total and size
-        my $lSize = $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
-
-        $lFileTotal++;
-        $lSizeTotal += $lSize;
-
-        # Queue for parallel backup
-        $oBackupProcess->queueJob(
-            $iHostConfigIdx, $strQueueKey, $strRepoFile, OP_BACKUP_FILE,
-            [$strDbFile, $bIgnoreMissing, $lSize,
-                $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
-                cfgOption(CFGOPT_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false,
-                defined($strLsnStart) ? hex((split('/', $strLsnStart))[0]) : 0xFFFFFFFF,
-                defined($strLsnStart) ? hex((split('/', $strLsnStart))[1]) : 0xFFFFFFFF,
-                $strRepoFile, defined($strReference) ? true : false, $bCompress, cfgOption(CFGOPT_COMPRESS_LEVEL),
-                $strBackupLabel, cfgOption(CFGOPT_DELTA)],
-            {rParamSecure => $oBackupManifest->cipherPassSub() ? [$oBackupManifest->cipherPassSub()] : undef});
-
-        # Size and checksum will be removed and then verified later as a sanity check
-        $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
-        $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM);
-    }
-
-    # pg_control should always be in the backup (unless this is an offline backup)
-    if (!$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL) && cfgOption(CFGOPT_ONLINE))
-    {
-        confess &log(ERROR, DB_FILE_PGCONTROL . " must be present in all online backups\n" .
-                     'HINT: is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
-    }
-
-    # If there are no files to backup then we'll exit with an error unless in test mode.  The other way this could happen is if
-    # the database is down and backup is called with --no-online twice in a row.
-    if ($lFileTotal == 0 && !cfgOption(CFGOPT_TEST))
-    {
-        confess &log(ERROR, "no files have changed since the last backup - this seems unlikely", ERROR_FILE_MISSING);
-    }
-
-    # Running total of bytes copied
-    my $lSizeCurrent = 0;
-
-    # Determine how often the manifest will be saved
-    my $lManifestSaveCurrent = 0;
-    my $lManifestSaveSize = int($lSizeTotal / 100);
-
-    if (cfgOptionSource(CFGOPT_MANIFEST_SAVE_THRESHOLD) ne CFGDEF_SOURCE_DEFAULT ||
-        $lManifestSaveSize < cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD))
-    {
-        $lManifestSaveSize = cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD);
-    }
-
-    # Run the backup jobs and process results
-    while (my $hyJob = $oBackupProcess->process())
-    {
-        foreach my $hJob (@{$hyJob})
-        {
-            ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
-                $oBackupManifest, cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $hJob->{iHostConfigIdx}), false),
-                $hJob->{iProcessId}, @{$hJob->{rParam}}[0], @{$hJob->{rParam}}[7], @{$hJob->{rParam}}[2], @{$hJob->{rParam}}[3],
-                @{$hJob->{rParam}}[4], @{$hJob->{rResult}}, $lSizeTotal, $lSizeCurrent, $lManifestSaveSize,
-                $lManifestSaveCurrent);
-        }
-
-        # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
-        # then the remote might timeout while waiting for a command.
-        protocolKeepAlive();
-    }
-
-    foreach my $strFile ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_FILE))
-    {
-        # If the file has a reference, then it was not copied since it can be retrieved from the referenced backup. However, if
-        # hardlinking is enabled the link will need to be created.
-        my $strReference = $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
-
-        if ($strReference)
-        {
-            # If hardlinking is enabled then create a hardlink for files that have not changed since the last backup
-            if ($bHardLink)
-            {
-                &log(DETAIL, "hardlink ${strFile} to ${strReference}");
-
-                storageRepo()->linkCreate(
-                    STORAGE_REPO_BACKUP . "/${strReference}/${strFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
-                    STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
-                    {bHard => true});
-            }
-            # Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
-            # recopied.
-            else
-            {
-                logDebugMisc($strOperation, "reference ${strFile} to ${strReference}");
-            }
-        }
-    }
-
-    # Validate the manifest
-    $oBackupManifest->validate();
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'lSizeTotal', value => $lSizeTotal}
-    );
-}
-
-####################################################################################################################################
 # process
 #
 # Process the database backup.
@@ -304,9 +88,6 @@ sub process
         strCipherPass => defined($oBackupInfo->cipherPassSub()) ? $oBackupInfo->cipherPassSub() : undef});
     my $strCipherPassBackupSet = $oBackupManifest->cipherPassSub();
 
-    ################################################################################################################################
-    # ALL THE ABOVE EXISTS ONLY FOR MIGRATION
-    ################################################################################################################################
     # Start backup (unless --no-online is set)
     my $oDbMaster = undef;
     my $oDbStandby = undef;
@@ -325,15 +106,11 @@ sub process
 
     &log(TEST, TEST_MANIFEST_BUILD);
 
+    ################################################################################################################################
+    # ALL THE ABOVE EXISTS ONLY FOR MIGRATION
+    ################################################################################################################################
     # Set the delta option in the manifest
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
-
-    # Perform the backup
-    my $lBackupSizeTotal =
-        $self->processManifest(
-            $strDbMasterPath, $strDbCopyPath, cfgOption(CFGOPT_TYPE), $rhParam->{pgVersion}, cfgOption(CFGOPT_COMPRESS),
-            cfgOption(CFGOPT_REPO_HARDLINK), $oBackupManifest, $rhParam->{backupLabel}, undef);
-    &log(INFO, cfgOption(CFGOPT_TYPE) . " backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Master file object no longer needed
     undef($oStorageDbMaster);
