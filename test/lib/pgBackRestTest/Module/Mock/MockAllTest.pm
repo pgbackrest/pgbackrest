@@ -1069,8 +1069,7 @@ sub run
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
         $oHostDbMaster->manifestFileCreate(
-            \%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2', '09b5e31766be1dba1ec27de82f975c1b6eea2a92',
-            $lTime, undef, undef, false);
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2', '09b5e31766be1dba1ec27de82f975c1b6eea2a92', $lTime);
 
         $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 1, 2);
 
