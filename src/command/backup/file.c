@@ -53,7 +53,7 @@ backupFile(
         FUNCTION_LOG_PARAM(BOOL, pgFileChecksumPage);               // Should page checksums be validated
         FUNCTION_LOG_PARAM(UINT64, pgFileChecksumPageLsnLimit);     // Upper LSN limit to which page checksums must be valid
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Destination in the repo to copy the pg file
-        FUNCTION_LOG_PARAM(BOOL, repoFileHasReference);             // Does the repo file exists in a prior backup in the set?
+        FUNCTION_LOG_PARAM(BOOL, repoFileHasReference);             // Does the repo file exist in a prior backup in the set?
         FUNCTION_LOG_PARAM(BOOL, repoFileCompress);                 // Compress destination file
         FUNCTION_LOG_PARAM(UINT, repoFileCompressLevel);            // Compression level for destination file
         FUNCTION_LOG_PARAM(STRING, backupLabel);                    // Label of current backup
