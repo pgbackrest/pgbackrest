@@ -107,18 +107,8 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdBackup:
                 {
-#ifdef DEBUG
-                    // Check pg_control during testing so errors are more obvious.  Otherwise errors only happen in
-                    // archive-get/archive-push and end up in the PostgreSQL log which is not output in CI.  This can be removed
-                    // once backup is written in C.
-                    if (cfgOptionBool(cfgOptOnline) && !cfgOptionBool(cfgOptBackupStandby) && !cfgOptionTest(cfgOptPgHost))
-                        pgControlFromFile(storagePg());
-#endif
-
                     // Run backup
                     cmdBackup();
-                    perlExec();  // !!! RUN BOTH COMMANDS DURNG MIGRATION
-                    cfgCommandParamSet(strLstNew()); // !!! CLEAR OPTIONS THAT WERE PASSED TO PERL
 
                     // Switch to expire command
                     cmdEnd(0, NULL);

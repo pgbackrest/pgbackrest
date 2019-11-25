@@ -20,6 +20,7 @@ Backup Manifest Handler
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/storage.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -817,6 +818,7 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, 
     {
         this = manifestNewInternal();
         this->info = infoNew(NULL);
+        this->data.backrestVersion = strNew(PROJECT_VERSION);
         this->data.pgVersion = pgVersion;
         this->data.backupOptionOnline = online;
         this->data.backupOptionChecksumPage = varNewBool(checksumPage);
@@ -1145,7 +1147,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
 /**********************************************************************************************************************************/
 void
-manifestBuildComplete(
+manifestBuildUpdate(
     Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
     size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
     bool optionHardLink, bool optionOnline, unsigned int optionProcessMax, bool optionStandby)
@@ -1161,7 +1163,9 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionCompress);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
-        FUNCTION_LOG_PARAM(BOOL, optionProcessMax);
+        FUNCTION_LOG_PARAM(BOOL, optionHardLink);
+        FUNCTION_LOG_PARAM(BOOL, optionOnline);
+        FUNCTION_LOG_PARAM(UINT, optionProcessMax);
         FUNCTION_LOG_PARAM(BOOL, optionStandby);
     FUNCTION_LOG_END();
 
@@ -1180,6 +1184,24 @@ manifestBuildComplete(
         this->data.backupOptionOnline = optionOnline;
         this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
         this->data.backupOptionStandby = varNewBool(optionStandby);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+manifestBuildComplete(Manifest *this, time_t timestampStop)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(TIME, timestampStop);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->data.backupTimestampStop = timestampStop;
     }
     MEM_CONTEXT_END();
 

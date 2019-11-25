@@ -13,7 +13,6 @@ $SIG{__DIE__} = sub {Carp::confess @_};
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
@@ -122,17 +121,6 @@ sub main
             logFileSet(
                 storageLocal(),
                 cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
-
-            # Process backup command
-            # ----------------------------------------------------------------------------------------------------------------------
-            if (cfgCommandTest(CFGCMD_BACKUP))
-            {
-                # Load module dynamically
-                require pgBackRest::Backup::Backup;
-                pgBackRest::Backup::Backup->import();
-
-                new pgBackRest::Backup::Backup()->process(@stryCommandArg);
-            }
         }
 
         return 1;

@@ -4,7 +4,6 @@ Backup Command
 #include "build.auto.h"
 
 #include <string.h>
-// #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -16,14 +15,12 @@ Backup Command
 #include "command/stanza/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/compress/gzip/common.h"
+#include "common/compress/gzip/compress.h"
 #include "common/debug.h"
 #include "common/log.h"
-// #include "common/regExp.h"
-// #include "common/user.h"
 #include "common/type/convert.h"
 #include "common/type/json.h" // !!! TRY TO REMOVE
 #include "config/config.h"
-// #include "config/exec.h"
 #include "db/helper.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
@@ -32,7 +29,6 @@ Backup Command
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
-// #include "storage/write.intern.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -1406,11 +1402,8 @@ cmdBackup(void)
                 backupLabel(backupType(cfgOptionStr(cfgOptType)), manifestData(manifest)->backupLabelPrior, timestampStart));
         }
 
-        // Process the backup manifest
-        backupProcess(pg, manifest);
-
-        // Set the values required to complete the manifest
-        manifestBuildComplete(
+        // Set all the manifest values we have before the first save
+        manifestBuildUpdate(
             // !!! SEEMS LIKE THE ARCHIVE CHECK CALCULATION SHOULD BE ONLINE ONLY (WAS COPIED FROM PERL, THOUGH)
             manifest, timestampStart, infoPg.id, infoPg.systemId, !cfgOptionBool(cfgOptOnline) || cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
@@ -1418,21 +1411,7 @@ cmdBackup(void)
             cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink), cfgOptionBool(cfgOptOnline),
             cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
 
-        // !!! BELOW NEEDED FOR PERL MIGRATION
-        // !!! ---------------------------------------------------------------------------------------------------------------------
-
-        // Parameters that must be passed to Perl during migration
-        KeyValue *paramKv = kvNew();
-        kvPut(paramKv, VARSTRDEF("timestampStart"), VARUINT64((uint64_t)timestampStart));
-        kvPut(paramKv, VARSTRDEF("pgId"), VARUINT(infoPg.id));
-        kvPut(paramKv, VARSTRDEF("pgVersion"), VARSTR(pgVersionToStr(infoPg.version)));
-        kvPut(paramKv, VARSTRDEF("backupLabel"), VARSTR(manifestData(manifest)->backupLabel));
-
-        StringList *paramList = strLstNew();
-        strLstAdd(paramList, jsonFromVar(varNewKv(paramKv)));
-        cfgCommandParamSet(paramList);
-
-        // Save the manifest so the Perl code can read it
+        // Save the manifest before processing starts
         IoWrite *write = storageWriteIo(
             storageNewWriteP(
                 storageRepoWrite(),
@@ -1443,17 +1422,226 @@ cmdBackup(void)
             infoPgCipherPass(infoBackupPg(infoBackup)));
         manifestSave(manifest, write);
 
-        // Save an original copy so we can see what the C code wrote out
-        // write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_MANIFEST_FILE ".orig")));
-        // manifestSave(manifest, write);
+        // Process the backup manifest
+        backupProcess(pg, manifest);
 
-        // Do this so Perl does not need to reconstruct backup.info
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!! Master file object no longer needed
+        // undef($oStorageDbMaster);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!! Stop backup (unless --no-online is set)
+        // my $strArchiveStop = undef;
+        // my $strLsnStop = undef;
+        //
+        // if (cfgOption(CFGOPT_ONLINE))
+        // {
+        //     ($strArchiveStop, $strLsnStop, my $strTimestampDbStop, my $oFileHash) = $oDbMaster->backupStop();
+        //
+        //     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
+        //     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef, $strLsnStop);
+        //     &log(INFO, "backup stop archive = ${strArchiveStop}, lsn = ${strLsnStop}");
+        //
+        //     # Write out files returned from stop backup
+        //     foreach my $strFile (sort(keys(%{$oFileHash})))
+        //     {
+        //         # Only save the file if it has content
+        //         if (defined($oFileHash->{$strFile}))
+        //         {
+        //             my $rhyFilter = [{strClass => STORAGE_FILTER_SHA}];
+        //
+        //             # Add compression filter
+        //             if (cfgOption(CFGOPT_COMPRESS))
+        //             {
+        //                 push(
+        //                     @{$rhyFilter},
+        //                     {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, cfgOption(CFGOPT_COMPRESS_LEVEL)]});
+        //             }
+        //
+        //             # If the backups are encrypted, then the passphrase for the backup set from the manifest file is required to access
+        //             # the file in the repo
+        //             my $oDestinationFileIo = storageRepo()->openWrite(
+        //                 STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/${strFile}" .
+        //                     (cfgOption(CFGOPT_COMPRESS) ? qw{.} . COMPRESS_EXT : ''),
+        //                 {rhyFilter => $rhyFilter,
+        //                     strCipherPass => defined($strCipherPassBackupSet) ? $strCipherPassBackupSet : undef});
+        //
+        //             # Write content out to a file
+        //             storageRepo()->put($oDestinationFileIo, $oFileHash->{$strFile});
+        //
+        //             # Add file to manifest
+        //             $oBackupManifest->fileAdd(
+        //                 $strFile, time(), length($oFileHash->{$strFile}), $oDestinationFileIo->result(STORAGE_FILTER_SHA), true);
+        //
+        //             &log(DETAIL, "wrote '${strFile}' file returned from pg_stop_backup()");
+        //         }
+        //     }
+        // }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!! Remotes no longer needed (destroy them here so they don't timeout)
+        //
+        // undef($oDbMaster);
+        // protocolDestroy(undef, undef, true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!! If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
+        // archive logs are going to a different server.  Be careful of this option because there is no way to verify that the backup
+        // will be consistent - at least not here.
+        // if (cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_ARCHIVE_CHECK))
+        // {
+        //     # Save the backup manifest before getting archive logs in case of failure
+        //     $oBackupManifest->saveCopy();
+        //
+        //     # Create the modification time for the archive logs
+        //     my $lModificationTime = time();
+        //
+        //     # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
+        //     logDebugMisc($strOperation, "retrieve archive logs !!!START!!!:!!!STOP!!!");
+        //
+        //     my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
+        //     my $strArchiveId = $oArchiveInfo->archiveId();
+        //     my @stryArchive = lsnFileRange('START', $strLsnStop, $rhParam->{pgVersion}, 16);
+        //
+        //     foreach my $strArchive (@stryArchive)
+        //     {
+        //         my $strArchiveFile = walSegmentFind(
+        //             storageRepo(), $strArchiveId, substr($strArchiveStop, 0, 8) . $strArchive, cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
+        //
+        //         $strArchive = substr($strArchiveFile, 0, 24);
+        //
+        //         if (cfgOption(CFGOPT_ARCHIVE_COPY))
+        //         {
+        //             logDebugMisc($strOperation, "archive: ${strArchive} (${strArchiveFile})");
+        //
+        //             # Copy the log file from the archive repo to the backup
+        //             my $bArchiveCompressed = $strArchiveFile =~ ('^.*\.' . COMPRESS_EXT . '\$');
+        //
+        //             storageRepo()->copy(
+        //                 storageRepo()->openRead(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
+        //                     {strCipherPass => $oArchiveInfo->cipherPassSub()}),
+        //                 storageRepo()->openWrite(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} .
+        //                     $oBackupManifest->walPath() . "/${strArchive}" . (cfgOption(CFGOPT_COMPRESS) ? qw{.} . COMPRESS_EXT : ''),
+        //                     {bPathCreate => true, strCipherPass => $strCipherPassBackupSet})
+        //                 );
+        //
+        //             # Add the archive file to the manifest so it can be part of the restore and checked in validation
+        //             my $strPathLog = MANIFEST_TARGET_PGDATA . qw{/} . $oBackupManifest->walPath();
+        //             my $strFileLog = "${strPathLog}/${strArchive}";
+        //
+        //             # Add file to manifest
+        //             $oBackupManifest->fileAdd(
+        //                 $strFileLog, $lModificationTime, PG_WAL_SEGMENT_SIZE, substr($strArchiveFile, 25, 40), true);
+        //         }
+        //     }
+        // }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // // Sync backup path if supported
+        // if (storageRepo()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+        // {
+        //     # Sync all paths in the backup
+        //     storageRepo()->pathSync(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}");
+        //
+        //     foreach my $strPath ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_PATH))
+        //     {
+        //         my $strPathSync = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/$strPath");
+        //
+        //         # Not all paths are created for diff/incr backups, so only sync if this is a full backup or the path exists
+        //         if (cfgOption(CFGOPT_TYPE) eq CFGOPTVAL_BACKUP_TYPE_FULL || storageRepo()->pathExists($strPathSync))
+        //         {
+        //             storageRepo()->pathSync($strPathSync);
+        //         }
+        //     }
+        // }
+
+        // Complete manifest
+        manifestBuildComplete(manifest, time(NULL));
+
+        // Final save of the backup manifest
+        write = storageWriteIo(
+            storageNewWriteP(
+                storageRepoWrite(),
+                strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(manifestData(manifest)->backupLabel))));
+        cipherBlockFilterGroupAdd(
+            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+            infoPgCipherPass(infoBackupPg(infoBackup)));
+        manifestSave(manifest, write);
+
+        write = storageWriteIo(
+            storageNewWriteP(
+                storageRepoWrite(),
+                strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(manifestData(manifest)->backupLabel))));
+        cipherBlockFilterGroupAdd(
+            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+            infoPgCipherPass(infoBackupPg(infoBackup)));
+        manifestSave(manifest, write);
+
+        LOG_INFO_FMT("new backup label = %s", strPtr(manifestData(manifest)->backupLabel));
+
+        // Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest
+        // is required
+        StorageRead *manifestRead = storageNewReadP(
+                storageRepo(),
+                strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(manifestData(manifest)->backupLabel)));
+
+        cipherBlockFilterGroupAdd(
+            ioReadFilterGroup(storageReadIo(manifestRead)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
+            infoPgCipherPass(infoBackupPg(infoBackup)));
+
+        StorageWrite *manifestWrite = storageNewWriteP(
+                storageRepoWrite(),
+                strNewFmt(
+                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest." GZIP_EXT,
+                    strPtr(strSubN(manifestData(manifest)->backupLabel, 0, 4)), strPtr(manifestData(manifest)->backupLabel)));
+
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), gzipCompressNew(9, false));
+
+        cipherBlockFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+            infoPgCipherPass(infoBackupPg(infoBackup)));
+
+        storageCopyP(manifestRead, manifestWrite);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!! Sync history path if supported
+        // if (storageRepo()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+        // {
+        //     storageRepo()->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY);
+        //     storageRepo()->pathSync($strHistoryPath);
+        // }
+
+        // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
+        // used by us since symlinks are not supported on all storage types.
+        const String *const latestLink = storagePathP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"));
+
+        storageRemoveP(storageRepo(), latestLink);
+
+        if (storageFeature(storageRepo(), storageFeatureSymLink))
+        {
+            const String *const linkDestination = manifestData(manifest)->backupLabel;
+
+            THROW_ON_SYS_ERROR_FMT(
+                symlink(strPtr(linkDestination), strPtr(latestLink)) == -1, FileOpenError,
+                "unable to create symlink '%s' to '%s'", strPtr(latestLink), strPtr(linkDestination));
+        }
+
+        // Add manifest and save backup.info
+        infoBackupDataAdd(infoBackup, manifest);
+
         infoBackupSaveFile(
             infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
 
-        // Shutdown protocol so Perl can take locks
-        protocolFree();
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!! Sync backup root path if supported
+        // if (storageRepo()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+        // {
+        //     storageRepo()->pathSync(STORAGE_REPO_BACKUP);
+        // }
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -2776,6 +2776,7 @@ P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
+P00   WARN: backup '[BACKUP-INCR-5]' cannot be resumed: new backup type 'diff' does not match resumable backup type 'incr'
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e

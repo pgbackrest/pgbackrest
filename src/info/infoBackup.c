@@ -386,7 +386,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
             // If a reference to a file exists, then it is in a previous backup and the delta calculation was already done
             if (file->reference != NULL)
-                strLstAdd(referenceList, file->reference);
+                strLstAddIfMissing(referenceList, file->reference);
             else
             {
                 backupSizeDelta += file->size;
