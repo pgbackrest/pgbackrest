@@ -79,6 +79,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(0));                // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
+        varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - skip");
@@ -154,6 +155,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(1));                // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
+        varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - pageChecksum");
@@ -196,6 +198,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(1));                // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(true));             // delta
+        varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - noop");
@@ -320,6 +323,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(3));                // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
+        varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - copy, compress");
