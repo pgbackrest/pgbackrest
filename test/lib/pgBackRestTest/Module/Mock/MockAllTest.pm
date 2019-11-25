@@ -751,6 +751,9 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         my $strTblSpcPath = $oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC;
 
+        # Remove excludes now that they just create noise in the log
+        $oHostBackup->configUpdate({(CFGDEF_SECTION_GLOBAL . ':backup') => {cfgOptionName(CFGOPT_EXCLUDE) => []}});
+
         # Create a directory in pg_tablespace
         storageTest()->pathCreate("${strTblSpcPath}/path", {strMode => '0700', bCreateParent => true});
 
