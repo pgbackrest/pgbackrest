@@ -1014,6 +1014,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
         // Now put all files into the processing queues
         bool delta = cfgOptionBool(cfgOptDelta);
+        uint64_t fileTotal = 0;
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
@@ -1043,6 +1044,9 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
             // Add size to total
             result += file->size;
+
+            // Increment total files
+            fileTotal++;
         }
 
         // !!! pg_control should always be in the backup (unless this is an offline backup)
@@ -1052,12 +1056,10 @@ backupProcessQueue(Manifest *manifest, List **queueList)
         //                  'HINT: is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
         // }
 
-        // !!! If there are no files to backup then we'll exit with an error unless in test mode.  The other way this could happen is if
-        // !!! the database is down and backup is called with --no-online twice in a row.
-        // if ($lFileTotal == 0 && !cfgOption(CFGOPT_TEST))
-        // {
-        //     confess &log(ERROR, "no files have changed since the last backup - this seems unlikely", ERROR_FILE_MISSING);
-        // }
+        // If there are no files to backup then we'll exit with an error unless.  The could happen if the database is down and
+        // backup is called with --no-online twice in a row.
+        if (fileTotal == 0)
+            THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         // Sort the queues
         for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
