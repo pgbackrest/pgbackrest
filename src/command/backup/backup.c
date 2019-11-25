@@ -262,6 +262,10 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                         cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
                     const ManifestData *manifestPriorData = manifestData(result);
 
+                    LOG_INFO_FMT(
+                        "last backup label = %s, version = %s", strPtr(manifestData(result)->backupLabel),
+                        strPtr(manifestData(result)->backrestVersion));
+
                     // Warn if compress option changed
                     if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
                     {
@@ -347,10 +351,6 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *mani
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            LOG_INFO_FMT(
-                "last backup label = %s, version = %s", strPtr(manifestData(manifestPrior)->backupLabel),
-                strPtr(manifestData(manifestPrior)->backrestVersion));
-
             // Move the manifest to this context so it will be freed when we are done
             manifestMove(manifestPrior, MEM_CONTEXT_TEMP());
 
