@@ -407,17 +407,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bS3)
         {
-            # Test a backup abort
-            my $oExecuteBackup = $oHostBackup->backupBegin(
-                $strType, 'abort backup - local',
-                {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_START, fTestDelay => 5,
-                    iExpectedExitStatus => ERROR_TERM});
-
+            # Test global stop
             $oHostDbMaster->stop({bForce => true});
 
-            $oHostBackup->backupEnd($strType, $oExecuteBackup, {oExpectedManifest => \%oManifest});
-
-            # Test global stop
             $oHostBackup->backup(
                 $strType, 'global stop',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_STOP});
@@ -437,25 +429,6 @@ sub run
 
             # This time a warning should be generated
             $oHostDbMaster->start();
-
-            # If the backup is remote then test remote stops
-            if ($bRemote)
-            {
-                my $oExecuteBackup = $oHostBackup->backupBegin(
-                    $strType, 'abort backup - remote',
-                    {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_START, fTestDelay => 5,
-                        iExpectedExitStatus => ERROR_TERM});
-
-                $oHostBackup->stop({bForce => true});
-
-                $oHostBackup->backupEnd($strType, $oExecuteBackup, {oExpectedManifest => \%oManifest});
-
-                $oHostBackup->backup(
-                    $strType, 'global stop',
-                    {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_STOP});
-
-                $oHostBackup->start();
-            }
         }
 
         # Resume Full Backup
