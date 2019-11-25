@@ -271,21 +271,7 @@ stop all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --force stop
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo
-P00   INFO: sent term signal to process [PROCESS-ID]
 P00   INFO: stop command end: completed successfully
-
-full backup - abort backup - local (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup --test --test-delay=5 --test-point=backup-start=y
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=5 --test-point=backup-start=y --type=full
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
-            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: exclude '[TEST_PATH]/db-master/db/base/apipe' from backup using 'apipe' exclusion
-P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
-P00   INFO: exclude '[TEST_PATH]/db-master/db/base/pg_log2' from backup using 'pg_log2' exclusion
-P00   INFO: exclude '[TEST_PATH]/db-master/db/base/postgresql.auto.conf' from backup using 'postgresql.auto.conf' exclusion
-P00   TEST:         PgBaCkReStTeSt-BACKUP-START-PgBaCkReStTeSt
-P00   INFO: backup command end: terminated on signal [SIGTERM]
 
 full backup - global stop (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup
@@ -352,6 +338,7 @@ P00   INFO: exclude '[TEST_PATH]/db-master/db/base/postgresql.auto.conf' from ba
 P00   WARN: resumable backup [BACKUP-FULL-2] of same type exists -- remove invalid files and resume
 P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/file.tmp' from resumed backup
 P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION' from resumed backup
+P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/special-!_.*'()&!@;:+,?' from resumed backup
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1020,6 +1007,7 @@ incr backup - invalid path in pg_tblspc (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00  ERROR: [069]: 'pg_data/pg_tblspc/path' is not a symlink - pg_tblspc should contain only symlinks
 P00   INFO: backup command end: aborted with exception [069]
@@ -1030,6 +1018,7 @@ incr backup - invalid relative tablespace is ../ (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
@@ -1040,6 +1029,7 @@ incr backup - invalid relative tablespace is .. (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
@@ -1050,6 +1040,7 @@ incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
@@ -1060,6 +1051,7 @@ incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
@@ -1070,6 +1062,7 @@ incr backup - tablespace link references a link (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/pg_tblspc/99999' cannot reference another link '[TEST_PATH]/db-master/db/intermediate_link'
 P00   INFO: backup command end: aborted with exception [070]
@@ -1080,6 +1073,7 @@ incr backup - invalid relative tablespace in $PGDATA (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base/invalid_tblspc' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
@@ -1090,6 +1084,7 @@ incr backup - $PGDATA is a substring of valid tblspc excluding / (file missing e
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00  ERROR: [041]: unable to get info for missing path/file '[TEST_PATH]/db-master/db/base/pg_tblspc/99999/[TS_PATH-1]': [2] No such file or directory
 P00   INFO: backup command end: aborted with exception [041]
@@ -1100,6 +1095,7 @@ incr backup - invalid tablespace in $PGDATA (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base/invalid_tblspc' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
@@ -1110,9 +1106,9 @@ incr backup - add tablespace 1 (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 50%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/changesize.txt (4B, 68%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/zerosize.txt (0B, 68%)
@@ -1289,11 +1285,12 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-le
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-1]' missing manifest removed from backup.info
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: resumable backup [BACKUP-INCR-2] of same type exists -- remove invalid files and resume
 P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/changesize.txt' from resumed backup
+P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/zerosize.txt' from resumed backup
 P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt' from resumed backup
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
@@ -1315,10 +1312,10 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1638
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00   INFO: incr backup size = 192KB
 P00   INFO: new backup label = [BACKUP-INCR-2]
 P00   INFO: backup command end: completed successfully
@@ -1500,9 +1497,9 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-le
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-2]' missing manifest removed from backup.info
+P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match resumable backup type 'incr'
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
@@ -1521,10 +1518,10 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1638
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00   INFO: diff backup size = 192KB
 P00   INFO: new backup label = [BACKUP-DIFF-1]
 P00   INFO: backup command end: completed successfully
@@ -1701,9 +1698,9 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-le
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-DIFF-1]' missing manifest removed from backup.info
+P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
@@ -1722,10 +1719,10 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1638
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00   INFO: diff backup size = 192KB
 P00   INFO: new backup label = [BACKUP-DIFF-2]
 P00   INFO: backup command end: completed successfully
@@ -2065,13 +2062,12 @@ incr backup - add files and remove tablespace 2 (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-DIFF-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-DIFF-2], version = 0.00
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-DIFF-2]
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 61%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 38%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 100%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/base/base2.txt: file size 5 is not divisible by page size 8192
 P00   INFO: incr backup size = 13B
 P00   INFO: new backup label = [BACKUP-INCR-3]
 P00   INFO: backup command end: completed successfully
@@ -2162,7 +2158,7 @@ pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b59
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","master":true,"reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2286,10 +2282,10 @@ incr backup - update files (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
 P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -2400,7 +2396,7 @@ pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b59
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"reference":"[BACKUP-INCR-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","reference":"[BACKUP-INCR-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","master":true,"reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2487,9 +2483,9 @@ diff backup - updates since last full (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -2503,7 +2499,6 @@ P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/base/16384
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 99%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/base/base2.txt: file size 5 is not divisible by page size 8192
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
@@ -2604,7 +2599,7 @@ pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b59
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2672,396 +2667,6 @@ backrest-version="[VERSION-1]"
 [BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
 [BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
 [BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-
-[db]
-db-catalog-version=201409291
-db-control-version=942
-db-id=1
-db-system-id=1000000000000000094
-db-version="9.4"
-
-[db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
-
-[backrest]
-backrest-checksum="[CHECKSUM]"
-
-incr backup - remove files - but won't affect manifest (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
-            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
-P00   INFO: last backup label = [BACKUP-DIFF-3], version = [VERSION-1]
-P00   WARN: incr backup cannot alter compress option to 'true', reset to value in [BACKUP-DIFF-3]
-P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-DIFF-3]
-P00   TEST:         PgBaCkReStTeSt-MANIFEST-BUILD-PgBaCkReStTeSt
-P00   INFO: incr backup size = 0B
-P00   INFO: new backup label = [BACKUP-INCR-5]
-P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
-P00   INFO: expire command end: completed successfully
-
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
-[db]
-pg1-path=[TEST_PATH]/db-master/db/base-2
-
-[db:restore]
-tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
-tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
-
-[global]
-compress=y
-compress-level=3
-db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
-log-level-console=detail
-log-level-file=trace
-log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
-log-timestamp=n
-protocol-timeout=60
-repo1-path=[TEST_PATH]/db-master/repo
-spool-path=[TEST_PATH]/db-master/spool
-
-[global:backup]
-archive-copy=y
-exclude=postgresql.auto.conf
-exclude=pg_log/
-exclude=pg_log2
-exclude=apipe
-start-fast=y
-
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-5]/backup.manifest
------------------------------------------------------------------------------------------
-[backrest]
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[backup]
-backup-label="[BACKUP-INCR-5]"
-backup-prior="[BACKUP-DIFF-3]"
-backup-timestamp-copy-start=[TIMESTAMP]
-backup-timestamp-start=[TIMESTAMP]
-backup-timestamp-stop=[TIMESTAMP]
-backup-type="incr"
-
-[backup:db]
-db-catalog-version=201409291
-db-control-version=942
-db-id=1
-db-system-id=1000000000000000094
-db-version="9.4"
-
-[backup:option]
-option-archive-check=true
-option-archive-copy=true
-option-backup-standby=false
-option-buffer-size=4194304
-option-checksum-page=true
-option-compress=false
-option-compress-level=3
-option-compress-level-network=3
-option-delta=false
-option-hardlink=false
-option-online=false
-option-process-max=1
-
-[backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
-
-[target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","checksum-page":false,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","master":true,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"master":true,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-
-[target:file:default]
-group="[GROUP-1]"
-master=false
-mode="0600"
-user="[USER-1]"
-
-[target:link]
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
-
-[target:link:default]
-group="[GROUP-1]"
-user="[USER-1]"
-
-[target:path]
-pg_data={"mode":"0777"}
-pg_data/base={}
-pg_data/base/1={}
-pg_data/base/16384={}
-pg_data/base/32768={}
-pg_data/global={}
-pg_data/pg_clog={}
-pg_data/pg_dynshmem={}
-pg_data/pg_log={}
-pg_data/pg_notify={}
-pg_data/pg_replslot={}
-pg_data/pg_serial={}
-pg_data/pg_snapshots={}
-pg_data/pg_stat={}
-pg_data/pg_stat_tmp={}
-pg_data/pg_subtrans={}
-pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
-pg_tblspc/2={}
-pg_tblspc/2/[TS_PATH-1]={}
-pg_tblspc/2/[TS_PATH-1]/32768={}
-
-[target:path:default]
-group="[GROUP-1]"
-mode="0700"
-user="[USER-1]"
-
-[backrest]
-backrest-checksum="[CHECKSUM]"
-
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
-[backrest]
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-
-[db]
-db-catalog-version=201409291
-db-control-version=942
-db-id=1
-db-system-id=1000000000000000094
-db-version="9.4"
-
-[db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
-
-[backrest]
-backrest-checksum="[CHECKSUM]"
-
-diff backup - remove files during backup (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --process-max=1 --delta --type=diff --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
-            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [BACKUP-FULL-2]
-P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [BACKUP-FULL-2]
-P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   TEST:         PgBaCkReStTeSt-MANIFEST-BUILD-PgBaCkReStTeSt
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P00 DETAIL: skip file removed by database [TEST_PATH]/db-master/db/base-2/base/base2.txt
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P00   INFO: diff backup size = 176KB
-P00   INFO: new backup label = [BACKUP-DIFF-4]
-P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
-P00   INFO: expire command end: completed successfully
-
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
-[db]
-pg1-path=[TEST_PATH]/db-master/db/base-2
-
-[db:restore]
-tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
-tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
-
-[global]
-compress=y
-compress-level=3
-db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
-log-level-console=detail
-log-level-file=trace
-log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
-log-timestamp=n
-protocol-timeout=60
-repo1-hardlink=y
-repo1-path=[TEST_PATH]/db-master/repo
-spool-path=[TEST_PATH]/db-master/spool
-
-[global:backup]
-archive-copy=y
-exclude=postgresql.auto.conf
-exclude=pg_log/
-exclude=pg_log2
-exclude=apipe
-start-fast=y
-
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-4]/backup.manifest
------------------------------------------------------------------------------------------
-[backrest]
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[backup]
-backup-label="[BACKUP-DIFF-4]"
-backup-prior="[BACKUP-FULL-2]"
-backup-timestamp-copy-start=[TIMESTAMP]
-backup-timestamp-start=[TIMESTAMP]
-backup-timestamp-stop=[TIMESTAMP]
-backup-type="diff"
-
-[backup:db]
-db-catalog-version=201409291
-db-control-version=942
-db-id=1
-db-system-id=1000000000000000094
-db-version="9.4"
-
-[backup:option]
-option-archive-check=true
-option-archive-copy=true
-option-backup-standby=false
-option-buffer-size=4194304
-option-checksum-page=true
-option-compress=false
-option-compress-level=3
-option-compress-level-network=3
-option-delta=true
-option-hardlink=false
-option-online=false
-option-process-max=1
-
-[backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
-pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
-
-[target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-
-[target:file:default]
-group="[GROUP-1]"
-master=false
-mode="0600"
-user="[USER-1]"
-
-[target:link]
-pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
-
-[target:link:default]
-group="[GROUP-1]"
-user="[USER-1]"
-
-[target:path]
-pg_data={"mode":"0777"}
-pg_data/base={}
-pg_data/base/1={}
-pg_data/base/16384={}
-pg_data/base/32768={}
-pg_data/global={}
-pg_data/pg_clog={}
-pg_data/pg_dynshmem={}
-pg_data/pg_log={}
-pg_data/pg_notify={}
-pg_data/pg_replslot={}
-pg_data/pg_serial={}
-pg_data/pg_snapshots={}
-pg_data/pg_stat={}
-pg_data/pg_stat_tmp={}
-pg_data/pg_subtrans={}
-pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
-pg_tblspc/2={}
-pg_tblspc/2/[TS_PATH-1]={}
-pg_tblspc/2/[TS_PATH-1]/32768={}
-
-[target:path:default]
-group="[GROUP-1]"
-mode="0700"
-user="[USER-1]"
-
-[backrest]
-backrest-checksum="[CHECKSUM]"
-
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
-[backrest]
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -3261,8 +2866,6 @@ backrest-version="[VERSION-1]"
 [BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
 [BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
 [BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":true,"option-compress":false,"option-hardlink":false,"option-online":false}
 [BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
 
 [db]
@@ -3282,9 +2885,7 @@ expire full=1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-retention-full=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-full=1 --stanza=db
-P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3], [BACKUP-INCR-5], [BACKUP-DIFF-4]
-P00   INFO: remove expired backup [BACKUP-DIFF-4]
-P00   INFO: remove expired backup [BACKUP-INCR-5]
+P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3]
 P00   INFO: remove expired backup [BACKUP-DIFF-3]
 P00   INFO: remove expired backup [BACKUP-INCR-4]
 P00   INFO: remove expired backup [BACKUP-INCR-3]
@@ -3301,29 +2902,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
-P00 DETAIL: hardlink pg_data/PG_VERSION to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/badchecksum.txt to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/base/1/12000 to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/base/1/PG_VERSION to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/base/16384/17000 to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/base/16384/PG_VERSION to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/base/32768/33000 to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/base/32768/33000.32767 to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/base/32768/33001 to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/base/32768/44000_init to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/base/32768/PG_VERSION to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/changecontent.txt to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/changetime.txt to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/global/pg_control to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/pg_stat/global.stat to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/postgresql.conf to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/zero_from_start to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_data/zerosize.txt to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-FULL-3]
-P00 DETAIL: hardlink pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt to [BACKUP-FULL-3]
 P00   INFO: diff backup size = 9B
-P00   INFO: new backup label = [BACKUP-DIFF-5]
+P00   INFO: new backup label = [BACKUP-DIFF-4]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -3362,14 +2942,14 @@ exclude=pg_log2
 exclude=apipe
 start-fast=y
 
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-5]/backup.manifest
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-4]/backup.manifest
 -----------------------------------------------------------------------------------------
 [backrest]
 backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-label="[BACKUP-DIFF-5]"
+backup-label="[BACKUP-DIFF-4]"
 backup-prior="[BACKUP-FULL-3]"
 backup-timestamp-copy-start=[TIMESTAMP]
 backup-timestamp-start=[TIMESTAMP]
@@ -3477,7 +3057,7 @@ backrest-version="[VERSION-1]"
 
 [backup:current]
 [BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
-[BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
+[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -3496,7 +3076,7 @@ restore delta, remap - selective restore 16384 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --db-include=16384  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
-P00   INFO: restore backup set [BACKUP-DIFF-5]
+P00   INFO: restore backup set [BACKUP-DIFF-4]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: databases found for selective restore (1, 16384, 32768)
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
@@ -3560,7 +3140,7 @@ restore delta, remap - selective restore 32768 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --db-include=32768  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
-P00   INFO: restore backup set [BACKUP-DIFF-5]
+P00   INFO: restore backup set [BACKUP-DIFF-4]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-master/db/tablespace/ts2-2'
 P00 DETAIL: databases found for selective restore (1, 16384, 32768)
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2' exists
@@ -3634,7 +3214,7 @@ restore, remap - no tablespace remap (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
-P00   INFO: restore backup set [BACKUP-DIFF-5]
+P00   INFO: restore backup set [BACKUP-DIFF-4]
 P00   INFO: remap data directory to '[TEST_PATH]/db-master/db/base-2/base'
 P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check '[TEST_PATH]/db-master/db/base-2/base' exists
@@ -3724,10 +3304,8 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 [BACKUP-INCR-3].manifest.gz
 [BACKUP-INCR-4].manifest.gz
 [BACKUP-DIFF-3].manifest.gz
-[BACKUP-INCR-5].manifest.gz
-[BACKUP-DIFF-4].manifest.gz
 [BACKUP-FULL-3].manifest.gz
-[BACKUP-DIFF-5].manifest.gz
+[BACKUP-DIFF-4].manifest.gz
 
 diff backup - config file warning on local (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=info 2>&1 --type=diff --stanza=db backup
@@ -3736,6 +3314,186 @@ WARN: configuration file contains invalid option 'bogus'
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/base/pg_log' from backup using 'pg_log/' exclusion
+P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
+P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+P00   INFO: diff backup size = 9B
+P00   INFO: new backup label = [BACKUP-DIFF-5]
+P00   INFO: backup command end: completed successfully
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
+P00   INFO: expire command end: completed successfully
+
++ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
+----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-master/db/base-2/base
+
+[db:restore]
+
+[global]
+compress=y
+compress-level=3
+db-timeout=45
+lock-path=[TEST_PATH]/db-master/lock
+log-level-console=detail
+log-level-file=trace
+log-level-stderr=off
+log-path=[TEST_PATH]/db-master/log
+log-subprocess=y
+log-timestamp=n
+protocol-timeout=60
+repo1-hardlink=y
+repo1-path=[TEST_PATH]/db-master/repo
+spool-path=[TEST_PATH]/db-master/spool
+
+[global:backup]
+archive-copy=y
+exclude=postgresql.auto.conf
+exclude=pg_log/
+exclude=pg_log2
+exclude=apipe
+start-fast=y
+bogus=bogus
+
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-5]/backup.manifest
+-----------------------------------------------------------------------------------------
+[backrest]
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[backup]
+backup-label="[BACKUP-DIFF-5]"
+backup-prior="[BACKUP-FULL-3]"
+backup-timestamp-copy-start=[TIMESTAMP]
+backup-timestamp-start=[TIMESTAMP]
+backup-timestamp-stop=[TIMESTAMP]
+backup-type="diff"
+
+[backup:db]
+db-catalog-version=201409291
+db-control-version=942
+db-id=1
+db-system-id=1000000000000000094
+db-version="9.4"
+
+[backup:option]
+option-archive-check=true
+option-archive-copy=true
+option-backup-standby=false
+option-buffer-size=4194304
+option-checksum-page=false
+option-compress=true
+option-compress-level=3
+option-compress-level-network=3
+option-delta=false
+option-hardlink=true
+option-online=false
+option-process-max=1
+
+[backup:target]
+pg_data={"path":"[TEST_PATH]/db-master/db/base-2/base","type":"path"}
+pg_tblspc/2={"path":"../../tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+
+[target:file]
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+
+[target:file:default]
+group="[GROUP-1]"
+master=false
+mode="0600"
+user="[USER-1]"
+
+[target:link]
+pg_data/pg_tblspc/2={"destination":"../../tablespace/ts2"}
+
+[target:link:default]
+group="[GROUP-1]"
+user="[USER-1]"
+
+[target:path]
+pg_data={"mode":"0777"}
+pg_data/base={}
+pg_data/base/1={}
+pg_data/base/16384={}
+pg_data/base/32768={}
+pg_data/global={}
+pg_data/pg_clog={}
+pg_data/pg_dynshmem={}
+pg_data/pg_log={}
+pg_data/pg_notify={}
+pg_data/pg_replslot={}
+pg_data/pg_serial={}
+pg_data/pg_snapshots={}
+pg_data/pg_stat={}
+pg_data/pg_stat_tmp={}
+pg_data/pg_subtrans={}
+pg_data/pg_tblspc={}
+pg_tblspc={"mode":"0777"}
+pg_tblspc/2={}
+pg_tblspc/2/[TS_PATH-1]={}
+pg_tblspc/2/[TS_PATH-1]/32768={}
+
+[target:path:default]
+group="[GROUP-1]"
+mode="0700"
+user="[USER-1]"
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
+---------------------------------------------------------------------
+[backrest]
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[backup:current]
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
+[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
+[BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
+
+[db]
+db-catalog-version=201409291
+db-control-version=942
+db-id=1
+db-system-id=1000000000000000094
+db-version="9.4"
+
+[db:history]
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+
+[backrest]
+backrest-checksum="[CHECKSUM]"
+
+diff backup - option backup-standby reset - backup performed from master (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
+P00   WARN: option repo1-retention-full is not set, the repository may run out of space
+            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the primary
 P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
@@ -3776,7 +3534,6 @@ exclude=pg_log/
 exclude=pg_log2
 exclude=apipe
 start-fast=y
-bogus=bogus
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-6]/backup.manifest
 -----------------------------------------------------------------------------------------
@@ -3893,188 +3650,9 @@ backrest-version="[VERSION-1]"
 
 [backup:current]
 [BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
+[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
 [BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
 [BACKUP-DIFF-6]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
-
-[db]
-db-catalog-version=201409291
-db-control-version=942
-db-id=1
-db-system-id=1000000000000000094
-db-version="9.4"
-
-[db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
-
-[backrest]
-backrest-checksum="[CHECKSUM]"
-
-diff backup - option backup-standby reset - backup performed from master (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
-P00   WARN: option repo1-retention-full is not set, the repository may run out of space
-            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the primary
-P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base-2/base/pg_log' from backup using 'pg_log/' exclusion
-P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
-P00   INFO: diff backup size = 9B
-P00   INFO: new backup label = [BACKUP-DIFF-7]
-P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
-P00   INFO: expire command end: completed successfully
-
-+ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
-----------------------------------------------------------
-[db]
-pg1-path=[TEST_PATH]/db-master/db/base-2/base
-
-[db:restore]
-
-[global]
-compress=y
-compress-level=3
-db-timeout=45
-lock-path=[TEST_PATH]/db-master/lock
-log-level-console=detail
-log-level-file=trace
-log-level-stderr=off
-log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
-log-timestamp=n
-protocol-timeout=60
-repo1-hardlink=y
-repo1-path=[TEST_PATH]/db-master/repo
-spool-path=[TEST_PATH]/db-master/spool
-
-[global:backup]
-archive-copy=y
-exclude=postgresql.auto.conf
-exclude=pg_log/
-exclude=pg_log2
-exclude=apipe
-start-fast=y
-
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-7]/backup.manifest
------------------------------------------------------------------------------------------
-[backrest]
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[backup]
-backup-label="[BACKUP-DIFF-7]"
-backup-prior="[BACKUP-FULL-3]"
-backup-timestamp-copy-start=[TIMESTAMP]
-backup-timestamp-start=[TIMESTAMP]
-backup-timestamp-stop=[TIMESTAMP]
-backup-type="diff"
-
-[backup:db]
-db-catalog-version=201409291
-db-control-version=942
-db-id=1
-db-system-id=1000000000000000094
-db-version="9.4"
-
-[backup:option]
-option-archive-check=true
-option-archive-copy=true
-option-backup-standby=false
-option-buffer-size=4194304
-option-checksum-page=false
-option-compress=true
-option-compress-level=3
-option-compress-level-network=3
-option-delta=false
-option-hardlink=true
-option-online=false
-option-process-max=1
-
-[backup:target]
-pg_data={"path":"[TEST_PATH]/db-master/db/base-2/base","type":"path"}
-pg_tblspc/2={"path":"../../tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
-
-[target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-
-[target:file:default]
-group="[GROUP-1]"
-master=false
-mode="0600"
-user="[USER-1]"
-
-[target:link]
-pg_data/pg_tblspc/2={"destination":"../../tablespace/ts2"}
-
-[target:link:default]
-group="[GROUP-1]"
-user="[USER-1]"
-
-[target:path]
-pg_data={"mode":"0777"}
-pg_data/base={}
-pg_data/base/1={}
-pg_data/base/16384={}
-pg_data/base/32768={}
-pg_data/global={}
-pg_data/pg_clog={}
-pg_data/pg_dynshmem={}
-pg_data/pg_log={}
-pg_data/pg_notify={}
-pg_data/pg_replslot={}
-pg_data/pg_serial={}
-pg_data/pg_snapshots={}
-pg_data/pg_stat={}
-pg_data/pg_stat_tmp={}
-pg_data/pg_subtrans={}
-pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
-pg_tblspc/2={}
-pg_tblspc/2/[TS_PATH-1]={}
-pg_tblspc/2/[TS_PATH-1]/32768={}
-
-[target:path:default]
-group="[GROUP-1]"
-mode="0700"
-user="[USER-1]"
-
-[backrest]
-backrest-checksum="[CHECKSUM]"
-
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
-[backrest]
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[backup:current]
-[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
-[BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
-[BACKUP-DIFF-6]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
-[BACKUP-DIFF-7]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":true,"option-hardlink":true,"option-online":false}
 
 [db]
 db-catalog-version=201409291

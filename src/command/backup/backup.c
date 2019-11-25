@@ -122,6 +122,7 @@ backupLabel(BackupType type, const String *backupLabelLast, time_t timestamp)
                     break;
             }
 
+            // !!! NOT SURE ABOUT THIS LOGIC -- WHAT IF THIS IS NOT THE LAST BACKUP?
             timestamp++;
         }
     }
@@ -141,7 +142,12 @@ Get the postgres database and storage objects
 typedef struct BackupPg
 {
     const Storage *storagePrimary;
+    const String *const primaryHost;
+
     const Db *dbStandby;
+    const String *const standbyHost;
+
+    unsigned int pageSize;                                          // PostgreSQL page size
 } BackupPg;
 
 static BackupPg
@@ -153,12 +159,25 @@ backupPgGet(const InfoBackup *infoBackup)
 
     ASSERT(infoBackup != NULL);
 
-    // !!! PRETTY BADLY FAKED FOR NOW, SHOULD BE pgGet() KINDA THING
-    BackupPg result = {.storagePrimary = storagePgId(1)};
-
     // Get control information from the primary and validate it against backup info
+    // !!! PRETTY BADLY FAKED FOR NOW, SHOULD BE pgGet() KINDA THING
+    const Storage *storagePrimary = storagePgId(1);
+    const String *const primaryHost = cfgOptionStr(cfgOptPgHost);
+    const String *const standbyHost = primaryHost;
+
     InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-    PgControl pgControl = pgControlFromFile(result.storagePrimary);
+    PgControl pgControl = pgControlFromFile(storagePrimary);
+
+    // Initialize result
+    BackupPg result =
+    {
+        .storagePrimary = storagePrimary,
+
+        .primaryHost = primaryHost,
+        .standbyHost = standbyHost,
+
+        .pageSize = pgControl.pageSize,
+    };
 
     if (pgControl.version != infoPg.version || pgControl.systemId != infoPg.systemId)
     {
@@ -205,82 +224,117 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 
     Manifest *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    // No incremental if backup type is full
+    if (backupType(cfgOptionStr(cfgOptType)) != backupTypeFull)
     {
-        BackupType type = backupType(cfgOptionStr(cfgOptType));
-        InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-        const String *backupLabelPrior = NULL;
-
-        if (type != backupTypeFull)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            unsigned int backupTotal = infoBackupDataTotal(infoBackup);
+            BackupType type = backupType(cfgOptionStr(cfgOptType));
+            InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
+            const String *backupLabelPrior = NULL;
 
-            for (unsigned int backupIdx = backupTotal - 1; backupIdx < backupTotal; backupIdx--)
+            if (type != backupTypeFull)
             {
-                 InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
+                unsigned int backupTotal = infoBackupDataTotal(infoBackup);
 
-                 // The prior backup for a diff must be full
-                 if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
-                    continue;
-
-                // The backups must come from the same cluster
-                if (infoPg.id != backupPrior.backupPgId)
-                    continue;
-
-                // This backup is a candidate for prior
-                backupLabelPrior = strDup(backupPrior.backupLabel);
-                break;
-            }
-
-            // If there is a prior backup then check that options for the new backup are compatible
-            if (backupLabelPrior != NULL)
-            {
-                result = manifestLoadFile(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabelPrior)),
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
-                const ManifestData *manifestPriorData = manifestData(result);
-
-                LOG_INFO_FMT(
-                    "last backup label = %s, version = %s", strPtr(backupLabelPrior), strPtr(manifestPriorData->backrestVersion));
-
-                // Warn if compress option changed
-                if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
+                for (unsigned int backupIdx = backupTotal - 1; backupIdx < backupTotal; backupIdx--)
                 {
-                    LOG_WARN_FMT(
-                        "%s backup cannot alter compress option to '%s', reset to value in %s", strPtr(cfgOptionStr(cfgOptType)),
-                        cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)), strPtr(backupLabelPrior));
-                    cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
+                     InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
+
+                     // The prior backup for a diff must be full
+                     if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
+                        continue;
+
+                    // The backups must come from the same cluster
+                    if (infoPg.id != backupPrior.backupPgId)
+                        continue;
+
+                    // This backup is a candidate for prior
+                    backupLabelPrior = strDup(backupPrior.backupLabel);
+                    break;
                 }
 
-                // Warn if hardlink option changed
-                if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
+                // If there is a prior backup then check that options for the new backup are compatible
+                if (backupLabelPrior != NULL)
                 {
-                    LOG_WARN_FMT(
-                        "%s backup cannot alter hardlink option to '%s', reset to value in %s", strPtr(cfgOptionStr(cfgOptType)),
-                        cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)), strPtr(backupLabelPrior));
-                    cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
+                    result = manifestLoadFile(
+                        storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabelPrior)),
+                        cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+                    const ManifestData *manifestPriorData = manifestData(result);
+
+                    // Warn if compress option changed
+                    if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
+                    {
+                        LOG_WARN_FMT(
+                            "%s backup cannot alter compress option to '%s', reset to value in %s",
+                            strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
+                            strPtr(backupLabelPrior));
+                        cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
+                    }
+
+                    // Warn if hardlink option changed
+                    if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
+                    {
+                        LOG_WARN_FMT(
+                            "%s backup cannot alter hardlink option to '%s', reset to value in %s",
+                            strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
+                            strPtr(backupLabelPrior));
+                        cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
+                    }
+
+                    // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
+                    // checksum-page to false and move on without a warning.  Page checksums will start on the next full backup.
+                    if (manifestData(result)->backupOptionChecksumPage == NULL)
+                    {
+                        cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+                    }
+                    // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only
+                    // certain files would be checksummed and the list could be incomplete during reporting.
+                    else
+                    {
+                        bool checksumPagePrior = varBool(manifestData(result)->backupOptionChecksumPage);
+
+                        // Warn if an incompatible setting was explicitly requested
+                        // ??? After the migration this condition can be:
+                        // ???    !cfgOptionTest(cfgOptChecksumPage) || checksumPagePrior != cfgOptionBool(cfgOptChecksumPage)
+                        // ??? Since we don't need to log if the user did not express an explicit preference
+                        if (!cfgOptionTest(cfgOptChecksumPage) || checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
+                        {
+                            // ??? This can be removed after the migration since the warning will not be logged
+                            if (!cfgOptionTest(cfgOptChecksumPage))
+                                cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+
+                            LOG_WARN_FMT(
+                                "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
+                                strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
+                                cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(result)->backupLabel));
+                        }
+
+                        cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
+                    }
+
+                    manifestMove(result, MEM_CONTEXT_OLD());
                 }
-            }
-            else
-            {
-                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strPtr(cfgOptionStr(cfgOptType)));
-                cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(type)));
+                else
+                {
+                    LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strPtr(cfgOptionStr(cfgOptType)));
+                    cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(type)));
+                }
             }
         }
-
-        manifestMove(result, MEM_CONTEXT_OLD());
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(MANIFEST, result);
 }
 
 static bool
-backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest)
+backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *manifestPrior)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
@@ -288,49 +342,26 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest)
 
     bool result = false;
 
-    // No incremental if backup type is full
-    if (backupType(cfgOptionStr(cfgOptType)) != backupTypeFull)
+    // No incremental if no prior manifest
+    if (manifestPrior != NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
+            LOG_INFO_FMT(
+                "last backup label = %s, version = %s", strPtr(manifestData(manifestPrior)->backupLabel),
+                strPtr(manifestData(manifestPrior)->backrestVersion));
 
-            if (backupType(cfgOptionStr(cfgOptType)) != backupTypeFull)
-            {
-                manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), NULL/* !!! ARCHIVE_START */);
+            // Move the manifest to this context so it will be freed when we are done
+            manifestMove(manifestPrior, MEM_CONTEXT_TEMP());
 
-                // !!! SHOULDN'T THIS LOGIC BE IN backupBuildIncrPrior()?
-                // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
-                // checksum-page to false and move on without a warning.  Page checksums will start on the next full backup.
-                if (manifestData(manifestPrior)->backupOptionChecksumPage == NULL)
-                {
-                    manifestChecksumPageSet(manifest, false);
-                    cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
-                }
-                // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain
-                // files would be checksummed and the list could be incomplete during reporting.
-                else
-                {
-                    bool checksumPagePrior = varBool(manifestData(manifestPrior)->backupOptionChecksumPage);
+            // Build incremental manifest
+            manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), NULL/* !!! ARCHIVE_START */);
 
-                    if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
-                    {
-                        LOG_WARN_FMT(
-                            "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
-                            strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
-                            cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(manifestPrior)->backupLabel));
+            // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
+            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
 
-                        manifestChecksumPageSet(manifest, checksumPagePrior);
-                        cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
-                    }
-                }
-
-                // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
-                manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
-
-                // Incremental was built
-                result = true;
-            }
+            // Incremental was built
+            result = true;
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -430,7 +461,8 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             // *) have the same timestamp if not a delta backup
             if (file != NULL && file->reference == NULL &&
                 fileResume != NULL && fileResume->reference == NULL && fileResume->checksumSha1[0] != 0 &&
-                file->size == fileResume->size && (resumeData->delta || file->timestamp == fileResume->timestamp))
+                file->size == fileResume->size && (resumeData->delta || file->timestamp == fileResume->timestamp) &&
+                file->size != 0 /* ??? don't zero size files because Perl wouldn't -- this can be removed after the migration*/)
             {
                 manifestFileUpdate(
                     resumeData->manifest, manifestName, file->size, fileResume->sizeRepo, fileResume->checksumSha1, NULL,
@@ -737,77 +769,31 @@ backupStart(BackupPg *pg)
 /***********************************************************************************************************************************
 Log the results of a job and throw errors
 ***********************************************************************************************************************************/
-// sub backupManifestUpdate
-// {
-//     # Assign function parameters, defaults, and log debug info
-//     my
-//     (
-//         $strOperation,
-//         $oManifest,
-//         $strHost,
-//         $iLocalId,
-//         $strDbFile,
-//         $strRepoFile,
-//         $lSize,
-//         $strChecksum,
-//         $bChecksumPage,
-//         $iCopyResult,
-//         $lSizeCopy,
-//         $lSizeRepo,
-//         $strChecksumCopy,
-//         $rExtra,
-//         $lSizeTotal,
-//         $lSizeCurrent,
-//         $lManifestSaveSize,
-//         $lManifestSaveCurrent
-//     ) =
-//         logDebugParam
-//         (
-//             __PACKAGE__ . '::backupManifestUpdate', \@_,
-//             {name => 'oManifest', trace => true},
-//             {name => 'strHost', required => false, trace => true},
-//             {name => 'iLocalId', required => false, trace => true},
-//
-//             # Parameters to backupFile()
-//             {name => 'strDbFile', trace => true},
-//             {name => 'strRepoFile', trace => true},
-//             {name => 'lSize', required => false, trace => true},
-//             {name => 'strChecksum', required => false, trace => true},
-//             {name => 'bChecksumPage', trace => true},
-//
-//             # Results from backupFile()
-//             {name => 'iCopyResult', trace => true},
-//             {name => 'lSizeCopy', required => false, trace => true},
-//             {name => 'lSizeRepo', required => false, trace => true},
-//             {name => 'strChecksumCopy', required => false, trace => true},
-//             {name => 'rExtra', required => false, trace => true},
-//
-//             # Accumulators
-//             {name => 'lSizeTotal', trace => true},
-//             {name => 'lSizeCurrent', trace => true},
-//             {name => 'lManifestSaveSize', trace => true},
-//             {name => 'lManifestSaveCurrent', trace => true}
-//         );
-
 static uint64_t
-backupJobResult(Manifest *manifest, ProtocolParallelJob *job, uint64_t sizeTotal, uint64_t sizeCopied)
+backupJobResult(
+    Manifest *manifest, const String *const fileLog, ProtocolParallelJob *job, const uint64_t sizeTotal, uint64_t sizeCopied,
+    unsigned int pageSize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STRING, fileLog);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM(UINT64, sizeCopied);
+        FUNCTION_LOG_PARAM(UINT, pageSize);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
+    ASSERT(fileLog != NULL);
+    ASSERT(job != NULL);
 
     // The job was successful
     if (protocolParallelJobErrorCode(job) == 0)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const ManifestFile *file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
-            unsigned int processId = protocolParallelJobProcessId(job);
+            const ManifestFile *const file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
+            const unsigned int processId = protocolParallelJobProcessId(job);
 
             const VariantList *const jobResult = varVarLst(protocolParallelJobResult(job));
             const BackupCopyResult copyResult = (BackupCopyResult)varUIntForce(varLstGet(jobResult, 0));
@@ -819,18 +805,16 @@ backupJobResult(Manifest *manifest, ProtocolParallelJob *job, uint64_t sizeTotal
             // Increment backup copy progress
             sizeCopied += copySize;
 
+            // Format log strings
+            const String *const logProgress =
+                strNewFmt("%s, %" PRIu64 "%%", strPtr(strSizeFormat(copySize)), sizeCopied * 100 / sizeTotal);
+            const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strPtr(copyChecksum)) : EMPTY_STR;
+
             // If the file is in a prior backup and nothing changed, then nothing needs to be done
             if (copyResult == backupCopyResultNoOp)
             {
-        //         # File copy was not needed so just recopy the size and checksum to the manifest
-        //         $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
-        //         $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
-        //
-        //         &log(DETAIL,
-        //             'match file from prior backup ' . (defined($strHost) ? "${strHost}:" : '') . "${strDbFile} (" .
-        //                 fileSizeFormat($lSizeCopy) . ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%)' .
-        //                 ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''),
-        //              undef, undef, undef, $iLocalId);
+                LOG_DETAIL_PID_FMT(
+                    processId, "match file from prior backup %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
             }
             // Else if the file was removed during backup then remove from manifest
             else if (copyResult == backupCopyResultSkip)
@@ -838,51 +822,34 @@ backupJobResult(Manifest *manifest, ProtocolParallelJob *job, uint64_t sizeTotal
                 // &log(DETAIL, 'skip file removed by database ' . (defined($strHost) ? "${strHost}:" : '') . $strDbFile);
                 // $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile);
             }
-            // Else file was copied so updated manifest
+            // Else file was copied so update manifest
             else
             {
-                // Log invalid checksum
-                if (copyResult == backupCopyResultReCopy)
+                // If the the repo matched the expect checksum then log
+                if (copyResult == backupCopyResultChecksum)
                 {
-        //             &log(
-        //                 WARN,
-        //                 "resumed backup file ${strRepoFile} does not have expected checksum ${strChecksum}. The file will be recopied and" .
-        //                 " backup will continue but this may be an issue unless the resumed backup path in the repository is known to be" .
-        //                 " corrupted.\n" .
-        //                 "NOTE: this does not indicate a problem with the PostgreSQL page checksums.");
+                    LOG_DETAIL_PID_FMT(
+                        processId, "checksum resumed file %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
                 }
-
-
-                // If copy was successful store the checksum and size
-                // # Log copy or checksum
-                // &log($iCopyResult == BACKUP_FILE_CHECKSUM ? DETAIL : INFO,
-                //      ($iCopyResult == BACKUP_FILE_CHECKSUM ?
-                //         'checksum resumed file ' : 'backup file ' . (defined($strHost) ? "${strHost}:" : '')) .
-                //      "${strDbFile} (" . fileSizeFormat($lSizeCopy) .
-                //      ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%)' .
-                //      ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''), undef, undef, undef, $iLocalId);
-                //
-                // $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
-                //
-                // if ($lSizeRepo != $lSizeCopy)
-                // {
-                //     $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REPO_SIZE, $lSizeRepo);
-                // }
-                //
-                // if ($lSizeCopy > 0)
-                // {
-                //     $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
-                // }
-                //
-                // # If the file was copied, then remove any reference to the file's existence in a prior backup.
-                // if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY)
-                // {
-                //     $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE);
-                // }
-                //
-
-                if (copyResult != backupCopyResultChecksum)
+                // Else the file was copied
+                else
                 {
+                    // If the file had to be recopied then warn that there may be an issue with corruption in the repository
+                    // ??? This should really be below the message below for more context -- can be moved after the migration
+                    // ??? The name should be a pg path not manifest name -- can be fixed after the migration
+                    if (copyResult == backupCopyResultReCopy)
+                    {
+                        LOG_WARN_FMT(
+                            "resumed backup file %s does not have expected checksum %s. The file will be recopied and backup will"
+                            " continue but this may be an issue unless the resumed backup path in the repository is known to be"
+                            " corrupted.\n"
+                            "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
+                            strPtr(file->name), file->checksumSha1);
+                    }
+
+                    LOG_INFO_PID_FMT(
+                        processId, "backup file %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
+
                     // If the file had page checksums calculated during the copy
                     bool checksumPageError = file->checksumPageError;
                     const VariantList *checksumPageErrorList = file->checksumPageErrorList;
@@ -904,53 +871,62 @@ backupJobResult(Manifest *manifest, ProtocolParallelJob *job, uint64_t sizeTotal
                             {
                                 checksumPageErrorList = NULL;
 
-                                LOG_WARN_PID_FMT(
-                                    processId, "page misalignment in '%s' -- file size %" PRIu64 " is not divisible by page size",
-                                    strPtr(manifestPathPg(file->name)), copySize);
+                                // ??? Update formatting after migration
+                                LOG_WARN_FMT(
+                                    "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
+                                    strPtr(fileLog), copySize, pageSize);
                             }
                             else
                             {
+                                // Format the psage checksum errors
                                 checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
+                                ASSERT(varLstSize(checksumPageErrorList) > 0);
 
-                    //                 # Build a pretty list of the page errors
-                    //                 my $strPageError;
-                    //                 my $iPageErrorTotal = 0;
-                    //
-                    //                 foreach my $iyPage (@{$rExtra->{error}})
-                    //                 {
-                    //                     $strPageError .= (defined($strPageError) ? ', ' : '');
-                    //
-                    //                     # If a range of pages
-                    //                     if (ref($iyPage))
-                    //                     {
-                    //                         $strPageError .= $$iyPage[0] . '-' . $$iyPage[1];
-                    //                         $iPageErrorTotal += ($$iyPage[1] - $$iyPage[0]) + 1;
-                    //                     }
-                    //                     # Else a single page
-                    //                     else
-                    //                     {
-                    //                         $strPageError .= $iyPage;
-                    //                         $iPageErrorTotal += 1;
-                    //                     }
-                    //                 }
-                    //
-                    //                 # There should be at least one page in the error list
-                    //                 if ($iPageErrorTotal == 0)
-                    //                 {
-                    //                     confess &log(ASSERT, 'page checksum error list should have at least one entry');
-                    //                 }
+                                String *error = strNew("");
+                                unsigned int errorTotalMin = 0;
 
-                    //                 # Emit a warning so the user knows something is amiss
-                    //                 &log(WARN,
-                    //                     'invalid page checksum' . ($iPageErrorTotal > 1 ? 's' : '') .
-                    //                     ' found in file ' . (defined($strHost) ? "${strHost}:" : '') . "${strDbFile} at page" .
-                    //                     ($iPageErrorTotal > 1 ? 's' : '') . " ${strPageError}");
+                                for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
+                                {
+                                    const Variant *const errorItem = varLstGet(checksumPageErrorList, errorIdx);
 
-                                LOG_WARN_PID_FMT(
-                                    processId, "invalid page checksum? found in '%s' at page ???", strPtr(manifestPathPg(file->name)));
+                                    // Add a comma if this is not the first item
+                                    if (errorIdx != 0)
+                                        strCat(error, ", ");
+
+                                    // If an error range
+                                    if (varType(errorItem) == varTypeVariantList)
+                                    {
+                                        const VariantList *const errorItemList = varVarLst(errorItem);
+                                        ASSERT(varLstSize(errorItemList) == 2);
+
+                                        strCatFmt(
+                                            error, "%" PRIu64 "-%" PRIu64, varUInt64(varLstGet(errorItemList, 0)),
+                                            varUInt64(varLstGet(errorItemList, 1)));
+                                        errorTotalMin += 2;
+                                    }
+                                    else
+                                    {
+                                        ASSERT(varType(errorItem) == varTypeUInt64);
+
+                                        strCatFmt(error, "%" PRIu64, varUInt64(errorItem));
+                                        errorTotalMin++;
+                                    }
+                                }
+
+                                // Make message plural when appropriate
+                                const String *const plural = errorTotalMin > 1 ? STRDEF("s") : EMPTY_STR;
+
+                                // ??? Update formatting after migration
+                                LOG_WARN_FMT(
+                                    "invalid page checksum%s found in file %s at page%s %s", strPtr(plural), strPtr(fileLog),
+                                    strPtr(plural), strPtr(error));
                             }
                         }
                     }
+
+                    // Remove any reference to the file's existence in a prior backup
+                    // !!! THIS IS SO NOT KOSHER -- MAKE THIS A PARAM OF MANIFESTFILEUPDATE()
+                    ((ManifestFile *)manifestFileFind(manifest, file->name))->reference = NULL;
 
                     manifestFileUpdate(
                         manifest, file->name, copySize, repoSize, copySize > 0 ? strPtr(copyChecksum) : "", NULL,
@@ -1256,7 +1232,7 @@ backupProcess(BackupPg pg, Manifest *manifest)
             .backupLabel = backupLabel,
             .compress = cfgOptionBool(cfgOptCompress),
             .compressLevel = cfgOptionUInt(cfgOptCompressLevel),
-            .cipherSubPass = cfgOptionStr(cfgOptRepoCipherPass),
+            .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
         };
 
@@ -1278,7 +1254,23 @@ backupProcess(BackupPg pg, Manifest *manifest)
 
             for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
             {
-                sizeCopied = backupJobResult(manifest, protocolParallelResult(parallelExec), sizeTotal, sizeCopied);
+                ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+
+                // !!! Should add hostname in here
+                const String *const host = protocolParallelJobProcessId(job) == 0 ? pg.primaryHost : pg.standbyHost;
+                String *const fileLog = strNew("");
+
+                if (host != NULL)
+                    strCatFmt(fileLog, "%s:", strPtr(host));
+
+                strCat(
+                    fileLog,
+                    strPtr(
+                        storagePathP(
+                            pg.storagePrimary,
+                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name))));
+
+                sizeCopied = backupJobResult(manifest, fileLog, job, sizeTotal, sizeCopied, pg.pageSize);
             }
 
             // A keep-alive is required here for the remote holding open the backup connection
@@ -1313,7 +1305,7 @@ backupProcess(BackupPg pg, Manifest *manifest)
         //         $lManifestSaveCurrent = 0;
         //     }
 
-        // &log(INFO, cfgOption(CFGOPT_TYPE) . " backup size = " . fileSizeFormat($lBackupSizeTotal));
+        LOG_INFO_FMT("%s backup size = %s", strPtr(backupTypeStr(backupType)), strPtr(strSizeFormat(sizeTotal)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1348,6 +1340,9 @@ cmdBackup(void)
         // Get pg storage and database objects
         BackupPg pg = backupPgGet(infoBackup);
 
+        // Check if there is a prior manifest if diff/incr
+        Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
+
         // Start the backup
         backupStart(&pg);
 
@@ -1361,8 +1356,8 @@ cmdBackup(void)
 
         manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), timestampCopyStart);
 
-        // Build an incremental backup if type is not full
-        if (!backupBuildIncr(infoBackup, manifest))
+        // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
+        if (!backupBuildIncr(infoBackup, manifest, manifestPrior))
             manifestCipherSubPassSet(manifest, cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
 
         // Set delta if it is not already set and the manifest requires it
