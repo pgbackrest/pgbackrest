@@ -335,14 +335,9 @@ sub reconstruct
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
         my $strBackupPath = "$self->{strBackupClusterPath}/${strBackup}";
 
-        if (!$self->{oStorage}->pathExists($strBackupPath))
+        if (!$self->{oStorage}->pathExists($strBackupPath) || !$self->{oStorage}->exists($strManifestFile))
         {
-            &log(WARN, "backup ${strBackup} missing in repository removed from " . FILE_BACKUP_INFO);
-            $self->delete($strBackup);
-        }
-        elsif (!$self->{oStorage}->exists($strManifestFile))
-        {
-            &log(WARN, "backup ${strBackup} missing manifest removed from " . FILE_BACKUP_INFO);
+            &log(WARN, "backup '${strBackup}' missing manifest removed from " . FILE_BACKUP_INFO);
             $self->delete($strBackup);
         }
     }
