@@ -287,19 +287,6 @@ sub run
                 '7a16d165e4775f7c92e8cdf60c0af57313f0bf90', $lTime);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000', 'IGNORE');
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/t333_44000', 'IGNORE');
-
-            # Create files to be excluded with the --exclude option
-            $oHostBackup->configUpdate(
-                {(CFGDEF_SECTION_GLOBAL . ':backup') =>
-                    {cfgOptionName(CFGOPT_EXCLUDE) => ['postgresql.auto.conf', 'pg_log/', 'pg_log2']}});
-            $oHostDbMaster->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.auto.conf',
-                                              '../pg_config/postgresql.conf', true);
-            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log');
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log/logfile', 'IGNORE');
-            $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2');
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2/logfile', 'IGNORE');
-
-            executeTest('mkfifo ' . $oHostDbMaster->dbBasePath() . '/apipe');
         }
 
         # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.
@@ -388,11 +375,6 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 4194304;
-
-        # Add pipe to exclusions
-        $oHostBackup->configUpdate(
-            {(CFGDEF_SECTION_GLOBAL . ':backup') =>
-                {cfgOptionName(CFGOPT_EXCLUDE) => ['postgresql.auto.conf', 'pg_log/', 'pg_log2', 'apipe']}});
 
         # Error on backup option to check logging
         #---------------------------------------------------------------------------------------------------------------------------
@@ -507,6 +489,18 @@ sub run
             \%oManifest, MANIFEST_TARGET_PGDATA, 'changecontent.txt', 'CONTENT', '238a131a3e8eb98d1fc5b27d882ca40b7618fd2a', $lTime,
             undef, true);
 
+        # Create files to be excluded with the --exclude option
+        $oHostBackup->configUpdate(
+            {(CFGDEF_SECTION_GLOBAL . ':backup') =>
+                {cfgOptionName(CFGOPT_EXCLUDE) => ['postgresql.auto.conf', 'pg_log/', 'pg_log2', 'apipe']}});
+        $oHostDbMaster->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.auto.conf',
+                                          '../pg_config/postgresql.conf', true);
+        $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log');
+        $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log/logfile', 'IGNORE');
+        $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2');
+        $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2/logfile', 'IGNORE');
+        executeTest('mkfifo ' . $oHostDbMaster->dbBasePath() . '/apipe');
+
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
             {oExpectedManifest => \%oManifest,
@@ -562,6 +556,9 @@ sub run
             'add and delete files', $strFullBackup,
             {rhExpectedManifest => \%oManifest, bDelta => true, strUser => !$bRemote ? 'root' : undef,
                 strOptionalParam => ' --link-all' . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '')});
+
+        # Remove excludes now that they just create noise in the log
+        $oHostBackup->configUpdate({(CFGDEF_SECTION_GLOBAL . ':backup') => {cfgOptionName(CFGOPT_EXCLUDE) => []}});
 
         # Run again to fix permissions
         if (!$bRemote)
@@ -750,9 +747,6 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         my $strTblSpcPath = $oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC;
-
-        # Remove excludes now that they just create noise in the log
-        $oHostBackup->configUpdate({(CFGDEF_SECTION_GLOBAL . ':backup') => {cfgOptionName(CFGOPT_EXCLUDE) => []}});
 
         # Create a directory in pg_tablespace
         storageTest()->pathCreate("${strTblSpcPath}/path", {strMode => '0700', bCreateParent => true});
