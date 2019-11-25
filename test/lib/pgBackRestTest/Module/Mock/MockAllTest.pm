@@ -1111,9 +1111,7 @@ sub run
 
         # Incr Backup
         #
-        # Remove a file from the db after the manifest has been built but before files are copied.  The file will not be shown
-        # as removed in the log because it had not changed since the last backup so it will only be referenced.  This test also
-        # checks that everything works when there are no jobs to run.
+        # Remove a file from the db and check that we get an error because there are no jobs to run.
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
@@ -1121,29 +1119,20 @@ sub run
         # Enable compression to ensure a warning is raised
         $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => 'y'}});
 
-        my $oBackupExecute = $oHostBackup->backupBegin(
+        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
+
+        my $oBackupExecute = $oHostBackup->backup(
             $strType, 'remove files - but won\'t affect manifest',
-            {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1});
-
-        $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
-
-        $strBackup = $oHostBackup->backupEnd($strType, $oBackupExecute, {oExpectedManifest => \%oManifest});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_MISSING});
 
         # Diff Backup
         #
-        # Remove base2.txt and changed tablespace2c.txt during the backup.  The removed file should be logged and the changed
-        # file should have the new, larger size logged and in the manifest.
+        # Remove files and change tablespace2c.txt during the backup.  The changed file should have the new, larger size logged
+        # in the manifest.
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup, true);
 
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
-
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
-
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', true);
-        $oHostDbMaster->manifestFileCreate(
-            \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPC2C',
-            'ad7df329ab97a1e7d35f1ff0351c079319121836', $lTime, undef, undef, false);
 
         # Enable hardlinks (except for s3) to ensure a warning is raised
         if (!$bS3)
@@ -1153,18 +1142,17 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
 
-        $oBackupExecute = $oHostBackup->backupBegin(
-            $strType, 'remove files during backup',
-            {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
+        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', true);
+        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPCBIGGER',
             'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime, undef, undef, false);
 
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
-
-        $strBackup = $oHostBackup->backupEnd($strType, $oBackupExecute, {oExpectedManifest => \%oManifest});
+        $oBackupExecute = $oHostBackup->backup(
+            $strType, 'remove files during backup',
+            {oExpectedManifest => \%oManifest,
+                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
