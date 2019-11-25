@@ -335,7 +335,7 @@ full backup - resume (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --checksum-page --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
+P00   WARN: backup '[BACKUP-FULL-1]' missing manifest removed from backup.info
 P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
 P00   INFO: exclude apipe from backup using 'apipe' exclusion
 P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
@@ -1282,7 +1282,7 @@ incr backup - resume and add tablespace 2 (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: backup [BACKUP-INCR-1] missing in repository removed from backup.info
+P00   WARN: backup '[BACKUP-INCR-1]' missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
@@ -1487,7 +1487,7 @@ diff backup - cannot resume - new diff (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: backup [BACKUP-INCR-2] missing manifest removed from backup.info
+P00   WARN: backup '[BACKUP-INCR-2]' missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: aborted backup [BACKUP-INCR-2] cannot be resumed: new backup-type 'diff' does not match aborted backup-type 'incr'
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
@@ -1683,7 +1683,7 @@ diff backup - cannot resume - disabled / no repo link (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --no-resume --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: backup [BACKUP-DIFF-1] missing manifest removed from backup.info
+P00   WARN: backup '[BACKUP-DIFF-1]' missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: aborted backup [BACKUP-DIFF-1] cannot be resumed: resume is disabled
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
