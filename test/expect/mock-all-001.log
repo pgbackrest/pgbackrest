@@ -1113,6 +1113,23 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base/changesize.txt (4B, 68%) c
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/zerosize.txt (0B, 68%)
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum 14c44cef6287269b08d41de489fd492bb9fc795d
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changecontent.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: incr backup size = 22B
 P00   INFO: new backup label = [BACKUP-INCR-1]
 P00   INFO: backup command end: completed successfully
@@ -1310,6 +1327,22 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: incr backup size = 192KB
 P00   INFO: new backup label = [BACKUP-INCR-2]
 P00   INFO: backup command end: completed successfully
@@ -1511,6 +1544,22 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: diff backup size = 192KB
 P00   INFO: new backup label = [BACKUP-DIFF-1]
 P00   INFO: backup command end: completed successfully
@@ -1707,6 +1756,22 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: diff backup size = 192KB
 P00   INFO: new backup label = [BACKUP-DIFF-2]
 P00   INFO: backup command end: completed successfully
@@ -2047,6 +2112,26 @@ P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 38%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/badchecksum.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changecontent.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zerosize.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-DIFF-2]
 P00   INFO: incr backup size = 13B
 P00   INFO: new backup label = [BACKUP-INCR-3]
 P00   INFO: backup command end: completed successfully
@@ -2280,6 +2365,27 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/1/
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 99%) checksum e324463005236d83e6e54795dbddd20a74533bf3
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/badchecksum.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/base2.txt to [BACKUP-INCR-3]
+P00 DETAIL: reference pg_data/changecontent.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zerosize.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt to [BACKUP-INCR-3]
 P00   INFO: incr backup size = 176KB
 P00   INFO: new backup label = [BACKUP-INCR-4]
 P00   INFO: backup command end: completed successfully
@@ -2478,6 +2584,21 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: diff backup size = 176KB
 P00   INFO: new backup label = [BACKUP-DIFF-3]
 P00   INFO: backup command end: completed successfully
@@ -2688,6 +2809,21 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: diff backup size = 176KB
 P00   INFO: new backup label = [BACKUP-DIFF-4]
 P00   INFO: backup command end: completed successfully
@@ -3073,6 +3209,27 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+P00 DETAIL: hardlink pg_data/PG_VERSION to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/badchecksum.txt to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/base/1/12000 to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/base/1/PG_VERSION to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/base/16384/17000 to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/base/16384/PG_VERSION to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/base/32768/33000 to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/base/32768/33000.32767 to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/base/32768/33001 to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/base/32768/44000_init to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/base/32768/PG_VERSION to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/changecontent.txt to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/changetime.txt to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/global/pg_control to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/pg_stat/global.stat to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/postgresql.conf to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/zero_from_start to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_data/zerosize.txt to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-FULL-3]
+P00 DETAIL: hardlink pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt to [BACKUP-FULL-3]
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-5]
 P00   INFO: backup command end: completed successfully

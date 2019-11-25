@@ -771,7 +771,7 @@ Log the results of a job and throw errors
 ***********************************************************************************************************************************/
 static uint64_t
 backupJobResult(
-    Manifest *manifest, const String *const fileLog, ProtocolParallelJob *job, const uint64_t sizeTotal, uint64_t sizeCopied,
+    Manifest *manifest, const String *const fileLog, ProtocolParallelJob *const job, const uint64_t sizeTotal, uint64_t sizeCopied,
     unsigned int pageSize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1190,13 +1190,12 @@ backupProcess(BackupPg pg, Manifest *manifest)
         const BackupType backupType = manifestData(manifest)->backupType;
         const String *const backupLabel = manifestData(manifest)->backupLabel;
         const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel));
+        bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepo(), storageFeatureHardLink);
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
         // exist in to repo.  Also create tablspace symlinks when symlinks are available,  This makes it possible for the user to
         // make a copy of the backup path and get a valid cluster.
-        if ((backupType == backupTypeFull ||
-                (cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepo(), storageFeatureHardLink))) &&
-            storageFeature(storageRepo(), storageFeaturePath))
+        if ((backupType == backupTypeFull || hardLink) && storageFeature(storageRepo(), storageFeaturePath))
         {
             // Create paths
             for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
@@ -1306,6 +1305,39 @@ backupProcess(BackupPg pg, Manifest *manifest)
         //
         //         $lManifestSaveCurrent = 0;
         //     }
+
+        // Output references or create hardlinks for all files
+        const char *const compressExt = jobData.compress ? "." GZIP_EXT : "";
+
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+        {
+            const ManifestFile *const file = manifestFile(manifest, fileIdx);
+
+            // If the file has a reference, then it was not copied since it can be retrieved from the referenced backup. However,
+            // if hardlinking is enabled the link will need to be created.
+            if (file->reference != NULL)
+            {
+                // If hardlinking is enabled then create a hardlink for files that have not changed since the last backup
+                if (hardLink)
+                {
+                    LOG_DETAIL_FMT("hardlink %s to %s",  strPtr(file->name), strPtr(file->reference));
+
+                    const String *const link = storagePathP(
+                        storageRepo(), strNewFmt("%s/%s%s", strPtr(backupPathExp), strPtr(file->name), compressExt));
+                    const String *const linkDestination =  storagePathP(
+                        storageRepo(),
+                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(file->reference), strPtr(file->name), compressExt));
+
+                    THROW_ON_SYS_ERROR_FMT(
+                        symlink(strPtr(linkDestination), strPtr(link)) == -1, FileOpenError,
+                        "unable to create hardlink '%s' to '%s'", strPtr(link), strPtr(linkDestination));
+                }
+                // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
+                // recopied.
+                else
+                    LOG_DETAIL_FMT("reference %s to %s", strPtr(file->name), strPtr(file->reference));
+            }
+        }
 
         LOG_INFO_FMT("%s backup size = %s", strPtr(backupTypeStr(backupType)), strPtr(strSizeFormat(sizeTotal)));
     }
