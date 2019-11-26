@@ -19,7 +19,6 @@ Backup Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/type/convert.h"
-#include "common/type/json.h" // !!! TRY TO REMOVE
 #include "config/config.h"
 #include "db/helper.h"
 #include "info/infoBackup.h"
@@ -138,11 +137,15 @@ Get the postgres database and storage objects
 
 typedef struct BackupPg
 {
+    unsigned int pgIdPrimary;
+    const Db *dbPrimary;
     const Storage *storagePrimary;
-    const String *const primaryHost;
+    const String *hostPrimary;
 
+    unsigned int pgIdStandby;
     const Db *dbStandby;
-    const String *const standbyHost;
+    const Storage *storageStandby;
+    const String *hostStandby;
 
     unsigned int pageSize;                                          // PostgreSQL page size
 } BackupPg;
@@ -156,25 +159,35 @@ backupPgGet(const InfoBackup *infoBackup)
 
     ASSERT(infoBackup != NULL);
 
-    // Get control information from the primary and validate it against backup info
-    // !!! PRETTY BADLY FAKED FOR NOW, SHOULD BE pgGet() KINDA THING
-    const Storage *storagePrimary = storagePgId(1);
-    const String *const primaryHost = cfgOptionStr(cfgOptPgHost);
-    const String *const standbyHost = primaryHost;
+    // Initialize for offline backup
+    BackupPg result = {.pgIdPrimary = 1};
 
-    InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-    PgControl pgControl = pgControlFromFile(storagePrimary);
+    // Get database info when online
+    bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
 
-    // Initialize result
-    BackupPg result =
+    if (cfgOptionBool(cfgOptOnline))
     {
-        .storagePrimary = storagePrimary,
+        DbGetResult dbInfo = dbGet(!backupStandby, true);
 
-        .primaryHost = primaryHost,
-        .standbyHost = standbyHost,
+        result.pgIdPrimary = dbInfo.primaryId;
+        result.dbPrimary = dbInfo.primary;
 
-        .pageSize = pgControl.pageSize,
-    };
+        if (backupStandby)
+        {
+            result.pgIdStandby = dbInfo.standbyId;
+            result.dbStandby = dbInfo.standby;
+            result.storageStandby = storagePgId(result.pgIdStandby);
+            result.hostStandby = cfgOptionStr(cfgOptPgHost + result.pgIdStandby - 1);
+        }
+    }
+
+    // Add primary info
+    result.storagePrimary = storagePgId(result.pgIdPrimary);
+    result.hostPrimary = cfgOptionStr(cfgOptPgHost + result.pgIdPrimary - 1);
+
+    // Get control information from the primary and validate it against backup info
+    PgControl pgControl = pgControlFromFile(result.storagePrimary);
+    InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
     if (pgControl.version != infoPg.version || pgControl.systemId != infoPg.systemId)
     {
@@ -184,6 +197,8 @@ backupPgGet(const InfoBackup *infoBackup)
             strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId, strPtr(pgVersionToStr(infoPg.version)),
             infoPg.systemId);
     }
+
+    result.pageSize = pgControl.pageSize;
 
     // Backup from standby can only be used on PostgreSQL >= 9.1
     if (cfgOption(cfgOptOnline) && cfgOption(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
@@ -1376,7 +1391,7 @@ backupProcess(BackupPg pg, Manifest *manifest)
                 ProtocolParallelJob *job = protocolParallelResult(parallelExec);
 
                 // !!! Should add hostname in here
-                const String *const host = protocolParallelJobProcessId(job) == 0 ? pg.primaryHost : pg.standbyHost;
+                const String *const host = protocolParallelJobProcessId(job) == 0 ? pg.hostPrimary : pg.hostStandby;
                 String *const fileLog = strNew("");
 
                 if (host != NULL)
