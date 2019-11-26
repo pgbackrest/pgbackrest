@@ -27,6 +27,16 @@ Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicat
 Functions
 ***********************************************************************************************************************************/
 void dbOpen(Db *this);
+
+// Start a backup and return starting lsn and wal segment name
+typedef struct DbBackupStartResult
+{
+    String *lsn;
+    String *walSegmentName;
+} DbBackupStartResult;
+
+DbBackupStartResult dbBackupStart(Db *this, bool startFast);
+
 bool dbIsStandby(Db *this);
 String *dbWalSwitch(Db *this);
 void dbClose(Db *this);

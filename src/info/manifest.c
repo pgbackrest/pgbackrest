@@ -1148,13 +1148,16 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 /**********************************************************************************************************************************/
 void
 manifestBuildUpdate(
-    Manifest *this, time_t timestampStart, unsigned int pgId, uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy,
-    size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
-    bool optionHardLink, bool optionOnline, unsigned int optionProcessMax, bool optionStandby)
+    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, unsigned int pgId,
+    uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, bool optionCompress,
+    unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline,
+    unsigned int optionProcessMax, bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(TIME, timestampStart);
+        FUNCTION_LOG_PARAM(STRING, lsnStart);
+        FUNCTION_LOG_PARAM(STRING, archiveStart);
         FUNCTION_LOG_PARAM(UINT, pgId);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
@@ -1172,6 +1175,8 @@ manifestBuildUpdate(
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         this->data.backupTimestampStart = timestampStart;
+        this->data.lsnStart = strDup(lsnStart);
+        this->data.archiveStart = strDup(archiveStart);
         this->data.pgId = pgId;
         this->data.pgSystemId = pgSystemId;
         this->data.backupOptionArchiveCheck = optionArchiveCheck;

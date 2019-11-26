@@ -138,12 +138,12 @@ Get the postgres database and storage objects
 typedef struct BackupPg
 {
     unsigned int pgIdPrimary;
-    const Db *dbPrimary;
+    Db *dbPrimary;
     const Storage *storagePrimary;
     const String *hostPrimary;
 
     unsigned int pgIdStandby;
-    const Db *dbStandby;
+    Db *dbStandby;
     const Storage *storageStandby;
     const String *hostStandby;
 
@@ -199,6 +199,11 @@ backupPgGet(const InfoBackup *infoBackup)
     }
 
     result.pageSize = pgControl.pageSize;
+
+    // If checksum page is not explicity set then automatically enable it when checksums are available
+    if (cfgOptionBool(cfgOptOnline) && !cfgOptionTest(cfgOptChecksumPage))
+        cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksum));
+    // !!! ELSE WARN AND RESET WHEN PAGE CHECKSUMS DO NOT MATCH
 
     // Backup from standby can only be used on PostgreSQL >= 9.1
     if (cfgOption(cfgOptOnline) && cfgOption(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
@@ -693,114 +698,138 @@ backupResume(const InfoBackup *infoBackup, Manifest *manifest)
 /***********************************************************************************************************************************
 Start the backup
 ***********************************************************************************************************************************/
-static void
+typedef struct BackupStartResult
+{
+    String *lsn;
+    String *walSegmentName;
+} BackupStartResult;
+
+#define FUNCTION_LOG_BACKUP_START_RESULT_TYPE                                                                                      \
+    BackupStartResult
+#define FUNCTION_LOG_BACKUP_START_RESULT_FORMAT(value, buffer, bufferSize)                                                         \
+    objToLog(&value, "BackupStartResult", buffer, bufferSize)
+
+static BackupStartResult
 backupStart(BackupPg *pg)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_PG, pg);
     FUNCTION_LOG_END();
 
-    // If this is an offline backup
-    if (!cfgOptionBool(cfgOptOnline))
-    {
-        // If checksum-page is not explicitly enabled then disable it.  We can now detect checksums by reading pg_control directly
-        // but the integration tests can't properly enable checksums.
-        if (!cfgOptionTest(cfgOptChecksumPage))
-            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+    BackupStartResult result = {.lsn = NULL};
 
-        // Check if Postgres is running and if so only continue when forced
-        if (storageExistsP(pg->storagePrimary, PG_FILE_POSTMASTERPID_STR))
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If this is an offline backup
+        if (!cfgOptionBool(cfgOptOnline))
         {
-            if (cfgOptionBool(cfgOptForce))
+            // If checksum-page is not explicitly enabled then disable it.  We can now detect checksums by reading pg_control directly
+            // but the integration tests can't properly enable checksums.
+            if (!cfgOptionTest(cfgOptChecksumPage))
+                cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+
+            // Check if Postgres is running and if so only continue when forced
+            if (storageExistsP(pg->storagePrimary, PG_FILE_POSTMASTERPID_STR))
             {
-                LOG_WARN(
-                    "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMASTERPID " exists but --" CFGOPT_FORCE " was passed so backup"
-                    " will continue though it looks like the postmaster is running and the backup will probably not be consistent");
-            }
-            else
-            {
-                THROW(
-                    PostmasterRunningError,
-                    "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running."
-                    " Shutdown the postmaster and try again, or use --force.");
+                if (cfgOptionBool(cfgOptForce))
+                {
+                    LOG_WARN(
+                        "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMASTERPID " exists but --" CFGOPT_FORCE " was passed so backup"
+                        " will continue though it looks like the postmaster is running and the backup will probably not be consistent");
+                }
+                else
+                {
+                    THROW(
+                        PostmasterRunningError,
+                        "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMASTERPID " exists - looks like the postmaster is running."
+                        " Shutdown the postmaster and try again, or use --force.");
+                }
             }
         }
-    }
-    // Else start the backup normally
-    else
-    {
-        // -------------------------------------------------------------------------------------------------------------------------
-        // !!! DO CONFIG VALIDATE -- HOW MUCH OF THIS IS IN CHECK?
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        // !!!    # Else emit a warning that the feature is not supported and continue.  If a backup is running then an error will be
-        //     # generated later on.
-        //     else
-        //     {
-        //         &log(WARN, cfgOptionName(CFGOPT_STOP_AUTO) . ' option is only available in PostgreSQL >= ' . PG_VERSION_93);
-        //     }
-        // }
-        // !!! ALSO CHECK IF SET IN >= 9.6 where it is useless
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        // !!! Only allow start-fast option for version >= 8.4
-        // if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
-        // {
-        //     &log(WARN, cfgOptionName(CFGOPT_START_FAST) . ' option is only available in PostgreSQL >= ' . PG_VERSION_84);
-        //     $bStartFast = false;
-        // }
-
-        THROW(AssertError, "ONLINE BACKUPS DISABLED DURING DEVELOPMENT");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        // !!! Start the backup
-        // ($strArchiveStart, $strLsnStart, $iWalSegmentSize) =
-        //     $oDbMaster->backupStart(
-        //         PROJECT_NAME . ' backup started at ' . timestampFormat(undef, $rhParam->{timestampStart}),
-        //         cfgOption(CFGOPT_START_FAST));
-        //
-        // Record the archive start location
-        // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
-        // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strLsnStart);
-        // &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        //
-        // # Get the timeline from the archive
-        // $strTimelineCurrent = substr($strArchiveStart, 0, 8);
-        //
-        // !!! Get tablespace map and set in manifest
-        // $hTablespaceMap = $oDbMaster->tablespaceMapGet();
-        //
-        // !!! Get database map
-        // $hDatabaseMap = $oDbMaster->databaseMapGet();
-        //
-        // Wait for replay on the standby to catch up
-        if (cfgOptionBool(cfgOptBackupStandby))
+        // Else start the backup normally
+        else
         {
-            THROW(AssertError, "STANDBY BACKUPS DISABLED DURING DEVELOPMENT");
-        //     my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
-        //     $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
-        //
-        //     $oDbStandby->configValidate();
-        //
-        //     &log(INFO, "wait for replay on the standby to reach ${strLsnStart}");
-        //
-        //     my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strLsnStart);
-        //
-        //     &log(
-        //         INFO,
-        //         "replay on the standby reached ${strReplayedLSN}" .
-        //             (defined($strCheckpointLSN) ? ", checkpoint ${strCheckpointLSN}" : ''));
-        //
-        //     # The standby db object won't be used anymore so undef it to catch any subsequent references
-        //     undef($oDbStandby);
-        //     protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
-        }
-        // !!! NEED TO SET START LSN HERE
-    }
+            // -------------------------------------------------------------------------------------------------------------------------
+            // !!! DO CONFIG VALIDATE -- HOW MUCH OF THIS IS IN CHECK?
 
-    FUNCTION_LOG_RETURN_VOID();
+            // -------------------------------------------------------------------------------------------------------------------------
+            // !!!    # Else emit a warning that the feature is not supported and continue.  If a backup is running then an error will be
+            //     # generated later on.
+            //     else
+            //     {
+            //         &log(WARN, cfgOptionName(CFGOPT_STOP_AUTO) . ' option is only available in PostgreSQL >= ' . PG_VERSION_93);
+            //     }
+            // }
+            // !!! ALSO CHECK IF SET IN >= 9.6 where it is useless
+
+            // -------------------------------------------------------------------------------------------------------------------------
+            // !!! Only allow start-fast option for version >= 8.4
+            // if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
+            // {
+            //     &log(WARN, cfgOptionName(CFGOPT_START_FAST) . ' option is only available in PostgreSQL >= ' . PG_VERSION_84);
+            //     $bStartFast = false;
+            // }
+
+            // -------------------------------------------------------------------------------------------------------------------------
+            DbBackupStartResult backupStart = dbBackupStart(pg->dbPrimary, cfgOptionBool(cfgOptStartFast));
+
+            // THROW(AssertError, "ONLINE BACKUPS DISABLED DURING DEVELOPMENT");
+
+            // !!! Start the backup
+            // ($strArchiveStart, $strLsnStart, $iWalSegmentSize) =
+            //     $oDbMaster->backupStart(
+            //         PROJECT_NAME . ' backup started at ' . timestampFormat(undef, $rhParam->{timestampStart}),
+            //         cfgOption(CFGOPT_START_FAST));
+            //
+            // Record the archive start location
+            // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
+            // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strLsnStart);
+            // &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
+
+            // -------------------------------------------------------------------------------------------------------------------------
+            //
+            // # Get the timeline from the archive
+            // $strTimelineCurrent = substr($strArchiveStart, 0, 8);
+            //
+            // !!! Get tablespace map and set in manifest
+            // $hTablespaceMap = $oDbMaster->tablespaceMapGet();
+            //
+            // !!! Get database map
+            // $hDatabaseMap = $oDbMaster->databaseMapGet();
+            //
+            // Wait for replay on the standby to catch up
+            if (cfgOptionBool(cfgOptBackupStandby))
+            {
+                THROW(AssertError, "STANDBY BACKUPS DISABLED DURING DEVELOPMENT");
+            //     my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
+            //     $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
+            //
+            //     $oDbStandby->configValidate();
+            //
+            //     &log(INFO, "wait for replay on the standby to reach ${strLsnStart}");
+            //
+            //     my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strLsnStart);
+            //
+            //     &log(
+            //         INFO,
+            //         "replay on the standby reached ${strReplayedLSN}" .
+            //             (defined($strCheckpointLSN) ? ", checkpoint ${strCheckpointLSN}" : ''));
+            //
+            //     # The standby db object won't be used anymore so undef it to catch any subsequent references
+            //     undef($oDbStandby);
+            //     protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
+            }
+            // !!! NEED TO SET START LSN HERE
+
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result.lsn = strDup(backupStart.lsn);
+            result.walSegmentName = strDup(backupStart.walSegmentName);
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BACKUP_START_RESULT, result);
 }
 /***********************************************************************************************************************************
 Stop the backup
@@ -1677,7 +1706,7 @@ cmdBackup(void)
         Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
 
         // Start the backup
-        backupStart(&pg);
+        BackupStartResult backupStartResult = backupStart(&pg);
 
         // Build the manifest
         Manifest *manifest = manifestNewBuild(
@@ -1708,7 +1737,8 @@ cmdBackup(void)
         // Set all the manifest values we have before the first save
         manifestBuildUpdate(
             // !!! SEEMS LIKE THE ARCHIVE CHECK CALCULATION SHOULD BE ONLINE ONLY (WAS COPIED FROM PERL, THOUGH)
-            manifest, timestampStart, infoPg.id, infoPg.systemId, !cfgOptionBool(cfgOptOnline) || cfgOptionBool(cfgOptArchiveCheck),
+            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, infoPg.id, infoPg.systemId,
+            !cfgOptionBool(cfgOptOnline) || cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
             cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptCompress), cfgOptionUInt(cfgOptCompressLevel),
             cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink), cfgOptionBool(cfgOptOnline),
