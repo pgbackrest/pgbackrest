@@ -35,6 +35,9 @@ typedef enum
     // etc.) for storage that does not support paths.
     storageFeaturePath,
 
+    // Do paths need to be synced to ensure contents are durable?  storeageFeaturePath must also be enabled.
+    storageFeaturePathSync,
+
     // Is the storage able to do compression and therefore store the file more efficiently than what was written?  If so, the size
     // will need to checked after write to see if it is different.
     storageFeatureCompress,
