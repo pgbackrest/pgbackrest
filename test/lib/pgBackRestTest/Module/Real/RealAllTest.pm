@@ -15,7 +15,6 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
-use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;

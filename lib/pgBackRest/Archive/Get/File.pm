@@ -14,7 +14,6 @@ use File::Basename qw(basename dirname);
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Archive::Info;
-use pgBackRest::Db;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
