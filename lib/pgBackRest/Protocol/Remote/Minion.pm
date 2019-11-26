@@ -15,7 +15,6 @@ use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Wait;
 use pgBackRest::Archive::Get::File;
 use pgBackRest::Config::Config;
-use pgBackRest::Db;
 use pgBackRest::Protocol::Command::Minion;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -73,11 +72,6 @@ sub init
     {
         # ArchiveGet commands
         &OP_ARCHIVE_GET_CHECK => sub {archiveGetCheck(@{shift()})},
-
-        # Db commands
-        &OP_DB_CONNECT => sub {$oDb->connect()},
-        &OP_DB_EXECUTE_SQL => sub {$oDb->executeSql(@{shift()})},
-        &OP_DB_INFO => sub {$oDb->info(@{shift()})},
 
         # File commands
         &OP_STORAGE_OPEN_READ => sub

@@ -26,13 +26,6 @@ use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# PostgreSQL 8.3 WAL size
-#
-# WAL segment size in 8.3 cannot be determined from pg_control, so use this constant instead.
-####################################################################################################################################
-use constant PG_WAL_SIZE_83                                         => 16777216;
-
-####################################################################################################################################
 # Backup advisory lock
 ####################################################################################################################################
 use constant DB_BACKUP_ADVISORY_LOCK                                => '12340078987004321';
@@ -524,111 +517,6 @@ sub versionGet
         $strOperation,
         {name => 'strDbVersion', value => $self->{strDbVersion}},
         {name => 'strDbPath', value => $strDbPath}
-    );
-}
-
-####################################################################################################################################
-# backupStart
-####################################################################################################################################
-sub backupStart
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strLabel,
-        $bStartFast
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->backupStart', \@_,
-            {name => 'strLabel'},
-            {name => 'bStartFast'}
-        );
-
-    # Validate the database configuration
-    $self->configValidate();
-
-    # Only allow start-fast option for version >= 8.4
-    if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
-    {
-        &log(WARN, cfgOptionName(CFGOPT_START_FAST) . ' option is only available in PostgreSQL >= ' . PG_VERSION_84);
-        $bStartFast = false;
-    }
-
-    # Determine if page checksums can be enabled
-    my $bChecksumPage =
-        $self->executeSqlOne("select count(*) = 1 from pg_settings where name = 'data_checksums' and setting = 'on'");
-
-    # If checksum page option is not explicitly set then set it to whatever the database says
-    if (!cfgOptionTest(CFGOPT_CHECKSUM_PAGE))
-    {
-        cfgOptionSet(CFGOPT_CHECKSUM_PAGE, $bChecksumPage);
-    }
-    # Else if enabled make sure they are in the database as well, else throw a warning
-    elsif (cfgOption(CFGOPT_CHECKSUM_PAGE) && !$bChecksumPage)
-    {
-        &log(WARN, 'unable to enable page checksums since they are not enabled in the database');
-        cfgOptionSet(CFGOPT_CHECKSUM_PAGE, false);
-    }
-
-    # Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
-    # database cluster.  This lock helps make the stop-auto option safe.
-    if (!$self->executeSqlOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
-    {
-        confess &log(ERROR, 'unable to acquire ' . PROJECT_NAME . " advisory lock\n" .
-                            'HINT: is another ' . PROJECT_NAME . ' backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
-    }
-
-    # If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups are
-    # run in non-exclusive mode.
-    if (cfgOption(CFGOPT_STOP_AUTO) && $self->{strDbVersion} < PG_VERSION_96)
-    {
-        # Running backups can only be detected in PostgreSQL >= 9.3
-        if ($self->{strDbVersion} >= PG_VERSION_93)
-        {
-            # If a backup is currently in progress emit a warning and then stop it
-            if ($self->executeSqlOne('select pg_is_in_backup()'))
-            {
-                &log(WARN, 'the cluster is already in backup mode but no ' . PROJECT_NAME . ' backup process is running.' .
-                           ' pg_stop_backup() will be called so a new backup can be started.');
-                $self->backupStop();
-            }
-        }
-        # Else emit a warning that the feature is not supported and continue.  If a backup is running then an error will be
-        # generated later on.
-        else
-        {
-            &log(WARN, cfgOptionName(CFGOPT_STOP_AUTO) . ' option is only available in PostgreSQL >= ' . PG_VERSION_93);
-        }
-    }
-
-    # Start the backup
-    &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .
-               "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
-               ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
-
-    my ($strTimestampDbStart, $strArchiveStart, $strLsnStart, $iWalSegmentSize) = $self->executeSqlRow(
-        "select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_" . $self->walId() . "file_name(lsn), lsn::text," .
-            ($self->{strDbVersion} < PG_VERSION_84 ? PG_WAL_SIZE_83 :
-                " (select setting::int8 from pg_settings where name = 'wal_segment_size')" .
-                # In Pre-11 versions the wal_segment_sise was expressed in terms of blocks rather than total size
-                ($self->{strDbVersion} < PG_VERSION_11 ?
-                    " * (select setting::int8 from pg_settings where name = 'wal_block_size')" : '')) .
-            " from pg_start_backup('${strLabel}'" .
-            ($bStartFast ? ', true' : $self->{strDbVersion} >= PG_VERSION_84 ? ', false' : '') .
-            ($self->{strDbVersion} >= PG_VERSION_96 ? ', false' : '') . ') as lsn');
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strArchiveStart', value => $strArchiveStart},
-        {name => 'strLsnStart', value => $strLsnStart},
-        {name => 'iWalSegmentSize', value => $iWalSegmentSize},
-        {name => 'strTimestampDbStart', value => $strTimestampDbStart}
     );
 }
 

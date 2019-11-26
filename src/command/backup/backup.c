@@ -714,31 +714,56 @@ backupStart(BackupPg *pg)
     // Else start the backup normally
     else
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!! DO CONFIG VALIDATE -- HOW MUCH OF THIS IS IN CHECK?
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!!    # Else emit a warning that the feature is not supported and continue.  If a backup is running then an error will be
+        //     # generated later on.
+        //     else
+        //     {
+        //         &log(WARN, cfgOptionName(CFGOPT_STOP_AUTO) . ' option is only available in PostgreSQL >= ' . PG_VERSION_93);
+        //     }
+        // }
+        // !!! ALSO CHECK IF SET IN >= 9.6 where it is useless
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!! Only allow start-fast option for version >= 8.4
+        // if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
+        // {
+        //     &log(WARN, cfgOptionName(CFGOPT_START_FAST) . ' option is only available in PostgreSQL >= ' . PG_VERSION_84);
+        //     $bStartFast = false;
+        // }
+
         THROW(AssertError, "ONLINE BACKUPS DISABLED DURING DEVELOPMENT");
 
-        // # Start the backup
+        // -------------------------------------------------------------------------------------------------------------------------
+        // !!! Start the backup
         // ($strArchiveStart, $strLsnStart, $iWalSegmentSize) =
         //     $oDbMaster->backupStart(
         //         PROJECT_NAME . ' backup started at ' . timestampFormat(undef, $rhParam->{timestampStart}),
         //         cfgOption(CFGOPT_START_FAST));
         //
-        // # Record the archive start location
+        // Record the archive start location
         // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
         // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strLsnStart);
         // &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         //
         // # Get the timeline from the archive
         // $strTimelineCurrent = substr($strArchiveStart, 0, 8);
         //
-        // # Get tablespace map
+        // !!! Get tablespace map and set in manifest
         // $hTablespaceMap = $oDbMaster->tablespaceMapGet();
         //
-        // # Get database map
+        // !!! Get database map
         // $hDatabaseMap = $oDbMaster->databaseMapGet();
         //
-        // # Wait for replay on the standby to catch up
-        // if (cfgOption(CFGOPT_BACKUP_STANDBY))
-        // {
+        // Wait for replay on the standby to catch up
+        if (cfgOptionBool(cfgOptBackupStandby))
+        {
+            THROW(AssertError, "STANDBY BACKUPS DISABLED DURING DEVELOPMENT");
         //     my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
         //     $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
         //
@@ -756,7 +781,7 @@ backupStart(BackupPg *pg)
         //     # The standby db object won't be used anymore so undef it to catch any subsequent references
         //     undef($oDbStandby);
         //     protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
-        // }
+        }
         // !!! NEED TO SET START LSN HERE
     }
 

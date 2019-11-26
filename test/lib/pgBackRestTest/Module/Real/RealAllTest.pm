@@ -15,6 +15,7 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
+use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -97,7 +98,7 @@ sub run
              bCompress => $bCompress, bArchiveAsync => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
         # Only perform extra tests on certain runs to save time
-        my $bTestLocal = $self->runCurrent() == 1;
+        my $bTestLocal = false; # $self->runCurrent() == 1;
         my $bTestExtra =
             $bTestLocal || $self->runCurrent() == 4 || ($self->runCurrent() == 6 && $self->pgVersion() eq PG_VERSION_96);
 
