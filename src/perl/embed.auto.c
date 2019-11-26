@@ -25,7 +25,6 @@ static const EmbeddedModule embeddedModule[] =
             "use Fcntl qw(SEEK_CUR O_RDONLY);\n"
             "use File::Basename qw(dirname);\n"
             "\n"
-            "use pgBackRest::Db;\n"
             "use pgBackRest::DbVersion;\n"
             "use pgBackRest::Common::Exception;\n"
             "use pgBackRest::Common::Log;\n"
