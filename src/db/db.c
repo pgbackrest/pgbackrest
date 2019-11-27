@@ -7,10 +7,12 @@ Database Client
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
+#include "common/wait.h"
 #include "db/db.h"
 #include "db/protocol.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
+#include "protocol/helper.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -456,6 +458,120 @@ dbList(Db *this)
 
     FUNCTION_LOG_RETURN(
         VARIANT_LIST, dbQuery(this, STRDEF("select oid::oid, datname::text, datlastsysoid::oid from pg_catalog.pg_database")));
+}
+
+/**********************************************************************************************************************************/
+void
+dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(STRING, targetLsn);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(targetLsn != NULL);
+    ASSERT(timeout > 0);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Loop until lsn has been reached or timeout
+        Wait *wait = waitNew(timeout);
+        bool targetReached = false;
+        const char *lsnName = strPtr(pgLsnName(dbPgVersion(this)));
+        const String *replayLsnFunction = strNewFmt(
+            "pg_catalog.pg_last_%s_replay_%s()", strPtr(pgWalName(dbPgVersion(this))), lsnName);
+        const String *replayLsn = NULL;
+
+        do
+        {
+            // Build the query
+            String *query = strNewFmt(
+                "select replayLsn::text,\n"
+                "       (replayLsn > '%s')::bool as targetReached",
+                strPtr(targetLsn));
+
+            if (replayLsn != NULL)
+            {
+                strCatFmt(
+                    query,
+                    ",\n"
+                    "       (replayLsn > '%s')::bool as replayProgress", strPtr(replayLsn));
+            }
+
+            strCatFmt(
+                query,
+                "\n"
+                "  from %s as replayLsn",
+                strPtr(replayLsnFunction));
+
+            // Execute the query and get replayLsn
+            VariantList *row = dbQueryRow(this, query);
+            const String *replayLsn = varStr(varLstGet(row, 0));
+
+            // Error when replayLsn is null which indicates that this is not a standby.  This should have been sorted out before we
+            // connected but it's possible that the standy was promoted in the meantime.
+            if (replayLsn == NULL)
+            {
+                THROW_FMT(
+                    ArchiveTimeoutError,
+                    "unable to query replay lsn on the standby using '%s'\n"
+                    "HINT: Is this a standby?",
+                    strPtr(replayLsnFunction));
+            }
+
+            targetReached = varBool(varLstGet(row, 1));
+
+            // If the target has not been reached but progress is being made then reset the timer
+            if (!targetReached && varLstSize(row) > 2 && varBool(varLstGet(row, 2)))
+                wait = waitNew(timeout);
+
+            protocolKeepAlive();
+        }
+        while (!targetReached && waitMore(wait));
+
+        // // Error if a timeout occurred before the target lsn was reached
+        if (!targetReached)
+        {
+            THROW_FMT(
+                ArchiveTimeoutError, "timeout before standby replayed %s - only reached %s", strPtr(replayLsn), strPtr(targetLsn));
+        }
+
+        // Perform a checkpoint
+        dbExec(this, STRDEF("checkpoint"));
+
+        // On PostgreSQL >= 9.6 the checkpoint location can be verified
+        //
+        // ??? We have seen one instance where this check failed.  Is there any chance that the replayed position could be ahead of
+        // the checkpoint recorded in pg_control?  It seems possible since it would be safer if the checkpoint in pg_control was
+        // behind rather than ahead, so add a loop to keep checking pg_control until the checkpoint has been recorded.  In the C
+        // code we can now check pg_control directly so that seems the way to go so the version restriction can be removed.
+        if (dbPgVersion(this) >= PG_VERSION_96)
+        {
+            // Build the query
+            const String *query = strNewFmt(
+                "select (checkpoint_%s > '%s')::bool as targetReached,\n"
+                "       checkpoint_%s::text as checkpointLsn\n"
+                "  from pg_catalog.pg_control_checkpoint()",
+                lsnName, strPtr(targetLsn), lsnName);
+
+            // Execute query
+            VariantList *row = dbQueryRow(this, query);
+
+            // Verify target was reached
+            if (!varBool(varLstGet(row, 0)))
+            {
+                THROW_FMT(
+                    ArchiveTimeoutError,
+                    "the checkpoint location %s is less than the target location %s even though the replay location is %s",
+                    strPtr(varStr(varLstGet(row, 0))), strPtr(targetLsn), strPtr(replayLsn));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

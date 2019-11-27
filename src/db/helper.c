@@ -128,6 +128,10 @@ dbGet(bool primaryOnly, bool primaryRequired)
         if (result.primaryId == 0 && primaryRequired)
             THROW(DbConnectError, "unable to find primary cluster - cannot proceed");
 
+        // Error if no standby was found
+        if (result.standbyId == 0 && !primaryOnly)
+            THROW(DbConnectError, "unable to find standby cluster - cannot proceed");
+
         dbMove(result.primary, MEM_CONTEXT_OLD());
         dbMove(result.standby, MEM_CONTEXT_OLD());
     }

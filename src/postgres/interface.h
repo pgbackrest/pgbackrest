@@ -123,6 +123,9 @@ PgWal pgWalFromBuffer(const Buffer *walBuffer);
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_9.0_201008051
 String *pgTablespaceId(unsigned int pgVersion);
 
+// Get name used for lsn in functions (this was changed in PostgreSQL 10 for consistency since lots of names were changing)
+const String *pgLsnName(unsigned int pgVersion);
+
 const String *pgWalName(unsigned int pgVersion);
 
 // Get transaction commit log path (this was changed in PostgreSQL 10 to avoid including "log" in the name)

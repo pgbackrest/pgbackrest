@@ -549,18 +549,6 @@ sub walId
 }
 
 ####################################################################################################################################
-# lsnId
-#
-# Returns 'lsn' or 'location' depending on the version of PostgreSQL.
-####################################################################################################################################
-sub lsnId
-{
-    my $self = shift;
-
-    return $self->{strDbVersion} >= PG_VERSION_10 ? 'lsn' : 'location';
-}
-
-####################################################################################################################################
 # isStandby
 #
 # Determines if a database is a standby by testing if it is in recovery mode.
@@ -591,119 +579,6 @@ sub isStandby
     (
         $strOperation,
         {name => 'bStandby', value => $self->{bStandby}}
-    );
-}
-
-####################################################################################################################################
-# replayWait
-#
-# Waits for replay on the standby to equal specified LSN
-####################################################################################################################################
-sub replayWait
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strTargetLSN,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->replayWait', \@_,
-            {name => 'strTargetLSN'}
-        );
-
-    # Load ArchiveCommon Module
-    require pgBackRest::Archive::Common;
-    pgBackRest::Archive::Common->import();
-
-    # Initialize working variables
-    my $oWait = waitInit(cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
-    my $bTimeout = true;
-    my $strReplayedLSN = undef;
-
-    # Monitor the replay location
-    do
-    {
-        my $strLastWalReplayLsnFunction =
-            'pg_last_' . $self->walId() . '_replay_' . $self->lsnId() . '()';
-
-        # Get the replay location
-        my $strLastReplayedLSN = $self->executeSqlOne(
-            "select coalesce(${strLastWalReplayLsnFunction}::text, '<NONE>')");
-
-        # Error if the replay location could not be retrieved
-        if ($strLastReplayedLSN eq '<NONE>')
-        {
-            confess &log(
-                ERROR,
-                "unable to query replay lsn on the standby using ${strLastWalReplayLsnFunction}\n" .
-                    "Hint: Is this a standby?",
-                ERROR_ARCHIVE_TIMEOUT);
-        }
-
-        # Is the replay lsn > target lsn?  It needs to be greater because the checkpoint record is directly after the LSN returned
-        # by pg_start_backup().
-        if (lsnNormalize($strLastReplayedLSN) ge lsnNormalize($strTargetLSN))
-        {
-            $bTimeout = false;
-        }
-        else
-        {
-            # Reset the timer if the LSN is advancing
-            if (defined($strReplayedLSN) &&
-                lsnNormalize($strLastReplayedLSN) gt lsnNormalize($strReplayedLSN) &&
-                !waitMore($oWait))
-            {
-                $oWait = waitInit(cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
-            }
-        }
-
-        # Assigned last replayed to replayed
-        $strReplayedLSN = $strLastReplayedLSN;
-
-    } while ($bTimeout && waitMore($oWait));
-
-    # Error if a timeout occurred before the target lsn was reached
-    if ($bTimeout == true)
-    {
-        confess &log(
-            ERROR, "timeout before standby replayed ${strTargetLSN} - only reached ${strReplayedLSN}", ERROR_ARCHIVE_TIMEOUT);
-    }
-
-    # Perform a checkpoint
-    $self->executeSql('checkpoint', undef, false);
-
-    # On PostgreSQL >= 9.6 the checkpoint location can be verified
-    #
-    # ??? We have seen one instance where this check failed.  Is there any chance that the replayed position could be ahead of the
-    # checkpoint recorded in pg_control?  It seems possible, so in the C version of this add a loop to keep checking pg_control
-    # until the checkpoint has been recorded.
-    my $strCheckpointLSN = undef;
-
-    if ($self->{strDbVersion} >= PG_VERSION_96)
-    {
-        $strCheckpointLSN = $self->executeSqlOne('select checkpoint_' . $self->lsnId() .'::text from pg_control_checkpoint()');
-
-        if (lsnNormalize($strCheckpointLSN) le lsnNormalize($strTargetLSN))
-        {
-            confess &log(
-                ERROR,
-                "the checkpoint location ${strCheckpointLSN} is less than the target location ${strTargetLSN} even though the" .
-                    " replay location is ${strReplayedLSN}\n" .
-                    "Hint: This should not be possible and may indicate a bug in PostgreSQL.",
-                ERROR_ARCHIVE_TIMEOUT);
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strReplayedLSN', value => $strReplayedLSN},
-        {name => 'strCheckpointLSN', value => $strCheckpointLSN},
     );
 }
 

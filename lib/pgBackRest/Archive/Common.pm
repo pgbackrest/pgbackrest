@@ -44,46 +44,6 @@ use constant PG_WAL_SEGMENT_SIZE                                    => 16777216;
     push @EXPORT, qw(PG_WAL_SEGMENT_SIZE);
 
 ####################################################################################################################################
-# lsnNormalize
-#
-# Generates a normalized form from an LSN that can be used for comparison.
-####################################################################################################################################
-sub lsnNormalize
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strLsn,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::lsnFile', \@_,
-            {name => 'strLsn', trace => true},
-        );
-
-    # Split the LSN into major and minor parts
-    my @stryLsnSplit = split('/', $strLsn);
-
-    if (@stryLsnSplit != 2)
-    {
-        confess &log(ASSERT, "invalid lsn ${strLsn}");
-    }
-
-    my $strLsnNormal = uc(sprintf("%08s%08s", $stryLsnSplit[0], $stryLsnSplit[1]));
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strLsnNormal', value => $strLsnNormal, trace => true}
-    );
-
-}
-
-push @EXPORT, qw(lsnNormalize);
-
-####################################################################################################################################
 # lsnFileRange
 #
 # Generates a range of WAL filenames given the start and stop LSN.  For pre-9.3 databases, use bSkipFF to exclude the FF that

@@ -53,7 +53,7 @@ pgValidate(void)
         if (cfgOptionBool(cfgOptOnline))
         {
             // Check the connections of the master (and standby, if any) and return the master database object.
-            DbGetResult dbObject = dbGet(false, true);
+            DbGetResult dbObject = dbGet(true, true);
 
             // Get the pgControl information from the pg*-path deemed to be the master
             result = pgControlFromFile(storagePgId(dbObject.primaryId));

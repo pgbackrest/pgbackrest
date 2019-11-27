@@ -21,6 +21,7 @@ Backup Command
 #include "common/debug.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
+#include "common/time.h"
 #include "common/type/convert.h"
 #include "config/config.h"
 #include "db/helper.h"
@@ -178,6 +179,8 @@ backupPgGet(const InfoBackup *infoBackup)
 
         if (backupStandby)
         {
+            ASSERT(dbInfo.standbyId != 0);
+
             result.pgIdStandby = dbInfo.standbyId;
             result.dbStandby = dbInfo.standby;
             result.storageStandby = storagePgId(result.pgIdStandby);
@@ -782,16 +785,9 @@ backupStart(BackupPg *pg)
             // Wait for replay on the standby to catch up
             if (cfgOptionBool(cfgOptBackupStandby))
             {
-                THROW(AssertError, "STANDBY BACKUPS DISABLED DURING DEVELOPMENT");
-            //     my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
-            //     $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
-            //
-            //     $oDbStandby->configValidate();
-            //
-            //     &log(INFO, "wait for replay on the standby to reach ${strLsnStart}");
-            //
-            //     my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strLsnStart);
-            //
+                LOG_INFO_FMT("wait for replay on the standby to reach %s", strPtr(result.lsn));
+                dbReplayWait(pg->dbStandby, result.lsn, (TimeMSec)cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
+
             //     &log(
             //         INFO,
             //         "replay on the standby reached ${strReplayedLSN}" .
@@ -1204,6 +1200,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
         StringList *targetList = strLstNew();
         strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
 
+        // !!! CHEATING HERE -- NEED TO CREATE QUEUES BASED ON THE VALUE IN BACKUP-STANDBY
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
             const ManifestTarget *target = manifestTarget(manifest, targetIdx);
@@ -1766,6 +1763,9 @@ cmdBackup(void)
         // !!! NEED TO GET THIS FROM THE REMOTE AND WAIT REMAINDER WHEN ONLINE
         time_t timestampCopyStart = time(NULL);
 
+        if (cfgOptionBool(cfgOptOnline))
+            sleepMSec(1000);
+
         manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), timestampCopyStart);
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
@@ -1805,7 +1805,7 @@ cmdBackup(void)
 
         // Remotes no longer needed (free them here so they don't timeout)
         storageHelperFree();
-        protocolFree();
+        // !!! WHY DOES THIS BLOW UP? protocolFree();
 
         // Check and copy WAL segments required to make the backup consistent
         backupArchiveCheckCopy(manifest);

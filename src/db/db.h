@@ -53,6 +53,9 @@ bool dbIsStandby(Db *this);
 // Get list of databases in the cluster: select oid, datname, datlastsysoid from pg_database
 VariantList *dbList(Db *this);
 
+// Waits for replay on the standby to equal the target LSN
+void dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout);
+
 // Get list of tablespaces in the cluster: select oid, datname, datlastsysoid from pg_database
 VariantList *dbTablespaceList(Db *this);
 
