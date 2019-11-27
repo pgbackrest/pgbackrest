@@ -141,7 +141,6 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdExpire:
                 {
-                    perlExec();
                     cmdExpire();
                     break;
                 }
