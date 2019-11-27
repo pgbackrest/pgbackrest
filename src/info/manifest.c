@@ -399,6 +399,7 @@ typedef struct ManifestBuildData
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
     RegExp *standbyExp;                                             // Identify files that must be copied from the primary
+    const VariantList *tablespaceList;                              // List of tablespaces in the database
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
 
@@ -688,7 +689,33 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 // Identify this target as a tablespace
                 target.name = manifestName;
                 target.tablespaceId = cvtZToUInt(strPtr(info->name));
-                target.tablespaceName = strNewFmt("ts%s", strPtr(info->name));
+
+                // Look for this tablespace in the provided list
+                if (buildData.tablespaceList != NULL)
+                {
+                    // Search list
+                    for (unsigned int tablespaceIdx = 0; tablespaceIdx < varLstSize(buildData.tablespaceList); tablespaceIdx++)
+                    {
+                        const VariantList *tablespace = varVarLst(varLstGet(buildData.tablespaceList, tablespaceIdx));
+
+                        if (target.tablespaceId == varUIntForce(varLstGet(tablespace, 0)))
+                            target.tablespaceName = varStr(varLstGet(tablespace, 1));
+                    }
+
+                    // Error if the tablespace could not be found.  ??? This seems excessive, perhaps just warn here?
+                    if (target.tablespaceName == NULL)
+                    {
+                        THROW_FMT(
+                            AssertError,
+                            "tablespace with oid %u not found in tablespace map\n"
+                            "HINT: was a tablespace created or dropped during the backup?",
+                            target.tablespaceId);
+                    }
+                }
+
+                // If no tablespace name was found then create one
+                if (target.tablespaceName == NULL)
+                    target.tablespaceName = strNewFmt("ts%s", strPtr(info->name));
 
                 // Add a dummy pg_tblspc path entry if it does not already exist.  This entry will be ignored by restore but it is
                 // part of the original manifest format so we need to have it.
@@ -799,7 +826,9 @@ manifestBuildCallback(void *data, const StorageInfo *info)
     "(" MANIFEST_TARGET_PGDATA "/(" PG_PATH_GLOBAL "|" PG_PATH_BASE "/[0-9]+)|" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+)"
 
 Manifest *
-manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, bool checksumPage, const StringList *excludeList)
+manifestNewBuild(
+    const Storage *storagePg, unsigned int pgVersion, bool online, bool checksumPage, const StringList *excludeList,
+    const VariantList *tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
@@ -807,6 +836,7 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, 
         FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, tablespaceList);
     FUNCTION_LOG_END();
 
     ASSERT(storagePg != NULL);
@@ -831,6 +861,7 @@ manifestNewBuild(const Storage *storagePg, unsigned int pgVersion, bool online, 
             .tablespaceId = pgTablespaceId(pgVersion),
             .online = online,
             .checksumPage = checksumPage,
+            .tablespaceList = tablespaceList,
             .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
             .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/pg_%s", strPtr(pgWalName(pgVersion))),
             .pgPath = storagePathP(storagePg, NULL),
@@ -1147,19 +1178,24 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
 /**********************************************************************************************************************************/
 void
-manifestBuildUpdate(
-    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, unsigned int pgId,
-    uint64_t pgSystemId, bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, bool optionCompress,
-    unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline,
-    unsigned int optionProcessMax, bool optionStandby)
+manifestBuildComplete(
+    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
+    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
+    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
+    bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(TIME, timestampStart);
         FUNCTION_LOG_PARAM(STRING, lsnStart);
         FUNCTION_LOG_PARAM(STRING, archiveStart);
+        FUNCTION_LOG_PARAM(TIME, timestampStop);
+        FUNCTION_LOG_PARAM(STRING, lsnStop);
+        FUNCTION_LOG_PARAM(STRING, archiveStop);
         FUNCTION_LOG_PARAM(UINT, pgId);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, dbList);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
         FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
@@ -1174,11 +1210,34 @@ manifestBuildUpdate(
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
+        // Save info
         this->data.backupTimestampStart = timestampStart;
         this->data.lsnStart = strDup(lsnStart);
         this->data.archiveStart = strDup(archiveStart);
+        this->data.backupTimestampStop = timestampStop;
+        this->data.lsnStop = strDup(lsnStop);
+        this->data.archiveStop = strDup(archiveStop);
         this->data.pgId = pgId;
         this->data.pgSystemId = pgSystemId;
+
+        // Save db list
+        for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbList); dbIdx++)
+        {
+            const VariantList *dbRow = varVarLst(varLstGet(dbList, dbIdx));
+
+            ManifestDb db =
+            {
+                .id = varUIntForce(varLstGet(dbRow, 0)),
+                .name = varStr(varLstGet(dbRow, 1)),
+                .lastSystemId = varUIntForce(varLstGet(dbRow, 2)),
+            };
+
+            manifestDbAdd(this, &db);
+        }
+
+        lstSort(this->dbList, sortOrderAsc);
+
+        // Save options
         this->data.backupOptionArchiveCheck = optionArchiveCheck;
         this->data.backupOptionArchiveCopy = optionArchiveCopy;
         this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
@@ -1189,28 +1248,6 @@ manifestBuildUpdate(
         this->data.backupOptionOnline = optionOnline;
         this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
         this->data.backupOptionStandby = varNewBool(optionStandby);
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-manifestBuildComplete(Manifest *this, time_t timestampStop, const String *lsnStop, const String *archiveStop)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, this);
-        FUNCTION_LOG_PARAM(TIME, timestampStop);
-        FUNCTION_LOG_PARAM(STRING, lsnStop);
-        FUNCTION_LOG_PARAM(STRING, archiveStop);
-    FUNCTION_LOG_END();
-
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->data.backupTimestampStop = timestampStop;
-        this->data.lsnStop = strDup(lsnStop);
-        this->data.archiveStop = strDup(archiveStop);
     }
     MEM_CONTEXT_END();
 
@@ -2802,21 +2839,6 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-void
-manifestChecksumPageSet(Manifest *this, bool checksumPage)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(BOOL, checksumPage);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    this->data.backupOptionChecksumPage = checksumPage ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 const String *
 manifestCipherSubPass(const Manifest *this)
 {

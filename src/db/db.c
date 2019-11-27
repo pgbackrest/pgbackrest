@@ -360,7 +360,7 @@ dbBackupStopQuery(unsigned int pgVersion)
     strCat(
         result,
         "\n"
-        "  from pg_stop_backup(");
+        "  from pg_catalog.pg_stop_backup(");
 
     // Use non-exclusive backup mode when available
     if (pgVersion >= PG_VERSION_96)
@@ -444,6 +444,29 @@ dbIsStandby(Db *this)
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+VariantList *
+dbList(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        VARIANT_LIST, dbQuery(this, STRDEF("select oid::oid, datname::text, datlastsysoid::oid from pg_catalog.pg_database")));
+}
+
+/**********************************************************************************************************************************/
+VariantList *
+dbTablespaceList(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(VARIANT_LIST, dbQuery(this, STRDEF("select oid::oid, spcname::text from pg_catalog.pg_tablespace")));
 }
 
 /***********************************************************************************************************************************

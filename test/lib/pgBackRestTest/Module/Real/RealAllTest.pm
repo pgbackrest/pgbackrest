@@ -98,7 +98,7 @@ sub run
              bCompress => $bCompress, bArchiveAsync => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
         # Only perform extra tests on certain runs to save time
-        my $bTestLocal = false; # $self->runCurrent() == 1;
+        my $bTestLocal = $self->runCurrent() == 1;
         my $bTestExtra =
             $bTestLocal || $self->runCurrent() == 4 || ($self->runCurrent() == 6 && $self->pgVersion() eq PG_VERSION_96);
 

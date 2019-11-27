@@ -324,61 +324,6 @@ sub executeSqlOne
 }
 
 ####################################################################################################################################
-# tablespaceMapGet
-#
-# Get the mapping between oid and tablespace name.
-####################################################################################################################################
-sub tablespaceMapGet
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->tablespaceMapGet');
-
-    my $hTablespaceMap = {};
-
-    for my $strRow (@{$self->executeSql('select oid, spcname from pg_tablespace')})
-    {
-        $hTablespaceMap->{@{$strRow}[0]} = @{$strRow}[1];
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'hTablespaceMap', value => $hTablespaceMap}
-    );
-}
-
-####################################################################################################################################
-# databaseMapGet
-#
-# Get the mapping between oid and database name.
-####################################################################################################################################
-sub databaseMapGet
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->databaseMapGet');
-
-    my $hDatabaseMap = {};
-
-    for my $strRow (@{$self->executeSql('select datname, oid, datlastsysoid from pg_database')})
-    {
-        $hDatabaseMap->{@{$strRow}[0]}{&MANIFEST_KEY_DB_ID} = @{$strRow}[1];
-        $hDatabaseMap->{@{$strRow}[0]}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID} = @{$strRow}[2];
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'hDatabaseMap', value => $hDatabaseMap}
-    );
-}
-
-####################################################################################################################################
 # info
 ####################################################################################################################################
 sub info

@@ -49,6 +49,13 @@ typedef struct DbBackupStopResult
 DbBackupStopResult dbBackupStop(Db *this);
 
 bool dbIsStandby(Db *this);
+
+// Get list of databases in the cluster: select oid, datname, datlastsysoid from pg_database
+VariantList *dbList(Db *this);
+
+// Get list of tablespaces in the cluster: select oid, datname, datlastsysoid from pg_database
+VariantList *dbTablespaceList(Db *this);
+
 String *dbWalSwitch(Db *this);
 void dbClose(Db *this);
 

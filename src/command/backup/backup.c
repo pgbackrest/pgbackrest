@@ -585,6 +585,7 @@ backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String 
                                 "new backup type '%s' does not match resumable backup type '%s'", strPtr(cfgOptionStr(cfgOptType)),
                                 strPtr(backupTypeStr(manifestResumeData->backupType)));
                         }
+                        // Check prior backup label
                         else if (!strEq(
                                     manifestResumeData->backupLabelPrior,
                                     manifestData(manifest)->backupLabelPrior ? manifestData(manifest)->backupLabelPrior : NULL))
@@ -594,22 +595,6 @@ backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String 
                                 manifestResumeData->backupLabelPrior ? strPtr(manifestResumeData->backupLabelPrior) : "<undef>",
                                 manifestData(manifest)->backupLabelPrior ?
                                     strPtr(manifestData(manifest)->backupLabelPrior) : "<undef>");
-                        }
-                        // Check compression
-                        else if (manifestResumeData->backupOptionCompress != cfgOptionBool(cfgOptCompress))
-                        {
-                            reason = strNewFmt(
-                                "new compress option '%s' does not match resumable compress option '%s'",
-                                cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
-                                cvtBoolToConstZ(manifestResumeData->backupOptionCompress));
-                        }
-                        // Check hardlink
-                        else if (manifestResumeData->backupOptionHardLink != cfgOptionBool(cfgOptRepoHardlink))
-                        {
-                            reason = strNewFmt(
-                                "new hardlink option '%s' does not match resumable hardlink option '%s'",
-                                cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
-                                cvtBoolToConstZ(manifestResumeData->backupOptionHardLink));
                         }
                         else
                             usable = true;
@@ -706,6 +691,8 @@ typedef struct BackupStartResult
 {
     String *lsn;
     String *walSegmentName;
+    VariantList *dbList;
+    VariantList *tablespaceList;
 } BackupStartResult;
 
 #define FUNCTION_LOG_BACKUP_START_RESULT_TYPE                                                                                      \
@@ -781,32 +768,17 @@ backupStart(BackupPg *pg)
             //            "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
             //            ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
-            DbBackupStartResult backupStart = dbBackupStart(pg->dbPrimary, cfgOptionBool(cfgOptStartFast));
+            DbBackupStartResult dbBackupStartResult = dbBackupStart(pg->dbPrimary, cfgOptionBool(cfgOptStartFast));
 
-            // THROW(AssertError, "ONLINE BACKUPS DISABLED DURING DEVELOPMENT");
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result.lsn = strDup(dbBackupStartResult.lsn);
+            result.walSegmentName = strDup(dbBackupStartResult.walSegmentName);
+            result.dbList = dbList(pg->dbPrimary);
+            result.tablespaceList = dbTablespaceList(pg->dbPrimary);
+            memContextSwitch(MEM_CONTEXT_TEMP());
 
-            // !!! Start the backup
-            // ($strArchiveStart, $strLsnStart, $iWalSegmentSize) =
-            //     $oDbMaster->backupStart(
-            //         PROJECT_NAME . ' backup started at ' . timestampFormat(undef, $rhParam->{timestampStart}),
-            //         cfgOption(CFGOPT_START_FAST));
-            //
-            // Record the archive start location
-            // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
-            // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strLsnStart);
-            // &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
+            LOG_INFO_FMT("backup start archive = %s, lsn = %s", strPtr(result.walSegmentName), strPtr(result.lsn));
 
-            // ---------------------------------------------------------------------------------------------------------------------
-            //
-            // # Get the timeline from the archive
-            // $strTimelineCurrent = substr($strArchiveStart, 0, 8);
-            //
-            // !!! Get tablespace map and set in manifest
-            // $hTablespaceMap = $oDbMaster->tablespaceMapGet();
-            //
-            // !!! Get database map
-            // $hDatabaseMap = $oDbMaster->databaseMapGet();
-            //
             // Wait for replay on the standby to catch up
             if (cfgOptionBool(cfgOptBackupStandby))
             {
@@ -831,10 +803,6 @@ backupStart(BackupPg *pg)
             }
             // !!! NEED TO SET START LSN HERE
 
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result.lsn = strDup(backupStart.lsn);
-            result.walSegmentName = strDup(backupStart.walSegmentName);
-            memContextSwitch(MEM_CONTEXT_TEMP());
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -844,6 +812,7 @@ backupStart(BackupPg *pg)
 /***********************************************************************************************************************************
 Stop the backup
 ***********************************************************************************************************************************/
+// Helper to write a file from a string to the repository and update the manifest
 static void
 backupFilePut(const InfoBackup *infoBackup, Manifest *manifest, const String *name, const String *content)
 {
@@ -946,11 +915,6 @@ backupStop(const InfoBackup *infoBackup, BackupPg *const pg, Manifest *manifest)
 
     BackupStopResult result = {.lsn = NULL};
 
-    // -------------------------------------------------------------------------------------------------------------------------
-    // !!! Stop backup (unless --no-online is set)
-    // my $strArchiveStop = undef;
-    // my $strLsnStop = undef;
-    //
     MEM_CONTEXT_TEMP_BEGIN()
     {
         if (cfgOptionBool(cfgOptOnline))
@@ -1797,7 +1761,7 @@ cmdBackup(void)
         // Build the manifest
         Manifest *manifest = manifestNewBuild(
             pg.storagePrimary, infoPg.version, cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage),
-            strLstNewVarLst(cfgOptionLst(cfgOptExclude)));
+            strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
         // !!! NEED TO GET THIS FROM THE REMOTE AND WAIT REMAINDER WHEN ONLINE
         time_t timestampCopyStart = time(NULL);
@@ -1820,16 +1784,6 @@ cmdBackup(void)
                 backupLabelCreate(backupType(cfgOptionStr(cfgOptType)), manifestData(manifest)->backupLabelPrior, timestampStart));
         }
 
-        // Set all the manifest values we have before the first save
-        manifestBuildUpdate(
-            // !!! SEEMS LIKE THE ARCHIVE CHECK CALCULATION SHOULD BE ONLINE ONLY (WAS COPIED FROM PERL, THOUGH)
-            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, infoPg.id, infoPg.systemId,
-            !cfgOptionBool(cfgOptOnline) || cfgOptionBool(cfgOptArchiveCheck),
-            !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
-            cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptCompress), cfgOptionUInt(cfgOptCompressLevel),
-            cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink), cfgOptionBool(cfgOptOnline),
-            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
-
         // Save the manifest before processing starts
         backupManifestSaveCopy(infoBackup, manifest);
 
@@ -1840,7 +1794,14 @@ cmdBackup(void)
         BackupStopResult backupStopResult = backupStop(infoBackup, &pg, manifest);
 
         // Complete manifest
-        manifestBuildComplete(manifest, time(NULL), backupStopResult.lsn, backupStopResult.walSegmentName);
+        manifestBuildComplete(
+            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, time(NULL), backupStopResult.lsn,
+            backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
+            cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck),
+            !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
+            cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptCompress), cfgOptionUInt(cfgOptCompressLevel),
+            cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink), cfgOptionBool(cfgOptOnline),
+            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
 
         // Remotes no longer needed (free them here so they don't timeout)
         storageHelperFree();
