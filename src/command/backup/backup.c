@@ -1353,6 +1353,7 @@ backupProcess(BackupPg pg, Manifest *manifest)
         const String *const backupLabel = manifestData(manifest)->backupLabel;
         const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel));
         bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepo(), storageFeatureHardLink);
+        bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
         // exist in to repo.  Also create tablspace symlinks when symlinks are available,  This makes it possible for the user to
@@ -1420,7 +1421,7 @@ backupProcess(BackupPg pg, Manifest *manifest)
                 ProtocolParallelJob *job = protocolParallelResult(parallelExec);
 
                 // !!! Should add hostname in here
-                const String *const host = protocolParallelJobProcessId(job) == 0 ? pg.hostPrimary : pg.hostStandby;
+                const String *const host = backupStandby && protocolParallelJobProcessId(job) > 0 ? pg.hostStandby : pg.hostPrimary;
                 String *const fileLog = strNew("");
 
                 if (host != NULL)
