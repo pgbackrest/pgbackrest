@@ -521,52 +521,6 @@ sub versionGet
 }
 
 ####################################################################################################################################
-# backupStop
-####################################################################################################################################
-sub backupStop
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->backupStop');
-
-    # Stop the backup
-    &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .
-               'exclusive pg_stop_backup() and wait for all WAL segments to archive');
-
-    my ($strTimestampDbStop, $strArchiveStop, $strLsnStop, $strLabel, $strTablespaceMap) =
-        $self->executeSqlRow(
-            "select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_" .
-            $self->walId() . "file_name(lsn), lsn::text, " .
-            ($self->{strDbVersion} >= PG_VERSION_96 ?
-                'labelfile, ' .
-                'case when length(trim(both \'\t\n \' from spcmapfile)) = 0 then null else spcmapfile end as spcmapfile' :
-                'null as labelfile, null as spcmapfile') .
-            ' from pg_stop_backup(' .
-            # Add flag to use non-exclusive backup
-            ($self->{strDbVersion} >= PG_VERSION_96 ? 'false' : '') .
-            # Add flag to exit immediately after backup stop rather than waiting for WAL to archive (this is checked later)
-            ($self->{strDbVersion} >= PG_VERSION_10 ? ', false' : '') . ') as lsn');
-
-    # Build a hash of the files that need to be written to the backup
-    my $oFileHash =
-    {
-        &MANIFEST_FILE_BACKUPLABEL => $strLabel,
-        &MANIFEST_FILE_TABLESPACEMAP => $strTablespaceMap
-    };
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strArchiveStop', value => $strArchiveStop},
-        {name => 'strLsnStop', value => $strLsnStop},
-        {name => 'strTimestampDbStop', value => $strTimestampDbStop},
-        {name => 'oFileHash', value => $oFileHash}
-    );
-}
-
-####################################################################################################################################
 # configValidate
 #
 # Validate the database configuration and archiving.

@@ -237,7 +237,7 @@ dbOpen(Db *this)
 }
 
 /**********************************************************************************************************************************/
-// Helper to build start start backup query
+// Helper to build start backup query
 static String *
 dbBackupStartQuery(unsigned int pgVersion, bool startFast)
 {
@@ -262,7 +262,7 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
     else if (pgVersion >= PG_VERSION_84)
         strCatFmt(result, ", false");
 
-    // Disable archive checking in pg_stop_backup() since we already do this
+    // Use non-exclusive backup mode when available
     if (pgVersion >= PG_VERSION_96)
         strCatFmt(result, ", false");
 
@@ -330,6 +330,98 @@ dbBackupStart(Db *this, bool startFast)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(DB_BACKUP_START_RESULT, result);
+}
+/**********************************************************************************************************************************/
+// Helper to build stop backup query
+static String *
+dbBackupStopQuery(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    // Build query to return start lsn and WAL segment name
+    String *result = strNewFmt(
+        "select lsn::text as lsn,\n"
+        "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name",
+        strPtr(pgWalName(pgVersion)));
+
+    // For PostgreSQL >= 9.6 the backup label and tablespace map are returned from pg_stop_backup
+    if (pgVersion >= PG_VERSION_96)
+    {
+        strCat(
+            result,
+            ",\n"
+            "       labelfile::text as backuplabel_file,\n"
+            "       spcmapfile::text as tablespacemap_file");
+    }
+
+    // Build stop backup function
+    strCat(
+        result,
+        "\n"
+        "  from pg_stop_backup(");
+
+    // Use non-exclusive backup mode when available
+    if (pgVersion >= PG_VERSION_96)
+        strCatFmt(result, "false");
+
+    // Disable archive checking in pg_stop_backup() since we do this elsewhere
+    if (pgVersion >= PG_VERSION_10)
+        strCatFmt(result, ", false");
+
+    // Complete query
+    strCatFmt(result, ")");
+
+    if (pgVersion < PG_VERSION_96)
+        strCatFmt(result, " as lsn");
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+#define FUNCTION_LOG_DB_BACKUP_STOP_RESULT_TYPE                                                                                   \
+    DbBackupStopResult
+#define FUNCTION_LOG_DB_BACKUP_STOP_RESULT_FORMAT(value, buffer, bufferSize)                                                      \
+    objToLog(&value, "DbBackupStopResult", buffer, bufferSize)
+
+DbBackupStopResult
+dbBackupStop(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    DbBackupStopResult result = {.lsn = NULL};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Stop backup
+        VariantList *row = dbQueryRow(this, dbBackupStopQuery(dbPgVersion(this)));
+
+        // Check if the tablespace map is empty
+        bool tablespaceMapEmpty = strSize(strTrim(strDup(varStr(varLstGet(row, 3))))) == 0;
+
+        // Return results
+        memContextSwitch(MEM_CONTEXT_OLD());
+
+        result.lsn = strDup(varStr(varLstGet(row, 0)));
+        result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
+
+        if (dbPgVersion(this) >= PG_VERSION_96)
+        {
+            result.backupLabel = strDup(varStr(varLstGet(row, 2)));
+
+            if (!tablespaceMapEmpty)
+                result.tablespaceMap = strDup(varStr(varLstGet(row, 3)));
+        }
+
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(DB_BACKUP_STOP_RESULT, result);
 }
 
 /***********************************************************************************************************************************

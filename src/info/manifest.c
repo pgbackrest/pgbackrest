@@ -211,7 +211,7 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-static void
+void
 manifestFileAdd(Manifest *this, const ManifestFile *file)
 {
     FUNCTION_TEST_BEGIN();
@@ -1197,16 +1197,20 @@ manifestBuildUpdate(
 
 /**********************************************************************************************************************************/
 void
-manifestBuildComplete(Manifest *this, time_t timestampStop)
+manifestBuildComplete(Manifest *this, time_t timestampStop, const String *lsnStop, const String *archiveStop)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(TIME, timestampStop);
+        FUNCTION_LOG_PARAM(STRING, lsnStop);
+        FUNCTION_LOG_PARAM(STRING, archiveStop);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         this->data.backupTimestampStop = timestampStop;
+        this->data.lsnStop = strDup(lsnStop);
+        this->data.archiveStop = strDup(archiveStop);
     }
     MEM_CONTEXT_END();
 
@@ -2129,6 +2133,9 @@ manifestSave(Manifest *this, IoWrite *write)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Files can be added from outside the manifest so make sure they are sorted
+        lstSort(this->fileList, sortOrderAsc);
+
         ManifestSaveData saveData =
         {
             .manifest = this,

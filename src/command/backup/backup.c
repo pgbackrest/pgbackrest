@@ -4,6 +4,7 @@ Backup Command
 #include "build.auto.h"
 
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -17,6 +18,7 @@ Backup Command
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/compress.h"
 #include "common/debug.h"
+#include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/type/convert.h"
 #include "config/config.h"
@@ -147,6 +149,7 @@ typedef struct BackupPg
     const Storage *storageStandby;
     const String *hostStandby;
 
+    unsigned int version;                                           // PostgreSQL version
     unsigned int pageSize;                                          // PostgreSQL page size
 } BackupPg;
 
@@ -198,6 +201,7 @@ backupPgGet(const InfoBackup *infoBackup)
             infoPg.systemId);
     }
 
+    result.version = pgControl.version;
     result.pageSize = pgControl.pageSize;
 
     // If checksum page is not explicity set then automatically enable it when checksums are available
@@ -723,8 +727,8 @@ backupStart(BackupPg *pg)
         // If this is an offline backup
         if (!cfgOptionBool(cfgOptOnline))
         {
-            // If checksum-page is not explicitly enabled then disable it.  We can now detect checksums by reading pg_control directly
-            // but the integration tests can't properly enable checksums.
+            // If checksum-page is not explicitly enabled then disable it.  We can now detect checksums by reading pg_control
+            // directly but the integration tests can't properly enable checksums.
             if (!cfgOptionTest(cfgOptChecksumPage))
                 cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
 
@@ -734,8 +738,9 @@ backupStart(BackupPg *pg)
                 if (cfgOptionBool(cfgOptForce))
                 {
                     LOG_WARN(
-                        "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMASTERPID " exists but --" CFGOPT_FORCE " was passed so backup"
-                        " will continue though it looks like the postmaster is running and the backup will probably not be consistent");
+                        "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMASTERPID " exists but --" CFGOPT_FORCE " was passed so"
+                        " backup will continue though it looks like the postmaster is running and the backup will probably not be"
+                        " consistent");
                 }
                 else
                 {
@@ -749,10 +754,10 @@ backupStart(BackupPg *pg)
         // Else start the backup normally
         else
         {
-            // -------------------------------------------------------------------------------------------------------------------------
+            // ---------------------------------------------------------------------------------------------------------------------
             // !!! DO CONFIG VALIDATE -- HOW MUCH OF THIS IS IN CHECK?
 
-            // -------------------------------------------------------------------------------------------------------------------------
+            // ---------------------------------------------------------------------------------------------------------------------
             // !!!    # Else emit a warning that the feature is not supported and continue.  If a backup is running then an error will be
             //     # generated later on.
             //     else
@@ -762,7 +767,7 @@ backupStart(BackupPg *pg)
             // }
             // !!! ALSO CHECK IF SET IN >= 9.6 where it is useless
 
-            // -------------------------------------------------------------------------------------------------------------------------
+            // ---------------------------------------------------------------------------------------------------------------------
             // !!! Only allow start-fast option for version >= 8.4
             // if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
             // {
@@ -770,7 +775,12 @@ backupStart(BackupPg *pg)
             //     $bStartFast = false;
             // }
 
-            // -------------------------------------------------------------------------------------------------------------------------
+            // ---------------------------------------------------------------------------------------------------------------------
+            // !!! Start the backup
+            // &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .
+            //            "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
+            //            ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
+
             DbBackupStartResult backupStart = dbBackupStart(pg->dbPrimary, cfgOptionBool(cfgOptStartFast));
 
             // THROW(AssertError, "ONLINE BACKUPS DISABLED DURING DEVELOPMENT");
@@ -786,7 +796,7 @@ backupStart(BackupPg *pg)
             // $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strLsnStart);
             // &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
 
-            // -------------------------------------------------------------------------------------------------------------------------
+            // ---------------------------------------------------------------------------------------------------------------------
             //
             // # Get the timeline from the archive
             // $strTimelineCurrent = substr($strArchiveStart, 0, 8);
@@ -835,62 +845,137 @@ backupStart(BackupPg *pg)
 Stop the backup
 ***********************************************************************************************************************************/
 static void
-backupStop(BackupPg *const pg)
+backupFilePut(const InfoBackup *infoBackup, Manifest *manifest, const String *name, const String *content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(STRING, content);
     FUNCTION_LOG_END();
+
+    // Skip files with no content
+    if (content != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Create file
+            const String *manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(name));
+            bool compress = cfgOptionBool(cfgOptCompress);
+
+            StorageWrite *write = storageNewWriteP(
+                storageRepoWrite(),
+                strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
+                    compress ? "." GZIP_EXT : ""),
+                .compressible = true);
+
+            IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+
+            // Add SHA1 filter
+            ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+
+            // Add compression
+            if (compress)
+            {
+                ioFilterGroupAdd(
+                    ioWriteFilterGroup(storageWriteIo(write)), gzipCompressNew((int)cfgOptionUInt(cfgOptCompressLevel), false));
+            }
+
+            // Add encryption filter if required
+            cipherBlockFilterGroupAdd(
+                filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+                infoPgCipherPass(infoBackupPg(infoBackup)));
+
+            // Add size filter last to calculate repo size
+            ioFilterGroupAdd(filterGroup, ioSizeNew());
+
+            // Write file
+            storagePutP(write, BUFSTR(content));
+
+            // Use base path to set ownership and mode
+            const ManifestPath *basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+
+            // Add to manifest
+            ManifestFile file =
+            {
+                .name = manifestName,
+                .primary = true,
+                .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
+                .user = basePath->user,
+                .group = basePath->group,
+                .size = strSize(content),
+                .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
+                .timestamp = time(NULL),
+            };
+
+            memcpy(
+                file.checksumSha1, strPtr(varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))),
+                HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+            manifestFileAdd(manifest, &file);
+
+            LOG_DETAIL_FMT("wrote '%s' file returned from pg_stop_backup()", strPtr(name));
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/*--------------------------------------------------------------------------------------------------------------------------------*/
+typedef struct BackupStopResult
+{
+    String *lsn;
+    String *walSegmentName;
+} BackupStopResult;
+
+#define FUNCTION_LOG_BACKUP_STOP_RESULT_TYPE                                                                                       \
+    BackupStopResult
+#define FUNCTION_LOG_BACKUP_STOP_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
+    objToLog(&value, "BackupStopResult", buffer, bufferSize)
+
+static BackupStopResult
+backupStop(const InfoBackup *infoBackup, BackupPg *const pg, Manifest *manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    BackupStopResult result = {.lsn = NULL};
 
     // -------------------------------------------------------------------------------------------------------------------------
     // !!! Stop backup (unless --no-online is set)
     // my $strArchiveStop = undef;
     // my $strLsnStop = undef;
     //
-    // if (cfgOption(CFGOPT_ONLINE))
-    // {
-    //     ($strArchiveStop, $strLsnStop, my $strTimestampDbStop, my $oFileHash) = $oDbMaster->backupStop();
-    //
-    //     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
-    //     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef, $strLsnStop);
-    //     &log(INFO, "backup stop archive = ${strArchiveStop}, lsn = ${strLsnStop}");
-    //
-    //     # Write out files returned from stop backup
-    //     foreach my $strFile (sort(keys(%{$oFileHash})))
-    //     {
-    //         # Only save the file if it has content
-    //         if (defined($oFileHash->{$strFile}))
-    //         {
-    //             my $rhyFilter = [{strClass => STORAGE_FILTER_SHA}];
-    //
-    //             # Add compression filter
-    //             if (cfgOption(CFGOPT_COMPRESS))
-    //             {
-    //                 push(
-    //                     @{$rhyFilter},
-    //                     {strClass => STORAGE_FILTER_GZIP, rxyParam => [STORAGE_COMPRESS, false, cfgOption(CFGOPT_COMPRESS_LEVEL)]});
-    //             }
-    //
-    //             # If the backups are encrypted, then the passphrase for the backup set from the manifest file is required to access
-    //             # the file in the repo
-    //             my $oDestinationFileIo = storageRepo()->openWrite(
-    //                 STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/${strFile}" .
-    //                     (cfgOption(CFGOPT_COMPRESS) ? qw{.} . COMPRESS_EXT : ''),
-    //                 {rhyFilter => $rhyFilter,
-    //                     strCipherPass => defined($strCipherPassBackupSet) ? $strCipherPassBackupSet : undef});
-    //
-    //             # Write content out to a file
-    //             storageRepo()->put($oDestinationFileIo, $oFileHash->{$strFile});
-    //
-    //             # Add file to manifest
-    //             $oBackupManifest->fileAdd(
-    //                 $strFile, time(), length($oFileHash->{$strFile}), $oDestinationFileIo->result(STORAGE_FILTER_SHA), true);
-    //
-    //             &log(DETAIL, "wrote '${strFile}' file returned from pg_stop_backup()");
-    //         }
-    //     }
-    // }
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        if (cfgOptionBool(cfgOptOnline))
+        {
+            // Stop the backup
+            LOG_INFO_FMT(
+                "execute %sexclusive pg_stop_backup() and wait for all WAL segments to archive",
+                pg->version >= PG_VERSION_96 ? "non-" : "");
 
-    FUNCTION_LOG_RETURN_VOID();
+            DbBackupStopResult dbBackupStopResult = dbBackupStop(pg->dbPrimary);
+
+            backupFilePut(infoBackup, manifest, STRDEF(PG_FILE_BACKUPLABEL), dbBackupStopResult.backupLabel);
+            backupFilePut(infoBackup, manifest, STRDEF(PG_FILE_TABLESPACEMAP), dbBackupStopResult.tablespaceMap);
+
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result.lsn = strDup(dbBackupStopResult.lsn);
+            result.walSegmentName = strDup(dbBackupStopResult.walSegmentName);
+            memContextSwitch(MEM_CONTEXT_TEMP());
+
+            LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strPtr(result.walSegmentName), strPtr(result.lsn));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BACKUP_STOP_RESULT, result);
 }
 
 /***********************************************************************************************************************************
@@ -1752,10 +1837,10 @@ cmdBackup(void)
         backupProcess(pg, manifest);
 
         // Stop the backup
-        backupStop(&pg);
+        BackupStopResult backupStopResult = backupStop(infoBackup, &pg, manifest);
 
         // Complete manifest
-        manifestBuildComplete(manifest, time(NULL));
+        manifestBuildComplete(manifest, time(NULL), backupStopResult.lsn, backupStopResult.walSegmentName);
 
         // Remotes no longer needed (free them here so they don't timeout)
         storageHelperFree();

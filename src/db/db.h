@@ -28,7 +28,7 @@ Functions
 ***********************************************************************************************************************************/
 void dbOpen(Db *this);
 
-// Start a backup and return starting lsn and wal segment name
+// Start backup and return starting lsn and wal segment name
 typedef struct DbBackupStartResult
 {
     String *lsn;
@@ -36,6 +36,17 @@ typedef struct DbBackupStartResult
 } DbBackupStartResult;
 
 DbBackupStartResult dbBackupStart(Db *this, bool startFast);
+
+// Stop backup and return starting lsn, wal segment name, backup label, and tablspace map
+typedef struct DbBackupStopResult
+{
+    String *lsn;
+    String *walSegmentName;
+    String *backupLabel;
+    String *tablespaceMap;
+} DbBackupStopResult;
+
+DbBackupStopResult dbBackupStop(Db *this);
 
 bool dbIsStandby(Db *this);
 String *dbWalSwitch(Db *this);

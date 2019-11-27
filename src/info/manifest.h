@@ -173,7 +173,7 @@ void manifestBuildUpdate(
     unsigned int optionProcessMax, bool optionStandby);
 
 // Set remaining values before the final save
-void manifestBuildComplete(Manifest *this, time_t timestampStop);
+void manifestBuildComplete(Manifest *this, time_t timestampStop, const String *lsnStop, const String *archiveStop);
 
 /***********************************************************************************************************************************
 Functions
@@ -194,6 +194,7 @@ unsigned int manifestDbTotal(const Manifest *this);
 File functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestFile *manifestFile(const Manifest *this, unsigned int fileIdx);
+void manifestFileAdd(Manifest *this, const ManifestFile *file);
 const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
 const ManifestFile *manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault);
 void manifestFileRemove(const Manifest *this, const String *name);
