@@ -1221,21 +1221,24 @@ manifestBuildComplete(
         this->data.pgSystemId = pgSystemId;
 
         // Save db list
-        for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbList); dbIdx++)
+        if (dbList != NULL)
         {
-            const VariantList *dbRow = varVarLst(varLstGet(dbList, dbIdx));
-
-            ManifestDb db =
+            for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbList); dbIdx++)
             {
-                .id = varUIntForce(varLstGet(dbRow, 0)),
-                .name = varStr(varLstGet(dbRow, 1)),
-                .lastSystemId = varUIntForce(varLstGet(dbRow, 2)),
-            };
+                const VariantList *dbRow = varVarLst(varLstGet(dbList, dbIdx));
 
-            manifestDbAdd(this, &db);
+                ManifestDb db =
+                {
+                    .id = varUIntForce(varLstGet(dbRow, 0)),
+                    .name = varStr(varLstGet(dbRow, 1)),
+                    .lastSystemId = varUIntForce(varLstGet(dbRow, 2)),
+                };
+
+                manifestDbAdd(this, &db);
+            }
+
+            lstSort(this->dbList, sortOrderAsc);
         }
-
-        lstSort(this->dbList, sortOrderAsc);
 
         // Save options
         this->data.backupOptionArchiveCheck = optionArchiveCheck;

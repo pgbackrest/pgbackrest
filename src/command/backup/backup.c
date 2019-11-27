@@ -13,6 +13,7 @@ Backup Command
 #include "command/backup/common.h"
 #include "command/backup/file.h"
 #include "command/backup/protocol.h"
+#include "command/check/common.h"
 #include "command/stanza/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/compress/gzip/common.h"
@@ -742,9 +743,6 @@ backupStart(BackupPg *pg)
         else
         {
             // ---------------------------------------------------------------------------------------------------------------------
-            // !!! DO CONFIG VALIDATE -- HOW MUCH OF THIS IS IN CHECK?
-
-            // ---------------------------------------------------------------------------------------------------------------------
             // !!!    # Else emit a warning that the feature is not supported and continue.  If a backup is running then an error will be
             //     # generated later on.
             //     else
@@ -762,9 +760,11 @@ backupStart(BackupPg *pg)
             //     $bStartFast = false;
             // }
 
-            // ---------------------------------------------------------------------------------------------------------------------
-            // !!! Start the backup
-            // &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .
+            // Check database configuration
+            checkDbConfig(pg->version, pg->pgIdPrimary, pg->dbPrimary, false);
+
+            // Start backup
+            // !!! &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .
             //            "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
             //            ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
