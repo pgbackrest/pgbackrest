@@ -438,8 +438,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
     unsigned int pgVersion = buildData.manifest->data.pgVersion;
 
     // Contruct the name used to identify this file/link/path in the manifest
-    strPtr(info->name);
-    strPtr(buildData.manifestParentName);
     const String *manifestName = strNewFmt("%s/%s", strPtr(buildData.manifestParentName), strPtr(info->name));
 
     // Skip excluded files/links/paths
@@ -493,42 +491,50 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
             if (strEq(buildData.manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
+                // Skip pg_dynshmem/* since these files cannot be reused on recovery
                 if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
                 }
 
-                if (strEqZ(info->name, PG_PATH_PGNOTIFY))
+                // Skip pg_notify/* since these files cannot be reused on recovery
+                if (strEqZ(info->name, PG_PATH_PGNOTIFY) && pgVersion >= PG_VERSION_90)
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
                 }
 
+                // Skip pg_replslot/* since these files are generally not useful after a restore
                 if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && pgVersion >= PG_VERSION_94)
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
                 }
 
+                // Skip pg_serial/* since these files are reset
                 if (strEqZ(info->name, PG_PATH_PGSERIAL) && pgVersion >= PG_VERSION_91)
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
                 }
 
+                // Skip pg_snapshots/* since these files cannot be reused on recovery
                 if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && pgVersion >= PG_VERSION_92)
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
                 }
 
-                if (strEqZ(info->name, PG_PATH_PGSTATTMP))
+                // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
+                // created there
+                if (strEqZ(info->name, PG_PATH_PGSTATTMP) && pgVersion >= PG_VERSION_84)
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
                 }
 
+                // Skip pg_subtrans/* since these files are reset
                 if (strEqZ(info->name, PG_PATH_PGSUBTRANS))
                 {
                     FUNCTION_TEST_RETURN_VOID();
@@ -562,6 +568,14 @@ manifestBuildCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeFile:
         {
+            // There should not be any files in pg_tblspc
+            if (strEqZ(buildData.manifestParentName, MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC))
+            {
+                THROW_FMT(
+                    LinkExpectedError, "'%s' is not a symlink - " MANIFEST_TARGET_PGTBLSPC " should contain only symlinks",
+                    strPtr(manifestName));
+            }
+
             // Skip pg_internal.init since it is recreated on startup
             if (strEqZ(info->name, PG_FILE_PGINTERNALINIT))
             {
@@ -573,7 +587,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             if (strEq(buildData.manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
                 // Skip recovery files
-                if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_RECOVERYSIGNAL)) &&
+                if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_STANDBYSIGNAL)) &&
                         pgVersion >= PG_VERSION_12) ||
                     ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
                             pgVersion < PG_VERSION_12) ||
@@ -914,7 +928,7 @@ manifestNewBuild(
         // -------------------------------------------------------------------------------------------------------------------------
         if (pgVersion >= PG_VERSION_91)
         {
-            RegExp *relationExp = regExpNew(STRDEF("^" DB_PATH_EXP "/" RELATION_EXP "$"));
+            RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strPtr(buildData.tablespaceId)));
             unsigned int fileIdx = 0;
             const String *lastRelationFileId = NULL;
             bool lastRelationFileIdUnlogged = false;
@@ -991,7 +1005,7 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
     }
     MEM_CONTEXT_END();
 
-    // Check the manifest for timestamp anomolies that require a delta backup (if delta is not already specified)
+    // Check the manifest for timestamp anomalies that require a delta backup (if delta is not already specified)
     if (!varBool(this->data.backupOptionDelta))
     {
         MEM_CONTEXT_TEMP_BEGIN()
@@ -1067,7 +1081,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             this->data.backupOptionDelta = BOOL_TRUE_VAR;
         }
 
-        // Check for anomolies between manifests if delta is not already enabled.  This can't be combined with the main comparison
+        // Check for anomalies between manifests if delta is not already enabled.  This can't be combined with the main comparison
         // loop below because delta changes the behavior of that loop.
         if (!varBool(this->data.backupOptionDelta))
         {
@@ -1234,6 +1248,8 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 .timestamp = (time_t)varUInt64(kvGet(fileKv, MANIFEST_KEY_TIMESTAMP_VAR)),
             };
 
+            // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
+            // the repo-size is only stored in the manifest file if it is different than size.
             file.sizeRepo = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.size)));
 
             // If file size is zero then assign the static zero hash
