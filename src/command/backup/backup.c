@@ -172,7 +172,7 @@ backupPgGet(const InfoBackup *infoBackup)
 
     if (cfgOptionBool(cfgOptOnline))
     {
-        DbGetResult dbInfo = dbGet(!backupStandby, true);
+        DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
 
         result.pgIdPrimary = dbInfo.primaryId;
         result.dbPrimary = dbInfo.primary;

@@ -118,7 +118,7 @@ testRun(void)
             {.function = NULL}
         });
 
-        TEST_ERROR(dbGet(true, true), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
         harnessLogResult(
             "P00   WARN: unable to check pg-1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
 
@@ -135,7 +135,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ERROR(dbGet(true, true), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
 
         // Primary cluster found
         // -------------------------------------------------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ASSIGN(result, dbGet(true, true), "get primary only");
+        TEST_ASSIGN(result, dbGet(true, true, false), "get primary only");
 
         TEST_RESULT_INT(result.primaryId, 1, "    check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
@@ -178,7 +178,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ERROR(dbGet(true, true), DbConnectError, "more than one primary cluster found");
+        TEST_ERROR(dbGet(true, true, false), DbConnectError, "more than one primary cluster found");
 
         // Two standbys found but no primary
         // -------------------------------------------------------------------------------------------------------------------------
@@ -193,7 +193,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ERROR(dbGet(false, true), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(dbGet(false, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
 
         // Two standbys and primary not required
         // -------------------------------------------------------------------------------------------------------------------------
@@ -208,7 +208,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ASSIGN(result, dbGet(false, false), "get standbys");
+        TEST_ASSIGN(result, dbGet(false, false, false), "get standbys");
 
         TEST_RESULT_INT(result.primaryId, 0, "    check primary id");
         TEST_RESULT_BOOL(result.primary == NULL, true, "    check primary");
@@ -253,7 +253,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ASSIGN(result, dbGet(false, true), "get primary and standy");
+        TEST_ASSIGN(result, dbGet(false, true, false), "get primary and standy");
         harnessLogResultRegExp(
             "P00   WARN: unable to check pg-4: \\[DbConnectError\\] unable to connect to 'dbname='postgres' port=5433': error\n"
             "P00   WARN: unable to check pg-5: \\[DbConnectError\\] raised from remote-0 protocol on 'localhost':"

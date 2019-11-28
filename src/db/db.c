@@ -403,7 +403,8 @@ dbBackupStop(Db *this)
         VariantList *row = dbQueryRow(this, dbBackupStopQuery(dbPgVersion(this)));
 
         // Check if the tablespace map is empty
-        bool tablespaceMapEmpty = strSize(strTrim(strDup(varStr(varLstGet(row, 3))))) == 0;
+        bool tablespaceMapEmpty =
+            dbPgVersion(this) >= PG_VERSION_96 ? strSize(strTrim(strDup(varStr(varLstGet(row, 3))))) == 0 : false;
 
         // Return results
         memContextSwitch(MEM_CONTEXT_OLD());
