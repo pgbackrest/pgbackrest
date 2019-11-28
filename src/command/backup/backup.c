@@ -234,6 +234,39 @@ backupPgGet(const InfoBackup *infoBackup)
     FUNCTION_LOG_RETURN(BACKUP_PG, result);
 }
 
+/**********************************************************************************************************************************
+Get time from the database or locally depending on online
+***********************************************************************************************************************************/
+static time_t
+backupTime(BackupPg *pg, bool waitRemainder)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+        FUNCTION_LOG_PARAM(BOOL, waitRemainder);
+    FUNCTION_LOG_END();
+
+    // Offline backups will just grab the time from the local system since the value of copyStart is not important in this context.
+    // No worries about causing a delta backup since switching online will do that anyway.
+    time_t result = time(NULL);
+
+    // When online get the time from the database server
+    if (cfgOptionBool(cfgOptOnline))
+    {
+        // Get time from the database
+        TimeMSec timeMSec = dbTimeMSec(pg->dbPrimary);
+        result = timeMSec / 1000;
+
+        // Sleep the remainder of the second when requested (this is so copyStart is not subject to one second resolution issues)
+        sleepMSec(1000 - (timeMSec % 1000));
+
+        // Check time again to be sure we slept long enough
+        if (result >= (time_t)(dbTimeMSec(pg->dbPrimary) / 1000))
+            THROW(AssertError, "invalid sleep for online backup time with wait remainder");
+    }
+
+    FUNCTION_LOG_RETURN(TIME, result);
+}
+
 /***********************************************************************************************************************************
 Create an incremental backup if type is not full and a prior backup exists
 ***********************************************************************************************************************************/
@@ -810,10 +843,11 @@ Stop the backup
 ***********************************************************************************************************************************/
 // Helper to write a file from a string to the repository and update the manifest
 static void
-backupFilePut(const InfoBackup *infoBackup, Manifest *manifest, const String *name, const String *content)
+backupFilePut(const InfoBackup *infoBackup, BackupPg *pg, Manifest *manifest, const String *name, const String *content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(STRING, content);
@@ -871,7 +905,7 @@ backupFilePut(const InfoBackup *infoBackup, Manifest *manifest, const String *na
                 .group = basePath->group,
                 .size = strSize(content),
                 .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
-                .timestamp = time(NULL),
+                .timestamp = backupTime(pg, false),
             };
 
             memcpy(
@@ -922,8 +956,8 @@ backupStop(const InfoBackup *infoBackup, BackupPg *const pg, Manifest *manifest)
 
             DbBackupStopResult dbBackupStopResult = dbBackupStop(pg->dbPrimary);
 
-            backupFilePut(infoBackup, manifest, STRDEF(PG_FILE_BACKUPLABEL), dbBackupStopResult.backupLabel);
-            backupFilePut(infoBackup, manifest, STRDEF(PG_FILE_TABLESPACEMAP), dbBackupStopResult.tablespaceMap);
+            backupFilePut(infoBackup, pg, manifest, STRDEF(PG_FILE_BACKUPLABEL), dbBackupStopResult.backupLabel);
+            backupFilePut(infoBackup, pg, manifest, STRDEF(PG_FILE_TABLESPACEMAP), dbBackupStopResult.tablespaceMap);
 
             memContextSwitch(MEM_CONTEXT_OLD());
             result.lsn = strDup(dbBackupStopResult.lsn);
@@ -1729,9 +1763,6 @@ cmdBackup(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // Get the start timestamp which will later be written into the manifest to track total backup time
-    time_t timestampStart = time(NULL);
-
     // Verify the repo is local
     repoIsLocalVerify();
 
@@ -1749,6 +1780,9 @@ cmdBackup(void)
         // Get pg storage and database objects
         BackupPg pg = backupPgGet(infoBackup);
 
+        // Get the start timestamp which will later be written into the manifest to track total backup time
+        time_t timestampStart = backupTime(&pg, false);
+
         // Check if there is a prior manifest if diff/incr
         Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
 
@@ -1760,13 +1794,8 @@ cmdBackup(void)
             pg.storagePrimary, infoPg.version, cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage),
             strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
-        // !!! NEED TO GET THIS FROM THE REMOTE AND WAIT REMAINDER WHEN ONLINE
-        time_t timestampCopyStart = time(NULL);
-
-        if (cfgOptionBool(cfgOptOnline))
-            sleepMSec(1000);
-
-        manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), timestampCopyStart);
+        // Validate the manifest using the copy start time
+        manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), backupTime(&pg, true));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior))
@@ -1795,8 +1824,8 @@ cmdBackup(void)
 
         // Complete manifest
         manifestBuildComplete(
-            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, time(NULL), backupStopResult.lsn,
-            backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
+            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, backupTime(&pg, false),
+            backupStopResult.lsn, backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
             cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
             cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptCompress), cfgOptionUInt(cfgOptCompressLevel),

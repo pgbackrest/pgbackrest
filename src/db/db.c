@@ -585,6 +585,18 @@ dbTablespaceList(Db *this)
     FUNCTION_LOG_RETURN(VARIANT_LIST, dbQuery(this, STRDEF("select oid::oid, spcname::text from pg_catalog.pg_tablespace")));
 }
 
+/**********************************************************************************************************************************/
+TimeMSec
+dbTimeMSec(Db *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        UINT64, varInt64(dbQueryColumn(this, STRDEF("select (extract(epoch from clock_timestamp()) * 1000)::bigint"))));
+}
+
 /***********************************************************************************************************************************
 Switch the WAL segment and return the segment that should have been archived
 ***********************************************************************************************************************************/

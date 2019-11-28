@@ -56,6 +56,9 @@ VariantList *dbList(Db *this);
 // Waits for replay on the standby to equal the target LSN
 void dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout);
 
+// Epoch time on the PostgreSQL host in ms
+TimeMSec dbTimeMSec(Db *this);
+
 // Get list of tablespaces in the cluster: select oid, datname, datlastsysoid from pg_database
 VariantList *dbTablespaceList(Db *this);
 
