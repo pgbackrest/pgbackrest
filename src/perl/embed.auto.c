@@ -1428,7 +1428,7 @@ static const EmbeddedModule embeddedModule[] =
             "!cfgOption(CFGOPT_ONLINE) ||\n"
             "(cfgOption(CFGOPT_ARCHIVE_CHECK) && cfgOption(CFGOPT_ARCHIVE_COPY)));\n"
             "$oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,\n"
-            "!cfgOption(CFGOPT_ONLINE) || cfgOption(CFGOPT_ARCHIVE_CHECK));\n"
+            "cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_ARCHIVE_CHECK));\n"
             "$oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_PROCESS_MAX, undef, cfgOption(CFGOPT_PROCESS_MAX));\n"
             "\n\n"
             "$oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);\n"
