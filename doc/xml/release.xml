@@ -13,6 +13,15 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.20dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fix reference list when <file>backup.info</file> is reconstructed in <cmd>expire</cmd> command.</p>
+
+                        <p>Since the <cmd>backup</cmd> command is still using the <proper>Perl</proper> version of reconstruct this issue will not express unless <b>1)</b> there is a backup missing from <file>backup.info</file> and <b>2)</b> the <cmd>expire</cmd> command is run directly instead of running after <cmd>backup</cmd> as usual. This unlikely combination of events means this is probably not a problem in the field.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
         </release>
 
         <release date="2019-11-12" version="2.19" title="C Migrations and Bug Fixes">

@@ -385,6 +385,8 @@ testRun(void)
             "pg_data/postgresql.conf={\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\",\"master\":true,\"size\":4457"
                 ",\"timestamp\":1565282114}\n"
             "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
+            "pg_data/dupref={\"master\":true,\"mode\":\"0640\",\"reference\":\"20190818-084502F\",\"size\":0"
+                ",\"timestamp\":1565282120,\"user\":false}\n"
             TEST_MANIFEST_FILE_DEFAULT
             "\n"
             "[target:link]\n"
