@@ -594,7 +594,7 @@ dbTimeMSec(Db *this)
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
-        UINT64, varInt64(dbQueryColumn(this, STRDEF("select (extract(epoch from clock_timestamp()) * 1000)::bigint"))));
+        TIME_MSEC, varUInt64Force(dbQueryColumn(this, STRDEF("select (extract(epoch from clock_timestamp()) * 1000)::bigint"))));
 }
 
 /***********************************************************************************************************************************

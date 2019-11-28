@@ -254,7 +254,7 @@ backupTime(BackupPg *pg, bool waitRemainder)
     {
         // Get time from the database
         TimeMSec timeMSec = dbTimeMSec(pg->dbPrimary);
-        result = timeMSec / 1000;
+        result = (time_t)(timeMSec / 1000);
 
         // Sleep the remainder of the second when requested (this is so copyStart is not subject to one second resolution issues)
         sleepMSec(1000 - (timeMSec % 1000));
