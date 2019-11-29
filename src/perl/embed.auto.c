@@ -9566,6 +9566,7 @@ static const EmbeddedModule embeddedModule[] =
             "use pgBackRest::Common::Io::Buffered;\n"
             "use pgBackRest::Common::Wait;\n"
             "use pgBackRest::Config::Config;\n"
+            "use pgBackRest::Db;\n"
             "use pgBackRest::Protocol::Command::Minion;\n"
             "use pgBackRest::Protocol::Helper;\n"
             "use pgBackRest::Protocol::Storage::Helper;\n"
