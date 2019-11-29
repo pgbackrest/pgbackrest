@@ -10,7 +10,6 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Wait;

@@ -11102,7 +11102,6 @@ static const EmbeddedModule embeddedModule[] =
             "\n"
             "use File::Basename qw(dirname);\n"
             "\n"
-            "use pgBackRest::Backup::File;\n"
             "use pgBackRest::Common::Log;\n"
             "use pgBackRest::Common::Io::Buffered;\n"
             "use pgBackRest::Common::Wait;\n"
