@@ -79,6 +79,9 @@ storageNew(
     this->write = write;
     this->pathExpressionFunction = pathExpressionFunction;
 
+    // If path sync feature is enabled then path feature must be enabled
+    CHECK(!storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath));
+
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
