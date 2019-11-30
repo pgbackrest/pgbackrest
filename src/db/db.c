@@ -280,11 +280,12 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
     objToLog(&value, "DbBackupStartResult", buffer, bufferSize)
 
 DbBackupStartResult
-dbBackupStart(Db *this, bool startFast)
+dbBackupStart(Db *this, bool startFast, bool stopAuto)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
         FUNCTION_LOG_PARAM(BOOL, startFast);
+        FUNCTION_LOG_PARAM(BOOL, stopAuto);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -304,21 +305,19 @@ dbBackupStart(Db *this, bool startFast)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // !!! If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups are
-        // # run in non-exclusive mode.
-        // if (cfgOption(CFGOPT_STOP_AUTO) && $self->{strDbVersion} < PG_VERSION_96)
-        // {
-        //     # Running backups can only be detected in PostgreSQL >= 9.3
-        //     if ($self->{strDbVersion} >= PG_VERSION_93)
-        //     {
-        //         # If a backup is currently in progress emit a warning and then stop it
-        //         if ($self->executeSqlOne('select pg_is_in_backup()'))
-        //         {
-        //             &log(WARN, 'the cluster is already in backup mode but no ' . PROJECT_NAME . ' backup process is running.' .
-        //                        ' pg_stop_backup() will be called so a new backup can be started.');
-        //             $self->backupStop();
-        //         }
-        //     }
+        // If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups
+        // are run in non-exclusive mode.
+        if (stopAuto && dbPgVersion(this) >= PG_VERSION_93 && dbPgVersion(this) < PG_VERSION_96)
+        {
+            if (varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_backup()::bool"))))
+            {
+                LOG_WARN(
+                    "the cluster is already in backup mode but no " PROJECT_NAME " backup process is running."
+                    " pg_stop_backup() will be called so a new backup can be started.");
+
+                dbBackupStop(this);
+            }
+        }
 
         // Start backup
         VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));

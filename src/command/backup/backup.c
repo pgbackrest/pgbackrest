@@ -804,7 +804,8 @@ backupStart(BackupPg *pg)
             //            "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
             //            ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
-            DbBackupStartResult dbBackupStartResult = dbBackupStart(pg->dbPrimary, cfgOptionBool(cfgOptStartFast));
+            DbBackupStartResult dbBackupStartResult = dbBackupStart(
+                pg->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto));
 
             memContextSwitch(MEM_CONTEXT_OLD());
             result.lsn = strDup(dbBackupStartResult.lsn);
