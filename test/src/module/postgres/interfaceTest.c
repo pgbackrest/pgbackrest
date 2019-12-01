@@ -104,6 +104,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgTablespaceId(), pgWalName(), and pgXactPath()"))
     {
+        TEST_RESULT_STR(strPtr(pgLsnName(PG_VERSION_96)), "location", "check location name");
+        TEST_RESULT_STR(strPtr(pgLsnName(PG_VERSION_10)), "lsn", "check lsn name");
+
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_84), NULL, "check 8.4 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_90), "PG_9.0_201008051", "check 9.0 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94), "PG_9.4_201409291", "check 9.4 tablespace id");
