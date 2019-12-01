@@ -214,7 +214,7 @@ backupPgGet(const InfoBackup *infoBackup)
     // !!! ELSE WARN AND RESET WHEN PAGE CHECKSUMS DO NOT MATCH
 
     // Backup from standby can only be used on PostgreSQL >= 9.1
-    if (cfgOption(cfgOptOnline) && cfgOption(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
+    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
     {
         THROW_FMT(
             ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",

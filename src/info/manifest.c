@@ -883,14 +883,11 @@ manifestNewBuild(
 
         // Build expression to identify files that can be copied from the standby when standby backup is supported
         // -------------------------------------------------------------------------------------------------------------------------
-        if (pgVersion >= PG_VERSION_BACKUP_STANDBY)
-        {
-            buildData.standbyExp = regExpNew(
-                strNewFmt(
-                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
-                        MANIFEST_TARGET_PGTBLSPC ")/",
-                    strPtr(pgXactPath(pgVersion))));
-        }
+        buildData.standbyExp = regExpNew(
+            strNewFmt(
+                "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
+                    MANIFEST_TARGET_PGTBLSPC ")/",
+                strPtr(pgXactPath(pgVersion))));
 
         // Build list of exclusions
         // -------------------------------------------------------------------------------------------------------------------------
