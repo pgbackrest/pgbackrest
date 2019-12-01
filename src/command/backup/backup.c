@@ -884,8 +884,7 @@ backupFilePut(const InfoBackup *infoBackup, BackupPg *pg, Manifest *manifest, co
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(
-                filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
-                infoPgCipherPass(infoBackupPg(infoBackup)));
+                filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, manifestCipherSubPass(manifest));
 
             // Add size filter last to calculate repo size
             ioFilterGroupAdd(filterGroup, ioSizeNew());

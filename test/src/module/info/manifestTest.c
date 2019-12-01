@@ -148,7 +148,7 @@ testRun(void)
                 "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
+                "pg_data/PG_VERSION={\"master\":true,\"size\":4,\"timestamp\":1565282114}\n"
                 "pg_data/global/t1_1={\"size\":0,\"timestamp\":1565282114}\n"
                 TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
                 "\n"
