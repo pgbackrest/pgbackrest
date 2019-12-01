@@ -758,6 +758,9 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     buildData.pgPath = strNewFmt("%s/%s", strPtr(buildData.pgPath), strPtr(info->name));
                     linkName = buildData.tablespaceId;
                 }
+                // If no tablespace if then parent manifest name is the tablespace directory
+                else
+                    buildData.manifestParentName = MANIFEST_TARGET_PGTBLSPC_STR;
             }
 
             // Add info about the linked file/path

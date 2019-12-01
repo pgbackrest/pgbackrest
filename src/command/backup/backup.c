@@ -789,20 +789,21 @@ backupStart(BackupPg *pg)
             // !!! ALSO CHECK IF SET IN >= 9.6 where it is useless
 
             // ---------------------------------------------------------------------------------------------------------------------
-            // !!! Only allow start-fast option for version >= 8.4
-            // if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
-            // {
-            //     &log(WARN, cfgOptionName(CFGOPT_START_FAST) . ' option is only available in PostgreSQL >= ' . PG_VERSION_84);
-            //     $bStartFast = false;
-            // }
+            // Only allow start-fast option for version >= 8.4
+            if (pg->version < PG_VERSION_84 && cfgOptionBool(cfgOptStartFast))
+            {
+                LOG_WARN(CFGOPT_START_FAST " option is only available in PostgreSQL >= " PG_VERSION_84_STR);
+                cfgOptionSet(cfgOptStartFast, cfgSourceParam, BOOL_FALSE_VAR);
+            }
 
             // Check database configuration
             checkDbConfig(pg->version, pg->pgIdPrimary, pg->dbPrimary, false);
 
             // Start backup
-            // !!! &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .
-            //            "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
-            //            ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
+            LOG_INFO_FMT(
+                "execute %sexclusive pg_start_backup(): backup begins after the %s checkpoint completes",
+                pg->version >= PG_VERSION_96 ? "non-" : "",
+                cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
             DbBackupStartResult dbBackupStartResult = dbBackupStart(
                 pg->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto));
@@ -1025,8 +1026,8 @@ backupJobResult(
             // Else if the file was removed during backup then remove from manifest
             else if (copyResult == backupCopyResultSkip)
             {
-                // &log(DETAIL, 'skip file removed by database ' . (defined($strHost) ? "${strHost}:" : '') . $strDbFile);
-                // $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile);
+                LOG_DETAIL_FMT("skip file removed by database %s", strPtr(fileLog));
+                manifestFileRemove(manifest, file->name);
             }
             // Else file was copied so update manifest
             else

@@ -2503,7 +2503,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
 
-            <execute user="{[br-user]}" err-expect="62" output="y">
+            <execute user="{[br-user]}" err-expect="56" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>\: stop file exists for all stanzas</exe-highlight>
             </execute>
@@ -2544,7 +2544,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
 
-            <execute user="{[br-user]}" err-expect="62" output="y">
+            <execute user="{[br-user]}" err-expect="56" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>\: stop file exists for stanza demo</exe-highlight>
             </execute>
