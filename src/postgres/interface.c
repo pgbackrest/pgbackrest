@@ -29,6 +29,14 @@ STRING_EXTERN(PG_PATH_GLOBAL_STR,                                   PG_PATH_GLOB
 STRING_EXTERN(PG_NAME_WAL_STR,                                      PG_NAME_WAL);
 STRING_EXTERN(PG_NAME_XLOG_STR,                                     PG_NAME_XLOG);
 
+// Transaction commit log path names depending on version
+STRING_STATIC(PG_PATH_PGCLOG_STR,                                   "pg_clog");
+STRING_STATIC(PG_PATH_PGXACT_STR,                                   "pg_xact");
+
+// Lsn name used in functions depnding on version
+STRING_STATIC(PG_NAME_LSN_STR,                                      "lsn");
+STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
+
 /***********************************************************************************************************************************
 Define default wal segment size
 
@@ -562,6 +570,17 @@ pgTablespaceId(unsigned int pgVersion)
     FUNCTION_TEST_RETURN(result);
 }
 
+/**********************************************************************************************************************************/
+const String *
+pgLsnName(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_LSN_STR : PG_NAME_LOCATION_STR);
+}
+
 /***********************************************************************************************************************************
 Get WAL name (wal/xlog) for a PostgreSQL version
 ***********************************************************************************************************************************/
@@ -573,6 +592,17 @@ pgWalName(unsigned int pgVersion)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
+}
+
+/**********************************************************************************************************************************/
+const String *
+pgXactPath(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
 }
 
 /***********************************************************************************************************************************
