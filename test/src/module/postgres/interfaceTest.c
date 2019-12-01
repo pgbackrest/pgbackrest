@@ -102,7 +102,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgTablespaceId(), pgWalName(), and pgXactPath()"))
+    if (testBegin("pgLsnName(), pgTablespaceId(), pgWalName(), and pgXactPath()"))
     {
         TEST_RESULT_STR(strPtr(pgLsnName(PG_VERSION_96)), "location", "check location name");
         TEST_RESULT_STR(strPtr(pgLsnName(PG_VERSION_10)), "lsn", "check lsn name");
