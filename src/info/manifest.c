@@ -20,6 +20,7 @@ Backup Manifest Handler
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/storage.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -210,7 +211,7 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-static void
+void
 manifestFileAdd(Manifest *this, const ManifestFile *file)
 {
     FUNCTION_TEST_BEGIN();
@@ -393,10 +394,12 @@ typedef struct ManifestBuildData
     const Storage *storagePg;
     const String *tablespaceId;                                     // Tablespace id if PostgreSQL version has one
     bool online;                                                    // Is this an online backup?
+    bool checksumPage;                                              // Are page checksums being checked?
     const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
     RegExp *standbyExp;                                             // Identify files that must be copied from the primary
+    const VariantList *tablespaceList;                              // List of tablespaces in the database
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
 
@@ -641,6 +644,14 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     !regExpMatch(buildData.standbyExp, manifestName);
             }
 
+            // Determine if this file should be page checksummed
+            if (buildData.dbPath && buildData.checksumPage)
+            {
+                file.checksumPage =
+                    !strEndsWithZ(manifestName, "/" PG_FILE_PGFILENODEMAP) && !strEndsWithZ(manifestName, "/" PG_FILE_PGVERSION) &&
+                    !strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
+            }
+
             manifestFileAdd(buildData.manifest, &file);
             break;
         }
@@ -692,7 +703,33 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 // Identify this target as a tablespace
                 target.name = manifestName;
                 target.tablespaceId = cvtZToUInt(strPtr(info->name));
-                target.tablespaceName = strNewFmt("ts%s", strPtr(info->name));
+
+                // Look for this tablespace in the provided list
+                if (buildData.tablespaceList != NULL)
+                {
+                    // Search list
+                    for (unsigned int tablespaceIdx = 0; tablespaceIdx < varLstSize(buildData.tablespaceList); tablespaceIdx++)
+                    {
+                        const VariantList *tablespace = varVarLst(varLstGet(buildData.tablespaceList, tablespaceIdx));
+
+                        if (target.tablespaceId == varUIntForce(varLstGet(tablespace, 0)))
+                            target.tablespaceName = varStr(varLstGet(tablespace, 1));
+                    }
+
+                    // Error if the tablespace could not be found.  ??? This seems excessive, perhaps just warn here?
+                    if (target.tablespaceName == NULL)
+                    {
+                        THROW_FMT(
+                            AssertError,
+                            "tablespace with oid %u not found in tablespace map\n"
+                            "HINT: was a tablespace created or dropped during the backup?",
+                            target.tablespaceId);
+                    }
+                }
+
+                // If no tablespace name was found then create one
+                if (target.tablespaceName == NULL)
+                    target.tablespaceName = strNewFmt("ts%s", strPtr(info->name));
 
                 // Add a dummy pg_tblspc path entry if it does not already exist.  This entry will be ignored by restore but it is
                 // part of the original manifest format so we need to have it.
@@ -735,6 +772,9 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     buildData.pgPath = strNewFmt("%s/%s", strPtr(buildData.pgPath), strPtr(info->name));
                     linkName = buildData.tablespaceId;
                 }
+                // If no tablespace if then parent manifest name is the tablespace directory
+                else
+                    buildData.manifestParentName = MANIFEST_TARGET_PGTBLSPC_STR;
             }
 
             // Add info about the linked file/path
@@ -804,13 +844,16 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
 Manifest *
 manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, bool online, const StringList *excludeList)
+    const Storage *storagePg, unsigned int pgVersion, bool online, bool checksumPage, const StringList *excludeList,
+    const VariantList *tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(BOOL, online);
+        FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, tablespaceList);
     FUNCTION_LOG_END();
 
     ASSERT(storagePg != NULL);
@@ -822,8 +865,10 @@ manifestNewBuild(
     {
         this = manifestNewInternal();
         this->info = infoNew(NULL);
+        this->data.backrestVersion = strNew(PROJECT_VERSION);
         this->data.pgVersion = pgVersion;
         this->data.backupOptionOnline = online;
+        this->data.backupOptionChecksumPage = varNewBool(checksumPage);
 
         // Data needed to build the manifest
         ManifestBuildData buildData =
@@ -832,6 +877,8 @@ manifestNewBuild(
             .storagePg = storagePg,
             .tablespaceId = pgTablespaceId(pgVersion),
             .online = online,
+            .checksumPage = checksumPage,
+            .tablespaceList = tablespaceList,
             .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
             .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/pg_%s", strPtr(pgWalName(pgVersion))),
             .pgPath = storagePathP(storagePg, NULL),
@@ -844,8 +891,8 @@ manifestNewBuild(
         {
             ASSERT(buildData.tablespaceId != NULL);
 
-            buildData.dbPathExp = regExpNew(
-                strNewFmt("^" DB_PATH_EXP "$", strPtr(buildData.tablespaceId)));
+            // Expression to identify database paths
+            buildData.dbPathExp = regExpNew(strNewFmt("^" DB_PATH_EXP "$", strPtr(buildData.tablespaceId)));
 
             // Expression to find temp relations
             buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
@@ -853,14 +900,11 @@ manifestNewBuild(
 
         // Build expression to identify files that can be copied from the standby when standby backup is supported
         // -------------------------------------------------------------------------------------------------------------------------
-        if (pgVersion >= PG_VERSION_BACKUP_STANDBY)
-        {
-            buildData.standbyExp = regExpNew(
-                strNewFmt(
-                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
-                        MANIFEST_TARGET_PGTBLSPC ")/",
-                    strPtr(pgXactPath(pgVersion))));
-        }
+        buildData.standbyExp = regExpNew(
+            strNewFmt(
+                "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
+                    MANIFEST_TARGET_PGTBLSPC ")/",
+                strPtr(pgXactPath(pgVersion))));
 
         // Build list of exclusions
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1019,6 +1063,7 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
                 {
                     LOG_WARN_FMT(
                         "file '%s' has timestamp in the future, enabling delta checksum", strPtr(manifestPathPg(file->name)));
+
                     this->data.backupOptionDelta = BOOL_TRUE_VAR;
                     break;
                 }
@@ -1121,7 +1166,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         // Find files to reference in the prior manifest:
         // 1) that don't need to be copied because delta is disabled and the size and timestamp match or size matches and is zero
-        // 2) where delta is enabled and size matches so checkum will be verified during backup and the file copied on mismatch
+        // 2) where delta is enabled and size matches so checksum will be verified during backup and the file copied on mismatch
         bool delta = varBool(this->data.backupOptionDelta);
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
@@ -1141,6 +1186,87 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         }
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+manifestBuildComplete(
+    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
+    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
+    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
+    bool optionStandby)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(TIME, timestampStart);
+        FUNCTION_LOG_PARAM(STRING, lsnStart);
+        FUNCTION_LOG_PARAM(STRING, archiveStart);
+        FUNCTION_LOG_PARAM(TIME, timestampStop);
+        FUNCTION_LOG_PARAM(STRING, lsnStop);
+        FUNCTION_LOG_PARAM(STRING, archiveStop);
+        FUNCTION_LOG_PARAM(UINT, pgId);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, dbList);
+        FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
+        FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
+        FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
+        FUNCTION_LOG_PARAM(BOOL, optionCompress);
+        FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
+        FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
+        FUNCTION_LOG_PARAM(BOOL, optionHardLink);
+        FUNCTION_LOG_PARAM(BOOL, optionOnline);
+        FUNCTION_LOG_PARAM(UINT, optionProcessMax);
+        FUNCTION_LOG_PARAM(BOOL, optionStandby);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        // Save info
+        this->data.backupTimestampStart = timestampStart;
+        this->data.lsnStart = strDup(lsnStart);
+        this->data.archiveStart = strDup(archiveStart);
+        this->data.backupTimestampStop = timestampStop;
+        this->data.lsnStop = strDup(lsnStop);
+        this->data.archiveStop = strDup(archiveStop);
+        this->data.pgId = pgId;
+        this->data.pgSystemId = pgSystemId;
+
+        // Save db list
+        if (dbList != NULL)
+        {
+            for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbList); dbIdx++)
+            {
+                const VariantList *dbRow = varVarLst(varLstGet(dbList, dbIdx));
+
+                ManifestDb db =
+                {
+                    .id = varUIntForce(varLstGet(dbRow, 0)),
+                    .name = varStr(varLstGet(dbRow, 1)),
+                    .lastSystemId = varUIntForce(varLstGet(dbRow, 2)),
+                };
+
+                manifestDbAdd(this, &db);
+            }
+
+            lstSort(this->dbList, sortOrderAsc);
+        }
+
+        // Save options
+        this->data.backupOptionArchiveCheck = optionArchiveCheck;
+        this->data.backupOptionArchiveCopy = optionArchiveCopy;
+        this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
+        this->data.backupOptionCompress = optionCompress;
+        this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
+        this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
+        this->data.backupOptionHardLink = optionHardLink;
+        this->data.backupOptionOnline = optionOnline;
+        this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
+        this->data.backupOptionStandby = varNewBool(optionStandby);
+    }
+    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -2063,6 +2189,9 @@ manifestSave(Manifest *this, IoWrite *write)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Files can be added from outside the manifest so make sure they are sorted
+        lstSort(this->fileList, sortOrderAsc);
+
         ManifestSaveData saveData =
         {
             .manifest = this,
@@ -2729,21 +2858,6 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-void
-manifestChecksumPageSet(Manifest *this, bool checksumPage)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(BOOL, checksumPage);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    this->data.backupOptionChecksumPage = checksumPage ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 const String *
 manifestCipherSubPass(const Manifest *this)
 {

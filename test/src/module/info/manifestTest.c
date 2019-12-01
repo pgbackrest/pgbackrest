@@ -63,6 +63,7 @@ testRun(void)
             "[backup:option]\n"                                                                                                    \
             "option-archive-check=false\n"                                                                                         \
             "option-archive-copy=false\n"                                                                                          \
+            "option-checksum-page=false\n"                                                                                         \
             "option-compress=false\n"                                                                                              \
             "option-hardlink=false\n"                                                                                              \
             "option-online=false\n"
@@ -132,7 +133,7 @@ testRun(void)
         strLstAddZ(exclusionList, "bogus/");
 
         Manifest *manifest = NULL;
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_83, false, exclusionList), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_83, false, false, exclusionList, NULL), "build manifest");
 
         Buffer *contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -147,7 +148,7 @@ testRun(void)
                 "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
+                "pg_data/PG_VERSION={\"master\":true,\"size\":4,\"timestamp\":1565282114}\n"
                 "pg_data/global/t1_1={\"size\":0,\"timestamp\":1565282114}\n"
                 TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
                 "\n"
@@ -224,7 +225,7 @@ testRun(void)
         storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSTATTMP), .mode = 0700, .noParentCreate = true);
         storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
 
-        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), "build manifest");
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), "build manifest");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -286,7 +287,7 @@ testRun(void)
             FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, false, NULL), LinkDestinationError,
+            manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), LinkDestinationError,
             hrnReplaceKey("link 'link' destination '{[path]}/pg/base' is in PGDATA"));
 
         #undef TEST_MANIFEST_HEADER
