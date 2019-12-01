@@ -107,7 +107,7 @@ sub main
         }
         else
         {
-            # Check that the repo path exists !!! Currently only needed to make the error test in perl/exec module pass.
+            # Check that the repo path exists
             require pgBackRest::Protocol::Storage::Helper;
             pgBackRest::Protocol::Storage::Helper->import();
 
