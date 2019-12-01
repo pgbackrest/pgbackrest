@@ -44,6 +44,24 @@ testRun(void)
 
         TEST_RESULT_VOID(mcvUpdate(mcv, varNewUInt(555)), "update 555");
         TEST_RESULT_UINT(varUInt(mcvResult(mcv)), 555, "result is 555");
+
+        // Bool MCV
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(mcv, mcvNew(), "new mcv");
+
+        TEST_RESULT_VOID(mcvUpdate(mcv, varNewBool(true)), "update true");
+        TEST_RESULT_BOOL(varBool(mcvResult(mcv)), true, "result is true");
+
+        TEST_RESULT_VOID(mcvUpdate(mcv, varNewBool(false)), "update false");
+        TEST_RESULT_BOOL(varBool(mcvResult(mcv)), false, "result is false");
+
+        TEST_ASSIGN(mcv, mcvNew(), "new mcv");
+
+        TEST_RESULT_VOID(mcvUpdate(mcv, varNewBool(false)), "update false");
+        TEST_RESULT_BOOL(varBool(mcvResult(mcv)), false, "result is false");
+
+        TEST_RESULT_VOID(mcvUpdate(mcv, varNewBool(true)), "update true");
+        TEST_RESULT_BOOL(varBool(mcvResult(mcv)), false, "result is false");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
