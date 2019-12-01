@@ -559,8 +559,11 @@ unit:
       - name: manifest
         total: 6
 
-        coverage:
-          info/manifest: full
+        # coverage:
+          # info/manifest: full
+
+        include:
+          - info/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info-backup-perl
@@ -577,9 +580,13 @@ unit:
         perlReq: true
 
         coverage:
-          db/db: full
-          db/helper: full
+          # db/db: full
+          # db/helper: full
           db/protocol: full
+
+        include:
+          - db/db
+          - db/helper
 
   # ********************************************************************************************************************************
   - name: command

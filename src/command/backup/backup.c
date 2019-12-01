@@ -778,17 +778,13 @@ backupStart(BackupPg *pg)
         // Else start the backup normally
         else
         {
-            // ---------------------------------------------------------------------------------------------------------------------
-            // !!!    # Else emit a warning that the feature is not supported and continue.  If a backup is running then an error will be
-            //     # generated later on.
-            //     else
-            //     {
-            //         &log(WARN, cfgOptionName(CFGOPT_STOP_AUTO) . ' option is only available in PostgreSQL >= ' . PG_VERSION_93);
-            //     }
-            // }
-            // !!! ALSO CHECK IF SET IN >= 9.6 where it is useless
+            // Allow allow stop auto in PostgreSQL >= 9.3 and <= 9.5. If a backup is running then an error will be generated later.
+            if (pg->version >= PG_VERSION_93 && pg->version <= PG_VERSION_95 && cfgOptionBool(cfgOptStopAuto))
+            {
+                LOG_WARN(
+                    CFGOPT_STOP_AUTO " option is only available in PostgreSQL >= " PG_VERSION_93_STR " and <= " PG_VERSION_95_STR);
+            }
 
-            // ---------------------------------------------------------------------------------------------------------------------
             // Only allow start-fast option for version >= 8.4
             if (pg->version < PG_VERSION_84 && cfgOptionBool(cfgOptStartFast))
             {
@@ -822,18 +818,13 @@ backupStart(BackupPg *pg)
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strPtr(result.lsn));
                 dbReplayWait(pg->dbStandby, result.lsn, (TimeMSec)cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
+                LOG_INFO_FMT("replay on the standby reached %s", strPtr(result.lsn));
 
-            //     &log(
-            //         INFO,
-            //         "replay on the standby reached ${strReplayedLSN}" .
-            //             (defined($strCheckpointLSN) ? ", checkpoint ${strCheckpointLSN}" : ''));
-            //
-            //     # The standby db object won't be used anymore so undef it to catch any subsequent references
-            //     undef($oDbStandby);
-            //     protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
+                // The standby db object won't be used anymore so undef it to catch any subsequent references
+                dbFree(pg->dbStandby);
+
+                // !!! protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
             }
-            // !!! NEED TO SET START LSN HERE
-
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -1085,7 +1076,7 @@ backupJobResult(
                             }
                             else
                             {
-                                // Format the psage checksum errors
+                                // Format the page checksum errors
                                 checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
                                 ASSERT(varLstSize(checksumPageErrorList) > 0);
 
@@ -1487,8 +1478,9 @@ backupProcess(BackupPg pg, Manifest *manifest)
         ProtocolParallel *parallelExec = protocolParallelNew(
             (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, backupJobCallback, &jobData);
 
+        // !!! CREATE PRIMARY AND STANDBY CONNECTIONS WHEN NEEDED
         for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
-            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, 1, processIdx));
+            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pg.pgIdPrimary, processIdx));
 
         // Process jobs
         uint64_t sizeCopied = 0;
