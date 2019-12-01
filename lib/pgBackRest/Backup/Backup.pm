@@ -782,7 +782,7 @@ sub process
                               !cfgOption(CFGOPT_ONLINE) ||
                               (cfgOption(CFGOPT_ARCHIVE_CHECK) && cfgOption(CFGOPT_ARCHIVE_COPY)));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
-                              !cfgOption(CFGOPT_ONLINE) || cfgOption(CFGOPT_ARCHIVE_CHECK));
+                              cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_ARCHIVE_CHECK));
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_PROCESS_MAX, undef, cfgOption(CFGOPT_PROCESS_MAX));
 
     # Database settings

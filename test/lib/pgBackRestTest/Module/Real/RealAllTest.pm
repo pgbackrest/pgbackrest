@@ -397,17 +397,14 @@ sub run
             }
         }
 
-        my $oExecuteBackup = $oHostBackup->backupBegin(
-            CFGOPTVAL_BACKUP_TYPE_FULL, 'update during backup',
-            {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
-                strOptionalParam => ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384'});
-
         $oHostDbMaster->sqlExecute("update test set message = '$strFullMessage'");
 
         # Required to set hint bits to be sent to the standby to make the heap match on both sides
         $oHostDbMaster->sqlSelectOneTest('select message from test', $strFullMessage);
 
-        my $strFullBackup = $oHostBackup->backupEnd(CFGOPTVAL_BACKUP_TYPE_FULL, $oExecuteBackup);
+        my $strFullBackup = $oHostBackup->backup(
+            CFGOPTVAL_BACKUP_TYPE_FULL, 'update during backup',
+            {strOptionalParam => ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384'});
 
         # Enabled async archiving
         $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_ARCHIVE_ASYNC) => 'y'}});
@@ -621,34 +618,16 @@ sub run
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be restarted', true)");
         }
 
-        # Exercise --delta checksum option
-        $oExecuteBackup = $oHostBackup->backupBegin(
-            CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
-            {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768' .
-                ' --delta'});
-
         # Drop a table
         $oHostDbMaster->sqlExecute('drop table test_remove');
         $oHostDbMaster->sqlWalRotate();
         $oHostDbMaster->sqlExecute("update test set message = '$strIncrMessage'", {bCommit => true});
 
-        # Check that application name is set
-        if ($oHostDbMaster->pgVersion() >= PG_VERSION_APPLICATION_NAME)
-        {
-            my $strApplicationNameExpected = PROJECT_NAME . ' [' . cfgCommandName(CFGCMD_BACKUP) . ']';
-            my $strApplicationName = $oHostDbMaster->sqlSelectOne(
-                "select application_name from pg_stat_activity where application_name like '" . PROJECT_NAME . "%'");
-
-            if (!defined($strApplicationName) || $strApplicationName ne $strApplicationNameExpected)
-            {
-                confess &log(ERROR,
-                    "application name '" . (defined($strApplicationName) ? $strApplicationName : '[null]') .
-                        "' does not match '" . $strApplicationNameExpected . "'");
-            }
-        }
-
-        my $strIncrBackup = $oHostBackup->backupEnd(CFGOPTVAL_BACKUP_TYPE_INCR, $oExecuteBackup);
+        # Exercise --delta checksum option
+        my $strIncrBackup = $oHostBackup->backup(
+            CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
+            {strOptionalParam =>
+                '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768 --delta'});
 
         # Ensure the check command runs properly with a tablespace unless there is a bogus host
         if (!$oHostBackup->bogusHost())

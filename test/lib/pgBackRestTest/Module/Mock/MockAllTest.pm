@@ -108,7 +108,7 @@ sub run
 
         $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = PROJECT_VERSION;
         $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = REPOSITORY_FORMAT;
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::true;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 16384;
@@ -407,17 +407,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bS3)
         {
-            # Test a backup abort
-            my $oExecuteBackup = $oHostBackup->backupBegin(
-                $strType, 'abort backup - local',
-                {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_START, fTestDelay => 5,
-                    iExpectedExitStatus => ERROR_TERM});
-
+            # Test global stop
             $oHostDbMaster->stop({bForce => true});
 
-            $oHostBackup->backupEnd($strType, $oExecuteBackup, {oExpectedManifest => \%oManifest});
-
-            # Test global stop
             $oHostBackup->backup(
                 $strType, 'global stop',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_STOP});
@@ -437,25 +429,6 @@ sub run
 
             # This time a warning should be generated
             $oHostDbMaster->start();
-
-            # If the backup is remote then test remote stops
-            if ($bRemote)
-            {
-                my $oExecuteBackup = $oHostBackup->backupBegin(
-                    $strType, 'abort backup - remote',
-                    {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_START, fTestDelay => 5,
-                        iExpectedExitStatus => ERROR_TERM});
-
-                $oHostBackup->stop({bForce => true});
-
-                $oHostBackup->backupEnd($strType, $oExecuteBackup, {oExpectedManifest => \%oManifest});
-
-                $oHostBackup->backup(
-                    $strType, 'global stop',
-                    {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_STOP});
-
-                $oHostBackup->start();
-            }
         }
 
         # Resume Full Backup
@@ -778,6 +751,9 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         my $strTblSpcPath = $oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC;
 
+        # Remove excludes now that they just create noise in the log
+        $oHostBackup->configUpdate({(CFGDEF_SECTION_GLOBAL . ':backup') => {cfgOptionName(CFGOPT_EXCLUDE) => []}});
+
         # Create a directory in pg_tablespace
         storageTest()->pathCreate("${strTblSpcPath}/path", {strMode => '0700', bCreateParent => true});
 
@@ -1067,8 +1043,7 @@ sub run
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
         $oHostDbMaster->manifestFileCreate(
-            \%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2', '09b5e31766be1dba1ec27de82f975c1b6eea2a92',
-            $lTime, undef, undef, false);
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2', '09b5e31766be1dba1ec27de82f975c1b6eea2a92', $lTime);
 
         $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 1, 2);
 
@@ -1139,9 +1114,7 @@ sub run
 
         # Incr Backup
         #
-        # Remove a file from the db after the manifest has been built but before files are copied.  The file will not be shown
-        # as removed in the log because it had not changed since the last backup so it will only be referenced.  This test also
-        # checks that everything works when there are no jobs to run.
+        # Remove a file from the db and check that we get an error because there are no jobs to run.
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
@@ -1149,29 +1122,20 @@ sub run
         # Enable compression to ensure a warning is raised
         $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => 'y'}});
 
-        my $oBackupExecute = $oHostBackup->backupBegin(
+        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
+
+        my $oBackupExecute = $oHostBackup->backup(
             $strType, 'remove files - but won\'t affect manifest',
-            {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1});
-
-        $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
-
-        $strBackup = $oHostBackup->backupEnd($strType, $oBackupExecute, {oExpectedManifest => \%oManifest});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_MISSING});
 
         # Diff Backup
         #
-        # Remove base2.txt and changed tablespace2c.txt during the backup.  The removed file should be logged and the changed
-        # file should have the new, larger size logged and in the manifest.
+        # Remove files and change tablespace2c.txt during the backup.  The changed file should have the new, larger size logged
+        # in the manifest.
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup, true);
 
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
-
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
-
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', true);
-        $oHostDbMaster->manifestFileCreate(
-            \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPC2C',
-            'ad7df329ab97a1e7d35f1ff0351c079319121836', $lTime, undef, undef, false);
 
         # Enable hardlinks (except for s3) to ensure a warning is raised
         if (!$bS3)
@@ -1181,18 +1145,17 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
 
-        $oBackupExecute = $oHostBackup->backupBegin(
-            $strType, 'remove files during backup',
-            {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
+        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', true);
+        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPCBIGGER',
             'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime, undef, undef, false);
 
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
-
-        $strBackup = $oHostBackup->backupEnd($strType, $oBackupExecute, {oExpectedManifest => \%oManifest});
+        $oBackupExecute = $oHostBackup->backup(
+            $strType, 'remove files during backup',
+            {oExpectedManifest => \%oManifest,
+                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 

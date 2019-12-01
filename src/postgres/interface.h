@@ -16,6 +16,7 @@ Defines for various Postgres paths and files
 #define PG_FILE_BACKUPLABEL                                         "backup_label"
 #define PG_FILE_BACKUPLABELOLD                                      "backup_label.old"
 #define PG_FILE_PGCONTROL                                           "pg_control"
+#define PG_FILE_PGFILENODEMAP                                       "pg_filenode.map"
 #define PG_FILE_PGINTERNALINIT                                      "pg_internal.init"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
     STRING_DECLARE(PG_FILE_PGVERSION_STR);
@@ -121,6 +122,9 @@ PgWal pgWalFromBuffer(const Buffer *walBuffer);
 
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_9.0_201008051
 String *pgTablespaceId(unsigned int pgVersion);
+
+// Get name used for lsn in functions (this was changed in PostgreSQL 10 for consistency since lots of names were changing)
+const String *pgLsnName(unsigned int pgVersion);
 
 const String *pgWalName(unsigned int pgVersion);
 

@@ -108,7 +108,9 @@ mcvResult(const MostCommonValue *this)
     {
         MostCommonValueEntry *entry = (MostCommonValueEntry *)lstGet(this->list, listIdx);
 
-        if (entry->total > resultTotal)
+        if (entry->total > resultTotal ||
+            // If boolean always return false when there is a tie.  This is to maintain compatibility with older mcv code/tests.
+            (entry->total == resultTotal && varType(entry->value) == varTypeBool && !varBool(entry->value)))
         {
             result = entry->value;
             resultTotal = entry->total;

@@ -443,7 +443,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
     // Skip excluded files/links/paths
     if (buildData.excludeSingle != NULL && strLstExists(buildData.excludeSingle, manifestName))
     {
-        LOG_INFO(
+        LOG_INFO_FMT(
             "exclude '%s/%s' from backup using '%s' exclusion", strPtr(buildData.pgPath), strPtr(info->name),
             strPtr(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
@@ -480,7 +480,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             // Skip excluded path content
             if (buildData.excludeContent != NULL && strLstExists(buildData.excludeContent, manifestName))
             {
-                LOG_INFO(
+                LOG_INFO_FMT(
                     "exclude contents of '%s/%s' from backup using '%s/' exclusion", strPtr(buildData.pgPath), strPtr(info->name),
                     strPtr(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
@@ -789,7 +789,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
         {
-            LOG_WARN("exclude special file '%s/%s' from backup", strPtr(buildData.pgPath), strPtr(info->name));
+            LOG_WARN_FMT("exclude special file '%s/%s' from backup", strPtr(buildData.pgPath), strPtr(info->name));
             break;
         }
     }
@@ -1017,7 +1017,8 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
                 // Check for timestamp in the future
                 if (file->timestamp > copyStart)
                 {
-                    LOG_WARN("file '%s' has timestamp in the future, enabling delta checksum", strPtr(manifestPathPg(file->name)));
+                    LOG_WARN_FMT(
+                        "file '%s' has timestamp in the future, enabling delta checksum", strPtr(manifestPathPg(file->name)));
                     this->data.backupOptionDelta = BOOL_TRUE_VAR;
                     break;
                 }
@@ -1065,7 +1066,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         if (manifestData(manifestPrior)->archiveStop != NULL && this->data.archiveStart != NULL &&
             !strEq(strSubN(manifestData(manifestPrior)->archiveStop, 0, 8), strSubN(this->data.archiveStart, 0, 8)))
         {
-            LOG_WARN(
+            LOG_WARN_FMT(
                 "a timeline switch has occurred since the %s backup, enabling delta checksum",
                 strPtr(manifestData(manifestPrior)->backupLabel));
 
@@ -1074,7 +1075,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         // Else enable delta if online differs
         else if (manifestData(manifestPrior)->backupOptionOnline != this->data.backupOptionOnline)
         {
-            LOG_WARN(
+            LOG_WARN_FMT(
                 "the online option has changed since the %s backup, enabling delta checksum",
                 strPtr(manifestData(manifestPrior)->backupLabel));
 
@@ -1096,7 +1097,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // Check for timestamp earlier than the prior backup
                     if (file->timestamp < filePrior->timestamp)
                     {
-                        LOG_WARN(
+                        LOG_WARN_FMT(
                             "file '%s' has timestamp earlier than prior backup, enabling delta checksum",
                             strPtr(manifestPathPg(file->name)));
 
@@ -1107,7 +1108,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // Check for size change with no timestamp change
                     if (file->size != filePrior->size && file->timestamp == filePrior->timestamp)
                     {
-                        LOG_WARN(
+                        LOG_WARN_FMT(
                             "file '%s' has same timestamp as prior but different size, enabling delta checksum",
                             strPtr(manifestPathPg(file->name)));
 

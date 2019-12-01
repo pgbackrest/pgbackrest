@@ -10,11 +10,9 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Wait;
-use pgBackRest::Archive::Get::File;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::Protocol::Command::Minion;
@@ -72,9 +70,6 @@ sub init
     # Create anonymous subs for each command
     my $hCommandMap =
     {
-        # ArchiveGet commands
-        &OP_ARCHIVE_GET_CHECK => sub {archiveGetCheck(@{shift()})},
-
         # Db commands
         &OP_DB_CONNECT => sub {$oDb->connect()},
         &OP_DB_EXECUTE_SQL => sub {$oDb->executeSql(@{shift()})},

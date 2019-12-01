@@ -1661,7 +1661,7 @@ sub run
         $self->testResult(sub {isChecksumPage($strFile)}, false,
             "file '${strFile}' isChecksumPage=false");
 
-        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . BOGUS;
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/123/' . BOGUS;
         $self->testResult(sub {isChecksumPage($strFile)}, true,
             "file '${strFile}' isChecksumPage=true");
 

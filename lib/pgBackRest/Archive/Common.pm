@@ -13,7 +13,6 @@ use Exporter qw(import);
 use Fcntl qw(SEEK_CUR O_RDONLY);
 use File::Basename qw(dirname);
 
-use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
