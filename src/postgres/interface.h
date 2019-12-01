@@ -13,15 +13,23 @@ PostgreSQL Interface
 /***********************************************************************************************************************************
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
+#define PG_FILE_BACKUPLABEL                                         "backup_label"
+#define PG_FILE_BACKUPLABELOLD                                      "backup_label.old"
 #define PG_FILE_PGCONTROL                                           "pg_control"
+#define PG_FILE_PGFILENODEMAP                                       "pg_filenode.map"
+#define PG_FILE_PGINTERNALINIT                                      "pg_internal.init"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
     STRING_DECLARE(PG_FILE_PGVERSION_STR);
 #define PG_FILE_POSTGRESQLAUTOCONF                                  "postgresql.auto.conf"
     STRING_DECLARE(PG_FILE_POSTGRESQLAUTOCONF_STR);
+#define PG_FILE_POSTGRESQLAUTOCONFTMP                               "postgresql.auto.conf.tmp"
+#define PG_FILE_POSTMASTEROPTS                                      "postmaster.opts"
 #define PG_FILE_POSTMASTERPID                                       "postmaster.pid"
     STRING_DECLARE(PG_FILE_POSTMASTERPID_STR);
 #define PG_FILE_RECOVERYCONF                                        "recovery.conf"
     STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
+#define PG_FILE_RECOVERYDONE                                        "recovery.done"
+    STRING_DECLARE(PG_FILE_RECOVERYDONE_STR);
 #define PG_FILE_RECOVERYSIGNAL                                      "recovery.signal"
     STRING_DECLARE(PG_FILE_RECOVERYSIGNAL_STR);
 #define PG_FILE_STANDBYSIGNAL                                       "standby.signal"
@@ -32,6 +40,16 @@ Defines for various Postgres paths and files
 #define PG_PATH_BASE                                                "base"
 #define PG_PATH_GLOBAL                                              "global"
     STRING_DECLARE(PG_PATH_GLOBAL_STR);
+#define PG_PATH_PGMULTIXACT                                         "pg_multixact"
+#define PG_PATH_PGDYNSHMEM                                          "pg_dynshmem"
+#define PG_PATH_PGNOTIFY                                            "pg_notify"
+#define PG_PATH_PGREPLSLOT                                          "pg_replslot"
+#define PG_PATH_PGSERIAL                                            "pg_serial"
+#define PG_PATH_PGSNAPSHOTS                                         "pg_snapshots"
+#define PG_PATH_PGSTATTMP                                           "pg_stat_tmp"
+#define PG_PATH_PGSUBTRANS                                          "pg_subtrans"
+
+#define PG_PREFIX_PGSQLTMP                                          "pgsql_tmp"
 
 #define PG_NAME_WAL                                                 "wal"
     STRING_DECLARE(PG_NAME_WAL_STR);
