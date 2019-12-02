@@ -304,7 +304,6 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
                 "HINT: is another " PROJECT_NAME " backup already running on this cluster?");
         }
 
-        // -------------------------------------------------------------------------------------------------------------------------
         // If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups
         // are run in non-exclusive mode.
         if (stopAuto && dbPgVersion(this) >= PG_VERSION_93 && dbPgVersion(this) < PG_VERSION_96)
