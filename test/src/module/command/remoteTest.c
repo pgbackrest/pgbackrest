@@ -18,6 +18,10 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // Create default storage object for testing
+    Storage *storageData = storagePosixNew(
+        strNew(testDataPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+
     // *****************************************************************************************************************************
     if (testBegin("cmdRemote()"))
     {
@@ -158,6 +162,41 @@ testRun(void)
                     true, "lock exists");
 
                 protocolClientFree(client);
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stop file exists");
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                StringList *argList = strLstNew();
+                strLstAddZ(argList, "--stanza=test");
+                strLstAddZ(argList, "--command=archive-push-async");
+                strLstAddZ(argList, "--process=0");
+                strLstAddZ(argList, "--type=backup");
+                harnessCfgLoad(cfgCmdRemote, argList);
+
+                cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
+                ioWriteOpen(write);
+
+                storagePutP(storageNewWriteP(storageData, strNew("lock/all" STOP_FILE_EXT)), NULL);
+
+                TEST_ERROR(
+                    protocolClientNew(strNew("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), StopError,
+                    "raised from test: stop file exists for all stanzas");
             }
             HARNESS_FORK_PARENT_END();
         }
