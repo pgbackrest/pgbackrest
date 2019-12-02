@@ -39,13 +39,12 @@ backupProtocol(const String *command, const VariantList *paramList, ProtocolServ
         if (strEq(command, PROTOCOL_COMMAND_BACKUP_FILE_STR))
         {
             // Backup the file
-            // !!! CAN WE GET RID OF THE BOOL FORCES HERE?
             BackupFileResult result = backupFile(
-                varStr(varLstGet(paramList, 0)), varBoolForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
-                varStr(varLstGet(paramList, 3)), varBoolForce(varLstGet(paramList, 4)),
+                varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
+                varStr(varLstGet(paramList, 3)), varBool(varLstGet(paramList, 4)),
                 varUInt64(varLstGet(paramList, 5)) << 32 | varUInt64(varLstGet(paramList, 6)), varStr(varLstGet(paramList, 7)),
-                varBoolForce(varLstGet(paramList, 8)), varBoolForce(varLstGet(paramList, 9)),
-                varUIntForce(varLstGet(paramList, 10)), varStr(varLstGet(paramList, 11)), varBoolForce(varLstGet(paramList, 12)),
+                varBool(varLstGet(paramList, 8)), varBool(varLstGet(paramList, 9)), varUIntForce(varLstGet(paramList, 10)),
+                varStr(varLstGet(paramList, 11)), varBool(varLstGet(paramList, 12)),
                 varStr(varLstGet(paramList, 13)) == NULL ? cipherTypeNone : cipherTypeAes256Cbc, varStr(varLstGet(paramList, 13)));
 
             // Return backup result

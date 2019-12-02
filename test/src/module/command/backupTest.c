@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Backup Command
 ***********************************************************************************************************************************/
+#include "command/stanza/create.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
@@ -16,6 +17,9 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // Start a protocol server to test the protocol directly
     Buffer *serverWrite = bufNew(8192);
@@ -456,20 +460,34 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdBackup()"))
     {
-        // const String *pgPath = strNewFmt("%s/pg", testPath());
-        // const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *pg1Path = strNewFmt("%s/pg1", testPath());
+        const String *repoPath = strNewFmt("%s/repo", testPath());
+
+        // Create pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
+
+        // Create stanza
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+
+        cmdStanzaCreate();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("offline full backup");
         //
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("PLACEHOLDER TEST");
-        //
-        // StringList *argList = strLstNew();
-        // strLstAddZ(argList, "pgbackrest");
+        // argList = strLstNew();
         // strLstAddZ(argList, "--stanza=test1");
         // strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
-        // strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        // strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pg1Path)));
         // strLstAddZ(argList, "--repo1-retention-full=1");
-        // strLstAddZ(argList, "backup");
-        // harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        // strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        // harnessCfgLoad(cfgCmdBackup, argList);
         //
         // TEST_RESULT_VOID(cmdBackup(), "backup");
     }
