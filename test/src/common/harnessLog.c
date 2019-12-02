@@ -150,6 +150,27 @@ harnessLogLoad(const char *logFile)
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
+/**********************************************************************************************************************************/
+static struct
+{
+    MemContext *memContext;                                         // Mem context for log harness
+    List *replaceList;                                              // List of replacements
+} harnessLog;
+
+void
+harnessLogReplaceExpAdd(const char *expected)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, expected);
+    FUNCTION_HARNESS_END();
+
+    if (harnessLog.
+
+    FUNCTION_HARNESS_ASSERT(expected != NULL);
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
 /***********************************************************************************************************************************
 Compare log to a static string
 

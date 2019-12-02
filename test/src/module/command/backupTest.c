@@ -479,17 +479,17 @@ testRun(void)
         cmdStanzaCreate();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("offline full backup");
-        //
-        // argList = strLstNew();
-        // strLstAddZ(argList, "--stanza=test1");
-        // strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
-        // strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pg1Path)));
-        // strLstAddZ(argList, "--repo1-retention-full=1");
-        // strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        // harnessCfgLoad(cfgCmdBackup, argList);
-        //
-        // TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_TITLE("offline full backup");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--repo1-retention-full=1");
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
