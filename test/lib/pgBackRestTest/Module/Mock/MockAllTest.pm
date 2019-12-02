@@ -764,7 +764,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, 'invalid relative tablespace is ../',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
             testFileRemove("${strTblSpcPath}/99999");
 
@@ -772,7 +772,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, 'invalid relative tablespace is ..',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
             testFileRemove("${strTblSpcPath}/99999");
 
@@ -780,7 +780,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, 'invalid relative tablespace is ../../$PGDATA',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
             testFileRemove("${strTblSpcPath}/99999");
 
@@ -788,7 +788,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, 'invalid relative tablespace is ../../$PGDATA',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
             testFileRemove("${strTblSpcPath}/99999");
 
@@ -809,7 +809,7 @@ sub run
 
         $oHostBackup->backup(
             $strType, 'invalid relative tablespace in $PGDATA',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
         testFileRemove("${strTblSpcPath}/99999");
 
@@ -830,7 +830,7 @@ sub run
 
         $oHostBackup->backup(
             $strType, 'invalid tablespace in $PGDATA',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
         testFileRemove("${strTblSpcPath}/99999");
 

@@ -1028,7 +1028,7 @@ sub build
                        $hManifest->{$strName}{link_destination}) . '/', "${strPath}/") == 0))
             {
                 confess &log(ERROR, 'tablespace symlink ' . $hManifest->{$strName}{link_destination} .
-                             ' destination must not be in $PGDATA', ERROR_TABLESPACE_IN_PGDATA);
+                             ' destination must not be in $PGDATA', ERROR_LINK_DESTINATION);
             }
         }
 

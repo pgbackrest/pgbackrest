@@ -1004,8 +1004,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink ../ destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00  ERROR: [070]: tablespace symlink ../ destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace is .. (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1015,8 +1015,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink .. destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00  ERROR: [070]: tablespace symlink .. destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1026,8 +1026,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink ../../base/ destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00  ERROR: [070]: tablespace symlink ../../base/ destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1037,8 +1037,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink ../../base destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00  ERROR: [070]: tablespace symlink ../../base destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - tablespace link references a link (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1059,8 +1059,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00  ERROR: [070]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - $PGDATA is a substring of valid tblspc excluding / (file missing err expected) (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1081,8 +1081,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [071]: tablespace symlink [TEST_PATH]/db-master/db/base/invalid_tblspc destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [071]
+P00  ERROR: [070]: tablespace symlink [TEST_PATH]/db-master/db/base/invalid_tblspc destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - add tablespace 1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --test --stanza=db backup
