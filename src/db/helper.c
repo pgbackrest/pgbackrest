@@ -50,12 +50,15 @@ dbGetId(unsigned int pgId)
 Get primary cluster or primary and standby cluster
 ***********************************************************************************************************************************/
 DbGetResult
-dbGet(bool primaryOnly, bool primaryRequired)
+dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, primaryOnly);
         FUNCTION_LOG_PARAM(BOOL, primaryRequired);
+        FUNCTION_LOG_PARAM(BOOL, standbyRequired);
     FUNCTION_LOG_END();
+
+    ASSERT(!(primaryOnly && standbyRequired));
 
     DbGetResult result = {0};
 
@@ -127,6 +130,10 @@ dbGet(bool primaryOnly, bool primaryRequired)
         // Error if no primary was found
         if (result.primaryId == 0 && primaryRequired)
             THROW(DbConnectError, "unable to find primary cluster - cannot proceed");
+
+        // Error if no standby was found
+        if (result.standbyId == 0 && standbyRequired)
+            THROW(DbConnectError, "unable to find standby cluster - cannot proceed");
 
         dbMove(result.primary, MEM_CONTEXT_OLD());
         dbMove(result.standby, MEM_CONTEXT_OLD());

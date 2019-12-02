@@ -167,7 +167,7 @@ cmdCheck(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-        DbGetResult dbGroup = dbGet(false, false);
+        DbGetResult dbGroup = dbGet(false, false, false);
 
         if (dbGroup.standby == NULL && dbGroup.primary == NULL)
             THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
