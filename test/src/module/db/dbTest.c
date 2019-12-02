@@ -137,6 +137,22 @@ testRun(void)
 
         TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("standby cluster required but not found");
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
+            HRNPQ_MACRO_SET_SEARCH_PATH(1),
+            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, "/pgdata", NULL, NULL),
+            HRNPQ_MACRO_SET_APPLICATION_NAME(1),
+            HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+            HRNPQ_MACRO_CLOSE(1),
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_ERROR(dbGet(false, false, true), DbConnectError, "unable to find standby cluster - cannot proceed");
+
         // Primary cluster found
         // -------------------------------------------------------------------------------------------------------------------------
         harnessPqScriptSet((HarnessPq [])

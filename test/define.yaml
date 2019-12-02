@@ -581,12 +581,11 @@ unit:
 
         coverage:
           # db/db: full
-          # db/helper: full
+          db/helper: full
           db/protocol: full
 
         include:
           - db/db
-          - db/helper
 
   # ********************************************************************************************************************************
   - name: command
