@@ -197,6 +197,8 @@ testRun(void)
                 TEST_ERROR(
                     protocolClientNew(strNew("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), StopError,
                     "raised from test: stop file exists for all stanzas");
+
+                storageRemoveP(storageData, strNew("lock/all" STOP_FILE_EXT));
             }
             HARNESS_FORK_PARENT_END();
         }

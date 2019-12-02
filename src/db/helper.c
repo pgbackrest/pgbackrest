@@ -58,6 +58,8 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
         FUNCTION_LOG_PARAM(BOOL, standbyRequired);
     FUNCTION_LOG_END();
 
+    ASSERT(!(primaryOnly && standbyRequired));
+
     DbGetResult result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
