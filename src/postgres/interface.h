@@ -7,6 +7,7 @@ PostgreSQL Interface
 #include <stdint.h>
 #include <sys/types.h>
 
+#include "common/debug.h"
 #include "common/type/string.h"
 #include "storage/storage.h"
 
