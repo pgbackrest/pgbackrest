@@ -55,10 +55,11 @@ cmdRemote(int handleRead, int handleWrite)
                 // Acquire a lock if this command requires a lock
                 if (cfgLockRemoteRequired(commandId))
                 {
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockRemoteType(commandId), 0, true);
-
                     // Make sure the local host is not stopped
                     lockStopTest();
+
+                    // Acquire the lock
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockRemoteType(commandId), 0, true);
                 }
             }
 
