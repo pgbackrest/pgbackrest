@@ -722,19 +722,27 @@ testRun(void)
         cmdStanzaUpgrade();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 9.6 full backup");
+        TEST_TITLE("online 9.6 back-standby full backup");
+
+        const String *pg2Path = strNewFmt("%s/pg2", testPath());
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
         strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG2_PATH "=%s", strPtr(pg2Path)));
+        strLstAddZ(argList, "--" CFGOPT_PG2_PORT "=5433");
         strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
+
+            // Connect to standby
+            HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5433", PG_VERSION_96, strPtr(pg2Path), true, NULL, NULL),
 
             // Get start time
             HRNPQ_MACRO_TIME_QUERY(1, 1575392588000),
@@ -744,6 +752,12 @@ testRun(void)
             HRNPQ_MACRO_START_BACKUP_GE_96(1, "0/1", "000000010000000000000000"),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+
+            // Wait for standby to sync
+            HRNPQ_MACRO_REPLAY_WAIT(2, "0/1"),
+
+            // Close standby connection
+            HRNPQ_MACRO_CLOSE(2),
 
             // Get copy start time
             HRNPQ_MACRO_TIME_QUERY(1, 1575392588999),
@@ -764,10 +778,14 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
+        // !!! MAKE THIS BACKUP USE THE CORRECT LOCALS
+
         TEST_RESULT_LOG(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
             "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+            "P00   INFO: wait for replay on the standby to reach 0/1\n"
+            "P00   INFO: replay on the standby reached 0/1\n"
             "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum\n"
             "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
             "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
