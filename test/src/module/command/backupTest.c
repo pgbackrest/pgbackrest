@@ -465,7 +465,7 @@ testRun(void)
 
         // Add log replacements
         hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F", NULL, "FULL", true);
-        hrnLogReplaceAdd(", [0-9]{1,3}%\\)", "[0-9]+", "PCT", false);
+        hrnLogReplaceAdd(", [0-9]{1,3}%\\)", "[0-9]+%", "PCT", false);
 
         // Create pg_control
         storagePutP(
@@ -498,14 +498,14 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
-        TEST_RESULT_LOG(
+        TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
-            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]%) checksum"
-                " bc3479b54aa9e478a6cf1af99e4382a7a1e02112\n"
-            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/postgresql.conf (11B, [PCT]%) checksum"
+            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum %s\n"
+            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum"
                 " e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: full backup size = 8KB\n"
-            "P00   INFO: new backup label = [FULL-1]");
+            "P00   INFO: new backup label = [FULL-1]",
+            TEST_64BIT() ? "bc3479b54aa9e478a6cf1af99e4382a7a1e02112" : "41b93d3dd94a07ae3a42b1877781c47444d0d5a3");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

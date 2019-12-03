@@ -223,30 +223,24 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
 }
 
 /***********************************************************************************************************************************
-Compare log to a static string
-
-After the comparison the log is cleared so the next result can be compared.
+Perform log replacements
 ***********************************************************************************************************************************/
-void
-harnessLogResult(const char *expected)
+static void
+hrnLogReplace(void)
 {
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, expected);
+    FUNCTION_HARNESS_VOID();
 
-        FUNCTION_HARNESS_ASSERT(expected != NULL);
-    FUNCTION_HARNESS_END();
-
-    harnessLogLoad(logFile);
-
+    // Proceed only if replacements have been defined
     if (harnessLog.replaceList != NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
+            // Loop through all replacements
             for (unsigned int replaceIdx = 0; replaceIdx < lstSize(harnessLog.replaceList); replaceIdx++)
             {
                 HarnessLogReplace *logReplace = lstGet(harnessLog.replaceList, replaceIdx);
 
-                // Get matches
+                // Check for matches
                 while (regExpMatch(logReplace->regExp, STRDEF(harnessLogBuffer)))
                 {
                     // Get the match
@@ -260,7 +254,11 @@ harnessLogResult(const char *expected)
                     {
                         // The sub expression must match
                         if (!regExpMatch(logReplace->regExpSub, match))
-                            THROW_FMT(AssertError, "unable to find sub expression in '%s'", strPtr(match));
+                        {
+                            THROW_FMT(
+                                AssertError, "unable to find sub expression '%s' in '%s' extracted with expresion '%s'",
+                                strPtr(logReplace->expressionSub), strPtr(match), strPtr(logReplace->expression));
+                        }
 
                         // Find beginning of match
                         begin += regExpMatchPtr(logReplace->regExpSub) - strPtr(match);
@@ -302,6 +300,26 @@ harnessLogResult(const char *expected)
         }
         MEM_CONTEXT_TEMP_END();
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Compare log to a static string
+
+After the comparison the log is cleared so the next result can be compared.
+***********************************************************************************************************************************/
+void
+harnessLogResult(const char *expected)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, expected);
+
+        FUNCTION_HARNESS_ASSERT(expected != NULL);
+    FUNCTION_HARNESS_END();
+
+    harnessLogLoad(logFile);
+    hrnLogReplace();
 
     expected = hrnReplaceKey(expected);
 
@@ -369,6 +387,7 @@ harnessLogFinal(void)
     FUNCTION_HARNESS_VOID();
 
     harnessLogLoad(logFile);
+    hrnLogReplace();
 
     if (strcmp(harnessLogBuffer, "") != 0)
         THROW_FMT(AssertError, "\n\nexpected log to be empty but actual log was:\n\n%s\n\n", harnessLogBuffer);

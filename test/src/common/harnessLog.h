@@ -4,6 +4,8 @@ Log Test Harness
 #ifndef TEST_COMMON_HARNESSLOG_H
 #define TEST_COMMON_HARNESSLOG_H
 
+#include <stdbool.h>
+
 #include "common/logLevel.h"
 
 /***********************************************************************************************************************************
