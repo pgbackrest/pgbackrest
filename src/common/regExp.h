@@ -25,6 +25,18 @@ bool regExpMatchOne(const String *expression, const String *string);
 String *regExpPrefix(const String *expression);
 
 /***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+// Get pointer to the last match.  NULL if there was no match.
+const char *regExpMatchPtr(RegExp *this);
+
+// Get size of the last match.  0 if there was no match.
+size_t regExpMatchSize(RegExp *this);
+
+// Get the last match as a String.  NULL if there was no match.
+String *regExpMatchStr(RegExp *this);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_REGEXP_TYPE                                                                                                   \

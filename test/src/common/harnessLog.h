@@ -9,6 +9,8 @@ Log Test Harness
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+void hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *replacement, bool version);
+
 void harnessLogResult(const char *expected);
 void harnessLogResultRegExp(const char *expression);
 
