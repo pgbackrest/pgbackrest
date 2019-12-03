@@ -257,11 +257,14 @@ backupTime(BackupPg *pg, bool waitRemainder)
         result = (time_t)(timeMSec / 1000);
 
         // Sleep the remainder of the second when requested (this is so copyStart is not subject to one second resolution issues)
-        sleepMSec(1000 - (timeMSec % 1000));
+        if (waitRemainder)
+        {
+            sleepMSec(1000 - (timeMSec % 1000));
 
-        // Check time again to be sure we slept long enough
-        if (result >= (time_t)(dbTimeMSec(pg->dbPrimary) / 1000))
-            THROW(AssertError, "invalid sleep for online backup time with wait remainder");
+            // Check time again to be sure we slept long enough
+            if (result >= (time_t)(dbTimeMSec(pg->dbPrimary) / 1000))
+                THROW(AssertError, "invalid sleep for online backup time with wait remainder");
+        }
     }
 
     FUNCTION_LOG_RETURN(TIME, result);
@@ -357,15 +360,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                         bool checksumPagePrior = varBool(manifestData(result)->backupOptionChecksumPage);
 
                         // Warn if an incompatible setting was explicitly requested
-                        // ??? After the migration this condition can be:
-                        // ???    !cfgOptionTest(cfgOptChecksumPage) || checksumPagePrior != cfgOptionBool(cfgOptChecksumPage)
-                        // ??? Since we don't need to log if the user did not express an explicit preference
-                        if (!cfgOptionTest(cfgOptChecksumPage) || checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
+                        if (cfgOptionTest(cfgOptChecksumPage) && checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
                         {
-                            // ??? This can be removed after the migration since the warning will not be logged
-                            if (!cfgOptionTest(cfgOptChecksumPage))
-                                cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
-
                             LOG_WARN_FMT(
                                 "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
                                 strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),

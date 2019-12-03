@@ -2,6 +2,7 @@
 Test Backup Command
 ***********************************************************************************************************************************/
 #include "command/stanza/create.h"
+#include "command/stanza/upgrade.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
@@ -9,6 +10,7 @@ Test Backup Command
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessPq.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -463,34 +465,62 @@ testRun(void)
         const String *pg1Path = strNewFmt("%s/pg1", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
 
+        // Set log level to detail
+        harnessLogLevelSet(logLevelDetail);
+
         // Add log replacements
+        hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F_[0-9]{8}-[0-9]{6}I", NULL, "INCR", true);
+        hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F_[0-9]{8}-[0-9]{6}D", NULL, "DIFF", true);
         hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F", NULL, "FULL", true);
         hrnLogReplaceAdd(", [0-9]{1,3}%\\)", "[0-9]+%", "PCT", false);
+        hrnLogReplaceAdd("\\) checksum [a-f0-9]{40}", "[a-f0-9]{40}$", "SHA1", false);
 
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         // Create stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         cmdStanzaCreate();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("offline full backup");
+        TEST_TITLE("error when postmaster.pid exists");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pg1Path)));
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR), BUFSTRDEF("PID"));
+
+        TEST_ERROR(
+            cmdBackup(), PostmasterRunningError,
+            "--no-online passed but postmaster.pid exists - looks like the postmaster is running. Shutdown the postmaster and try"
+                " again, or use --force.");
+
+        TEST_RESULT_LOG("P00   WARN: no prior backup exists, incr backup has been changed to full");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("offline full backup (changed from incr)");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        strLstAddZ(argList, "--" CFGOPT_FORCE);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         storagePutP(
@@ -498,14 +528,212 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
-        TEST_RESULT_LOG_FMT(
+        TEST_RESULT_LOG(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
-            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum %s\n"
-            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum"
-                " e3db315c260e79211b7b52587123b7aa060f30ab\n"
+            "P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it"
+                " looks like the postmaster is running and the backup will probably not be consistent\n"
+            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
             "P00   INFO: full backup size = 8KB\n"
-            "P00   INFO: new backup label = [FULL-1]",
-            TEST_64BIT() ? "bc3479b54aa9e478a6cf1af99e4382a7a1e02112" : "41b93d3dd94a07ae3a42b1877781c47444d0d5a3");
+            "P00   INFO: new backup label = [FULL-1]");
+
+        // Remove postmaster.pid
+        storageRemoveP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR, .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when no files have changed");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        strLstAddZ(argList, "--" CFGOPT_COMPRESS);
+        strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_ERROR(cmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
+            "P00   WARN: incr backup cannot alter compress option to 'true', reset to value in [FULL-1]\n"
+            "P00   WARN: incr backup cannot alter hardlink option to 'true', reset to value in [FULL-1]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("offline diff backup");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
+        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VER"));
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
+            "P00   WARN: diff backup cannot alter 'checksum-page' option to 'true', reset to 'false' from [FULL-1]\n"
+            "P00   WARN: backup '[INCR-1]' cannot be resumed: new backup type 'diff' does not match resumable backup type 'incr'\n"
+            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
+            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
+            "P00   INFO: diff backup size = 3B\n"
+            "P00   INFO: new backup label = [DIFF-1]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Update pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}));
+
+        // Upgrade stanza
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
+
+        cmdStanzaUpgrade();
+
+        // We've tested backup size enough so add a replacement to reduce log churn
+        hrnLogReplaceAdd(" backup size = [0-9]+[A-Z]+", "[^ ]+$", "SIZE", false);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 9.5 full backup");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, strPtr(pg1Path), false, NULL, NULL),
+
+            // Get start time
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392544000),
+
+            // Start backup
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_START_BACKUP_84_95(1, "0/1", "000000010000000000000000"),
+            HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+            HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+
+            // Get copy start time
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392544999),
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392545000),
+
+            // Stop backup
+            HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "0/1000001", "000000010000000000000001"),
+
+            // Get stop time
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392550000),
+
+            // Close primary connection
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
+            "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+            "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+            "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum\n"
+            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P00   INFO: full backup size = [SIZE]\n"
+            "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+            "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+            "P00   INFO: new backup label = [FULL-2]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Update pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
+
+        // Upgrade stanza
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
+
+        cmdStanzaUpgrade();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 9.6 full backup");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
+
+            // Get start time
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392588000),
+
+            // Start backup
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_START_BACKUP_GE_96(1, "0/1", "000000010000000000000000"),
+            HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+            HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+
+            // Get copy start time
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392588999),
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392589000),
+
+            // Stop backup
+            HRNPQ_MACRO_STOP_BACKUP_96(1, "0/1000001", "000000010000000000000001"),
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392590000),
+
+            // Get stop time
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392590000),
+
+            // Close primary connection
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
+            "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+            "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+            "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum\n"
+            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P00   INFO: full backup size = [SIZE]\n"
+            "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+            "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
+            "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+            "P00   INFO: new backup label = [FULL-3]");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
