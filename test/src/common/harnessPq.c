@@ -12,6 +12,12 @@ Pq Test Harness
 #include "common/type/variantList.h"
 
 #include "common/harnessPq.h"
+#include "common/harnessTest.h"
+
+/***********************************************************************************************************************************
+Pq shim error prefix
+***********************************************************************************************************************************/
+#define PQ_ERROR_PREFIX                                             "PQ SHIM ERROR"
 
 /***********************************************************************************************************************************
 Script that defines how shim functions operate
@@ -22,6 +28,7 @@ unsigned int harnessPqScriptIdx;
 // If there is a script failure change the behavior of cleanup functions to return immediately so the real error will be reported
 // rather than a bogus scripting error during cleanup
 bool harnessPqScriptFail;
+char harnessPqScriptError[4096];
 
 /***********************************************************************************************************************************
 Set pq script
@@ -45,14 +52,22 @@ Run pq script
 static HarnessPq *
 harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *parent)
 {
+    // If an error has already been thrown then throw the same error again
+    if (harnessPqScriptFail)
+        THROW(AssertError, harnessPqScriptError);
+
     // Convert params to json for comparison and reporting
     String *paramStr = param ? jsonFromVar(varNewVarLst(param)) : strNew("");
 
     // Ensure script has not ended
     if (harnessPqScript == NULL)
     {
+        snprintf(harnessPqScriptError, sizeof(harnessPqScriptError), "pq script ended before %s (%s)", function, strPtr(paramStr));
+
+        TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
         harnessPqScriptFail = true;
-        THROW_FMT(AssertError, "pq script ended before %s (%s)", function, strPtr(paramStr));
+
+        THROW(AssertError, harnessPqScriptError);
     }
 
     // Get current script item
@@ -61,30 +76,41 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
     // Check that expected function was called
     if (strcmp(result->function, function) != 0)
     {
+        snprintf(
+            harnessPqScriptError, sizeof(harnessPqScriptError), "pq script [%u] expected function %s (%s) but got %s (%s)",
+            harnessPqScriptIdx, result->function, result->param == NULL ? "" : result->param, function, strPtr(paramStr));
+
+        TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
         harnessPqScriptFail = true;
 
-        THROW_FMT(
-            AssertError, "pq script [%u] expected function %s (%s) but got %s (%s)", harnessPqScriptIdx, result->function,
-            result->param == NULL ? "" : result->param, function, strPtr(paramStr));
+        THROW(AssertError, harnessPqScriptError);
     }
 
     // Check that parameters match
     if ((param != NULL && result->param == NULL) || (param == NULL && result->param != NULL) ||
         (param != NULL && result->param != NULL && !strEqZ(paramStr, result->param)))
     {
+        snprintf(
+            harnessPqScriptError, sizeof(harnessPqScriptError), "pq script [%u] function '%s', expects param '%s' but got '%s'",
+            harnessPqScriptIdx, result->function, result->param ? result->param : "NULL", param ? strPtr(paramStr) : "NULL");
+
+        TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
         harnessPqScriptFail = true;
 
-        THROW_FMT(
-            AssertError, "pq script [%u] function '%s', expects param '%s' but got '%s'", harnessPqScriptIdx, result->function,
-            result->param ? result->param : "NULL", param ? strPtr(paramStr) : "NULL");
+        THROW(AssertError, harnessPqScriptError);
     }
 
     // Make sure the session matches with the parent as a sanity check
     if (parent != NULL && result->session != parent->session)
     {
-        THROW_FMT(
-            AssertError, "pq script [%u] function '%s', expects session '%u' but got '%u'", harnessPqScriptIdx, result->function,
-            result->session, parent->session);
+        snprintf(
+            harnessPqScriptError, sizeof(harnessPqScriptError), "pq script [%u] function '%s', expects session '%u' but got '%u'",
+            harnessPqScriptIdx, result->function, result->session, parent->session);
+
+        TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
+        harnessPqScriptFail = true;
+
+        THROW(AssertError, harnessPqScriptError);
     }
 
     // Sleep if requested
