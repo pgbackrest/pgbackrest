@@ -460,6 +460,49 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("backupLabelCreate()"))
+    {
+        const String *pg1Path = strNewFmt("%s/pg1", testPath());
+        const String *repoPath = strNewFmt("%s/repo", testPath());
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        time_t timestamp = 1575401652;
+        String *backupLabel = backupLabelFormat(backupTypeFull, NULL, timestamp);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("label advanced on history conflict");
+
+        storagePutP(
+            storageNewWriteP(
+                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz", strPtr(backupLabel))),
+            NULL);
+
+        TEST_RESULT_STR_Z(backupLabelCreate(backupTypeFull, NULL, timestamp), "20191203-193413F", "create label");
+
+        storageRemoveP(
+            storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz", strPtr(backupLabel)),
+            .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("label not advanced -- no conflict");
+
+        TEST_RESULT_STR_Z(backupLabelCreate(backupTypeFull, NULL, timestamp), "20191203-193412F", "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("label advanced on backup conflict");
+
+        storagePathCreateP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel)));
+
+        TEST_RESULT_STR_Z(backupLabelCreate(backupTypeFull, NULL, timestamp), "20191203-193413F", "create label");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdBackup()"))
     {
         const String *pg1Path = strNewFmt("%s/pg1", testPath());
@@ -582,7 +625,7 @@ testRun(void)
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: diff backup cannot alter 'checksum-page' option to 'true', reset to 'false' from [FULL-1]\n"
             "P00   WARN: backup '[INCR-1]' cannot be resumed: new backup type 'diff' does not match resumable backup type 'incr'\n"
-            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: diff backup size = 3B\n"
@@ -654,9 +697,9 @@ testRun(void)
             "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
             "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
             "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum\n"
-            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
             "P00   INFO: full backup size = [SIZE]\n"
             "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
             "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
@@ -726,9 +769,9 @@ testRun(void)
             "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
             "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
             "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum\n"
-            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
             "P00   INFO: full backup size = [SIZE]\n"
             "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
             "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"

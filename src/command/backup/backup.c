@@ -122,7 +122,8 @@ backupLabelCreate(BackupType type, const String *backupLabelLast, time_t timesta
                     break;
             }
 
-            // !!! NOT SURE ABOUT THIS LOGIC -- WHAT IF THIS IS NOT THE LAST BACKUP?
+            // ??? This is likely to work in virtually all cases, but it would be far better to make sure that the time is later
+            // than any other backup label.
             timestamp++;
         }
     }
