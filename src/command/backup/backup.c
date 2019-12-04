@@ -209,6 +209,21 @@ backupPgGet(const InfoBackup *infoBackup)
     result.version = pgControl.version;
     result.pageSize = pgControl.pageSize;
 
+    // Allow stop auto in PostgreSQL >= 9.3 and <= 9.5
+    if (result.version >= PG_VERSION_93 && result.version <= PG_VERSION_95 && cfgOptionBool(cfgOptStopAuto))
+    {
+        LOG_WARN(
+            CFGOPT_STOP_AUTO " option is only available in PostgreSQL >= " PG_VERSION_93_STR " and <= " PG_VERSION_95_STR);
+        cfgOptionSet(cfgOptStopAuto, cfgSourceParam, BOOL_FALSE_VAR);
+    }
+
+    // Allow start-fast option for version >= 8.4
+    if (result.version < PG_VERSION_84 && cfgOptionBool(cfgOptStartFast))
+    {
+        LOG_WARN(CFGOPT_START_FAST " option is only available in PostgreSQL >= " PG_VERSION_84_STR);
+        cfgOptionSet(cfgOptStartFast, cfgSourceParam, BOOL_FALSE_VAR);
+    }
+
     // If checksum page is not explicity set then automatically enable it when checksums are available
     if (cfgOptionBool(cfgOptOnline) && !cfgOptionTest(cfgOptChecksumPage))
         cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksum));
@@ -775,20 +790,6 @@ backupStart(BackupPg *pg)
         // Else start the backup normally
         else
         {
-            // Allow allow stop auto in PostgreSQL >= 9.3 and <= 9.5. If a backup is running then an error will be generated later.
-            if (pg->version >= PG_VERSION_93 && pg->version <= PG_VERSION_95 && cfgOptionBool(cfgOptStopAuto))
-            {
-                LOG_WARN(
-                    CFGOPT_STOP_AUTO " option is only available in PostgreSQL >= " PG_VERSION_93_STR " and <= " PG_VERSION_95_STR);
-            }
-
-            // Only allow start-fast option for version >= 8.4
-            if (pg->version < PG_VERSION_84 && cfgOptionBool(cfgOptStartFast))
-            {
-                LOG_WARN(CFGOPT_START_FAST " option is only available in PostgreSQL >= " PG_VERSION_84_STR);
-                cfgOptionSet(cfgOptStartFast, cfgSourceParam, BOOL_FALSE_VAR);
-            }
-
             // Check database configuration
             checkDbConfig(pg->version, pg->pgIdPrimary, pg->dbPrimary, false);
 
