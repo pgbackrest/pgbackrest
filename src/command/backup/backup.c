@@ -1219,11 +1219,10 @@ backupProcessQueue(Manifest *manifest, List **queueList)
         // Create list of process queue
         *queueList = lstNew(sizeof(List *));
 
-        // Generate the list of processing queues (there is always at least one)
+        // Generate the list of targets
         StringList *targetList = strLstNew();
         strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
 
-        // !!! CHEATING HERE -- NEED TO CREATE QUEUES BASED ON THE VALUE IN BACKUP-STANDBY
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
             const ManifestTarget *target = manifestTarget(manifest, targetIdx);
@@ -1232,10 +1231,13 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 strLstAdd(targetList, strNewFmt("%s/", strPtr(target->name)));
         }
 
-        // Generate the processing queues
+        // Generate the processing queues (there is always at least one)
+        bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
+        unsigned int queueOffset = backupStandby ? 1 : 0;
+
         MEM_CONTEXT_BEGIN(lstMemContext(*queueList))
         {
-            for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
+            for (unsigned int queueIdx = 0; queueIdx < strLstSize(targetList) + queueOffset; queueIdx++)
             {
                 List *queue = lstNewP(sizeof(ManifestFile *), .comparator = backupProcessQueueComparator);
                 lstAdd(*queueList, &queue);
@@ -1255,23 +1257,31 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             if (file->reference != NULL && (!delta || file->size == 0))
                 continue;
 
-            // Find the target that contains this file
-            unsigned int targetIdx = 0;
-
-            do
+            // Files that must be copied from the primary are always put in queue 0 when backup from standby
+            if (backupStandby && file->primary)
             {
-                // A target should always be found
-                CHECK(targetIdx < strLstSize(targetList));
-
-                if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
-                    break;
-
-                targetIdx++;
+                lstAdd(*(List **)lstGet(*queueList, 0), &file);
             }
-            while (1);
+            else
+            {
+                // Find the target that contains this file
+                unsigned int targetIdx = 0;
 
-            // Add file to queue
-            lstAdd(*(List **)lstGet(*queueList, targetIdx), &file);
+                do
+                {
+                    // A target should always be found
+                    CHECK(targetIdx < strLstSize(targetList));
+
+                    if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
+                        break;
+
+                    targetIdx++;
+                }
+                while (1);
+
+                // Add file to queue
+                lstAdd(*(List **)lstGet(*queueList, targetIdx + queueOffset), &file);
+            }
 
             // Add size to total
             result += file->size;
@@ -1330,6 +1340,7 @@ backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal
 typedef struct BackupJobData
 {
     const String *const backupLabel;                                // Backup label (defines the backup path)
+    const bool backupStandby;                                       // Backup from standby
     const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
     const bool compress;                                            // Is the backup compressed?
     const unsigned int compressLevel;                               // Compress level if backup is compressed
@@ -1355,12 +1366,13 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
         BackupJobData *jobData = data;
 
         // Determine where to begin scanning the queue (we'll stop when we get back here)
-        int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
+        unsigned int queueOffset = jobData->backupStandby && clientIdx > 0 ? 1 : 0;
+        int queueIdx = jobData->backupStandby && clientIdx == 0 ? 0 : (int)(clientIdx % (lstSize(jobData->queueList) - queueOffset));
         int queueEnd = queueIdx;
 
         do
         {
-            List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx);
+            List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
 
             if (lstSize(queue) > 0)
             {
@@ -1396,7 +1408,8 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 break;
             }
 
-            queueIdx = backupJobQueueNext(clientIdx, queueIdx, lstSize(jobData->queueList));
+            if (!jobData->backupStandby || clientIdx > 0)
+                queueIdx = backupJobQueueNext(clientIdx, queueIdx, lstSize(jobData->queueList) - queueOffset);
         }
         while (queueIdx != queueEnd);
     }
@@ -1463,6 +1476,7 @@ backupProcess(BackupPg pg, Manifest *manifest)
         BackupJobData jobData =
         {
             .backupLabel = backupLabel,
+            .backupStandby = backupStandby,
             .compress = cfgOptionBool(cfgOptCompress),
             .compressLevel = cfgOptionUInt(cfgOptCompressLevel),
             .cipherSubPass = manifestCipherSubPass(manifest),
@@ -1475,9 +1489,16 @@ backupProcess(BackupPg pg, Manifest *manifest)
         ProtocolParallel *parallelExec = protocolParallelNew(
             (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, backupJobCallback, &jobData);
 
-        // !!! CREATE PRIMARY AND STANDBY CONNECTIONS WHEN NEEDED
-        for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
-            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pg.pgIdPrimary, processIdx));
+        // First client is always on the primary
+        protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pg.pgIdPrimary, 1));
+
+        // Create the rest of the clients on the primary or standby depending on the value of backup-standby.  Note that standby
+        // backups doesn't count the primary client in process-max.
+        unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (backupStandby ? 1 : 0);
+        unsigned int pgId = backupStandby ? pg.pgIdStandby : pg.pgIdPrimary;
+
+        for (unsigned int processIdx = 2; processIdx <= processMax; processIdx++)
+            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgId, processIdx));
 
         // Process jobs
         uint64_t sizeCopied = 0;
@@ -1501,7 +1522,7 @@ backupProcess(BackupPg pg, Manifest *manifest)
                     fileLog,
                     strPtr(
                         storagePathP(
-                            pg.storagePrimary,
+                            protocolParallelJobProcessId(job) > 0 ? storagePgId(pgId) : pg.storagePrimary,
                             manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name))));
 
                 sizeCopied = backupJobResult(manifest, fileLog, job, sizeTotal, sizeCopied, pg.pageSize);

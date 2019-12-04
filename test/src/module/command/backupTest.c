@@ -708,7 +708,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         // Update pg_control
         storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            storageNewWriteP(
+                storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path)), .timeModified = 1575392540),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
 
         // Upgrade stanza
@@ -735,6 +736,11 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
         strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
         harnessCfgLoad(cfgCmdBackup, argList);
+
+        // Create files to copy from the standby.  The files will be zero-size on the primary and non-zero on the standby to test
+        // that they were copied from the right place.
+        storagePutP(storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = 1575392541), NULL);
+        storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("DATA"));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -776,25 +782,19 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
+        // Set log level to warn because the following test uses multiple processes so the log will not be predictable
+        harnessLogLevelSet(logLevelWarn);
+
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
-        // !!! MAKE THIS BACKUP USE THE CORRECT LOCALS
+        // Set log level back to detail
+        harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_LOG(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
-            "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
-            "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
-            "P00   INFO: wait for replay on the standby to reach 0/1\n"
-            "P00   INFO: replay on the standby reached 0/1\n"
-            "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum\n"
-            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-            "P00   INFO: full backup size = [SIZE]\n"
-            "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
-            "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-            "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
-            "P00   INFO: new backup label = [FULL-3]");
+            "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum");
+
+        // !!! NEED TO MAKE SURE DIRECTORY MATCHES
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

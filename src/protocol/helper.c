@@ -163,7 +163,7 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, u
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            protocolHelper.clientLocalSize = cfgOptionUInt(cfgOptProcessMax);
+            protocolHelper.clientLocalSize = cfgOptionUInt(cfgOptProcessMax) + 1;
             protocolHelper.clientLocal = (ProtocolHelperClient *)memNew(
                 protocolHelper.clientLocalSize * sizeof(ProtocolHelperClient));
         }
