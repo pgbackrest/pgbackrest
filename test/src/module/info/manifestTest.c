@@ -49,6 +49,42 @@ testRun(void)
             "db-system-id=0\n"                                                                                                     \
             "db-version=\"8.3\"\n"
 
+        #define TEST_MANIFEST_DB_84                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=200904091\n"                                                                                       \
+            "db-control-version=843\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"8.4\"\n"
+
+        #define TEST_MANIFEST_DB_90                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201008051\n"                                                                                       \
+            "db-control-version=903\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"9.0\"\n"
+
+        #define TEST_MANIFEST_DB_91                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201105231\n"                                                                                       \
+            "db-control-version=903\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"9.1\"\n"
+
+        #define TEST_MANIFEST_DB_92                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201204301\n"                                                                                       \
+            "db-control-version=922\n"                                                                                             \
+            "db-id=0\n"                                                                                                            \
+            "db-system-id=0\n"                                                                                                     \
+            "db-version=\"9.2\"\n"
+
         #define TEST_MANIFEST_DB_94                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
@@ -67,6 +103,16 @@ testRun(void)
             "option-compress=false\n"                                                                                              \
             "option-hardlink=false\n"                                                                                              \
             "option-online=false\n"
+
+        #define TEST_MANIFEST_OPTION_ONLINE                                                                                        \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "option-archive-check=false\n"                                                                                         \
+            "option-archive-copy=false\n"                                                                                          \
+            "option-checksum-page=false\n"                                                                                         \
+            "option-compress=false\n"                                                                                              \
+            "option-hardlink=false\n"                                                                                              \
+            "option-online=true\n"
 
         #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE                                                                           \
             "\n"                                                                                                                   \
@@ -109,12 +155,73 @@ testRun(void)
 
         // Version
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
             BUFSTRDEF("8.3\n"));
+
+        // Create special file
+        String *specialFile = strNewFmt("%s/pg/testpipe", testPath());
+        TEST_RESULT_INT(
+            system(strPtr(strNewFmt("mkfifo -m 666 %s", strPtr(specialFile)))), 0, "create pipe");
+
+        // Files that will always be ignored
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_BACKUPLABELOLD), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_POSTMASTEROPTS), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_POSTMASTERPID), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_RECOVERYCONF), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_RECOVERYDONE), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
 
         // Directories that will always be ignored
         storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
         storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
+
+        // Directories under which files will be ignored (some depending on the version)
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM "/" BOGUS_STR), .modeFile = 0400,
+            .timeModified = 1565282101), NULL);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGNOTIFY "/" BOGUS_STR), .modeFile = 0400,
+            .timeModified = 1565282102), NULL);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT "/" BOGUS_STR), .modeFile = 0400,
+            .timeModified = 1565282103), NULL);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGSERIAL "/" BOGUS_STR), .modeFile = 0400,
+            .timeModified = 1565282104), NULL);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS "/" BOGUS_STR), .modeFile = 0400,
+            .timeModified = 1565282105), BUFSTRDEF("test"));
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGSTATTMP "/" BOGUS_STR), .modeFile = 0640,
+            .timeModified = 1565282106), NULL);
+        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS "/" BOGUS_STR), .modeFile = 0400,
+            .timeModified = 1565282107), NULL);
+
+        // WAL directory not ignored when offline
+        storagePathCreateP(storagePgWrite, strNew("pg_xlog"), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew("pg_xlog/" BOGUS_STR), .modeFile = 0400,
+            .timeModified = 1565282108), NULL);
+        storagePathCreateP(storagePgWrite, strNew("pg_xlog/archive_status"), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew("pg_xlog/archive_status/" BOGUS_STR), .modeFile = 0400,
+            .timeModified = 1565282108), NULL);
 
         // global directory
         storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_GLOBAL), .mode = 0700, .noParentCreate = true);
@@ -148,52 +255,72 @@ testRun(void)
                 "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"master\":true,\"size\":4,\"timestamp\":1565282114}\n"
-                "pg_data/global/t1_1={\"size\":0,\"timestamp\":1565282114}\n"
-                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
+                "pg_data/global/t1_1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/pg_notify/BOGUS={\"size\":0,\"timestamp\":1565282102}\n"
+                "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
+                "pg_data/pg_serial/BOGUS={\"size\":0,\"timestamp\":1565282104}\n"
+                "pg_data/pg_snapshots/BOGUS={\"size\":4,\"timestamp\":1565282105}\n"
+                "pg_data/pg_stat_tmp/BOGUS={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282106}\n"
+                "pg_data/pg_xlog/BOGUS={\"size\":0,\"timestamp\":1565282108}\n"
+                "pg_data/pg_xlog/archive_status/BOGUS={\"size\":0,\"timestamp\":1565282108}\n"
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
                 "pg_data/base={}\n"
                 "pg_data/global={}\n"
+                "pg_data/pg_dynshmem={}\n"
+                "pg_data/pg_notify={}\n"
+                "pg_data/pg_replslot={}\n"
+                "pg_data/pg_serial={}\n"
+                "pg_data/pg_snapshots={}\n"
+                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                "pg_data/pg_subtrans={}\n"
+                "pg_data/pg_xlog={}\n"
+                "pg_data/pg_xlog/archive_status={}\n"
                 TEST_MANIFEST_PATH_DEFAULT))),
             "check manifest");
 
         TEST_RESULT_LOG(
             "P00   INFO: exclude contents of '{[path]}/pg/base' from backup using 'base/' exclusion\n"
-            "P00   INFO: exclude '{[path]}/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion");
+            "P00   INFO: exclude '{[path]}/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion\n"
+            "P00   WARN: exclude special file '/home/vagrant/test/test-0/pg/testpipe' from backup");
 
+        storageRemoveP(storageTest, specialFile, .errorOnMissing = true);
+
+        // Set up for manifestNewBuild tests
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest with all features");
-
-        // Version
-        storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282114),
-            BUFSTRDEF("9.4\n"));
 
         // Temp relations to ignore
-        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1")), NULL);
-        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1.1")), NULL);
-        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm")), NULL);
-        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm.999999")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1"), .modeFile = 0400,
+            .timeModified = 1565282113), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1.1"), .modeFile = 0400,
+            .timeModified = 1565282113),  NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm"), .modeFile = 0400,
+            .timeModified = 1565282113),  NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm.999999"), .modeFile = 0400,
+            .timeModified = 1565282113),  NULL);
 
-        // Unlogged relations
-        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555")), NULL);
+        // Unlogged relations (pgVersion > 9.1)
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // skip file
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_fsm"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // skip file
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_vm.1"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // skip file
         storagePutP(
             storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_init"), .modeFile = 0400, .timeModified = 1565282114),
-            NULL);
-
-        // Tablespace 1
-        storagePathCreateP(storageTest, STRDEF("ts/1"), .mode = 0777);
-        storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.4_201409291/1"), .mode = 0700);
-        storagePathCreateP(storagePgWrite, MANIFEST_TARGET_PGTBLSPC_STR, .mode = 0700, .noParentCreate = true);
-        THROW_ON_SYS_ERROR(
-            symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+            NULL); // do not skip _init
         storagePutP(
-            storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/16384"), .modeFile = 0400,  .timeModified = 1565282115),
-            BUFSTRDEF("TESTDATA"));
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_init.1"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // do not skip _init with segment
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_vm.1_vm"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // do not skip files that do not have valid endings as we are not sure what they are
 
         // Config directory and file links
         storagePathCreateP(storageTest, STRDEF("config"), .mode = 0700);
@@ -210,21 +337,366 @@ testRun(void)
             storageNewWriteP(storageTest, strNew("config/pg_hba.conf"), .modeFile = 0400,  .timeModified = 1565282117),
             BUFSTRDEF("PGHBACONF"));
 
-        // pg_xlog/wal link
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest with all features - 8.4 and online");
+
+        // Version
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("8.4\n"));
+
+        // Tablespace 1 (old tablespace dir format)
+        storagePathCreateP(storageTest, STRDEF("ts/1"), .mode = 0777);
+        storagePathCreateP(storageTest, STRDEF("ts/1/1"), .mode = 0700);
+        storagePathCreateP(storagePgWrite, MANIFEST_TARGET_PGTBLSPC_STR, .mode = 0700, .noParentCreate = true);
+        THROW_ON_SYS_ERROR(
+            symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_tblspc/1/1/16384"), .modeFile = 0400,  .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_tblspc/1/1/t123_123_fsm"), .modeFile = 0400, .timeModified = 1565282115),
+            BUFSTRDEF("TEMP_RELATION"));
+
+        // Test manifest - mode stored for shared cluster tablespace dir, pg_xlog contents ignored because online
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_84, true, false, NULL, NULL), "build manifest");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_84
+                TEST_MANIFEST_OPTION_ONLINE
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"master\":true,\"size\":4,\"timestamp\":1565282100}\n"
+                "pg_data/base/1/555={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_fsm={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/t1_1={\"size\":0,\"timestamp\":1565282113}\n"
+                "pg_data/base/1/t1_1.1={\"size\":0,\"timestamp\":1565282113}\n"
+                "pg_data/base/1/t8888888_8888888_vm={\"size\":0,\"timestamp\":1565282113}\n"
+                "pg_data/base/1/t8888888_8888888_vm.999999={\"size\":0,\"timestamp\":1565282113}\n"
+                "pg_data/global/t1_1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/pg_dynshmem/BOGUS={\"master\":true,\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/pg_hba.conf={\"master\":true,\"size\":9,\"timestamp\":1565282117}\n"
+                "pg_data/pg_notify/BOGUS={\"master\":true,\"size\":0,\"timestamp\":1565282102}\n"
+                "pg_data/pg_replslot/BOGUS={\"master\":true,\"size\":0,\"timestamp\":1565282103}\n"
+                "pg_data/pg_serial/BOGUS={\"master\":true,\"size\":0,\"timestamp\":1565282104}\n"
+                "pg_data/pg_snapshots/BOGUS={\"master\":true,\"size\":4,\"timestamp\":1565282105}\n"
+                "pg_data/postgresql.conf={\"master\":true,\"size\":14,\"timestamp\":1565282116}\n"
+                "pg_tblspc/1/1/16384={\"size\":8,\"timestamp\":1565282115}\n"
+                "pg_tblspc/1/1/t123_123_fsm={\"size\":13,\"timestamp\":1565282115}\n"
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
+                "\n"
+                "[target:link]\n"
+                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
+                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                TEST_MANIFEST_LINK_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_dynshmem={}\n"
+                "pg_data/pg_notify={}\n"
+                "pg_data/pg_replslot={}\n"
+                "pg_data/pg_serial={}\n"
+                "pg_data/pg_snapshots={}\n"
+                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                "pg_data/pg_subtrans={}\n"
+                "pg_data/pg_tblspc={}\n"
+                "pg_data/pg_xlog={}\n"
+                "pg_data/pg_xlog/archive_status={}\n"
+                "pg_tblspc={}\n"
+                "pg_tblspc/1={\"mode\":\"0777\"}\n"
+                "pg_tblspc/1/1={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // Remove directory
+        storagePathRemoveP(storageTest, STRDEF("ts/1/1"), .recurse = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest with all features - 9.0");
+
+        // Version
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("9.0\n"));
+
+        // Make 'pg_xlog/archive_status' a link (if other links in the pg_xlog dir (should not be), they will be followed and added
+        // when online but archive_status (and pg_xlog), whether a link of not, will will only be followed if offline)
+        storagePathRemoveP(storagePgWrite, strNew("pg_xlog/archive_status"), .recurse = true);
+        storagePathCreateP(storageTest, STRDEF("archivestatus"), .mode = 0777);
+        THROW_ON_SYS_ERROR(
+            symlink("../../archivestatus", strPtr(strNewFmt("%s/pg/pg_xlog/archive_status", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_xlog/archive_status/" BOGUS_STR), .modeFile = 0400,  .timeModified = 1565282120),
+            BUFSTRDEF("TESTDATA"));
+
+        // Tablespace 1
+        storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.0_201008051/1"), .mode = 0700);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_tblspc/1/PG_9.0_201008051/1/16384"), .modeFile = 0400,  .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_tblspc/1/PG_9.0_201008051/1/t123_123_fsm"), .modeFile = 0400,
+                .timeModified = 1565282115), BUFSTRDEF("IGNORE_TEMP_RELATION"));
+
+        // Test manifest - temp tables and pg_notify files ignored
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_90, false, false, NULL, NULL), "build manifest");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_90
+                TEST_MANIFEST_OPTION
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_data/pg_xlog/archive_status={\"path\":\"../../archivestatus\",\"type\":\"link\"}\n"
+                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
+                "pg_data/base/1/555={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_fsm={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
+                "pg_data/pg_serial/BOGUS={\"size\":0,\"timestamp\":1565282104}\n"
+                "pg_data/pg_snapshots/BOGUS={\"size\":4,\"timestamp\":1565282105}\n"
+                "pg_data/pg_xlog/BOGUS={\"size\":0,\"timestamp\":1565282108}\n"
+                "pg_data/pg_xlog/archive_status/BOGUS={\"size\":8,\"timestamp\":1565282120}\n"
+                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                "pg_tblspc/1/PG_9.0_201008051/1/16384={\"master\":false,\"size\":8,\"timestamp\":1565282115}\n"
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+                "\n"
+                "[target:link]\n"
+                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
+                "pg_data/pg_xlog/archive_status={\"destination\":\"../../archivestatus\"}\n"
+                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                TEST_MANIFEST_LINK_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_dynshmem={}\n"
+                "pg_data/pg_notify={}\n"
+                "pg_data/pg_replslot={}\n"
+                "pg_data/pg_serial={}\n"
+                "pg_data/pg_snapshots={}\n"
+                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                "pg_data/pg_subtrans={}\n"
+                "pg_data/pg_tblspc={}\n"
+                "pg_data/pg_xlog={}\n"
+                "pg_data/pg_xlog/archive_status={\"mode\":\"0777\"}\n"
+                "pg_tblspc={}\n"
+                "pg_tblspc/1={}\n"
+                "pg_tblspc/1/PG_9.0_201008051={}\n"
+                "pg_tblspc/1/PG_9.0_201008051/1={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // Remove symlinks and directories
+        THROW_ON_SYS_ERROR(
+            unlink(strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+        storagePathRemoveP(storageTest, STRDEF("ts/1/PG_9.0_201008051"), .recurse = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest with all features - 9.1 and online");
+
+        // Version
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("9.1\n"));
+
+        // Test manifest - temp tables, unlogged tables, pg_serial and pg_xlog files ignored
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_91, true, false, NULL, NULL), "build manifest");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_91
+                TEST_MANIFEST_OPTION_ONLINE
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_data/pg_xlog/archive_status={\"path\":\"../../archivestatus\",\"type\":\"link\"}\n"
+                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
+                "pg_data/base/1/555_init={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
+                "pg_data/pg_snapshots/BOGUS={\"size\":4,\"timestamp\":1565282105}\n"
+                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+                "\n"
+                "[target:link]\n"
+                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                "pg_data/pg_xlog/archive_status={\"destination\":\"../../archivestatus\"}\n"
+                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                TEST_MANIFEST_LINK_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_dynshmem={}\n"
+                "pg_data/pg_notify={}\n"
+                "pg_data/pg_replslot={}\n"
+                "pg_data/pg_serial={}\n"
+                "pg_data/pg_snapshots={}\n"
+                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                "pg_data/pg_subtrans={}\n"
+                "pg_data/pg_tblspc={}\n"
+                "pg_data/pg_xlog={}\n"
+                "pg_data/pg_xlog/archive_status={\"mode\":\"0777\"}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // Remove pg_xlog and the directory that archive_status link pointed to
+        storagePathRemoveP(storagePgWrite, STRDEF("pg_xlog"), .recurse = true);
+        storagePathRemoveP(storageTest, STRDEF("archivestatus"), .recurse = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest with all features - 9.2");
+
+        // Version
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("9.2\n"));
+
+        // create pg_xlog/wal as a link
         storagePathCreateP(storageTest, STRDEF("wal"), .mode = 0700);
         THROW_ON_SYS_ERROR(
             symlink(strPtr(strNewFmt("%s/wal", testPath())), strPtr(strNewFmt("%s/pg/pg_xlog", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
 
-        // Directories to ignore files for depending on the version
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSTATTMP), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
+        // Files to conditionally ignore before 9.4
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_POSTGRESQLAUTOCONFTMP), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
 
+        // Test manifest - pg_snapshots files ignored
+        TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_92, false, false, NULL, NULL), "build manifest");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_92
+                TEST_MANIFEST_OPTION
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "pg_data/pg_xlog={\"path\":\"{[path]}/wal\",\"type\":\"link\"}\n"
+                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
+                "pg_data/base/1/555_init={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
+                "pg_data/postgresql.auto.conf.tmp={\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+                "\n"
+                "[target:link]\n"
+                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                "pg_data/pg_xlog={\"destination\":\"{[path]}/wal\"}\n"
+                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                TEST_MANIFEST_LINK_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_dynshmem={}\n"
+                "pg_data/pg_notify={}\n"
+                "pg_data/pg_replslot={}\n"
+                "pg_data/pg_serial={}\n"
+                "pg_data/pg_snapshots={}\n"
+                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                "pg_data/pg_subtrans={}\n"
+                "pg_data/pg_tblspc={}\n"
+                "pg_data/pg_xlog={}\n"
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "check manifest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest with all features - 9.4");
+
+        // Version
+        storagePutP(
+            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("9.4\n"));
+
+        // Tablespace 1
+        storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.4_201409291/1"), .mode = 0700);
+        THROW_ON_SYS_ERROR(
+            symlink("../../ts/1", strPtr(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/16384"), .modeFile = 0400,  .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm"), .modeFile = 0400,  .timeModified = 1565282115),
+            BUFSTRDEF("IGNORE_TEMP_RELATION"));
+
+        // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
         TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), "build manifest");
 
         contentSave = bufNew(0);
@@ -244,12 +716,14 @@ testRun(void)
                 "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
-                "pg_tblspc/1/PG_9.4_201409291/1/16384={\"master\":false,\"size\":8,\"timestamp\":1565282115}\n"
-                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+                "pg_data/PG_VERSION={\"master\":true,\"size\":4,\"timestamp\":1565282100}\n"
+                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/pg_hba.conf={\"master\":true,\"size\":9,\"timestamp\":1565282117}\n"
+                "pg_data/postgresql.conf={\"master\":true,\"size\":14,\"timestamp\":1565282116}\n"
+                "pg_tblspc/1/PG_9.4_201409291/1/16384={\"size\":8,\"timestamp\":1565282115}\n"
+                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
@@ -268,7 +742,7 @@ testRun(void)
                 "pg_data/pg_replslot={}\n"
                 "pg_data/pg_serial={}\n"
                 "pg_data/pg_snapshots={}\n"
-                "pg_data/pg_stat_tmp={}\n"
+                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
                 "pg_data/pg_subtrans={}\n"
                 "pg_data/pg_tblspc={}\n"
                 "pg_data/pg_xlog={}\n"
@@ -289,6 +763,31 @@ testRun(void)
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), LinkDestinationError,
             hrnReplaceKey("link 'link' destination '{[path]}/pg/base' is in PGDATA"));
+
+        THROW_ON_SYS_ERROR(
+            unlink(strPtr(strNewFmt("%s/pg/link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on path in pg_data");
+
+        storagePathCreateP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somedir"), .mode = 0700, .noParentCreate = true);
+
+        TEST_ERROR(
+            manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), LinkExpectedError,
+            "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
+
+        storagePathRemoveP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somedir"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on file in pg_data");
+
+        storagePutP(storageNewWriteP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somefile")), NULL);
+
+        TEST_ERROR(
+            manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), LinkExpectedError,
+            "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
+
+        storageRemoveP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somefile"));
 
         #undef TEST_MANIFEST_HEADER
         #undef TEST_MANIFEST_DB_83
