@@ -636,12 +636,12 @@ unit:
         perlReq: true
 
         coverage:
-          command/backup/backup: full
+          # command/backup/backup: full
           command/backup/file: full
           command/backup/protocol: full
 
         include:
-          # - command/backup/backup
+          - command/backup/backup
           - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------

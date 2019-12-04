@@ -564,6 +564,29 @@ testRun(void)
              "option 'backup-standby' not valid for PostgreSQL < 9.2");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("warn and reset when backup from standby used in offline mode");
+
+        // Create pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, NULL)), "backup init");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    check backup-standby");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg_control does not match stanza");
 
         // Create pg_control
@@ -651,6 +674,88 @@ testRun(void)
 
         TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_95, 1000000000000000950, NULL)), "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), true, "    check stop-auto");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("reset checksum-page when the cluster does not have checksums enabled");
+
+        // Create pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
+
+            // Close primary connection
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_RESULT_VOID(dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, NULL))->dbPrimary), "backup init");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: checksum-page option set to true but checksums are not enabled on the cluster, resetting to false");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("ok if cluster checksums are enabled and checksum-page is any value");
+
+        // Create pg_control with page checksums
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .pageChecksum = true}));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_CHECKSUM_PAGE);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
+
+            // Close primary connection
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_RESULT_VOID(dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, NULL))->dbPrimary), "backup init");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
+
+        // Create pg_control without page checksums
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
+
+            // Close primary connection
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_RESULT_VOID(dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, NULL))->dbPrimary), "backup init");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
     }
 
     // *****************************************************************************************************************************
