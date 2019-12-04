@@ -11,6 +11,43 @@ Test Backup Command
 
 #include "common/harnessConfig.h"
 #include "common/harnessPq.h"
+#include "common/harnessStorage.h"
+
+/***********************************************************************************************************************************
+Test backup to be sure all files are correct
+***********************************************************************************************************************************/
+static void
+testBackupCompare(const Storage *storage, const String *path, const char *compare)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE, storage);
+        FUNCTION_HARNESS_PARAM(STRING, path);
+        FUNCTION_HARNESS_PARAM(STRINGZ, compare);
+    FUNCTION_HARNESS_END();
+
+    // Get the pg-path as a string
+    HarnessStorageInfoListCallbackData callbackData =
+    {
+        .content = strNew(""),
+        .modeOmit = true,
+        .modePath = 0750,
+        .modeFile = 0640,
+        .userOmit = true,
+        .groupOmit = true,
+        .timestampOmit = true,
+        .rootPathOmit = true,
+    };
+
+    TEST_RESULT_VOID(
+        storageInfoListP(storage, path, hrnStorageInfoListCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc),
+        "path info list for backup compare");
+
+    // Compare
+    TEST_RESULT_STR_Z(callbackData.content, hrnReplaceKey(compare), "    compare file list");
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
 
 /***********************************************************************************************************************************
 Test Run
@@ -734,6 +771,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--" CFGOPT_PG2_PATH "=%s", strPtr(pg2Path)));
         strLstAddZ(argList, "--" CFGOPT_PG2_PORT "=5433");
         strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -794,7 +832,16 @@ testRun(void)
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum");
 
-        // !!! NEED TO MAKE SURE DIRECTORY MATCHES
+        testBackupCompare(
+            storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"),
+            "PG_VERSION {file, s=3}\n"
+            "backup_label {file, s=17}\n"
+            "base {path}\n"
+            "base/1 {path}\n"
+            "base/1/1 {file, s=4}\n"
+            "global {path}\n"
+            "global/pg_control {file, s=8192}\n"
+            "postgresql.conf {file, s=11}\n");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
