@@ -110,6 +110,8 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
 
+    ASSERT(hostId > 0);
+
     StringList *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -155,6 +157,8 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, u
         FUNCTION_LOG_PARAM(UINT, hostId);
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
 
     protocolHelperInit();
 
