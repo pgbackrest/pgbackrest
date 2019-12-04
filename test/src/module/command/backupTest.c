@@ -759,6 +759,48 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("backupTime()"))
+    {
+        const String *pg1Path = strNewFmt("%s/pg1", testPath());
+        const String *repoPath = strNewFmt("%s/repo", testPath());
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when second does not advance after sleep");
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        // Create pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
+
+            // Don't advance time after wait
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392588998),
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392588999),
+
+            // Close primary connection
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        BackupData *backupData = backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, NULL));
+
+        TEST_ERROR(backupTime(backupData, true), AssertError, "invalid sleep for online backup time with wait remainder");
+        dbFree(backupData->dbPrimary);
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdBackup()"))
     {
         const String *pg1Path = strNewFmt("%s/pg1", testPath());

@@ -286,15 +286,15 @@ backupTime(BackupData *backupData, bool waitRemainder)
     {
         // Get time from the database
         TimeMSec timeMSec = dbTimeMSec(backupData->dbPrimary);
-        result = (time_t)(timeMSec / 1000);
+        result = (time_t)(timeMSec / MSEC_PER_SEC);
 
         // Sleep the remainder of the second when requested (this is so copyStart is not subject to one second resolution issues)
         if (waitRemainder)
         {
-            sleepMSec(1000 - (timeMSec % 1000));
+            sleepMSec(MSEC_PER_SEC - (timeMSec % MSEC_PER_SEC));
 
             // Check time again to be sure we slept long enough
-            if (result >= (time_t)(dbTimeMSec(backupData->dbPrimary) / 1000))
+            if (result >= (time_t)(dbTimeMSec(backupData->dbPrimary) / MSEC_PER_SEC))
                 THROW(AssertError, "invalid sleep for online backup time with wait remainder");
         }
     }
