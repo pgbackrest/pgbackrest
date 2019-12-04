@@ -169,12 +169,20 @@ backupInit(const InfoBackup *infoBackup)
     BackupData *result = memNew(sizeof(BackupData));
     *result = (BackupData){.pgIdPrimary = 1};
 
+    if (!cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby))
+    {
+        LOG_WARN(
+            "option " CFGOPT_BACKUP_STANDBY " is enabled but backup is offline - backups will be performed from the primary");
+        cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
+    }
+
     // Check that the PostgreSQL version supports backup from standby. The check is done using the stanza info because pg_control
     // cannot be loaded until a primary is found -- which will also lead to an error if the version does not support standby. If the
     // pg_control version does not match the stanza version then there will be an error further down.
+    bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
     InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
-    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
+    if (cfgOptionBool(cfgOptOnline) && backupStandby && infoPg.version < PG_VERSION_BACKUP_STANDBY)
     {
         THROW_FMT(
             ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",
@@ -182,8 +190,6 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Get database info when online
-    bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
-
     if (cfgOptionBool(cfgOptOnline))
     {
         DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
