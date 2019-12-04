@@ -19,6 +19,7 @@ typedef struct HarnessStorageInfoListCallbackData
     bool userOmit;                                                  // Should the current user be ommitted?
     bool groupOmit;                                                 // Should the current group be ommitted?
     bool sizeOmit;                                                  // Should the size be ommitted
+    bool rootPathOmit;                                              // Should the root path be ommitted?
 } HarnessStorageInfoListCallbackData;
 
 void hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info);

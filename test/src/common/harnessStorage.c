@@ -14,6 +14,9 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 {
     HarnessStorageInfoListCallbackData *data = callbackData;
 
+    if (data->rootPathOmit && info->type == storageTypePath && strEq(info->name, DOT_STR))
+        return;
+
     strCatFmt(data->content, "%s {", strPtr(info->name));
 
     switch (info->type)
