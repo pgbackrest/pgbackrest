@@ -169,6 +169,18 @@ backupInit(const InfoBackup *infoBackup)
     BackupData *result = memNew(sizeof(BackupData));
     *result = (BackupData){.pgIdPrimary = 1};
 
+    // Check that the PostgreSQL version supports backup from standby. The check is done using the stanza info because pg_control
+    // cannot be loaded until a primary is found -- which will also lead to an error if the version does not support standby. If the
+    // pg_control version does not match the stanza version then there will be an error further down.
+    InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
+
+    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
+    {
+        THROW_FMT(
+            ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",
+            strPtr(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
+    }
+
     // Get database info when online
     bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
 
@@ -194,11 +206,14 @@ backupInit(const InfoBackup *infoBackup)
     result->storagePrimary = storagePgId(result->pgIdPrimary);
     result->hostPrimary = cfgOptionStr(cfgOptPgHost + result->pgIdPrimary - 1);
 
-    // Get control information from the primary and validate it against backup info
+    // Get pg_control info from the primary
     PgControl pgControl = pgControlFromFile(result->storagePrimary);
-    InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
-    if (pgControl.version != infoPg.version || pgControl.systemId != infoPg.systemId)
+    result->version = pgControl.version;
+    result->pageSize = pgControl.pageSize;
+
+    // Validate pg_control info against the stanza
+    if (result->version != infoPg.version || pgControl.systemId != infoPg.systemId)
     {
         THROW_FMT(
             BackupMismatchError,
@@ -207,45 +222,39 @@ backupInit(const InfoBackup *infoBackup)
             infoPg.systemId);
     }
 
-    result->version = pgControl.version;
-    result->pageSize = pgControl.pageSize;
-
-    // Allow stop auto in PostgreSQL >= 9.3 and <= 9.5
-    if (result->version >= PG_VERSION_93 && result->version <= PG_VERSION_95 && cfgOptionBool(cfgOptStopAuto))
+    // Only allow stop auto in PostgreSQL >= 9.3 and <= 9.5
+    if (cfgOptionBool(cfgOptStopAuto) && (result->version < PG_VERSION_93 || result->version > PG_VERSION_95))
     {
         LOG_WARN(
-            CFGOPT_STOP_AUTO " option is only available in PostgreSQL >= " PG_VERSION_93_STR " and <= " PG_VERSION_95_STR);
+            CFGOPT_STOP_AUTO " option is only available in " PG_NAME " >= " PG_VERSION_93_STR " and <= " PG_VERSION_95_STR);
         cfgOptionSet(cfgOptStopAuto, cfgSourceParam, BOOL_FALSE_VAR);
     }
 
-    // Allow start-fast option for version >= 8.4
-    if (result->version < PG_VERSION_84 && cfgOptionBool(cfgOptStartFast))
+    // Only allow start-fast option for PostgreSQL >= 8.4
+    if (cfgOptionBool(cfgOptStartFast) && result->version < PG_VERSION_84)
     {
-        LOG_WARN(CFGOPT_START_FAST " option is only available in PostgreSQL >= " PG_VERSION_84_STR);
+        LOG_WARN(CFGOPT_START_FAST " option is only available in " PG_NAME " >= " PG_VERSION_84_STR);
         cfgOptionSet(cfgOptStartFast, cfgSourceParam, BOOL_FALSE_VAR);
     }
 
     // If checksum page is not explicity set then automatically enable it when checksums are available
-    if (cfgOptionBool(cfgOptOnline) && !cfgOptionTest(cfgOptChecksumPage))
-        cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksum));
-    // !!! ELSE WARN AND RESET WHEN PAGE CHECKSUMS DO NOT MATCH
-
-    // Backup from standby can only be used on PostgreSQL >= 9.1
-    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
+    if (!cfgOptionTest(cfgOptChecksumPage))
     {
-        THROW_FMT(
-            ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",
-            strPtr(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
+        // If online then use the value in pg_control to set checksum-page
+        if (cfgOptionBool(cfgOptOnline))
+        {
+            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksum));
+        }
+        // Else set to false.  An offline cluster is likely to have false positives so better if the user enables manually
+        else
+            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
     }
-
-    // If backup from standby option is set but a standby was not configured in the config file or on the command line, then turn
-    // off backup-standby and warn that backups will be performed from the primary.
-    if (result->dbStandby == NULL && cfgOptionBool(cfgOptBackupStandby))
+    // Else if checksums have been explicitly enabled but are not available then warn and reset. ??? We should be able to make this
+    // determination when offline as well, but the integration tests don't write pg_control accurately enough to support it.
+    else if (cfgOptionBool(cfgOptOnline) && !pgControl.pageChecksum && cfgOptionBool(cfgOptChecksumPage))
     {
-        cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
-        LOG_WARN(
-            "option " CFGOPT_BACKUP_STANDBY " is enabled but standby is not properly configured - backups will be performed from"
-            " the primary");
+        LOG_WARN(CFGOPT_CHECKSUM_PAGE " option set to true but checksums are not enabled on the cluster, resetting to false");
+        cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
     }
 
     FUNCTION_LOG_RETURN(BACKUP_DATA, result);
@@ -377,7 +386,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                         bool checksumPagePrior = varBool(manifestData(result)->backupOptionChecksumPage);
 
                         // Warn if an incompatible setting was explicitly requested
-                        if (cfgOptionTest(cfgOptChecksumPage) && checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
+                        if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
                         {
                             LOG_WARN_FMT(
                                 "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",

@@ -540,6 +540,120 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("backupInit()"))
+    {
+        const String *pg1Path = strNewFmt("%s/pg1", testPath());
+        const String *repoPath = strNewFmt("%s/repo", testPath());
+
+        // Set log level to detail
+        harnessLogLevelSet(logLevelDetail);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when backup from standby is not supported");
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_ERROR(
+            backupInit(infoBackupNew(PG_VERSION_91, 1000000000000000910, NULL)), ConfigError,
+             "option 'backup-standby' not valid for PostgreSQL < 9.2");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when pg_control does not match stanza");
+
+        // Create pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_ERROR(
+            backupInit(infoBackupNew(PG_VERSION_11, 1000000000000001100, NULL)), BackupMismatchError,
+            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 11, system-id 1000000000000001100");
+        TEST_ERROR(
+            backupInit(infoBackupNew(PG_VERSION_10, 1000000000000001100, NULL)), BackupMismatchError,
+            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 10, system-id 1000000000000001100");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("reset start-fast when PostgreSQL < 8.4");
+
+        // Create pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830}));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        strLstAddZ(argList, "--" CFGOPT_START_FAST);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, NULL)), "backup init");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "    check start-fast");
+
+        TEST_RESULT_LOG("P00   WARN: start-fast option is only available in PostgreSQL >= 8.4");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("reset stop-auto when PostgreSQL < 9.3 or PostgreSQL > 9.5");
+
+        // Create pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, NULL)), "backup init");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "    check stop-auto");
+
+        TEST_RESULT_LOG("P00   WARN: stop-auto option is only available in PostgreSQL >= 9.3 and <= 9.5");
+
+        // Create pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
+
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_96, 1000000000000000960, NULL)), "backup init");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "    check stop-auto");
+
+        TEST_RESULT_LOG("P00   WARN: stop-auto option is only available in PostgreSQL >= 9.3 and <= 9.5");
+
+        // Create pg_control
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}));
+
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_95, 1000000000000000950, NULL)), "backup init");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), true, "    check stop-auto");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdBackup()"))
     {
         const String *pg1Path = strNewFmt("%s/pg1", testPath());
@@ -707,7 +821,7 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_START_BACKUP_84_95(1, "0/1", "000000010000000000000000"),
+            HRNPQ_MACRO_START_BACKUP_84_95(1, false, "0/1", "000000010000000000000000"),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
@@ -773,6 +887,7 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
+        strLstAddZ(argList, "--" CFGOPT_START_FAST);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         // Create files to copy from the standby.  The files will be zero-size on the primary and non-zero on the standby to test
@@ -793,7 +908,7 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_START_BACKUP_GE_96(1, "0/1", "000000010000000000000000"),
+            HRNPQ_MACRO_START_BACKUP_GE_96(1, true, "0/1", "000000010000000000000000"),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 

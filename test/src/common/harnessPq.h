@@ -164,13 +164,14 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
-#define HRNPQ_MACRO_START_BACKUP_84_95(sessionParam, lsnParam, walSegmentNameParam)                                                \
+#define HRNPQ_MACRO_START_BACKUP_84_95(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                                \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param =                                                                                                                   \
+        .param = strPtr(strNewFmt(                                                                                                 \
             "[\"select lsn::text as lsn,\\n"                                                                                       \
             "       pg_catalog.pg_xlogfile_name(lsn)::text as wal_segment_name\\n"                                                 \
-            "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp, false) as lsn\"]",            \
+            "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp, %s) as lsn\"]",               \
+            cvtBoolToConstZ(startFastParam))),                                                                                     \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
@@ -185,13 +186,14 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
-#define HRNPQ_MACRO_START_BACKUP_GE_96(sessionParam, lsnParam, walSegmentNameParam)                                                \
+#define HRNPQ_MACRO_START_BACKUP_GE_96(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                                \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param =                                                                                                                   \
+        .param = strPtr(strNewFmt(                                                                                                 \
             "[\"select lsn::text as lsn,\\n"                                                                                       \
             "       pg_catalog.pg_xlogfile_name(lsn)::text as wal_segment_name\\n"                                                 \
-            "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp, false, false) as lsn\"]",     \
+            "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp, %s, false) as lsn\"]",        \
+            cvtBoolToConstZ(startFastParam))),                                                                                     \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
