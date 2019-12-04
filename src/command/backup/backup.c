@@ -135,12 +135,12 @@ backupLabelCreate(BackupType type, const String *backupLabelLast, time_t timesta
 /***********************************************************************************************************************************
 Get the postgres database and storage objects
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_BACKUP_PG_TYPE                                                                                                \
-    BackupPg
-#define FUNCTION_LOG_BACKUP_PG_FORMAT(value, buffer, bufferSize)                                                                   \
-    objToLog(&value, "BackupPg", buffer, bufferSize)
+#define FUNCTION_LOG_BACKUP_DATA_TYPE                                                                                              \
+    BackupData *
+#define FUNCTION_LOG_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                                 \
+    objToLog(value, "BackupData", buffer, bufferSize)
 
-typedef struct BackupPg
+typedef struct BackupData
 {
     unsigned int pgIdPrimary;
     Db *dbPrimary;
@@ -154,10 +154,10 @@ typedef struct BackupPg
 
     unsigned int version;                                           // PostgreSQL version
     unsigned int pageSize;                                          // PostgreSQL page size
-} BackupPg;
+} BackupData;
 
-static BackupPg
-backupPgGet(const InfoBackup *infoBackup)
+static BackupData *
+backupInit(const InfoBackup *infoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -166,7 +166,8 @@ backupPgGet(const InfoBackup *infoBackup)
     ASSERT(infoBackup != NULL);
 
     // Initialize for offline backup
-    BackupPg result = {.pgIdPrimary = 1};
+    BackupData *result = memNew(sizeof(BackupData));
+    *result = (BackupData){.pgIdPrimary = 1};
 
     // Get database info when online
     bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
@@ -175,26 +176,26 @@ backupPgGet(const InfoBackup *infoBackup)
     {
         DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
 
-        result.pgIdPrimary = dbInfo.primaryId;
-        result.dbPrimary = dbInfo.primary;
+        result->pgIdPrimary = dbInfo.primaryId;
+        result->dbPrimary = dbInfo.primary;
 
         if (backupStandby)
         {
             ASSERT(dbInfo.standbyId != 0);
 
-            result.pgIdStandby = dbInfo.standbyId;
-            result.dbStandby = dbInfo.standby;
-            result.storageStandby = storagePgId(result.pgIdStandby);
-            result.hostStandby = cfgOptionStr(cfgOptPgHost + result.pgIdStandby - 1);
+            result->pgIdStandby = dbInfo.standbyId;
+            result->dbStandby = dbInfo.standby;
+            result->storageStandby = storagePgId(result->pgIdStandby);
+            result->hostStandby = cfgOptionStr(cfgOptPgHost + result->pgIdStandby - 1);
         }
     }
 
     // Add primary info
-    result.storagePrimary = storagePgId(result.pgIdPrimary);
-    result.hostPrimary = cfgOptionStr(cfgOptPgHost + result.pgIdPrimary - 1);
+    result->storagePrimary = storagePgId(result->pgIdPrimary);
+    result->hostPrimary = cfgOptionStr(cfgOptPgHost + result->pgIdPrimary - 1);
 
     // Get control information from the primary and validate it against backup info
-    PgControl pgControl = pgControlFromFile(result.storagePrimary);
+    PgControl pgControl = pgControlFromFile(result->storagePrimary);
     InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
     if (pgControl.version != infoPg.version || pgControl.systemId != infoPg.systemId)
@@ -206,11 +207,11 @@ backupPgGet(const InfoBackup *infoBackup)
             infoPg.systemId);
     }
 
-    result.version = pgControl.version;
-    result.pageSize = pgControl.pageSize;
+    result->version = pgControl.version;
+    result->pageSize = pgControl.pageSize;
 
     // Allow stop auto in PostgreSQL >= 9.3 and <= 9.5
-    if (result.version >= PG_VERSION_93 && result.version <= PG_VERSION_95 && cfgOptionBool(cfgOptStopAuto))
+    if (result->version >= PG_VERSION_93 && result->version <= PG_VERSION_95 && cfgOptionBool(cfgOptStopAuto))
     {
         LOG_WARN(
             CFGOPT_STOP_AUTO " option is only available in PostgreSQL >= " PG_VERSION_93_STR " and <= " PG_VERSION_95_STR);
@@ -218,7 +219,7 @@ backupPgGet(const InfoBackup *infoBackup)
     }
 
     // Allow start-fast option for version >= 8.4
-    if (result.version < PG_VERSION_84 && cfgOptionBool(cfgOptStartFast))
+    if (result->version < PG_VERSION_84 && cfgOptionBool(cfgOptStartFast))
     {
         LOG_WARN(CFGOPT_START_FAST " option is only available in PostgreSQL >= " PG_VERSION_84_STR);
         cfgOptionSet(cfgOptStartFast, cfgSourceParam, BOOL_FALSE_VAR);
@@ -239,7 +240,7 @@ backupPgGet(const InfoBackup *infoBackup)
 
     // If backup from standby option is set but a standby was not configured in the config file or on the command line, then turn
     // off backup-standby and warn that backups will be performed from the primary.
-    if (result.dbStandby == NULL && cfgOptionBool(cfgOptBackupStandby))
+    if (result->dbStandby == NULL && cfgOptionBool(cfgOptBackupStandby))
     {
         cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
         LOG_WARN(
@@ -247,17 +248,17 @@ backupPgGet(const InfoBackup *infoBackup)
             " the primary");
     }
 
-    FUNCTION_LOG_RETURN(BACKUP_PG, result);
+    FUNCTION_LOG_RETURN(BACKUP_DATA, result);
 }
 
 /**********************************************************************************************************************************
 Get time from the database or locally depending on online
 ***********************************************************************************************************************************/
 static time_t
-backupTime(BackupPg *pg, bool waitRemainder)
+backupTime(BackupData *backupData, bool waitRemainder)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(BOOL, waitRemainder);
     FUNCTION_LOG_END();
 
@@ -269,7 +270,7 @@ backupTime(BackupPg *pg, bool waitRemainder)
     if (cfgOptionBool(cfgOptOnline))
     {
         // Get time from the database
-        TimeMSec timeMSec = dbTimeMSec(pg->dbPrimary);
+        TimeMSec timeMSec = dbTimeMSec(backupData->dbPrimary);
         result = (time_t)(timeMSec / 1000);
 
         // Sleep the remainder of the second when requested (this is so copyStart is not subject to one second resolution issues)
@@ -278,7 +279,7 @@ backupTime(BackupPg *pg, bool waitRemainder)
             sleepMSec(1000 - (timeMSec % 1000));
 
             // Check time again to be sure we slept long enough
-            if (result >= (time_t)(dbTimeMSec(pg->dbPrimary) / 1000))
+            if (result >= (time_t)(dbTimeMSec(backupData->dbPrimary) / 1000))
                 THROW(AssertError, "invalid sleep for online backup time with wait remainder");
         }
     }
@@ -750,10 +751,10 @@ typedef struct BackupStartResult
     objToLog(&value, "BackupStartResult", buffer, bufferSize)
 
 static BackupStartResult
-backupStart(BackupPg *pg)
+backupStart(BackupData *backupData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
     FUNCTION_LOG_END();
 
     BackupStartResult result = {.lsn = NULL};
@@ -769,7 +770,7 @@ backupStart(BackupPg *pg)
                 cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
 
             // Check if Postgres is running and if so only continue when forced
-            if (storageExistsP(pg->storagePrimary, PG_FILE_POSTMASTERPID_STR))
+            if (storageExistsP(backupData->storagePrimary, PG_FILE_POSTMASTERPID_STR))
             {
                 if (cfgOptionBool(cfgOptForce))
                 {
@@ -791,22 +792,22 @@ backupStart(BackupPg *pg)
         else
         {
             // Check database configuration
-            checkDbConfig(pg->version, pg->pgIdPrimary, pg->dbPrimary, false);
+            checkDbConfig(backupData->version, backupData->pgIdPrimary, backupData->dbPrimary, false);
 
             // Start backup
             LOG_INFO_FMT(
                 "execute %sexclusive pg_start_backup(): backup begins after the %s checkpoint completes",
-                pg->version >= PG_VERSION_96 ? "non-" : "",
+                backupData->version >= PG_VERSION_96 ? "non-" : "",
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
             DbBackupStartResult dbBackupStartResult = dbBackupStart(
-                pg->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto));
+                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto));
 
             memContextSwitch(MEM_CONTEXT_OLD());
             result.lsn = strDup(dbBackupStartResult.lsn);
             result.walSegmentName = strDup(dbBackupStartResult.walSegmentName);
-            result.dbList = dbList(pg->dbPrimary);
-            result.tablespaceList = dbTablespaceList(pg->dbPrimary);
+            result.dbList = dbList(backupData->dbPrimary);
+            result.tablespaceList = dbTablespaceList(backupData->dbPrimary);
             memContextSwitch(MEM_CONTEXT_TEMP());
 
             LOG_INFO_FMT("backup start archive = %s, lsn = %s", strPtr(result.walSegmentName), strPtr(result.lsn));
@@ -815,11 +816,11 @@ backupStart(BackupPg *pg)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strPtr(result.lsn));
-                dbReplayWait(pg->dbStandby, result.lsn, (TimeMSec)cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
+                dbReplayWait(backupData->dbStandby, result.lsn, (TimeMSec)cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
                 LOG_INFO_FMT("replay on the standby reached %s", strPtr(result.lsn));
 
                 // The standby db object won't be used anymore so undef it to catch any subsequent references
-                dbFree(pg->dbStandby);
+                dbFree(backupData->dbStandby);
 
                 // !!! protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
             }
@@ -834,11 +835,10 @@ Stop the backup
 ***********************************************************************************************************************************/
 // Helper to write a file from a string to the repository and update the manifest
 static void
-backupFilePut(const InfoBackup *infoBackup, BackupPg *pg, Manifest *manifest, const String *name, const String *content)
+backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, const String *content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
-        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(STRING, content);
@@ -895,7 +895,7 @@ backupFilePut(const InfoBackup *infoBackup, BackupPg *pg, Manifest *manifest, co
                 .group = basePath->group,
                 .size = strSize(content),
                 .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
-                .timestamp = backupTime(pg, false),
+                .timestamp = backupTime(backupData, false),
             };
 
             memcpy(
@@ -925,11 +925,10 @@ typedef struct BackupStopResult
     objToLog(&value, "BackupStopResult", buffer, bufferSize)
 
 static BackupStopResult
-backupStop(const InfoBackup *infoBackup, BackupPg *const pg, Manifest *manifest)
+backupStop(BackupData *backupData, Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
-        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
@@ -942,12 +941,12 @@ backupStop(const InfoBackup *infoBackup, BackupPg *const pg, Manifest *manifest)
             // Stop the backup
             LOG_INFO_FMT(
                 "execute %sexclusive pg_stop_backup() and wait for all WAL segments to archive",
-                pg->version >= PG_VERSION_96 ? "non-" : "");
+                backupData->version >= PG_VERSION_96 ? "non-" : "");
 
-            DbBackupStopResult dbBackupStopResult = dbBackupStop(pg->dbPrimary);
+            DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
 
-            backupFilePut(infoBackup, pg, manifest, STRDEF(PG_FILE_BACKUPLABEL), dbBackupStopResult.backupLabel);
-            backupFilePut(infoBackup, pg, manifest, STRDEF(PG_FILE_TABLESPACEMAP), dbBackupStopResult.tablespaceMap);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), dbBackupStopResult.backupLabel);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), dbBackupStopResult.tablespaceMap);
 
             memContextSwitch(MEM_CONTEXT_OLD());
             result.lsn = strDup(dbBackupStopResult.lsn);
@@ -1420,10 +1419,10 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 }
 
 static void
-backupProcess(BackupPg pg, Manifest *manifest)
+backupProcess(BackupData *backupData, Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BACKUP_PG, pg);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
@@ -1491,12 +1490,12 @@ backupProcess(BackupPg pg, Manifest *manifest)
             (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, backupJobCallback, &jobData);
 
         // First client is always on the primary
-        protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pg.pgIdPrimary, 1));
+        protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, backupData->pgIdPrimary, 1));
 
         // Create the rest of the clients on the primary or standby depending on the value of backup-standby.  Note that standby
         // backups doesn't count the primary client in process-max.
         unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (backupStandby ? 1 : 0);
-        unsigned int pgId = backupStandby ? pg.pgIdStandby : pg.pgIdPrimary;
+        unsigned int pgId = backupStandby ? backupData->pgIdStandby : backupData->pgIdPrimary;
 
         for (unsigned int processIdx = 2; processIdx <= processMax; processIdx++)
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgId, processIdx));
@@ -1513,7 +1512,7 @@ backupProcess(BackupPg pg, Manifest *manifest)
                 ProtocolParallelJob *job = protocolParallelResult(parallelExec);
 
                 // !!! Should add hostname in here
-                const String *const host = backupStandby && protocolParallelJobProcessId(job) > 0 ? pg.hostStandby : pg.hostPrimary;
+                const String *const host = backupStandby && protocolParallelJobProcessId(job) > 0 ? backupData->hostStandby : backupData->hostPrimary;
                 String *const fileLog = strNew("");
 
                 if (host != NULL)
@@ -1523,10 +1522,10 @@ backupProcess(BackupPg pg, Manifest *manifest)
                     fileLog,
                     strPtr(
                         storagePathP(
-                            protocolParallelJobProcessId(job) > 0 ? storagePgId(pgId) : pg.storagePrimary,
+                            protocolParallelJobProcessId(job) > 0 ? storagePgId(pgId) : backupData->storagePrimary,
                             manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name))));
 
-                sizeCopied = backupJobResult(manifest, fileLog, job, sizeTotal, sizeCopied, pg.pageSize);
+                sizeCopied = backupJobResult(manifest, fileLog, job, sizeTotal, sizeCopied, backupData->pageSize);
             }
 
             // A keep-alive is required here for the remote holding open the backup connection
@@ -1790,24 +1789,24 @@ cmdBackup(void)
         InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
         // Get pg storage and database objects
-        BackupPg pg = backupPgGet(infoBackup);
+        BackupData *backupData = backupInit(infoBackup);
 
         // Get the start timestamp which will later be written into the manifest to track total backup time
-        time_t timestampStart = backupTime(&pg, false);
+        time_t timestampStart = backupTime(backupData, false);
 
         // Check if there is a prior manifest if diff/incr
         Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
 
         // Start the backup
-        BackupStartResult backupStartResult = backupStart(&pg);
+        BackupStartResult backupStartResult = backupStart(backupData);
 
         // Build the manifest
         Manifest *manifest = manifestNewBuild(
-            pg.storagePrimary, infoPg.version, cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage),
+            backupData->storagePrimary, infoPg.version, cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage),
             strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
-        manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), backupTime(&pg, true));
+        manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior))
@@ -1829,14 +1828,14 @@ cmdBackup(void)
         backupManifestSaveCopy(infoBackup, manifest);
 
         // Process the backup manifest
-        backupProcess(pg, manifest);
+        backupProcess(backupData, manifest);
 
         // Stop the backup
-        BackupStopResult backupStopResult = backupStop(infoBackup, &pg, manifest);
+        BackupStopResult backupStopResult = backupStop(backupData, manifest);
 
         // Complete manifest
         manifestBuildComplete(
-            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, backupTime(&pg, false),
+            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, backupTime(backupData, false),
             backupStopResult.lsn, backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
             cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
