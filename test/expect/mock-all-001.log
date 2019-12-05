@@ -1289,7 +1289,6 @@ P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to
 P00   WARN: resumable backup [BACKUP-INCR-2] of same type exists -- remove invalid files and resume
 P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/changesize.txt' from resumed backup (mismatched size)
 P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/zerosize.txt' from resumed backup (zero size)
-P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt' from resumed backup (mismatched timestamp)
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e

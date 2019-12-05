@@ -699,9 +699,6 @@ testRun(void)
             // Connect to primary
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
 
-            // Close primary connection
-            HRNPQ_MACRO_CLOSE(1),
-
             HRNPQ_MACRO_DONE()
         });
 
@@ -732,9 +729,6 @@ testRun(void)
             // Connect to primary
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
 
-            // Close primary connection
-            HRNPQ_MACRO_CLOSE(1),
-
             HRNPQ_MACRO_DONE()
         });
 
@@ -750,9 +744,6 @@ testRun(void)
         {
             // Connect to primary
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
-
-            // Close primary connection
-            HRNPQ_MACRO_CLOSE(1),
 
             HRNPQ_MACRO_DONE()
         });
@@ -790,9 +781,6 @@ testRun(void)
             // Don't advance time after wait
             HRNPQ_MACRO_TIME_QUERY(1, 1575392588998),
             HRNPQ_MACRO_TIME_QUERY(1, 1575392588999),
-
-            // Close primary connection
-            HRNPQ_MACRO_CLOSE(1),
 
             HRNPQ_MACRO_DONE()
         });
@@ -1039,12 +1027,18 @@ testRun(void)
         storagePathRemoveP(storagePgWrite(), NULL, .recurse = true);
 
         // Update pg_control
+        time_t backupTimeStart = 1575392544;
+
         storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
+            storageNewWriteP(
+                storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path)),
+                .timeModified = backupTimeStart),
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}));
 
         // Update version
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF(PG_VERSION_95_STR));
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .timeModified = backupTimeStart),
+            BUFSTRDEF(PG_VERSION_95_STR));
 
         // Upgrade stanza
         argList = strLstNew();
@@ -1076,7 +1070,7 @@ testRun(void)
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, strPtr(pg1Path), false, NULL, NULL),
 
             // Get start time
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392544000),
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000),
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -1085,30 +1079,28 @@ testRun(void)
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
             // Get copy start time
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392544999),
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392545000),
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000 + 999),
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000 + 1000),
 
             // Stop backup
             HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "0/1000001", "000000010000000000000001"),
 
             // Get stop time
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392550000),
-
-            // Close primary connection
-            HRNPQ_MACRO_CLOSE(1),
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000 + 2000),
 
             HRNPQ_MACRO_DONE()
         });
 
         // Add files
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postgresql.conf")), BUFSTRDEF("CONFIGSTUFF"));
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), STRDEF("postgresql.conf"), .timeModified = backupTimeStart),
+            BUFSTRDEF("CONFIGSTUFF"));
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
             "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
-            "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum\n"
             "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
             "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
             "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
@@ -1127,6 +1119,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("online resumed compressed 9.5 full backup");
 
+        // Backup start time
+        backupTimeStart = 1575392566;
+
+        // Load options
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
         strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
@@ -1140,7 +1136,7 @@ testRun(void)
         Manifest *manifestResume = manifestNewLoad(storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)));
         ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
-        resumeLabel = backupLabelCreate(backupTypeFull, NULL, 1575392566);
+        resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
         manifestResumeData->backupLabel = resumeLabel;
 
         // Copy a file to be resumed that has not changed in the repo
@@ -1150,7 +1146,8 @@ testRun(void)
                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION.gz", strPtr(resumeLabel))));
 
         // File exists in cluster and repo but not in the resume manifest
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("not-in-resume"), .timeModified = 1575392565), BUFSTRDEF("TEST"));
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), STRDEF("not-in-resume"), .timeModified = backupTimeStart), BUFSTRDEF("TEST"));
         storagePutP(
             storageNewWriteP(
                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/not-in-resume.gz", strPtr(resumeLabel))),
@@ -1165,7 +1162,8 @@ testRun(void)
         ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/global/pg_control")))->checksumSha1[0] = 0;
 
         // Size does not match between cluster and resume manifest
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("size-mismatch"), .timeModified = 1575392565), BUFSTRDEF("TEST"));
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), STRDEF("size-mismatch"), .timeModified = backupTimeStart), BUFSTRDEF("TEST"));
         storagePutP(
             storageNewWriteP(
                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/size-mismatch.gz", strPtr(resumeLabel))),
@@ -1175,7 +1173,8 @@ testRun(void)
                 .name = STRDEF("pg_data/size-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", .size = 33});
 
         // Time does not match between cluster and resume manifest
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("time-mismatch"), .timeModified = 1575392565), BUFSTRDEF("TEST"));
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), STRDEF("time-mismatch"), .timeModified = backupTimeStart), BUFSTRDEF("TEST"));
         storagePutP(
             storageNewWriteP(
                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch.gz", strPtr(resumeLabel))),
@@ -1183,15 +1182,16 @@ testRun(void)
         manifestFileAdd(
             manifestResume, &(ManifestFile){
                 .name = STRDEF("pg_data/time-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", .size = 4,
-                .timestamp = 1575392566});
+                .timestamp = backupTimeStart - 1});
 
         // Size is zero in cluster and resume manifest. ??? We'd like to remove this requirement after the migration.
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("zero-size"), .timeModified = 1575392565), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("zero-size"), .timeModified = backupTimeStart), NULL);
         storagePutP(
             storageNewWriteP(
                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/zero-size.gz", strPtr(resumeLabel))),
             BUFSTRDEF("ZERO-SIZE"));
-        manifestFileAdd(manifestResume, &(ManifestFile){.name = STRDEF("pg_data/zero-size"), .size = 0, .timestamp = 1575392565});
+        manifestFileAdd(
+            manifestResume, &(ManifestFile){.name = STRDEF("pg_data/zero-size"), .size = 0, .timestamp = backupTimeStart});
 
         // Save the resume manifest
         manifestSave(
@@ -1208,7 +1208,7 @@ testRun(void)
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, strPtr(pg1Path), false, NULL, NULL),
 
             // Get start time
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392566000),
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000),
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -1217,17 +1217,14 @@ testRun(void)
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
             // Get copy start time
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392566999),
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392567000),
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000 + 999),
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000 + 1000),
 
             // Stop backup
             HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "0/1000001", "000000010000000000000001"),
 
             // Get stop time
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392568000),
-
-            // Close primary connection
-            HRNPQ_MACRO_CLOSE(1),
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000 + 2000),
 
             HRNPQ_MACRO_DONE()
         });
@@ -1237,7 +1234,6 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
             "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
-            "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum\n"
             "P00   WARN: resumable backup [FULL-3] of same type exists -- remove invalid files and resume\n"
             "P00 DETAIL: remove file '{[path]}/repo/backup/test1/[FULL-3]/pg_data/global/pg_control.gz' from resumed backup"
                 " (no checksum in resumed manifest)\n"
@@ -1276,6 +1272,127 @@ testRun(void)
         storageRemoveP(storagePgWrite(), STRDEF("size-mismatch"), .errorOnMissing = true);
         storageRemoveP(storagePgWrite(), STRDEF("time-mismatch"), .errorOnMissing = true);
         storageRemoveP(storagePgWrite(), STRDEF("zero-size"), .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online resumed compressed 9.5 diff backup");
+
+        backupTimeStart = 1575392577;
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        // Create a backup manifest that looks like a halted backup manifest
+        manifestResume = manifestNewBuild(storagePg(), PG_VERSION_96, true, false, NULL, NULL);
+        manifestResumeData = (ManifestData *)manifestData(manifestResume);
+
+        manifestResumeData->backupType = backupTypeDiff;
+        manifestResumeData->backupLabelPrior = resumeLabel;
+        resumeLabel = backupLabelCreate(backupTypeDiff, resumeLabel, backupTimeStart);
+        manifestBackupLabelSet(manifestResume, resumeLabel);
+
+        // Reference in manifest
+        storagePutP(
+            storageNewWriteP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION.gz", strPtr(resumeLabel))),
+            NULL);
+
+        // Reference in resumed manifest
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("resume-ref"), .timeModified = backupTimeStart), NULL);
+        storagePutP(
+            storageNewWriteP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/resume-ref.gz", strPtr(resumeLabel))),
+            NULL);
+        manifestFileAdd(
+            manifestResume, &(ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
+
+        // Time does not match between cluster and resume manifest (but resume because time is in future so delta enabled).  Note
+        // also that the repo file is intenionally corrupt to generate a warning about corruption in the repository.
+        storagePutP(
+            storageNewWriteP(storagePgWrite(), STRDEF("time-mismatch2"), .timeModified = backupTimeStart + 100), BUFSTRDEF("TEST"));
+        storagePutP(
+            storageNewWriteP(
+                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch2.gz", strPtr(resumeLabel))),
+            NULL);
+        manifestFileAdd(
+            manifestResume, &(ManifestFile){
+                .name = STRDEF("pg_data/time-mismatch2"), .checksumSha1 = "984816fd329622876e14907634264e6f332e9fb3", .size = 4,
+                .timestamp = backupTimeStart});
+
+        // Save the resume manifest
+        manifestSave(
+            manifestResume,
+            storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(),
+                    strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(resumeLabel)))));
+
+        // Pq Script
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, strPtr(pg1Path), false, NULL, NULL),
+
+            // Get start time
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000),
+
+            // Start backup
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_START_BACKUP_84_95(1, false, "0/1", "000000010000000000000000"),
+            HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+            HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+
+            // Get copy start time
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000 + 999),
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000 + 1000),
+
+            // Stop backup
+            HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "0/1000001", "000000010000000000000001"),
+
+            // Get stop time
+            HRNPQ_MACRO_TIME_QUERY(1, backupTimeStart * 1000 + 2000),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: last backup label = [FULL-3], version = 2.20dev\n"
+            "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+            "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+            "P00   WARN: file 'time-mismatch2' has timestamp in the future, enabling delta checksum\n"
+            "P00   WARN: resumable backup [DIFF-3] of same type exists -- remove invalid files and resume\n"
+            "P00 DETAIL: remove file '{[path]}/repo/backup/test1/[DIFF-3]/pg_data/PG_VERSION.gz' from resumed backup"
+                " (reference in manifest)\n"
+            "P00 DETAIL: remove file '{[path]}/repo/backup/test1/[DIFF-3]/pg_data/resume-ref.gz' from resumed backup"
+                " (reference in resumed manifest)\n"
+            "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+            "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+            "P00   WARN: resumed backup file pg_data/time-mismatch2 does not have expected checksum"
+                " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be an"
+                " issue unless the resumed backup path in the repository is known to be corrupted.\n"
+            "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
+            "P01   INFO: backup file {[path]}/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
+            "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/resume-ref (0B, [PCT])\n"
+            "P00 DETAIL: reference pg_data/PG_VERSION to [FULL-3]\n"
+            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-3]\n"
+            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-3]\n"
+            "P00   INFO: diff backup size = [SIZE]\n"
+            "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+            "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+            "P00   INFO: new backup label = [DIFF-3]");
+
+        testBackupCompare(
+            storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
+            "resume-ref.gz {file, s=0}\n"
+            "time-mismatch2.gz {file, s=4}\n");
+
+        storageRemoveP(storagePgWrite(), STRDEF("resume-ref"), .errorOnMissing = true);
+        storageRemoveP(storagePgWrite(), STRDEF("time-mismatch2"), .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Update pg_control
@@ -1339,9 +1456,6 @@ testRun(void)
             // Wait for standby to sync
             HRNPQ_MACRO_REPLAY_WAIT(2, "0/1"),
 
-            // Close standby connection
-            HRNPQ_MACRO_CLOSE(2),
-
             // Get copy start time
             HRNPQ_MACRO_TIME_QUERY(1, 1575392588999),
             HRNPQ_MACRO_TIME_QUERY(1, 1575392589000),
@@ -1352,9 +1466,6 @@ testRun(void)
 
             // Get stop time
             HRNPQ_MACRO_TIME_QUERY(1, 1575392590000),
-
-            // Close primary connection
-            HRNPQ_MACRO_CLOSE(1),
 
             HRNPQ_MACRO_DONE()
         });

@@ -546,6 +546,8 @@ void backupResumeCallback(void *data, const StorageInfo *info)
                 removeReason = "reference in manifest";
             else if (fileResume == NULL)
                 removeReason = "missing in resumed manifest";
+            // CSHANG -- this is new an means we don't having to worry about checking for hardlinks on resume because a hardlink
+            // will always have a reference.
             else if (fileResume->reference != NULL)
                 removeReason = "reference in resumed manifest";
             else if (fileResume->checksumSha1[0] == '\0')
@@ -647,7 +649,8 @@ backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String 
                             infoPgCipherPass(infoBackupPg(infoBackup)));
                         const ManifestData *manifestResumeData = manifestData(manifestResume);
 
-                        // Check version
+                        // Check pgBackRest version. This allows the resume implementation to be changed with each version of
+                        // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the cost.
                         if (!strEqZ(manifestResumeData->backrestVersion, PROJECT_VERSION))
                         {
                             reason = strNewFmt(
@@ -672,6 +675,9 @@ backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String 
                                 manifestData(manifest)->backupLabelPrior ?
                                     strPtr(manifestData(manifest)->backupLabelPrior) : "<undef>");
                         }
+                        // CSHANG -- no longer checking hardlinks here since we will only resume files that have no reference in the
+                        // resumed manifest.  No reference means no hardlink, so hardlinks will all be removed during clean if they
+                        // exist.
                         else
                             usable = true;
                     }
@@ -749,6 +755,7 @@ backupResume(const InfoBackup *infoBackup, Manifest *manifest)
                 .manifest = manifest,
                 .manifestResume = manifestResume,
                 .compressed = cfgOptionBool(cfgOptCompress),
+                .delta = cfgOptionBool(cfgOptDelta),
                 .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(manifestData(manifest)->backupLabel)),
             };
 
@@ -1023,7 +1030,8 @@ backupJobResult(
 
             // Format log strings
             const String *const logProgress =
-                strNewFmt("%s, %" PRIu64 "%%", strPtr(strSizeFormat(copySize)), sizeCopied * 100 / sizeTotal);
+                strNewFmt(
+                    "%s, %" PRIu64 "%%", strPtr(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : sizeCopied * 100 / sizeTotal);
             const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strPtr(copyChecksum)) : EMPTY_STR;
 
             // If the file is in a prior backup and nothing changed, then nothing needs to be done
