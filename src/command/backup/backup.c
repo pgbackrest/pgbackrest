@@ -537,24 +537,38 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             const ManifestFile *file = manifestFileFindDefault(resumeData->manifest, manifestName, NULL);
             const ManifestFile *fileResume = manifestFileFindDefault(resumeData->manifestResume, manifestName, NULL);
 
-            // To be preserved the file must:
-            // *) exist in the both manifests
-            // *) not be a reference to a previous backup in either manifest
-            // *) have the same size
-            // *) have the same timestamp if not a delta backup
-            if (file != NULL && file->reference == NULL &&
-                fileResume != NULL && fileResume->reference == NULL && fileResume->checksumSha1[0] != 0 &&
-                file->size == fileResume->size && (resumeData->delta || file->timestamp == fileResume->timestamp) &&
-                file->size != 0 /* ??? don't zero size files because Perl wouldn't -- this can be removed after the migration*/)
+            // Check if the file can be resumed or must be removed
+            const char *removeReason = NULL;
+
+            if (file == NULL)
+                removeReason = "missing in manifest";
+            else if (file->reference != NULL)
+                removeReason = "reference in manifest";
+            else if (fileResume == NULL)
+                removeReason = "missing in resumed manifest";
+            else if (fileResume->reference != NULL)
+                removeReason = "reference in resumed manifest";
+            else if (fileResume->checksumSha1[0] == '\0')
+                removeReason = "no checksum in resumed manifest";
+            else if (file->size != fileResume->size)
+                removeReason = "mismatched size";
+            else if (!resumeData->delta && file->timestamp != fileResume->timestamp)
+                removeReason = "mismatched timestamp";
+            else if (file->size == 0)
+                // ??? don't resume zero size files because Perl wouldn't -- this can be removed after the migration)
+                removeReason = "zero size";
+            else
             {
                 manifestFileUpdate(
                     resumeData->manifest, manifestName, file->size, fileResume->sizeRepo, fileResume->checksumSha1, NULL,
                     fileResume->checksumPage, fileResume->checksumPageError, fileResume->checksumPageErrorList);
             }
-            // Else remove the file
-            else
+
+            // Remove the file if it could not be resumed
+            if (removeReason != NULL)
             {
-                LOG_DETAIL_FMT("remove file '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
+                LOG_DETAIL_FMT(
+                    "remove file '%s' from resumed backup (%s)", strPtr(storagePathP(storageRepo(), backupPath)), removeReason);
                 storageRemoveP(storageRepoWrite(), backupPath);
             }
 
