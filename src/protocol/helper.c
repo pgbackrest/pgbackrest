@@ -95,6 +95,8 @@ pgIsLocal(unsigned int hostId)
         FUNCTION_LOG_PARAM(UINT, hostId);
     FUNCTION_LOG_END();
 
+    ASSERT(hostId > 0);
+
     FUNCTION_LOG_RETURN(BOOL, !cfgOptionTest(cfgOptPgHost + hostId - 1));
 }
 
@@ -109,6 +111,8 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         FUNCTION_LOG_PARAM(UINT, hostId);
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
 
     StringList *result = NULL;
 
@@ -155,6 +159,8 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, u
         FUNCTION_LOG_PARAM(UINT, hostId);
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
 
     protocolHelperInit();
 
@@ -322,6 +328,8 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, hostId);
     FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
 
     // Is this a repo remote?
     bool isRepo = protocolStorageType == protocolStorageTypeRepo;
