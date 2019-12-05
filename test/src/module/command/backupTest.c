@@ -892,17 +892,18 @@ testRun(void)
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_ERROR(cmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P00   WARN: incr backup cannot alter compress option to 'true', reset to value in [FULL-1]\n"
-            "P00   WARN: incr backup cannot alter hardlink option to 'true', reset to value in [FULL-1]");
+            "P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [FULL-1]\n"
+            "P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [FULL-1]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("offline diff backup");
+        TEST_TITLE("offline incr backup to test unresumable backup");
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -912,7 +913,7 @@ testRun(void)
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
-        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VER"));
@@ -921,13 +922,72 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P00   WARN: diff backup cannot alter 'checksum-page' option to 'true', reset to 'false' from [FULL-1]\n"
-            "P00   WARN: backup '[INCR-1]' cannot be resumed: new backup type 'diff' does not match resumable backup type 'incr'\n"
+            "P00   WARN: incr backup cannot alter 'checksum-page' option to 'true', reset to 'false' from [FULL-1]\n"
+            "P00   WARN: backup '[DIFF-1]' cannot be resumed: new backup type 'incr' does not match resumable backup type 'diff'\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
+            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
+            "P00   INFO: incr backup size = 3B\n"
+            "P00   INFO: new backup label = [INCR-1]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("offline diff backup to test prior backup is not correct type");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VR2"));
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: diff backup size = 3B\n"
-            "P00   INFO: new backup label = [DIFF-1]");
+            "P00   INFO: new backup label = [DIFF-2]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("offline incr backup to test null checksum page in prior backup");
+
+        // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
+        const String *manifestPriorFile = STRDEF(STORAGE_REPO_BACKUP "/latest/" BACKUP_MANIFEST_FILE);
+
+        Manifest *manifestPrior = manifestNewLoad(storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)));
+        ((ManifestData *)manifestData(manifestPrior))->backupOptionChecksumPage = NULL;
+        manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VR3"));
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: last backup label = [DIFF-2], version = " PROJECT_VERSION "\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
+            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
+            "P00   INFO: incr backup size = 3B\n"
+            "P00   INFO: new backup label = [INCR-2]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Update pg_control
@@ -956,6 +1016,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
         strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
         strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
@@ -991,7 +1052,6 @@ testRun(void)
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
         TEST_RESULT_LOG(
-            "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
             "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
             "P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum\n"

@@ -318,98 +318,95 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
     Manifest *result = NULL;
 
     // No incremental if backup type is full
-    if (backupType(cfgOptionStr(cfgOptType)) != backupTypeFull)
+    BackupType type = backupType(cfgOptionStr(cfgOptType));
+
+    if (type != backupTypeFull)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            BackupType type = backupType(cfgOptionStr(cfgOptType));
             InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
             const String *backupLabelPrior = NULL;
+            unsigned int backupTotal = infoBackupDataTotal(infoBackup);
 
-            if (type != backupTypeFull)
+            for (unsigned int backupIdx = backupTotal - 1; backupIdx < backupTotal; backupIdx--)
             {
-                unsigned int backupTotal = infoBackupDataTotal(infoBackup);
+                 InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
 
-                for (unsigned int backupIdx = backupTotal - 1; backupIdx < backupTotal; backupIdx--)
+                 // The prior backup for a diff must be full
+                 if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
+                    continue;
+
+                // The backups must come from the same cluster
+                if (infoPg.id != backupPrior.backupPgId)
+                    continue;
+
+                // This backup is a candidate for prior
+                backupLabelPrior = strDup(backupPrior.backupLabel);
+                break;
+            }
+
+            // If there is a prior backup then check that options for the new backup are compatible
+            if (backupLabelPrior != NULL)
+            {
+                result = manifestLoadFile(
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabelPrior)),
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+                const ManifestData *manifestPriorData = manifestData(result);
+
+                LOG_INFO_FMT(
+                    "last backup label = %s, version = %s", strPtr(manifestData(result)->backupLabel),
+                    strPtr(manifestData(result)->backrestVersion));
+
+                // Warn if compress option changed
+                if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
                 {
-                     InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
-
-                     // The prior backup for a diff must be full
-                     if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
-                        continue;
-
-                    // The backups must come from the same cluster
-                    if (infoPg.id != backupPrior.backupPgId)
-                        continue;
-
-                    // This backup is a candidate for prior
-                    backupLabelPrior = strDup(backupPrior.backupLabel);
-                    break;
+                    LOG_WARN_FMT(
+                        "%s backup cannot alter compress option to '%s', reset to value in %s",
+                        strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
+                        strPtr(backupLabelPrior));
+                    cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
                 }
 
-                // If there is a prior backup then check that options for the new backup are compatible
-                if (backupLabelPrior != NULL)
+                // Warn if hardlink option changed
+                if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
                 {
-                    result = manifestLoadFile(
-                        storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupLabelPrior)),
-                        cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
-                    const ManifestData *manifestPriorData = manifestData(result);
-
-                    LOG_INFO_FMT(
-                        "last backup label = %s, version = %s", strPtr(manifestData(result)->backupLabel),
-                        strPtr(manifestData(result)->backrestVersion));
-
-                    // Warn if compress option changed
-                    if (cfgOptionBool(cfgOptCompress) != manifestPriorData->backupOptionCompress)
-                    {
-                        LOG_WARN_FMT(
-                            "%s backup cannot alter compress option to '%s', reset to value in %s",
-                            strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
-                            strPtr(backupLabelPrior));
-                        cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
-                    }
-
-                    // Warn if hardlink option changed
-                    if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
-                    {
-                        LOG_WARN_FMT(
-                            "%s backup cannot alter hardlink option to '%s', reset to value in %s",
-                            strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
-                            strPtr(backupLabelPrior));
-                        cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
-                    }
-
-                    // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
-                    // checksum-page to false and move on without a warning.  Page checksums will start on the next full backup.
-                    if (manifestData(result)->backupOptionChecksumPage == NULL)
-                    {
-                        cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
-                    }
-                    // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only
-                    // certain files would be checksummed and the list could be incomplete during reporting.
-                    else
-                    {
-                        bool checksumPagePrior = varBool(manifestData(result)->backupOptionChecksumPage);
-
-                        // Warn if an incompatible setting was explicitly requested
-                        if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
-                        {
-                            LOG_WARN_FMT(
-                                "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
-                                strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
-                                cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(result)->backupLabel));
-                        }
-
-                        cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
-                    }
-
-                    manifestMove(result, MEM_CONTEXT_OLD());
+                    LOG_WARN_FMT(
+                        "%s backup cannot alter hardlink option to '%s', reset to value in %s",
+                        strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
+                        strPtr(backupLabelPrior));
+                    cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
                 }
+
+                // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
+                // checksum-page to false and move on without a warning.  Page checksums will start on the next full backup.
+                if (manifestData(result)->backupOptionChecksumPage == NULL)
+                {
+                    cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+                }
+                // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only
+                // certain files would be checksummed and the list could be incomplete during reporting.
                 else
                 {
-                    LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strPtr(cfgOptionStr(cfgOptType)));
-                    cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(backupTypeFull)));
+                    bool checksumPagePrior = varBool(manifestData(result)->backupOptionChecksumPage);
+
+                    // Warn if an incompatible setting was explicitly requested
+                    if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
+                    {
+                        LOG_WARN_FMT(
+                            "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
+                            strPtr(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
+                            cvtBoolToConstZ(checksumPagePrior), strPtr(manifestData(result)->backupLabel));
+                    }
+
+                    cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
                 }
+
+                manifestMove(result, MEM_CONTEXT_OLD());
+            }
+            else
+            {
+                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strPtr(cfgOptionStr(cfgOptType)));
+                cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(backupTypeFull)));
             }
         }
         MEM_CONTEXT_TEMP_END();
