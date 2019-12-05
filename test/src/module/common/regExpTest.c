@@ -24,10 +24,31 @@ testRun(void)
         }
         TRY_END();
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new regexp");
+
         RegExp *regExp = NULL;
         TEST_ASSIGN(regExp, regExpNew(strNew("^abc")), "new regexp");
-        TEST_RESULT_BOOL(regExpMatch(regExp, strNew("abcdef")), true, "match regexp");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regexp match");
+
+        const String *string = STRDEF("abcdef");
+        TEST_RESULT_BOOL(regExpMatch(regExp, string), true, "match regexp");
+        TEST_RESULT_PTR(regExpMatchPtr(regExp), strPtr(string), "check ptr");
+        TEST_RESULT_SIZE(regExpMatchSize(regExp), 3, "check size");
+        TEST_RESULT_STR_Z(regExpMatchStr(regExp), "abc", "check str");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no regexp match");
+
         TEST_RESULT_BOOL(regExpMatch(regExp, strNew("bcdef")), false, "no match regexp");
+        TEST_RESULT_PTR(regExpMatchPtr(regExp), NULL, "check ptr");
+        TEST_RESULT_SIZE(regExpMatchSize(regExp), 0, "check size");
+        TEST_RESULT_PTR(regExpMatchStr(regExp), NULL, "check str");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("free regexp");
 
         TEST_RESULT_VOID(regExpFree(regExp), "free regexp");
     }
