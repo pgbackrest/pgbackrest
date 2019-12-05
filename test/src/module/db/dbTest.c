@@ -17,6 +17,9 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // PQfinish() is strictly checked
+    harnessPqScriptStrictSet(true);
+
     // *****************************************************************************************************************************
     if (testBegin("Db and dbProtocol()"))
     {

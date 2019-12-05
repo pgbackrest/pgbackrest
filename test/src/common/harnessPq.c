@@ -25,6 +25,9 @@ Script that defines how shim functions operate
 HarnessPq *harnessPqScript;
 unsigned int harnessPqScriptIdx;
 
+// Is PQfinish scripting required?
+bool harnessPqStrict = false;
+
 // If there is a script failure change the behavior of cleanup functions to return immediately so the real error will be reported
 // rather than a bogus scripting error during cleanup
 bool harnessPqScriptFail;
@@ -44,6 +47,13 @@ harnessPqScriptSet(HarnessPq *harnessPqScriptParam)
 
     harnessPqScript = harnessPqScriptParam;
     harnessPqScriptIdx = 0;
+}
+
+/**********************************************************************************************************************************/
+void
+harnessPqScriptStrictSet(bool strict)
+{
+    harnessPqStrict = strict;
 }
 
 /***********************************************************************************************************************************
@@ -319,7 +329,7 @@ Shim for PQfinish()
 ***********************************************************************************************************************************/
 void PQfinish(PGconn *conn)
 {
-    if (!harnessPqScriptFail)
+    if (harnessPqStrict && !harnessPqScriptFail)
         harnessPqScriptRun(HRNPQ_FINISH, NULL, (HarnessPq *)conn);
 }
 

@@ -145,7 +145,8 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
     {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 1},                                                          \
     {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},                               \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = STRINGIFY(timeParam)},                      \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]",                                                        \
+        .resultZ = strPtr(strNewFmt("%" PRId64, (int64_t)timeParam))},                                                             \
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
@@ -389,6 +390,11 @@ typedef struct HarnessPq
 Functions
 ***********************************************************************************************************************************/
 void harnessPqScriptSet(HarnessPq *harnessPqScriptParam);
+
+// Are we strict about requiring PQfinish()?  Strict is a good idea for low-level testing of Pq code but is a nuissance for
+// higher-level testing since it can mask other errors.  When not strict, PGfinish() is allowed at any time and does not need to be
+// scripted.
+void harnessPqScriptStrictSet(bool strict);
 
 #endif // HARNESS_PQ_REAL
 
