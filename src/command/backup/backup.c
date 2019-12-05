@@ -776,11 +776,6 @@ backupStart(BackupData *backupData)
         // If this is an offline backup
         if (!cfgOptionBool(cfgOptOnline))
         {
-            // If checksum-page is not explicitly enabled then disable it.  We can now detect checksums by reading pg_control
-            // directly but the integration tests can't properly enable checksums.
-            if (!cfgOptionTest(cfgOptChecksumPage))
-                cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
-
             // Check if Postgres is running and if so only continue when forced
             if (storageExistsP(backupData->storagePrimary, PG_FILE_POSTMASTERPID_STR))
             {

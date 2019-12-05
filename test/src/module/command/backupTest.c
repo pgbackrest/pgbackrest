@@ -48,7 +48,6 @@ testBackupCompare(const Storage *storage, const String *path, const char *compar
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
-
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -931,7 +930,7 @@ testRun(void)
             "P00   INFO: new backup label = [INCR-1]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("offline diff backup to test prior backup is not correct type");
+        TEST_TITLE("offline diff backup to test prior backup must be full");
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -957,14 +956,7 @@ testRun(void)
             "P00   INFO: new backup label = [DIFF-2]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("offline incr backup to test null checksum page in prior backup");
-
-        // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
-        const String *manifestPriorFile = STRDEF(STORAGE_REPO_BACKUP "/latest/" BACKUP_MANIFEST_FILE);
-
-        Manifest *manifestPrior = manifestNewLoad(storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)));
-        ((ManifestData *)manifestData(manifestPrior))->backupOptionChecksumPage = NULL;
-        manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
+        TEST_TITLE("offline resumed incr backup to test null checksum page in prior backup");
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -976,6 +968,46 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
         harnessCfgLoad(cfgCmdBackup, argList);
 
+        // Create a backup that looks like a halted backup
+        const String *manifestPriorFile = STRDEF(STORAGE_REPO_BACKUP "/latest/" BACKUP_MANIFEST_FILE);
+        Manifest *manifestPrior = manifestNewLoad(storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)));
+        ManifestData *manifestPriorData = (ManifestData *)manifestData(manifestPrior);
+
+        const String *resumeLabel = backupLabelCreate(backupTypeIncr, manifestPriorData->backupLabel, time(NULL));
+        manifestPriorData->backupLabelPrior = manifestPriorData->backupLabel;
+        manifestPriorData->backupLabel = resumeLabel;
+        manifestPriorData->backupType = backupTypeIncr;
+
+        manifestSave(
+            manifestPrior,
+            storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(),
+                    strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(resumeLabel)))));
+
+
+        storagePathCreateP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/bogus_path", strPtr(resumeLabel)));
+
+        storagePutP(
+            storageNewWriteP(
+                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus", strPtr(resumeLabel))),
+            NULL);
+
+        THROW_ON_SYS_ERROR(
+            symlink(
+                "..",
+                strPtr(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/link", strPtr(resumeLabel))))) == -1,
+            FileOpenError, "unable to create symlink");
+
+        TEST_SYSTEM_FMT(
+            "mkfifo -m 666 %s",
+            strPtr(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/pipe", strPtr(resumeLabel)))));
+
+        // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
+        manifestPrior = manifestNewLoad(storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)));
+        ((ManifestData *)manifestData(manifestPrior))->backupOptionChecksumPage = NULL;
+        manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
+
         sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VR3"));
 
@@ -983,6 +1015,10 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [DIFF-2], version = " PROJECT_VERSION "\n"
+            "P00   WARN: resumable backup [INCR-2] of same type exists -- remove invalid files and resume\n"
+            "P00 DETAIL: remove path '{[path]}/repo/backup/test1/[INCR-2]/pg_data/bogus_path' from resumed backup\n"
+            "P00 DETAIL: remove file '{[path]}/repo/backup/test1/[INCR-2]/pg_data/global/bogus' from resumed backup\n"
+            "P00   WARN: remove special file '{[path]}/repo/backup/test1/[INCR-2]/pg_data/pipe' from resumed backup\n"
             "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
