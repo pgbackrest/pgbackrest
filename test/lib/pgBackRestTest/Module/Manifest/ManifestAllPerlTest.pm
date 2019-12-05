@@ -764,7 +764,7 @@ sub run
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_TABLESPACE_IN_PGDATA,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_LINK_DESTINATION,
             'tablespace symlink ../ destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
@@ -773,7 +773,7 @@ sub run
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_TABLESPACE_IN_PGDATA,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_LINK_DESTINATION,
             'tablespace symlink .. destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
@@ -782,7 +782,7 @@ sub run
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_TABLESPACE_IN_PGDATA,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_LINK_DESTINATION,
             'tablespace symlink ../base destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
@@ -792,7 +792,7 @@ sub run
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testException(
-            sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_TABLESPACE_IN_PGDATA,
+            sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_LINK_DESTINATION,
             "tablespace symlink $self->{strDbPath}/base destination must not be in \$PGDATA");
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 

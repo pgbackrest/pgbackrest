@@ -52,7 +52,6 @@ ERROR_DEFINE( 67, FeatureNotSupportedError, RuntimeError);
 ERROR_DEFINE( 68, ArchiveCommandInvalidError, RuntimeError);
 ERROR_DEFINE( 69, LinkExpectedError, RuntimeError);
 ERROR_DEFINE( 70, LinkDestinationError, RuntimeError);
-ERROR_DEFINE( 71, TablespaceInPgdataError, RuntimeError);
 ERROR_DEFINE( 72, HostInvalidError, RuntimeError);
 ERROR_DEFINE( 73, PathMissingError, RuntimeError);
 ERROR_DEFINE( 74, FileMoveError, RuntimeError);
@@ -139,7 +138,6 @@ static const ErrorType *errorTypeList[] =
     &ArchiveCommandInvalidError,
     &LinkExpectedError,
     &LinkDestinationError,
-    &TablespaceInPgdataError,
     &HostInvalidError,
     &PathMissingError,
     &FileMoveError,

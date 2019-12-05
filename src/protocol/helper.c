@@ -95,6 +95,8 @@ pgIsLocal(unsigned int hostId)
         FUNCTION_LOG_PARAM(UINT, hostId);
     FUNCTION_LOG_END();
 
+    ASSERT(hostId > 0);
+
     FUNCTION_LOG_RETURN(BOOL, !cfgOptionTest(cfgOptPgHost + hostId - 1));
 }
 
@@ -326,6 +328,8 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, hostId);
     FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
 
     // Is this a repo remote?
     bool isRepo = protocolStorageType == protocolStorageTypeRepo;
