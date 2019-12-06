@@ -884,6 +884,27 @@ testRun(void)
         dbFree(backupData->dbPrimary);
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("backupResumeFind()"))
+    {
+        const String *repoPath = strNewFmt("%s/repo", testPath());
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume empty directory");
+
+        // String *
+        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191201F"));
+
+        // TEST_RESULT_PTR(manifestResumeFind((Manifest *)1, NULL, )
+    }
+
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
     // *****************************************************************************************************************************
     if (testBegin("cmdBackup() offline"))
