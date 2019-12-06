@@ -972,11 +972,10 @@ testRun(void)
         #define BACKUP_EPOCH                                        1570000000
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 9.5 compressed full backup");
+        TEST_TITLE("online 9.5 resume uncompressed full backup");
 
         time_t backupTimeStart = BACKUP_EPOCH;
 
-        MEM_CONTEXT_TEMP_BEGIN()
         {
             // Create pg_control
             storagePutP(
@@ -1002,8 +1001,44 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+            strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             harnessCfgLoad(cfgCmdBackup, argList);
 
+            // Add files
+            storagePutP(
+                storageNewWriteP(storagePgWrite(), STRDEF("postgresql.conf"), .timeModified = backupTimeStart),
+                BUFSTRDEF("CONFIGSTUFF"));
+            storagePutP(
+                storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .timeModified = backupTimeStart),
+                BUFSTRDEF(PG_VERSION_95_STR));
+
+            // Create a backup manifest that looks like a halted backup manifest
+            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, true, false, NULL, NULL);
+            ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
+
+            manifestResumeData->backupType = backupTypeFull;
+            const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
+            manifestBackupLabelSet(manifestResume, resumeLabel);
+
+            // Copy a file to be resumed that has not changed in the repo
+            storageCopy(
+                storageNewReadP(storagePg(), PG_FILE_PGVERSION_STR),
+                storageNewWriteP(
+                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strPtr(resumeLabel))));
+
+            strcpy(
+                ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/PG_VERSION")))->checksumSha1,
+                "06d06bb31b570b94d7b4325f511f853dbe771c21");
+
+            // Save the resume manifest
+            manifestSave(
+                manifestResume,
+                storageWriteIo(
+                    storageNewWriteP(
+                        storageRepoWrite(),
+                        strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(resumeLabel)))));
+
+            // Pq Script
             harnessPqScriptSet((HarnessPq [])
             {
                 // Connect to primary
@@ -1031,35 +1066,27 @@ testRun(void)
                 HRNPQ_MACRO_DONE()
             });
 
-            // Add files
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), STRDEF("postgresql.conf"), .timeModified = backupTimeStart),
-                BUFSTRDEF("CONFIGSTUFF"));
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .timeModified = backupTimeStart),
-                BUFSTRDEF(PG_VERSION_95_STR));
-
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+                "P00   WARN: resumable backup 20191002-070640F of same type exists -- remove invalid files and resume\n"
                 "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: checksum resumed file /home/vagrant/test/test-0/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
                 "P00   INFO: new backup label = 20191002-070640F");
 
             testBackupCompare(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
-                "PG_VERSION.gz {file, s=3}\n"
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), false,
+                "PG_VERSION {file, s=3}\n"
                 "global {path}\n"
-                "global/pg_control.gz {file, s=8192}\n"
-                "postgresql.conf.gz {file, s=11}\n");
+                "global/pg_control {file, s=8192}\n"
+                "postgresql.conf {file, s=11}\n");
         }
-        MEM_CONTEXT_TEMP_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("online resumed compressed 9.5 full backup");
@@ -1067,7 +1094,6 @@ testRun(void)
         // Backup start time
         backupTimeStart = BACKUP_EPOCH + 100000;
 
-        MEM_CONTEXT_TEMP_BEGIN()
         {
             // Load options
             StringList *argList = strLstNew();
@@ -1086,16 +1112,6 @@ testRun(void)
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
-            // Copy a file to be resumed that has not changed in the repo
-            storageCopy(
-                storageNewReadP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data/PG_VERSION.gz")),
-                storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION.gz", strPtr(resumeLabel))));
-
-            strcpy(
-                ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/PG_VERSION")))->checksumSha1,
-                "06d06bb31b570b94d7b4325f511f853dbe771c21");
-
             // File exists in cluster and repo but not in the resume manifest
             storagePutP(
                 storageNewWriteP(storagePgWrite(), STRDEF("not-in-resume"), .timeModified = backupTimeStart), BUFSTRDEF("TEST"));
@@ -1105,10 +1121,10 @@ testRun(void)
                 NULL);
 
             // Remove checksum from file so it won't be resumed
-            storageCopy(
-                storageNewReadP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data/global/pg_control.gz")),
+            storagePutP(
                 storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strPtr(resumeLabel))));
+                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strPtr(resumeLabel))),
+                NULL);
 
             ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/global/pg_control")))->checksumSha1[0] = 0;
 
@@ -1198,8 +1214,8 @@ testRun(void)
                 "P00 DETAIL: remove path '{[path]}/repo/backup/test1/20191003-105320F/pg_data/bogus_path' from resumed backup\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus' from resumed backup"
                     " (missing in manifest)\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/pg_control.gz' from resumed backup"
-                    " (no checksum in resumed manifest)\n"
+                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/pg_control.gz' from resumed"
+                    " backup (no checksum in resumed manifest)\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/not-in-resume.gz' from resumed backup"
                     " (missing in resumed manifest)\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/size-mismatch.gz' from resumed backup"
@@ -1213,7 +1229,7 @@ testRun(void)
                 "P01   INFO: backup file {[path]}/pg1/time-mismatch (4B, [PCT]) checksum [SHA1]\n"
                 "P01   INFO: backup file {[path]}/pg1/size-mismatch (4B, [PCT]) checksum [SHA1]\n"
                 "P01   INFO: backup file {[path]}/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: checksum resumed file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P01   INFO: backup file {[path]}/pg1/zero-size (0B, [PCT])\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
@@ -1237,14 +1253,12 @@ testRun(void)
             storageRemoveP(storagePgWrite(), STRDEF("time-mismatch"), .errorOnMissing = true);
             storageRemoveP(storagePgWrite(), STRDEF("zero-size"), .errorOnMissing = true);
         }
-        MEM_CONTEXT_TEMP_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("online resumed compressed 9.5 diff backup");
 
         backupTimeStart = BACKUP_EPOCH + 200000;
 
-        MEM_CONTEXT_TEMP_BEGIN()
         {
             StringList *argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1383,14 +1397,12 @@ testRun(void)
             storageRemoveP(storagePgWrite(), STRDEF("resume-ref"), .errorOnMissing = true);
             storageRemoveP(storagePgWrite(), STRDEF("time-mismatch2"), .errorOnMissing = true);
         }
-        MEM_CONTEXT_TEMP_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("online 9.6 back-standby full backup");
 
         backupTimeStart = BACKUP_EPOCH + 1200000;
 
-        MEM_CONTEXT_TEMP_BEGIN()
         {
             // Update pg_control
             storagePutP(
@@ -1488,7 +1500,6 @@ testRun(void)
                 "global/pg_control {file, s=8192}\n"
                 "postgresql.conf {file, s=11}\n");
         }
-        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
