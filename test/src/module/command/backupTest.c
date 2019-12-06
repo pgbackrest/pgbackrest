@@ -120,7 +120,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_START_BACKUP_GE_96(1, true, "0/1", "000000010000000000000000"),
+                HRNPQ_MACRO_START_BACKUP_96(1, true, "0/1", "000000010000000000000000"),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
@@ -141,8 +141,40 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_DONE()
             });
     }
+    else if (pgVersion == PG_VERSION_11)
+    {
+        ASSERT(!param.backupStandby);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
+
+            // Get start time
+            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
+
+            // Start backup
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, "0/1", "000000010000000000000000"),
+            HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+            HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+
+            // Get copy start time
+            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
+            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+            // Stop backup
+            HRNPQ_MACRO_STOP_BACKUP_GE_10(1, "0/1000001", "000000010000000000000001"),
+            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+
+            // Get stop time
+            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+
+            HRNPQ_MACRO_DONE()
+        });
+    }
     else
-        THROW_FMT(AssertError, "unsupported version %u", pgVersion);
+        THROW_FMT(AssertError, "unsupported version %u", pgVersion);                // {uncoverable - no invalid versions in tests}
 };
 
 /***********************************************************************************************************************************
@@ -1028,6 +1060,44 @@ testRun(void)
         manifestResume->data.backupOptionCompress = false;
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("backupJobResult()"))
+    {
+        // Set log level to detail
+        harnessLogLevelSet(logLevelDetail);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when postmaster.pid exists");
+
+        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(STRDEF("command")));
+        protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
+
+        TEST_ERROR(backupJobResult((Manifest *)1, STRDEF("log"), job, 0, 0, 0), AssertError, "error message");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove skipped file");
+
+        // Create job that skips file
+        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(STRDEF("command")));
+
+        VariantList *result = varLstNew();
+        varLstAdd(result, varNewUInt64(backupCopyResultSkip));
+        varLstAdd(result, varNewUInt64(0));
+        varLstAdd(result, varNewUInt64(0));
+        varLstAdd(result, NULL);
+        varLstAdd(result, NULL);
+
+        protocolParallelJobResultSet(job, varNewVarLst(result));
+
+        // Create manifest with file
+        Manifest *manifest = manifestNewInternal();
+        manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
+
+        TEST_RESULT_UINT(backupJobResult(manifest, STRDEF("log-test"), job, 0, 0, 0), 0, "log skip result");
+
+        TEST_RESULT_LOG("P00 DETAIL: skip file removed by database log-test");
+    }
+
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
     // *****************************************************************************************************************************
     if (testBegin("cmdBackup() offline"))
@@ -1433,7 +1503,7 @@ testRun(void)
                 "time-mismatch.gz {file, s=4}\n"
                 "zero-size.gz {file, s=0}\n");
 
-            // Remove files used to test resume
+            // Remove test files
             storageRemoveP(storagePgWrite(), STRDEF("not-in-resume"), .errorOnMissing = true);
             storageRemoveP(storagePgWrite(), STRDEF("size-mismatch"), .errorOnMissing = true);
             storageRemoveP(storagePgWrite(), STRDEF("time-mismatch"), .errorOnMissing = true);
@@ -1557,6 +1627,7 @@ testRun(void)
                 "resume-ref.gz {file, s=0}\n"
                 "time-mismatch2.gz {file, s=4}\n");
 
+            // Remove test files
             storageRemoveP(storagePgWrite(), STRDEF("resume-ref"), .errorOnMissing = true);
             storageRemoveP(storagePgWrite(), STRDEF("time-mismatch2"), .errorOnMissing = true);
         }
@@ -1630,6 +1701,122 @@ testRun(void)
                 "global {path}\n"
                 "global/pg_control {file, s=8192}\n"
                 "postgresql.conf {file, s=11}\n");
+
+            // Remove test files
+            storagePathRemoveP(storagePgIdWrite(2), NULL, .recurse = true);
+            storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 full backup with tablespaces and page checksums");
+
+        backupTimeStart = BACKUP_EPOCH + 2200000;
+
+        {
+            // Update pg_control
+            storagePutP(
+                storageNewWriteP(
+                    storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path)),
+                    .timeModified = backupTimeStart),
+                pgControlTestToBuffer(
+                    (PgControl){.version = PG_VERSION_11, .systemId = 1000000000000001100, .pageChecksum = true}));
+
+            // Update version
+            storagePutP(
+                storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .timeModified = backupTimeStart),
+                BUFSTRDEF(PG_VERSION_11_STR));
+
+            // Upgrade stanza
+            StringList *argList = strLstNew();
+            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+            strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+            harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
+
+            cmdStanzaUpgrade();
+
+            // Load options
+            argList = strLstNew();
+            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+            harnessCfgLoad(cfgCmdBackup, argList);
+
+            // Zeroed file which passes page checksums
+            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), relation);
+
+            // Zeroed file which will fail on alignment
+            relation = bufNew(PG_PAGE_SIZE_DEFAULT + 1);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/2"), .timeModified = backupTimeStart), relation);
+
+            // File with bad page checksums
+            relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
+            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 0, 8, PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 1, 0, PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 2, 8, PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 3, 8, PG_PAGE_SIZE_DEFAULT);
+            bufUsedSet(relation, bufSize(relation));
+
+            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart), relation);
+
+            // File with bad page checksum
+            relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 0, 0, PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 1, 8, PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 2, 0, PG_PAGE_SIZE_DEFAULT);
+            bufUsedSet(relation, bufSize(relation));
+
+            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/4"), .timeModified = backupTimeStart), relation);
+
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart);
+            TEST_RESULT_VOID(cmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+                "P01   INFO: backup file {[path]}/pg1/base/1/3 (32KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: invalid page checksums found in file {[path]}/pg1/base/1/3 at pages 0, 2-3\n"
+                "P01   INFO: backup file {[path]}/pg1/base/1/4 (24KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: invalid page checksum found in file {[path]}/pg1/base/1/4 at page 1\n"
+                "P01   INFO: backup file {[path]}/pg1/base/1/2 (8KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: page misalignment in file {[path]}/pg1/base/1/2: file size 8193 is not divisible by page size 8192\n"
+                "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file {[path]}/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P00   INFO: full backup size = [SIZE]\n"
+                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
+                "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+                "P00   INFO: new backup label = 20191027-181320F");
+
+            testBackupCompare(
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
+                "PG_VERSION.gz {file, s=2}\n"
+                "backup_label.gz {file, s=17}\n"
+                "base {path}\n"
+                "base/1 {path}\n"
+                "base/1/1.gz {file, s=8192}\n"
+                "base/1/2.gz {file, s=8193}\n"
+                "base/1/3.gz {file, s=32768}\n"
+                "base/1/4.gz {file, s=24576}\n"
+                "global {path}\n"
+                "global/pg_control.gz {file, s=8192}\n"
+                "postgresql.conf.gz {file, s=11}\n");
+
+            // Remove test files
+            storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);
         }
     }
 
