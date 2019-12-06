@@ -22,7 +22,8 @@ Pq shim error prefix
 /***********************************************************************************************************************************
 Script that defines how shim functions operate
 ***********************************************************************************************************************************/
-HarnessPq *harnessPqScript;
+HarnessPq harnessPqScript[1024];
+bool harnessPqScriptDone = true;
 unsigned int harnessPqScriptIdx;
 
 // Is PQfinish scripting required?
@@ -39,13 +40,23 @@ Set pq script
 void
 harnessPqScriptSet(HarnessPq *harnessPqScriptParam)
 {
-    if (harnessPqScript != NULL)
+    if (!harnessPqScriptDone)
         THROW(AssertError, "previous pq script has not yet completed");
 
     if (harnessPqScriptParam[0].function == NULL)
         THROW(AssertError, "pq script must have entries");
 
-    harnessPqScript = harnessPqScriptParam;
+    // Copy records into local storage
+    unsigned int copyIdx = 0;
+
+    while (harnessPqScriptParam[copyIdx].function != NULL)
+    {
+        harnessPqScript[copyIdx] = harnessPqScriptParam[copyIdx];
+        copyIdx++;
+    }
+
+    harnessPqScript[copyIdx].function = NULL;
+    harnessPqScriptDone = false;
     harnessPqScriptIdx = 0;
 }
 
@@ -70,7 +81,7 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
     String *paramStr = param ? jsonFromVar(varNewVarLst(param)) : strNew("");
 
     // Ensure script has not ended
-    if (harnessPqScript == NULL)
+    if (harnessPqScriptDone)
     {
         snprintf(harnessPqScriptError, sizeof(harnessPqScriptError), "pq script ended before %s (%s)", function, strPtr(paramStr));
 
@@ -130,7 +141,7 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
     harnessPqScriptIdx++;
 
     if (harnessPqScript[harnessPqScriptIdx].function == NULL)
-        harnessPqScript = NULL;
+        harnessPqScriptDone = true;
 
     return result;
 }

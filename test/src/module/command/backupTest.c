@@ -53,6 +53,99 @@ testBackupCompare(const Storage *storage, const String *path, bool fileCompresse
 }
 
 /***********************************************************************************************************************************
+Generate pq scripts for versions of PostgreSQL
+***********************************************************************************************************************************/
+typedef struct TestBackupPqScriptParam
+{
+    VAR_PARAM_HEADER;
+    bool startFast;
+    bool backupStandby;
+    bool noPathEnforce;
+} TestBackupPqScriptParam;
+
+#define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                                           \
+    testBackupPqScript(pgVersion, backupStartTime, (TestBackupPqScriptParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+static void
+testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqScriptParam param)
+{
+    const char *pg1Path = strPtr(strNewFmt("%s/pg1", testPath()));
+    const char *pg2Path = strPtr(strNewFmt("%s/pg2", testPath()));
+
+    if (pgVersion == PG_VERSION_95)
+    {
+        ASSERT(!param.backupStandby);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, pg1Path, false, NULL, NULL),
+
+            // Get start time
+            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
+
+            // Start backup
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, "0/1", "000000010000000000000000"),
+            HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+            HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+
+            // Get copy start time
+            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
+            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+            // Stop backup
+            HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "0/1000001", "000000010000000000000001"),
+
+            // Get stop time
+            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+
+            HRNPQ_MACRO_DONE()
+        });
+    }
+    else if (pgVersion == PG_VERSION_96)
+    {
+        ASSERT(param.backupStandby);
+
+            harnessPqScriptSet((HarnessPq [])
+            {
+                // Connect to primary
+                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, pg1Path, false, NULL, NULL),
+
+                // Connect to standby
+                HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5433", PG_VERSION_96, pg2Path, true, NULL, NULL),
+
+                // Get start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
+
+                // Start backup
+                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+                HRNPQ_MACRO_START_BACKUP_GE_96(1, true, "0/1", "000000010000000000000000"),
+                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+
+                // Wait for standby to sync
+                HRNPQ_MACRO_REPLAY_WAIT(2, "0/1"),
+
+                // Get copy start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+                // Stop backup
+                HRNPQ_MACRO_STOP_BACKUP_96(1, "0/1000001", "000000010000000000000001"),
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+
+                // Get stop time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+
+                HRNPQ_MACRO_DONE()
+            });
+    }
+    else
+        THROW_FMT(AssertError, "unsupported version %u", pgVersion);
+};
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -1038,34 +1131,8 @@ testRun(void)
                         storageRepoWrite(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(resumeLabel)))));
 
-            // Pq Script
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, strPtr(pg1Path), false, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_START_BACKUP_84_95(1, false, "0/1", "000000010000000000000000"),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "0/1000001", "000000010000000000000001"),
-
-                // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                HRNPQ_MACRO_DONE()
-            });
-
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -1074,7 +1141,7 @@ testRun(void)
                 "P00   WARN: resumable backup 20191002-070640F of same type exists -- remove invalid files and resume\n"
                 "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: checksum resumed file /home/vagrant/test/test-0/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: checksum resumed file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
@@ -1177,34 +1244,8 @@ testRun(void)
                         storageRepoWrite(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(resumeLabel)))));
 
-            // Pq Script
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, strPtr(pg1Path), false, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_START_BACKUP_84_95(1, false, "0/1", "000000010000000000000000"),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "0/1000001", "000000010000000000000001"),
-
-                // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                HRNPQ_MACRO_DONE()
-            });
-
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -1329,36 +1370,11 @@ testRun(void)
                         storageRepoWrite(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(resumeLabel)))));
 
-            // Pq Script
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, strPtr(pg1Path), false, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_START_BACKUP_84_95(1, false, "0/1", "000000010000000000000000"),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "0/1000001", "000000010000000000000001"),
-
-                // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                HRNPQ_MACRO_DONE()
-            });
-
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
+            // Check log
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
@@ -1389,6 +1405,7 @@ testRun(void)
                 "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
                 "P00   INFO: new backup label = 20191003-105320F_20191004-144000D");
 
+            // Check repo directory
             testBackupCompare(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
                 "resume-ref.gz {file, s=0}\n"
@@ -1444,43 +1461,11 @@ testRun(void)
             storagePutP(storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), NULL);
             storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("DATA"));
 
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, strPtr(pg1Path), false, NULL, NULL),
-
-                // Connect to standby
-                HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5433", PG_VERSION_96, strPtr(pg2Path), true, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_START_BACKUP_GE_96(1, true, "0/1", "000000010000000000000000"),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
-
-                // Wait for standby to sync
-                HRNPQ_MACRO_REPLAY_WAIT(2, "0/1"),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_96(1, "0/1000001", "000000010000000000000001"),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                HRNPQ_MACRO_DONE()
-            });
-
             // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
             harnessLogLevelSet(logLevelWarn);
 
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Set log level back to detail
