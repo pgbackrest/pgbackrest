@@ -1077,13 +1077,12 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
 
 /**********************************************************************************************************************************/
 void
-manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type, unsigned int pgId, const String *archiveStart)
+manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type, const String *archiveStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
         FUNCTION_LOG_PARAM(ENUM, type);
-        FUNCTION_LOG_PARAM(UINT, pgId);
         FUNCTION_LOG_PARAM(STRING, archiveStart);
     FUNCTION_LOG_END();
 
@@ -1100,14 +1099,17 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         // Set diff/incr backup type
         this->data.backupType = type;
+
+        // Set archive start
+        this->data.archiveStart = strDup(archiveStart);
     }
     MEM_CONTEXT_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Enable delta if timelines differ
-        if (manifestData(manifestPrior)->archiveStop != NULL && archiveStart != NULL &&
-            !strEq(strSubN(manifestData(manifestPrior)->archiveStop, 0, 8), strSubN(archiveStart, 0, 8)))
+        if (manifestData(manifestPrior)->archiveStop != NULL && this->data.archiveStart != NULL &&
+            !strEq(strSubN(manifestData(manifestPrior)->archiveStop, 0, 8), strSubN(this->data.archiveStart, 0, 8)))
         {
             LOG_WARN_FMT(
                 "a timeline switch has occurred since the %s backup, enabling delta checksum",
@@ -1120,15 +1122,6 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         {
             LOG_WARN_FMT(
                 "the online option has changed since the %s backup, enabling delta checksum",
-                strPtr(manifestData(manifestPrior)->backupLabel));
-
-            this->data.backupOptionDelta = BOOL_TRUE_VAR;
-        }
-        // Else enable delta if a stanza-upgrade has occurred
-        else if (manifestData(manifestPrior)->pgId != pgId)
-        {
-            LOG_WARN_FMT(
-                "stanza has been upgraded since the %s backup, enabling delta checksum",
                 strPtr(manifestData(manifestPrior)->backupLabel));
 
             this->data.backupOptionDelta = BOOL_TRUE_VAR;

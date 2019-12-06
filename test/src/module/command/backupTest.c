@@ -1499,18 +1499,18 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_LOG(
-            "P00   WARN: incr backup cannot alter compress option to 'false', reset to value in 20191003-105320F_20191004-144000D\n"
-            "P00   WARN: stanza has been upgraded since the 20191003-105320F_20191004-144000D backup, enabling delta checksum");
+            "P00   WARN: no prior backup exists, incr backup has been changed to full");
 
         testBackupCompare(
-            storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
-            "PG_VERSION.gz {file, s=3}\n"
-            "backup_label.gz {file, s=17}\n"
+            storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), false,
+            "PG_VERSION {file, s=3}\n"
+            "backup_label {file, s=17}\n"
             "base {path}\n"
             "base/1 {path}\n"
-            "base/1/1.gz {file, s=4}\n"
+            "base/1/1 {file, s=4}\n"
             "global {path}\n"
-            "global/pg_control.gz {file, s=8192}\n");
+            "global/pg_control {file, s=8192}\n"
+            "postgresql.conf {file, s=11}\n");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

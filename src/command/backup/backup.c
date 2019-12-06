@@ -324,7 +324,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Search for a prior backup
+            InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
             const String *backupLabelPrior = NULL;
             unsigned int backupTotal = infoBackupDataTotal(infoBackup);
 
@@ -336,7 +336,9 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                  if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
                     continue;
 
-                // CSHANG -- a different pg id now enables delta rather than forcing a full backup
+                // The backups must come from the same cluster ??? This should enable delta instead
+                if (infoPg.id != backupPrior.backupPgId)
+                    continue;
 
                 // This backup is a candidate for prior
                 backupLabelPrior = strDup(backupPrior.backupLabel);
@@ -414,17 +416,16 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 }
 
 static bool
-backupBuildIncr(Manifest *manifest, Manifest *manifestPrior, unsigned int pgId, const String *archiveStart)
+backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *manifestPrior)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
-        FUNCTION_LOG_PARAM(UINT, pgId);
-        FUNCTION_LOG_PARAM(STRING, archiveStart);
     FUNCTION_LOG_END();
 
+    ASSERT(infoBackup != NULL);
     ASSERT(manifest != NULL);
-    ASSERT(pgId > 0);
 
     bool result = false;
 
@@ -437,7 +438,7 @@ backupBuildIncr(Manifest *manifest, Manifest *manifestPrior, unsigned int pgId, 
             manifestMove(manifestPrior, MEM_CONTEXT_TEMP());
 
             // Build incremental manifest
-            manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), pgId, archiveStart);
+            manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), NULL/* !!! ARCHIVE_START */);
 
             // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
             manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
@@ -1838,7 +1839,7 @@ cmdBackup(void)
         manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
-        if (!backupBuildIncr(manifest, manifestPrior, infoPg.id, backupStartResult.walSegmentName))
+        if (!backupBuildIncr(infoBackup, manifest, manifestPrior))
             manifestCipherSubPassSet(manifest, cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
 
         // Set delta if it is not already set and the manifest requires it
