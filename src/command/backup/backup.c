@@ -639,7 +639,7 @@ backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String 
                 // then the backup will be considered unusable and a resume will not be attempted.
                 if (cfgOptionBool(cfgOptResume))
                 {
-                    reason = strNewFmt("unable to read %s", strPtr(manifestFile));
+                    reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strPtr(manifestFile));
 
                     TRY_BEGIN()
                     {
@@ -706,8 +706,8 @@ backupResumeFind(const InfoBackup *infoBackup, const Manifest *manifest, String 
                         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel)), .recurse = true);
                 }
             }
+            }
         }
-    }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(MANIFEST, result);
