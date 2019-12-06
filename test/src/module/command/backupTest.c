@@ -1267,7 +1267,7 @@ testRun(void)
             "P01   INFO: backup file {[path]}/pg1/size-mismatch (4B, [PCT]) checksum [SHA1]\n"
             "P01   INFO: backup file {[path]}/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
             "P01 DETAIL: checksum resumed file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-            "P01   INFO: backup file /home/vagrant/test/test-0/pg1/zero-size (0B, [PCT])\n"
+            "P01   INFO: backup file {[path]}/pg1/zero-size (0B, [PCT])\n"
             "P00   INFO: full backup size = [SIZE]\n"
             "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
             "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
@@ -1500,18 +1500,18 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_LOG(
-            "P00   WARN: no prior backup exists, incr backup has been changed to full");
+            "P00   WARN: incr backup cannot alter compress option to 'false', reset to value in 20191003-105320F_20191004-144000D\n"
+            "P00   WARN: stanza has been upgraded since the 20191003-105320F_20191004-144000D backup, enabling delta checksum");
 
         testBackupCompare(
-            storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), false,
-            "PG_VERSION {file, s=3}\n"
-            "backup_label {file, s=17}\n"
+            storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
+            "PG_VERSION.gz {file, s=3}\n"
+            "backup_label.gz {file, s=17}\n"
             "base {path}\n"
             "base/1 {path}\n"
-            "base/1/1 {file, s=4}\n"
+            "base/1/1.gz {file, s=4}\n"
             "global {path}\n"
-            "global/pg_control {file, s=8192}\n"
-            "postgresql.conf {file, s=11}\n");
+            "global/pg_control.gz {file, s=8192}\n");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

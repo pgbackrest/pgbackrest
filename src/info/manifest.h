@@ -164,7 +164,8 @@ Build functions
 void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart);
 
 // Create a diff/incr backup by comparing to a previous backup manifest
-void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
+void manifestBuildIncr(
+    Manifest *this, const Manifest *manifestPrior, BackupType type, unsigned int pgId, const String *archiveStart);
 
 // Set remaining values before the final save
 void manifestBuildComplete(
