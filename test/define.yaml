@@ -643,6 +643,7 @@ unit:
         include:
           - command/backup/backup
           - command/backup/file
+          - info/manifest
           - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------

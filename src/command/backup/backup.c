@@ -648,23 +648,21 @@ backupResumeFind(const Manifest *manifest, const String *cipherPass)
 
                         // Check pgBackRest version. This allows the resume implementation to be changed with each version of
                         // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the cost.
-                        if (!strEqZ(manifestResumeData->backrestVersion, PROJECT_VERSION))
+                        if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
                         {
                             reason = strNewFmt(
                                 "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
-                                PROJECT_VERSION, strPtr(manifestResumeData->backrestVersion));
+                                strPtr(manifestData(manifest)->backrestVersion), strPtr(manifestResumeData->backrestVersion));
                         }
-                        // Check backup type
+                        // Check backup type ??? Do we really care about the backup type?
                         else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
                         {
                             reason = strNewFmt(
                                 "new backup type '%s' does not match resumable backup type '%s'", strPtr(cfgOptionStr(cfgOptType)),
                                 strPtr(backupTypeStr(manifestResumeData->backupType)));
                         }
-                        // Check prior backup label
-                        else if (!strEq(
-                                    manifestResumeData->backupLabelPrior,
-                                    manifestData(manifest)->backupLabelPrior ? manifestData(manifest)->backupLabelPrior : NULL))
+                        // Check prior backup label ??? Do we really care about the prior backup label?
+                        else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
                         {
                             reason = strNewFmt(
                                 "new prior backup label '%s' does not match resumable prior backup label '%s'",
@@ -672,10 +670,17 @@ backupResumeFind(const Manifest *manifest, const String *cipherPass)
                                 manifestData(manifest)->backupLabelPrior ?
                                     strPtr(manifestData(manifest)->backupLabelPrior) : "<undef>");
                         }
-                        // !!! SHOULD JUST CHECK COMPRESSION INSTEAD OF BACKUP TYPE AND BACKUP LABEL (WHAT ABOUT PERL INT TESTS)?
+                        // Check compression.  Compression can't be changed between backups so resume won't work either.
+                        else if (manifestResumeData->backupOptionCompress != cfgOptionBool(cfgOptCompress))
+                        {
+                            reason = strNewFmt(
+                                "new compression '%s' does not match resumable compression '%s'",
+                                cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
+                                cvtBoolToConstZ(manifestResumeData->backupOptionCompress));
+                        }
                         // CSHANG -- no longer checking hardlinks here since we will only resume files that have no reference in the
-                        // resumed manifest.  No reference means no hardlink, so hardlinks will all be removed during clean if they
-                        // exist.
+                        // resumed manifest (which was true in Perl, too).  No reference means no hardlink, so hardlinks will all be
+                        // removed during clean if they exist.
                         else
                             usable = true;
                     }
@@ -1825,7 +1830,7 @@ cmdBackup(void)
             strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
-        manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true));
+        manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true), cfgOptionBool(cfgOptCompress));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior))
@@ -1858,9 +1863,9 @@ cmdBackup(void)
             backupStopResult.lsn, backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
             cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
-            cfgOptionUInt(cfgOptBufferSize), cfgOptionBool(cfgOptCompress), cfgOptionUInt(cfgOptCompressLevel),
-            cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink), cfgOptionBool(cfgOptOnline),
-            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
+            cfgOptionUInt(cfgOptBufferSize), cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork),
+            cfgOptionBool(cfgOptRepoHardlink), cfgOptionBool(cfgOptOnline), cfgOptionUInt(cfgOptProcessMax),
+            cfgOptionBool(cfgOptBackupStandby));
 
         // Remotes no longer needed (free them here so they don't timeout)
         storageHelperFree();

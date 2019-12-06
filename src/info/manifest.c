@@ -1026,12 +1026,13 @@ manifestNewBuild(
 
 /**********************************************************************************************************************************/
 void
-manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
+manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, bool compress)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(TIME, copyStart);
+        FUNCTION_LOG_PARAM(TIME, compress);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -1046,6 +1047,10 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
         // manifest was being built.  It's up to the caller to actually wait the remainder of the second, but for comparison
         // purposes we want the time when the waiting started.
         this->data.backupTimestampCopyStart = copyStart + (this->data.backupOptionOnline ? 1 : 0);
+
+        // This value is not needed in this function, but it is needed for resumed manifests and this is last place to set it before
+        // processing begins
+        this->data.backupOptionCompress = compress;
     }
     MEM_CONTEXT_END();
 
@@ -1195,7 +1200,7 @@ void
 manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel,
+    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
     unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
     bool optionStandby)
 {
@@ -1213,7 +1218,6 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
         FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
-        FUNCTION_LOG_PARAM(BOOL, optionCompress);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
         FUNCTION_LOG_PARAM(BOOL, optionHardLink);
@@ -1258,7 +1262,6 @@ manifestBuildComplete(
         this->data.backupOptionArchiveCheck = optionArchiveCheck;
         this->data.backupOptionArchiveCopy = optionArchiveCopy;
         this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
-        this->data.backupOptionCompress = optionCompress;
         this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
         this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
         this->data.backupOptionHardLink = optionHardLink;

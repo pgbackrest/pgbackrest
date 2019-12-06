@@ -894,15 +894,138 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
         strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
         strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume empty directory");
 
-        // String *
-        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191201F"));
+        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F"));
 
-        // TEST_RESULT_PTR(manifestResumeFind((Manifest *)1, NULL, )
+        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when resume is disabled");
+
+        cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_FALSE_VAR);
+
+        storagePutP(
+            storageNewWriteP(
+                storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
+            NULL);
+
+        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed: resume is disabled");
+
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+
+        cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_TRUE_VAR);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when pgBackRest version has changed");
+
+        Manifest *manifestResume = manifestNewInternal();
+        manifestResume->info = infoNew(NULL);
+        manifestResume->data.backupType = backupTypeFull;
+        manifestResume->data.backupLabel = STRDEF("20191003-105320F");
+        manifestResume->data.pgVersion = PG_VERSION_12;
+
+        manifestTargetAdd(manifestResume, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
+        manifestPathAdd(manifestResume, &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR});
+        manifestFileAdd(manifestResume, &(ManifestFile){.name = STRDEF("pg_data/" PG_FILE_PGVERSION)});
+
+        manifestSave(
+            manifestResume,
+            storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
+
+        Manifest *manifest = manifestNewInternal();
+        manifest->data.backupType = backupTypeFull;
+        manifest->data.backrestVersion = STRDEF("BOGUS");
+
+        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed:"
+                " new pgBackRest version 'BOGUS' does not match resumable pgBackRest version '" PROJECT_VERSION "'");
+
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+
+        manifest->data.backrestVersion = STRDEF(PROJECT_VERSION);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when backup labels do not match (resumable is null)");
+
+        manifest->data.backupType = backupTypeFull;
+        manifest->data.backupLabelPrior = STRDEF("20191003-105320F");
+
+        manifestSave(
+            manifestResume,
+            storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
+
+        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed:"
+                " new prior backup label '<undef>' does not match resumable prior backup label '20191003-105320F'");
+
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+
+        manifest->data.backupLabelPrior = NULL;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when backup labels do not match (new is null)");
+
+        manifest->data.backupType = backupTypeFull;
+        manifestResume->data.backupLabelPrior = STRDEF("20191003-105320F");
+
+        manifestSave(
+            manifestResume,
+            storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
+
+        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed:"
+                " new prior backup label '20191003-105320F' does not match resumable prior backup label '<undef>'");
+
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+
+        manifestResume->data.backupLabelPrior = NULL;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when compression does not match");
+
+        manifestResume->data.backupOptionCompress = true;
+
+        manifestSave(
+            manifestResume,
+            storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
+
+        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed:"
+                " new compression 'false' does not match resumable compression 'true'");
+
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+
+        manifestResume->data.backupOptionCompress = false;
     }
 
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
@@ -1197,6 +1320,7 @@ testRun(void)
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
+            manifestResumeData->backupOptionCompress = true;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -1342,6 +1466,7 @@ testRun(void)
 
             manifestResumeData->backupType = backupTypeDiff;
             manifestResumeData->backupLabelPrior = manifestData(manifestPrior)->backupLabel;
+            manifestResumeData->backupOptionCompress = true;
             const String *resumeLabel = backupLabelCreate(backupTypeDiff, manifestData(manifestPrior)->backupLabel, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
