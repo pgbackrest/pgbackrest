@@ -791,6 +791,7 @@ testRun(void)
         dbFree(backupData->dbPrimary);
     }
 
+    // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
     // *****************************************************************************************************************************
     if (testBegin("cmdBackup() offline"))
     {
@@ -800,12 +801,10 @@ testRun(void)
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
 
-        // Add log replacements
+        // Replace backup labels since the times are not deterministic
         hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F_[0-9]{8}-[0-9]{6}I", NULL, "INCR", true);
         hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F_[0-9]{8}-[0-9]{6}D", NULL, "DIFF", true);
         hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F", NULL, "FULL", true);
-        hrnLogReplaceAdd(", [0-9]{1,3}%\\)", "[0-9]+%", "PCT", false);
-        hrnLogReplaceAdd("\\) checksum [a-f0-9]{40}", "[a-f0-9]{40}$", "SHA1", false);
 
         // Create pg_control
         storagePutP(
@@ -843,7 +842,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, incr backup has been changed to full");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("offline full backup (changed from incr)");
+        TEST_TITLE("offline full backup");
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -859,14 +858,15 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
-        TEST_RESULT_LOG(
+        TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it"
                 " looks like the postmaster is running and the backup will probably not be consistent\n"
-            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
+            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, 100%%) checksum e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: full backup size = 8KB\n"
-            "P00   INFO: new backup label = [FULL-1]");
+            "P00   INFO: new backup label = [FULL-1]",
+            TEST_64BIT() ? "21e2ddc99cdf4cfca272eee4f38891146092e358" : "8bb70506d988a8698d9e8cf90736ada23634571b");
 
         // Remove postmaster.pid
         storageRemoveP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR, .errorOnMissing = true);
@@ -914,7 +914,7 @@ testRun(void)
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: incr backup cannot alter 'checksum-page' option to 'true', reset to 'false' from [FULL-1]\n"
             "P00   WARN: backup '[DIFF-1]' cannot be resumed: new backup type 'incr' does not match resumable backup type 'diff'\n"
-            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: incr backup size = 3B\n"
@@ -940,7 +940,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: diff backup size = 3B\n"
@@ -975,7 +975,6 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(),
                     strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(resumeLabel)))));
-
 
         // Create path that will be removed by resume
         storagePathCreateP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/bogus_path", strPtr(resumeLabel)));
@@ -1015,7 +1014,7 @@ testRun(void)
             "P00 DETAIL: remove file '{[path]}/repo/backup/test1/[INCR-2]/pg_data/global/bogus' from resumed backup"
                 " (missing in manifest)\n"
             "P00   WARN: remove special file '{[path]}/repo/backup/test1/[INCR-2]/pg_data/pipe' from resumed backup\n"
-            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum e03c665f0e29a94a5636f2c7b4d0736a9e25d417\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: incr backup size = 3B\n"
