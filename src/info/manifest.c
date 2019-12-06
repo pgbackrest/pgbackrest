@@ -591,9 +591,9 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             {
                 // Skip recovery files
                 if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_STANDBYSIGNAL)) &&
-                        pgVersion >= PG_VERSION_12) ||
+                    pgVersion >= PG_VERSION_12) ||
                     ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
-                            pgVersion < PG_VERSION_12) ||
+                    pgVersion < PG_VERSION_12) ||
                     // Skip temp file for safely writing postgresql.auto.conf
                     (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP) && pgVersion >= PG_VERSION_94) ||
                     // Skip backup_label in versions where non-exclusive backup is supported
@@ -856,6 +856,7 @@ manifestNewBuild(
 
     ASSERT(storagePg != NULL);
     ASSERT(pgVersion != 0);
+    ASSERT(!(checksumPage == true && pgVersion <= PG_VERSION_93));
 
     Manifest *this = NULL;
 
