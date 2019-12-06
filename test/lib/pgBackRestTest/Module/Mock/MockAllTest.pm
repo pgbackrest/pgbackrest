@@ -440,8 +440,9 @@ sub run
         # Resume by copying the valid full backup over the last aborted full backup if it exists, or by creating a new path
         my $strResumeBackup = (storageRepo()->list(
             STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))[0];
-        my $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . '/' .
-            ($strResumeBackup ne $strFullBackup ? $strResumeBackup : backupLabel(storageRepo(), $strType, undef, time())));
+        my $strResumeLabel = $strResumeBackup ne $strFullBackup ?
+            $strResumeBackup : backupLabel(storageRepo(), $strType, undef, time());
+        my $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . '/' . $strResumeLabel);
 
         forceStorageRemove(storageRepo(), $strResumePath, {bRecurse => true});
         forceStorageMove(storageRepo(), 'backup/' . $self->stanza() . "/${strFullBackup}", $strResumePath);
@@ -458,8 +459,9 @@ sub run
 
         $oHostBackup->manifestMunge(
             basename($strResumePath),
-            {&MANIFEST_SECTION_TARGET_FILE =>
-                {(&MANIFEST_TARGET_PGDATA . '/' . &DB_FILE_PGVERSION) => {&MANIFEST_SUBKEY_CHECKSUM => undef}}},
+            {&MANIFEST_SECTION_BACKUP => {&MANIFEST_KEY_LABEL => $strResumeLabel},
+                &MANIFEST_SECTION_TARGET_FILE =>
+                    {(&MANIFEST_TARGET_PGDATA . '/' . &DB_FILE_PGVERSION) => {&MANIFEST_SUBKEY_CHECKSUM => undef}}},
             false);
 
         # Remove the main manifest so the backup appears aborted
@@ -869,9 +871,8 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
 
         # Create resumable backup from last backup
-        $strResumePath =
-            storageRepo()->pathGet('backup/' . $self->stanza() . '/' .
-            backupLabel(storageRepo(), $strType, substr($strBackup, 0, 16), time()));
+        $strResumeLabel = backupLabel(storageRepo(), $strType, substr($strBackup, 0, 16), time());
+        $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . '/' . $strResumeLabel);
 
         forceStorageRemove(storageRepo(), $strResumePath);
         forceStorageMove(storageRepo(), 'backup/' . $self->stanza() . "/${strBackup}", $strResumePath);
@@ -890,6 +891,10 @@ sub run
         {
             storageRepo()->put("${strResumePath}/pg_data/badchecksum.txt", 'BDDCHECKSUM');
         }
+
+        # Write correct label into resumable manifest
+        $oHostBackup->manifestMunge(
+            basename($strResumePath), {&MANIFEST_SECTION_BACKUP => {&MANIFEST_KEY_LABEL => $strResumeLabel}},false);
 
         # Change contents/size of a db file to make sure it recopies (and does not resume)
         $oHostDbMaster->manifestFileCreate(
