@@ -146,7 +146,7 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 1},                                                          \
     {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},                               \
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]",                                                        \
-        .resultZ = strPtr(strNewFmt("%" PRId64, (int64_t)timeParam))},                                                             \
+        .resultZ = strPtr(strNewFmt("%" PRId64, (int64_t)(timeParam)))},                                                           \
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 

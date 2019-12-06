@@ -222,6 +222,18 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
+/**********************************************************************************************************************************/
+void
+hrnLogReplaceClear(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    if (harnessLog.replaceList != NULL)
+        lstClear(harnessLog.replaceList);
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
 /***********************************************************************************************************************************
 Perform log replacements
 ***********************************************************************************************************************************/
@@ -324,7 +336,11 @@ harnessLogResult(const char *expected)
     expected = hrnReplaceKey(expected);
 
     if (strcmp(harnessLogBuffer, expected) != 0)
-        THROW_FMT(AssertError, "\n\nexpected log:\n\n%s\n\nbut diff was:\n\n%s", expected, hrnDiff(harnessLogBuffer, expected));
+    {
+        THROW_FMT(
+            AssertError, "\n\nactual log:\n\n%s\n\nbut diff with expected is:\n\n%s", harnessLogBuffer,
+            hrnDiff(harnessLogBuffer, expected));
+    }
 
     close(logHandleFile);
     logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
