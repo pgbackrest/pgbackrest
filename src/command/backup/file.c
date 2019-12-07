@@ -133,7 +133,7 @@ backupFile(
                 }
                 else if (!delta || pgFileMatch)
                 {
-                    // Check the repo file in a try block because on error (e.g. corrupt file that can't be decrypted or
+                    // Check the repo file in a try block because on error (e.g. missing or corrupt file that can't be decrypted or
                     // decompressed) we should recopy rather than ending the backup.
                     TRY_BEGIN()
                     {

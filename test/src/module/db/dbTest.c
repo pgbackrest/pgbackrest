@@ -10,6 +10,9 @@ Test Database
 #include "common/io/handleWrite.h"
 #include "common/type/json.h"
 
+/***********************************************************************************************************************************
+Macro to check that replay is making progress -- this seems too specific to be included in the pq harness header
+***********************************************************************************************************************************/
 #define HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                \
     sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,              \
     replayProgressParam, sleepParam)                                                                                               \
