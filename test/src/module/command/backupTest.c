@@ -411,6 +411,22 @@ testRun(void)
             true, "    copy");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("resumed file is missing in repo but present in resumed manfest, recopy");
+
+        TEST_ASSIGN(
+            result,
+            backupFile(
+                pgFile, false, 9, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, STRDEF(BOGUS_STR), false, false, 1,
+                backupLabel, true, cipherTypeNone, NULL),
+            "backup file");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    check copy result");
+        TEST_RESULT_BOOL(
+            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+            true, "    recopy");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         // File exists in repo and db, checksum not same in repo, delta set, ignoreMissing false, no hasReference - RECOPY
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(), backupPathFile), BUFSTRDEF("adifferentfile")),

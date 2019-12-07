@@ -637,12 +637,11 @@ unit:
 
         coverage:
           # command/backup/backup: full
-          # command/backup/file: full
+          command/backup/file: full
           command/backup/protocol: full
 
         include:
           - command/backup/backup
-          - command/backup/file
           - info/manifest
           - storage/storage
 
