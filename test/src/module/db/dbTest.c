@@ -11,7 +11,7 @@ Test Database
 #include "common/type/json.h"
 
 /***********************************************************************************************************************************
-Macro to check that replay is making progress -- this seems too specific to be included in the pq harness header
+Macro to check that replay is making progress -- this does not seem useful enough to be included in the pq harness header
 ***********************************************************************************************************************************/
 #define HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                \
     sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,              \
@@ -136,7 +136,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("dbBackupStart(), dbBackupStop(), dbTime()"))
+    if (testBegin("dbBackupStart(), dbBackupStop(), dbTime(), dbList(), dbTablespaceList(), and dbReplayWait()"))
     {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");

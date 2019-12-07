@@ -255,7 +255,7 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
         "  from pg_catalog.pg_start_backup('" PROJECT_NAME " backup started at ' || current_timestamp",
         strPtr(pgWalName(pgVersion)));
 
-    // Start backup after an immediate checkpoint
+    // Start backup after immediate checkpoint
     if (startFast)
     {
         strCatFmt(result, ", true");
@@ -532,7 +532,7 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
         }
         while (!targetReached && waitMore(wait));
 
-        // // Error if a timeout occurred before the target lsn was reached
+        // Error if a timeout occurred before the target lsn was reached
         if (!targetReached)
         {
             THROW_FMT(
