@@ -181,6 +181,11 @@ Functions
 ***********************************************************************************************************************************/
 void harnessPqScriptSet(HarnessPq *harnessPqScriptParam);
 
+// Are we strict about requiring PQfinish()?  Strict is a good idea for low-level testing of Pq code but is a nuissance for
+// higher-level testing since it can mask other errors.  When not strict, PGfinish() is allowed at any time and does not need to be
+// scripted.
+void harnessPqScriptStrictSet(bool strict);
+
 #endif // HARNESS_PQ_REAL
 
 #endif
