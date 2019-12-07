@@ -171,6 +171,9 @@ testBegin(const char *name)
                 fflush(stderr);
                 exit(255);
             }
+
+            // Clear any log replacements
+            hrnLogReplaceClear();
         }
 #endif
         // No longer the first test
