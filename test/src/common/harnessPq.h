@@ -341,6 +341,23 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
+#define HRNPQ_MACRO_TABLESPACE_LIST_1(sessionParam, id1Param, name1Param)                                                          \
+    {.session = sessionParam,                                                                                                      \
+        .function = HRNPQ_SENDQUERY, .param = "[\"select oid::oid, spcname::text from pg_catalog.pg_tablespace\"]",                \
+        .resultInt = 1},                                                                                                           \
+    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
+    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
+    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
+    {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
+    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 2},                                                          \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},                               \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},                              \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = strPtr(strNewFmt("%d", id1Param))},         \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = name1Param},                                \
+    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+
 #define HRNPQ_MACRO_REPLAY_WAIT(sessionParam, targetLsnParam)                                                                      \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \

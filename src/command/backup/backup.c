@@ -367,7 +367,9 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     cfgOptionSet(cfgOptCompress, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionCompress));
                 }
 
-                // Warn if hardlink option changed
+                // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
+                // is guaranteed to contain a real file -- like references.  Also annoying that if the full backup was not
+                // hardlinked then an diff/incr can't be because we need more testing.
                 if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
                 {
                     LOG_WARN_FMT(
@@ -842,7 +844,7 @@ backupStart(BackupData *backupData)
                 dbReplayWait(backupData->dbStandby, result.lsn, (TimeMSec)cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
                 LOG_INFO_FMT("replay on the standby reached %s", strPtr(result.lsn));
 
-                // The standby db object won't be used anymore so undef it to catch any subsequent references
+                // The standby db object won't be used anymore so free it
                 dbFree(backupData->dbStandby);
 
                 // !!! protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
@@ -989,12 +991,13 @@ Log the results of a job and throw errors
 ***********************************************************************************************************************************/
 static uint64_t
 backupJobResult(
-    Manifest *manifest, const String *const fileLog, ProtocolParallelJob *const job, const uint64_t sizeTotal, uint64_t sizeCopied,
-    unsigned int pageSize)
+    Manifest *manifest, const String *host, const String *const fileName, ProtocolParallelJob *const job, const uint64_t sizeTotal,
+    uint64_t sizeCopied, unsigned int pageSize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(STRING, fileLog);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(STRING, fileName);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM(UINT64, sizeCopied);
@@ -1002,7 +1005,7 @@ backupJobResult(
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
-    ASSERT(fileLog != NULL);
+    ASSERT(fileName != NULL);
     ASSERT(job != NULL);
 
     // The job was successful
@@ -1022,6 +1025,9 @@ backupJobResult(
 
             // Increment backup copy progress
             sizeCopied += copySize;
+
+            // Create log file name
+            const String *fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strPtr(host), strPtr(fileName));
 
             // Format log strings
             const String *const logProgress =
@@ -1458,23 +1464,27 @@ backupProcess(BackupData *backupData, Manifest *manifest)
         const BackupType backupType = manifestData(manifest)->backupType;
         const String *const backupLabel = manifestData(manifest)->backupLabel;
         const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel));
-        bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepo(), storageFeatureHardLink);
+        bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepoWrite(), storageFeatureHardLink);
         bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
         // exist in to repo.  Also create tablspace symlinks when symlinks are available,  This makes it possible for the user to
         // make a copy of the backup path and get a valid cluster.
-        if ((backupType == backupTypeFull || hardLink) && storageFeature(storageRepo(), storageFeaturePath))
+        if (backupType == backupTypeFull || hardLink)
         {
-            // Create paths
-            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+            // Create paths when available
+            if (storageFeature(storageRepoWrite(), storageFeaturePath))
             {
-                storagePathCreateP(
-                    storageRepoWrite(), strNewFmt("%s/%s", strPtr(backupPathExp), strPtr(manifestPath(manifest, pathIdx)->name)));
+                for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+                {
+                    storagePathCreateP(
+                        storageRepoWrite(),
+                        strNewFmt("%s/%s", strPtr(backupPathExp), strPtr(manifestPath(manifest, pathIdx)->name)));
+                }
             }
 
             // Create tablespace symlinks when available
-            if (storageFeature(storageRepo(), storageFeatureSymLink))
+            if (storageFeature(storageRepoWrite(), storageFeatureSymLink))
             {
                 for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
                 {
@@ -1527,35 +1537,34 @@ backupProcess(BackupData *backupData, Manifest *manifest)
         // Process jobs
         uint64_t sizeCopied = 0;
 
-        do
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            unsigned int completed = protocolParallelProcess(parallelExec);
-
-            for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+            do
             {
-                ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                unsigned int completed = protocolParallelProcess(parallelExec);
 
-                // !!! Should add hostname in here
-                const String *const host = backupStandby && protocolParallelJobProcessId(job) > 0 ? backupData->hostStandby : backupData->hostPrimary;
-                String *const fileLog = strNew("");
+                for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                {
+                    ProtocolParallelJob *job = protocolParallelResult(parallelExec);
 
-                if (host != NULL)
-                    strCatFmt(fileLog, "%s:", strPtr(host));
-
-                strCat(
-                    fileLog,
-                    strPtr(
+                    sizeCopied = backupJobResult(
+                        manifest,
+                        backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         storagePathP(
-                            protocolParallelJobProcessId(job) > 0 ? storagePgId(pgId) : backupData->storagePrimary,
-                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name))));
+                            protocolParallelJobProcessId(job) > 1 ? storagePgId(pgId) : backupData->storagePrimary,
+                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
+                        job, sizeTotal, sizeCopied, backupData->pageSize);
+                }
 
-                sizeCopied = backupJobResult(manifest, fileLog, job, sizeTotal, sizeCopied, backupData->pageSize);
+                // A keep-alive is required here for the remote holding open the backup connection
+                protocolKeepAlive();
+
+                // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                MEM_CONTEXT_TEMP_RESET(1000);
             }
-
-            // A keep-alive is required here for the remote holding open the backup connection
-            protocolKeepAlive();
+            while (!protocolParallelDone(parallelExec));
         }
-        while (!protocolParallelDone(parallelExec));
+        MEM_CONTEXT_TEMP_END();
 
         // # Determine how often the manifest will be saved
         // my $lManifestSaveCurrent = 0;
@@ -1600,15 +1609,15 @@ backupProcess(BackupData *backupData, Manifest *manifest)
                 {
                     LOG_DETAIL_FMT("hardlink %s to %s",  strPtr(file->name), strPtr(file->reference));
 
-                    const String *const link = storagePathP(
+                    const String *const linkName = storagePathP(
                         storageRepo(), strNewFmt("%s/%s%s", strPtr(backupPathExp), strPtr(file->name), compressExt));
                     const String *const linkDestination =  storagePathP(
                         storageRepo(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(file->reference), strPtr(file->name), compressExt));
 
                     THROW_ON_SYS_ERROR_FMT(
-                        symlink(strPtr(linkDestination), strPtr(link)) == -1, FileOpenError,
-                        "unable to create hardlink '%s' to '%s'", strPtr(link), strPtr(linkDestination));
+                        link(strPtr(linkDestination), strPtr(linkName)) == -1, FileOpenError,
+                        "unable to create hardlink '%s' to '%s'", strPtr(linkName), strPtr(linkDestination));
                 }
                 // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
                 // recopied.
@@ -1755,7 +1764,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         storageCopyP(manifestRead, manifestWrite);
 
         // Sync history path if required
-        if (storageFeature(storageRepoWrite(), storageFeaturePath))
+        if (storageFeature(storageRepoWrite(), storageFeaturePathSync))
             storagePathSyncP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY));
 
         // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
@@ -1766,7 +1775,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // Remove an existing latest link/file in case symlink capabilities have changed
         storageRemoveP(storageRepoWrite(), latestLink);
 
-        if (storageFeature(storageRepo(), storageFeatureSymLink))
+        if (storageFeature(storageRepoWrite(), storageFeatureSymLink))
         {
             THROW_ON_SYS_ERROR_FMT(
                 symlink(strPtr(backupLabel), strPtr(latestLink)) == -1, FileOpenError,
@@ -1774,7 +1783,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         }
 
         // Sync backup path if required
-        if (storageFeature(storageRepoWrite(), storageFeaturePath))
+        if (storageFeature(storageRepoWrite(), storageFeaturePathSync))
             storagePathSyncP(storageRepoWrite(), STORAGE_REPO_BACKUP_STR);
 
         // Add manifest and save backup.info (infoBackupSaveFile() is responsible for proper syncing)
@@ -1867,8 +1876,11 @@ cmdBackup(void)
             cfgOptionBool(cfgOptRepoHardlink), cfgOptionBool(cfgOptOnline), cfgOptionUInt(cfgOptProcessMax),
             cfgOptionBool(cfgOptBackupStandby));
 
+        // The primary db object won't be used anymore so free it
+        dbFree(backupData->dbPrimary);
+
         // Remotes no longer needed (free them here so they don't timeout)
-        storageHelperFree();
+        // !!! THIS MAKES TESTING backupComplete() HARD -- BETTER TO FREE ONLY STORAGE NO LONGER NEEDED storageHelperFree();
         // !!! WHY DOES THIS BLOW UP? protocolFree();
 
         // Check and copy WAL segments required to make the backup consistent

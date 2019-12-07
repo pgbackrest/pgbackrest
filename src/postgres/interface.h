@@ -49,6 +49,7 @@ Defines for various Postgres paths and files
 #define PG_PATH_PGSNAPSHOTS                                         "pg_snapshots"
 #define PG_PATH_PGSTATTMP                                           "pg_stat_tmp"
 #define PG_PATH_PGSUBTRANS                                          "pg_subtrans"
+#define PG_PATH_PGTBLSPC                                            "pg_tblspc"
 
 #define PG_PREFIX_PGSQLTMP                                          "pgsql_tmp"
 

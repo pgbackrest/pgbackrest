@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Backup Command
 ***********************************************************************************************************************************/
+#include <utime.h>
+
 #include "command/stanza/create.h"
 #include "command/stanza/upgrade.h"
 #include "common/io/bufferRead.h"
@@ -157,7 +159,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
             HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, "0/1", "000000010000000000000000"),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-            HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+            HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
 
             // Get copy start time
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
@@ -1072,7 +1074,7 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(STRDEF("command")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, STRDEF("log"), job, 0, 0, 0), AssertError, "error message");
+        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), job, 0, 0, 0), AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove skipped file");
@@ -1093,9 +1095,9 @@ testRun(void)
         Manifest *manifest = manifestNewInternal();
         manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
 
-        TEST_RESULT_UINT(backupJobResult(manifest, STRDEF("log-test"), job, 0, 0, 0), 0, "log skip result");
+        TEST_RESULT_UINT(backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), job, 0, 0, 0), 0, "log skip result");
 
-        TEST_RESULT_LOG("P00 DETAIL: skip file removed by database log-test");
+        TEST_RESULT_LOG("P00 DETAIL: skip file removed by database host:log-test");
     }
 
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
@@ -1383,6 +1385,7 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Create a backup manifest that looks like a halted backup manifest
@@ -1459,9 +1462,19 @@ testRun(void)
                         storageRepoWrite(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(resumeLabel)))));
 
+            // Disable storageFeaturePath so paths will not be created before files are copied
+            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeaturePath;
+
+            // Disable storageFeaturePathSync so paths will not be synced
+            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeaturePathSync;
+
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_VOID(cmdBackup(), "backup");
+
+            // Enable storage features
+            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeaturePath;
+            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeaturePathSync;
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
@@ -1522,6 +1535,7 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
@@ -1613,9 +1627,9 @@ testRun(void)
                 "P01   INFO: backup file {[path]}/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P01   INFO: backup file {[path]}/pg1/resume-ref (0B, [PCT])\n"
-                "P00 DETAIL: reference pg_data/PG_VERSION to 20191003-105320F\n"
-                "P00 DETAIL: reference pg_data/global/pg_control to 20191003-105320F\n"
-                "P00 DETAIL: reference pg_data/postgresql.conf to 20191003-105320F\n"
+                "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191003-105320F\n"
+                "P00 DETAIL: hardlink pg_data/global/pg_control to 20191003-105320F\n"
+                "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
                 "P00   INFO: diff backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
@@ -1624,6 +1638,10 @@ testRun(void)
             // Check repo directory
             testBackupCompare(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
+                "PG_VERSION.gz {file, s=3}\n"
+                "global {path}\n"
+                "global/pg_control.gz {file, s=8192}\n"
+                "postgresql.conf.gz {file, s=11}\n"
                 "resume-ref.gz {file, s=0}\n"
                 "time-mismatch2.gz {file, s=4}\n");
 
@@ -1743,6 +1761,7 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
@@ -1778,9 +1797,31 @@ testRun(void)
 
             storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/4"), .timeModified = backupTimeStart), relation);
 
+            // Add a tablespace
+            storagePathCreateP(storagePgWrite(), STRDEF(PG_PATH_PGTBLSPC));
+            THROW_ON_SYS_ERROR(
+                symlink("../../pg1-tblspc/32768", strPtr(storagePathP(storagePg(), STRDEF(PG_PATH_PGTBLSPC "/32768")))) == -1,
+                FileOpenError, "unable to create symlink");
+
+            storagePutP(
+                storageNewWriteP(
+                    storageTest, strNewFmt("pg1-tblspc/32768/%s/1/5", strPtr(pgTablespaceId(PG_VERSION_11))),
+                    .timeModified = backupTimeStart),
+                NULL);
+
+            // Disable storageFeatureSymLink so tablespace (and latest) symlinks will not be created
+            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureSymLink;
+
+            // Disable storageFeatureHardLink so hardlinks will not be created
+            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureHardLink;
+
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart);
             TEST_RESULT_VOID(cmdBackup(), "backup");
+
+            // Reset storage features
+            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeatureSymLink;
+            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeatureHardLink;
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
@@ -1795,6 +1836,7 @@ testRun(void)
                 "P01   INFO: backup file {[path]}/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01   INFO: backup file {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file {[path]}/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
@@ -1802,7 +1844,7 @@ testRun(void)
                 "P00   INFO: new backup label = 20191027-181320F");
 
             testBackupCompare(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/20191027-181320F/pg_data"), true,
                 "PG_VERSION.gz {file, s=2}\n"
                 "backup_label.gz {file, s=17}\n"
                 "base {path}\n"
@@ -1813,7 +1855,81 @@ testRun(void)
                 "base/1/4.gz {file, s=24576}\n"
                 "global {path}\n"
                 "global/pg_control.gz {file, s=8192}\n"
+                "pg_tblspc {path}\n"
                 "postgresql.conf.gz {file, s=11}\n");
+
+            testBackupCompare(
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F/pg_tblspc"), true,
+                "32768 {path}\n"
+                "32768/PG_11_201809051 {path}\n"
+                "32768/PG_11_201809051/1 {path}\n"
+                "32768/PG_11_201809051/1/5.gz {file, s=0}\n");
+
+            // Remove test files
+            storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 incr backup with tablespaces");
+
+        backupTimeStart = BACKUP_EPOCH + 2300000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
+            strLstAddZ(argList, "--" CFGOPT_DELTA);
+            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+            harnessCfgLoad(cfgCmdBackup, argList);
+
+            // Update pg_control timestamp
+            struct utimbuf utimeTest = {.actime = backupTimeStart, .modtime = backupTimeStart};
+            THROW_ON_SYS_ERROR(
+                utime(strPtr(storagePathP(storagePg(), STRDEF("global/pg_control"))), &utimeTest) != 0, FileWriteError,
+                "unable to set time");
+
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart);
+            TEST_RESULT_VOID(cmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
+                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+                "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191027-181320F\n"
+                "P00 DETAIL: hardlink pg_data/global/pg_control to 20191027-181320F\n"
+                "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191027-181320F\n"
+                "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
+                "P00   INFO: incr backup size = [SIZE]\n"
+                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
+                "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+                "P00   INFO: new backup label = 20191027-181320F_20191028-220000I");
+
+            testBackupCompare(
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
+                "PG_VERSION.gz {file, s=2}\n"
+                "backup_label.gz {file, s=17}\n"
+                "base {path}\n"
+                "global {path}\n"
+                "global/pg_control.gz {file, s=8192}\n"
+                "pg_tblspc {path}\n"
+                "pg_tblspc/32768 {link, d=../../pg_tblspc/32768}\n"
+                "postgresql.conf.gz {file, s=11}\n");
+
+            testBackupCompare(
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_tblspc"), true,
+                "32768 {path}\n"
+                "32768/PG_11_201809051 {path}\n"
+                "32768/PG_11_201809051/1 {path}\n"
+                "32768/PG_11_201809051/1/5.gz {file, s=0}\n");
 
             // Remove test files
             storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);

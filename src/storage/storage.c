@@ -82,6 +82,12 @@ storageNew(
     // If path sync feature is enabled then path feature must be enabled
     CHECK(!storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath));
 
+    // If hardlink feature is enabled then path feature must be enabled
+    CHECK(!storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath));
+
+    // If symlink feature is enabled then path feature must be enabled
+    CHECK(!storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath));
+
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
