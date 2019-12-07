@@ -1878,8 +1878,7 @@ cmdBackup(void)
             cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
             cfgOptionUInt(cfgOptBufferSize), cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork),
-            cfgOptionBool(cfgOptRepoHardlink), cfgOptionBool(cfgOptOnline), cfgOptionUInt(cfgOptProcessMax),
-            cfgOptionBool(cfgOptBackupStandby));
+            cfgOptionBool(cfgOptRepoHardlink), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
 
         // The primary db object won't be used anymore so free it
         dbFree(backupData->dbPrimary);

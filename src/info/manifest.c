@@ -1103,17 +1103,14 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         // Set diff/incr backup type
         this->data.backupType = type;
-
-        // Set archive start
-        this->data.archiveStart = strDup(archiveStart);
     }
     MEM_CONTEXT_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Enable delta if timelines differ
-        if (manifestData(manifestPrior)->archiveStop != NULL && this->data.archiveStart != NULL &&
-            !strEq(strSubN(manifestData(manifestPrior)->archiveStop, 0, 8), strSubN(this->data.archiveStart, 0, 8)))
+        if (archiveStart != NULL && manifestData(manifestPrior)->archiveStop != NULL &&
+            !strEq(strSubN(archiveStart, 0, 8), strSubN(manifestData(manifestPrior)->archiveStop, 0, 8)))
         {
             LOG_WARN_FMT(
                 "a timeline switch has occurred since the %s backup, enabling delta checksum",
@@ -1200,7 +1197,7 @@ manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
     bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
     bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1220,7 +1217,6 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
         FUNCTION_LOG_PARAM(BOOL, optionHardLink);
-        FUNCTION_LOG_PARAM(BOOL, optionOnline);
         FUNCTION_LOG_PARAM(UINT, optionProcessMax);
         FUNCTION_LOG_PARAM(BOOL, optionStandby);
     FUNCTION_LOG_END();
@@ -1264,7 +1260,6 @@ manifestBuildComplete(
         this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
         this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
         this->data.backupOptionHardLink = optionHardLink;
-        this->data.backupOptionOnline = optionOnline;
         this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
         this->data.backupOptionStandby = varNewBool(optionStandby);
     }

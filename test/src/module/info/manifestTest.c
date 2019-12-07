@@ -805,6 +805,16 @@ testRun(void)
                 .timeModified = 1565282120),
             NULL);
 
+        // Tablespace 2
+        storagePathCreateP(storageTest, STRDEF("ts/2/PG_9.4_201409291/1"), .mode = 0700);
+        THROW_ON_SYS_ERROR(
+            symlink("../../ts/2", strPtr(strNewFmt("%s/pg/pg_tblspc/2", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, strNew("pg_tblspc/2/PG_9.4_201409291/1/16385"), .modeFile = 0400, .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
+
         // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
         TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_94, false, true, NULL, NULL), "build manifest");
 
@@ -825,6 +835,7 @@ testRun(void)
                 "pg_data/pg_xlog={\"path\":\"{[path]}/wal\",\"type\":\"link\"}\n"
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
+                "pg_tblspc/2={\"path\":\"../../ts/2\",\"tablespace-id\":\"2\",\"tablespace-name\":\"ts2\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"master\":true,\"size\":4,\"timestamp\":1565282100}\n"
@@ -845,11 +856,13 @@ testRun(void)
                 "pg_data/standby.signal={\"master\":true,\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_tblspc/1/PG_9.4_201409291/1/16384={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
                 "pg_tblspc/1/PG_9.4_201409291/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
+                "pg_tblspc/2/PG_9.4_201409291/1/16385={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
                 TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
                 "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
+                "pg_data/pg_tblspc/2={\"destination\":\"../../ts/2\"}\n"
                 "pg_data/pg_xlog={\"destination\":\"{[path]}/wal\"}\n"
                 "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
                 TEST_MANIFEST_LINK_DEFAULT
@@ -876,8 +889,39 @@ testRun(void)
                 "pg_tblspc/1={}\n"
                 "pg_tblspc/1/PG_9.4_201409291={}\n"
                 "pg_tblspc/1/PG_9.4_201409291/1={}\n"
+                "pg_tblspc/2={}\n"
+                "pg_tblspc/2/PG_9.4_201409291={}\n"
+                "pg_tblspc/2/PG_9.4_201409291/1={}\n"
                 TEST_MANIFEST_PATH_DEFAULT))),
             "check manifest");
+
+        storageRemoveP(storageTest, STRDEF("pg/pg_tblspc/2"), .errorOnMissing = true);
+        storagePathRemoveP(storageTest, STRDEF("ts/2"), .recurse = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on link that points to nothing");
+
+        THROW_ON_SYS_ERROR(
+            symlink("../bogus-link", strPtr(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+
+        TEST_ERROR(
+            manifestNewBuild(storagePg, PG_VERSION_94, false, true, NULL, NULL), FileOpenError,
+            hrnReplaceKey("unable to get info for missing path/file '{[path]}/pg/link-to-link': [2] No such file or directory"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on link to a link");
+
+        THROW_ON_SYS_ERROR(
+            symlink("../bogus", strPtr(strNewFmt("%s/bogus-link", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+
+        TEST_ERROR(
+            manifestNewBuild(storagePg, PG_VERSION_94, false, true, NULL, NULL), LinkDestinationError,
+            hrnReplaceKey("link '{[path]}/pg/link-to-link' cannot reference another link '{[path]}/bogus-link'"));
+
+        storageRemoveP(storageTest, STRDEF("bogus-link"), .errorOnMissing = true);
+        storageRemoveP(storageTest, STRDEF("pg/link-to-link"), .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 12, online");
@@ -1395,7 +1439,9 @@ testRun(void)
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
 
-        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
+        TEST_RESULT_VOID(
+            manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")),
+            "incremental manifest");
 
         TEST_RESULT_LOG("P00   WARN: file 'FILE2' has same timestamp as prior but different size, enabling delta checksum");
 
@@ -1422,9 +1468,23 @@ testRun(void)
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("delta enabled by online option change");
+        TEST_TITLE("delta enabled by timeline change");
+
+        manifestPrior->data.archiveStop = STRDEF("000000030000000300000003");
+        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+
+        TEST_RESULT_VOID(
+            manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")), "incremental manifest");
+
+        TEST_RESULT_LOG("P00   WARN: a timeline switch has occurred since the 20190101-010101F backup, enabling delta checksum");
+
+        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta is enabled");
 
         manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta enabled by online option change");
+
         manifest->data.backupOptionOnline = BOOL_FALSE_VAR;
         lstClear(manifest->fileList);
         manifestFileAdd(
@@ -1440,7 +1500,8 @@ testRun(void)
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
 
-        TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
+        TEST_RESULT_VOID(
+            manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
 
         TEST_RESULT_LOG("P00   WARN: the online option has changed since the 20190101-010101F backup, enabling delta checksum");
 
@@ -1473,7 +1534,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("manifestNewLoad() and manifestSave()"))
+    if (testBegin("manifestNewLoad(), manifestSave(), and manifestBuildComplete()"))
     {
         Manifest *manifest = NULL;
 
@@ -1580,12 +1641,12 @@ testRun(void)
             "option-archive-copy=true\n"                                                                                           \
             "option-backup-standby=false\n"                                                                                        \
             "option-buffer-size=16384\n"                                                                                           \
-            "option-checksum-page=true\n"                                                                                          \
-            "option-compress=false\n"                                                                                              \
+            "option-checksum-page=false\n"                                                                                         \
+            "option-compress=true\n"                                                                                               \
             "option-compress-level=3\n"                                                                                            \
-            "option-compress-level-network=3\n"                                                                                    \
+            "option-compress-level-network=6\n"                                                                                    \
             "option-delta=false\n"                                                                                                 \
-            "option-hardlink=false\n"                                                                                              \
+            "option-hardlink=true\n"                                                                                               \
             "option-online=false\n"                                                                                                \
             "option-process-max=32\n"
 
@@ -1620,8 +1681,7 @@ testRun(void)
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
                 ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                   \
-            "pg_data/postgresql.conf={\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\",\"master\":true,\"size\":4457"     \
-                ",\"timestamp\":1565282114}\n"                                                                                     \
+            "pg_data/postgresql.conf={\"master\":true,\"size\":4457,\"timestamp\":1565282114}\n"                                   \
             "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 
         #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
@@ -1660,26 +1720,89 @@ testRun(void)
             "mode=\"0700\"\n"                                                                                                      \
             "user=\"user1\"\n"
 
-        contentLoad = harnessInfoChecksumZ
-        (
-            TEST_MANIFEST_HEADER
-            TEST_MANIFEST_TARGET
-            TEST_MANIFEST_DB
-            TEST_MANIFEST_FILE
-            TEST_MANIFEST_FILE_DEFAULT
-            TEST_MANIFEST_LINK
-            TEST_MANIFEST_LINK_DEFAULT
-            TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
+        TEST_ASSIGN(
+            manifest,
+            manifestNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
+                "[backup]\n"
+                "backup-archive-start=\"000000040000028500000089\"\n"
+                "backup-archive-stop=\"000000040000028500000089\"\n"
+                "backup-label=\"20190818-084502F\"\n"
+                "backup-lsn-start=\"300/89000028\"\n"
+                "backup-lsn-stop=\"300/89001F88\"\n"
+                "backup-prior=\"20190818-084502F\"\n"
+                "backup-timestamp-copy-start=1565282141\n"
+                "backup-timestamp-start=777\n"
+                "backup-timestamp-stop=777\n"
+                "backup-type=\"full\"\n"
+                "\n"
+                "[backup:db]\n"
+                "db-catalog-version=201409291\n"
+                "db-control-version=942\n"
+                "db-id=2\n"
+                "db-system-id=2000000000000000094\n"
+                "db-version=\"9.4\"\n"
+                "\n"
+                "[backup:option]\n"
+                "option-archive-check=false\n"
+                "option-archive-copy=false\n"
+                "option-backup-standby=true\n"
+                "option-buffer-size=16384\n"
+                "option-checksum-page=false\n"
+                "option-compress=true\n"
+                "option-compress-level=33\n"
+                "option-compress-level-network=66\n"
+                "option-delta=false\n"
+                "option-hardlink=false\n"
+                "option-online=false\n"
+                "option-process-max=99\n"
+                TEST_MANIFEST_TARGET
+                "\n"
+                "[db]\n"
+                "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"
+                "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
+                TEST_MANIFEST_FILE
+                TEST_MANIFEST_FILE_DEFAULT
+                TEST_MANIFEST_LINK
+                TEST_MANIFEST_LINK_DEFAULT
+                TEST_MANIFEST_PATH
+                TEST_MANIFEST_PATH_DEFAULT))),
+            "load manifest");
 
-        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
+        TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
+
+        TEST_RESULT_VOID(
+            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
+            "manifest complete without db");
+
+        // Create db list
+        VariantList *dbList = varLstNew();
+
+        VariantList *dbRow = varLstNew();
+        varLstAdd(dbRow, varNewUInt64(12168));
+        varLstAdd(dbRow, varNewStrZ("template0"));
+        varLstAdd(dbRow, varNewUInt64(12168));
+        varLstAdd(dbList, varNewVarLst(dbRow));
+
+        dbRow = varLstNew();
+        varLstAdd(dbRow, varNewUInt64(1));
+        varLstAdd(dbRow, varNewStrZ("template1"));
+        varLstAdd(dbRow, varNewUInt64(12168));
+        varLstAdd(dbList, varNewVarLst(dbRow));
+
+        TEST_RESULT_VOID(
+            manifestBuildComplete(
+                manifest, 1565282140, STRDEF("285/89000028"), STRDEF("000000030000028500000089"), 1565282142,
+                STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, dbList,
+                true, true, 16384, 3, 6, true, 32, false),
+            "manifest complete with db");
 
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data")), NULL, "check pg_data path");
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
 
-        TEST_RESULT_PTR(manifestCipherSubPass(manifest), NULL, "    check cipher subpass");
+        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), NULL, "    check cipher subpass");
+        TEST_RESULT_VOID(manifestCipherSubPassSet(manifest, STRDEF("supersecret")), "cipher subpass set");
+        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "supersecret", "    check cipher subpass");
 
         // Absolute target paths
         TEST_RESULT_STR_Z(manifestTargetPath(manifest, manifestTargetBase(manifest)), "/pg/base", "base target path");
@@ -1718,6 +1841,13 @@ testRun(void)
             "manifestFileFindDefault() - return found");
         TEST_ASSIGN(file, manifestFileFindDefault(manifest, STRDEF("bogus"), NULL), "manifestFileFindDefault()");
         TEST_RESULT_PTR(file, NULL, "    return default NULL");
+
+        TEST_RESULT_VOID(
+            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, NULL, false, false, NULL),
+            "update file");
+        TEST_RESULT_VOID(
+            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL),
+            "update file");
 
         // ManifestDb getters
         const ManifestDb *db = NULL;
@@ -1776,7 +1906,24 @@ testRun(void)
         contentSave = bufNew(0);
 
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
+
+        Buffer *contentCompare = harnessInfoChecksumZ
+        (
+            TEST_MANIFEST_HEADER
+            TEST_MANIFEST_TARGET
+            "\n"
+            "[cipher]\n"
+            "cipher-pass=\"supersecret\"\n"
+            TEST_MANIFEST_DB
+            TEST_MANIFEST_FILE
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT
+        );
+
+        TEST_RESULT_STR_STR(strNewBuf(contentSave), strNewBuf(contentCompare), "   check save");
 
         TEST_RESULT_VOID(manifestFileRemove(manifest, STRDEF("pg_data/PG_VERSION")), "remove file");
         TEST_ERROR(
@@ -1875,24 +2022,5 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("manifestBuildComplete()"))
-    {
-        Manifest *manifest = manifestNewInternal();
-        manifest->info = infoNew(NULL);
-        manifest->data.pgVersion = PG_VERSION_96;
-
-        // TEST_RESULT_VOID(manifestBuildComplete(
-        //         manifest, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-        //         const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-        //         bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel,
-        //         unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
-        //         bool optionStandby), "set manifest complete");
-
-        const ManifestData *manData = NULL;
-        TEST_ASSIGN(manData, manifestData(manifest), "get manifest data");
-        TEST_RESULT_UINT(manData->pgVersion, PG_VERSION_96, "check version");
     }
 }
