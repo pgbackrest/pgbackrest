@@ -169,7 +169,11 @@ harnessLogResult(const char *expected)
     expected = hrnReplaceKey(expected);
 
     if (strcmp(harnessLogBuffer, expected) != 0)
-        THROW_FMT(AssertError, "\n\nexpected log:\n\n%s\n\nbut diff was:\n\n%s", expected, hrnDiff(harnessLogBuffer, expected));
+    {
+        THROW_FMT(
+            AssertError, "\n\nactual log:\n\n%s\n\nbut diff is (- remove from expected, + add to expected):\n\n%s",
+            harnessLogBuffer, hrnDiff(expected, harnessLogBuffer));
+    }
 
     close(logHandleFile);
     logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);

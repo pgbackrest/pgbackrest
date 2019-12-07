@@ -339,28 +339,28 @@ hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSiz
 char harnessDiffBuffer[256 * 1024];
 
 const char *
-hrnDiff(const char *actual, const char *expected)
+hrnDiff(const char *expected, const char *actual)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, actual);
         FUNCTION_HARNESS_PARAM(STRINGZ, expected);
+        FUNCTION_HARNESS_PARAM(STRINGZ, actual);
     FUNCTION_HARNESS_END();
 
     ASSERT(actual != NULL);
-
-    // Write actual file
-    char actualFile[1024];
-    snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", testDataPath());
-    hrnFileWrite(actualFile, (unsigned char *)actual, strlen(actual));
 
     // Write expected file
     char expectedFile[1024];
     snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", testDataPath());
     hrnFileWrite(expectedFile, (unsigned char *)expected, strlen(expected));
 
+    // Write actual file
+    char actualFile[1024];
+    snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", testDataPath());
+    hrnFileWrite(actualFile, (unsigned char *)actual, strlen(actual));
+
     // Perform diff
     char command[2560];
-    snprintf(command, sizeof(command), "diff -u %s %s > %s/diff.result", actualFile, expectedFile, testDataPath());
+    snprintf(command, sizeof(command), "diff -u %s %s > %s/diff.result", expectedFile, actualFile, testDataPath());
 
     if (system(command) == 2)
     {

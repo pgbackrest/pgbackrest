@@ -232,8 +232,9 @@ parameters.
         if (strcmp(#type, "char *") == 0 && strstr(TEST_RESULT_resultStr, "\n") != NULL)                                           \
         {                                                                                                                          \
             THROW_FMT(                                                                                                             \
-                AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF:\n%s\n\n",                                           \
-                #statement, TEST_RESULT_resultStr, hrnDiff(TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr));                 \
+                AssertError,                                                                                                       \
+                "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF IS (- remove from expected, + add to expected):\n%s\n\n",         \
+                #statement, TEST_RESULT_resultStr, hrnDiff(TEST_RESULT_resultExpectedStr, TEST_RESULT_resultStr));                 \
         }                                                                                                                          \
         /* Throw error */                                                                                                          \
         else                                                                                                                       \
