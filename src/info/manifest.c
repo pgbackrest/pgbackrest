@@ -593,7 +593,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_STANDBYSIGNAL)) &&
                         pgVersion >= PG_VERSION_12) ||
                     ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
-                            pgVersion < PG_VERSION_12) ||
+                        pgVersion < PG_VERSION_12) ||
                     // Skip temp file for safely writing postgresql.auto.conf
                     (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP) && pgVersion >= PG_VERSION_94) ||
                     // Skip backup_label in versions where non-exclusive backup is supported
@@ -610,7 +610,8 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 }
             }
 
-            // Skip the contents of the wal path when online
+            // Skip the contents of the wal path when online. WAL will be restored from the archive or stored in the wal directory
+            // at the end of the backup if the archive-copy option is set.
             if (buildData.online && strEq(buildData.manifestParentName, buildData.manifestWalName))
             {
                 FUNCTION_TEST_RETURN_VOID();
@@ -636,13 +637,10 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 .timestamp = info->timeModified,
             };
 
-            // Determine if this file should be copied from the primary
-            if (buildData.standbyExp != NULL)
-            {
-                file.primary =
-                    strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-                    !regExpMatch(buildData.standbyExp, manifestName);
-            }
+            // Set a flag to indicate if this file must be copied from the primary
+            file.primary =
+                strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+                !regExpMatch(buildData.standbyExp, manifestName);
 
             // Determine if this file should be page checksummed
             if (buildData.dbPath && buildData.checksumPage)
@@ -704,7 +702,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 target.name = manifestName;
                 target.tablespaceId = cvtZToUInt(strPtr(info->name));
 
-                // Look for this tablespace in the provided list
+                // Look for this tablespace in the provided list (list may be null for off-line backup)
                 if (buildData.tablespaceList != NULL)
                 {
                     // Search list
@@ -772,7 +770,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     buildData.pgPath = strNewFmt("%s/%s", strPtr(buildData.pgPath), strPtr(info->name));
                     linkName = buildData.tablespaceId;
                 }
-                // If no tablespace if then parent manifest name is the tablespace directory
+                // If no tablespace id then parent manifest name is the tablespace directory
                 else
                     buildData.manifestParentName = MANIFEST_TARGET_PGTBLSPC_STR;
             }
@@ -858,6 +856,7 @@ manifestNewBuild(
 
     ASSERT(storagePg != NULL);
     ASSERT(pgVersion != 0);
+    ASSERT(!(checksumPage == true && pgVersion <= PG_VERSION_93));
 
     Manifest *this = NULL;
 
