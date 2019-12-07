@@ -396,7 +396,6 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
-            HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
 
@@ -407,7 +406,6 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
-            HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
 
@@ -424,7 +422,6 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(pg1Path), false, NULL, NULL),
-            HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
 
@@ -445,7 +442,6 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", strPtr(strNewFmt("%s/pg2", testPath())), false, NULL, NULL),
-            HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
 
@@ -480,8 +476,6 @@ testRun(void)
         {
             HRNPQ_MACRO_OPEN_92(1, "dbname='postgres' port=5432", testPath(), true, NULL, NULL),
             HRNPQ_MACRO_OPEN_92(2, "dbname='postgres' port=5434", strPtr(pg1Path), false, NULL, NULL),
-            HRNPQ_MACRO_CLOSE(2),
-            HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
 

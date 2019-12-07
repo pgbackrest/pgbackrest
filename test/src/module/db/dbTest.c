@@ -611,10 +611,12 @@ testRun(void)
         });
 
         TEST_ASSIGN(result, dbGet(false, true, false), "get primary and standy");
-        harnessLogResultRegExp(
-            "P00   WARN: unable to check pg-4: \\[DbConnectError\\] unable to connect to 'dbname='postgres' port=5433': error\n"
-            "P00   WARN: unable to check pg-5: \\[DbConnectError\\] raised from remote-0 protocol on 'localhost':"
-                " unable to connect to 'dbname='postgres' port=5432': could not connect to server: No such file or directory.*");
+
+        hrnLogReplaceAdd("No such file or directory.*$", NULL, "NO SUCH FILE OR DIRECTORY", false);
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to check pg-4: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error\n"
+            "P00   WARN: unable to check pg-5: [DbConnectError] raised from remote-0 protocol on 'localhost':"
+                " unable to connect to 'dbname='postgres' port=5432': could not connect to server: [NO SUCH FILE OR DIRECTORY]");
 
         TEST_RESULT_INT(result.primaryId, 8, "    check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
