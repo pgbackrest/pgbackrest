@@ -418,12 +418,13 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 }
 
 static bool
-backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *manifestPrior)
+backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *manifestPrior, const String *archiveStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
+        FUNCTION_LOG_PARAM(STRING, archiveStart);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
@@ -440,7 +441,7 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *mani
             manifestMove(manifestPrior, MEM_CONTEXT_TEMP());
 
             // Build incremental manifest
-            manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), NULL/* !!! ARCHIVE_START */);
+            manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), archiveStart);
 
             // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
             manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
@@ -1843,7 +1844,7 @@ cmdBackup(void)
         manifestBuildValidate(manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true), cfgOptionBool(cfgOptCompress));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
-        if (!backupBuildIncr(infoBackup, manifest, manifestPrior))
+        if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
             manifestCipherSubPassSet(manifest, cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
 
         // Set delta if it is not already set and the manifest requires it
