@@ -304,10 +304,12 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
                 "HINT: is another " PROJECT_NAME " backup already running on this cluster?");
         }
 
-        // If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups
-        // are run in non-exclusive mode.
-        if (stopAuto && dbPgVersion(this) >= PG_VERSION_93 && dbPgVersion(this) < PG_VERSION_96)
+        // If stop-auto is enabled check for a running backup
+        if (stopAuto)
         {
+            // This feature is not supported for PostgreSQL >= 9.6 since backups are run in non-exclusive mode
+            CHECK(dbPgVersion(this) >= PG_VERSION_93 && dbPgVersion(this) < PG_VERSION_96);
+
             if (varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_backup()::bool"))))
             {
                 LOG_WARN(
@@ -507,7 +509,7 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
 
             // Execute the query and get replayLsn
             VariantList *row = dbQueryRow(this, query);
-            const String *replayLsn = varStr(varLstGet(row, 0));
+            replayLsn = varStr(varLstGet(row, 0));
 
             // Error when replayLsn is null which indicates that this is not a standby.  This should have been sorted out before we
             // connected but it's possible that the standy was promoted in the meantime.
@@ -534,7 +536,8 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
         if (!targetReached)
         {
             THROW_FMT(
-                ArchiveTimeoutError, "timeout before standby replayed %s - only reached %s", strPtr(replayLsn), strPtr(targetLsn));
+                ArchiveTimeoutError, "timeout before standby replayed to %s - only reached %s", strPtr(targetLsn),
+                strPtr(replayLsn));
         }
 
         // Perform a checkpoint
@@ -544,8 +547,7 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
         //
         // ??? We have seen one instance where this check failed.  Is there any chance that the replayed position could be ahead of
         // the checkpoint recorded in pg_control?  It seems possible since it would be safer if the checkpoint in pg_control was
-        // behind rather than ahead, so add a loop to keep checking pg_control until the checkpoint has been recorded.  In the C
-        // code we can now check pg_control directly so that seems the way to go so the version restriction can be removed.
+        // behind rather than ahead, so add a loop to keep checking until the checkpoint has been recorded or timeout.
         if (dbPgVersion(this) >= PG_VERSION_96)
         {
             // Build the query
@@ -563,8 +565,8 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
             {
                 THROW_FMT(
                     ArchiveTimeoutError,
-                    "the checkpoint location %s is less than the target location %s even though the replay location is %s",
-                    strPtr(varStr(varLstGet(row, 0))), strPtr(targetLsn), strPtr(replayLsn));
+                    "the checkpoint lsn %s is less than the target lsn %s even though the replay lsn is %s",
+                    strPtr(varStr(varLstGet(row, 1))), strPtr(targetLsn), strPtr(replayLsn));
             }
         }
     }

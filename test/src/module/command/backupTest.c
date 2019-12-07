@@ -127,14 +127,14 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
                 // Wait for standby to sync
-                HRNPQ_MACRO_REPLAY_WAIT(2, "0/1"),
+                HRNPQ_MACRO_REPLAY_WAIT_96(2, "0/1"),
 
                 // Get copy start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
                 // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_96(1, "0/1000001", "000000010000000000000001"),
+                HRNPQ_MACRO_STOP_BACKUP_96(1, "0/1000001", "000000010000000000000001", false),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
 
                 // Get stop time
@@ -166,7 +166,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
             // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_GE_10(1, "0/1000001", "000000010000000000000001"),
+            HRNPQ_MACRO_STOP_BACKUP_GE_10(1, "0/1000001", "000000010000000000000001", false),
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
 
             // Get stop time
