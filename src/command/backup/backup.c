@@ -1277,6 +1277,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
         // Now put all files into the processing queues
         bool delta = cfgOptionBool(cfgOptDelta);
         uint64_t fileTotal = 0;
+        bool pgControlFound = false;
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
@@ -1285,6 +1286,10 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             // If the file is a reference it should only be backed up if delta and not zero size
             if (file->reference != NULL && (!delta || file->size == 0))
                 continue;
+
+            // Is pg_control in the backup?
+            if (strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
+                pgControlFound = true;
 
             // Files that must be copied from the primary are always put in queue 0 when backup from standby
             if (backupStandby && file->primary)
@@ -1319,12 +1324,14 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             fileTotal++;
         }
 
-        // !!! pg_control should always be in the backup (unless this is an offline backup)
-        // if (!$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL) && cfgOption(CFGOPT_ONLINE))
-        // {
-        //     confess &log(ERROR, DB_FILE_PGCONTROL . " must be present in all online backups\n" .
-        //                  'HINT: is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
-        // }
+        // pg_control should always be in an online backup
+        if (!pgControlFound && cfgOptionBool(cfgOptOnline))
+        {
+            THROW(
+                FileMissingError,
+                PG_FILE_PGCONTROL " must be present in all online backups\n"
+                "HINT: is something wrong with the clock or filesystem timestamps?");
+         }
 
         // If there are no files to backup then we'll exit with an error unless.  The could happen if the database is down and
         // backup is called with --no-online twice in a row.
@@ -1411,9 +1418,8 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE_STR);
 
                 protocolCommandParamAdd(command, VARSTR(manifestPathPg(file->name)));
-
-                protocolCommandParamAdd(command, VARBOOL(true)); // !!! NEED EXCEPTION FOR PG_CONTROL
-
+                protocolCommandParamAdd(
+                    command, VARBOOL(!strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))));
                 protocolCommandParamAdd(command, VARUINT64(file->size));
                 protocolCommandParamAdd(command, file->checksumSha1[0] != 0 ? VARSTRZ(file->checksumSha1) : NULL);
                 protocolCommandParamAdd(command, VARBOOL(file->checksumPage));
@@ -1668,7 +1674,7 @@ backupArchiveCheckCopy(Manifest *manifest)
     //     my $lModificationTime = time();
     //
     //     # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
-    //     logDebugMisc($strOperation, "retrieve archive logs !!!START!!!:!!!STOP!!!");
+    //     logDebugMisc($strOperation, "retrieve archive logs START:STOP");
     //
     //     my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
     //     my $strArchiveId = $oArchiveInfo->archiveId();

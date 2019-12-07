@@ -1887,9 +1887,10 @@ testRun(void)
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Update pg_control timestamp
-            struct utimbuf utimeTest = {.actime = backupTimeStart, .modtime = backupTimeStart};
             THROW_ON_SYS_ERROR(
-                utime(strPtr(storagePathP(storagePg(), STRDEF("global/pg_control"))), &utimeTest) != 0, FileWriteError,
+                utime(
+                    strPtr(storagePathP(storagePg(), STRDEF("global/pg_control"))),
+                    &(struct utimbuf){.actime = backupTimeStart, .modtime = backupTimeStart}) != 0, FileWriteError,
                 "unable to set time");
 
             // Run backup

@@ -856,7 +856,7 @@ manifestNewBuild(
 
     ASSERT(storagePg != NULL);
     ASSERT(pgVersion != 0);
-    ASSERT(!(checksumPage == true && pgVersion <= PG_VERSION_93));
+    ASSERT(!checksumPage || pgVersion >= PG_VERSION_93);
 
     Manifest *this = NULL;
 

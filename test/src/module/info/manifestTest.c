@@ -307,7 +307,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: exclude contents of '{[path]}/pg/base' from backup using 'base/' exclusion\n"
             "P00   INFO: exclude '{[path]}/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion\n"
-            "P00   WARN: exclude special file '/home/vagrant/test/test-0/pg/testpipe' from backup");
+            "P00   WARN: exclude special file '{[path]}/pg/testpipe' from backup");
 
         storageRemoveP(storageTest, specialFile, .errorOnMissing = true);
 
