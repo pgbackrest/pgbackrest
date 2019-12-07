@@ -133,40 +133,51 @@ backupFile(
                 }
                 else if (!delta || pgFileMatch)
                 {
-                    // Generate checksum/size for the repo file
-                    IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoPathFile));
-
-                    if (cipherType != cipherTypeNone)
+                    // Check the repo file in a try block because on error (e.g. missing or corrupt file that can't be decrypted or
+                    // decompressed) we should recopy rather than ending the backup.
+                    TRY_BEGIN()
                     {
-                        ioFilterGroupAdd(
-                            ioReadFilterGroup(read), cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
+                        // Generate checksum/size for the repo file
+                        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoPathFile));
+
+                        if (cipherType != cipherTypeNone)
+                        {
+                            ioFilterGroupAdd(
+                                ioReadFilterGroup(read), cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
+                        }
+
+                        if (repoFileCompress)
+                            ioFilterGroupAdd(ioReadFilterGroup(read), gzipDecompressNew(false));
+
+                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+                        ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
+
+                        ioReadDrain(read);
+
+                        // Test checksum/size
+                        const String *pgTestChecksum = varStr(
+                            ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
+                        uint64_t pgTestSize = varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR));
+
+                        // No need to recopy if checksum/size match
+                        if (pgFileSize == pgTestSize && strEq(pgFileChecksum, pgTestChecksum))
+                        {
+                            memContextSwitch(MEM_CONTEXT_OLD());
+                            result.backupCopyResult = backupCopyResultChecksum;
+                            result.copySize = pgTestSize;
+                            result.copyChecksum = strDup(pgTestChecksum);
+                            memContextSwitch(MEM_CONTEXT_TEMP());
+                        }
+                        // Else recopy when repo file is not as expected
+                        else
+                            result.backupCopyResult = backupCopyResultReCopy;
                     }
-
-                    if (repoFileCompress)
-                        ioFilterGroupAdd(ioReadFilterGroup(read), gzipDecompressNew(false));
-
-                    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
-                    ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
-
-                    ioReadDrain(read);
-
-                    // Test checksum/size
-                    const String *pgTestChecksum = varStr(
-                        ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
-                    uint64_t pgTestSize = varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR));
-
-                    // No need to recopy if checksum/size match
-                    if (pgFileSize == pgTestSize && strEq(pgFileChecksum, pgTestChecksum))
+                    // Recopy on any kind of error
+                    CATCH_ANY()
                     {
-                        memContextSwitch(MEM_CONTEXT_OLD());
-                        result.backupCopyResult = backupCopyResultChecksum;
-                        result.copySize = pgTestSize;
-                        result.copyChecksum = strDup(pgTestChecksum);
-                        memContextSwitch(MEM_CONTEXT_TEMP());
-                    }
-                    // Else recopy when repo file is not as expected
-                    else
                         result.backupCopyResult = backupCopyResultReCopy;
+                    }
+                    TRY_END();
                 }
             }
         }
