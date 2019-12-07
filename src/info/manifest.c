@@ -1184,8 +1184,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             {
                 manifestFileUpdate(
                     this, file->name, file->size, filePrior->sizeRepo, filePrior->checksumSha1,
-                    filePrior->reference != NULL ? filePrior->reference : manifestPrior->data.backupLabel, filePrior->checksumPage,
-                    filePrior->checksumPageError, filePrior->checksumPageErrorList);
+                    VARSTR(filePrior->reference != NULL ? filePrior->reference : manifestPrior->data.backupLabel),
+                    filePrior->checksumPage, filePrior->checksumPageError, filePrior->checksumPageErrorList);
             }
         }
     }
@@ -2472,7 +2472,7 @@ manifestFileTotal(const Manifest *this)
 
 void
 manifestFileUpdate(
-    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const String *reference,
+    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
     bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList)
 {
     FUNCTION_TEST_BEGIN();
@@ -2481,7 +2481,7 @@ manifestFileUpdate(
         FUNCTION_TEST_PARAM(UINT64, size);
         FUNCTION_TEST_PARAM(UINT64, sizeRepo);
         FUNCTION_TEST_PARAM(STRINGZ, checksumSha1);
-        FUNCTION_TEST_PARAM(STRING, reference);
+        FUNCTION_TEST_PARAM(VARIANT, reference);
         FUNCTION_TEST_PARAM(BOOL, checksumPage);
         FUNCTION_TEST_PARAM(BOOL, checksumPageError);
         FUNCTION_TEST_PARAM(VARIANT_LIST, checksumPageErrorList);
@@ -2499,7 +2499,12 @@ manifestFileUpdate(
     {
         // Update reference if set
         if (reference != NULL)
-            file->reference = strLstAddIfMissing(this->referenceList, reference);
+        {
+            if (varStr(reference) == NULL)
+                file->reference = NULL;
+            else
+                file->reference = strLstAddIfMissing(this->referenceList, varStr(reference));
+        }
 
         // Update checksum if set
         if (checksumSha1 != NULL)

@@ -1151,12 +1151,9 @@ backupJobResult(
                         }
                     }
 
-                    // Remove any reference to the file's existence in a prior backup
-                    // !!! THIS IS SO NOT KOSHER -- MAKE THIS A PARAM OF MANIFESTFILEUPDATE()
-                    ((ManifestFile *)manifestFileFind(manifest, file->name))->reference = NULL;
-
+                    // Update file info and remove any reference to the file's existence in a prior backup
                     manifestFileUpdate(
-                        manifest, file->name, copySize, repoSize, copySize > 0 ? strPtr(copyChecksum) : "", NULL,
+                        manifest, file->name, copySize, repoSize, copySize > 0 ? strPtr(copyChecksum) : "", VARSTR(NULL),
                         file->checksumPage, checksumPageError, checksumPageErrorList);
                 }
             }
