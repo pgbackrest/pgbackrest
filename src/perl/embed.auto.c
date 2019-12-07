@@ -10424,7 +10424,6 @@ static const EmbeddedModule embeddedModule[] =
             "use warnings FATAL => qw(all);\n"
             "use Carp qw(confess);\n"
             "\n"
-            "use pgBackRest::Backup::File;\n"
             "use pgBackRest::Common::Log;\n"
             "use pgBackRest::Config::Config;\n"
             "use pgBackRest::Protocol::Command::Master;\n"

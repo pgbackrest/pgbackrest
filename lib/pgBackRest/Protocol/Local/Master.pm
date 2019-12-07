@@ -8,7 +8,6 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Command::Master;
