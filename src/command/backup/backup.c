@@ -1571,7 +1571,7 @@ backupProcess(BackupData *backupData, Manifest *manifest)
         }
         MEM_CONTEXT_TEMP_END();
 
-        // # Determine how often the manifest will be saved
+        // !!! Determine how often the manifest will be saved
         // my $lManifestSaveCurrent = 0;
         // my $lManifestSaveSize = int($lSizeTotal / 100);
         //
