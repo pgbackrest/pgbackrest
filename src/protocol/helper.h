@@ -30,6 +30,9 @@ void protocolKeepAlive(void);
 ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId);
 ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
 
+// Free (shutdown) a remote
+void protocolRemoteFree(unsigned int hostId);
+
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/

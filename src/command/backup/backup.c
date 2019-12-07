@@ -847,7 +847,8 @@ backupStart(BackupData *backupData)
                 // The standby db object won't be used anymore so free it
                 dbFree(backupData->dbStandby);
 
-                // !!! protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
+                // The standby protocol connection won't be used anymore so free it
+                protocolRemoteFree(backupData->pgIdStandby);
             }
         }
     }
@@ -1879,9 +1880,9 @@ cmdBackup(void)
         // The primary db object won't be used anymore so free it
         dbFree(backupData->dbPrimary);
 
-        // Remotes no longer needed (free them here so they don't timeout)
-        // !!! THIS MAKES TESTING backupComplete() HARD -- BETTER TO FREE ONLY STORAGE NO LONGER NEEDED storageHelperFree();
-        // !!! WHY DOES THIS BLOW UP? protocolFree();
+        // The primary protocol connection won't be used anymore so free it.  Any further access to the primary storage object may
+        // result in an error (likely eof).
+        protocolRemoteFree(backupData->pgIdPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
         backupArchiveCheckCopy(manifest);

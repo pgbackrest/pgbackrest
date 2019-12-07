@@ -412,6 +412,33 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient->client);
 }
 
+/**********************************************************************************************************************************/
+void
+protocolRemoteFree(unsigned int hostId)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, hostId);
+    FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
+
+    if (protocolHelper.clientRemote != NULL)
+    {
+        ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[hostId - 1];
+
+        if (protocolHelperClient->client != NULL)
+        {
+            protocolClientFree(protocolHelperClient->client);
+            execFree(protocolHelperClient->exec);
+
+            protocolHelperClient->client = NULL;
+            protocolHelperClient->exec = NULL;
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Send keepalives to all remotes
 ***********************************************************************************************************************************/
@@ -482,19 +509,8 @@ protocolFree(void)
     if (protocolHelper.memContext != NULL)
     {
         // Free remotes
-        for (unsigned int clientIdx  = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
-        {
-            ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[clientIdx];
-
-            if (protocolHelperClient->client != NULL)
-            {
-                protocolClientFree(protocolHelperClient->client);
-                execFree(protocolHelperClient->exec);
-
-                protocolHelperClient->client = NULL;
-                protocolHelperClient->exec = NULL;
-            }
-        }
+        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+            protocolRemoteFree(clientIdx + 1);
 
         // Free locals
         for (unsigned int clientIdx  = 0; clientIdx < protocolHelper.clientLocalSize; clientIdx++)

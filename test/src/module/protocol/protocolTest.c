@@ -845,6 +845,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolGet()"))
     {
+        // Call remote free before any remotes exist
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(protocolRemoteFree(1), "free remote (non exist)");
+
         // Call keep alive before any remotes exist
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
