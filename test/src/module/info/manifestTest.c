@@ -787,7 +787,8 @@ testRun(void)
             BUFSTRDEF("TESTDATA"));
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm"), .modeFile = 0400, .timeModified = 1565282115),
+                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm"), .modeFile = 0400,
+                .timeModified = 1565282115),
             BUFSTRDEF("IGNORE_TEMP_RELATION"));
 
         // Add checksum-page files to exclude from checksum-page validation in database relation directories
@@ -1125,11 +1126,11 @@ testRun(void)
 
         storagePathCreateP(storageTest, STRDEF("linktestdir"), .mode = 0777);
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/linktestdir", testPath())), strPtr(strNewFmt("%s/linktest", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+            symlink(strPtr(strNewFmt("%s/linktestdir", testPath())), strPtr(strNewFmt("%s/linktest", testPath()))) == -1,
+            FileOpenError, "unable to create symlink");
         THROW_ON_SYS_ERROR(
-            symlink(strPtr(strNewFmt("%s/linktest", testPath())), strPtr(strNewFmt("%s/pg/linktolink", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+            symlink(strPtr(strNewFmt("%s/linktest", testPath())), strPtr(strNewFmt("%s/pg/linktolink", testPath()))) == -1,
+            FileOpenError, "unable to create symlink");
 
         TEST_ERROR_FMT(
             manifestNewBuild(storagePg, PG_VERSION_94, false, false, NULL, NULL), LinkDestinationError,
@@ -1512,7 +1513,7 @@ testRun(void)
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER_PRE
                 "option-delta=true\n"
-                "option-hardlink=false\n"                                                                                              \
+                "option-hardlink=false\n"
                 "option-online=true\n"
                 "\n"
                 "[backup:target]\n"
