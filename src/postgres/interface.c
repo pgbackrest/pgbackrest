@@ -572,6 +572,53 @@ pgTablespaceId(unsigned int pgVersion)
 }
 
 /**********************************************************************************************************************************/
+uint64_t
+pgLsnFromStr(const String *lsn)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, lsn);
+    FUNCTION_TEST_END();
+
+    uint64_t result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        StringList *lsnPart = strLstNewSplit(lsn, FSLASH_STR);
+
+        CHECK(strLstSize(lsnPart) == 2);
+
+        result = (cvtZToUInt64Base(strPtr(strLstGet(lsnPart, 0)), 16) << 32) + cvtZToUInt64Base(strPtr(strLstGet(lsnPart, 1)), 16);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+String *
+pgLsnToStr(uint64_t lsn)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, lsn);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(strNewFmt("%x/%x", (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF)));
+}
+
+/**********************************************************************************************************************************/
+String *
+pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, timeline);
+        FUNCTION_TEST_PARAM(UINT64, lsn);
+        FUNCTION_TEST_PARAM(UINT, walSegmentSize);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(
+        strNewFmt("%08X%08X%08X", timeline, (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF / walSegmentSize)));
+}
+
+/**********************************************************************************************************************************/
 const String *
 pgLsnName(unsigned int pgVersion)
 {

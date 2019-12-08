@@ -102,6 +102,21 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("pgLsnFromStr(), pgLsnToStr(), and pgLsnToWalSegment()"))
+    {
+        TEST_RESULT_UINT(pgLsnFromStr(STRDEF("1/1")), 0x0000000100000001, "lsn to string");
+        TEST_RESULT_UINT(pgLsnFromStr(STRDEF("ffffffff/ffffffff")), 0xFFFFFFFFFFFFFFFF, "lsn to string");
+        TEST_RESULT_UINT(pgLsnFromStr(STRDEF("ffffffff/aaaaaaaa")), 0xFFFFFFFFAAAAAAAA, "lsn to string");
+
+        TEST_RESULT_STR_Z(pgLsnToStr(0xFFFFFFFFAAAAAAAA), "ffffffff/aaaaaaaa", "string to lsn");
+        TEST_RESULT_STR_Z(pgLsnToStr(0x0000000000000000), "0/0", "string to lsn");
+        TEST_RESULT_STR_Z(pgLsnToStr(0x0000000100000002), "1/2", "string to lsn");
+
+        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x1000000), "00000001FFFFFFFF000000AA", "lsn to wal segment");
+        TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x40000000), "00000001FFFFFFFF00000002", "lsn to wal segment");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("pgLsnName(), pgTablespaceId(), pgWalName(), and pgXactPath()"))
     {
         TEST_RESULT_STR(strPtr(pgLsnName(PG_VERSION_96)), "location", "check location name");
