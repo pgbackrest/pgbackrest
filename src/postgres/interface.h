@@ -125,6 +125,13 @@ PgWal pgWalFromBuffer(const Buffer *walBuffer);
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_9.0_201008051
 String *pgTablespaceId(unsigned int pgVersion);
 
+// Convert a string to an lsn and vice versa
+uint64_t pgLsnFromStr(const String *lsn);
+String *pgLsnToStr(uint64_t lsn);
+
+// Convert a timeline and lsn to a wal segment
+String *pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize);
+
 // Get name used for lsn in functions (this was changed in PostgreSQL 10 for consistency since lots of names were changing)
 const String *pgLsnName(unsigned int pgVersion);
 
