@@ -1174,11 +1174,11 @@ backupJobResult(
 Save a copy of the backup manifest during processing
 ***********************************************************************************************************************************/
 static void
-backupManifestSaveCopy(const InfoBackup *const infoBackup, Manifest *const manifest)
+backupManifestSaveCopy(Manifest *const manifest, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1194,8 +1194,7 @@ backupManifestSaveCopy(const InfoBackup *const infoBackup, Manifest *const manif
 
         // Add encryption filter if required
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
-            infoPgCipherPass(infoBackupPg(infoBackup)));
+            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, cipherPass);
 
         // Save file
         manifestSave(manifest, write);
@@ -1454,12 +1453,13 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 }
 
 static void
-backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart)
+backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, lsnStart);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1541,6 +1541,13 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         for (unsigned int processIdx = 2; processIdx <= processMax; processIdx++)
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgId, processIdx));
 
+        // Determine how often the manifest will be saved (every one percent or threshold size, whichever is greater)
+        uint64_t manifestSaveLast = 0;
+        uint64_t manifestSaveSize = sizeTotal / 100;
+
+        if (manifestSaveSize < cfgOptionUInt64(cfgOptManifestSaveThreshold))
+            manifestSaveSize = cfgOptionUInt64(cfgOptManifestSaveThreshold);
+
         // Process jobs
         uint64_t sizeCopied = 0;
 
@@ -1566,39 +1573,19 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 // A keep-alive is required here for the remote holding open the backup connection
                 protocolKeepAlive();
 
+                // Save the manifest periodically to preserve checksums for resume
+                if (sizeCopied - manifestSaveLast >= manifestSaveSize)
+                {
+                    backupManifestSaveCopy(manifest, cipherPass);
+                    manifestSaveLast = sizeCopied;
+                }
+
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
             while (!protocolParallelDone(parallelExec));
         }
         MEM_CONTEXT_TEMP_END();
-
-        // !!! Determine how often the manifest will be saved
-        // my $lManifestSaveCurrent = 0;
-        // my $lManifestSaveSize = int($lSizeTotal / 100);
-        //
-        // if (cfgOptionSource(CFGOPT_MANIFEST_SAVE_THRESHOLD) ne CFGDEF_SOURCE_DEFAULT ||
-        //     $lManifestSaveSize < cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD))
-        // {
-        //     $lManifestSaveSize = cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD);
-        // }
-        //
-        //     # Determine whether to save the manifest
-        //     $lManifestSaveCurrent += $lSize;
-        //
-        //     if ($lManifestSaveCurrent >= $lManifestSaveSize)
-        //     {
-        //         $oManifest->saveCopy();
-        //
-        //         logDebugMisc
-        //         (
-        //             $strOperation, 'save manifest',
-        //             {name => 'lManifestSaveSize', value => $lManifestSaveSize},
-        //             {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
-        //         );
-        //
-        //         $lManifestSaveCurrent = 0;
-        //     }
 
         // Output references or create hardlinks for all files
         const char *const compressExt = jobData.compress ? "." GZIP_EXT : "";
@@ -1737,7 +1724,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         // Final save of the backup manifest
         // -------------------------------------------------------------------------------------------------------------------------
-        backupManifestSaveCopy(infoBackup, manifest);
+        backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)));
 
         storageCopy(
             storageNewReadP(
@@ -1865,10 +1852,10 @@ cmdBackup(void)
         }
 
         // Save the manifest before processing starts
-        backupManifestSaveCopy(infoBackup, manifest);
+        backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)));
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, backupStartResult.lsn);
+        backupProcess(backupData, manifest, backupStartResult.lsn, infoPgCipherPass(infoBackupPg(infoBackup)));
 
         // Stop the backup
         BackupStopResult backupStopResult = backupStop(backupData, manifest);

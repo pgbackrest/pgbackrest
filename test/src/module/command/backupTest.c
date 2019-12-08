@@ -81,7 +81,7 @@ typedef struct TestBackupPqScriptParam
     VAR_PARAM_HEADER;
     bool startFast;
     bool backupStandby;
-    bool noPathEnforce;
+    bool errorAfterStart;
 } TestBackupPqScriptParam;
 
 #define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                                           \
@@ -105,6 +105,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     if (pgVersion == PG_VERSION_95)
     {
         ASSERT(!param.backupStandby);
+        ASSERT(!param.errorAfterStart);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -136,65 +137,34 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     else if (pgVersion == PG_VERSION_96)
     {
         ASSERT(param.backupStandby);
-
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, pg1Path, false, NULL, NULL),
-
-                // Connect to standby
-                HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5433", PG_VERSION_96, pg2Path, true, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_START_BACKUP_96(1, true, lsnStartStr, walSegmentStart),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
-
-                // Wait for standby to sync
-                HRNPQ_MACRO_REPLAY_WAIT_96(2, lsnStartStr),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                HRNPQ_MACRO_DONE()
-            });
-    }
-    else if (pgVersion == PG_VERSION_11)
-    {
-        ASSERT(!param.backupStandby);
+        ASSERT(!param.errorAfterStart);
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_96, pg1Path, false, NULL, NULL),
+
+            // Connect to standby
+            HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5433", PG_VERSION_96, pg2Path, true, NULL, NULL),
 
             // Get start time
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
+            HRNPQ_MACRO_START_BACKUP_96(1, true, lsnStartStr, walSegmentStart),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-            HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
+            HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+
+            // Wait for standby to sync
+            HRNPQ_MACRO_REPLAY_WAIT_96(2, lsnStartStr),
 
             // Get copy start time
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
             // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, false),
+            HRNPQ_MACRO_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false),
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
 
             // Get stop time
@@ -202,6 +172,64 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
             HRNPQ_MACRO_DONE()
         });
+    }
+    else if (pgVersion == PG_VERSION_11)
+    {
+        ASSERT(!param.backupStandby);
+
+        if (param.errorAfterStart)
+        {
+            harnessPqScriptSet((HarnessPq [])
+            {
+                // Connect to primary
+                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
+
+                // Get start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
+
+                // Start backup
+                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+                HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+                HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
+
+                // Get copy start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+                HRNPQ_MACRO_DONE()
+            });
+        }
+        else
+        {
+            harnessPqScriptSet((HarnessPq [])
+            {
+                // Connect to primary
+                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
+
+                // Get start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
+
+                // Start backup
+                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+                HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+                HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
+
+                // Get copy start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+                // Stop backup
+                HRNPQ_MACRO_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, false),
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+
+                // Get stop time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+
+                HRNPQ_MACRO_DONE()
+            });
+        }
     }
     else
         THROW_FMT(AssertError, "unsupported test version %u", pgVersion);           // {uncoverable - no invalid versions in tests}
@@ -1350,6 +1378,7 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+            strLstAddZ(argList, "--no-" CFGOPT_ARCHIVE_CHECK);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Add files
@@ -1425,6 +1454,7 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
             strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+            strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Create a backup manifest that looks like a halted backup manifest
@@ -1801,6 +1831,7 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
             strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+            strLstAddZ(argList, "--" CFGOPT_MANIFEST_SAVE_THRESHOLD "=1");
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
@@ -1908,9 +1939,43 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 11 incr backup with tablespaces");
+        TEST_TITLE("error when pg_control not present");
 
         backupTimeStart = BACKUP_EPOCH + 2300000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strPtr(repoPath)));
+            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
+            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
+            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+            harnessCfgLoad(cfgCmdBackup, argList);
+
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .errorAfterStart = true);
+            TEST_ERROR(
+                cmdBackup(), FileMissingError,
+                "pg_control must be present in all online backups\n"
+                "HINT: is something wrong with the clock or filesystem timestamps?");
+
+            // Check log
+            TEST_RESULT_LOG(
+                "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
+                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DB764000000000, lsn = 5db7640/0");
+
+            // Remove partial backup so it won't be resumed (since it errored before any checksums were written)
+            storagePathRemoveP(
+                storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F_20191028-220000I"), .recurse = true);
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 incr backup with tablespaces");
+
+        backupTimeStart = BACKUP_EPOCH + 2400000;
 
         {
             // Load options
@@ -1938,7 +2003,7 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 0000000105DB764000000000, lsn = 5db7640/0\n"
+                "P00   INFO: backup start archive = 0000000105DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
@@ -1949,8 +2014,8 @@ testRun(void)
                 "P00   INFO: incr backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00   INFO: backup stop archive = 0000000105DB764000000000, lsn = 5db7640/800000\n"
-                "P00   INFO: new backup label = 20191027-181320F_20191028-220000I");
+                "P00   INFO: backup stop archive = 0000000105DB8EB000000000, lsn = 5db8eb0/800000\n"
+                "P00   INFO: new backup label = 20191027-181320F_20191030-014640I");
 
             testBackupCompare(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
