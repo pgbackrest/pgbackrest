@@ -147,9 +147,31 @@ typedef struct ManifestTarget
 } ManifestTarget;
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
+// Build a new manifest for a PostgreSQL data directory
+Manifest *manifestNewBuild(
+    const Storage *storagePg, unsigned int pgVersion, bool online, bool checksumPage, const StringList *excludeList,
+    const VariantList *tablespaceList);
+
+// Load a manifest from IO
 Manifest *manifestNewLoad(IoRead *read);
+
+/***********************************************************************************************************************************
+Build functions
+***********************************************************************************************************************************/
+// Validate the timestamps in the manifest given a copy start time, i.e. all times should be <= the copy start time
+void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, bool compress);
+
+// Create a diff/incr backup by comparing to a previous backup manifest
+void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
+
+// Set remaining values before the final save
+void manifestBuildComplete(
+    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
+    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
+    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby);
 
 /***********************************************************************************************************************************
 Functions
@@ -170,10 +192,16 @@ unsigned int manifestDbTotal(const Manifest *this);
 File functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestFile *manifestFile(const Manifest *this, unsigned int fileIdx);
+void manifestFileAdd(Manifest *this, const ManifestFile *file);
 const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
 const ManifestFile *manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault);
 void manifestFileRemove(const Manifest *this, const String *name);
 unsigned int manifestFileTotal(const Manifest *this);
+
+// Update a file with new data
+void manifestFileUpdate(
+    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
+    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters
@@ -215,13 +243,17 @@ unsigned int manifestTargetTotal(const Manifest *this);
 void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
-// Get cipher sub-passphrase
+// Get/set the cipher subpassphrase
 const String *manifestCipherSubPass(const Manifest *this);
+void manifestCipherSubPassSet(Manifest *this, const String *cipherSubPass);
 
 // Get manifest configuration and options
 const ManifestData *manifestData(const Manifest *this);
+
+// Set backup label
+void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
 
 /***********************************************************************************************************************************
 Helper functions
