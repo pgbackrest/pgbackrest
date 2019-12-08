@@ -1381,6 +1381,7 @@ typedef struct BackupJobData
     const bool compress;                                            // Is the backup compressed?
     const unsigned int compressLevel;                               // Compress level if backup is compressed
     const bool delta;                                               // Is this a checksum delta backup?
+    const uint64_t lsnStart;                                        // Starting lsn for the backup
 
     List *queueList;                                                // List of processing queues
 } BackupJobData;
@@ -1423,8 +1424,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(command, VARUINT64(file->size));
                 protocolCommandParamAdd(command, file->checksumSha1[0] != 0 ? VARSTRZ(file->checksumSha1) : NULL);
                 protocolCommandParamAdd(command, VARBOOL(file->checksumPage));
-                protocolCommandParamAdd(command, VARUINT(0xFFFFFFFF)); // !!! COMBINE INTO ONE PARAM
-                protocolCommandParamAdd(command, VARUINT(0xFFFFFFFF)); // !!! COMBINE INTO ONE PARAM
+                protocolCommandParamAdd(command, VARUINT64(jobData->lsnStart));
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARBOOL(file->reference != NULL));
                 protocolCommandParamAdd(command, VARBOOL(jobData->compress));
@@ -1454,11 +1454,12 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 }
 
 static void
-backupProcess(BackupData *backupData, Manifest *manifest)
+backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STRING, lsnStart);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1520,6 +1521,7 @@ backupProcess(BackupData *backupData, Manifest *manifest)
             .compressLevel = cfgOptionUInt(cfgOptCompressLevel),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
+            .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
         };
 
         uint64_t sizeTotal = backupProcessQueue(manifest, &jobData.queueList);
@@ -1866,7 +1868,7 @@ cmdBackup(void)
         backupManifestSaveCopy(infoBackup, manifest);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest);
+        backupProcess(backupData, manifest, backupStartResult.lsn);
 
         // Stop the backup
         BackupStopResult backupStopResult = backupStop(backupData, manifest);

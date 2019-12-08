@@ -16,6 +16,25 @@ Test Backup Command
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
+Page header structure use to create realistic pages for testing
+***********************************************************************************************************************************/
+typedef struct
+{
+    uint32_t walid;                                                 // high bits
+    uint32_t xrecoff;                                               // low bits
+} PageWalRecPtr;
+
+typedef struct PageHeaderData
+{
+    // LSN is member of *any* block, not only page-organized ones
+    PageWalRecPtr pd_lsn;                                           // Lsn for last change to this page
+    uint16_t pd_checksum;                                           // checksum
+    uint16_t pd_flags;                                              // flag bits, see below
+    uint16_t pd_lower;                                              // offset to start of free space
+    uint16_t pd_upper;                                              // offset to end of free space
+} PageHeaderData;
+
+/***********************************************************************************************************************************
 Test backup to be sure all files are correct
 ***********************************************************************************************************************************/
 static void
@@ -74,6 +93,15 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     const char *pg1Path = strPtr(strNewFmt("%s/pg1", testPath()));
     const char *pg2Path = strPtr(strNewFmt("%s/pg2", testPath()));
 
+    unsigned int walSegmentSize = 16 * 1024 * 1024;
+    uint64_t lsnStart = ((uint64_t)backupTimeStart & 0xFFFFFF00) << 28;
+    uint64_t lsnStop = lsnStart + (walSegmentSize / 2);
+
+    const char *lsnStartStr = strPtr(pgLsnToStr(lsnStart));
+    const char *walSegmentStart = strPtr(pgLsnToWalSegment(1, lsnStart, walSegmentSize));
+    const char *lsnStopStr = strPtr(pgLsnToStr(lsnStop));
+    const char *walSegmentStop = strPtr(pgLsnToWalSegment(1, lsnStop, walSegmentSize));
+
     if (pgVersion == PG_VERSION_95)
     {
         ASSERT(!param.backupStandby);
@@ -88,7 +116,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, "0/1", "000000010000000000000000"),
+            HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
@@ -97,7 +125,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
             // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "0/1000001", "000000010000000000000001"),
+            HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
 
             // Get stop time
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
@@ -122,19 +150,19 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_START_BACKUP_96(1, true, "0/1", "000000010000000000000000"),
+                HRNPQ_MACRO_START_BACKUP_96(1, true, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
                 // Wait for standby to sync
-                HRNPQ_MACRO_REPLAY_WAIT_96(2, "0/1"),
+                HRNPQ_MACRO_REPLAY_WAIT_96(2, lsnStartStr),
 
                 // Get copy start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
                 // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_96(1, "0/1000001", "000000010000000000000001", false),
+                HRNPQ_MACRO_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
 
                 // Get stop time
@@ -157,7 +185,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, "0/1", "000000010000000000000000"),
+            HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
             HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
 
@@ -166,7 +194,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
             // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_GE_10(1, "0/1000001", "000000010000000000000001", false),
+            HRNPQ_MACRO_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, false),
             HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
 
             // Get stop time
@@ -176,7 +204,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         });
     }
     else
-        THROW_FMT(AssertError, "unsupported version %u", pgVersion);                // {uncoverable - no invalid versions in tests}
+        THROW_FMT(AssertError, "unsupported test version %u", pgVersion);           // {uncoverable - no invalid versions in tests}
 };
 
 /***********************************************************************************************************************************
@@ -244,8 +272,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));              // pgFileSize
         varLstAdd(paramList, NULL);                         // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit 1
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit 2
+        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(missingFile));       // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
         varLstAdd(paramList, varNewBool(false));            // repoFileCompress
@@ -320,8 +347,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(9));              // pgFileSize
         varLstAdd(paramList, NULL);                         // pgFileChecksum
         varLstAdd(paramList, varNewBool(true));             // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0xFFFFFFFF));     // pgFileChecksumPageLsnLimit 1
-        varLstAdd(paramList, varNewUInt64(0xFFFFFFFF));     // pgFileChecksumPageLsnLimit 2
+        varLstAdd(paramList, varNewUInt64(0xFFFFFFFFFFFFFFFF)); // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
         varLstAdd(paramList, varNewBool(false));            // repoFileCompress
@@ -363,8 +389,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(9));              // pgFileSize
         varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));   // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit 1
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit 2
+        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(true));             // repoFileHasReference
         varLstAdd(paramList, varNewBool(false));            // repoFileCompress
@@ -504,8 +529,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(9));              // pgFileSize
         varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));   // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit 1
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit 2
+        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));            // repoFile
         varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
         varLstAdd(paramList, varNewBool(true));             // repoFileCompress
@@ -624,8 +648,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(9));                  // pgFileSize
         varLstAdd(paramList, varNewStrZ("1234567890123456789012345678901234567890"));   // pgFileChecksum
         varLstAdd(paramList, varNewBool(false));                // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit 1
-        varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit 2
+        varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit
         varLstAdd(paramList, varNewStr(pgFile));                // repoFile
         varLstAdd(paramList, varNewBool(false));                // repoFileHasReference
         varLstAdd(paramList, varNewBool(false));                // repoFileCompress
@@ -1369,14 +1392,14 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+                "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
                 "P00   WARN: resumable backup 20191002-070640F of same type exists -- remove invalid files and resume\n"
                 "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: checksum resumed file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
-                "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+                "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
                 "P00   INFO: new backup label = 20191002-070640F");
 
             testBackupCompare(
@@ -1494,7 +1517,7 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+                "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
                 "P00   WARN: resumable backup 20191003-105320F of same type exists -- remove invalid files and resume\n"
                 "P00 DETAIL: remove path '{[path]}/repo/backup/test1/20191003-105320F/pg_data/bogus_path' from resumed backup\n"
                 "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus' from resumed backup"
@@ -1518,7 +1541,7 @@ testRun(void)
                 "P01   INFO: backup file {[path]}/pg1/zero-size (0B, [PCT])\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
-                "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+                "P00   INFO: backup stop archive = 0000000105D95D3000000000, lsn = 5d95d30/800000\n"
                 "P00   INFO: new backup label = 20191003-105320F");
 
             testBackupCompare(
@@ -1624,7 +1647,7 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+                "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   WARN: file 'time-mismatch2' has timestamp in the future, enabling delta checksum\n"
                 "P00   WARN: resumable backup 20191003-105320F_20191004-144000D of same type exists"
                     " -- remove invalid files and resume\n"
@@ -1648,7 +1671,7 @@ testRun(void)
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
                 "P00   INFO: diff backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
-                "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+                "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
                 "P00   INFO: new backup label = 20191003-105320F_20191004-144000D");
 
             // Check repo directory
@@ -1796,19 +1819,18 @@ testRun(void)
 
             // File with bad page checksums
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
-            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 0, 8, PG_PAGE_SIZE_DEFAULT);
-            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 1, 0, PG_PAGE_SIZE_DEFAULT);
-            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 2, 8, PG_PAGE_SIZE_DEFAULT);
-            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 3, 8, PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            ((PageHeaderData *)(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 0))->pd_upper = 0xFF;
+            ((PageHeaderData *)(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 2))->pd_upper = 0xFE;
+            ((PageHeaderData *)(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 3))->pd_upper = 0xEF;
             bufUsedSet(relation, bufSize(relation));
 
             storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart), relation);
 
             // File with bad page checksum
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
-            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 0, 0, PG_PAGE_SIZE_DEFAULT);
-            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 1, 8, PG_PAGE_SIZE_DEFAULT);
-            memset(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 2, 0, PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            ((PageHeaderData *)(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 1))->pd_upper = 0x08;
             bufUsedSet(relation, bufSize(relation));
 
             storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/4"), .timeModified = backupTimeStart), relation);
@@ -1841,7 +1863,7 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+                "P00   INFO: backup start archive = 0000000105DB5DE000000000, lsn = 5db5de0/0\n"
                 "P01   INFO: backup file {[path]}/pg1/base/1/3 (32KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksums found in file {[path]}/pg1/base/1/3 at pages 0, 2-3\n"
                 "P01   INFO: backup file {[path]}/pg1/base/1/4 (24KB, [PCT]) checksum [SHA1]\n"
@@ -1856,7 +1878,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+                "P00   INFO: backup stop archive = 0000000105DB5DE000000000, lsn = 5db5de0/800000\n"
                 "P00   INFO: new backup label = 20191027-181320F");
 
             testBackupCompare(
@@ -1916,7 +1938,7 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 000000010000000000000000, lsn = 0/1\n"
+                "P00   INFO: backup start archive = 0000000105DB764000000000, lsn = 5db7640/0\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
@@ -1927,7 +1949,7 @@ testRun(void)
                 "P00   INFO: incr backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00   INFO: backup stop archive = 000000010000000000000001, lsn = 0/1000001\n"
+                "P00   INFO: backup stop archive = 0000000105DB764000000000, lsn = 5db7640/800000\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191028-220000I");
 
             testBackupCompare(

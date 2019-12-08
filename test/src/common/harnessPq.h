@@ -409,10 +409,10 @@ Macros for defining groups of functions that implement various queries and comma
     sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam)                                  \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param =                                                                                                                   \
+        .param =  strPtr(strNewFmt(                                                                                                \
             "[\"select replayLsn::text,\\n"                                                                                        \
-            "       (replayLsn > '" targetLsnParam "')::bool as targetReached\\n"                                                  \
-            "  from pg_catalog.pg_last_" walNameParam "_replay_" lsnNameParam "() as replayLsn\"]",                                \
+            "       (replayLsn > '%s')::bool as targetReached\\n"                                                                  \
+            "  from pg_catalog.pg_last_" walNameParam "_replay_" lsnNameParam "() as replayLsn\"]", targetLsnParam)),              \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
@@ -436,10 +436,10 @@ Macros for defining groups of functions that implement various queries and comma
 #define HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED(sessionParam, lsnNameParam, targetLsnParam, targetReachedParam, checkpointLsnParam)  \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param =                                                                                                                   \
-            "[\"select (checkpoint_" lsnNameParam " > '" targetLsnParam "')::bool as targetReached,\\n"                            \
+        .param = strPtr(strNewFmt(                                                                                                 \
+            "[\"select (checkpoint_" lsnNameParam " > '%s')::bool as targetReached,\\n"                                            \
             "       checkpoint_" lsnNameParam "::text as checkpointLsn\\n"                                                         \
-            "  from pg_catalog.pg_control_checkpoint()\"]",                                                                        \
+            "  from pg_catalog.pg_control_checkpoint()\"]", targetLsnParam)),                                                      \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
