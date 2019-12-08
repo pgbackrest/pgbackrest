@@ -25,6 +25,7 @@ Backup Command
 #include "common/type/convert.h"
 #include "config/config.h"
 #include "db/helper.h"
+#include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -154,6 +155,7 @@ typedef struct BackupData
 
     unsigned int version;                                           // PostgreSQL version
     unsigned int pageSize;                                          // PostgreSQL page size
+    unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
 } BackupData;
 
 static BackupData *
@@ -217,6 +219,7 @@ backupInit(const InfoBackup *infoBackup)
 
     result->version = pgControl.version;
     result->pageSize = pgControl.pageSize;
+    result->walSegmentSize = pgControl.walSegmentSize;
 
     // Validate pg_control info against the stanza
     if (result->version != infoPg.version || pgControl.systemId != infoPg.systemId)
@@ -862,12 +865,13 @@ Stop the backup
 ***********************************************************************************************************************************/
 // Helper to write a file from a string to the repository and update the manifest
 static void
-backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, const String *content)
+backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, time_t timestamp, const String *content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(TIME, timestamp);
         FUNCTION_LOG_PARAM(STRING, content);
     FUNCTION_LOG_END();
 
@@ -922,7 +926,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, co
                 .group = basePath->group,
                 .size = strSize(content),
                 .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
-                .timestamp = backupTime(backupData, false),
+                .timestamp = timestamp,
             };
 
             memcpy(
@@ -944,6 +948,7 @@ typedef struct BackupStopResult
 {
     String *lsn;
     String *walSegmentName;
+    time_t timestamp;
 } BackupStopResult;
 
 #define FUNCTION_LOG_BACKUP_STOP_RESULT_TYPE                                                                                       \
@@ -971,9 +976,10 @@ backupStop(BackupData *backupData, Manifest *manifest)
                 backupData->version >= PG_VERSION_96 ? "non-" : "");
 
             DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
+            result.timestamp = backupTime(backupData, false);
 
-            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), dbBackupStopResult.backupLabel);
-            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), dbBackupStopResult.tablespaceMap);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
 
             memContextSwitch(MEM_CONTEXT_OLD());
             result.lsn = strDup(dbBackupStopResult.lsn);
@@ -1542,6 +1548,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgId, processIdx));
 
         // Determine how often the manifest will be saved (every one percent or threshold size, whichever is greater)
+        // CSHANG -- this logic s a bit different from Perl and should reduce saves which should be better for S3 (and in general)
         uint64_t manifestSaveLast = 0;
         uint64_t manifestSaveSize = sizeTotal / 100;
 
@@ -1643,10 +1650,12 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 Check and copy WAL segments required to make the backup consistent
 ***********************************************************************************************************************************/
 static void
-backupArchiveCheckCopy(Manifest *manifest)
+backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(UINT, walSegmentSize);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1654,53 +1663,60 @@ backupArchiveCheckCopy(Manifest *manifest)
     // !!! If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
     // archive logs are going to a different server.  Be careful of this option because there is no way to verify that the backup
     // will be consistent - at least not here.
-    // if (cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_ARCHIVE_CHECK))
-    // {
-    //     # Save the backup manifest before getting archive logs in case of failure
-    //     $oBackupManifest->saveCopy();
-    //
-    //     # Create the modification time for the archive logs
-    //     my $lModificationTime = time();
-    //
-    //     # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
-    //     logDebugMisc($strOperation, "retrieve archive logs START:STOP");
-    //
-    //     my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
-    //     my $strArchiveId = $oArchiveInfo->archiveId();
-    //     my @stryArchive = lsnFileRange('START', $strLsnStop, $rhParam->{pgVersion}, 16);
-    //
-    //     foreach my $strArchive (@stryArchive)
-    //     {
-    //         my $strArchiveFile = walSegmentFind(
-    //             storageRepo(), $strArchiveId, substr($strArchiveStop, 0, 8) . $strArchive, cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
-    //
-    //         $strArchive = substr($strArchiveFile, 0, 24);
-    //
-    //         if (cfgOption(CFGOPT_ARCHIVE_COPY))
-    //         {
-    //             logDebugMisc($strOperation, "archive: ${strArchive} (${strArchiveFile})");
-    //
-    //             # Copy the log file from the archive repo to the backup
-    //             my $bArchiveCompressed = $strArchiveFile =~ ('^.*\.' . COMPRESS_EXT . '\$');
-    //
-    //             storageRepo()->copy(
-    //                 storageRepo()->openRead(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
-    //                     {strCipherPass => $oArchiveInfo->cipherPassSub()}),
-    //                 storageRepo()->openWrite(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} .
-    //                     $oBackupManifest->walPath() . "/${strArchive}" . (cfgOption(CFGOPT_COMPRESS) ? qw{.} . COMPRESS_EXT : ''),
-    //                     {bPathCreate => true, strCipherPass => $strCipherPassBackupSet})
-    //                 );
-    //
-    //             # Add the archive file to the manifest so it can be part of the restore and checked in validation
-    //             my $strPathLog = MANIFEST_TARGET_PGDATA . qw{/} . $oBackupManifest->walPath();
-    //             my $strFileLog = "${strPathLog}/${strArchive}";
-    //
-    //             # Add file to manifest
-    //             $oBackupManifest->fileAdd(
-    //                 $strFileLog, $lModificationTime, PG_WAL_SEGMENT_SIZE, substr($strArchiveFile, 25, 40), true);
-    //         }
-    //     }
-    // }
+    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck))
+    {
+        unsigned int timeline = cvtZToUInt(strPtr(strSubN(manifestData(manifest)->archiveStart, 0, 8)));
+        uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
+        uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
+
+        LOG_INFO_FMT(
+            "check archive for segment(s) %s:%s", strPtr(pgLsnToWalSegment(timeline, lsnStart, walSegmentSize)),
+            strPtr(pgLsnToWalSegment(timeline, lsnStop, walSegmentSize)));
+
+        // Save the backup manifest before getting archive logs in case of failure
+        backupManifestSaveCopy(manifest, cipherPass);
+
+        // Loop through all the segments in the lsn range
+        InfoArchive *infoArchive = infoArchiveLoadFile(
+            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            cfgOptionStr(cfgOptRepoCipherPass));
+        const String *archiveId = infoArchiveId(infoArchive);
+
+        (void)archiveId;
+        // my @stryArchive = lsnFileRange('START', $strLsnStop, $rhParam->{pgVersion}, 16);
+        //
+        // foreach my $strArchive (@stryArchive)
+        // {
+        //     my $strArchiveFile = walSegmentFind(
+        //         storageRepo(), $strArchiveId, substr($strArchiveStop, 0, 8) . $strArchive, cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
+        //
+        //     $strArchive = substr($strArchiveFile, 0, 24);
+        //
+        //     if (cfgOption(CFGOPT_ARCHIVE_COPY))
+        //     {
+        //         logDebugMisc($strOperation, "archive: ${strArchive} (${strArchiveFile})");
+        //
+        //         # Copy the log file from the archive repo to the backup
+        //         my $bArchiveCompressed = $strArchiveFile =~ ('^.*\.' . COMPRESS_EXT . '\$');
+        //
+        //         storageRepo()->copy(
+        //             storageRepo()->openRead(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
+        //                 {strCipherPass => $oArchiveInfo->cipherPassSub()}),
+        //             storageRepo()->openWrite(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} .
+        //                 $oBackupManifest->walPath() . "/${strArchive}" . (cfgOption(CFGOPT_COMPRESS) ? qw{.} . COMPRESS_EXT : ''),
+        //                 {bPathCreate => true, strCipherPass => $strCipherPassBackupSet})
+        //             );
+        //
+        //         # Add the archive file to the manifest so it can be part of the restore and checked in validation
+        //         my $strPathLog = MANIFEST_TARGET_PGDATA . qw{/} . $oBackupManifest->walPath();
+        //         my $strFileLog = "${strPathLog}/${strArchive}";
+        //
+        //         # Add file to manifest
+        //         $oBackupManifest->fileAdd(
+        //             $strFileLog, $lModificationTime, PG_WAL_SEGMENT_SIZE, substr($strArchiveFile, 25, 40), true);
+        //     }
+        // }
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -1862,7 +1878,7 @@ cmdBackup(void)
 
         // Complete manifest
         manifestBuildComplete(
-            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, backupTime(backupData, false),
+            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, backupStopResult.timestamp,
             backupStopResult.lsn, backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
             cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck),
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
@@ -1877,7 +1893,7 @@ cmdBackup(void)
         protocolRemoteFree(backupData->pgIdPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
-        backupArchiveCheckCopy(manifest);
+        backupArchiveCheckCopy(manifest, backupData->walSegmentSize, infoPgCipherPass(infoBackupPg(infoBackup)));
 
         // Complete the backup
         LOG_INFO_FMT("new backup label = %s", strPtr(manifestData(manifest)->backupLabel));
