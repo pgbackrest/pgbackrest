@@ -591,9 +591,9 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             {
                 // Skip recovery files
                 if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_STANDBYSIGNAL)) &&
-                    pgVersion >= PG_VERSION_12) ||
+                        pgVersion >= PG_VERSION_12) ||
                     ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
-                    pgVersion < PG_VERSION_12) ||
+                        pgVersion < PG_VERSION_12) ||
                     // Skip temp file for safely writing postgresql.auto.conf
                     (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP) && pgVersion >= PG_VERSION_94) ||
                     // Skip backup_label in versions where non-exclusive backup is supported
@@ -856,7 +856,7 @@ manifestNewBuild(
 
     ASSERT(storagePg != NULL);
     ASSERT(pgVersion != 0);
-    ASSERT(!(checksumPage == true && pgVersion <= PG_VERSION_93));
+    ASSERT(!checksumPage || pgVersion >= PG_VERSION_93);
 
     Manifest *this = NULL;
 
@@ -1025,12 +1025,13 @@ manifestNewBuild(
 
 /**********************************************************************************************************************************/
 void
-manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
+manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, bool compress)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(TIME, copyStart);
+        FUNCTION_LOG_PARAM(TIME, compress);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -1045,6 +1046,10 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart)
         // manifest was being built.  It's up to the caller to actually wait the remainder of the second, but for comparison
         // purposes we want the time when the waiting started.
         this->data.backupTimestampCopyStart = copyStart + (this->data.backupOptionOnline ? 1 : 0);
+
+        // This value is not needed in this function, but it is needed for resumed manifests and this is last place to set it before
+        // processing begins
+        this->data.backupOptionCompress = compress;
     }
     MEM_CONTEXT_END();
 
@@ -1098,17 +1103,14 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         // Set diff/incr backup type
         this->data.backupType = type;
-
-        // Set archive start
-        this->data.archiveStart = strDup(archiveStart);
     }
     MEM_CONTEXT_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Enable delta if timelines differ
-        if (manifestData(manifestPrior)->archiveStop != NULL && this->data.archiveStart != NULL &&
-            !strEq(strSubN(manifestData(manifestPrior)->archiveStop, 0, 8), strSubN(this->data.archiveStart, 0, 8)))
+        if (archiveStart != NULL && manifestData(manifestPrior)->archiveStop != NULL &&
+            !strEq(strSubN(archiveStart, 0, 8), strSubN(manifestData(manifestPrior)->archiveStop, 0, 8)))
         {
             LOG_WARN_FMT(
                 "a timeline switch has occurred since the %s backup, enabling delta checksum",
@@ -1179,8 +1181,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             {
                 manifestFileUpdate(
                     this, file->name, file->size, filePrior->sizeRepo, filePrior->checksumSha1,
-                    filePrior->reference != NULL ? filePrior->reference : manifestPrior->data.backupLabel, filePrior->checksumPage,
-                    filePrior->checksumPageError, filePrior->checksumPageErrorList);
+                    VARSTR(filePrior->reference != NULL ? filePrior->reference : manifestPrior->data.backupLabel),
+                    filePrior->checksumPage, filePrior->checksumPageError, filePrior->checksumPageErrorList);
             }
         }
     }
@@ -1194,8 +1196,8 @@ void
 manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
+    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
     bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1212,11 +1214,9 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
         FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
-        FUNCTION_LOG_PARAM(BOOL, optionCompress);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevel);
         FUNCTION_LOG_PARAM(UINT, optionCompressLevelNetwork);
         FUNCTION_LOG_PARAM(BOOL, optionHardLink);
-        FUNCTION_LOG_PARAM(BOOL, optionOnline);
         FUNCTION_LOG_PARAM(UINT, optionProcessMax);
         FUNCTION_LOG_PARAM(BOOL, optionStandby);
     FUNCTION_LOG_END();
@@ -1257,11 +1257,9 @@ manifestBuildComplete(
         this->data.backupOptionArchiveCheck = optionArchiveCheck;
         this->data.backupOptionArchiveCopy = optionArchiveCopy;
         this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
-        this->data.backupOptionCompress = optionCompress;
         this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
         this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
         this->data.backupOptionHardLink = optionHardLink;
-        this->data.backupOptionOnline = optionOnline;
         this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
         this->data.backupOptionStandby = varNewBool(optionStandby);
     }
@@ -2469,7 +2467,7 @@ manifestFileTotal(const Manifest *this)
 
 void
 manifestFileUpdate(
-    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const String *reference,
+    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
     bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList)
 {
     FUNCTION_TEST_BEGIN();
@@ -2478,7 +2476,7 @@ manifestFileUpdate(
         FUNCTION_TEST_PARAM(UINT64, size);
         FUNCTION_TEST_PARAM(UINT64, sizeRepo);
         FUNCTION_TEST_PARAM(STRINGZ, checksumSha1);
-        FUNCTION_TEST_PARAM(STRING, reference);
+        FUNCTION_TEST_PARAM(VARIANT, reference);
         FUNCTION_TEST_PARAM(BOOL, checksumPage);
         FUNCTION_TEST_PARAM(BOOL, checksumPageError);
         FUNCTION_TEST_PARAM(VARIANT_LIST, checksumPageErrorList);
@@ -2496,7 +2494,12 @@ manifestFileUpdate(
     {
         // Update reference if set
         if (reference != NULL)
-            file->reference = strLstAddIfMissing(this->referenceList, reference);
+        {
+            if (varStr(reference) == NULL)
+                file->reference = NULL;
+            else
+                file->reference = strLstAddIfMissing(this->referenceList, varStr(reference));
+        }
 
         // Update checksum if set
         if (checksumSha1 != NULL)

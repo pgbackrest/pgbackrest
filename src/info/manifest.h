@@ -161,7 +161,7 @@ Manifest *manifestNewLoad(IoRead *read);
 Build functions
 ***********************************************************************************************************************************/
 // Validate the timestamps in the manifest given a copy start time, i.e. all times should be <= the copy start time
-void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart);
+void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, bool compress);
 
 // Create a diff/incr backup by comparing to a previous backup manifest
 void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
@@ -170,9 +170,8 @@ void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, c
 void manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, bool optionCompress, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, bool optionOnline, unsigned int optionProcessMax,
-    bool optionStandby);
+    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby);
 
 /***********************************************************************************************************************************
 Functions
@@ -201,7 +200,7 @@ unsigned int manifestFileTotal(const Manifest *this);
 
 // Update a file with new data
 void manifestFileUpdate(
-    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const String *reference,
+    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
     bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList);
 
 /***********************************************************************************************************************************
