@@ -123,8 +123,8 @@ backupLabelCreate(BackupType type, const String *backupLabelLast, time_t timesta
                     break;
             }
 
-            // ??? This is likely to work in virtually all cases, but it would be far better to make sure that the time is later
-            // than any other backup label.
+            // !!! This is likely to work in virtually all cases, but it would be far better to make sure that the time is later
+            // than any other backup label.  This change will be compeleted for this commit.
             timestamp++;
         }
     }
@@ -607,11 +607,11 @@ void backupResumeCallback(void *data, const StorageInfo *info)
 
 // Helper to find a resumable backup
 static const Manifest *
-backupResumeFind(const Manifest *manifest, const String *cipherPass)
+backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -649,7 +649,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPass)
                     TRY_BEGIN()
                     {
                         manifestResume = manifestLoadFile(
-                            storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPass);
+                            storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassBackup);
                         const ManifestData *manifestResumeData = manifestData(manifestResume);
 
                         // Check pgBackRest version. This allows the resume implementation to be changed with each version of
@@ -718,11 +718,11 @@ backupResumeFind(const Manifest *manifest, const String *cipherPass)
 }
 
 static bool
-backupResume(Manifest *manifest, const String *cipherPass)
+backupResume(Manifest *manifest, const String *cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -731,7 +731,7 @@ backupResume(Manifest *manifest, const String *cipherPass)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const Manifest *manifestResume = backupResumeFind(manifest, cipherPass);
+        const Manifest *manifestResume = backupResumeFind(manifest, cipherPassBackup);
 
         // If a resumable backup was found set the label and cipher subpass
         if (manifestResume)
@@ -966,9 +966,9 @@ backupStop(BackupData *backupData, Manifest *manifest)
 
     BackupStopResult result = {.lsn = NULL};
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    if (cfgOptionBool(cfgOptOnline))
     {
-        if (cfgOptionBool(cfgOptOnline))
+        MEM_CONTEXT_TEMP_BEGIN()
         {
             // Stop the backup
             LOG_INFO_FMT(
@@ -988,8 +988,10 @@ backupStop(BackupData *backupData, Manifest *manifest)
 
             LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strPtr(result.walSegmentName), strPtr(result.lsn));
         }
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
+    else
+        result.timestamp = backupTime(backupData, false);
 
     FUNCTION_LOG_RETURN(BACKUP_STOP_RESULT, result);
 }
@@ -1180,11 +1182,11 @@ backupJobResult(
 Save a copy of the backup manifest during processing
 ***********************************************************************************************************************************/
 static void
-backupManifestSaveCopy(Manifest *const manifest, const String *cipherPass)
+backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1200,7 +1202,7 @@ backupManifestSaveCopy(Manifest *const manifest, const String *cipherPass)
 
         // Add encryption filter if required
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, cipherPass);
+            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, cipherPassBackup);
 
         // Save file
         manifestSave(manifest, write);
@@ -1459,13 +1461,13 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 }
 
 static void
-backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart, const String *cipherPass)
+backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart, const String *cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, lsnStart);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1583,7 +1585,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 // Save the manifest periodically to preserve checksums for resume
                 if (sizeCopied - manifestSaveLast >= manifestSaveSize)
                 {
-                    backupManifestSaveCopy(manifest, cipherPass);
+                    backupManifestSaveCopy(manifest, cipherPassBackup);
                     manifestSaveLast = sizeCopied;
                 }
 
@@ -1650,12 +1652,12 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 Check and copy WAL segments required to make the backup consistent
 ***********************************************************************************************************************************/
 static void
-backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const String *cipherPass)
+backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const String *cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(UINT, walSegmentSize);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1674,7 +1676,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
             strPtr(pgLsnToWalSegment(timeline, lsnStop, walSegmentSize)));
 
         // Save the backup manifest before getting archive logs in case of failure
-        backupManifestSaveCopy(manifest, cipherPass);
+        backupManifestSaveCopy(manifest, cipherPassBackup);
 
         // Loop through all the segments in the lsn range
         InfoArchive *infoArchive = infoArchiveLoadFile(
@@ -1830,6 +1832,7 @@ cmdBackup(void)
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             cfgOptionStr(cfgOptRepoCipherPass));
         InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
+        const String *cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
 
         // Get pg storage and database objects
         BackupData *backupData = backupInit(infoBackup);
@@ -1860,7 +1863,7 @@ cmdBackup(void)
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
         // Resume a backup when possible
-        if (!backupResume(manifest, infoPgCipherPass(infoBackupPg(infoBackup))))
+        if (!backupResume(manifest, cipherPassBackup))
         {
             manifestBackupLabelSet(
                 manifest,
@@ -1868,10 +1871,10 @@ cmdBackup(void)
         }
 
         // Save the manifest before processing starts
-        backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)));
+        backupManifestSaveCopy(manifest, cipherPassBackup);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, backupStartResult.lsn, infoPgCipherPass(infoBackupPg(infoBackup)));
+        backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
 
         // Stop the backup
         BackupStopResult backupStopResult = backupStop(backupData, manifest);
@@ -1893,7 +1896,7 @@ cmdBackup(void)
         protocolRemoteFree(backupData->pgIdPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
-        backupArchiveCheckCopy(manifest, backupData->walSegmentSize, infoPgCipherPass(infoBackupPg(infoBackup)));
+        backupArchiveCheckCopy(manifest, backupData->walSegmentSize, cipherPassBackup);
 
         // Complete the backup
         LOG_INFO_FMT("new backup label = %s", strPtr(manifestData(manifest)->backupLabel));
