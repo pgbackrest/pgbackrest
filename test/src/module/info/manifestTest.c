@@ -900,31 +900,6 @@ testRun(void)
         storagePathRemoveP(storageTest, STRDEF("ts/2"), .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on link that points to nothing");
-
-        THROW_ON_SYS_ERROR(
-            symlink("../bogus-link", strPtr(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
-
-        TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, false, true, NULL, NULL), FileOpenError,
-            hrnReplaceKey("unable to get info for missing path/file '{[path]}/pg/link-to-link': [2] No such file or directory"));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on link to a link");
-
-        THROW_ON_SYS_ERROR(
-            symlink("../bogus", strPtr(strNewFmt("%s/bogus-link", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
-
-        TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, false, true, NULL, NULL), LinkDestinationError,
-            hrnReplaceKey("link '{[path]}/pg/link-to-link' cannot reference another link '{[path]}/bogus-link'"));
-
-        storageRemoveP(storageTest, STRDEF("bogus-link"), .errorOnMissing = true);
-        storageRemoveP(storageTest, STRDEF("pg/link-to-link"), .errorOnMissing = true);
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 12, online");
 
         // Version
@@ -1120,6 +1095,20 @@ testRun(void)
             "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
         storageRemoveP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somefile"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on link that points to nothing");
+
+        THROW_ON_SYS_ERROR(
+            symlink("../bogus-link", strPtr(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileOpenError,
+            "unable to create symlink");
+
+        TEST_ERROR(
+            manifestNewBuild(storagePg, PG_VERSION_94, false, true, NULL, NULL), FileOpenError,
+            hrnReplaceKey("unable to get info for missing path/file '{[path]}/pg/link-to-link': [2] No such file or directory"));
+
+        THROW_ON_SYS_ERROR(
+            unlink(strPtr(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to a link");
