@@ -556,7 +556,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
                 removeReason = "reference in manifest";
             else if (fileResume == NULL)
                 removeReason = "missing in resumed manifest";
-            // CSHANG -- this is new an means we don't having to worry about checking for hardlinks on resume because a hardlink
+            // CSHANG -- this is new and means we don't having to worry about checking for hardlinks on resume because a hardlink
             // will always have a reference.
             else if (fileResume->reference != NULL)
                 removeReason = "reference in resumed manifest";
@@ -1340,7 +1340,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 "HINT: is something wrong with the clock or filesystem timestamps?");
          }
 
-        // If there are no files to backup then we'll exit with an error.  The could happen if the database is down and backup is
+        // If there are no files to backup then we'll exit with an error.  This could happen if the database is down and backup is
         // called with --no-online twice in a row.
         if (fileTotal == 0)
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
@@ -1553,7 +1553,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgId, processIdx));
 
         // Determine how often the manifest will be saved (every one percent or threshold size, whichever is greater)
-        // CSHANG -- this logic s a bit different from Perl and should reduce saves which should be better for S3 (and in general)
+        // CSHANG -- this logic is a bit different from Perl and should reduce saves which should be better for S3 (and in general)
         uint64_t manifestSaveLast = 0;
         uint64_t manifestSaveSize = sizeTotal / 100;
 
