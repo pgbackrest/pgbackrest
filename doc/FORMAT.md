@@ -17,3 +17,4 @@
 - Save **all** options instead of the piecemeal saves that are done now.  These options are for informational purposes only so it would be fine to save them in a KeyValue or JSON blob.
 
 - Store default sections before file/link/path sections to avoid two passes on load.
+- Format backup labels using gmtime().
