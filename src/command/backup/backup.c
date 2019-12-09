@@ -98,8 +98,8 @@ backupLabelCreate(BackupType type, const String *backupLabelLast, time_t timesta
     {
         while (true)
         {
-            // Get the current year to use for searching the history.  Put this in the loop since we could theoretically roll over to
-            // a new year while searching for a valid label.
+            // Get the current year to use for searching the history.  Put this in the loop since we could theoretically roll over
+            // to a new year while searching for a valid label.
             char year[5];
             THROW_ON_SYS_ERROR(
                 strftime(year, sizeof(year), "%Y", localtime(&timestamp)) == 0, AssertError, "unable to format year");
@@ -183,6 +183,9 @@ backupInit(const InfoBackup *infoBackup)
             strPtr(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
     }
 
+    // Don't allow backup from standby when offline
+    // CSHANG -- in Perl this error message said "standby is not properly configured" which doesn't seem right because it doesn't
+    // seem like you can get past dbObjectGet() in this case.  This as been downgraded to an offline warning here.
     if (!cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby))
     {
         LOG_WARN(
@@ -254,7 +257,7 @@ backupInit(const InfoBackup *infoBackup)
         {
             cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksum));
         }
-        // Else set to false.  An offline cluster is likely to have false positives so better if the user enables manually
+        // Else set to false.  An offline cluster is likely to have false positives so better if the user enables manually.
         else
             cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
     }
@@ -306,7 +309,7 @@ backupTime(BackupData *backupData, bool waitRemainder)
 }
 
 /***********************************************************************************************************************************
-Create an incremental backup if type is not full and a prior backup exists
+Create an incremental backup if type is not full and a compatible prior backup exists
 ***********************************************************************************************************************************/
 // Helper to find a compatible prior backup
 static Manifest *
@@ -471,7 +474,7 @@ typedef struct BackupResumeData
     const String *manifestParentName;                               // Parent manifest name used to construct manifest name
 } BackupResumeData;
 
-// Callback to clean invalid paths/files/links out of the repo
+// Callback to clean invalid paths/files/links out of the resumable backup path
 void backupResumeCallback(void *data, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
@@ -491,7 +494,8 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         return;
     }
 
-    // Skip backup.manifest.copy -- it will never be in the manifest
+    // Skip backup.manifest.copy -- it must be preserved to allow resume again if this process throws an error before writing the
+    // manifest for the first time
     if (resumeData->manifestParentName == NULL && strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
     {
         FUNCTION_TEST_RETURN_VOID();
@@ -860,6 +864,7 @@ backupStart(BackupData *backupData)
 
     FUNCTION_LOG_RETURN(BACKUP_START_RESULT, result);
 }
+
 /***********************************************************************************************************************************
 Stop the backup
 ***********************************************************************************************************************************/
@@ -976,17 +981,18 @@ backupStop(BackupData *backupData, Manifest *manifest)
                 backupData->version >= PG_VERSION_96 ? "non-" : "");
 
             DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
-            result.timestamp = backupTime(backupData, false);
-
-            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
-            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
 
             memContextSwitch(MEM_CONTEXT_OLD());
+            result.timestamp = backupTime(backupData, false);
             result.lsn = strDup(dbBackupStopResult.lsn);
             result.walSegmentName = strDup(dbBackupStopResult.walSegmentName);
             memContextSwitch(MEM_CONTEXT_TEMP());
 
             LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strPtr(result.walSegmentName), strPtr(result.lsn));
+
+            // Save files returned by stop backup
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -1045,125 +1051,118 @@ backupJobResult(
                     "%s, %" PRIu64 "%%", strPtr(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : sizeCopied * 100 / sizeTotal);
             const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strPtr(copyChecksum)) : EMPTY_STR;
 
-            // If the file is in a prior backup and nothing changed, then nothing needs to be done
+            // If the file is in a prior backup and nothing changed, just log it
             if (copyResult == backupCopyResultNoOp)
             {
                 LOG_DETAIL_PID_FMT(
                     processId, "match file from prior backup %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
             }
+            // Else if the repo matched the expect checksum, just log it
+            else if (copyResult == backupCopyResultChecksum)
+            {
+                LOG_DETAIL_PID_FMT(
+                    processId, "checksum resumed file %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
+            }
             // Else if the file was removed during backup then remove from manifest
             else if (copyResult == backupCopyResultSkip)
             {
-                LOG_DETAIL_FMT("skip file removed by database %s", strPtr(fileLog));
+                LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strPtr(fileLog));
                 manifestFileRemove(manifest, file->name);
             }
             // Else file was copied so update manifest
             else
             {
-                // If the the repo matched the expect checksum then log
-                if (copyResult == backupCopyResultChecksum)
+                // If the file had to be recopied then warn that there may be an issue with corruption in the repository
+                // ??? This should really be below the message below for more context -- can be moved after the migration
+                // ??? The name should be a pg path not manifest name -- can be fixed after the migration
+                if (copyResult == backupCopyResultReCopy)
                 {
-                    LOG_DETAIL_PID_FMT(
-                        processId, "checksum resumed file %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
+                    LOG_WARN_FMT(
+                        "resumed backup file %s does not have expected checksum %s. The file will be recopied and backup will"
+                        " continue but this may be an issue unless the resumed backup path in the repository is known to be"
+                        " corrupted.\n"
+                        "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
+                        strPtr(file->name), file->checksumSha1);
                 }
-                // Else the file was copied
-                else
+
+                LOG_INFO_PID_FMT(
+                    processId, "backup file %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
+
+                // If the file had page checksums calculated during the copy
+                ASSERT((!file->checksumPage && checksumPageResult == NULL) || (file->checksumPage && checksumPageResult != NULL));
+
+                bool checksumPageError = false;
+                const VariantList *checksumPageErrorList = NULL;
+
+                if (checksumPageResult != NULL)
                 {
-                    // If the file had to be recopied then warn that there may be an issue with corruption in the repository
-                    // ??? This should really be below the message below for more context -- can be moved after the migration
-                    // ??? The name should be a pg path not manifest name -- can be fixed after the migration
-                    if (copyResult == backupCopyResultReCopy)
+                    // If the checksum was valid
+                    if (!varBool(kvGet(checksumPageResult, VARSTRDEF("valid"))))
                     {
-                        LOG_WARN_FMT(
-                            "resumed backup file %s does not have expected checksum %s. The file will be recopied and backup will"
-                            " continue but this may be an issue unless the resumed backup path in the repository is known to be"
-                            " corrupted.\n"
-                            "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
-                            strPtr(file->name), file->checksumSha1);
-                    }
+                        checksumPageError = true;
 
-                    LOG_INFO_PID_FMT(
-                        processId, "backup file %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
-
-                    // If the file had page checksums calculated during the copy
-                    bool checksumPageError = file->checksumPageError;
-                    const VariantList *checksumPageErrorList = file->checksumPageErrorList;
-
-                    if (checksumPageResult != NULL)
-                    {
-                        ASSERT(file->checksumPage);
-
-                        if (varBool(kvGet(checksumPageResult, VARSTRDEF("valid"))))
+                        if (!varBool(kvGet(checksumPageResult, VARSTRDEF("align"))))
                         {
-                            checksumPageError = false;
                             checksumPageErrorList = NULL;
+
+                            // ??? Update formatting after migration
+                            LOG_WARN_FMT(
+                                "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
+                                strPtr(fileLog), copySize, pageSize);
                         }
                         else
                         {
-                            checksumPageError = true;
+                            // Format the page checksum errors
+                            checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
+                            ASSERT(varLstSize(checksumPageErrorList) > 0);
 
-                            if (!varBool(kvGet(checksumPageResult, VARSTRDEF("align"))))
+                            String *error = strNew("");
+                            unsigned int errorTotalMin = 0;
+
+                            for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
                             {
-                                checksumPageErrorList = NULL;
+                                const Variant *const errorItem = varLstGet(checksumPageErrorList, errorIdx);
 
-                                // ??? Update formatting after migration
-                                LOG_WARN_FMT(
-                                    "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
-                                    strPtr(fileLog), copySize, pageSize);
-                            }
-                            else
-                            {
-                                // Format the page checksum errors
-                                checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
-                                ASSERT(varLstSize(checksumPageErrorList) > 0);
+                                // Add a comma if this is not the first item
+                                if (errorIdx != 0)
+                                    strCat(error, ", ");
 
-                                String *error = strNew("");
-                                unsigned int errorTotalMin = 0;
-
-                                for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
+                                // If an error range
+                                if (varType(errorItem) == varTypeVariantList)
                                 {
-                                    const Variant *const errorItem = varLstGet(checksumPageErrorList, errorIdx);
+                                    const VariantList *const errorItemList = varVarLst(errorItem);
+                                    ASSERT(varLstSize(errorItemList) == 2);
 
-                                    // Add a comma if this is not the first item
-                                    if (errorIdx != 0)
-                                        strCat(error, ", ");
-
-                                    // If an error range
-                                    if (varType(errorItem) == varTypeVariantList)
-                                    {
-                                        const VariantList *const errorItemList = varVarLst(errorItem);
-                                        ASSERT(varLstSize(errorItemList) == 2);
-
-                                        strCatFmt(
-                                            error, "%" PRIu64 "-%" PRIu64, varUInt64(varLstGet(errorItemList, 0)),
-                                            varUInt64(varLstGet(errorItemList, 1)));
-                                        errorTotalMin += 2;
-                                    }
-                                    else
-                                    {
-                                        ASSERT(varType(errorItem) == varTypeUInt64);
-
-                                        strCatFmt(error, "%" PRIu64, varUInt64(errorItem));
-                                        errorTotalMin++;
-                                    }
+                                    strCatFmt(
+                                        error, "%" PRIu64 "-%" PRIu64, varUInt64(varLstGet(errorItemList, 0)),
+                                        varUInt64(varLstGet(errorItemList, 1)));
+                                    errorTotalMin += 2;
                                 }
+                                // Else a single error
+                                else
+                                {
+                                    ASSERT(varType(errorItem) == varTypeUInt64);
 
-                                // Make message plural when appropriate
-                                const String *const plural = errorTotalMin > 1 ? STRDEF("s") : EMPTY_STR;
-
-                                // ??? Update formatting after migration
-                                LOG_WARN_FMT(
-                                    "invalid page checksum%s found in file %s at page%s %s", strPtr(plural), strPtr(fileLog),
-                                    strPtr(plural), strPtr(error));
+                                    strCatFmt(error, "%" PRIu64, varUInt64(errorItem));
+                                    errorTotalMin++;
+                                }
                             }
+
+                            // Make message plural when appropriate
+                            const String *const plural = errorTotalMin > 1 ? STRDEF("s") : EMPTY_STR;
+
+                            // ??? Update formatting after migration
+                            LOG_WARN_FMT(
+                                "invalid page checksum%s found in file %s at page%s %s", strPtr(plural), strPtr(fileLog),
+                                strPtr(plural), strPtr(error));
                         }
                     }
-
-                    // Update file info and remove any reference to the file's existence in a prior backup
-                    manifestFileUpdate(
-                        manifest, file->name, copySize, repoSize, copySize > 0 ? strPtr(copyChecksum) : "", VARSTR(NULL),
-                        file->checksumPage, checksumPageError, checksumPageErrorList);
                 }
+
+                // Update file info and remove any reference to the file's existence in a prior backup
+                manifestFileUpdate(
+                    manifest, file->name, copySize, repoSize, copySize > 0 ? strPtr(copyChecksum) : "", VARSTR(NULL),
+                    file->checksumPage, checksumPageError, checksumPageErrorList);
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1179,7 +1178,7 @@ backupJobResult(
 }
 
 /***********************************************************************************************************************************
-Save a copy of the backup manifest during processing
+Save a copy of the backup manifest during processing to preserve checksums for a possible resume
 ***********************************************************************************************************************************/
 static void
 backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
@@ -1303,6 +1302,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             {
                 lstAdd(*(List **)lstGet(*queueList, 0), &file);
             }
+            // Else find the correct queue by matching to file to a target
             else
             {
                 // Find the target that contains this file
@@ -1340,8 +1340,8 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 "HINT: is something wrong with the clock or filesystem timestamps?");
          }
 
-        // If there are no files to backup then we'll exit with an error unless.  The could happen if the database is down and
-        // backup is called with --no-online twice in a row.
+        // If there are no files to backup then we'll exit with an error.  The could happen if the database is down and backup is
+        // called with --no-online twice in a row.
         if (fileTotal == 0)
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
@@ -1409,9 +1409,11 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
         // Get a new job if there are any left
         BackupJobData *jobData = data;
 
-        // Determine where to begin scanning the queue (we'll stop when we get back here)
+        // Determine where to begin scanning the queue (we'll stop when we get back here).  When copying from the primary during
+        // backup from standby only queue 0 will be used.
         unsigned int queueOffset = jobData->backupStandby && clientIdx > 0 ? 1 : 0;
-        int queueIdx = jobData->backupStandby && clientIdx == 0 ? 0 : (int)(clientIdx % (lstSize(jobData->queueList) - queueOffset));
+        int queueIdx = jobData->backupStandby && clientIdx == 0 ?
+            0 : (int)(clientIdx % (lstSize(jobData->queueList) - queueOffset));
         int queueEnd = queueIdx;
 
         do
@@ -1450,6 +1452,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 break;
             }
 
+            // Don't get next queue when copying from primary during backup from standby since the primary only has one queue
             if (!jobData->backupStandby || clientIdx > 0)
                 queueIdx = backupJobQueueNext(clientIdx, queueIdx, lstSize(jobData->queueList) - queueOffset);
         }
@@ -1542,7 +1545,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, backupData->pgIdPrimary, 1));
 
         // Create the rest of the clients on the primary or standby depending on the value of backup-standby.  Note that standby
-        // backups doesn't count the primary client in process-max.
+        // backups don't count the primary client in process-max.
         unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (backupStandby ? 1 : 0);
         unsigned int pgId = backupStandby ? backupData->pgIdStandby : backupData->pgIdPrimary;
 
@@ -1596,7 +1599,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         }
         MEM_CONTEXT_TEMP_END();
 
-        // Output references or create hardlinks for all files
+        // Log references or create hardlinks for all files
         const char *const compressExt = jobData.compress ? "." GZIP_EXT : "";
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
@@ -1840,7 +1843,7 @@ cmdBackup(void)
         // Get the start timestamp which will later be written into the manifest to track total backup time
         time_t timestampStart = backupTime(backupData, false);
 
-        // Check if there is a prior manifest if diff/incr
+        // Check if there is a prior manifest when backup type is diff/incr
         Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
 
         // Start the backup

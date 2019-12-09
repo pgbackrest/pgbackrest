@@ -1908,8 +1908,8 @@ testRun(void)
                 "P01   INFO: backup file {[path]}/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
                 "P00   INFO: backup stop archive = 0000000105DB5DE000000000, lsn = 5db5de0/800000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000000\n"
                 "P00   INFO: new backup label = 20191027-181320F");
 
@@ -2014,8 +2014,8 @@ testRun(void)
                 "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
                 "P00   INFO: incr backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
                 "P00   INFO: backup stop archive = 0000000105DB8EB000000000, lsn = 5db8eb0/800000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB8EB000000000:0000000105DB8EB000000000\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I");
 
