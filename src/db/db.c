@@ -258,15 +258,15 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
     // Start backup after immediate checkpoint
     if (startFast)
     {
-        strCatFmt(result, ", true");
+        strCatFmt(result, ", " TRUE_Z);
     }
     // Else start backup at the next scheduled checkpoint
     else if (pgVersion >= PG_VERSION_84)
-        strCatFmt(result, ", false");
+        strCatFmt(result, ", " FALSE_Z);
 
     // Use non-exclusive backup mode when available
     if (pgVersion >= PG_VERSION_96)
-        strCatFmt(result, ", false");
+        strCatFmt(result, ", " FALSE_Z);
 
     // Complete query
     strCatFmt(result, ") as lsn");
@@ -366,11 +366,11 @@ dbBackupStopQuery(unsigned int pgVersion)
 
     // Use non-exclusive backup mode when available
     if (pgVersion >= PG_VERSION_96)
-        strCatFmt(result, "false");
+        strCatFmt(result, FALSE_Z);
 
     // Disable archive checking in pg_stop_backup() since we do this elsewhere
     if (pgVersion >= PG_VERSION_10)
-        strCatFmt(result, ", false");
+        strCatFmt(result, ", " FALSE_Z);
 
     // Complete query
     strCatFmt(result, ")");
@@ -701,6 +701,6 @@ String *
 dbToLog(const Db *this)
 {
     return strNewFmt(
-        "{client: %s, remoteClient: %s}", this->client == NULL ? "null" : strPtr(pgClientToLog(this->client)),
-        this->remoteClient == NULL ? "null" : strPtr(protocolClientToLog(this->remoteClient)));
+        "{client: %s, remoteClient: %s}", this->client == NULL ? NULL_Z : strPtr(pgClientToLog(this->client)),
+        this->remoteClient == NULL ? NULL_Z : strPtr(protocolClientToLog(this->remoteClient)));
 }

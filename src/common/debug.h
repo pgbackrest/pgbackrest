@@ -7,6 +7,7 @@ Debug Routines
 #include "common/assert.h"
 #include "common/stackTrace.h"
 #include "common/type/convert.h"
+#include "common/type/stringz.h"
 
 /***********************************************************************************************************************************
 NDEBUG indicates to C library routines that debugging is off -- set a more readable flag to use when debugging is on
@@ -83,7 +84,7 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
         char *buffer = stackTraceParamBuffer(#param);                                                                              \
                                                                                                                                    \
         if (param == NULL)                                                                                                         \
-            stackTraceParamAdd(typeToLog("null", buffer, STACK_TRACE_PARAM_MAX));                                                  \
+            stackTraceParamAdd(typeToLog(NULL_Z, buffer, STACK_TRACE_PARAM_MAX));                                                  \
         else                                                                                                                       \
         {                                                                                                                          \
             buffer[0] = '*';                                                                                                       \
@@ -98,7 +99,7 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
         char *buffer = stackTraceParamBuffer(#param);                                                                              \
                                                                                                                                    \
         if (param == NULL)                                                                                                         \
-            stackTraceParamAdd(typeToLog("null", buffer, STACK_TRACE_PARAM_MAX));                                                  \
+            stackTraceParamAdd(typeToLog(NULL_Z, buffer, STACK_TRACE_PARAM_MAX));                                                  \
         else if (*param == NULL)                                                                                                   \
             stackTraceParamAdd(typeToLog("*null", buffer, STACK_TRACE_PARAM_MAX));                                                 \
         else                                                                                                                       \

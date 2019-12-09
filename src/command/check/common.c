@@ -34,7 +34,7 @@ checkArchiveCommand(const String *archiveCommand)
     {
         THROW_FMT(
             ArchiveCommandInvalidError, "archive_command '%s' must contain %s", (archiveCommand != NULL ? strPtr(archiveCommand)
-            : "[null]"), PROJECT_BIN);
+            : "[" NULL_Z "]"), PROJECT_BIN);
     }
 
     FUNCTION_TEST_RETURN(result);

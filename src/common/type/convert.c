@@ -117,7 +117,7 @@ cvtBoolToZ(bool value, char *buffer, size_t bufferSize)
 const char *
 cvtBoolToConstZ(bool value)
 {
-    return value ? "true" : "false";
+    return value ? TRUE_Z : FALSE_Z;
 }
 
 /***********************************************************************************************************************************

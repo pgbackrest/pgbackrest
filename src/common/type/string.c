@@ -14,6 +14,7 @@ String Handler
 #include "common/memContext.h"
 #include "common/type/string.h"
 #include "common/type/stringList.h"
+#include "common/type/stringz.h"
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful
@@ -25,12 +26,12 @@ STRING_EXTERN(DOT_STR,                                              ".");
 STRING_EXTERN(DOTDOT_STR,                                           "..");
 STRING_EXTERN(EMPTY_STR,                                            "");
 STRING_EXTERN(EQ_STR,                                               "=");
-STRING_EXTERN(FALSE_STR,                                            "false");
+STRING_EXTERN(FALSE_STR,                                            FALSE_Z);
 STRING_EXTERN(FSLASH_STR,                                           "/");
 STRING_EXTERN(LF_STR,                                               "\n");
 STRING_EXTERN(N_STR,                                                "n");
-STRING_EXTERN(NULL_STR,                                             "null");
-STRING_EXTERN(TRUE_STR,                                             "true");
+STRING_EXTERN(NULL_STR,                                             NULL_Z);
+STRING_EXTERN(TRUE_STR,                                             TRUE_Z);
 STRING_EXTERN(Y_STR,                                                "y");
 STRING_EXTERN(ZERO_STR,                                             "0");
 
@@ -926,7 +927,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? strPtr(NULL_STR) : strPtr(formatFunc(object)));
+        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strPtr(formatFunc(object)));
     }
     MEM_CONTEXT_TEMP_END();
 
