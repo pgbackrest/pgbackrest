@@ -289,9 +289,6 @@ sub processManifest
         {name => 'strLsnStart', required => false},
     );
 
-    # Start backup test point
-    &log(TEST, TEST_BACKUP_START);
-
     # Get the master protocol for keep-alive
     my $oProtocolMaster =
         !isDbLocal({iRemoteIdx => $self->{iMasterRemoteIdx}}) ?
@@ -417,7 +414,7 @@ sub processManifest
 
     # If there are no files to backup then we'll exit with an error unless in test mode.  The other way this could happen is if
     # the database is down and backup is called with --no-online twice in a row.
-    if ($lFileTotal == 0 && !cfgOption(CFGOPT_TEST))
+    if ($lFileTotal == 0)
     {
         confess &log(ERROR, "no files have changed since the last backup - this seems unlikely", ERROR_FILE_MISSING);
     }
@@ -735,7 +732,6 @@ sub process
             else
             {
                 &log(WARN, "aborted backup ${strAbortedBackup} cannot be resumed: ${strReason}");
-                &log(TEST, TEST_BACKUP_NORESUME);
 
                 $oStorageRepo->pathRemove(STORAGE_REPO_BACKUP . "/${strAbortedBackup}", {bRecurse => true});
                 undef($oAbortedManifest);
@@ -912,13 +908,10 @@ sub process
         $oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $hTablespaceMap,
         $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false), $strTimelineCurrent, $strTimelineLast));
 
-    &log(TEST, TEST_MANIFEST_BUILD);
-
     # If resuming from an aborted backup
     if (defined($oAbortedManifest))
     {
         &log(WARN, "aborted backup ${strBackupLabel} of same type exists, will be cleaned to remove invalid files and resumed");
-        &log(TEST, TEST_BACKUP_RESUME);
 
         # Clean the backup path before resuming. The delta option may have changed from false to true during the resume clean
         # so set it to the result.
@@ -996,8 +989,6 @@ sub process
     }
 
     # Remotes no longer needed (destroy them here so they don't timeout)
-    &log(TEST, TEST_BACKUP_STOP);
-
     undef($oDbMaster);
     protocolDestroy(undef, undef, true);
 

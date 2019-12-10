@@ -863,8 +863,7 @@ sub run
                 \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', DB_FILE_PREFIX_TMP . '/' . DB_FILE_PREFIX_TMP . '.1', 'IGNORE');
         }
 
-        my $strBackup = $oHostBackup->backup(
-            $strType, 'add tablespace 1', {oExpectedManifest => \%oManifest, strOptionalParam => '--test'});
+        my $strBackup = $oHostBackup->backup($strType, 'add tablespace 1', {oExpectedManifest => \%oManifest});
 
         # Resume Incr Backup
         #---------------------------------------------------------------------------------------------------------------------------

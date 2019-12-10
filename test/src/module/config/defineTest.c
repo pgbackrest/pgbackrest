@@ -88,7 +88,6 @@ testRun(void)
 
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptSet), false, "option set is not internal");
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptPgHost), true, "option pg-host is internal");
-        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptTest), true, "option test is internal");
 
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptRecoveryOption), true, "recovery-option is multi");
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptDbInclude), true, "db-include is multi");

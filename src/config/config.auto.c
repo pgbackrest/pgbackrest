@@ -466,9 +466,6 @@ STRING_EXTERN(CFGOPT_TARGET_STR,                                    CFGOPT_TARGE
 STRING_EXTERN(CFGOPT_TARGET_ACTION_STR,                             CFGOPT_TARGET_ACTION);
 STRING_EXTERN(CFGOPT_TARGET_EXCLUSIVE_STR,                          CFGOPT_TARGET_EXCLUSIVE);
 STRING_EXTERN(CFGOPT_TARGET_TIMELINE_STR,                           CFGOPT_TARGET_TIMELINE);
-STRING_EXTERN(CFGOPT_TEST_STR,                                      CFGOPT_TEST);
-STRING_EXTERN(CFGOPT_TEST_DELAY_STR,                                CFGOPT_TEST_DELAY);
-STRING_EXTERN(CFGOPT_TEST_POINT_STR,                                CFGOPT_TEST_POINT);
 STRING_EXTERN(CFGOPT_TYPE_STR,                                      CFGOPT_TYPE);
 
 /***********************************************************************************************************************************
@@ -1786,30 +1783,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_TARGET_TIMELINE)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptTargetTimeline)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_TEST)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTest)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_TEST_DELAY)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTestDelay)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_TEST_POINT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTestPoint)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

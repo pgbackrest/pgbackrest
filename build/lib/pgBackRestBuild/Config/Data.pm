@@ -169,15 +169,6 @@ use constant CFGOPT_RECURSE                                         => 'recurse'
 use constant CFGOPT_SORT                                            => 'sort';
     push @EXPORT, qw(CFGOPT_SORT);
 
-# Command-line only test options
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPT_TEST                                            => 'test';
-    push @EXPORT, qw(CFGOPT_TEST);
-use constant CFGOPT_TEST_DELAY                                      => 'test-delay';
-    push @EXPORT, qw(CFGOPT_TEST_DELAY);
-use constant CFGOPT_TEST_POINT                                      => 'test-point';
-    push @EXPORT, qw(CFGOPT_TEST_POINT);
-
 # General options
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_ARCHIVE_TIMEOUT                                 => 'archive-timeout';
@@ -1135,43 +1126,6 @@ my %hConfigDefine =
         {
             &CFGCMD_STORAGE_LIST => {},
         }
-    },
-
-    # Command-line only test options
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_TEST =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_DEFAULT => false,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-        }
-    },
-
-    &CFGOPT_TEST_DELAY =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_DEFAULT => 5,
-        &CFGDEF_ALLOW_RANGE => [.1, 60],
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_TEST,
-            &CFGDEF_DEPEND_LIST => [true],
-        },
-        &CFGDEF_COMMAND => CFGOPT_TEST,
-    },
-
-    &CFGOPT_TEST_POINT =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_HASH,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_DEPEND => CFGOPT_TEST_DELAY,
-        &CFGDEF_COMMAND => CFGOPT_TEST,
     },
 
     # General options

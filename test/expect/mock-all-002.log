@@ -540,7 +540,7 @@ P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to
 P00  ERROR: [070]: tablespace symlink [TEST_PATH]/db-master/db/base/invalid_tblspc destination must not be in $PGDATA
 
 incr backup - add tablespace 1 (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --test --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.

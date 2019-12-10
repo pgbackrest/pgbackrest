@@ -2240,29 +2240,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptTargetTimeline,
     },
 
-    // test option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_TEST,
-        .val = PARSE_OPTION_FLAG | cfgOptTest,
-    },
-
-    // test-delay option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_TEST_DELAY,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTestDelay,
-    },
-
-    // test-point option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_TEST_POINT,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTestPoint,
-    },
-
     // type option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2425,9 +2402,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptStopAuto,
     cfgOptTablespaceMap,
     cfgOptTablespaceMapAll,
-    cfgOptTest,
-    cfgOptTestDelay,
-    cfgOptTestPoint,
     cfgOptType,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,

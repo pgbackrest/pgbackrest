@@ -131,13 +131,11 @@ sub endRetry
     my
     (
         $strOperation,
-        $strTest,
         $bWait
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->endRetry', \@_,
-            {name => 'strTest', required => false, trace => true},
             {name => 'bWait', required => false, default => true, trace => true}
         );
 
@@ -172,12 +170,6 @@ sub endRetry
             if ($self->{bShowOutputAsync})
             {
                 syswrite(*STDOUT, "    ${strLine}\n")
-            }
-
-            if (defined($strTest) && testCheck($strLine, $strTest))
-            {
-                &log(DEBUG, "Found test ${strTest}");
-                return true;
             }
         }
 
@@ -272,11 +264,6 @@ sub endRetry
         print "output:\n$self->{strOutLog}\n";
     }
 
-    if (defined($strTest))
-    {
-        confess &log(ASSERT, "test point ${strTest} was not found");
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -296,13 +283,11 @@ sub end
     my
     (
         $strOperation,
-        $strTest,
         $bWait
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->end', \@_,
-            {name => 'strTest', required => false, trace => true},
             {name => 'bWait', required => false, default => true, trace => true}
         );
 
@@ -311,7 +296,7 @@ sub end
 
     if (!defined($self->{iRetrySeconds}))
     {
-        $iExitStatus = $self->endRetry($strTest, $bWait);
+        $iExitStatus = $self->endRetry($bWait);
     }
     # Else loop until success or timeout
     else
@@ -322,7 +307,7 @@ sub end
         {
             $self->{bRetry} = false;
             $self->begin();
-            $iExitStatus = $self->endRetry($strTest, $bWait);
+            $iExitStatus = $self->endRetry($bWait);
 
             if ($self->{bRetry})
             {
@@ -334,7 +319,7 @@ sub end
         if ($self->{bRetry})
         {
             $self->begin();
-            $iExitStatus = $self->endRetry($strTest, $bWait);
+            $iExitStatus = $self->endRetry($bWait);
         }
     }
 
@@ -353,16 +338,9 @@ sub executeTest
 {
     my $strCommand = shift;
     my $oParam = shift;
-    my $strTest = shift;
 
     my $oExec = new pgBackRestTest::Common::ExecuteTest($strCommand, $oParam);
     $oExec->begin();
-
-    if (defined($strTest))
-    {
-        $oExec->end($strTest);
-    }
-
     $oExec->end();
 
     return $oExec->{strOutLog};

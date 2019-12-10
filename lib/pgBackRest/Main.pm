@@ -57,13 +57,6 @@ sub main
         if (!$bConfigLoaded)
         {
             configLoad(undef, $strConfigBin, $strCommand, \$strConfigJson);
-
-            # Set test options
-            if (cfgOptionTest(CFGOPT_TEST) && cfgOption(CFGOPT_TEST))
-            {
-                testSet(cfgOption(CFGOPT_TEST), cfgOption(CFGOPT_TEST_DELAY), cfgOption(CFGOPT_TEST_POINT, false));
-            }
-
             $bConfigLoaded = true;
         }
         else

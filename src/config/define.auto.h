@@ -146,9 +146,6 @@ typedef enum
     cfgDefOptTargetAction,
     cfgDefOptTargetExclusive,
     cfgDefOptTargetTimeline,
-    cfgDefOptTest,
-    cfgDefOptTestDelay,
-    cfgDefOptTestPoint,
     cfgDefOptType,
 } ConfigDefineOption;
 

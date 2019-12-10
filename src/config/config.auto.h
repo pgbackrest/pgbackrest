@@ -381,16 +381,10 @@ Option constants
     STRING_DECLARE(CFGOPT_TARGET_EXCLUSIVE_STR);
 #define CFGOPT_TARGET_TIMELINE                                      "target-timeline"
     STRING_DECLARE(CFGOPT_TARGET_TIMELINE_STR);
-#define CFGOPT_TEST                                                 "test"
-    STRING_DECLARE(CFGOPT_TEST_STR);
-#define CFGOPT_TEST_DELAY                                           "test-delay"
-    STRING_DECLARE(CFGOPT_TEST_DELAY_STR);
-#define CFGOPT_TEST_POINT                                           "test-point"
-    STRING_DECLARE(CFGOPT_TEST_POINT_STR);
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            168
+#define CFG_OPTION_TOTAL                                            165
 
 /***********************************************************************************************************************************
 Command enum
@@ -588,9 +582,6 @@ typedef enum
     cfgOptTargetAction,
     cfgOptTargetExclusive,
     cfgOptTargetTimeline,
-    cfgOptTest,
-    cfgOptTestDelay,
-    cfgOptTestPoint,
     cfgOptType,
 } ConfigOption;
 

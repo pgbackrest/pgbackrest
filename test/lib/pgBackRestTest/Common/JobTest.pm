@@ -574,7 +574,7 @@ sub end
     my $strTestDone = $self->{oProcess}{test};
     my $iTestDoneIdx = $self->{oProcess}{idx};
 
-    my $iExitStatus = $oExecDone->end(undef, $self->{iVmMax} == 1);
+    my $iExitStatus = $oExecDone->end($self->{iVmMax} == 1);
 
     if (defined($iExitStatus))
     {

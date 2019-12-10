@@ -268,9 +268,6 @@ sub keepAlive
     if (gettimeofday() - $self->{fKeepAliveTimeout} > $self->{fKeepAliveTime})
     {
         $self->noOp();
-
-        # Keep alive test point
-        &log(TEST, TEST_KEEP_ALIVE);
     }
 }
 

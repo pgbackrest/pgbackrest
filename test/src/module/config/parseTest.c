@@ -882,11 +882,11 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--test-delay=1"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--spool-path=/path/to/spool"));
+        strLstAdd(argList, strNew(TEST_COMMAND_ARCHIVE_GET));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'test-delay' not valid without option 'test'");
+            "option 'spool-path' not valid without option 'archive-async'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
