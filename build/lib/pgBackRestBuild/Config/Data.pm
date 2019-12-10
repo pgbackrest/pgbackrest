@@ -202,10 +202,6 @@ use constant CFGOPT_LOG_PATH                                        => 'log-path
 use constant CFGOPT_SPOOL_PATH                                      => 'spool-path';
     push @EXPORT, qw(CFGOPT_SPOOL_PATH);
 
-# Perl
-use constant CFGOPT_PERL_OPTION                                     => 'perl-option';
-    push @EXPORT, qw(CFGOPT_PERL_OPTION);
-
 # Logging
 use constant CFGOPT_LOG_LEVEL_CONSOLE                               => 'log-level-console';
     push @EXPORT, qw(CFGOPT_LOG_LEVEL_CONSOLE);
@@ -1385,32 +1381,6 @@ my %hConfigDefine =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
             &CFGCMD_STORAGE_LIST => {},
-        },
-    },
-
-    &CFGOPT_PERL_OPTION =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_LIST,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
         },
     },
 

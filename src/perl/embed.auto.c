@@ -7581,7 +7581,6 @@ static const EmbeddedModule embeddedModule[] =
             "'CFGOPT_NEUTRAL_UMASK',\n"
             "'CFGOPT_ONLINE',\n"
             "'CFGOPT_OUTPUT',\n"
-            "'CFGOPT_PERL_OPTION',\n"
             "'CFGOPT_PG_HOST',\n"
             "'CFGOPT_PG_HOST2',\n"
             "'CFGOPT_PG_HOST3',\n"

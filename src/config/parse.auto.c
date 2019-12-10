@@ -472,18 +472,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptOutput,
     },
 
-    // perl-option option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_PERL_OPTION,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptPerlOption,
-    },
-    {
-        .name = "reset-" CFGOPT_PERL_OPTION,
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPerlOption,
-    },
-
     // pg-host option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2294,7 +2282,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
-    cfgOptPerlOption,
     cfgOptPgHost,
     cfgOptPgHost + 1,
     cfgOptPgHost + 2,

@@ -340,7 +340,6 @@ STRING_EXTERN(CFGOPT_MANIFEST_SAVE_THRESHOLD_STR,                   CFGOPT_MANIF
 STRING_EXTERN(CFGOPT_NEUTRAL_UMASK_STR,                             CFGOPT_NEUTRAL_UMASK);
 STRING_EXTERN(CFGOPT_ONLINE_STR,                                    CFGOPT_ONLINE);
 STRING_EXTERN(CFGOPT_OUTPUT_STR,                                    CFGOPT_OUTPUT);
-STRING_EXTERN(CFGOPT_PERL_OPTION_STR,                               CFGOPT_PERL_OPTION);
 STRING_EXTERN(CFGOPT_PG1_HOST_STR,                                  CFGOPT_PG1_HOST);
 STRING_EXTERN(CFGOPT_PG2_HOST_STR,                                  CFGOPT_PG2_HOST);
 STRING_EXTERN(CFGOPT_PG3_HOST_STR,                                  CFGOPT_PG3_HOST);
@@ -775,14 +774,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_OUTPUT)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptOutput)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PERL_OPTION)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPerlOption)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

@@ -129,8 +129,6 @@ Option constants
     STRING_DECLARE(CFGOPT_ONLINE_STR);
 #define CFGOPT_OUTPUT                                               "output"
     STRING_DECLARE(CFGOPT_OUTPUT_STR);
-#define CFGOPT_PERL_OPTION                                          "perl-option"
-    STRING_DECLARE(CFGOPT_PERL_OPTION_STR);
 #define CFGOPT_PG1_HOST                                             "pg1-host"
     STRING_DECLARE(CFGOPT_PG1_HOST_STR);
 #define CFGOPT_PG1_HOST_CMD                                         "pg1-host-cmd"
@@ -384,7 +382,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            165
+#define CFG_OPTION_TOTAL                                            164
 
 /***********************************************************************************************************************************
 Command enum
@@ -456,7 +454,6 @@ typedef enum
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
-    cfgOptPerlOption,
     cfgOptPgHost,
     cfgOptPgHost2,
     cfgOptPgHost3,

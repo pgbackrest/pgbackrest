@@ -173,7 +173,6 @@ sub libcAutoExportTag
             'CFGOPT_NEUTRAL_UMASK',
             'CFGOPT_ONLINE',
             'CFGOPT_OUTPUT',
-            'CFGOPT_PERL_OPTION',
             'CFGOPT_PG_HOST',
             'CFGOPT_PG_HOST2',
             'CFGOPT_PG_HOST3',

@@ -97,19 +97,11 @@ testRun(void)
         strLstAdd(commandParamList, strNew("param2"));
         cfgCommandParamSet(commandParamList);
 
-        cfgOptionValidSet(cfgOptPerlOption, true);
-        StringList *perlList = strLstNew();
-        strLstAdd(perlList, strNew("-I."));
-        strLstAdd(perlList, strNew("-MDevel::Cover=-silent,1"));
-        cfgOptionSet(cfgOptPerlOption, cfgSourceParam, varNewVarLst(varLstNewStrLst(perlList)));
-
         TEST_RESULT_STR(
             strPtr(perlOptionJson()),
             "{"
             "\"db-include\":{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,"
                 "\"value\":{\"db1\":true,\"db2\":true}},"
-            "\"perl-option\":{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,"
-                "\"value\":{\"-I.\":true,\"-MDevel::Cover=-silent,1\":true}},"
             "\"recovery-option\":{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,"
                 "\"value\":{\"primary_conn_info\":\"blah\",\"standby_mode\":\"on\"}}"
             "}",
