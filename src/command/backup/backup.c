@@ -1437,7 +1437,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARBOOL(file->reference != NULL));
                 protocolCommandParamAdd(command, VARBOOL(jobData->compress));
-                protocolCommandParamAdd(command, VARBOOL(jobData->compressLevel));
+                protocolCommandParamAdd(command, VARUINT(jobData->compressLevel));
                 protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
                 protocolCommandParamAdd(command, VARBOOL(jobData->delta));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
