@@ -145,6 +145,20 @@ testRun(void)
             bufEq(decompressed, testDecompress(gzipDecompressNew(false), compressed, 1, 1)), true,
             "simple data - decompress small in/small out buffer");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on no compression data");
+
+        TEST_ERROR(testDecompress(gzipDecompressNew(true), bufNew(0), 1, 1), FormatError, "unexpected eof in compressed data");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on truncated compression data");
+
+        Buffer *truncated = bufNew(0);
+        bufCatSub(truncated, compressed, 0, bufUsed(compressed) - 1);
+
+        TEST_RESULT_UINT(bufUsed(truncated), bufUsed(compressed) - 1, "check truncated buffer size");
+        TEST_ERROR(testDecompress(gzipDecompressNew(false), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
+
         // Compress a large zero input buffer into small output buffer
         // -------------------------------------------------------------------------------------------------------------------------
         decompressed = bufNew(1024 * 1024 - 1);

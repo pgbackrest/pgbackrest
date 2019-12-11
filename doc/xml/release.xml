@@ -20,6 +20,14 @@
 
                         <p>Since the <cmd>backup</cmd> command is still using the <proper>Perl</proper> version of reconstruct this issue will not express unless <b>1)</b> there is a backup missing from <file>backup.info</file> and <b>2)</b> the <cmd>expire</cmd> command is run directly instead of running after <cmd>backup</cmd> as usual. This unlikely combination of events means this is probably not a problem in the field.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix segfault on unexpected EOF in <proper>gzip</proper> decompression.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-development-list>
