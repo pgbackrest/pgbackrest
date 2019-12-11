@@ -382,7 +382,7 @@ cvtSSizeToZ(ssize_t value, char *buffer, size_t bufferSize)
 }
 
 /***********************************************************************************************************************************
-Convert time to zero-terminated string
+Convert time_t to zero-terminated string
 ***********************************************************************************************************************************/
 size_t
 cvtTimeToZ(time_t value, char *buffer, size_t bufferSize)
