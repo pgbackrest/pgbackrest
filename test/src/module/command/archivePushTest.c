@@ -181,12 +181,23 @@ testRun(void)
 
         TEST_ERROR(cmdArchivePush(), ParamRequiredError, "WAL segment to push required");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        StringList *argListTemp = strLstDup(argList);
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
+        TEST_ERROR(
+            cmdArchivePush(), OptionRequiredError,
+            "option 'pg1-path' must be specified when relative wal paths are used"
+            "\nHINT: is %f passed to archive-push instead of %p?"
+            "\nHINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
+
         // Create pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
 
-        StringList *argListTemp = strLstDup(argList);
+        argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
@@ -415,7 +426,8 @@ testRun(void)
         strLstAddZ(argList, "pg_wal/bogus");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        THROW_ON_SYS_ERROR(chdir(testPath()) != 0, PathMissingError, "unable to chdir()");
+        storagePathCreateP(storageTest, cfgOptionStr(cfgOptPgPath));
+        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,

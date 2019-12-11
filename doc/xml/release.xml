@@ -16,6 +16,17 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-ideator id="milosz.suchy"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix archive-push/archive-get when <path>PGDATA</path> is symlinked.</p>
+
+                        <p>These commands tried to use <code>cwd()</code> as <path>PGDATA</path> but this would disagree with the path configured in pgBackRest if <path>PGDATA</path> was symlinked.  If <code>cwd()</code> does not match the <backrest/> path then <code>chdir()</code> to the path and make sure the next <code>cwd()</code> matches the result from the first call.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix reference list when <file>backup.info</file> is reconstructed in <cmd>expire</cmd> command.</p>
 
                         <p>Since the <cmd>backup</cmd> command is still using the <proper>Perl</proper> version of reconstruct this issue will not express unless <b>1)</b> there is a backup missing from <file>backup.info</file> and <b>2)</b> the <cmd>expire</cmd> command is run directly instead of running after <cmd>backup</cmd> as usual. This unlikely combination of events means this is probably not a problem in the field.</p>
@@ -7807,6 +7818,11 @@
         <contributor id="mihail.shvein">
             <contributor-name-display>Mihail Shvein</contributor-name-display>
             <contributor-id type="github">M1hacka</contributor-id>
+        </contributor>
+
+        <contributor id="milosz.suchy">
+            <contributor-name-display>Milosz Suchy</contributor-name-display>
+            <contributor-id type="github">Yuxael</contributor-id>
         </contributor>
 
         <contributor id="mohamad.el.rifai">

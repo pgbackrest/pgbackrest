@@ -588,6 +588,8 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
+        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, false)
@@ -623,8 +625,6 @@ testRun(void)
 
         // Write out a WAL segment for success
         // -------------------------------------------------------------------------------------------------------------------------
-        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
-
         storagePutP(
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
             BUFSTRDEF("SHOULD-BE-A-REAL-WAL-FILE"));

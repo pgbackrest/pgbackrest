@@ -172,14 +172,39 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("walPath()"))
     {
-        THROW_ON_SYS_ERROR(chdir("/tmp") != 0, PathMissingError, "unable to chdir()");
+        const String *pgPath = storagePathP(storageTest, STRDEF("pg"));
+        storagePathCreateP(storageTest, pgPath);
 
-        TEST_RESULT_STR(strPtr(walPath(strNew("/absolute/path"))), "/absolute/path", "absolute path");
-        TEST_RESULT_STR(strPtr(walPath(strNew("relative/path"))), "/tmp/relative/path", "relative path");
+        TEST_RESULT_STR(
+            strPtr(walPath(strNew("/absolute/path"), pgPath, strNew("test"))), "/absolute/path", "absolute path");
+
+        THROW_ON_SYS_ERROR(chdir(strPtr(pgPath)) != 0, PathMissingError, "unable to chdir()");
+        TEST_RESULT_STR_STR(
+            walPath(strNew("relative/path"), pgPath, strNew("test")), strNewFmt("%s/relative/path", strPtr(pgPath)),
+            "relative path");
+
+
+        const String *pgPathLink = storagePathP(storageTest, STRDEF("pg-link"));
+        THROW_ON_SYS_ERROR_FMT(
+            symlink(strPtr(pgPath), strPtr(pgPathLink)) == -1, FileOpenError,
+            "unable to create symlink '%s' to '%s'", strPtr(pgPath), strPtr(pgPathLink));
+
+        THROW_ON_SYS_ERROR(chdir(strPtr(pgPath)) != 0, PathMissingError, "unable to chdir()");
+        TEST_RESULT_STR_STR(
+            walPath(strNew("relative/path"), pgPathLink, strNew("test")), strNewFmt("%s/relative/path", strPtr(pgPathLink)),
+            "relative path");
+
 
         THROW_ON_SYS_ERROR(chdir("/") != 0, PathMissingError, "unable to chdir()");
+        TEST_ERROR(
+            walPath(strNew("relative/path"), pgPathLink, strNew("test")), AssertError,
+            hrnReplaceKey("working path '/' is not the same path as '{[path]}/pg-link'"));
 
-        TEST_RESULT_STR(strPtr(walPath(strNew("relative/path"))), "/relative/path", "relative path");
+        TEST_ERROR(
+            walPath(strNew("relative/path"), NULL, strNew("test")), OptionRequiredError,
+            "option 'pg1-path' must be specified when relative wal paths are used\n"
+                "HINT: is %f passed to test instead of %p?\n"
+                "HINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
     }
 
     // *****************************************************************************************************************************
