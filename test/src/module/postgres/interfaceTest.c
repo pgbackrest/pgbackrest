@@ -102,7 +102,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgLsnFromStr(), pgLsnToStr(), and pgLsnToWalSegment()"))
+    if (testBegin("pgLsnFromStr(), pgLsnToStr(), pgLsnToWalSegment(), and pgLsnRangeToWalSegmentList()"))
     {
         TEST_RESULT_UINT(pgLsnFromStr(STRDEF("1/1")), 0x0000000100000001, "lsn to string");
         TEST_RESULT_UINT(pgLsnFromStr(STRDEF("ffffffff/ffffffff")), 0xFFFFFFFFFFFFFFFF, "lsn to string");
@@ -115,6 +115,42 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x1000000), "00000001FFFFFFFF000000AA", "lsn to wal segment");
         TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x40000000), "00000001FFFFFFFF00000002", "lsn to wal segment");
         TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFF40000000, 0x40000000), "00000001FFFFFFFF00000001", "lsn to wal segment");
+
+        TEST_RESULT_STR_Z(
+            strLstJoin(
+                pgLsnRangeToWalSegmentList(
+                    PG_VERSION_92, 1, pgLsnFromStr(STRDEF("1/60")), pgLsnFromStr(STRDEF("1/60")), 16 * 1024 * 1024),
+                ", "),
+            "000000010000000100000000", "get single");
+        TEST_RESULT_STR_Z(
+            strLstJoin(
+                pgLsnRangeToWalSegmentList(
+                    PG_VERSION_92, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/1000000")), 16 * 1024 * 1024),
+                ", "),
+            "0000000200000001000000FD, 0000000200000001000000FE, 000000020000000200000000, 000000020000000200000001",
+            "get range <= 9.2");
+        TEST_RESULT_STR_Z(
+            strLstJoin(
+                pgLsnRangeToWalSegmentList(
+                    PG_VERSION_93, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/60")), 16 * 1024 * 1024),
+                ", "),
+            "0000000200000001000000FD, 0000000200000001000000FE, 0000000200000001000000FF, 000000020000000200000000",
+            "get range > 9.2");
+        TEST_RESULT_STR_Z(
+            strLstJoin(
+                pgLsnRangeToWalSegmentList(
+                    PG_VERSION_11, 2, pgLsnFromStr(STRDEF("A/800")), pgLsnFromStr(STRDEF("B/C0000000")), 1024 * 1024 * 1024),
+                ", "),
+            "000000020000000A00000000, 000000020000000A00000001, 000000020000000A00000002, 000000020000000A00000003"
+                ", 000000020000000B00000000, 000000020000000B00000001, 000000020000000B00000002, 000000020000000B00000003",
+            "get range >= 11/1GB");
+        TEST_RESULT_STR_Z(
+            strLstJoin(
+                pgLsnRangeToWalSegmentList(
+                    PG_VERSION_11, 3, pgLsnFromStr(STRDEF("7/FFEFFFFF")), pgLsnFromStr(STRDEF("8/001AAAAA")), 1024 * 1024),
+                ", "),
+            "000000030000000700000FFE, 000000030000000700000FFF, 000000030000000800000000, 000000030000000800000001",
+            "get range >= 11/1MB");
     }
 
     // *****************************************************************************************************************************
