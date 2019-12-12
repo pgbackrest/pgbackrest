@@ -184,8 +184,6 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Don't allow backup from standby when offline
-    // CSHANG -- in Perl this error message said "standby is not properly configured" which doesn't seem right because it doesn't
-    // seem like you can get past dbObjectGet() in this case.  This as been downgraded to an offline warning here.
     if (!cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby))
     {
         LOG_WARN(
@@ -338,8 +336,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             {
                  InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
 
-                 // The prior backup for a diff must be full
-                 if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
+                // The prior backup for a diff must be full
+                if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
                     continue;
 
                 // The backups must come from the same cluster ??? This should enable delta instead
@@ -375,7 +373,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 
                 // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
                 // is guaranteed to contain a real file -- like references.  Also annoying that if the full backup was not
-                // hardlinked then an diff/incr can't be because we need more testing.
+                // hardlinked then an diff/incr can't be used because we need more testing.
                 if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
                 {
                     LOG_WARN_FMT(
@@ -664,7 +662,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                                 "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
                                 strPtr(manifestData(manifest)->backrestVersion), strPtr(manifestResumeData->backrestVersion));
                         }
-                        // Check backup type ??? Do we really care about the backup type?
+                        // Check backup type because new backup label must be the same type as resume backup label
                         else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
                         {
                             reason = strNewFmt(
@@ -680,7 +678,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                                 manifestData(manifest)->backupLabelPrior ?
                                     strPtr(manifestData(manifest)->backupLabelPrior) : "<undef>");
                         }
-                        // Check compression.  Compression can't be changed between backups so resume won't work either.
+                        // Check compression. Compression can't be changed between backups so resume won't work either.
                         else if (manifestResumeData->backupOptionCompress != cfgOptionBool(cfgOptCompress))
                         {
                             reason = strNewFmt(
@@ -688,9 +686,6 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                                 cvtBoolToConstZ(cfgOptionBool(cfgOptCompress)),
                                 cvtBoolToConstZ(manifestResumeData->backupOptionCompress));
                         }
-                        // CSHANG -- no longer checking hardlinks here since we will only resume files that have no reference in the
-                        // resumed manifest (which was true in Perl, too).  No reference means no hardlink, so hardlinks will all be
-                        // removed during clean if they exist.
                         else
                             usable = true;
                     }
