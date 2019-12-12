@@ -879,7 +879,7 @@ manifestNewBuild(
             .checksumPage = checksumPage,
             .tablespaceList = tablespaceList,
             .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
-            .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/pg_%s", strPtr(pgWalName(pgVersion))),
+            .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(pgWalPath(pgVersion))),
             .pgPath = storagePathP(storagePg, NULL),
         };
 

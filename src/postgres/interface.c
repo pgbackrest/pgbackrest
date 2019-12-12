@@ -30,6 +30,10 @@ STRING_EXTERN(PG_PATH_GLOBAL_STR,                                   PG_PATH_GLOB
 STRING_EXTERN(PG_NAME_WAL_STR,                                      PG_NAME_WAL);
 STRING_EXTERN(PG_NAME_XLOG_STR,                                     PG_NAME_XLOG);
 
+// Wal path names depending on version
+STRING_STATIC(PG_PATH_PGWAL_STR,                                    "pg_wal");
+STRING_STATIC(PG_PATH_PGXLOG_STR,                                   "pg_xlog");
+
 // Transaction commit log path names depending on version
 STRING_STATIC(PG_PATH_PGCLOG_STR,                                   "pg_clog");
 STRING_STATIC(PG_PATH_PGXACT_STR,                                   "pg_xact");
@@ -640,6 +644,17 @@ pgWalName(unsigned int pgVersion)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
+}
+
+/**********************************************************************************************************************************/
+const String *
+pgWalPath(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGWAL_STR : PG_PATH_PGXLOG_STR);
 }
 
 /**********************************************************************************************************************************/

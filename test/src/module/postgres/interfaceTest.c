@@ -117,7 +117,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgLsnName(), pgTablespaceId(), pgWalName(), and pgXactPath()"))
+    if (testBegin("pgLsnName(), pgTablespaceId(), pgWalName(), pgWalPath(), and pgXactPath()"))
     {
         TEST_RESULT_STR(strPtr(pgLsnName(PG_VERSION_96)), "location", "check location name");
         TEST_RESULT_STR(strPtr(pgLsnName(PG_VERSION_10)), "lsn", "check lsn name");
@@ -129,6 +129,9 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(pgWalName(PG_VERSION_96)), "xlog", "check xlog name");
         TEST_RESULT_STR(strPtr(pgWalName(PG_VERSION_10)), "wal", "check wal name");
+
+        TEST_RESULT_STR_Z(pgWalPath(PG_VERSION_96), "pg_xlog", "check xlog path");
+        TEST_RESULT_STR_Z(pgWalPath(PG_VERSION_10), "pg_wal", "check wal path");
 
         TEST_RESULT_STR(strPtr(pgXactPath(PG_VERSION_96)), "pg_clog", "check pg_clog name");
         TEST_RESULT_STR(strPtr(pgXactPath(PG_VERSION_10)), "pg_xact", "check pg_xact name");

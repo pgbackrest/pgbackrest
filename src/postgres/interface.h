@@ -137,6 +137,9 @@ const String *pgLsnName(unsigned int pgVersion);
 
 const String *pgWalName(unsigned int pgVersion);
 
+// Get wal path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
+const String *pgWalPath(unsigned int pgVersion);
+
 // Get transaction commit log path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
 const String *pgXactPath(unsigned int pgVersion);
 
