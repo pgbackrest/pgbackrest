@@ -90,17 +90,14 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        filter = backupRegExpP(.incremental = true, .differential = true);
+        filter = backupRegExpP(.incremental = true, .differential = true, .noAnchorEnd = true);
 
         TEST_RESULT_STR(
             strPtr(filter),
-            "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(D|I)$", "diff and incr backup regex with anchors");
+            "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(D|I)", "diff and incr backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "   match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "   match diff");
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
-        TEST_RESULT_BOOL(
-            regExpMatchOne(
-                filter, strNew("12341234-123123F_12341234-123123DG")), false, "   does not match with trailing character");
         TEST_RESULT_BOOL(
             regExpMatchOne(
                 filter, strNew("A12341234-123123F_12341234-123123I")), false, "   does not match with leading character");

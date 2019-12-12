@@ -26,6 +26,7 @@ backupRegExp(BackupRegExpParam param)
         FUNCTION_LOG_PARAM(BOOL, param.full);
         FUNCTION_LOG_PARAM(BOOL, param.differential);
         FUNCTION_LOG_PARAM(BOOL, param.incremental);
+        FUNCTION_LOG_PARAM(BOOL, param.noAnchorEnd);
     FUNCTION_LOG_END();
 
     ASSERT(param.full || param.differential || param.incremental);
@@ -76,7 +77,8 @@ backupRegExp(BackupRegExpParam param)
     }
 
     // Append the end anchor
-    strCat(result, "$");
+    if (!param.noAnchorEnd)
+        strCat(result, "$");
 
     FUNCTION_LOG_RETURN(STRING, result);
 }
