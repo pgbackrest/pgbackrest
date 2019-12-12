@@ -371,6 +371,16 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
     }
     MEM_CONTEXT_TEMP_END();
 
+    if (result == NULL && timeout != 0)
+    {
+        THROW_FMT(
+            ArchiveTimeoutError,
+            "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
+                "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+                "HINT: check the PostgreSQL server log for errors.",
+            strPtr(walSegment), timeout);
+    }
+
     FUNCTION_LOG_RETURN(STRING, result);
 }
 

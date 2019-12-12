@@ -221,9 +221,11 @@ testRun(void)
 
         storagePathCreateP(storageTest, strNew("archive/db/9.6-2/1234567812345678"));
         TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 0), NULL, "no segment");
-        TEST_RESULT_PTR(
-            walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 500), NULL,
-            "no segment after 500ms");
+        TEST_ERROR(
+            walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 100), ArchiveTimeoutError,
+            "WAL segment 123456781234567812345678 was not archived before the 100ms timeout\n"
+            "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+            "HINT: check the PostgreSQL server log for errors.");
 
         // Check timeout by making the wal segment appear after 250ms
         HARNESS_FORK_BEGIN()

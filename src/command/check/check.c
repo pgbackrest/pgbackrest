@@ -135,22 +135,10 @@ checkPrimary(const DbGetResult dbGroup)
         TimeMSec archiveTimeout = (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
         const String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, walSegment, archiveTimeout);
 
-        if (walSegmentFile != NULL)
-        {
-            LOG_INFO_FMT(
-                "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
-                strPtr(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
-                strPtr(walSegmentFile)))));
-        }
-        else
-        {
-            THROW_FMT(
-                ArchiveTimeoutError,
-                "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
-                    "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-                    "HINT: check the PostgreSQL server log for errors.",
-                strPtr(walSegment), archiveTimeout);
-        }
+        LOG_INFO_FMT(
+            "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
+            strPtr(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
+            strPtr(walSegmentFile)))));
     }
 
     FUNCTION_LOG_RETURN_VOID();
