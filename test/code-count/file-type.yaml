@@ -175,10 +175,6 @@ lib/pgBackRest/Archive/Common.pm:
   class: core
   type: perl
 
-lib/pgBackRest/Archive/Get/File.pm:
-  class: core
-  type: perl
-
 lib/pgBackRest/Archive/Info.pm:
   class: core
   type: perl
@@ -1079,6 +1075,10 @@ src/common/type/mcv.h:
   class: core
   type: c/h
 
+src/common/type/param.h:
+  class: core
+  type: c/h
+
 src/common/type/string.c:
   class: core
   type: c
@@ -1092,6 +1092,10 @@ src/common/type/stringList.c:
   type: c
 
 src/common/type/stringList.h:
+  class: core
+  type: c/h
+
+src/common/type/stringz.h:
   class: core
   type: c/h
 
@@ -1716,10 +1720,6 @@ test/lib/pgBackRestTest/Module/Backup/BackupUnitPerlTest.pm:
   type: perl
 
 test/lib/pgBackRestTest/Module/Command/CommandArchiveCommonPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Command/CommandArchiveGetPerlTest.pm:
   class: test/module
   type: perl
 

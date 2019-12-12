@@ -26,7 +26,7 @@ to:
 use constant PROJECT_VERSION                                        => '2.14';
 ```
 
-## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.  The `u19` vm is also required.
+## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
 ```
 doc/release.pl --build
 ```
