@@ -799,10 +799,12 @@ testRun(void)
 
         TEST_ERROR(
             backupInit(infoBackupNew(PG_VERSION_11, 1000000000000001100, NULL)), BackupMismatchError,
-            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 11, system-id 1000000000000001100");
+            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 11, system-id 1000000000000001100\n"
+            "HINT: is this the correct stanza?");
         TEST_ERROR(
             backupInit(infoBackupNew(PG_VERSION_10, 1000000000000001100, NULL)), BackupMismatchError,
-            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 10, system-id 1000000000000001100");
+            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 10, system-id 1000000000000001100\n"
+            "HINT: is this the correct stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reset start-fast when PostgreSQL < 8.4");

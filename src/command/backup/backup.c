@@ -227,9 +227,9 @@ backupInit(const InfoBackup *infoBackup)
     {
         THROW_FMT(
             BackupMismatchError,
-            PG_NAME " version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64,
-            strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId, strPtr(pgVersionToStr(infoPg.version)),
-            infoPg.systemId);
+            PG_NAME " version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64 "\n"
+            "HINT: is this the correct stanza?", strPtr(pgVersionToStr(pgControl.version)), pgControl.systemId,
+            strPtr(pgVersionToStr(infoPg.version)), infoPg.systemId);
     }
 
     // Only allow stop auto in PostgreSQL >= 9.3 and <= 9.5
@@ -514,7 +514,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypePath:
         {
-            // If the path was not found remove it
+            // If the path was not found in the new manifest then remove it
             if (manifestPathFindDefault(resumeData->manifest, manifestName, NULL) == NULL)
             {
                 LOG_DETAIL_FMT("remove path '%s' from resumed backup", strPtr(storagePathP(storageRepo(), backupPath)));
@@ -554,8 +554,6 @@ void backupResumeCallback(void *data, const StorageInfo *info)
                 removeReason = "reference in manifest";
             else if (fileResume == NULL)
                 removeReason = "missing in resumed manifest";
-            // CSHANG -- this is new and means we don't having to worry about checking for hardlinks on resume because a hardlink
-            // will always have a reference.
             else if (fileResume->reference != NULL)
                 removeReason = "reference in resumed manifest";
             else if (fileResume->checksumSha1[0] == '\0')
