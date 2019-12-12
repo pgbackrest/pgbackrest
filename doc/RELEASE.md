@@ -143,5 +143,5 @@ test/test.pl --vm=u18 --build-only
 Commit and push to integration:
 ```
 git commit -m "Begin v2.15 development."
-git push origin master
+git push origin integration
 ```
