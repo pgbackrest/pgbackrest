@@ -97,6 +97,7 @@ test.pl [options]
    --profile            generate profile info
    --no-debug           don't generate a debug build
    --scale              scale performance tests
+   --tz                 test with the specified timezone
    --debug-test-trace   test stack trace for low-level functions (slow, esp w/valgrind, may cause timeouts)
 
  Report Options:
@@ -169,6 +170,7 @@ my $bNoDebug = false;
 my $iScale = 1;
 my $bDebugTestTrace = false;
 my $iRetry = 0;
+my $strTimeZone = undef;
 
 my @cmdOptions = @ARGV;
 
@@ -215,6 +217,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-optimize' => \$bNoOptimize,
             'no-debug', => \$bNoDebug,
             'scale=s' => \$iScale,
+            'tz=s', => \$strTimeZone,
             'debug-test-trace', => \$bDebugTestTrace,
             'retry=s' => \$iRetry)
     or pod2usage(2);
@@ -1322,7 +1325,8 @@ eval
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $strVmHost, $bVmOut,
                         $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync,
                         $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bBackTrace,
-                        $bProfile, $iScale, !$bNoDebug, $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
+                        $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                        $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -1513,6 +1517,12 @@ eval
 
     # Create host group for containers
     my $oHostGroup = hostGroupGet();
+
+    # Set timezone
+    if (defined($strTimeZone))
+    {
+        $ENV{TZ} = $strTimeZone;
+    }
 
     # Run the test
     testRun($stryModule[0], $stryModuleTest[0])->process(

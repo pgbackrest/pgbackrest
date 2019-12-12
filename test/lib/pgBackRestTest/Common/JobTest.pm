@@ -76,6 +76,7 @@ sub new
         $self->{bBackTrace},
         $self->{bProfile},
         $self->{iScale},
+        $self->{strTimeZone},
         $self->{bDebug},
         $self->{bDebugTestTrace},
         $self->{iBuildMax},
@@ -107,6 +108,7 @@ sub new
             {name => 'bBackTrace'},
             {name => 'bProfile'},
             {name => 'iScale'},
+            {name => 'strTimeZone', required => false},
             {name => 'bDebug'},
             {name => 'bDebugTestTrace'},
             {name => 'iBuildMax'},
@@ -278,6 +280,7 @@ sub run
                 (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
                 ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
                 ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
+                ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
                 ($self->{bLogForce} ? ' --log-force' : '') .
                 ($self->{bDryRun} ? ' --dry-run' : '') .
                 ($self->{bDryRun} ? ' --vm-out' : '') .
@@ -393,6 +396,16 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_IDX\]\}/$self->{iVmIdx}/g;
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
                 $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
+
+                # Set timezone
+                if (defined($self->{strTimeZone}))
+                {
+                    $strTestC =~ s/\{\[C\_TEST\_TZ\]\}/setenv\("TZ", "$self->{strTimeZone}", true\);/g;
+                }
+                else
+                {
+                    $strTestC =~ s/\{\[C\_TEST\_TZ\]\}/\/\/ No timezone specified/g;
+                }
 
                 # Set default log level
                 my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});
