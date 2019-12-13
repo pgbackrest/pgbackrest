@@ -310,7 +310,6 @@ STRING_EXTERN(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX_STR,                    CFGOPT_ARCHI
 STRING_EXTERN(CFGOPT_ARCHIVE_TIMEOUT_STR,                           CFGOPT_ARCHIVE_TIMEOUT);
 STRING_EXTERN(CFGOPT_BACKUP_STANDBY_STR,                            CFGOPT_BACKUP_STANDBY);
 STRING_EXTERN(CFGOPT_BUFFER_SIZE_STR,                               CFGOPT_BUFFER_SIZE);
-STRING_EXTERN(CFGOPT_C_STR,                                         CFGOPT_C);
 STRING_EXTERN(CFGOPT_CHECKSUM_PAGE_STR,                             CFGOPT_CHECKSUM_PAGE);
 STRING_EXTERN(CFGOPT_CMD_SSH_STR,                                   CFGOPT_CMD_SSH);
 STRING_EXTERN(CFGOPT_COMMAND_STR,                                   CFGOPT_COMMAND);
@@ -534,14 +533,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_BUFFER_SIZE)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptBufferSize)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_C)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptC)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

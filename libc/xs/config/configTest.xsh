@@ -1,11 +1,8 @@
 /***********************************************************************************************************************************
-Perl Configuration
+Config XS Header
 ***********************************************************************************************************************************/
-#include "build.auto.h"
-
 #include <string.h>
 
-#include "common/debug.h"
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "config/config.h"
@@ -16,8 +13,6 @@ Build JSON output from options
 String *
 perlOptionJson(void)
 {
-    FUNCTION_TEST_VOID();
-
     String *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -121,5 +116,5 @@ perlOptionJson(void)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    return result;
 }

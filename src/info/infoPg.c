@@ -297,7 +297,7 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
 
         InfoPgData pgData = infoPgDataCurrent(saveData->infoPg);
 
-        // These need to be saved because older Perl and C versions expect them
+        // These need to be saved because older pgBackRest versions expect them
         if (saveData->infoPg->type == infoPgBackup)
         {
             infoSaveValue(
@@ -331,7 +331,7 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
             {
                 kvPut(pgDataKv, INFO_KEY_DB_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
 
-                // These need to be saved because older Perl and C versions expect them
+                // These need to be saved because older pgBackRest versions expect them
                 kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgCatalogVersion(pgData.version)));
                 kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgControlVersion(pgData.version)));
             }

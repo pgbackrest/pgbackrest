@@ -14,8 +14,6 @@ use File::Basename qw(basename);
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::LibC qw(:storage);
-use pgBackRest::Protocol::Helper;
-use pgBackRest::Protocol::Storage::Remote;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -45,35 +43,24 @@ sub storageDb
     my
     (
         $strOperation,
-        $iRemoteIdx,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::storageDb', \@_,
-            {name => 'iRemoteIdx', optional => true, default => cfgOptionValid(CFGOPT_HOST_ID) ? cfgOption(CFGOPT_HOST_ID) : 1,
-                trace => true},
         );
 
     # Create storage if not defined
-    if (!defined($hStorage->{&STORAGE_DB}{$iRemoteIdx}))
+    if (!defined($hStorage->{&STORAGE_DB}))
     {
-        if (isDbLocal({iRemoteIdx => $iRemoteIdx}))
-        {
-            $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Storage::Storage(
-                STORAGE_DB, {lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
-        }
-        else
-        {
-            $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Protocol::Storage::Remote(
-                protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $iRemoteIdx));
-        }
+        $hStorage->{&STORAGE_DB} = new pgBackRest::Storage::Storage(
+            STORAGE_DB, {lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oStorageDb', value => $hStorage->{&STORAGE_DB}{$iRemoteIdx}, trace => true},
+        {name => 'oStorageDb', value => $hStorage->{&STORAGE_DB}, trace => true},
     );
 }
 
@@ -99,17 +86,8 @@ sub storageRepo
     # Create storage if not defined
     if (!defined($hStorage->{&STORAGE_REPO}))
     {
-        if (isRepoLocal())
-        {
-            $hStorage->{&STORAGE_REPO} = new pgBackRest::Storage::Storage(
-                STORAGE_REPO, {lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
-        }
-        else
-        {
-            # Create remote storage
-            $hStorage->{&STORAGE_REPO} = new pgBackRest::Protocol::Storage::Remote(
-                protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP));
-        }
+        $hStorage->{&STORAGE_REPO} = new pgBackRest::Storage::Storage(
+            STORAGE_REPO, {lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
     }
 
     # Return from function and log return values if any

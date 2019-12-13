@@ -93,7 +93,6 @@ my @stryCFile =
     'config/define.c',
     'config/load.c',
     'config/parse.c',
-    'perl/config.c',
 	'protocol/client.c',
 	'protocol/command.c',
 	'protocol/helper.c',

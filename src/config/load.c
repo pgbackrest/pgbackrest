@@ -236,8 +236,7 @@ cfgLoadUpdateOption(void)
 }
 
 /***********************************************************************************************************************************
-Attempt to set the log file and turn file logging off if the file cannot be opened.  This is so the Perl code won't attempt to open
-the file again and error out.
+Attempt to set the log file and turn file logging off if the file cannot be opened
 ***********************************************************************************************************************************/
 void
 cfgLoadLogFile(void)

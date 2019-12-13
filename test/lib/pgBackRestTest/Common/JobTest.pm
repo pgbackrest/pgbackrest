@@ -233,8 +233,8 @@ sub run
                     $rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} = true;
                 }
 
-                # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
-                if ($self->{oTest}->{&TEST_VM} ne VM_NONE && (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ}))
+                # If testing Perl code (or C code that calls the binary) install binary
+                if ($self->{oTest}->{&TEST_VM} ne VM_NONE && (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_BIN_REQ}))
                 {
                     jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
                 }
@@ -433,8 +433,7 @@ sub run
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/test.c", $strTestC);
 
                 # Create build.auto.h
-                my $strBuildAutoH =
-                    "#define HAVE_LIBPERL\n";
+                my $strBuildAutoH = "";
 
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/" . BUILD_AUTO_H, $strBuildAutoH);
 
@@ -451,8 +450,7 @@ sub run
 
                 # Flags that are common to all builds
                 my $strCommonFlags =
-                    '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200112L' .
-                        ' `perl -MExtUtils::Embed -e ccopts`' .
+                    '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200809L -D_FILE_OFFSET_BITS=64' .
                         ' `xml2-config --cflags`' . ($self->{bProfile} ? " -pg" : '') .
                         ' -I`pg_config --includedir`' .
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
@@ -504,7 +502,6 @@ sub run
                     "LDFLAGS=-lcrypto -lssl -lxml2 -lz" .
                         (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
-                        " `perl -MExtUtils::Embed -e ldopts`\n" .
                     "\n" .
                     "SRCS=" . join(' ', @stryCFile) . "\n" .
                     "OBJS=\$(SRCS:.c=.o)\n" .
@@ -783,7 +780,7 @@ sub end
 }
 
 ####################################################################################################################################
-# Install C binary and library
+# Install C binary
 ####################################################################################################################################
 sub jobInstallC
 {
@@ -791,7 +788,6 @@ sub jobInstallC
     my $strVm = shift;
     my $strImage = shift;
 
-    # Install Perl C Library
     my $oVm = vmGet();
     my $strBuildPath = "${strBasePath}/test/.vagrant/bin/${strVm}";
     my $strBuildLibCPath = "${strBuildPath}/libc";

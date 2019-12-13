@@ -19,7 +19,6 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
@@ -1108,9 +1107,7 @@ sub build
         # lead to an invalid diff/incr backup later when using timestamps to determine which files have changed.  Offline backups do
         # not wait because it makes testing much faster and Postgres should not be running (if it is the backup will not be
         # consistent anyway and the one-second resolution problem is the least of our worries).
-        my $lTimeBegin =
-            $oStorageDbMaster->can('protocol') ?
-                $oStorageDbMaster->protocol()->cmdExecute(OP_WAIT, [$bOnline]) : waitRemainder($bOnline);
+        my $lTimeBegin = waitRemainder($bOnline);
 
         # Check that links are valid
         $self->linkCheck();

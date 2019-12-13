@@ -56,7 +56,6 @@ These includes are from the src directory.  There is no Perl-specific code in th
 #include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
-#include "perl/config.h"
 #include "postgres/pageChecksum.h"
 #include "storage/posix/storage.h"
 
@@ -72,6 +71,7 @@ These includes define data structures that are required for the C to Perl interf
 ***********************************************************************************************************************************/
 #include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
+#include "xs/config/configTest.xsh"
 #include "xs/postgres/client.xsh"
 #include "xs/storage/storage.xsh"
 #include "xs/storage/storageRead.xsh"

@@ -108,19 +108,6 @@ testRun(void)
         TRY_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TRY_BEGIN()
-        {
-            THROW(RuntimeError, PERL_EMBED_ERROR);
-        }
-        CATCH_ANY()
-        {
-            exitSafe(0, true, signalTypeNone);
-            harnessLogResult(
-                "P00   INFO: archive-push command end: aborted with exception [122]");
-        }
-        TRY_END();
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeNone), errorTypeCode(&TermError), "exit on term with no signal");
         harnessLogResult("P00   INFO: archive-push command end: terminated on signal from child process");

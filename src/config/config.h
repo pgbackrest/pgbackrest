@@ -86,7 +86,7 @@ typedef enum
 Load Functions
 
 Used primarily by modules that need to manipulate the configuration.  These modules include, but are not limited to, config/parse.c,
-config/load.c, perl/config.c, and perl/exec.c.
+config/load.c.
 ***********************************************************************************************************************************/
 void cfgInit(void);
 

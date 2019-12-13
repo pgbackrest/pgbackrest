@@ -544,11 +544,6 @@ testRun(void)
             storagePathP(storageTest, strNew("/path/toot")), AssertError,
             "absolute path '/path/toot' is not in base path '/path/to'");
 
-        // Path enforcement disabled globally
-        storagePathEnforceSet(storageTest, false);
-        TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("/bogus"))), "/bogus", "path enforce disabled globally");
-        storagePathEnforceSet(storageTest, true);
-
         // Path enforcement disabled for a single call
         TEST_RESULT_STR(strPtr(storagePathP(storageTest, strNew("/bogus"), .noEnforce = true)), "/bogus", "path enforce disabled");
 

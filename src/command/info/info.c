@@ -22,7 +22,6 @@ Info Command
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
 #include "info/manifest.h"
-#include "perl/exec.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
 

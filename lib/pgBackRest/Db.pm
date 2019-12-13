@@ -21,7 +21,6 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
@@ -98,11 +97,6 @@ sub new
     if (defined($self->{iRemoteIdx}))
     {
         $self->{strDbPath} = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $self->{iRemoteIdx}));
-
-        if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
-        {
-            $self->{oProtocol} = protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iRemoteIdx});
-        }
     }
 
     # Return from function and log return values if any
@@ -155,56 +149,46 @@ sub connect
     # Only connect if not already connected
     my $bResult = true;
 
-    # Run remotely
-    if (defined($self->{oProtocol}))
+    if (!defined($self->{oDb}))
     {
-        # Set bResult to false if undef is returned
-        $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, undef, false, $bWarnOnError) ? true : false;
-    }
-    # Else run locally
-    else
-    {
-        if (!defined($self->{oDb}))
+        $self->{oDb} = new pgBackRest::LibC::PgClient(
+            cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_SOCKET_PATH, $self->{iRemoteIdx}), false),
+            cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PORT, $self->{iRemoteIdx})), 'postgres',
+            cfgOption(CFGOPT_DB_TIMEOUT) * 1000);
+
+        if ($bWarnOnError)
         {
-            $self->{oDb} = new pgBackRest::LibC::PgClient(
-                cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_SOCKET_PATH, $self->{iRemoteIdx}), false),
-                cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PORT, $self->{iRemoteIdx})), 'postgres',
-                cfgOption(CFGOPT_DB_TIMEOUT) * 1000);
-
-            if ($bWarnOnError)
-            {
-                eval
-                {
-                    $self->{oDb}->open();
-                    return true;
-                }
-                or do
-                {
-                    &log(WARN, exceptionMessage($EVAL_ERROR));
-                    $bResult = false;
-
-                    undef($self->{oDb});
-                }
-            }
-            else
+            eval
             {
                 $self->{oDb}->open();
+                return true;
             }
-
-            if (defined($self->{oDb}))
+            or do
             {
-                my ($fDbVersion) = $self->versionGet();
+                &log(WARN, exceptionMessage($EVAL_ERROR));
+                $bResult = false;
 
-                if ($fDbVersion >= PG_VERSION_APPLICATION_NAME)
-                {
-                    # Set application name for monitoring and debugging
-                    $self->{oDb}->query(
-                        "set application_name = '" . PROJECT_NAME . ' [' .
-                        (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'");
+                undef($self->{oDb});
+            }
+        }
+        else
+        {
+            $self->{oDb}->open();
+        }
 
-                    # Clear search path to prevent possible function overrides
-                    $self->{oDb}->query("set search_path = 'pg_catalog'");
-                }
+        if (defined($self->{oDb}))
+        {
+            my ($fDbVersion) = $self->versionGet();
+
+            if ($fDbVersion >= PG_VERSION_APPLICATION_NAME)
+            {
+                # Set application name for monitoring and debugging
+                $self->{oDb}->query(
+                    "set application_name = '" . PROJECT_NAME . ' [' .
+                    (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'");
+
+                # Clear search path to prevent possible function overrides
+                $self->{oDb}->query("set search_path = 'pg_catalog'");
             }
         }
     }
@@ -243,22 +227,12 @@ sub executeSql
     # Get the user-defined command for psql
     my @stryResult;
 
-    # Run remotely
-    if (defined($self->{oProtocol}))
-    {
-        # Execute the command
-        @stryResult = @{$self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, [$strSql, $bIgnoreError, $bResult], $bResult)};
-    }
-    # Else run locally
-    else
-    {
-        $self->connect();
-        my $strResult = $self->{oDb}->query($strSql);
+    $self->connect();
+    my $strResult = $self->{oDb}->query($strSql);
 
-        if (defined($strResult))
-        {
-            @stryResult = @{JSON::PP->new()->allow_nonref()->decode($strResult)};
-        }
+    if (defined($strResult))
+    {
+        @stryResult = @{JSON::PP->new()->allow_nonref()->decode($strResult)};
     }
 
     # Return from function and log return values if any
@@ -346,63 +320,49 @@ sub info
     #-------------------------------------------------------------------------------------------------------------------------------
     if (!defined($self->{info}{$strDbPath}))
     {
-        # Get info from remote
-        #---------------------------------------------------------------------------------------------------------------------------
-        if (defined($self->{oProtocol}))
+        # Open the control file and read system id and versions
+        #-----------------------------------------------------------------------------------------------------------------------
+        my $strControlFile = "${strDbPath}/" . DB_FILE_PGCONTROL;
+        my $hFile;
+        my $tBlock;
+
+        sysopen($hFile, $strControlFile, O_RDONLY)
+            or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
+
+        # Read system identifier
+        sysread($hFile, $tBlock, 8) == 8
+            or confess &log(ERROR, "unable to read database system identifier");
+
+        $self->{info}{$strDbPath}{ullDbSysId} = unpack('Q', $tBlock);
+
+        # Read control version
+        sysread($hFile, $tBlock, 4) == 4
+            or confess &log(ERROR, "unable to read control version");
+
+        $self->{info}{$strDbPath}{iDbControlVersion} = unpack('L', $tBlock);
+
+        # Read catalog version
+        sysread($hFile, $tBlock, 4) == 4
+            or confess &log(ERROR, "unable to read catalog version");
+
+        $self->{info}{$strDbPath}{iDbCatalogVersion} = unpack('L', $tBlock);
+
+        # Close the control file
+        close($hFile);
+
+        # Get PostgreSQL version
+        $self->{info}{$strDbPath}{strDbVersion} =
+            $oPgControlVersionHash->{$self->{info}{$strDbPath}{iDbControlVersion}}
+                {$self->{info}{$strDbPath}{iDbCatalogVersion}};
+
+        if (!defined($self->{info}{$strDbPath}{strDbVersion}))
         {
-            # Execute the command
-            ($self->{info}{$strDbPath}{strDbVersion}, $self->{info}{$strDbPath}{iDbControlVersion},
-                $self->{info}{$strDbPath}{iDbCatalogVersion}, $self->{info}{$strDbPath}{ullDbSysId}) =
-                    $self->{oProtocol}->cmdExecute(OP_DB_INFO, [$strDbPath], true);
-        }
-        # Get info locally
-        #---------------------------------------------------------------------------------------------------------------------------
-        else
-        {
-            # Open the control file and read system id and versions
-            #-----------------------------------------------------------------------------------------------------------------------
-            my $strControlFile = "${strDbPath}/" . DB_FILE_PGCONTROL;
-            my $hFile;
-            my $tBlock;
-
-            sysopen($hFile, $strControlFile, O_RDONLY)
-                or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
-
-            # Read system identifier
-            sysread($hFile, $tBlock, 8) == 8
-                or confess &log(ERROR, "unable to read database system identifier");
-
-            $self->{info}{$strDbPath}{ullDbSysId} = unpack('Q', $tBlock);
-
-            # Read control version
-            sysread($hFile, $tBlock, 4) == 4
-                or confess &log(ERROR, "unable to read control version");
-
-            $self->{info}{$strDbPath}{iDbControlVersion} = unpack('L', $tBlock);
-
-            # Read catalog version
-            sysread($hFile, $tBlock, 4) == 4
-                or confess &log(ERROR, "unable to read catalog version");
-
-            $self->{info}{$strDbPath}{iDbCatalogVersion} = unpack('L', $tBlock);
-
-            # Close the control file
-            close($hFile);
-
-            # Get PostgreSQL version
-            $self->{info}{$strDbPath}{strDbVersion} =
-                $oPgControlVersionHash->{$self->{info}{$strDbPath}{iDbControlVersion}}
-                    {$self->{info}{$strDbPath}{iDbCatalogVersion}};
-
-            if (!defined($self->{info}{$strDbPath}{strDbVersion}))
-            {
-                confess &log(
-                    ERROR,
-                    'unexpected control version = ' . $self->{info}{$strDbPath}{iDbControlVersion} .
-                    ' and catalog version = ' . $self->{info}{$strDbPath}{iDbCatalogVersion} . "\n" .
-                    'HINT: is this version of PostgreSQL supported?',
-                    ERROR_VERSION_NOT_SUPPORTED);
-            }
+            confess &log(
+                ERROR,
+                'unexpected control version = ' . $self->{info}{$strDbPath}{iDbControlVersion} .
+                ' and catalog version = ' . $self->{info}{$strDbPath}{iDbCatalogVersion} . "\n" .
+                'HINT: is this version of PostgreSQL supported?',
+                ERROR_VERSION_NOT_SUPPORTED);
         }
     }
 

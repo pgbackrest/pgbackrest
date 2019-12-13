@@ -265,9 +265,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
         cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
-    // Use a C remote
-    kvPut(optionReplace, VARSTR(CFGOPT_C_STR), VARBOOL(true));
-
     // Copy pg options to index 0 since that's what the remote will be expecting
     if (hostIdx != 0)
     {

@@ -63,8 +63,8 @@ use constant TESTDEF_TOTAL                                          => 'total';
     push @EXPORT, qw(TESTDEF_TOTAL);
 use constant TESTDEF_TYPE                                           => 'type';
     push @EXPORT, qw(TESTDEF_TYPE);
-use constant TESTDEF_PERL_REQ                                       => 'perlReq';
-    push @EXPORT, qw(TESTDEF_PERL_REQ);
+use constant TESTDEF_BIN_REQ                                        => 'binReq';
+    push @EXPORT, qw(TESTDEF_BIN_REQ);
 use constant TESTDEF_VM                                             => 'vm';
     push @EXPORT, qw(TESTDEF_VM);
 
@@ -128,7 +128,7 @@ sub testDefLoad
 
                 # Resolve variables that can be set in the module or the test
                 foreach my $strVar (
-                    TESTDEF_DEFINE, TESTDEF_DEFINE_TEST, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_PERL_REQ, TESTDEF_VM,
+                    TESTDEF_DEFINE, TESTDEF_DEFINE_TEST, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_BIN_REQ, TESTDEF_VM,
                     TESTDEF_CONTAINER_REQUIRED)
                 {
                     $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(

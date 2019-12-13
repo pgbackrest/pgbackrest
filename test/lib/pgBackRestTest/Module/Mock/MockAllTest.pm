@@ -26,6 +26,7 @@ use pgBackRest::InfoCommon;
 use pgBackRest::LibC qw(:checksum);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
@@ -142,7 +143,7 @@ sub run
                                               '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, undef, true);
 
         # Load sample page
-        my $tBasePage = ${storageTest()->get($self->dataPath() . '/page.bin')};
+        my $tBasePage = ${storageLocal()->get($self->dataPath() . '/page.bin')};
         my $iBasePageChecksum = 0x1B99;
 
         # Create base path

@@ -14,6 +14,12 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.21dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <p><backrest/> is now pure <proper>C</proper>.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>

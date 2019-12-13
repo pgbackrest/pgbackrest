@@ -69,8 +69,6 @@ Option constants
     STRING_DECLARE(CFGOPT_BACKUP_STANDBY_STR);
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
     STRING_DECLARE(CFGOPT_BUFFER_SIZE_STR);
-#define CFGOPT_C                                                    "c"
-    STRING_DECLARE(CFGOPT_C_STR);
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
     STRING_DECLARE(CFGOPT_CHECKSUM_PAGE_STR);
 #define CFGOPT_CMD_SSH                                              "cmd-ssh"
@@ -382,7 +380,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            164
+#define CFG_OPTION_TOTAL                                            163
 
 /***********************************************************************************************************************************
 Command enum
@@ -424,7 +422,6 @@ typedef enum
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
-    cfgOptC,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
     cfgOptCommand,

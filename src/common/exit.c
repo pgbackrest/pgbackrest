@@ -15,10 +15,6 @@ Exit Routines
 #include "config/config.h"
 #include "protocol/helper.h"
 
-#ifdef HAVE_LIBPERL
-    #include "perl/exec.h"
-#endif
-
 /***********************************************************************************************************************************
 Return signal names
 ***********************************************************************************************************************************/
@@ -106,32 +102,24 @@ exitSafe(int result, bool error, SignalType signalType)
     // Report error if one was thrown
     if (error)
     {
-        // Don't log the error if it has already been logged by Perl
-#ifdef HAVE_LIBPERL
-        if (strcmp(errorMessage(), PERL_EMBED_ERROR) != 0)
+        LogLevel logLevel = errorCode() == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError;
+
+        // Assert errors always output a stack trace
+        if (logLevel == logLevelAssert)
+            LOG_FMT(logLevel, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(), errorStackTrace());
+        else
         {
-#endif
-            LogLevel logLevel = errorCode() == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError;
+            // Log just the error to non-debug levels
+            LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, logLevelDetail, 0, errorCode(), errorMessage());
 
-            // Assert errors always output a stack trace
-            if (logLevel == logLevelAssert)
-                LOG_FMT(logLevel, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(), errorStackTrace());
-            else
+            // Log the stack trace debug levels
+            if (logAny(logLevelDebug))
             {
-                // Log just the error to non-debug levels
-                LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, logLevelDetail, 0, errorCode(), errorMessage());
-
-                // Log the stack trace debug levels
-                if (logAny(logLevelDebug))
-                {
-                    LOG_INTERNAL_FMT(
-                        logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(),
-                        errorStackTrace());
-                }
+                LOG_INTERNAL_FMT(
+                    logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(),
+                    errorStackTrace());
             }
-#ifdef HAVE_LIBPERL
         }
-#endif
 
         result = errorCode();
     }
@@ -142,15 +130,6 @@ exitSafe(int result, bool error, SignalType signalType)
         protocolFree();
     }
     TRY_END();
-
-    // Free Perl but ignore errors
-#ifdef HAVE_LIBPERL
-    TRY_BEGIN()
-    {
-        perlFree(result);
-    }
-    TRY_END();
-#endif
 
     // Log command end if a command is set
     if (cfgCommand() != cfgCmdNone)

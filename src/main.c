@@ -30,7 +30,6 @@ Main
 #include "config/config.h"
 #include "config/load.h"
 #include "postgres/interface.h"
-#include "perl/exec.h"
 #include "storage/helper.h"
 #include "version.h"
 
@@ -166,13 +165,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRemote:
                 {
-                    if (cfgOptionBool(cfgOptC))
-                    {
-                        cmdRemote(STDIN_FILENO, STDOUT_FILENO);
-                    }
-                    else
-                        perlExec();
-
+                    cmdRemote(STDIN_FILENO, STDOUT_FILENO);
                     break;
                 }
 

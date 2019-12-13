@@ -220,7 +220,7 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
-                        "|pgbackrest --c --command=archive-get --log-level-file=off --log-level-stderr=error --process=0"
+                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=0"
                         " --stanza=test1 --type=backup remote")),
             "remote protocol params");
 
@@ -243,7 +243,7 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
-                        "|pgbackrest --c --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
+                        "|pgbackrest --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
                         " --config-path=/path/config --log-level-file=info --log-level-stderr=error --log-subprocess --process=1"
                         " --stanza=test1 --type=backup remote")),
             "remote protocol params with replacements");
@@ -265,7 +265,7 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
-                        "|pgbackrest --c --command=archive-get --log-level-file=off --log-level-stderr=error --process=3"
+                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=3"
                         " --stanza=test1 --type=backup remote")),
             "remote protocol params for backup local");
 
@@ -284,7 +284,7 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg1-host"
-                        "|pgbackrest --c --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/1"
+                        "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/1"
                         " --process=1 --stanza=test1 --type=db remote")),
             "remote protocol params for db backup");
 
@@ -309,7 +309,7 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg2-host"
-                        "|pgbackrest --c --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/2"
+                        "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/2"
                         " --process=4 --stanza=test1 --type=db remote")),
             "remote protocol params for db local");
 
@@ -334,7 +334,7 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg3-host"
-                        "|pgbackrest --c --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/3"
+                        "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/3"
                         " --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --stanza=test1 --type=db remote")),
             "remote protocol params for db local");
     }

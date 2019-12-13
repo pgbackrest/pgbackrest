@@ -134,7 +134,7 @@ sub helpFormatText
             $strText .= "\n";
         }
 
-        # Escape perl special characters
+        # Escape special characters
         $strLine =~ s/\"/\\"/g;
 
         my $strPart;
