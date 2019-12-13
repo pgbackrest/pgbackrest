@@ -13,7 +13,6 @@ Test Backup Command
 
 #include "common/harnessConfig.h"
 #include "common/harnessPq.h"
-#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Page header structure use to create realistic pages for testing
@@ -35,42 +34,139 @@ typedef struct PageHeaderData
 } PageHeaderData;
 
 /***********************************************************************************************************************************
-Test backup to be sure all files are correct
+Get a list of all files in the backup
 ***********************************************************************************************************************************/
-static void
-testBackupCompare(const Storage *storage, const String *path, bool fileCompressed, const char *compare)
+typedef struct TestBackupValidateCallbackData
+{
+    const Storage *storage;                                         // Storage object when needed (e.g. fileCompressed = true)
+    const String *path;                                             // Subpath when storage is specified
+    const Manifest *manifest;                                       // Manifest check for files/links/paths
+    String *content;                                                // String where content should be added
+} TestBackupValidateCallbackData;
+
+void
+testBackupValidateCallback(void *callbackData, const StorageInfo *info)
+{
+    TestBackupValidateCallbackData *data = callbackData;
+
+    // Don't include . when it is a path (we'll still include it when it is a link so we can see the destination)
+    if (info->type == storageTypePath && strEq(info->name, DOT_STR))
+        return;
+
+    // Don't include backup.manifest or copy.  We'll test that they are present elsewhere
+    if (info->type == storageTypeFile &&
+        (strEqZ(info->name, BACKUP_MANIFEST_FILE) || strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT)))
+        return;
+
+    strCatFmt(data->content, "%s {", strPtr(info->name));
+
+    switch (info->type)
+    {
+        case storageTypeFile:
+        {
+            strCat(data->content, "file");
+
+            uint64_t size = info->size;
+            const String *manifestName = info->name;
+
+            // If the file is compressed then decompress to get the real size
+            if (strEndsWithZ(info->name, "." GZIP_EXT))
+            {
+                ASSERT(data->storage != NULL);
+
+                StorageRead *read = storageNewReadP(
+                    data->storage,
+                    data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
+                size = bufUsed(storageGetP(read));
+
+                manifestName = strSubN(info->name, 0, strSize(info->name) - strlen("." GZIP_EXT));
+            }
+
+            strCatFmt(data->content, ", s=%" PRIu64, size);
+
+            // Check against the manifest
+            const ManifestFile *file = manifestFileFind(data->manifest, manifestName);
+
+            if (size != file->size)
+                THROW_FMT(AssertError, "'%s' size does match manifest", strPtr(manifestName));
+
+            if (info->size != file->sizeRepo)
+                THROW_FMT(AssertError, "'%s' repo size does match manifest", strPtr(manifestName));
+
+            if (info->mode != 0640)
+                THROW_FMT(AssertError, "'%s' mode is not 0640", strPtr(manifestName));
+
+            if (!strEqZ(info->user, testUser()))
+                THROW_FMT(AssertError, "'%s' user should be '%s'", strPtr(manifestName), testUser());
+
+            if (!strEqZ(info->group, testGroup()))
+                THROW_FMT(AssertError, "'%s' group should be '%s'", strPtr(manifestName), testGroup());
+
+            break;
+        }
+
+        case storageTypeLink:
+        {
+            strCatFmt(data->content, "link, d=%s", strPtr(info->linkDestination));
+            break;
+        }
+
+        case storageTypePath:
+        {
+            strCat(data->content, "path");
+
+            // Check against the manifest
+            manifestPathFind(data->manifest, info->name);
+
+            break;
+        }
+
+        case storageTypeSpecial:
+        {
+            THROW_FMT(AssertError, "unexpected special file '%s'", strPtr(info->name));
+            break;
+        }
+    }
+
+    strCat(data->content, "}\n");
+}
+
+static String *
+testBackupValidate(const Storage *storage, const String *path)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
         FUNCTION_HARNESS_PARAM(STRING, path);
-        FUNCTION_HARNESS_PARAM(BOOL, fileCompressed);
-        FUNCTION_HARNESS_PARAM(STRINGZ, compare);
     FUNCTION_HARNESS_END();
 
-    // Get the pg-path as a string
-    HarnessStorageInfoListCallbackData callbackData =
+    String *result = strNew("");
+
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        .storage = storage,
-        .path = path,
-        .content = strNew(""),
-        .modeOmit = true,
-        .modePath = 0750,
-        .modeFile = 0640,
-        .userOmit = true,
-        .groupOmit = true,
-        .timestampOmit = true,
-        .rootPathOmit = true,
-        .fileCompressed = fileCompressed,
-    };
+        // Make sure both backup.manifest files exist
+        if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strPtr(path))))
+            THROW(AssertError, BACKUP_MANIFEST_FILE " is missing");
 
-    TEST_RESULT_VOID(
-        storageInfoListP(storage, path, hrnStorageInfoListCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc),
-        "path info list for backup compare");
+        if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strPtr(path))))
+            THROW(AssertError, BACKUP_MANIFEST_FILE INFO_COPY_EXT " is missing");
 
-    // Compare
-    TEST_RESULT_STR_Z(callbackData.content, hrnReplaceKey(compare), "    compare file list");
+        // Build a list of files in the backup path and verify against the manifest
+        Manifest *manifest = manifestLoadFile(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strPtr(path)), cipherTypeNone, NULL);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+        TestBackupValidateCallbackData callbackData =
+        {
+            .storage = storage,
+            .path = path,
+            .content = result,
+            .manifest = manifest,
+        };
+
+        storageInfoListP(storage, path, testBackupValidateCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -82,6 +178,9 @@ typedef struct TestBackupPqScriptParam
     bool startFast;
     bool backupStandby;
     bool errorAfterStart;
+    bool noWal;                                                     // Don't write test WAL segments
+    bool walCompress;                                               // Compress the archive files
+    unsigned int walTotal;                                          // Total WAL to write
 } TestBackupPqScriptParam;
 
 #define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                                           \
@@ -93,15 +192,51 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     const char *pg1Path = strPtr(strNewFmt("%s/pg1", testPath()));
     const char *pg2Path = strPtr(strNewFmt("%s/pg2", testPath()));
 
-    unsigned int walSegmentSize = 16 * 1024 * 1024;
+    // Read pg_control to get info about the cluster
+    PgControl pgControl = pgControlFromFile(storagePg());
+
+    // Set archive timeout really small to save time on errors
+    cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewDbl(.1));
+
     uint64_t lsnStart = ((uint64_t)backupTimeStart & 0xFFFFFF00) << 28;
-    uint64_t lsnStop = lsnStart + (walSegmentSize / 2);
+    uint64_t lsnStop =
+        lsnStart + ((param.walTotal == 0 ? 0 : param.walTotal - 1) * pgControl.walSegmentSize) + (pgControl.walSegmentSize / 2);
 
     const char *lsnStartStr = strPtr(pgLsnToStr(lsnStart));
-    const char *walSegmentStart = strPtr(pgLsnToWalSegment(1, lsnStart, walSegmentSize));
+    const char *walSegmentStart = strPtr(pgLsnToWalSegment(1, lsnStart, pgControl.walSegmentSize));
     const char *lsnStopStr = strPtr(pgLsnToStr(lsnStop));
-    const char *walSegmentStop = strPtr(pgLsnToWalSegment(1, lsnStop, walSegmentSize));
+    const char *walSegmentStop = strPtr(pgLsnToWalSegment(1, lsnStop, pgControl.walSegmentSize));
 
+    // Write WAL segments to the archive
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (!param.noWal)
+    {
+        InfoArchive *infoArchive = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
+        const String *archiveId = infoArchiveId(infoArchive);
+        StringList *walSegmentList = pgLsnRangeToWalSegmentList(pgControl.version, 1, lsnStart, lsnStop, pgControl.walSegmentSize);
+
+        Buffer *walBuffer = bufNew((size_t)pgControl.walSegmentSize);
+        bufUsedSet(walBuffer, bufSize(walBuffer));
+        memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
+        pgWalTestToBuffer((PgWal){.version = pgControl.version, .systemId = pgControl.systemId}, walBuffer);
+        const String *walChecksum = bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer));
+
+        for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
+        {
+            StorageWrite *write = storageNewWriteP(
+                storageRepoWrite(),
+                strNewFmt(
+                    STORAGE_REPO_ARCHIVE "/%s/%s-%s%s", strPtr(archiveId), strPtr(strLstGet(walSegmentList, walSegmentIdx)),
+                    strPtr(walChecksum), param.walCompress ? "." GZIP_EXT : ""));
+
+            if (param.walCompress)
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), gzipCompressNew(1, false));
+
+            storagePutP(write, walBuffer);
+        }
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     if (pgVersion == PG_VERSION_95)
     {
         ASSERT(!param.backupStandby);
@@ -134,6 +269,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
             HRNPQ_MACRO_DONE()
         });
     }
+    // -----------------------------------------------------------------------------------------------------------------------------
     else if (pgVersion == PG_VERSION_96)
     {
         ASSERT(param.backupStandby);
@@ -172,6 +308,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
             HRNPQ_MACRO_DONE()
         });
     }
+    // -----------------------------------------------------------------------------------------------------------------------------
     else if (pgVersion == PG_VERSION_11)
     {
         ASSERT(!param.backupStandby);
@@ -240,6 +377,9 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // The tests expect the timezone to be UTC
+    setenv("TZ", "UTC", true);
 
     Storage *storageTest = storagePosixNew(
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
@@ -708,30 +848,61 @@ testRun(void)
         String *backupLabel = backupLabelFormat(backupTypeFull, NULL, timestamp);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("label advanced on history conflict");
+        TEST_TITLE("assign label when no history");
+
+        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/backup.history/2019"));
+
+        TEST_RESULT_STR_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("assign label when history is older");
 
         storagePutP(
             storageNewWriteP(
-                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz", strPtr(backupLabel))),
+                storageRepoWrite(),
+                strNewFmt(
+                    STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                    strPtr(backupLabelFormat(backupTypeFull, NULL, timestamp - 4)))),
+            NULL);
+
+        TEST_RESULT_STR_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("assign label when backup is older");
+
+        storagePutP(
+            storageNewWriteP(
+                storageRepoWrite(),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabelFormat(backupTypeFull, NULL, timestamp - 2)))),
+            NULL);
+
+        TEST_RESULT_STR_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("advance time when backup is same");
+
+        storagePutP(
+            storageNewWriteP(
+                storageRepoWrite(),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabelFormat(backupTypeFull, NULL, timestamp)))),
             NULL);
 
         TEST_RESULT_STR_Z(backupLabelCreate(backupTypeFull, NULL, timestamp), "20191203-193413F", "create label");
 
-        storageRemoveP(
-            storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz", strPtr(backupLabel)),
-            .errorOnMissing = true);
-
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("label not advanced -- no conflict");
+        TEST_TITLE("error when new label is in the past even with advanced time");
 
-        TEST_RESULT_STR_Z(backupLabelCreate(backupTypeFull, NULL, timestamp), "20191203-193412F", "create label");
+        storagePutP(
+            storageNewWriteP(
+                storageRepoWrite(),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabelFormat(backupTypeFull, NULL, timestamp + 1)))),
+            NULL);
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("label advanced on backup conflict");
-
-        storagePathCreateP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel)));
-
-        TEST_RESULT_STR_Z(backupLabelCreate(backupTypeFull, NULL, timestamp), "20191203-193413F", "create label");
+        TEST_ERROR(
+            backupLabelCreate(backupTypeFull, NULL, timestamp), FormatError,
+            "new backup label '20191203-193413F' is not later than latest backup label '20191203-193413F'\n"
+            "HINT: has the timezone changed?\n"
+            "HINT: is there clock skew?");
     }
 
     // *****************************************************************************************************************************
@@ -1388,6 +1559,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .timeModified = backupTimeStart),
                 BUFSTRDEF(PG_VERSION_95_STR));
+            storagePathCreateP(storagePgWrite(), pgWalPath(PG_VERSION_95), .noParentCreate = true);
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, true, false, NULL, NULL);
@@ -1431,12 +1603,16 @@ testRun(void)
                 "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
                 "P00   INFO: new backup label = 20191002-070640F");
 
-            testBackupCompare(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), false,
-                "PG_VERSION {file, s=3}\n"
-                "global {path}\n"
-                "global/pg_control {file, s=8192}\n"
-                "postgresql.conf {file, s=11}\n");
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ". {link, d=20191002-070640F}\n"
+                "pg_data {path}\n"
+                "pg_data/PG_VERSION {file, s=3}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control {file, s=8192}\n"
+                "pg_data/pg_xlog {path}\n"
+                "pg_data/postgresql.conf {file, s=11}\n",
+                "compare file list");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1575,16 +1751,21 @@ testRun(void)
                 "P00   INFO: check archive for segment(s) 0000000105D95D3000000000:0000000105D95D3000000000\n"
                 "P00   INFO: new backup label = 20191003-105320F");
 
-            testBackupCompare(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
-                "PG_VERSION.gz {file, s=3}\n"
-                "global {path}\n"
-                "global/pg_control.gz {file, s=8192}\n"
-                "not-in-resume.gz {file, s=4}\n"
-                "postgresql.conf.gz {file, s=11}\n"
-                "size-mismatch.gz {file, s=4}\n"
-                "time-mismatch.gz {file, s=4}\n"
-                "zero-size.gz {file, s=0}\n");
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ". {link, d=20191003-105320F}\n"
+                "pg_data {path}\n"
+                "pg_data/PG_VERSION.gz {file, s=3}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control.gz {file, s=8192}\n"
+                "pg_data/not-in-resume.gz {file, s=4}\n"
+                "pg_data/pg_xlog {path}\n"
+                "pg_data/pg_xlog/0000000105D95D3000000000.gz {file, s=16777216}\n"
+                "pg_data/postgresql.conf.gz {file, s=11}\n"
+                "pg_data/size-mismatch.gz {file, s=4}\n"
+                "pg_data/time-mismatch.gz {file, s=4}\n"
+                "pg_data/zero-size.gz {file, s=0}\n",
+                "compare file list");
 
             // Remove test files
             storageRemoveP(storagePgWrite(), STRDEF("not-in-resume"), .errorOnMissing = true);
@@ -1707,14 +1888,18 @@ testRun(void)
                 "P00   INFO: new backup label = 20191003-105320F_20191004-144000D");
 
             // Check repo directory
-            testBackupCompare(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
-                "PG_VERSION.gz {file, s=3}\n"
-                "global {path}\n"
-                "global/pg_control.gz {file, s=8192}\n"
-                "postgresql.conf.gz {file, s=11}\n"
-                "resume-ref.gz {file, s=0}\n"
-                "time-mismatch2.gz {file, s=4}\n");
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ". {link, d=20191003-105320F_20191004-144000D}\n"
+                "pg_data {path}\n"
+                "pg_data/PG_VERSION.gz {file, s=3}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control.gz {file, s=8192}\n"
+                "pg_data/pg_xlog {path}\n"
+                "pg_data/postgresql.conf.gz {file, s=11}\n"
+                "pg_data/resume-ref.gz {file, s=0}\n"
+                "pg_data/time-mismatch2.gz {file, s=4}\n",
+                "compare file list");
 
             // Remove test files
             storageRemoveP(storagePgWrite(), STRDEF("resume-ref"), .errorOnMissing = true);
@@ -1760,6 +1945,7 @@ testRun(void)
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
             strLstAddZ(argList, "--" CFGOPT_START_FAST);
+            strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Create files to copy from the standby.  The files will be zero-size on the primary and non-zero on the standby to test
@@ -1770,8 +1956,19 @@ testRun(void)
             // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
             harnessLogLevelSet(logLevelWarn);
 
+            // Run backup but error on archive check
+            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true);
+            TEST_ERROR(
+                cmdBackup(), ArchiveTimeoutError,
+                "WAL segment 0000000105DA69C000000000 was not archived before the 100ms timeout\n"
+                "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+                "HINT: check the PostgreSQL server log for errors.");
+
+            // Remove halted backup so there's no resume
+            storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191016-042640F"), .recurse = true);
+
             // Run backup
-            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true);
+            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompress = true);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Set log level back to detail
@@ -1780,16 +1977,21 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   WARN: no prior backup exists, incr backup has been changed to full");
 
-            testBackupCompare(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), false,
-                "PG_VERSION {file, s=3}\n"
-                "backup_label {file, s=17}\n"
-                "base {path}\n"
-                "base/1 {path}\n"
-                "base/1/1 {file, s=4}\n"
-                "global {path}\n"
-                "global/pg_control {file, s=8192}\n"
-                "postgresql.conf {file, s=11}\n");
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ". {link, d=20191016-042640F}\n"
+                "pg_data {path}\n"
+                "pg_data/PG_VERSION {file, s=3}\n"
+                "pg_data/backup_label {file, s=17}\n"
+                "pg_data/base {path}\n"
+                "pg_data/base/1 {path}\n"
+                "pg_data/base/1/1 {file, s=4}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control {file, s=8192}\n"
+                "pg_data/pg_xlog {path}\n"
+                "pg_data/pg_xlog/0000000105DA69C000000000 {file, s=16777216}\n"
+                "pg_data/postgresql.conf {file, s=11}\n",
+                "compare file list");
 
             // Remove test files
             storagePathRemoveP(storagePgIdWrite(2), NULL, .recurse = true);
@@ -1808,12 +2010,18 @@ testRun(void)
                     storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path)),
                     .timeModified = backupTimeStart),
                 pgControlTestToBuffer(
-                    (PgControl){.version = PG_VERSION_11, .systemId = 1000000000000001100, .pageChecksum = true}));
+                    (PgControl){
+                        .version = PG_VERSION_11, .systemId = 1000000000000001100, .pageChecksum = true,
+                        .walSegmentSize = 1024 * 1024}));
 
             // Update version
             storagePutP(
                 storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .timeModified = backupTimeStart),
                 BUFSTRDEF(PG_VERSION_11_STR));
+
+            // Update wal path
+            storagePathRemoveP(storagePgWrite(), pgWalPath(PG_VERSION_95));
+            storagePathCreateP(storagePgWrite(), pgWalPath(PG_VERSION_11), .noParentCreate = true);
 
             // Upgrade stanza
             StringList *argList = strLstNew();
@@ -1834,6 +2042,7 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
             strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
             strLstAddZ(argList, "--" CFGOPT_MANIFEST_SAVE_THRESHOLD "=1");
+            strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
@@ -1887,7 +2096,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart);
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompress = true, .walTotal = 3);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Reset storage features
@@ -1910,32 +2119,36 @@ testRun(void)
                 "P01   INFO: backup file {[path]}/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
-                "P00   INFO: backup stop archive = 0000000105DB5DE000000000, lsn = 5db5de0/800000\n"
+                "P00   INFO: backup stop archive = 0000000105DB5DE000000002, lsn = 5db5de0/280000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000000\n"
+                "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000002\n"
                 "P00   INFO: new backup label = 20191027-181320F");
 
-            testBackupCompare(
-                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/20191027-181320F/pg_data"), true,
-                "PG_VERSION.gz {file, s=2}\n"
-                "backup_label.gz {file, s=17}\n"
-                "base {path}\n"
-                "base/1 {path}\n"
-                "base/1/1.gz {file, s=8192}\n"
-                "base/1/2.gz {file, s=8193}\n"
-                "base/1/3.gz {file, s=32768}\n"
-                "base/1/4.gz {file, s=24576}\n"
-                "global {path}\n"
-                "global/pg_control.gz {file, s=8192}\n"
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
+                "pg_data {path}\n"
+                "pg_data/PG_VERSION.gz {file, s=2}\n"
+                "pg_data/backup_label.gz {file, s=17}\n"
+                "pg_data/base {path}\n"
+                "pg_data/base/1 {path}\n"
+                "pg_data/base/1/1.gz {file, s=8192}\n"
+                "pg_data/base/1/2.gz {file, s=8193}\n"
+                "pg_data/base/1/3.gz {file, s=32768}\n"
+                "pg_data/base/1/4.gz {file, s=24576}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control.gz {file, s=8192}\n"
+                "pg_data/pg_tblspc {path}\n"
+                "pg_data/pg_wal {path}\n"
+                "pg_data/pg_wal/0000000105DB5DE000000000.gz {file, s=1048576}\n"
+                "pg_data/pg_wal/0000000105DB5DE000000001.gz {file, s=1048576}\n"
+                "pg_data/pg_wal/0000000105DB5DE000000002.gz {file, s=1048576}\n"
+                "pg_data/postgresql.conf.gz {file, s=11}\n"
                 "pg_tblspc {path}\n"
-                "postgresql.conf.gz {file, s=11}\n");
-
-            testBackupCompare(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F/pg_tblspc"), true,
-                "32768 {path}\n"
-                "32768/PG_11_201809051 {path}\n"
-                "32768/PG_11_201809051/1 {path}\n"
-                "32768/PG_11_201809051/1/5.gz {file, s=0}\n");
+                "pg_tblspc/32768 {path}\n"
+                "pg_tblspc/32768/PG_11_201809051 {path}\n"
+                "pg_tblspc/32768/PG_11_201809051/1 {path}\n"
+                "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n",
+                "compare file list");
 
             // Remove test files
             storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);
@@ -2016,28 +2229,30 @@ testRun(void)
                 "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
                 "P00   INFO: incr backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
-                "P00   INFO: backup stop archive = 0000000105DB8EB000000000, lsn = 5db8eb0/800000\n"
+                "P00   INFO: backup stop archive = 0000000105DB8EB000000000, lsn = 5db8eb0/80000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB8EB000000000:0000000105DB8EB000000000\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I");
 
-            testBackupCompare(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_data"), true,
-                "PG_VERSION.gz {file, s=2}\n"
-                "backup_label.gz {file, s=17}\n"
-                "base {path}\n"
-                "global {path}\n"
-                "global/pg_control.gz {file, s=8192}\n"
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ". {link, d=20191027-181320F_20191030-014640I}\n"
+                "pg_data {path}\n"
+                "pg_data/PG_VERSION.gz {file, s=2}\n"
+                "pg_data/backup_label.gz {file, s=17}\n"
+                "pg_data/base {path}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control.gz {file, s=8192}\n"
+                "pg_data/pg_tblspc {path}\n"
+                "pg_data/pg_tblspc/32768 {link, d=../../pg_tblspc/32768}\n"
+                "pg_data/pg_wal {path}\n"
+                "pg_data/postgresql.conf.gz {file, s=11}\n"
                 "pg_tblspc {path}\n"
-                "pg_tblspc/32768 {link, d=../../pg_tblspc/32768}\n"
-                "postgresql.conf.gz {file, s=11}\n");
-
-            testBackupCompare(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest/pg_tblspc"), true,
-                "32768 {path}\n"
-                "32768/PG_11_201809051 {path}\n"
-                "32768/PG_11_201809051/1 {path}\n"
-                "32768/PG_11_201809051/1/5.gz {file, s=0}\n");
+                "pg_tblspc/32768 {path}\n"
+                "pg_tblspc/32768/PG_11_201809051 {path}\n"
+                "pg_tblspc/32768/PG_11_201809051/1 {path}\n"
+                "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n",
+                "compare file list");
 
             // Remove test files
             storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);

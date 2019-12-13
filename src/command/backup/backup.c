@@ -8,6 +8,7 @@ Backup Command
 #include <time.h>
 #include <unistd.h>
 
+#include "command/archive/common.h"
 #include "command/control/common.h"
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
@@ -18,6 +19,7 @@ Backup Command
 #include "common/crypto/cipherBlock.h"
 #include "common/compress/gzip/common.h"
 #include "common/compress/gzip/compress.h"
+#include "common/compress/gzip/decompress.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
@@ -46,15 +48,15 @@ Generate a unique backup label that does not contain a timestamp from a previous
 ***********************************************************************************************************************************/
 // Helper to format the backup label
 static String *
-backupLabelFormat(BackupType type, const String *backupLabelLast, time_t timestamp)
+backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, type);
-        FUNCTION_LOG_PARAM(STRING, backupLabelLast);
+        FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
         FUNCTION_LOG_PARAM(TIME, timestamp);
     FUNCTION_LOG_END();
 
-    ASSERT((type == backupTypeFull && backupLabelLast == NULL) || (type != backupTypeFull && backupLabelLast != NULL));
+    ASSERT((type == backupTypeFull && backupLabelPrior == NULL) || (type != backupTypeFull && backupLabelPrior != NULL));
     ASSERT(timestamp > 0);
 
     // Format the timestamp
@@ -73,7 +75,7 @@ backupLabelFormat(BackupType type, const String *backupLabelLast, time_t timesta
     else
     {
         // Get the full backup portion of the last backup label
-        result = strSubN(backupLabelLast, 0, 16);
+        result = strSubN(backupLabelPrior, 0, 16);
 
         // Append the diff/incr timestamp
         strCatFmt(result, "_%s%s", buffer, type == backupTypeDiff ? "D" : "I");
@@ -83,54 +85,89 @@ backupLabelFormat(BackupType type, const String *backupLabelLast, time_t timesta
 }
 
 static String *
-backupLabelCreate(BackupType type, const String *backupLabelLast, time_t timestamp)
+backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, type);
-        FUNCTION_LOG_PARAM(STRING, backupLabelLast);
+        FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
         FUNCTION_LOG_PARAM(TIME, timestamp);
     FUNCTION_LOG_END();
 
-    ASSERT((type == backupTypeFull && backupLabelLast == NULL) || (type != backupTypeFull && backupLabelLast != NULL));
+    ASSERT((type == backupTypeFull && backupLabelPrior == NULL) || (type != backupTypeFull && backupLabelPrior != NULL));
     ASSERT(timestamp > 0);
+
+    String *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        while (true)
+        const String *backupLabelLatest = NULL;
+
+        // Get the newest backup
+        const StringList *backupList = strLstSort(
+            storageListP(
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
+                .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+            sortOrderDesc);
+
+        if (strLstSize(backupList) > 0)
+            backupLabelLatest = strLstGet(backupList, 0);
+
+        // Get the newest history
+        const StringList *historyYearList = strLstSort(
+            storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
+            sortOrderDesc);
+
+        if (strLstSize(historyYearList) > 0)
         {
-            // Get the current year to use for searching the history.  Put this in the loop since we could theoretically roll over
-            // to a new year while searching for a valid label.
-            char year[5];
-            THROW_ON_SYS_ERROR(
-                strftime(year, sizeof(year), "%Y", localtime(&timestamp)) == 0, AssertError, "unable to format year");
+            const StringList *historyList = strLstSort(
+                storageListP(
+                    storageRepo(),
+                    strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strPtr(strLstGet(historyYearList, 0))),
+                    .expression = strNewFmt(
+                        "%s\\.manifest\\." GZIP_EXT "$",
+                        strPtr(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)))),
+                sortOrderDesc);
 
-            // Create regular expression for search.  We can't just search on the label because we want to be sure that no other
-            // backup uses the same timestamp, no matter what type it is.
-            String *timestampStr = strSubN(backupLabelFormat(backupTypeFull, NULL, timestamp), 0, 15);
-            String *timestampExp = strNewFmt("(^%sF$)|(_%s(D|I)$)", strPtr(timestampStr), strPtr(timestampStr));
-
-            // Check for the timestamp in the backup path
-            if (strLstSize(storageListP(storageRepo(), STORAGE_REPO_BACKUP_STR, .expression = timestampExp)) == 0)
+            if (strLstSize(historyList) > 0)
             {
-                // Now check in the backup.history
-                String *historyPath = strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", year);
-                String *historyExp = strNewFmt(
-                    "(^%sF\\.manifest\\." GZIP_EXT "$)|(_%s(D|I)\\.manifest\\." GZIP_EXT "$)", strPtr(timestampStr),
-                    strPtr(timestampStr));
+                const String *historyLabelLatest = strLstGet(historyList, 0);
 
-                // If the timestamp also does not appear in the history then it is safe to use
-                if (strLstSize(storageListP(storageRepo(), historyPath, .expression = historyExp)) == 0)
-                    break;
+                if (backupLabelLatest == NULL || strCmp(historyLabelLatest, backupLabelLatest) > 0)
+                    backupLabelLatest = historyLabelLatest;
+            }
+        }
+
+        // Now that we have the latest label check if the provided timestamp will give us an even later label
+        result = backupLabelFormat(type, backupLabelPrior, timestamp);
+
+        if (backupLabelLatest != NULL && strCmp(result, backupLabelLatest) <= 0)
+        {
+            // If that didn't give us a later label then add one second.  It's possible that two backups (they would need to be
+            // offline or halted online) have run very close together.
+            result = backupLabelFormat(type, backupLabelPrior, timestamp + 1);
+
+            // If the label is still not latest then error.  There is probably a timezone change or massive clock skew.
+            if (strCmp(result, backupLabelLatest) <= 0)
+            {
+                THROW_FMT(
+                    FormatError,
+                    "new backup label '%s' is not later than latest backup label '%s'\n"
+                    "HINT: has the timezone changed?\n"
+                    "HINT: is there clock skew?",
+                    strPtr(result), strPtr(backupLabelLatest));
             }
 
-            // !!! This is likely to work in virtually all cases, but it would be far better to make sure that the time is later
-            // than any other backup label.  This change will be compeleted for this commit.
-            timestamp++;
+            // If adding a second worked then sleep the remainder of the current second so we don't start early
+            sleepMSec(timeMSec() % 1000);
         }
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strDup(result);
+        memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING, backupLabelFormat(type, backupLabelLast, timestamp));
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -842,7 +879,7 @@ backupStart(BackupData *backupData)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strPtr(result.lsn));
-                dbReplayWait(backupData->dbStandby, result.lsn, (TimeMSec)cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
+                dbReplayWait(backupData->dbStandby, result.lsn, (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
                 LOG_INFO_FMT("replay on the standby reached %s", strPtr(result.lsn));
 
                 // The standby db object won't be used anymore so free it
@@ -1295,7 +1332,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             {
                 lstAdd(*(List **)lstGet(*queueList, 0), &file);
             }
-            // Else find the correct queue by matching the file to a target
+            // Else find the correct queue by matching to file to a target
             else
             {
                 // Find the target that contains this file
@@ -1546,6 +1583,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgId, processIdx));
 
         // Determine how often the manifest will be saved (every one percent or threshold size, whichever is greater)
+        // CSHANG -- this logic is a bit different from Perl and should reduce saves which should be better for S3 (and in general)
         uint64_t manifestSaveLast = 0;
         uint64_t manifestSaveSize = sizeTotal / 100;
 
@@ -1657,62 +1695,108 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
     ASSERT(manifest != NULL);
 
-    // !!! If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
-    // archive logs are going to a different server.  Be careful of this option because there is no way to verify that the backup
-    // will be consistent - at least not here.
+    // If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
+    // archive logs are going to a different server.  Be careful of disabling this option because there is no way to verify that the
+    // backup will be consistent - at least not here.
     if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck))
     {
-        unsigned int timeline = cvtZToUInt(strPtr(strSubN(manifestData(manifest)->archiveStart, 0, 8)));
-        uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
-        uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            unsigned int timeline = cvtZToUInt(strPtr(strSubN(manifestData(manifest)->archiveStart, 0, 8)));
+            uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
+            uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 
-        LOG_INFO_FMT(
-            "check archive for segment(s) %s:%s", strPtr(pgLsnToWalSegment(timeline, lsnStart, walSegmentSize)),
-            strPtr(pgLsnToWalSegment(timeline, lsnStop, walSegmentSize)));
+            LOG_INFO_FMT(
+                "check archive for segment(s) %s:%s", strPtr(pgLsnToWalSegment(timeline, lsnStart, walSegmentSize)),
+                strPtr(pgLsnToWalSegment(timeline, lsnStop, walSegmentSize)));
 
-        // Save the backup manifest before getting archive logs in case of failure
-        backupManifestSaveCopy(manifest, cipherPassBackup);
+            // Save the backup manifest before getting archive logs in case of failure
+            backupManifestSaveCopy(manifest, cipherPassBackup);
 
-        // Loop through all the segments in the lsn range
-        InfoArchive *infoArchive = infoArchiveLoadFile(
-            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass));
-        const String *archiveId = infoArchiveId(infoArchive);
+            // Use base path to set ownership and mode
+            const ManifestPath *basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
 
-        (void)archiveId;
-        // my @stryArchive = lsnFileRange('START', $strLsnStop, $rhParam->{pgVersion}, 16);
-        //
-        // foreach my $strArchive (@stryArchive)
-        // {
-        //     my $strArchiveFile = walSegmentFind(
-        //         storageRepo(), $strArchiveId, substr($strArchiveStop, 0, 8) . $strArchive, cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
-        //
-        //     $strArchive = substr($strArchiveFile, 0, 24);
-        //
-        //     if (cfgOption(CFGOPT_ARCHIVE_COPY))
-        //     {
-        //         logDebugMisc($strOperation, "archive: ${strArchive} (${strArchiveFile})");
-        //
-        //         # Copy the log file from the archive repo to the backup
-        //         my $bArchiveCompressed = $strArchiveFile =~ ('^.*\.' . COMPRESS_EXT . '\$');
-        //
-        //         storageRepo()->copy(
-        //             storageRepo()->openRead(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
-        //                 {strCipherPass => $oArchiveInfo->cipherPassSub()}),
-        //             storageRepo()->openWrite(STORAGE_REPO_BACKUP . "/$rhParam->{backupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} .
-        //                 $oBackupManifest->walPath() . "/${strArchive}" . (cfgOption(CFGOPT_COMPRESS) ? qw{.} . COMPRESS_EXT : ''),
-        //                 {bPathCreate => true, strCipherPass => $strCipherPassBackupSet})
-        //             );
-        //
-        //         # Add the archive file to the manifest so it can be part of the restore and checked in validation
-        //         my $strPathLog = MANIFEST_TARGET_PGDATA . qw{/} . $oBackupManifest->walPath();
-        //         my $strFileLog = "${strPathLog}/${strArchive}";
-        //
-        //         # Add file to manifest
-        //         $oBackupManifest->fileAdd(
-        //             $strFileLog, $lModificationTime, PG_WAL_SEGMENT_SIZE, substr($strArchiveFile, 25, 40), true);
-        //     }
-        // }
+            // Loop through all the segments in the lsn range
+            InfoArchive *infoArchive = infoArchiveLoadFile(
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
+            const String *archiveId = infoArchiveId(infoArchive);
+
+            StringList *walSegmentList = pgLsnRangeToWalSegmentList(
+                manifestData(manifest)->pgVersion, timeline, lsnStart, lsnStop, walSegmentSize);
+
+            for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
+            {
+                const String *walSegment = strLstGet(walSegmentList, walSegmentIdx);
+
+                // Find the actual wal segment file in the archive
+                const String *archiveFile = walSegmentFind(
+                    storageRepo(), archiveId, walSegment,  (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
+
+                if (cfgOptionBool(cfgOptArchiveCopy))
+                {
+                    // Is the archive file compressed?
+                    bool archiveCompressed = strEndsWithZ(archiveFile, "." GZIP_EXT);
+
+                    // Open the archive file
+                    StorageRead *read = storageNewReadP(
+                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(archiveFile)));
+                    IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
+
+                    // Decrypt with archive key if encrypted
+                    cipherBlockFilterGroupAdd(
+                        filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
+                        infoArchiveCipherPass(infoArchive));
+
+                    // Compress or decompress if archive and backup do not have the same compression type
+                    if (archiveCompressed != cfgOptionBool(cfgOptCompress))
+                    {
+                        if (archiveCompressed)
+                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
+                        else
+                            ioFilterGroupAdd(filterGroup, gzipCompressNew(cfgOptionInt(cfgOptCompressLevel), false));
+                    }
+
+                    // Encrypt with backup key if encrypted
+                    cipherBlockFilterGroupAdd(
+                        filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+                        manifestCipherSubPass(manifest));
+
+                    // Add size filter last to calculate repo size
+                    ioFilterGroupAdd(filterGroup, ioSizeNew());
+
+                    // Copy the file
+                    const String *manifestName = strNewFmt(
+                        MANIFEST_TARGET_PGDATA "/%s/%s", strPtr(pgWalPath(manifestData(manifest)->pgVersion)), strPtr(walSegment));
+
+                    storageCopyP(
+                        read,
+                        storageNewWriteP(
+                            storageRepoWrite(),
+                            strNewFmt(
+                                STORAGE_REPO_BACKUP "/%s/%s%s", strPtr(manifestData(manifest)->backupLabel), strPtr(manifestName),
+                                cfgOptionBool(cfgOptCompress) ? "." GZIP_EXT : "")));
+
+                    // Add to manifest
+                    ManifestFile file =
+                    {
+                        .name = manifestName,
+                        .primary = true,
+                        .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
+                        .user = basePath->user,
+                        .group = basePath->group,
+                        .size = walSegmentSize,
+                        .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
+                        .timestamp = manifestData(manifest)->backupTimestampStop,
+                    };
+
+                    memcpy(file.checksumSha1, strPtr(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+                    manifestFileAdd(manifest, &file);
+                }
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN_VOID();
