@@ -158,7 +158,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
             }
 
             // If adding a second worked then sleep the remainder of the current second so we don't start early
-            sleepMSec(timeMSec() % 1000);
+            sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
         }
 
         memContextSwitch(MEM_CONTEXT_OLD());
@@ -1332,7 +1332,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             {
                 lstAdd(*(List **)lstGet(*queueList, 0), &file);
             }
-            // Else find the correct queue by matching to file to a target
+            // Else find the correct queue by matching the file to a target
             else
             {
                 // Find the target that contains this file
@@ -1583,7 +1583,6 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgId, processIdx));
 
         // Determine how often the manifest will be saved (every one percent or threshold size, whichever is greater)
-        // CSHANG -- this logic is a bit different from Perl and should reduce saves which should be better for S3 (and in general)
         uint64_t manifestSaveLast = 0;
         uint64_t manifestSaveSize = sizeTotal / 100;
 
