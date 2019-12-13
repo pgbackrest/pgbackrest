@@ -516,7 +516,7 @@ sub run
         $oHostBackup->backup(
             $strType, 'invalid repo',
             {oExpectedManifest => \%oManifest, strOptionalParam => '--' . cfgOptionName(CFGOPT_REPO_PATH) . '=/bogus_path',
-                iExpectedExitStatus => $bS3 ? ERROR_FILE_MISSING : ERROR_PATH_MISSING});
+                iExpectedExitStatus => ERROR_FILE_MISSING});
 
         # Restore - tests various mode, extra files/paths, missing files/paths
         #---------------------------------------------------------------------------------------------------------------------------
@@ -822,7 +822,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, '$PGDATA is a substring of valid tblspc excluding / (file missing err expected)',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_MISSING});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_OPEN});
 
             testFileRemove("${strTblSpcPath}/99999");
         }

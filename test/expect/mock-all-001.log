@@ -61,7 +61,7 @@ full backup - error on identical link destinations (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/pg_hba.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
+P00  ERROR: [070]: link 'pg_config_bad/pg_hba.conf.link' destination '[TEST_PATH]/db-master/db/base/pg_config_bad' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
 
 full backup - error on link to a link (db-master host)
@@ -70,7 +70,7 @@ full backup - error on link to a link (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
+P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' cannot reference another link '[TEST_PATH]/db-master/db/pg_config/postgresql.conf.link'
 P00   INFO: backup command end: aborted with exception [070]
 
 full backup - create pg_stat link, pg_clog dir (db-master host)
@@ -318,13 +318,14 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-FULL-1]' missing manifest removed from backup.info
 P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
-P00   INFO: exclude apipe from backup using 'apipe' exclusion
-P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
-P00   INFO: exclude pg_log2 from backup using 'pg_log2' exclusion
-P00   INFO: exclude pg_log2/logfile from backup using 'pg_log2' exclusion
-P00   INFO: exclude postgresql.auto.conf from backup using 'postgresql.auto.conf' exclusion
-P00   WARN: aborted backup [BACKUP-FULL-2] of same type exists, will be cleaned to remove invalid files and resumed
-P00 DETAIL: clean resumed backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/apipe' from backup using 'apipe' exclusion
+P00   INFO: exclude contents of '[TEST_PATH]/db-master/db/base/pg_log' from backup using 'pg_log/' exclusion
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/pg_log2' from backup using 'pg_log2' exclusion
+P00   INFO: exclude '[TEST_PATH]/db-master/db/base/postgresql.auto.conf' from backup using 'postgresql.auto.conf' exclusion
+P00   WARN: resumable backup [BACKUP-FULL-2] of same type exists -- remove invalid files and resume
+P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/file.tmp' from resumed backup (missing in manifest)
+P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION' from resumed backup (no checksum in resumed manifest)
+P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/special-!_.*'()&!@;:+,?' from resumed backup (zero size)
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -508,8 +509,12 @@ full backup - invalid repo (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --exclude=postgresql.auto.conf --exclude=pg_log/ --exclude=pg_log2 --exclude=apipe --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=/bogus_path --stanza=db --start-fast --type=full
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [073]: repo1-path '/bogus_path' does not exist
-P00   INFO: backup command end: aborted with exception [073]
+P00  ERROR: [055]: unable to load info file '/bogus_path/backup/db/backup.info' or '/bogus_path/backup/db/backup.info.copy':
+            FileMissingError: unable to open missing file '/bogus_path/backup/db/backup.info' for read
+            FileMissingError: unable to open missing file '/bogus_path/backup/db/backup.info.copy' for read
+            HINT: backup.info cannot be opened and is required to perform a backup.
+            HINT: has a stanza-create been performed?
+P00   INFO: backup command end: aborted with exception [055]
 
 restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all  --stanza=db restore
@@ -971,7 +976,7 @@ incr backup - invalid database version (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [051]: database version = 9.4, system-id 1000000000000000094 does not match backup version = 8.0, system-id = 1000000000000000094
+P00  ERROR: [051]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match stanza version 8.0, system-id 1000000000000000094
             HINT: is this the correct stanza?
 P00   INFO: backup command end: aborted with exception [051]
 
@@ -981,7 +986,7 @@ incr backup - invalid system id (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [051]: database version = 9.4, system-id 1000000000000000094 does not match backup version = 9.4, system-id = 6999999999999999999
+P00  ERROR: [051]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match stanza version 9.4, system-id 6999999999999999999
             HINT: is this the correct stanza?
 P00   INFO: backup command end: aborted with exception [051]
 
@@ -993,7 +998,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [069]: pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
+P00  ERROR: [069]: 'pg_data/pg_tblspc/path' is not a symlink - pg_tblspc should contain only symlinks
 P00   INFO: backup command end: aborted with exception [069]
 
 incr backup - invalid relative tablespace is ../ (db-master host)
@@ -1004,7 +1009,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [070]: tablespace symlink ../ destination must not be in $PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace is .. (db-master host)
@@ -1015,7 +1020,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [070]: tablespace symlink .. destination must not be in $PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
@@ -1026,7 +1031,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [070]: tablespace symlink ../../base/ destination must not be in $PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
@@ -1037,7 +1042,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [070]: tablespace symlink ../../base destination must not be in $PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - tablespace link references a link (db-master host)
@@ -1048,7 +1053,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/pg_tblspc/99999' -> '[TEST_PATH]/db-master/db/intermediate_link' cannot reference another link
+P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/pg_tblspc/99999' cannot reference another link '[TEST_PATH]/db-master/db/intermediate_link'
 P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace in $PGDATA (db-master host)
@@ -1059,7 +1064,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [070]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base/invalid_tblspc' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - $PGDATA is a substring of valid tblspc excluding / (file missing err expected) (db-master host)
@@ -1070,8 +1075,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [073]: unable to list file info for missing path '[TEST_PATH]/db-master/db/base_tbs'
-P00   INFO: backup command end: aborted with exception [073]
+P00  ERROR: [041]: unable to get info for missing path/file '[TEST_PATH]/db-master/db/base/pg_tblspc/99999/[TS_PATH-1]': [2] No such file or directory
+P00   INFO: backup command end: aborted with exception [041]
 
 incr backup - invalid tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup
@@ -1081,7 +1086,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [070]: tablespace symlink [TEST_PATH]/db-master/db/base/invalid_tblspc destination must not be in $PGDATA
+P00  ERROR: [070]: link 'pg_tblspc/99999' destination '[TEST_PATH]/db-master/db/base/invalid_tblspc' is in PGDATA
 P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - add tablespace 1 (db-master host)
@@ -1097,6 +1102,23 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base/changesize.txt (4B, 68%) c
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/zerosize.txt (0B, 68%)
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum 14c44cef6287269b08d41de489fd492bb9fc795d
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changecontent.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: incr backup size = 22B
 P00   INFO: new backup label = [BACKUP-INCR-1]
 P00   INFO: backup command end: completed successfully
@@ -1266,8 +1288,9 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
 P00   WARN: backup '[BACKUP-INCR-1]' missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
-P00 DETAIL: clean resumed backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
+P00   WARN: resumable backup [BACKUP-INCR-2] of same type exists -- remove invalid files and resume
+P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/changesize.txt' from resumed backup (mismatched size)
+P00 DETAIL: remove file '[TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/zerosize.txt' from resumed backup (zero size)
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1288,10 +1311,26 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1638
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: incr backup size = 192KB
 P00   INFO: new backup label = [BACKUP-INCR-2]
 P00   INFO: backup command end: completed successfully
@@ -1470,8 +1509,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-INCR-2]' missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: aborted backup [BACKUP-INCR-2] cannot be resumed: new backup-type 'diff' does not match aborted backup-type 'incr'
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
+P00   WARN: backup '[BACKUP-INCR-2]' cannot be resumed: new backup type 'diff' does not match resumable backup type 'incr'
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1489,10 +1528,26 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1638
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: diff backup size = 192KB
 P00   INFO: new backup label = [BACKUP-DIFF-1]
 P00   INFO: backup command end: completed successfully
@@ -1666,8 +1721,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-DIFF-1]' missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: aborted backup [BACKUP-DIFF-1] cannot be resumed: resume is disabled
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
+P00   WARN: backup '[BACKUP-DIFF-1]' cannot be resumed: resume is disabled
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1685,10 +1740,26 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1638
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: diff backup size = 192KB
 P00   INFO: new backup label = [BACKUP-DIFF-2]
 P00   INFO: backup command end: completed successfully
@@ -2024,11 +2095,31 @@ incr backup - add files and remove tablespace 2 (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-DIFF-2], version = [VERSION-1]
+P00   INFO: last backup label = [BACKUP-DIFF-2], version = 0.00
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-DIFF-2]
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 61%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 38%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 100%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/badchecksum.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changecontent.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zerosize.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-DIFF-2]
 P00   INFO: incr backup size = 13B
 P00   INFO: new backup label = [BACKUP-INCR-3]
 P00   INFO: backup command end: completed successfully
@@ -2201,8 +2292,10 @@ incr backup - update files - fail on missing backup.info (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [055]: unable to open [TEST_PATH]/db-master/repo/backup/db/backup.info or [TEST_PATH]/db-master/repo/backup/db/backup.info.copy
-P00  ERROR: [055]: [TEST_PATH]/db-master/repo/backup/db/backup.info does not exist and is required to perform a backup.
+P00  ERROR: [055]: unable to load info file '[TEST_PATH]/db-master/repo/backup/db/backup.info' or '[TEST_PATH]/db-master/repo/backup/db/backup.info.copy':
+            FileMissingError: unable to open missing file '[TEST_PATH]/db-master/repo/backup/db/backup.info' for read
+            FileMissingError: unable to open missing file '[TEST_PATH]/db-master/repo/backup/db/backup.info.copy' for read
+            HINT: backup.info cannot be opened and is required to perform a backup.
             HINT: has a stanza-create been performed?
 P00   INFO: backup command end: aborted with exception [055]
 
@@ -2239,7 +2332,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
-P00   WARN: file pg_data/base/16384/17000 timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -2260,6 +2353,27 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/1/
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 99%) checksum e324463005236d83e6e54795dbddd20a74533bf3
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/badchecksum.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/base2.txt to [BACKUP-INCR-3]
+P00 DETAIL: reference pg_data/changecontent.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zerosize.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-DIFF-2]
+P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt to [BACKUP-INCR-3]
 P00   INFO: incr backup size = 176KB
 P00   INFO: new backup label = [BACKUP-INCR-4]
 P00   INFO: backup command end: completed successfully
@@ -2458,6 +2572,21 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: diff backup size = 176KB
 P00   INFO: new backup label = [BACKUP-DIFF-3]
 P00   INFO: backup command end: completed successfully
@@ -2647,8 +2776,8 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [BACKUP-FULL-2]
-P00   WARN: aborted backup [BACKUP-INCR-5] cannot be resumed: new backup-type 'diff' does not match aborted backup-type 'incr'
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
+P00   WARN: backup '[BACKUP-INCR-5]' cannot be resumed: new backup type 'diff' does not match resumable backup type 'incr'
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -2669,6 +2798,21 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/44000_init to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
+P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: diff backup size = 176KB
 P00   INFO: new backup label = [BACKUP-DIFF-4]
 P00   INFO: backup command end: completed successfully
@@ -3658,7 +3802,7 @@ diff backup - option backup-standby reset - backup performed from master (db-mas
 P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base-2/base --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the master
+P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B

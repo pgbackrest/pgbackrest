@@ -9,6 +9,7 @@ Main
 
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
+#include "command/backup/backup.h"
 #include "command/check/check.h"
 #include "command/command.h"
 #include "command/control/start.h"
@@ -106,16 +107,8 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdBackup:
                 {
-#ifdef DEBUG
-                    // Check pg_control during testing so errors are more obvious.  Otherwise errors only happen in
-                    // archive-get/archive-push and end up in the PostgreSQL log which is not output in CI.  This can be removed
-                    // once backup is written in C.
-                    if (cfgOptionBool(cfgOptOnline) && !cfgOptionBool(cfgOptBackupStandby) && !cfgOptionTest(cfgOptPgHost))
-                        pgControlFromFile(storagePg());
-#endif
-
                     // Run backup
-                    perlExec();
+                    cmdBackup();
 
                     // Switch to expire command
                     cmdEnd(0, NULL);

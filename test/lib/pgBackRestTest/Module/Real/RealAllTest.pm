@@ -475,7 +475,7 @@ sub run
                     my $strStandbyBackup = $oHostBackup->backup(
                         CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access at least one standby',
                         {bStandby => true,
-                         iExpectedExitStatus => ERROR_HOST_CONNECT,
+                         iExpectedExitStatus => ERROR_DB_CONNECT,
                          strOptionalParam => '--' .
                          cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, cfgOptionIndexTotal(CFGOPT_PG_PATH))) . '=' . BOGUS});
                 }
@@ -535,7 +535,9 @@ sub run
 
             $oHostDbMaster->stop();
 
-            $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_INCR, 'attempt backup when stopped', {iExpectedExitStatus => ERROR_STOP});
+            $oHostBackup->backup(
+                CFGOPTVAL_BACKUP_TYPE_INCR, 'attempt backup when stopped',
+                {iExpectedExitStatus => $oHostBackup == $oHostDbMaster ? ERROR_STOP : ERROR_DB_CONNECT});
 
             $oHostDbMaster->start();
         }
