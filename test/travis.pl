@@ -138,7 +138,7 @@ eval
 
     processBegin('mount tmpfs');
     processExec('mkdir -p -m 770 test');
-    processExec('sudo mount -t tmpfs -o size=2560m tmpfs test');
+    processExec('sudo mount -t tmpfs -o size=3072m tmpfs test');
     processExec('df -h test', {bShowOutputAsync => true});
     processEnd();
 
