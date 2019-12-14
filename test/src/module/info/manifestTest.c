@@ -1672,7 +1672,8 @@ testRun(void)
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
                 ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                   \
             "pg_data/postgresql.conf={\"master\":true,\"size\":4457,\"timestamp\":1565282114}\n"                                   \
-            "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
+            "pg_data/special-@#!$^&*()_+~`{}[]\\:;={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120"         \
+                ",\"user\":false}\n"                                                                                               \
 
         #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
@@ -1827,8 +1828,8 @@ testRun(void)
             manifestFileFindDefault(manifest, STRDEF("bogus"), file)->name, "pg_data/PG_VERSION",
             "manifestFileFindDefault() - return default");
         TEST_RESULT_STR_Z(
-            manifestFileFindDefault(manifest, STRDEF("pg_data/special"), file)->name, "pg_data/special",
-            "manifestFileFindDefault() - return found");
+            manifestFileFind(manifest, STRDEF("pg_data/special-@#!$^&*()_+~`{}[]\\:;"))->name,
+            "pg_data/special-@#!$^&*()_+~`{}[]\\:;", "find special file");
         TEST_ASSIGN(file, manifestFileFindDefault(manifest, STRDEF("bogus"), NULL), "manifestFileFindDefault()");
         TEST_RESULT_PTR(file, NULL, "    return default NULL");
 

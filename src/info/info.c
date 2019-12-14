@@ -82,13 +82,12 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_SECTION_NEXT_END_BUF, "},");
     }                                                                                                                              \
     while (0)
 
-BUFFER_STRDEF_STATIC(INFO_CHECKSUM_KEY_VALUE_END_BUF, "\":");
+BUFFER_STRDEF_STATIC(INFO_CHECKSUM_KEY_VALUE_END_BUF, ":");
 
 #define INFO_CHECKSUM_KEY_VALUE(checksum, key, value)                                                                              \
     do                                                                                                                             \
     {                                                                                                                              \
-        ioFilterProcessIn(checksum, QUOTED_BUF);                                                                                   \
-        ioFilterProcessIn(checksum, BUFSTR(key));                                                                                  \
+        ioFilterProcessIn(checksum, BUFSTR(jsonFromStr(key)));                                                                     \
         ioFilterProcessIn(checksum, INFO_CHECKSUM_KEY_VALUE_END_BUF);                                                              \
         ioFilterProcessIn(checksum, BUFSTR(value));                                                                                \
     }                                                                                                                              \
