@@ -307,16 +307,20 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
         // If stop-auto is enabled check for a running backup
         if (stopAuto)
         {
-            // This feature is not supported for PostgreSQL >= 9.6 since backups are run in non-exclusive mode
-            CHECK(dbPgVersion(this) >= PG_VERSION_93 && dbPgVersion(this) < PG_VERSION_96);
+            // Feature is not supported in PostgreSQL < 9.3
+            CHECK(dbPgVersion(this) >= PG_VERSION_93);
 
-            if (varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_backup()::bool"))))
+            // Feature is not needed for PostgreSQL >= 9.6 since backups are run in non-exclusive mode
+            if (dbPgVersion(this) < PG_VERSION_96)
             {
-                LOG_WARN(
-                    "the cluster is already in backup mode but no " PROJECT_NAME " backup process is running."
-                    " pg_stop_backup() will be called so a new backup can be started.");
+                if (varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_backup()::bool"))))
+                {
+                    LOG_WARN(
+                        "the cluster is already in backup mode but no " PROJECT_NAME " backup process is running."
+                        " pg_stop_backup() will be called so a new backup can be started.");
 
-                dbBackupStop(this);
+                    dbBackupStop(this);
+                }
             }
         }
 

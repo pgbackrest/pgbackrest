@@ -261,6 +261,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_IS_IN_BACKUP(1, false),
             HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
@@ -1009,7 +1010,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   WARN: start-fast option is only available in PostgreSQL >= 8.4");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("reset stop-auto when PostgreSQL < 9.3 or PostgreSQL > 9.5");
+        TEST_TITLE("reset stop-auto when PostgreSQL < 9.3");
 
         // Create pg_control
         storagePutP(
@@ -1028,29 +1029,7 @@ testRun(void)
         TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, NULL)), "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "    check stop-auto");
 
-        TEST_RESULT_LOG("P00   WARN: stop-auto option is only available in PostgreSQL >= 9.3 and <= 9.5");
-
-        // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
-
-        harnessCfgLoad(cfgCmdBackup, argList);
-
-        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_96, 1000000000000000960, NULL)), "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "    check stop-auto");
-
-        TEST_RESULT_LOG("P00   WARN: stop-auto option is only available in PostgreSQL >= 9.3 and <= 9.5");
-
-        // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}));
-
-        harnessCfgLoad(cfgCmdBackup, argList);
-
-        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_95, 1000000000000000950, NULL)), "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), true, "    check stop-auto");
+        TEST_RESULT_LOG("P00   WARN: stop-auto option is only available in PostgreSQL >= 9.3");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reset checksum-page when the cluster does not have checksums enabled");
@@ -1557,6 +1536,7 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+            strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--no-" CFGOPT_ARCHIVE_CHECK);
             harnessCfgLoad(cfgCmdBackup, argList);
@@ -1638,6 +1618,7 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+            strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
@@ -1795,6 +1776,7 @@ testRun(void)
             strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strPtr(pg1Path)));
             strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+            strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
             harnessCfgLoad(cfgCmdBackup, argList);
 

@@ -289,7 +289,7 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
-        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false), "start backup");
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "3/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000300000003", "check wal segment name");
 
