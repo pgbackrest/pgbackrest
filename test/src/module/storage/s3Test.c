@@ -213,6 +213,8 @@ testS3Server(void)
                 "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                 "    <Contents>"
                 "        <Key>path/to/test_file</Key>"
+                "        <LastModified>2009-10-12T17:50:30.000Z</LastModified>"
+                // EPOCH 1255369830
                 "        <Size>787</Size>"
                 "    </Contents>"
                 "   <CommonPrefixes>"

@@ -604,6 +604,10 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
 
     StorageS3InfoListData *data = (StorageS3InfoListData *)callbackData;
 
+    // const String *time =
+//2009-10-12T17:50:30.000Z
+//1255369830
+
     StorageInfo info =
     {
         .type = type,
