@@ -62,7 +62,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
 P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' cannot reference another link '[TEST_PATH]/db-master/db/pg_config/postgresql.conf.link'
 
 full backup - create pg_stat link, pg_clog dir (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --cmd-ssh=/usr/bin/ssh --pg1-port=9999 --pg1-socket-path=/test_socket_path --buffer-size=16384 --checksum-page --process-max=1 --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --cmd-ssh=/usr/bin/ssh --pg1-port=9999 --pg1-socket-path=/test_socket_path --buffer-size=[BUFFER-SIZE] --checksum-page --process-max=1 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -75,16 +75,17 @@ P00   WARN: invalid page checksum found in file db-master:[TEST_PATH]/db-master/
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -104,16 +105,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -156,7 +158,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=16384
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -265,16 +267,17 @@ P00   WARN: resumable backup [BACKUP-FULL-2] of same type exists -- remove inval
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -294,16 +297,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -350,7 +354,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -555,16 +559,17 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -584,16 +589,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -637,7 +643,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -757,16 +763,17 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -786,16 +793,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -839,7 +847,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -969,16 +977,17 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -998,16 +1007,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -1051,7 +1061,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -1177,16 +1187,17 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -1206,16 +1217,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -1259,7 +1271,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -1409,16 +1421,17 @@ tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -1438,16 +1451,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -1491,7 +1505,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -1615,16 +1629,17 @@ tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -1644,16 +1659,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -1697,7 +1713,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -1824,16 +1840,17 @@ tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -1853,16 +1870,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -1906,7 +1924,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -2044,16 +2062,17 @@ tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -2073,16 +2092,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=y
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -2126,7 +2146,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
 option-compress=false
 option-compress-level=3
@@ -2248,16 +2268,17 @@ tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -2277,16 +2298,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=y
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -2329,7 +2351,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=false
 option-compress=true
 option-compress-level=3
@@ -2457,16 +2479,17 @@ tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -2486,16 +2509,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=y
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -2539,7 +2563,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=false
 option-compress=true
 option-compress-level=3
@@ -2683,7 +2707,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 diff backup - config file not validated on remote (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
@@ -2692,7 +2716,7 @@ P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -2705,16 +2729,17 @@ pg1-path=[TEST_PATH]/db-master/db/base-2/base
 [db:restore]
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -2735,16 +2760,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=y
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -2788,7 +2814,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=false
 option-compress=true
 option-compress-level=3
@@ -2896,7 +2922,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --buffer-size=[BUFFER-SIZE] --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
@@ -2906,7 +2932,7 @@ P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00   INFO: http statistics:[HTTP-STATISTICS]
 P00   INFO: expire command end: completed successfully
@@ -2919,16 +2945,17 @@ pg1-path=[TEST_PATH]/db-master/db/base-2/base
 [db:restore]
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=n
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -2948,16 +2975,17 @@ pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
+buffer-size=[BUFFER-SIZE]
 compress=y
 compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=warn
-log-level-file=trace
+log-level-file=[LOG-LEVEL-FILE]
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
-log-subprocess=y
+log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 process-max=2
 protocol-timeout=60
@@ -3001,7 +3029,7 @@ db-version="9.4"
 option-archive-check=false
 option-archive-copy=true
 option-backup-standby=false
-option-buffer-size=4194304
+option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=false
 option-compress=true
 option-compress-level=3

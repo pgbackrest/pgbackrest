@@ -65,6 +65,7 @@ sub new
         $self->{iTestMax},
         $self->{strLogLevel},
         $self->{strLogLevelTest},
+        $self->{strLogLevelTestFile},
         $self->{bLogForce},
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
@@ -97,6 +98,7 @@ sub new
             {name => 'iTestMax'},
             {name => 'strLogLevel'},
             {name => 'strLogLevelTest'},
+            {name => 'strLogLevelTestFile'},
             {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
@@ -279,6 +281,7 @@ sub run
                 $strCommandRunParam .
                 (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
                 ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
+                ($self->{strLogLevelTestFile} ne lc(TRACE) ? " --log-level-test-file=$self->{strLogLevelTestFile}" : '') .
                 ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
                 ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
                 ($self->{bLogForce} ? ' --log-force' : '') .

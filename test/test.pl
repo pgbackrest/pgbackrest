@@ -107,6 +107,7 @@ test.pl [options]
    --test-path          path where tests are executed (defaults to ./test)
    --log-level          log level to use for test harness (and Perl tests) (defaults to INFO)
    --log-level-test     log level to use for C tests (defaults to OFF)
+   --log-level-test-file log level to use for file logging in integration tests (defaults to TRACE)
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
@@ -126,6 +127,7 @@ test.pl [options]
 ####################################################################################################################################
 my $strLogLevel = lc(INFO);
 my $strLogLevelTest = lc(OFF);
+my $strLogLevelTestFile = lc(TRACE);
 my $bVmOut = false;
 my @stryModule;
 my @stryModuleTest;
@@ -180,6 +182,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'log-level-test=s' => \$strLogLevelTest,
+            'log-level-test-file=s' => \$strLogLevelTestFile,
             'vm=s' => \$strVm,
             'vm-host=s' => \$strVmHost,
             'vm-out' => \$bVmOut,
@@ -1205,6 +1208,14 @@ eval
             confess &log(ERROR, '--no-cleanup is not valid when more than one test will run')
         }
 
+        # Disable file logging for integration tests when there is more than one test since it will be overwritten
+        if (@{$oyTestRun} > 1)
+        {
+            $strLogLevelTestFile = lc(OFF);
+        }
+
+        # Don't allow --no-cleanup when more than one test will run.  How would the prior results be preserved?
+
         # Only use one vm for dry run so results are printed in order
         if ($bDryRun)
         {
@@ -1269,9 +1280,9 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $strVmHost, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync,
-                        $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bBackTrace,
-                        $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, $bLogForce,
+                        $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize,
+                        $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
                         $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
@@ -1481,6 +1492,7 @@ eval
         $strPgVersion ne 'minimal' ? $strPgVersion: undef,          # Pg version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
         $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,                 # Test options
+        $strLogLevelTestFile,                                       # Log options
         TEST_USER, TEST_GROUP);                                     # User/group info
 
     if (!$bNoCleanup)
