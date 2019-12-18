@@ -23,7 +23,7 @@ Macro to check that replay is making progress -- this does not seem useful enoug
             "       (replayLsn > '" targetLsnParam "')::bool as targetReached,\\n"                                                 \
             "       (replayLsn > '" replayLastLsnParam "')::bool as replayProgress\\n"                                             \
             "  from pg_catalog.pg_last_" walNameParam "_replay_" lsnNameParam "() as replayLsn\"]",                                \
-        .resultInt = 1, .sleep = sleepParam},                                                                                                           \
+        .resultInt = 1, .sleep = sleepParam},                                                                                      \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
     {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
