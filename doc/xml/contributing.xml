@@ -57,7 +57,7 @@
             <execute user="root" pre="y">
                 <exe-cmd>
                     apt-get install rsync git devscripts build-essential valgrind autoconf
-                    libssl-dev zlib1g-dev libperl-dev libxml2-dev libpq-dev libxml-checker-perl
+                    libssl-dev zlib1g-dev libxml2-dev libpq-dev libxml-checker-perl
                     libyaml-libyaml-perl libdbd-pg-perl
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
