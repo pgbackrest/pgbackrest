@@ -7,7 +7,8 @@ Vagrant.configure(2) do |config|
     config.vm.box = "ubuntu/bionic64"
     config.vm.box_version = "20180719.0.0"
 
-    # vagrant plugin install vagrant-disksize
+    # Increase disk size if the vagrant-disksize plugin is available
+    # To install the plugin: vagrant plugin install vagrant-disksize
     if Vagrant.has_plugin?('vagrant-disksize')
       config.disksize.size = '64GB'
     end
