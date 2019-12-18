@@ -2612,6 +2612,13 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
 ####################################################################################################################################
 foreach my $strKey (sort(keys(%hConfigDefine)))
 {
+    # Error if prefix and index total are not both defined
+    if ((defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) && !defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL})) ||
+        (!defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) && defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL})))
+    {
+        confess &log(ASSERT, "CFGDEF_PREFIX and CFGDEF_INDEX_TOTAL must both be defined (or neither) for option '${strKey}'");
+    }
+
     # If the define is a scalar then copy the entire define from the referenced option
     if (defined($hConfigDefine{$strKey}{&CFGDEF_INHERIT}))
     {
