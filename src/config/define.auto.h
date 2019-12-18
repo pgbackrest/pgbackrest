@@ -99,6 +99,7 @@ typedef enum
     cfgDefOptPgPath,
     cfgDefOptPgPort,
     cfgDefOptPgSocketPath,
+    cfgDefOptPgUser,
     cfgDefOptProcess,
     cfgDefOptProcessMax,
     cfgDefOptProtocolTimeout,

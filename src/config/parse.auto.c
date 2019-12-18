@@ -1575,6 +1575,81 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (cfgOptPgSocketPath + 7),
     },
 
+    // pg-user option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_PG1_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptPgUser,
+    },
+    {
+        .name = "reset-" CFGOPT_PG1_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgUser,
+    },
+    {
+        .name = CFGOPT_PG2_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 1),
+    },
+    {
+        .name = "reset-" CFGOPT_PG2_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 1),
+    },
+    {
+        .name = CFGOPT_PG3_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 2),
+    },
+    {
+        .name = "reset-" CFGOPT_PG3_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 2),
+    },
+    {
+        .name = CFGOPT_PG4_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 3),
+    },
+    {
+        .name = "reset-" CFGOPT_PG4_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 3),
+    },
+    {
+        .name = CFGOPT_PG5_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 4),
+    },
+    {
+        .name = "reset-" CFGOPT_PG5_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 4),
+    },
+    {
+        .name = CFGOPT_PG6_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 5),
+    },
+    {
+        .name = "reset-" CFGOPT_PG6_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 5),
+    },
+    {
+        .name = CFGOPT_PG7_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 6),
+    },
+    {
+        .name = "reset-" CFGOPT_PG7_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 6),
+    },
+    {
+        .name = CFGOPT_PG8_USER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgUser + 7),
+    },
+    {
+        .name = "reset-" CFGOPT_PG8_USER,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgUser + 7),
+    },
+
     // process option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2354,6 +2429,14 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptPgSocketPath + 5,
     cfgOptPgSocketPath + 6,
     cfgOptPgSocketPath + 7,
+    cfgOptPgUser,
+    cfgOptPgUser + 1,
+    cfgOptPgUser + 2,
+    cfgOptPgUser + 3,
+    cfgOptPgUser + 4,
+    cfgOptPgUser + 5,
+    cfgOptPgUser + 6,
+    cfgOptPgUser + 7,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,

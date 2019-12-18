@@ -419,6 +419,14 @@ STRING_EXTERN(CFGOPT_PG5_SOCKET_PATH_STR,                           CFGOPT_PG5_S
 STRING_EXTERN(CFGOPT_PG6_SOCKET_PATH_STR,                           CFGOPT_PG6_SOCKET_PATH);
 STRING_EXTERN(CFGOPT_PG7_SOCKET_PATH_STR,                           CFGOPT_PG7_SOCKET_PATH);
 STRING_EXTERN(CFGOPT_PG8_SOCKET_PATH_STR,                           CFGOPT_PG8_SOCKET_PATH);
+STRING_EXTERN(CFGOPT_PG1_USER_STR,                                  CFGOPT_PG1_USER);
+STRING_EXTERN(CFGOPT_PG2_USER_STR,                                  CFGOPT_PG2_USER);
+STRING_EXTERN(CFGOPT_PG3_USER_STR,                                  CFGOPT_PG3_USER);
+STRING_EXTERN(CFGOPT_PG4_USER_STR,                                  CFGOPT_PG4_USER);
+STRING_EXTERN(CFGOPT_PG5_USER_STR,                                  CFGOPT_PG5_USER);
+STRING_EXTERN(CFGOPT_PG6_USER_STR,                                  CFGOPT_PG6_USER);
+STRING_EXTERN(CFGOPT_PG7_USER_STR,                                  CFGOPT_PG7_USER);
+STRING_EXTERN(CFGOPT_PG8_USER_STR,                                  CFGOPT_PG8_USER);
 STRING_EXTERN(CFGOPT_PROCESS_STR,                                   CFGOPT_PROCESS);
 STRING_EXTERN(CFGOPT_PROCESS_MAX_STR,                               CFGOPT_PROCESS_MAX);
 STRING_EXTERN(CFGOPT_PROTOCOL_TIMEOUT_STR,                          CFGOPT_PROTOCOL_TIMEOUT);
@@ -1405,6 +1413,70 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_PG8_SOCKET_PATH)
         CONFIG_OPTION_INDEX(7)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG1_USER)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG2_USER)
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG3_USER)
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG4_USER)
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG5_USER)
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG6_USER)
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG7_USER)
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG8_USER)
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
