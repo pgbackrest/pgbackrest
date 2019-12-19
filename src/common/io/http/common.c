@@ -14,7 +14,6 @@ Http Common
 time_t
 httpCvtTime(const String *time)
 {
-// !!! Wed, 21 Oct 2015 07:28:00 GMT
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, time);
     FUNCTION_TEST_END();
@@ -48,19 +47,7 @@ httpCvtTime(const String *time)
             .tm_sec = cvtZToInt(strPtr(strSubN(time, 23, 2))),
         };
 
-        char *tz = getenv("TZ");
-        String *tzStr = NULL;
-
-        if (tz != NULL)
-        {
-            tzStr = strNew(tz);
-            setenv("TZ", "UTC", true);
-        }
-
-        result = mktime(&timeStruct);
-
-        if (tzStr != NULL)
-            setenv("TZ", strPtr(tzStr), true);
+        result = cvtTimeStructGmtToTime(&timeStruct);
     }
     MEM_CONTEXT_TEMP_END();
 

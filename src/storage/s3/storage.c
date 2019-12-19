@@ -597,7 +597,6 @@ storageS3CvtTime(const String *time)
         FUNCTION_TEST_PARAM(STRING, time);
     FUNCTION_TEST_END();
 
-    // Get timezone offset
     struct tm timeStruct =
     {
         .tm_year = cvtZToInt(strPtr(strSubN(time, 0, 4))) - 1900,
@@ -608,21 +607,7 @@ storageS3CvtTime(const String *time)
         .tm_sec = cvtZToInt(strPtr(strSubN(time, 17, 2))),
     };
 
-    char *tz = getenv("TZ");
-    String *tzStr = NULL;
-
-    if (tz != NULL)
-    {
-        tzStr = strNew(tz);
-        setenv("TZ", "UTC", true);
-    }
-
-    time_t result = mktime(&timeStruct);
-
-    if (tzStr != NULL)
-        setenv("TZ", strPtr(tzStr), true);
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(cvtTimeStructGmtToTime(&timeStruct));
 }
 
 static void

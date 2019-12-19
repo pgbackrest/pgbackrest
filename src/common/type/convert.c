@@ -9,7 +9,6 @@ Convert Base Data Types
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "common/debug.h"
 #include "common/type/convert.h"
@@ -399,6 +398,34 @@ cvtTimeToZ(time_t value, char *buffer, size_t bufferSize)
 
     if (result == 0)
         THROW(AssertError, "buffer overflow");
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+time_t
+cvtTimeStructGmtToTime(struct tm *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+
+    char *tz = getenv("TZ");
+    char tzCopy[128] = "";
+
+    if (tz != NULL)
+    {
+        CHECK(strlen(tz) < sizeof(tzCopy));
+        strcpy(tzCopy, tz);
+        setenv("TZ", "UTC", true);
+    }
+
+    time_t result = mktime(value);
+
+    if (tzCopy != NULL)
+        setenv("TZ", tzCopy, true);
 
     FUNCTION_TEST_RETURN(result);
 }
