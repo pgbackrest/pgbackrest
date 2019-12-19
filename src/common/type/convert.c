@@ -424,7 +424,7 @@ cvtTimeStructGmtToTime(struct tm *value)
 
     time_t result = mktime(value);
 
-    if (tzCopy != NULL)
+    if (tz != NULL)
         setenv("TZ", tzCopy, true);
 
     FUNCTION_TEST_RETURN(result);

@@ -34,7 +34,8 @@ httpCvtTime(const String *time)
                 break;
         }
 
-        CHECK(monthIdx < sizeof(monthList) / sizeof(char *));
+        if (monthIdx == sizeof(monthList) / sizeof(char *))
+            THROW_FMT(FormatError, "invalid month '%s'", month);
 
         // Convert to time_t
         struct tm timeStruct =

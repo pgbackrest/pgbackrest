@@ -312,6 +312,13 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("httpCvtTime()"))
+    {
+        TEST_ERROR(httpCvtTime(STRDEF("Wed, 21 Bog 2015 07:28:00 GMT")), FormatError, "invalid month 'Bog'");
+        TEST_RESULT_INT(httpCvtTime(STRDEF("Wed, 21 Oct 2015 07:28:00 GMT")), 1445412480, "convert gmt datetime");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("HttpHeader"))
     {
         HttpHeader *header = NULL;

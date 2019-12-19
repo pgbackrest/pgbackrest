@@ -109,7 +109,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtTimeToZ()"))
+    if (testBegin("cvtTimeToZ() and cvtTimeStructGmtToTime()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
@@ -117,6 +117,39 @@ testRun(void)
 
         TEST_RESULT_UINT(cvtTimeToZ(1573222014, buffer, STACK_TRACE_PARAM_MAX), 10, "convert time to string");
         TEST_RESULT_STR(buffer, "1573222014", "    check buffer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        struct tm tmTest =
+        {
+            .tm_year = 115,
+            .tm_mon = 9,
+            .tm_mday = 21,
+            .tm_hour = 7,
+            .tm_min = 28,
+            .tm_sec = 0,
+        };
+
+        char *tz = getenv("TZ");
+        char tzCopy[128] = "";
+
+        if (tz != NULL)
+        {
+            CHECK(strlen(tz) < sizeof(tzCopy));
+            strcpy(tzCopy, tz);
+            setenv("TZ", "UTC", true);
+        }
+
+        setenv("TZ", "America/New_York", true);
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1445412480, "convert time to string (America/New_York)");
+
+        setenv("TZ", "UTC", true);
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1445412480, "convert time to string (UTC)");
+
+        unsetenv("TZ");
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1445412480, "convert time to string (UTC)");
+
+        if (tz != NULL)
+            setenv("TZ", tzCopy, true);
     }
 
     // *****************************************************************************************************************************
