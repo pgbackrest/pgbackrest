@@ -553,7 +553,7 @@ sub manGet
         "\n" .
         "SEE ALSO\n" .
         "\n" .
-	    '  /usr/share/doc/' . PROJECT_EXE . "-doc/html/index.html\n" .
+        '  /usr/share/doc/' . PROJECT_EXE . "-doc/html/index.html\n" .
         '  ' . $oManifest->variableReplace('{[backrest-url-base]}') . "\n";
 
     return $strManPage;
