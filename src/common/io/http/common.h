@@ -11,6 +11,9 @@ Http common functions.
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Convert Last-Modified header to time_t
+time_t httpCvtTime(const String *time);
+
 String *httpUriEncode(const String *uri, bool path);
 
 #endif

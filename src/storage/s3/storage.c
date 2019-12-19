@@ -575,6 +575,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
         result.exists = true;
         result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
+        result.timeModified = httpCvtTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -595,6 +596,7 @@ storageS3CvtTime(const String *time)
         FUNCTION_TEST_PARAM(STRING, time);
     FUNCTION_TEST_END();
 
+    // Get timezone offset
     struct tm timeStruct =
     {
         .tm_year = cvtZToInt(strPtr(strSubN(time, 0, 4))) - 1900,
@@ -605,10 +607,7 @@ storageS3CvtTime(const String *time)
         .tm_sec = cvtZToInt(strPtr(strSubN(time, 17, 2))),
     };
 
-    char timeBuf[20];
-    CHECK(strftime(timeBuf, sizeof(timeBuf), "%s", &timeStruct) != 0);
-
-    FUNCTION_TEST_RETURN((time_t)cvtZToInt64(timeBuf));
+    FUNCTION_TEST_RETURN(mktime(&timeStruct));
 }
 
 static void
@@ -628,8 +627,6 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
     ASSERT(xml != NULL);
 
     StorageS3InfoListData *data = (StorageS3InfoListData *)callbackData;
-
-// HEAD DATE -- Date: 13 Nov 2012 00:28:38 GMT
     StorageInfo info =
     {
         .type = type,
