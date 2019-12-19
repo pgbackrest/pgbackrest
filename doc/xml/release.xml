@@ -26,6 +26,16 @@
                     <release-item>
                         <p><backrest/> is now pure <proper>C</proper>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="mike.palmiotto"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>pg-user</br-option> option.</p>
+
+                        <p>Specifies the database user name when connecting to <postgres/>.  If not specified <backrest/> will connect with the local OS user or <id>PGUSER</id>, which was the previous behavior.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
@@ -7846,6 +7856,11 @@
         <contributor id="mihail.shvein">
             <contributor-name-display>Mihail Shvein</contributor-name-display>
             <contributor-id type="github">M1hacka</contributor-id>
+        </contributor>
+
+        <contributor id="mike.palmiotto">
+            <contributor-name-display>Mike Palmiotto</contributor-name-display>
+            <contributor-id type="github">mpalmi</contributor-id>
         </contributor>
 
         <contributor id="milosz.suchy">

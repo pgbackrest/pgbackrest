@@ -147,6 +147,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG1_PORT_STR);
 #define CFGOPT_PG1_SOCKET_PATH                                      "pg1-socket-path"
     STRING_DECLARE(CFGOPT_PG1_SOCKET_PATH_STR);
+#define CFGOPT_PG1_USER                                             "pg1-user"
+    STRING_DECLARE(CFGOPT_PG1_USER_STR);
 #define CFGOPT_PG2_HOST                                             "pg2-host"
     STRING_DECLARE(CFGOPT_PG2_HOST_STR);
 #define CFGOPT_PG2_HOST_CMD                                         "pg2-host-cmd"
@@ -167,6 +169,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG2_PORT_STR);
 #define CFGOPT_PG2_SOCKET_PATH                                      "pg2-socket-path"
     STRING_DECLARE(CFGOPT_PG2_SOCKET_PATH_STR);
+#define CFGOPT_PG2_USER                                             "pg2-user"
+    STRING_DECLARE(CFGOPT_PG2_USER_STR);
 #define CFGOPT_PG3_HOST                                             "pg3-host"
     STRING_DECLARE(CFGOPT_PG3_HOST_STR);
 #define CFGOPT_PG3_HOST_CMD                                         "pg3-host-cmd"
@@ -187,6 +191,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG3_PORT_STR);
 #define CFGOPT_PG3_SOCKET_PATH                                      "pg3-socket-path"
     STRING_DECLARE(CFGOPT_PG3_SOCKET_PATH_STR);
+#define CFGOPT_PG3_USER                                             "pg3-user"
+    STRING_DECLARE(CFGOPT_PG3_USER_STR);
 #define CFGOPT_PG4_HOST                                             "pg4-host"
     STRING_DECLARE(CFGOPT_PG4_HOST_STR);
 #define CFGOPT_PG4_HOST_CMD                                         "pg4-host-cmd"
@@ -207,6 +213,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG4_PORT_STR);
 #define CFGOPT_PG4_SOCKET_PATH                                      "pg4-socket-path"
     STRING_DECLARE(CFGOPT_PG4_SOCKET_PATH_STR);
+#define CFGOPT_PG4_USER                                             "pg4-user"
+    STRING_DECLARE(CFGOPT_PG4_USER_STR);
 #define CFGOPT_PG5_HOST                                             "pg5-host"
     STRING_DECLARE(CFGOPT_PG5_HOST_STR);
 #define CFGOPT_PG5_HOST_CMD                                         "pg5-host-cmd"
@@ -227,6 +235,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG5_PORT_STR);
 #define CFGOPT_PG5_SOCKET_PATH                                      "pg5-socket-path"
     STRING_DECLARE(CFGOPT_PG5_SOCKET_PATH_STR);
+#define CFGOPT_PG5_USER                                             "pg5-user"
+    STRING_DECLARE(CFGOPT_PG5_USER_STR);
 #define CFGOPT_PG6_HOST                                             "pg6-host"
     STRING_DECLARE(CFGOPT_PG6_HOST_STR);
 #define CFGOPT_PG6_HOST_CMD                                         "pg6-host-cmd"
@@ -247,6 +257,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG6_PORT_STR);
 #define CFGOPT_PG6_SOCKET_PATH                                      "pg6-socket-path"
     STRING_DECLARE(CFGOPT_PG6_SOCKET_PATH_STR);
+#define CFGOPT_PG6_USER                                             "pg6-user"
+    STRING_DECLARE(CFGOPT_PG6_USER_STR);
 #define CFGOPT_PG7_HOST                                             "pg7-host"
     STRING_DECLARE(CFGOPT_PG7_HOST_STR);
 #define CFGOPT_PG7_HOST_CMD                                         "pg7-host-cmd"
@@ -267,6 +279,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG7_PORT_STR);
 #define CFGOPT_PG7_SOCKET_PATH                                      "pg7-socket-path"
     STRING_DECLARE(CFGOPT_PG7_SOCKET_PATH_STR);
+#define CFGOPT_PG7_USER                                             "pg7-user"
+    STRING_DECLARE(CFGOPT_PG7_USER_STR);
 #define CFGOPT_PG8_HOST                                             "pg8-host"
     STRING_DECLARE(CFGOPT_PG8_HOST_STR);
 #define CFGOPT_PG8_HOST_CMD                                         "pg8-host-cmd"
@@ -287,6 +301,8 @@ Option constants
     STRING_DECLARE(CFGOPT_PG8_PORT_STR);
 #define CFGOPT_PG8_SOCKET_PATH                                      "pg8-socket-path"
     STRING_DECLARE(CFGOPT_PG8_SOCKET_PATH_STR);
+#define CFGOPT_PG8_USER                                             "pg8-user"
+    STRING_DECLARE(CFGOPT_PG8_USER_STR);
 #define CFGOPT_PROCESS                                              "process"
     STRING_DECLARE(CFGOPT_PROCESS_STR);
 #define CFGOPT_PROCESS_MAX                                          "process-max"
@@ -380,7 +396,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            163
+#define CFG_OPTION_TOTAL                                            171
 
 /***********************************************************************************************************************************
 Command enum
@@ -531,6 +547,14 @@ typedef enum
     cfgOptPgSocketPath6,
     cfgOptPgSocketPath7,
     cfgOptPgSocketPath8,
+    cfgOptPgUser,
+    cfgOptPgUser2,
+    cfgOptPgUser3,
+    cfgOptPgUser4,
+    cfgOptPgUser5,
+    cfgOptPgUser6,
+    cfgOptPgUser7,
+    cfgOptPgUser8,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,

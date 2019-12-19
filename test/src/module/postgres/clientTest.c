@@ -3,7 +3,7 @@ Test PostgreSQL Client
 
 This test can be run two ways:
 
-1) The default uses a pqlib shim to simulate a PostgreSQL connection.  This will work with all VM types.
+1) The default uses a libpq shim to simulate a PostgreSQL connection.  This will work with all VM types.
 
 2) Optionally use a real cluster for testing (only works with debian/pg11).  The test Makefile must be manually updated with the
 -DHARNESS_PQ_REAL flag and -lpq must be added to the libs list.  This method does not have 100% coverage but is very close.
