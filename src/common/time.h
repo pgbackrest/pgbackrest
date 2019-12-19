@@ -22,6 +22,12 @@ Functions
 void sleepMSec(TimeMSec sleepMSec);
 TimeMSec timeMSec(void);
 
+// Is the year a leap year?
+bool yearIsLeap(int year);
+
+// Get days since the beginning of the year (1-366)
+int dayOfYear(int year, int month, int day);
+
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/

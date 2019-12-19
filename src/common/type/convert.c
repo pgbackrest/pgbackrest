@@ -12,6 +12,7 @@ Convert Base Data Types
 
 #include "common/debug.h"
 #include "common/type/convert.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Check results of strto*() function for:
@@ -412,15 +413,11 @@ cvtTimeStructGmtToTime(struct tm *value)
 
     ASSERT(value != NULL);
 
-    // Use mktime to fill in tm_yday
-    value->tm_isdst = -1;
-    mktime(value);
-
     // Return epoch time using calculation from https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
     FUNCTION_TEST_RETURN(
-        value->tm_sec + value->tm_min * 60 + value->tm_hour * 3600 + value->tm_yday * 86400 +
-        (value->tm_year - 70) * 31536000 + ((value->tm_year - 69) / 4) * 86400 - ((value->tm_year - 1) / 100) * 86400 +
-        ((value->tm_year + 299) / 400) * 86400);
+        value->tm_sec + value->tm_min * 60 + value->tm_hour * 3600 +
+        (dayOfYear(value->tm_year + 1900, value->tm_mon + 1, value->tm_mday) - 1) * 86400 + (value->tm_year - 70) * 31536000 +
+        ((value->tm_year - 69) / 4) * 86400 - ((value->tm_year - 1) / 100) * 86400 + ((value->tm_year + 299) / 400) * 86400);
 }
 
 /***********************************************************************************************************************************

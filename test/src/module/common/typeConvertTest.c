@@ -146,27 +146,27 @@ testRun(void)
         TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1445412480, "convert time to string (UTC)");
 
         unsetenv("TZ");
-        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1445412480, "convert time to string (UTC)");
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1445412480, "convert time to string (NO TZ)");
 
         // Time that is not affected by DST in America/New_York
         tmTest = (struct tm )
         {
-            .tm_year = 115,
+            .tm_year = 119,
             .tm_mon = 10,
-            .tm_mday = 21,
-            .tm_hour = 7,
-            .tm_min = 28,
-            .tm_sec = 0,
+            .tm_mday = 2,
+            .tm_hour = 3,
+            .tm_min = 30,
+            .tm_sec = 03,
         };
 
         setenv("TZ", "America/New_York", true);
-        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1448090880, "convert time to string (America/New_York)");
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1572665403, "convert time to string (America/New_York)");
 
         setenv("TZ", "UTC", true);
-        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1448090880, "convert time to string (UTC)");
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1572665403, "convert time to string (UTC)");
 
         unsetenv("TZ");
-        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1448090880, "convert time to string (UTC)");
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1572665403, "convert time to string (NO TZ)");
 
         if (tz != NULL)
             setenv("TZ", tzCopy, true);

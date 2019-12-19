@@ -422,7 +422,7 @@ common/time.o: common/time.c build.auto.h common/assert.h common/debug.h common/
 common/type/buffer.o: common/type/buffer.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h common/type/stringz.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/type/buffer.c -o common/type/buffer.o
 
-common/type/convert.o: common/type/convert.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h common/type/convert.h common/type/stringz.h
+common/type/convert.o: common/type/convert.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h common/time.h common/type/convert.h common/type/stringz.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/type/convert.c -o common/type/convert.o
 
 common/type/json.o: common/type/json.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/stringz.h common/type/variantList.h
