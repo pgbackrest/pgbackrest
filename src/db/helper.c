@@ -32,8 +32,8 @@ dbGetId(unsigned int pgId)
         {
             result = dbNew(
                 pgClientNew(
-                    cfgOptionStr(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), PG_DB_POSTGRES_STR, NULL,
-                    (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
+                    cfgOptionStr(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), PG_DB_POSTGRES_STR,
+                    cfgOptionStr(cfgOptPgUser + pgId - 1), (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
                 NULL, applicationName);
         }
         else

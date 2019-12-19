@@ -360,6 +360,8 @@ use constant CFGOPT_PG_PORT                                         => CFGDEF_PR
     push @EXPORT, qw(CFGOPT_PG_PORT);
 use constant CFGOPT_PG_SOCKET_PATH                                  => CFGDEF_PREFIX_PG . '-socket-path';
     push @EXPORT, qw(CFGOPT_PG_SOCKET_PATH);
+use constant CFGOPT_PG_USER                                         => CFGDEF_PREFIX_PG . '-user';
+    push @EXPORT, qw(CFGOPT_PG_USER);
 
 ####################################################################################################################################
 # Option values - for options that have a specific list of allowed values
@@ -2535,6 +2537,29 @@ my %hConfigDefine =
         {
             'db-socket-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
             'db?-socket-path' => {&CFGDEF_RESET => false},
+        },
+    },
+
+	&CFGOPT_PG_USER =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_REMOTE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+        },
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_PATH
         },
     },
 );

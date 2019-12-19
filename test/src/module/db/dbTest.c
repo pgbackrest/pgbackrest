@@ -448,11 +448,12 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/path/to/pg");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        strLstAddZ(argList, "--pg1-user=bob");
+		harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
+            {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432 user='bob'\"]"},
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_BAD},
             {.function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
             {.function = HRNPQ_FINISH},
@@ -461,13 +462,14 @@ testRun(void)
 
         TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
         harnessLogResult(
-            "P00   WARN: unable to check pg-1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
+            "P00   WARN: unable to check pg-1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
+                " error");
 
         // Only cluster is a standby
         // -------------------------------------------------------------------------------------------------------------------------
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
+            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
             HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, "/pgdata", NULL, NULL),
             HRNPQ_MACRO_SET_APPLICATION_NAME(1),
@@ -483,7 +485,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
+            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
             HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, "/pgdata", NULL, NULL),
             HRNPQ_MACRO_SET_APPLICATION_NAME(1),
@@ -498,7 +500,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432", PG_VERSION_84, "/pgdata", NULL, NULL),
+            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_84, "/pgdata", NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
