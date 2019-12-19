@@ -7,7 +7,6 @@ Convert Base Data Types
 #include <inttypes.h>
 #include <stdbool.h>
 #include <sys/types.h>
-#include <time.h>
 
 /***********************************************************************************************************************************
 Required buffer sizes
@@ -36,10 +35,6 @@ mode_t cvtZToMode(const char *value);
 
 size_t cvtSizeToZ(size_t value, char *buffer, size_t bufferSize);
 size_t cvtSSizeToZ(ssize_t value, char *buffer, size_t bufferSize);
-
-// Convert a time struct in UTC/GMT time to time_t.  This involves manipulating the TZ environment variable but it seems to be the
-// only way to accomplish the task.
-time_t cvtTimeStructGmtToTime(struct tm *value);
 
 size_t cvtTimeToZ(time_t value, char *buffer, size_t bufferSize);
 

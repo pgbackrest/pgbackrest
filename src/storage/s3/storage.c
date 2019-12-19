@@ -3,9 +3,7 @@ S3 Storage
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "common/crypto/hash.h"
 #include "common/encode.h"
@@ -576,7 +574,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
         result.exists = true;
         result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-        result.timeModified = httpCvtTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+        result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -597,17 +595,11 @@ storageS3CvtTime(const String *time)
         FUNCTION_TEST_PARAM(STRING, time);
     FUNCTION_TEST_END();
 
-    struct tm timeStruct =
-    {
-        .tm_year = cvtZToInt(strPtr(strSubN(time, 0, 4))) - 1900,
-        .tm_mon = cvtZToInt(strPtr(strSubN(time, 5, 2))) - 1,
-        .tm_mday = cvtZToInt(strPtr(strSubN(time, 8, 2))),
-        .tm_hour = cvtZToInt(strPtr(strSubN(time, 11, 2))),
-        .tm_min = cvtZToInt(strPtr(strSubN(time, 14, 2))),
-        .tm_sec = cvtZToInt(strPtr(strSubN(time, 17, 2))),
-    };
-
-    FUNCTION_TEST_RETURN(cvtTimeStructGmtToTime(&timeStruct));
+    FUNCTION_TEST_RETURN(
+        epochFromParts(
+            cvtZToInt(strPtr(strSubN(time, 0, 4))), cvtZToInt(strPtr(strSubN(time, 5, 2))),
+            cvtZToInt(strPtr(strSubN(time, 8, 2))), cvtZToInt(strPtr(strSubN(time, 11, 2))),
+            cvtZToInt(strPtr(strSubN(time, 14, 2))), cvtZToInt(strPtr(strSubN(time, 17, 2)))));
 }
 
 static void
@@ -627,6 +619,7 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
     ASSERT(xml != NULL);
 
     StorageS3InfoListData *data = (StorageS3InfoListData *)callbackData;
+
     StorageInfo info =
     {
         .type = type,

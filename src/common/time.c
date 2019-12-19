@@ -49,12 +49,22 @@ sleepMSec(TimeMSec sleepMSec)
 /**********************************************************************************************************************************/
 bool yearIsLeap(int year)
 {
-    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, year);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0));
 }
 
 /**********************************************************************************************************************************/
 int dayOfYear(int year, int month, int day)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, year);
+        FUNCTION_TEST_PARAM(INT, month);
+        FUNCTION_TEST_PARAM(INT, day);
+    FUNCTION_TEST_END();
+
     static const int daysPerMonth[2][12] =
     {
         {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
@@ -62,4 +72,24 @@ int dayOfYear(int year, int month, int day)
     };
 
     FUNCTION_TEST_RETURN(daysPerMonth[yearIsLeap(year) ? 1 : 0][month - 1] + day);
+}
+
+/**********************************************************************************************************************************/
+time_t
+epochFromParts(int year, int month, int day, int hour, int minute, int second)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, year);
+        FUNCTION_TEST_PARAM(INT, month);
+        FUNCTION_TEST_PARAM(INT, day);
+        FUNCTION_TEST_PARAM(INT, hour);
+        FUNCTION_TEST_PARAM(INT, minute);
+        FUNCTION_TEST_PARAM(INT, second);
+    FUNCTION_TEST_END();
+
+    // Return epoch time using calculation from https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
+    FUNCTION_TEST_RETURN(
+        second + minute * 60 + hour * 3600 +
+        (dayOfYear(year, month, day) - 1) * 86400 + (year - 1900 - 70) * 31536000 +
+        ((year - 1900 - 69) / 4) * 86400 - ((year - 1900 - 1) / 100) * 86400 + ((year - 1900 + 299) / 400) * 86400);
 }

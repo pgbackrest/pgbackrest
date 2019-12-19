@@ -5,6 +5,7 @@ Time Management
 #define COMMON_TIME_H
 
 #include <stdint.h>
+#include <time.h>
 
 /***********************************************************************************************************************************
 Time types
@@ -27,6 +28,9 @@ bool yearIsLeap(int year);
 
 // Get days since the beginning of the year (1-366)
 int dayOfYear(int year, int month, int day);
+
+// Return epoch time from date/time parts (year >= 1970, month 1-12, day 1-31, hour 0-23, minute 0-59, second 0-59)
+time_t epochFromParts(int year, int month, int day, int hour, int minute, int second);
 
 /***********************************************************************************************************************************
 Macros for function logging

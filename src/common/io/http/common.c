@@ -3,19 +3,18 @@ Http Common
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "common/debug.h"
 #include "common/io/http/common.h"
+#include "common/time.h"
 
 /**********************************************************************************************************************************/
 time_t
-httpCvtTime(const String *time)
+httpLastModifiedToTime(const String *lastModified)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, time);
+        FUNCTION_TEST_PARAM(STRING, lastModified);
     FUNCTION_TEST_END();
 
     time_t result = 0;
@@ -25,7 +24,7 @@ httpCvtTime(const String *time)
         // Find the month
         static const char *monthList[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-        const char *month = strPtr(strSubN(time, 8, 3));
+        const char *month = strPtr(strSubN(lastModified, 8, 3));
         unsigned int monthIdx = 0;
 
         for (; monthIdx < sizeof(monthList) / sizeof(char *); monthIdx++)
@@ -38,17 +37,10 @@ httpCvtTime(const String *time)
             THROW_FMT(FormatError, "invalid month '%s'", month);
 
         // Convert to time_t
-        struct tm timeStruct =
-        {
-            .tm_year = cvtZToInt(strPtr(strSubN(time, 12, 4))) - 1900,
-            .tm_mon = (int)monthIdx,
-            .tm_mday = cvtZToInt(strPtr(strSubN(time, 5, 2))),
-            .tm_hour = cvtZToInt(strPtr(strSubN(time, 17, 2))),
-            .tm_min = cvtZToInt(strPtr(strSubN(time, 20, 2))),
-            .tm_sec = cvtZToInt(strPtr(strSubN(time, 23, 2))),
-        };
-
-        result = cvtTimeStructGmtToTime(&timeStruct);
+        result = epochFromParts(
+            cvtZToInt(strPtr(strSubN(lastModified, 12, 4))), (int)monthIdx + 1, cvtZToInt(strPtr(strSubN(lastModified, 5, 2))),
+            cvtZToInt(strPtr(strSubN(lastModified, 17, 2))), cvtZToInt(strPtr(strSubN(lastModified, 20, 2))),
+            cvtZToInt(strPtr(strSubN(lastModified, 23, 2))));
     }
     MEM_CONTEXT_TEMP_END();
 
