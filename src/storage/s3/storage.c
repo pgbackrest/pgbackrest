@@ -3,6 +3,7 @@ S3 Storage
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -607,7 +608,21 @@ storageS3CvtTime(const String *time)
         .tm_sec = cvtZToInt(strPtr(strSubN(time, 17, 2))),
     };
 
-    FUNCTION_TEST_RETURN(mktime(&timeStruct));
+    char *tz = getenv("TZ");
+    String *tzStr = NULL;
+
+    if (tz != NULL)
+    {
+        tzStr = strNew(tz);
+        setenv("TZ", "UTC", true);
+    }
+
+    time_t result = mktime(&timeStruct);
+
+    if (tzStr != NULL)
+        setenv("TZ", strPtr(tzStr), true);
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 static void

@@ -3,6 +3,7 @@ Http Common
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -47,7 +48,19 @@ httpCvtTime(const String *time)
             .tm_sec = cvtZToInt(strPtr(strSubN(time, 23, 2))),
         };
 
+        char *tz = getenv("TZ");
+        String *tzStr = NULL;
+
+        if (tz != NULL)
+        {
+            tzStr = strNew(tz);
+            setenv("TZ", "UTC", true);
+        }
+
         result = mktime(&timeStruct);
+
+        if (tzStr != NULL)
+            setenv("TZ", strPtr(tzStr), true);
     }
     MEM_CONTEXT_TEMP_END();
 
