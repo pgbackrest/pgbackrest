@@ -47,6 +47,42 @@ sleepMSec(TimeMSec sleepMSec)
 }
 
 /**********************************************************************************************************************************/
+void datePartsValid(int year, int month, int day)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, year);
+        FUNCTION_TEST_PARAM(INT, month);
+        FUNCTION_TEST_PARAM(INT, day);
+    FUNCTION_TEST_END();
+
+    static const int daysPerMonth[2][12] =
+    {
+        {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+        {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+    };
+
+    if (!(year >= 1970 && month > 0 && month <= 12 && day > 0 && day <= daysPerMonth[yearIsLeap(year) ? 1 : 0][month - 1]))
+        THROW_FMT(FormatError, "invalid date %04d-%02d-%02d", year, month, day);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void timePartsValid(int hour, int minute, int second)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, hour);
+        FUNCTION_TEST_PARAM(INT, minute);
+        FUNCTION_TEST_PARAM(INT, second);
+    FUNCTION_TEST_END();
+
+    if (!(hour >= 0 && hour < 24 && minute >= 0 && minute < 60 && second >= 0 && second < 60))
+        THROW_FMT(FormatError, "invalid time %02d:%02d:%02d", hour, minute, second);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 bool yearIsLeap(int year)
 {
     FUNCTION_TEST_BEGIN();
@@ -65,13 +101,15 @@ int dayOfYear(int year, int month, int day)
         FUNCTION_TEST_PARAM(INT, day);
     FUNCTION_TEST_END();
 
-    static const int daysPerMonth[2][12] =
+    datePartsValid(year, month, day);
+
+    static const int cumulativeDaysPerMonth[2][12] =
     {
         {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
         {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335},
     };
 
-    FUNCTION_TEST_RETURN(daysPerMonth[yearIsLeap(year) ? 1 : 0][month - 1] + day);
+    FUNCTION_TEST_RETURN(cumulativeDaysPerMonth[yearIsLeap(year) ? 1 : 0][month - 1] + day);
 }
 
 /**********************************************************************************************************************************/
@@ -87,7 +125,9 @@ epochFromParts(int year, int month, int day, int hour, int minute, int second)
         FUNCTION_TEST_PARAM(INT, second);
     FUNCTION_TEST_END();
 
-    // Return epoch time using calculation from https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
+    timePartsValid(hour, minute, second);
+
+    // Return epoch using calculation from https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
     FUNCTION_TEST_RETURN(
         second + minute * 60 + hour * 3600 +
         (dayOfYear(year, month, day) - 1) * 86400 + (year - 1900 - 70) * 31536000 +

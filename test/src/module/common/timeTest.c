@@ -33,7 +33,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("yearIsLeap(), dayOfYear(), and epochFromParts()"))
+    if (testBegin("yearIsLeap(), dayOfYear(), timePartsValid(), and epochFromParts()"))
     {
         TEST_TITLE("is leap year");
 
@@ -47,6 +47,27 @@ testRun(void)
 
         TEST_RESULT_INT(dayOfYear(1995, 3, 1), 60, "1995-03-01 day of year");
         TEST_RESULT_INT(dayOfYear(1996, 3, 1), 61, "1996-03-01 day of year");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("date parts valid");
+
+        TEST_ERROR(datePartsValid(1969,  0,  0), FormatError, "invalid date 1969-00-00");
+        TEST_ERROR(datePartsValid(1970,  0,  0), FormatError, "invalid date 1970-00-00");
+        TEST_ERROR(datePartsValid(1970, 13,  0), FormatError, "invalid date 1970-13-00");
+        TEST_ERROR(datePartsValid(1970, 12,  0), FormatError, "invalid date 1970-12-00");
+        TEST_ERROR(datePartsValid(1970,  2, 29), FormatError, "invalid date 1970-02-29");
+        TEST_RESULT_VOID(datePartsValid(1972, 2, 29), "valid date");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("time parts valid");
+
+        TEST_ERROR(timePartsValid(-1,  0,  0), FormatError, "invalid time -1:00:00");
+        TEST_ERROR(timePartsValid(24,  0,  0), FormatError, "invalid time 24:00:00");
+        TEST_ERROR(timePartsValid( 0, -1,  0), FormatError, "invalid time 00:-1:00");
+        TEST_ERROR(timePartsValid( 0, 60,  0), FormatError, "invalid time 00:60:00");
+        TEST_ERROR(timePartsValid( 0,  0, -1), FormatError, "invalid time 00:00:-1");
+        TEST_ERROR(timePartsValid( 0,  0, 60), FormatError, "invalid time 00:00:60");
+        TEST_RESULT_VOID(timePartsValid(23, 59, 59), "valid time");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("time from parts");

@@ -23,10 +23,16 @@ Functions
 void sleepMSec(TimeMSec sleepMSec);
 TimeMSec timeMSec(void);
 
+// Are the date parts valid? (year >= 1970, month 1-12, day 1-31)
+void datePartsValid(int year, int month, int day);
+
+// Are the time parts valid?
+void timePartsValid(int hour, int minute, int second);
+
 // Is the year a leap year?
 bool yearIsLeap(int year);
 
-// Get days since the beginning of the year (1-366)
+// Get days since the beginning of the year (year >= 1970, month 1-12, day 1-31), returns 1-366
 int dayOfYear(int year, int month, int day);
 
 // Return epoch time from date/time parts (year >= 1970, month 1-12, day 1-31, hour 0-23, minute 0-59, second 0-59)
