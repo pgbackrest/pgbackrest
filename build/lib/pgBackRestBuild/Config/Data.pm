@@ -2540,7 +2540,7 @@ my %hConfigDefine =
         },
     },
 
-	&CFGOPT_PG_USER =>
+    &CFGOPT_PG_USER =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
