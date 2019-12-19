@@ -851,6 +851,7 @@ testRun(void)
         TEST_RESULT_UINT(testStorageInfoList[0].type, storageTypePath, "    check type");
         TEST_RESULT_STR(strPtr(testStorageInfoList[1].name), "test_file", "    check name");
         TEST_RESULT_UINT(testStorageInfoList[1].size, 787, "    check size");
+        TEST_RESULT_UINT(testStorageInfoList[1].timeModified, 1255369830, "    check time");
         TEST_RESULT_UINT(testStorageInfoList[1].type, storageTypeFile, "    check type");
 
         // storageDriverList()

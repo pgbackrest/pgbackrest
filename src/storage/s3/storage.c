@@ -59,6 +59,7 @@ STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
 STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
 STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
+STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
 STRING_STATIC(S3_XML_TAG_MESSAGE_STR,                               "Message");
 STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinuationToken");
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
@@ -586,6 +587,30 @@ typedef struct StorageS3InfoListData
     void *callbackData;                                             // User-supplied callback data
 } StorageS3InfoListData;
 
+// Helper to convert S3 not-quite-ISO-8601 times to time_t
+static time_t
+storageS3CvtTime(const String *time)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, time);
+    FUNCTION_TEST_END();
+
+    struct tm timeStruct =
+    {
+        .tm_year = cvtZToInt(strPtr(strSubN(time, 0, 4))) - 1900,
+        .tm_mon = cvtZToInt(strPtr(strSubN(time, 5, 2))) - 1,
+        .tm_mday = cvtZToInt(strPtr(strSubN(time, 8, 2))),
+        .tm_hour = cvtZToInt(strPtr(strSubN(time, 11, 2))),
+        .tm_min = cvtZToInt(strPtr(strSubN(time, 14, 2))),
+        .tm_sec = cvtZToInt(strPtr(strSubN(time, 17, 2))),
+    };
+
+    char timeBuf[20];
+    CHECK(strftime(timeBuf, sizeof(timeBuf), "%s", &timeStruct) != 0);
+
+    FUNCTION_TEST_RETURN((time_t)cvtZToInt64(timeBuf));
+}
+
 static void
 storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
 {
@@ -604,15 +629,14 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
 
     StorageS3InfoListData *data = (StorageS3InfoListData *)callbackData;
 
-    // const String *time =
-//2009-10-12T17:50:30.000Z
-//1255369830
-
+// HEAD DATE -- Date: 13 Nov 2012 00:28:38 GMT
     StorageInfo info =
     {
         .type = type,
         .name = name,
         .size = type == storageTypeFile ? cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true)))) : 0,
+        .timeModified = type == storageTypeFile ?
+            storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true))) : 0,
     };
 
     data->callback(data->callbackData, &info);
