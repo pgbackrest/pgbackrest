@@ -449,7 +449,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/path/to/pg");
         strLstAddZ(argList, "--pg1-user=bob");
-		harnessCfgLoad(cfgCmdBackup, argList);
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {

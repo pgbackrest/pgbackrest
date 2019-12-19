@@ -47,7 +47,7 @@ testRun(void)
             AssertError, "assertion 'param.full || param.differential || param.incremental' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
-	    String *filter = backupRegExpP(.full = true);
+        String *filter = backupRegExpP(.full = true);
         TEST_RESULT_STR(strPtr(filter), "^[0-9]{8}\\-[0-9]{6}F$", "full backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "    does not exactly match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "    does not exactly match diff");

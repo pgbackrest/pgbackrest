@@ -23,10 +23,10 @@
 #               setting CFGDEF_REQUIRED in the CFGDEF_COMMAND section.
 #   In CFGDEF_COMMAND section:
 #       true - the option must be set somehow for the command, either by default (CFGDEF_DEFAULT) or by the user.
-# 	        &CFGCMD_CHECK =>
-#             {
-#                 &CFGDEF_REQUIRED => true
-#             },
+#           &CFGCMD_CHECK =>
+#           {
+#               &CFGDEF_REQUIRED => true
+#           },
 #       false - mainly used for overriding the CFGDEF_REQUIRED in the global section.
 #
 # CFGDEF_DEFAULT:

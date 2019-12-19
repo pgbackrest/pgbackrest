@@ -513,7 +513,7 @@ sub run
                     "\t\$(CC) -o test.bin \$(OBJS) test.o"  . ($self->{bProfile} ? " -pg" : '') . " \$(LDFLAGS)\n" .
                     "\n" .
                     "test.o: testflags test.c${strTestDepend}\n" .
-	                "\t\$(CC) \$(COMMONFLAGS) \$(WARNINGFLAGS) \$(TESTFLAGS) -c test.c\n";
+                    "\t\$(CC) \$(COMMONFLAGS) \$(WARNINGFLAGS) \$(TESTFLAGS) -c test.c\n";
 
                 # Build C file dependencies
                 foreach my $strCFile (@stryCFile)
