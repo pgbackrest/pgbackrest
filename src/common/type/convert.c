@@ -412,22 +412,15 @@ cvtTimeStructGmtToTime(struct tm *value)
 
     ASSERT(value != NULL);
 
-    char *tz = getenv("TZ");
-    char tzCopy[128] = "";
+    // Use mktime to fill in tm_yday
+    value->tm_isdst = -1;
+    mktime(value);
 
-    if (tz != NULL)
-    {
-        CHECK(strlen(tz) < sizeof(tzCopy));
-        strcpy(tzCopy, tz);
-        setenv("TZ", "UTC", true);
-    }
-
-    time_t result = mktime(value);
-
-    if (tz != NULL)
-        setenv("TZ", tzCopy, true);
-
-    FUNCTION_TEST_RETURN(result);
+    // Return epoch time using calculation from https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
+    FUNCTION_TEST_RETURN(
+        value->tm_sec + value->tm_min * 60 + value->tm_hour * 3600 + value->tm_yday * 86400 +
+        (value->tm_year - 70) * 31536000 + ((value->tm_year - 69) / 4) * 86400 - ((value->tm_year - 1) / 100) * 86400 +
+        ((value->tm_year + 299) / 400) * 86400);
 }
 
 /***********************************************************************************************************************************

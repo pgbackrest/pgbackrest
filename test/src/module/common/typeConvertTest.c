@@ -119,6 +119,16 @@ testRun(void)
         TEST_RESULT_STR(buffer, "1573222014", "    check buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        char *tz = getenv("TZ");
+        char tzCopy[128] = "";
+
+        if (tz != NULL)
+        {
+            CHECK(strlen(tz) < sizeof(tzCopy));
+            strcpy(tzCopy, tz);
+        }
+
+        // Time that is affected by DST in America/New_York
         struct tm tmTest =
         {
             .tm_year = 115,
@@ -129,16 +139,6 @@ testRun(void)
             .tm_sec = 0,
         };
 
-        char *tz = getenv("TZ");
-        char tzCopy[128] = "";
-
-        if (tz != NULL)
-        {
-            CHECK(strlen(tz) < sizeof(tzCopy));
-            strcpy(tzCopy, tz);
-            setenv("TZ", "UTC", true);
-        }
-
         setenv("TZ", "America/New_York", true);
         TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1445412480, "convert time to string (America/New_York)");
 
@@ -147,6 +147,26 @@ testRun(void)
 
         unsetenv("TZ");
         TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1445412480, "convert time to string (UTC)");
+
+        // Time that is not affected by DST in America/New_York
+        tmTest = (struct tm )
+        {
+            .tm_year = 115,
+            .tm_mon = 10,
+            .tm_mday = 21,
+            .tm_hour = 7,
+            .tm_min = 28,
+            .tm_sec = 0,
+        };
+
+        setenv("TZ", "America/New_York", true);
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1448090880, "convert time to string (America/New_York)");
+
+        setenv("TZ", "UTC", true);
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1448090880, "convert time to string (UTC)");
+
+        unsetenv("TZ");
+        TEST_RESULT_INT(cvtTimeStructGmtToTime(&tmTest), 1448090880, "convert time to string (UTC)");
 
         if (tz != NULL)
             setenv("TZ", tzCopy, true);
