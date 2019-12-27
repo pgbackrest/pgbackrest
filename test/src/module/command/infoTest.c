@@ -36,10 +36,10 @@ testRun(void)
 
         // No stanzas have been created
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(infoRender()), "[]", "json - repo but no stanzas");
+        TEST_RESULT_STR_Z(infoRender(), "[]", "json - repo but no stanzas");
 
         harnessCfgLoad(cfgCmdInfo, argListText);
-        TEST_RESULT_STR(strPtr(infoRender()), "No stanzas exist in the repository.\n", "text - no stanzas");
+        TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text - no stanzas");
 
         storagePathCreateP(storageLocalWrite(), archivePath);
         storagePathCreateP(storageLocalWrite(), backupPath);
@@ -48,13 +48,16 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup stanza1 directory");
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive stanza1 directory");
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: error (missing stanza data)\n"
-            "    cipher: none\n", "text - missing stanza data");
+            "    cipher: none\n",
+            "text - missing stanza data");
 
         harnessCfgLoad(cfgCmdInfo, argList);
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "["
                 "{"
                     "\"archive\":[],"
@@ -67,7 +70,8 @@ testRun(void)
                         "\"message\":\"missing stanza data\""
                         "}"
                 "}"
-            "]", "json - missing stanza data");
+            "]",
+            "json - missing stanza data");
 
         // backup.info file exists, but archive.info does not
         //--------------------------------------------------------------------------------------------------------------------------
@@ -128,7 +132,8 @@ testRun(void)
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
         // backup.info
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "["
                 "{"
                     "\"archive\":["
@@ -161,10 +166,12 @@ testRun(void)
                         "\"message\":\"no valid backups\""
                     "}"
                 "}"
-            "]", "json - single stanza, no valid backups");
+            "]",
+            "json - single stanza, no valid backups");
 
         harnessCfgLoad(cfgCmdInfo, argListText);
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: error (no valid backups)\n"
             "    cipher: aes-256-cbc\n"
@@ -186,7 +193,8 @@ testRun(void)
         strLstAddZ(argList2, "--stanza=stanza1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: error (no valid backups)\n"
             "    cipher: aes-256-cbc\n"
@@ -249,7 +257,8 @@ testRun(void)
             storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
                 harnessInfoChecksum(content)), "put backup info to file");
 
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "["
                 "{"
                      "\"archive\":["
@@ -325,10 +334,12 @@ testRun(void)
                         "\"message\":\"ok\""
                     "}"
                 "}"
-            "]", "json - single stanza, valid backup, no priors, no archives in latest DB");
+            "]",
+            "json - single stanza, valid backup, no priors, no archives in latest DB");
 
         harnessCfgLoad(cfgCmdInfo, argListText);
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: ok\n"
             "    cipher: none\n"
@@ -343,8 +354,8 @@ testRun(void)
             "            repository size: 3MB, repository backup size: 3KB\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-3): none present\n"
-            ,"text - single stanza, valid backup, no priors, no archives in latest DB");
+            "        wal archive min/max (9.4-3): none present\n",
+            "text - single stanza, valid backup, no priors, no archives in latest DB");
 
         // backup.info/archive.info files exist, backups exist, archives exist
         //--------------------------------------------------------------------------------------------------------------------------
@@ -574,7 +585,8 @@ testRun(void)
                 harnessInfoChecksum(content)), "put backup info to file - stanza2");
 
         harnessCfgLoad(cfgCmdInfo, argList);
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "["
                 "{"
                      "\"archive\":["
@@ -734,10 +746,12 @@ testRun(void)
                         "\"message\":\"no valid backups\""
                     "}"
                 "}"
-            "]", "json - multiple stanzas, one with valid backups, archives in latest DB");
+            "]",
+            "json - multiple stanzas, one with valid backups, archives in latest DB");
 
         harnessCfgLoad(cfgCmdInfo, argListText);
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: ok\n"
             "    cipher: none\n"
@@ -773,8 +787,8 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-1): none present\n"
-            , "text - multiple stanzas, one with valid backups, archives in latest DB");
+            "        wal archive min/max (9.4-1): none present\n",
+            "text - multiple stanzas, one with valid backups, archives in latest DB");
 
         // Backup set requested
         //--------------------------------------------------------------------------------------------------------------------------
@@ -783,8 +797,8 @@ testRun(void)
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
-        TEST_RESULT_STR(strPtr(infoRender()),
-
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: ok\n"
             "    cipher: none\n"
@@ -804,8 +818,8 @@ testRun(void)
             "                pg_stat => ../pg_stat\n"
             "            tablespaces:\n"
             "                ts1 (1) => /tblspc/ts1\n"
-            "                ts12 (12) => /tblspc/ts12\n"
-            , "text - backup set requested");
+            "                ts12 (12) => /tblspc/ts12\n",
+            "text - backup set requested");
 
         strLstAddZ(argList2, "--output=json");
         harnessCfgLoad(cfgCmdInfo, argList2);
@@ -844,7 +858,8 @@ testRun(void)
                     contentLoad),
                 "write manifest");
 
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: ok\n"
             "    cipher: none\n"
@@ -858,9 +873,8 @@ testRun(void)
             "            database size: 19.2MB, backup size: 8.2KB\n"
             "            repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
-            "            database list: mail (16456), postgres (12173)\n"
-            , "text - backup set requested, no links");
-
+            "            database list: mail (16456), postgres (12173)\n",
+            "text - backup set requested, no links");
 
         // Backup set requested but no databases
         //--------------------------------------------------------------------------------------------------------------------------
@@ -895,7 +909,8 @@ testRun(void)
                     contentLoad),
             "write manifest");
 
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: ok\n"
             "    cipher: none\n"
@@ -909,15 +924,16 @@ testRun(void)
             "            database size: 19.2MB, backup size: 8.2KB\n"
             "            repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
-            "            database list: none\n"
-            , "text - backup set requested, no db");
+            "            database list: none\n",
+            "text - backup set requested, no db");
 
         // Stanza not found
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argList);
         strLstAddZ(argList2, "--stanza=silly");
         harnessCfgLoad(cfgCmdInfo, argList2);
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "["
                 "{"
                      "\"backup\":[],"
@@ -928,21 +944,24 @@ testRun(void)
                         "\"message\":\"missing stanza path\""
                     "}"
                 "}"
-            "]", "json - missing stanza path");
+            "]",
+            "json - missing stanza path");
 
         StringList *argListText2 = strLstDup(argListText);
         strLstAddZ(argListText2, "--stanza=silly");
         harnessCfgLoad(cfgCmdInfo, argListText2);
-        TEST_RESULT_STR(strPtr(infoRender()),
-        "stanza: silly\n"
-        "    status: error (missing stanza path)\n"
-        , "text - missing stanza path");
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: silly\n"
+            "    status: error (missing stanza path)\n",
+            "text - missing stanza path");
 
         // Stanza found
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--stanza=stanza2");
         harnessCfgLoad(cfgCmdInfo, argList);
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "["
                 "{"
                      "\"archive\":["
@@ -970,18 +989,20 @@ testRun(void)
                         "\"message\":\"no valid backups\""
                     "}"
                 "}"
-            "]", "json - multiple stanzas - selected found");
+            "]",
+            "json - multiple stanzas - selected found");
 
         strLstAddZ(argListText, "--stanza=stanza2");
         harnessCfgLoad(cfgCmdInfo, argListText);
-        TEST_RESULT_STR(strPtr(infoRender()),
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza2\n"
             "    status: error (no valid backups)\n"
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-1): none present\n"
-            ,"text - multiple stanzas - selected found");
+            "        wal archive min/max (9.4-1): none present\n",
+            "text - multiple stanzas - selected found");
 
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1052,15 +1073,16 @@ testRun(void)
         String *result = strNew("");
         formatTextDb(stanzaInfo, result, NULL);
 
-        TEST_RESULT_STR(strPtr(result),
+        TEST_RESULT_STR_Z(
+            result,
             "\n"
             "    db (current)\n"
             "        full backup: 20181119-152138F\n"
             "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
             "            wal start/stop: n/a\n"
             "            database size: 0B, backup size: 0B\n"
-            "            repository size: 0B, repository backup size: 0B\n"
-            ,"formatTextDb only backup section (code coverage only)");
+            "            repository size: 0B, repository backup size: 0B\n",
+            "formatTextDb only backup section (code coverage only)");
     }
 
     //******************************************************************************************************************************
@@ -1087,8 +1109,8 @@ testRun(void)
 
         Storage *storage = storagePosixNew(
             strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile)))), "No stanzas exist in the repository.\n",
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), "No stanzas exist in the repository.\n",
             "    check text");
 
         //--------------------------------------------------------------------------------------------------------------------------

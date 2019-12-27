@@ -25,9 +25,9 @@ testRun(void)
         TEST_RESULT_INT(pgVersionFromStr(strNew("9.6")), 90600, "valid pg version 9.6");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(pgVersionToStr(PG_VERSION_11)), "11", "infoPgVersionToString 11");
-        TEST_RESULT_STR(strPtr(pgVersionToStr(PG_VERSION_96)), "9.6", "infoPgVersionToString 9.6");
-        TEST_RESULT_STR(strPtr(pgVersionToStr(83456)), "8.34", "infoPgVersionToString 83456");
+        TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_11), "11", "infoPgVersionToString 11");
+        TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_96), "9.6", "infoPgVersionToString 9.6");
+        TEST_RESULT_STR_Z(pgVersionToStr(83456), "8.34", "infoPgVersionToString 83456");
     }
 
     // *****************************************************************************************************************************
@@ -156,22 +156,22 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgLsnName(), pgTablespaceId(), pgWalName(), pgWalPath(), and pgXactPath()"))
     {
-        TEST_RESULT_STR(strPtr(pgLsnName(PG_VERSION_96)), "location", "check location name");
-        TEST_RESULT_STR(strPtr(pgLsnName(PG_VERSION_10)), "lsn", "check lsn name");
+        TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_96), "location", "check location name");
+        TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_10), "lsn", "check lsn name");
 
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_84), NULL, "check 8.4 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_90), "PG_9.0_201008051", "check 9.0 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94), "PG_9.4_201409291", "check 9.4 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_11), "PG_11_201809051", "check 11 tablespace id");
 
-        TEST_RESULT_STR(strPtr(pgWalName(PG_VERSION_96)), "xlog", "check xlog name");
-        TEST_RESULT_STR(strPtr(pgWalName(PG_VERSION_10)), "wal", "check wal name");
+        TEST_RESULT_STR_Z(pgWalName(PG_VERSION_96), "xlog", "check xlog name");
+        TEST_RESULT_STR_Z(pgWalName(PG_VERSION_10), "wal", "check wal name");
 
         TEST_RESULT_STR_Z(pgWalPath(PG_VERSION_96), "pg_xlog", "check xlog path");
         TEST_RESULT_STR_Z(pgWalPath(PG_VERSION_10), "pg_wal", "check wal path");
 
-        TEST_RESULT_STR(strPtr(pgXactPath(PG_VERSION_96)), "pg_clog", "check pg_clog name");
-        TEST_RESULT_STR(strPtr(pgXactPath(PG_VERSION_10)), "pg_xact", "check pg_xact name");
+        TEST_RESULT_STR_Z(pgXactPath(PG_VERSION_96), "pg_clog", "check pg_clog name");
+        TEST_RESULT_STR_Z(pgXactPath(PG_VERSION_10), "pg_xact", "check pg_xact name");
     }
 
     // *****************************************************************************************************************************
@@ -232,9 +232,9 @@ testRun(void)
             .pageChecksum = true
         };
 
-        TEST_RESULT_STR(
-            strPtr(pgControlToLog(&pgControl)),
-            "{version: 110000, systemId: 1030522662895, walSegmentSize: 16777216, pageChecksum: true}", "check log");
+        TEST_RESULT_STR_Z(
+            pgControlToLog(&pgControl), "{version: 110000, systemId: 1030522662895, walSegmentSize: 16777216, pageChecksum: true}",
+            "check log");
     }
 
     // *****************************************************************************************************************************
@@ -246,9 +246,7 @@ testRun(void)
             .systemId = 0xFEFEFEFEFE
         };
 
-        TEST_RESULT_STR(
-            strPtr(pgWalToLog(&pgWal)),
-            "{version: 100000, systemId: 1095199817470}", "check log");
+        TEST_RESULT_STR_Z(pgWalToLog(&pgWal), "{version: 100000, systemId: 1095199817470}", "check log");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

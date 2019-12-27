@@ -48,7 +48,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *filter = backupRegExpP(.full = true);
-        TEST_RESULT_STR(strPtr(filter), "^[0-9]{8}\\-[0-9]{6}F$", "full backup regex with anchors");
+        TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F$", "full backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "    does not exactly match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "    does not exactly match diff");
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    exactly matches full");
@@ -56,9 +56,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.full = true, .incremental = true);
 
-        TEST_RESULT_STR(
-            strPtr(filter),
-            "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}I){0,1}$", "full and optional incr backup regex with anchors");
+        TEST_RESULT_STR_Z(
+            filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}I){0,1}$", "full and optional incr backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "    match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "    does not match diff");
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
@@ -72,9 +71,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.full = true, .differential = true);
 
-        TEST_RESULT_STR(
-            strPtr(filter),
-            "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}D){0,1}$", "full and optional diff backup regex with anchors");
+        TEST_RESULT_STR_Z(
+            filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}D){0,1}$", "full and optional diff backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "    does not match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "    match diff");
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
@@ -82,9 +80,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.full = true,  .incremental = true, .differential = true);
 
-        TEST_RESULT_STR(
-            strPtr(filter),
-            "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}(D|I)){0,1}$", "full, optional diff and incr backup regex with anchors");
+        TEST_RESULT_STR_Z(
+            filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}(D|I)){0,1}$",
+            "full, optional diff and incr backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "    match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "    match diff");
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
@@ -92,9 +90,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.incremental = true, .differential = true, .noAnchorEnd = true);
 
-        TEST_RESULT_STR(
-            strPtr(filter),
-            "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(D|I)", "diff and incr backup regex with anchors");
+        TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(D|I)", "diff and incr backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "   match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "   match diff");
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
@@ -105,9 +101,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.incremental = true);
 
-        TEST_RESULT_STR(
-            strPtr(filter),
-            "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}I$", "incr backup regex with anchors");
+        TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}I$", "incr backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "   match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "   does not match diff");
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
@@ -115,9 +109,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.differential = true);
 
-        TEST_RESULT_STR(
-            strPtr(filter),
-            "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}D$", "diff backup regex with anchors");
+        TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}D$", "diff backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "   does not match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "   match diff");
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
@@ -141,8 +133,8 @@ testRun(void)
         ioWrite(write, buffer);
         ioWriteClose(write);
 
-        TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR))),
+        TEST_RESULT_STR_Z(
+            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":true,\"valid\":true}", "all zero pages");
 
         // Single checksum error
@@ -168,8 +160,8 @@ testRun(void)
         ioWrite(write, buffer);
         ioWriteClose(write);
 
-        TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR))),
+        TEST_RESULT_STR_Z(
+            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":true,\"error\":[0],\"valid\":false}", "single checksum error");
 
         // Various checksum errors some of which will be skipped because of the LSN
@@ -215,8 +207,8 @@ testRun(void)
         ioWrite(write, buffer);
         ioWriteClose(write);
 
-        TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR))),
+        TEST_RESULT_STR_Z(
+            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":false,\"error\":[0,[2,4],[6,7]],\"valid\":false}", "various checksum errors");
 
         // Impossibly misaligned page
@@ -232,8 +224,8 @@ testRun(void)
         ioWrite(write, buffer);
         ioWriteClose(write);
 
-        TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR))),
+        TEST_RESULT_STR_Z(
+            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":false,\"valid\":false}", "misalignment");
 
         // Two misaligned buffers in a row
@@ -258,9 +250,9 @@ testRun(void)
         TEST_RESULT_UINT(backupType(strNew("incr")), backupTypeIncr, "backup type incr");
         TEST_ERROR(backupType(strNew("bogus")), AssertError, "invalid backup type 'bogus'");
 
-        TEST_RESULT_STR(strPtr(backupTypeStr(backupTypeFull)), "full", "backup type str full");
-        TEST_RESULT_STR(strPtr(backupTypeStr(backupTypeDiff)), "diff", "backup type str diff");
-        TEST_RESULT_STR(strPtr(backupTypeStr(backupTypeIncr)), "incr", "backup type str incr");
+        TEST_RESULT_STR_Z(backupTypeStr(backupTypeFull), "full", "backup type str full");
+        TEST_RESULT_STR_Z(backupTypeStr(backupTypeDiff), "diff", "backup type str diff");
+        TEST_RESULT_STR_Z(backupTypeStr(backupTypeIncr), "incr", "backup type str incr");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

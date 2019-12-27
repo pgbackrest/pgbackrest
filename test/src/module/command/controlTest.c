@@ -27,11 +27,10 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_RESULT_STR(
-            strPtr(lockStopFileName(NULL)), hrnReplaceKey("{[path-data]}/lock/all" STOP_FILE_EXT), "stop file for all stanzas");
-        TEST_RESULT_STR(
-            strPtr(lockStopFileName(strNew("db"))), hrnReplaceKey("{[path-data]}/lock/db" STOP_FILE_EXT),
-            "stop file for on stanza");
+        TEST_RESULT_STR_Z(
+            lockStopFileName(NULL), hrnReplaceKey("{[path-data]}/lock/all" STOP_FILE_EXT), "stop file for all stanzas");
+        TEST_RESULT_STR_Z(
+            lockStopFileName(strNew("db")), hrnReplaceKey("{[path-data]}/lock/db" STOP_FILE_EXT), "stop file for on stanza");
     }
 
     // *****************************************************************************************************************************
@@ -109,7 +108,7 @@ testRun(void)
         StringList *lockPathList = NULL;
         TEST_ASSIGN(lockPathList, storageListP(storageData, strNew("lock"), .errorOnMissing = true), "    get file list");
         TEST_RESULT_INT(strLstSize(lockPathList), 1, "    only file in lock path");
-        TEST_RESULT_STR(strPtr(strLstGet(lockPathList, 0)), "db" STOP_FILE_EXT, "    stanza stop exists");
+        TEST_RESULT_STR_Z(strLstGet(lockPathList, 0), "db" STOP_FILE_EXT, "    stanza stop exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStop(), "stanza, stop file already exists");

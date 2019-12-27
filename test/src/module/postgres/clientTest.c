@@ -280,8 +280,8 @@ testRun(void)
             "  from pg_class where relname in ('pg_class', 'pg_proc')"
             " order by relname");
 
-        TEST_RESULT_STR(
-            strPtr(jsonFromVar(varNewVarLst(pgClientQuery(client, query)))),
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewVarLst(pgClientQuery(client, query))),
             "[[1259,null,\"pg_class\",true],[1255,\"\",\"pg_proc\",false]]", "simple query");
 
         // Close connection

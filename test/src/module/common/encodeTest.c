@@ -17,27 +17,27 @@ testRun(void)
         char destinationEncode[256];
 
         encodeToStr(encodeBase64, encode, 1, destinationEncode);
-        TEST_RESULT_STR(destinationEncode, "cw==", "1 character encode");
+        TEST_RESULT_Z(destinationEncode, "cw==", "1 character encode");
         TEST_RESULT_INT(encodeToStrSize(encodeBase64, 1), strlen(destinationEncode), "check size");
 
         encodeToStr(encodeBase64, encode, 2, destinationEncode);
-        TEST_RESULT_STR(destinationEncode, "c3Q=", "2 character encode");
+        TEST_RESULT_Z(destinationEncode, "c3Q=", "2 character encode");
         TEST_RESULT_INT(encodeToStrSize(encodeBase64, 2), strlen(destinationEncode), "check size");
 
         encodeToStr(encodeBase64, encode, 3, destinationEncode);
-        TEST_RESULT_STR(destinationEncode, "c3Ry", "3 character encode");
+        TEST_RESULT_Z(destinationEncode, "c3Ry", "3 character encode");
         TEST_RESULT_INT(encodeToStrSize(encodeBase64, 3), strlen(destinationEncode), "check size");
 
         encodeToStr(encodeBase64, encode, strlen((char *)encode) - 2, destinationEncode);
-        TEST_RESULT_STR(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ==", "encode full string");
+        TEST_RESULT_Z(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ==", "encode full string");
         TEST_RESULT_INT(encodeToStrSize(encodeBase64, strlen((char *)encode) - 2), strlen(destinationEncode), "check size");
 
         encodeToStr(encodeBase64, encode, strlen((char *)encode), destinationEncode);
-        TEST_RESULT_STR(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ0K", "encode full string with \\r\\n");
+        TEST_RESULT_Z(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ0K", "encode full string with \\r\\n");
         TEST_RESULT_INT(encodeToStrSize(encodeBase64, strlen((char *)encode)), strlen(destinationEncode), "check size");
 
         encodeToStr(encodeBase64, encode, strlen((char *)encode) + 1, destinationEncode);
-        TEST_RESULT_STR(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ0KAA==", "encode full string with \\r\\n and null");
+        TEST_RESULT_Z(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ0KAA==", "encode full string with \\r\\n and null");
         TEST_RESULT_INT(encodeToStrSize(encodeBase64, strlen((char *)encode) + 1), strlen(destinationEncode), "check size");
 
         TEST_ERROR(encodeToStr(999, encode, strlen((char *)encode), destinationEncode), AssertError, "invalid encode type 999");
@@ -49,7 +49,7 @@ testRun(void)
         memset(destinationDecode, 0xFF, sizeof(destinationDecode));
         const char *decode = "c3RyaW5nX3RvX2VuY29kZQ0KAA==";
         decodeToBin(encodeBase64, decode, destinationDecode);
-        TEST_RESULT_STR(destinationDecode, encode, "full string with \\r\\n and null decode");
+        TEST_RESULT_Z(destinationDecode, encode, "full string with \\r\\n and null decode");
         TEST_RESULT_INT(destinationDecode[strlen((char *)encode) + 1], 0xFF, "check for overrun");
         TEST_RESULT_INT(decodeToBinSize(encodeBase64, decode), strlen((char *)encode) + 1, "check size");
 

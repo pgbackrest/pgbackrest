@@ -16,7 +16,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("check known values"))
     {
-        TEST_RESULT_STR(cfgDefOptionName(cfgDefOptConfig), "config", "option name");
+        TEST_RESULT_Z(cfgDefOptionName(cfgDefOptConfig), "config", "option name");
 
         TEST_RESULT_INT(cfgDefOptionId("repo-host"), cfgDefOptRepoHost, "define id");
         TEST_RESULT_INT(cfgDefOptionId(BOGUS_STR), -1, "invalid define id");
@@ -29,9 +29,9 @@ testRun(void)
 
         TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgDefCmdBackup, cfgDefOptType), 3, "allow list total");
 
-        TEST_RESULT_STR(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 0), "full", "allow list value 0");
-        TEST_RESULT_STR(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 1), "diff", "allow list value 1");
-        TEST_RESULT_STR(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 2), "incr", "allow list value 2");
+        TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 0), "full", "allow list value 0");
+        TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 1), "diff", "allow list value 1");
+        TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 2), "incr", "allow list value 2");
         TEST_ERROR(
             cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 3), AssertError,
             "assertion 'valueId < cfgDefOptionAllowListValueTotal(commandDefId, optionDefId)' failed");
@@ -56,10 +56,10 @@ testRun(void)
         TEST_ERROR(cfgDefOptionDefault(
             cfgDefCmdBackup, cfgDefOptionTotal()), AssertError,
             "assertion 'optionDefId < cfgDefOptionTotal()' failed");
-        TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptCompressLevel), "6", "option default exists");
-        TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptType), "default", "command default exists");
-        TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdLocal, cfgDefOptType), NULL, "command default does not exist");
-        TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptRepoHost), NULL, "default does not exist");
+        TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptCompressLevel), "6", "option default exists");
+        TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptType), "default", "command default exists");
+        TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdLocal, cfgDefOptType), NULL, "command default does not exist");
+        TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptRepoHost), NULL, "default does not exist");
 
         TEST_RESULT_BOOL(cfgDefOptionDepend(cfgDefCmdRestore, cfgDefOptRepoS3Key), true, "has depend option");
         TEST_RESULT_BOOL(cfgDefOptionDepend(cfgDefCmdRestore, cfgDefOptType), false, "does not have depend option");
@@ -68,9 +68,9 @@ testRun(void)
         TEST_RESULT_INT(cfgDefOptionDependOption(cfgDefCmdBackup, cfgDefOptRepoHostCmd), cfgDefOptRepoHost, "depend option id");
 
         TEST_RESULT_INT(cfgDefOptionDependValueTotal(cfgDefCmdRestore, cfgDefOptTarget), 3, "depend option value total");
-        TEST_RESULT_STR(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 0), "name", "depend option value 0");
-        TEST_RESULT_STR(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 1), "time", "depend option value 1");
-        TEST_RESULT_STR(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 2), "xid", "depend option value 2");
+        TEST_RESULT_Z(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 0), "name", "depend option value 0");
+        TEST_RESULT_Z(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 1), "time", "depend option value 1");
+        TEST_RESULT_Z(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 2), "xid", "depend option value 2");
         TEST_ERROR(
             cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 3), AssertError,
             "assertion 'valueId < cfgDefOptionDependValueTotal(commandDefId, optionDefId)' failed");
@@ -93,8 +93,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptDbInclude), true, "db-include is multi");
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptStartFast), false, "start-fast is not multi");
 
-        TEST_RESULT_STR(cfgDefOptionPrefix(cfgDefOptPgHost), "pg", "option prefix");
-        TEST_RESULT_STR(cfgDefOptionPrefix(cfgDefOptType), NULL, "option has no prefix");
+        TEST_RESULT_Z(cfgDefOptionPrefix(cfgDefOptPgHost), "pg", "option prefix");
+        TEST_RESULT_Z(cfgDefOptionPrefix(cfgDefOptType), NULL, "option has no prefix");
 
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdBackup, cfgDefOptConfig), true, "option required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdRestore, cfgDefOptRepoHost), false, "option not required");
@@ -123,27 +123,27 @@ testRun(void)
         TEST_RESULT_BOOL(cfgDefOptionHelpNameAlt(cfgDefOptRepoHost), true, "name alt exists");
         TEST_RESULT_BOOL(cfgDefOptionHelpNameAlt(cfgDefOptSet), false, "name alt not exists");
         TEST_RESULT_INT(cfgDefOptionHelpNameAltValueTotal(cfgDefOptRepoHost), 1, "name alt value total");
-        TEST_RESULT_STR(cfgDefOptionHelpNameAltValue(cfgDefOptRepoHost, 0), "backup-host", "name alt value 0");
+        TEST_RESULT_Z(cfgDefOptionHelpNameAltValue(cfgDefOptRepoHost, 0), "backup-host", "name alt value 0");
         TEST_ERROR(
             cfgDefOptionHelpNameAltValue(cfgDefOptRepoHost, 1), AssertError,
             "assertion 'valueId < cfgDefOptionHelpNameAltValueTotal(optionDefId)' failed");
 
-        TEST_RESULT_STR(cfgDefCommandHelpSummary(cfgDefCmdBackup), "Backup a database cluster.", "backup command help summary");
-        TEST_RESULT_STR(
+        TEST_RESULT_Z(cfgDefCommandHelpSummary(cfgDefCmdBackup), "Backup a database cluster.", "backup command help summary");
+        TEST_RESULT_Z(
             cfgDefCommandHelpDescription(cfgDefCmdBackup),
             "pgBackRest does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.",
             "backup command help description");
 
-        TEST_RESULT_STR(cfgDefOptionHelpSection(cfgDefOptCompress), "general", "compress option help section");
-        TEST_RESULT_STR(
+        TEST_RESULT_Z(cfgDefOptionHelpSection(cfgDefOptCompress), "general", "compress option help section");
+        TEST_RESULT_Z(
             cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptCompress), "Use gzip file compression.",
             "backup command, compress option help summary");
-        TEST_RESULT_STR(
+        TEST_RESULT_Z(
             cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptCompress),
             "Backup files are compatible with command-line gzip tools.", "backup command, compress option help description");
-        TEST_RESULT_STR(
+        TEST_RESULT_Z(
             cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptType), "Backup type.", "backup command, type option help summary");
-        TEST_RESULT_STR(
+        TEST_RESULT_Z(
             cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptType),
             "The following backup types are supported:\n"
             "\n"

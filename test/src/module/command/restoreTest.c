@@ -215,10 +215,9 @@ testRun(void)
         TEST_RESULT_UINT(info.size, 7, "    check size");
         TEST_RESULT_UINT(info.mode, 0600, "    check mode");
         TEST_RESULT_UINT(info.timeModified, 1557432154, "    check time");
-        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
-        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("normal"))))), "acefile", "    check contents");
+        TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
+        TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
+        TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("normal")))), "acefile", "    check contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Create a repo file
@@ -232,8 +231,8 @@ testRun(void)
                 repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
                 false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta missing");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
 
         size_t oldBufferSize = ioBufferSize();
         ioBufferSizeSet(4);
@@ -260,8 +259,8 @@ testRun(void)
                 repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
                 false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, size differs");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("atestfile2"));
 
@@ -270,8 +269,8 @@ testRun(void)
                 repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
                 false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
 
         // Change the existing file so it no longer matches by content
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("btestfile"));
@@ -281,8 +280,8 @@ testRun(void)
                 repoFile1, repoFileReferenceFull, false, strNew("delta"), strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
                 false, 9, 1557432154, 0600, strNew(testUser()), strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, content differs");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta"))))), "atestfile", "    check contents");
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("btestfile"));
 
@@ -327,7 +326,7 @@ testRun(void)
         varLstAdd(paramList, NULL);
 
         TEST_RESULT_BOOL(restoreProtocol(PROTOCOL_COMMAND_RESTORE_FILE_STR, paramList, server), true, "protocol restore file");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "    check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
         info = storageInfoP(storagePg(), strNew("protocol"));
@@ -335,10 +334,10 @@ testRun(void)
         TEST_RESULT_UINT(info.size, 9, "    check size");
         TEST_RESULT_UINT(info.mode, 0677, "    check mode");
         TEST_RESULT_UINT(info.timeModified, 1557432100, "    check time");
-        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
-        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("protocol"))))), "atestfile", "    check contents");
+        TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
+        TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("protocol")))), "atestfile", "    check contents");
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
@@ -358,7 +357,7 @@ testRun(void)
         varLstAdd(paramList, NULL);
 
         TEST_RESULT_BOOL(restoreProtocol(PROTOCOL_COMMAND_RESTORE_FILE_STR, paramList, server), true, "protocol restore file");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "    check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
         // Check invalid protocol function
@@ -507,8 +506,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is not remapped");
-        TEST_RESULT_STR_STR(
-            manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is not remapped");
+        TEST_RESULT_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is not remapped");
 
         // Now change pg1-path so the data directory gets remapped
         pgPath = strNewFmt("%s/pg2", testPath());
@@ -520,7 +518,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is remapped");
-        TEST_RESULT_STR_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is remapped");
+        TEST_RESULT_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is remapped");
         TEST_RESULT_LOG("P00   INFO: remap data directory to '{[path]}/pg2'");
 
         // -------------------------------------------------------------------------------------------------------------------------

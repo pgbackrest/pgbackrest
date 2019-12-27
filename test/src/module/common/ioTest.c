@@ -308,8 +308,8 @@ testRun(void)
         IoFilter *bufferFilter = ioBufferNew();
         TEST_RESULT_VOID(ioFilterGroupAdd(ioReadFilterGroup(bufferRead), bufferFilter), "    add filter to filter group");
         TEST_RESULT_PTR(ioFilterMove(NULL, memContextTop()), NULL, "    move NULL filter to top context");
-        TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(bufferRead)))),
+        TEST_RESULT_STR_Z(
+            jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(bufferRead))),
             "[{\"size\":null},{\"double\":[\"double\",2,3]},{\"size\":null},{\"buffer\":null}]", "    check filter params");
 
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
@@ -317,27 +317,27 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
         TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
         TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 0, "    read 0 bytes (full buffer)");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "11", "    check read");
-        TEST_RESULT_STR(strPtr(ioFilterType(sizeFilter)), "size", "check filter type");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "11", "    check read");
+        TEST_RESULT_STR_Z(ioFilterType(sizeFilter), "size", "check filter type");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
 
         TEST_RESULT_VOID(bufUsedZero(buffer), "    zero buffer");
         TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "22", "    check read");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "22", "    check read");
 
         TEST_ASSIGN(buffer, bufNew(3), "change output buffer size to 3");
         TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 3, "    read 3 bytes");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "33X", "    check read");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "33X", "    check read");
 
         TEST_RESULT_VOID(bufUsedZero(buffer), "    zero buffer");
         TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "XX", "    check read");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "XX", "    check read");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), true, "    eof");
         TEST_RESULT_BOOL(ioBufferRead(ioReadDriver(bufferRead), buffer, true), 0, "    eof from driver");
         TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
         TEST_RESULT_VOID(ioReadClose(bufferRead), " close buffer read object");
-        TEST_RESULT_STR(
-            strPtr(jsonFromVar(ioFilterGroupResultAll(ioReadFilterGroup(bufferRead)))),
+        TEST_RESULT_STR_Z(
+            jsonFromVar(ioFilterGroupResultAll(ioReadFilterGroup(bufferRead))),
             "{\"buffer\":null,\"double\":null,\"size\":[3,9]}",
             "    check filter result all");
 
@@ -379,7 +379,7 @@ testRun(void)
             "    add filter that produces output with no input");
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open read");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 5, "    read 5 chars");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "YYYYY", "    check buffer");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "YYYYY", "    check buffer");
 
         // Mixed line and buffer read
         // -------------------------------------------------------------------------------------------------------------------------
@@ -390,24 +390,24 @@ testRun(void)
 
         // Start with a buffer read
         TEST_RESULT_INT(ioRead(read, buffer), 3, "read buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AAA", "    check buffer");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "AAA", "    check buffer");
 
         // Do line reads of various lengths
-        TEST_RESULT_STR(strPtr(ioReadLine(read)), "123", "read line");
-        TEST_RESULT_STR(strPtr(ioReadLine(read)), "1234", "read line");
-        TEST_RESULT_STR(strPtr(ioReadLine(read)), "", "read line");
-        TEST_RESULT_STR(strPtr(ioReadLine(read)), "12", "read line");
+        TEST_RESULT_STR_Z(ioReadLine(read), "123", "read line");
+        TEST_RESULT_STR_Z(ioReadLine(read), "1234", "read line");
+        TEST_RESULT_STR_Z(ioReadLine(read), "", "read line");
+        TEST_RESULT_STR_Z(ioReadLine(read), "12", "read line");
 
         // Read what was left in the line buffer
         TEST_RESULT_INT(ioRead(read, buffer), 0, "read buffer");
         bufUsedSet(buffer, 2);
         TEST_RESULT_INT(ioRead(read, buffer), 1, "read buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AAB", "    check buffer");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "AAB", "    check buffer");
         bufUsedSet(buffer, 0);
 
         // Now do a full buffer read from the input
         TEST_RESULT_INT(ioRead(read, buffer), 3, "read buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "DDD", "    check buffer");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "DDD", "    check buffer");
 
         // Read line doesn't work without a linefeed
         TEST_ERROR(ioReadLine(read), FileReadError, "unexpected eof while reading line");
@@ -415,11 +415,11 @@ testRun(void)
         // But those bytes can be picked up by a buffer read
         buffer = bufNew(2);
         TEST_RESULT_INT(ioRead(read, buffer), 2, "read buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "EF", "    check buffer");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "EF", "    check buffer");
 
         buffer = bufNew(1);
         TEST_RESULT_INT(ioRead(read, buffer), 1, "read buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "F", "    check buffer");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "F", "    check buffer");
 
         // Nothing left to read
         TEST_ERROR(ioReadLine(read), FileReadError, "unexpected eof while reading line");
@@ -434,7 +434,7 @@ testRun(void)
         // Read line without eof
         read = ioBufferReadNew(BUFSTRDEF("1234"));
         ioReadOpen(read);
-        TEST_RESULT_STR(strPtr(ioReadLineParam(read, true)), "1234", "read line without eof");
+        TEST_RESULT_STR_Z(ioReadLineParam(read, true), "1234", "read line without eof");
 
         // Read IO into a buffer
         // -------------------------------------------------------------------------------------------------------------------------
@@ -443,7 +443,7 @@ testRun(void)
         bufferRead = ioBufferReadNew(BUFSTRDEF("a test string"));
         ioReadOpen(bufferRead);
 
-        TEST_RESULT_STR(strPtr(strNewBuf(ioReadBuf(bufferRead))), "a test string", "read into buffer");
+        TEST_RESULT_STR_Z(strNewBuf(ioReadBuf(bufferRead)), "a test string", "read into buffer");
 
         // Drain read IO
         // -------------------------------------------------------------------------------------------------------------------------
@@ -499,15 +499,15 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteLine(bufferWrite, BUFSTRDEF("AB")), "    write line");
         TEST_RESULT_VOID(ioWrite(bufferWrite, bufNew(0)), "    write 0 bytes");
         TEST_RESULT_VOID(ioWrite(bufferWrite, NULL), "    write 0 bytes");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n", "    check write");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "AABB\n\n", "    check write");
 
         TEST_RESULT_VOID(ioWriteStr(bufferWrite, STRDEF("Z")), "    write string");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n", "    no change because output buffer is not full");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "AABB\n\n", "    no change because output buffer is not full");
         TEST_RESULT_VOID(ioWriteStr(bufferWrite, STRDEF("12345")), "    write bytes");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ1122334455", "    check write");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "AABB\n\nZZ1122334455", "    check write");
 
         TEST_RESULT_VOID(ioWriteClose(bufferWrite), " close buffer write object");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ1122334455XXXY", "    check write after close");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "AABB\n\nZZ1122334455XXXY", "    check write after close");
 
         TEST_RESULT_PTR(ioWriteFilterGroup(bufferWrite), filterGroup, "    check filter group");
         TEST_RESULT_UINT(
@@ -561,7 +561,7 @@ testRun(void)
                 TEST_RESULT_PTR(ioReadDriver(read), read->driver, "check driver");
 
                 // Read a string
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "test string 1", "read test string");
+                TEST_RESULT_STR_Z(ioReadLine(read), "test string 1", "read test string");
 
                 // Only part of the buffer is written before timeout
                 Buffer *buffer = bufNew(16);
@@ -576,7 +576,7 @@ testRun(void)
                 TEST_RESULT_UINT(ioRead(read, buffer), 12, "read buffer");
                 bufLimitClear(buffer);
                 TEST_RESULT_UINT(ioRead(read, buffer), 4, "read buffer");
-                TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "1234567812345678", "check buffer");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "1234567812345678", "check buffer");
 
                 // Check EOF
                 buffer = bufNew(16);

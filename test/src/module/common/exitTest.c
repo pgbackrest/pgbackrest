@@ -18,9 +18,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitSignalName()"))
     {
-        TEST_RESULT_STR(exitSignalName(signalTypeHup), "HUP", "SIGHUP name");
-        TEST_RESULT_STR(exitSignalName(signalTypeInt), "INT", "SIGINT name");
-        TEST_RESULT_STR(exitSignalName(signalTypeTerm), "TERM", "SIGTERM name");
+        TEST_RESULT_Z(exitSignalName(signalTypeHup), "HUP", "SIGHUP name");
+        TEST_RESULT_Z(exitSignalName(signalTypeInt), "INT", "SIGINT name");
+        TEST_RESULT_Z(exitSignalName(signalTypeTerm), "TERM", "SIGTERM name");
         TEST_ERROR(exitSignalName(signalTypeNone), AssertError, "no name for signal none");
     }
 

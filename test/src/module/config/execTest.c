@@ -31,12 +31,11 @@ testRun(void)
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(cfgExecParam(cfgCmdLocal, NULL, false), "|")),
-            strPtr(
-                strNewFmt(
-                    "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo"
-                    "|--stanza=test1|local",
-                    testPath(), testPath())),
+            strLstJoin(cfgExecParam(cfgCmdLocal, NULL, false), "|"),
+            strNewFmt(
+                "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo"
+                "|--stanza=test1|local",
+                testPath(), testPath()),
             "exec archive-get -> local");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -60,12 +59,11 @@ testRun(void)
         kvPut(optionReplace, varNewStr(strNew("stanza")), NULL);
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(cfgExecParam(cfgCmdRestore, optionReplace, true), "|")),
-            strPtr(
-                strNewFmt(
-                    "--db-include=1|--db-include=2|--pg1-path=%s/db|--recovery-option=a=b|--recovery-option=c=d"
-                        "|--repo1-path=/replace/path|restore",
-                    testPath())),
+            strLstJoin(cfgExecParam(cfgCmdRestore, optionReplace, true), "|"),
+            strNewFmt(
+                "--db-include=1|--db-include=2|--pg1-path=%s/db|--recovery-option=a=b|--recovery-option=c=d"
+                    "|--repo1-path=/replace/path|restore",
+                testPath()),
             "exec restore -> restore");
     }
 

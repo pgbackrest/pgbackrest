@@ -107,8 +107,8 @@ testRun(void)
         TEST_RESULT_UINT(protocolStorageTypeEnum(PROTOCOL_STORAGE_TYPE_REPO_STR), protocolStorageTypeRepo, "repo enum");
         TEST_ERROR(protocolStorageTypeEnum(STRDEF(BOGUS_STR)), AssertError, "invalid protocol storage type 'BOGUS'");
 
-        TEST_RESULT_STR_STR(protocolStorageTypeStr(protocolStorageTypePg), PROTOCOL_STORAGE_TYPE_PG_STR, "pg str");
-        TEST_RESULT_STR_STR(protocolStorageTypeStr(protocolStorageTypeRepo), PROTOCOL_STORAGE_TYPE_REPO_STR, "repo str");
+        TEST_RESULT_STR(protocolStorageTypeStr(protocolStorageTypePg), PROTOCOL_STORAGE_TYPE_PG_STR, "pg str");
+        TEST_RESULT_STR(protocolStorageTypeStr(protocolStorageTypeRepo), PROTOCOL_STORAGE_TYPE_REPO_STR, "repo str");
         TEST_ERROR(protocolStorageTypeStr((ProtocolStorageType)999), AssertError, "invalid protocol storage type 999");
     }
 
@@ -171,12 +171,10 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 1, 0), "|")),
-            strPtr(
-                strNew(
-                    "--command=archive-get|--host-id=1|--log-level-file=off|--log-level-stderr=error|--process=0|--stanza=test1"
-                        "|--type=backup|local")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 1, 0), "|"),
+            "--command=archive-get|--host-id=1|--log-level-file=off|--log-level-stderr=error|--process=0|--stanza=test1"
+                "|--type=backup|local",
             "local repo protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -189,12 +187,10 @@ testRun(void)
         strLstAddZ(argList, "backup");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolLocalParam(protocolStorageTypePg, 2, 1), "|")),
-            strPtr(
-                strNew(
-                    "--command=backup|--host-id=2|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg"
-                        "|--process=1|--stanza=test1|--type=db|local")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(protocolLocalParam(protocolStorageTypePg, 2, 1), "|"),
+            "--command=backup|--host-id=2|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg"
+                "|--process=1|--stanza=test1|--type=db|local",
             "local pg protocol params");
     }
 
@@ -215,13 +211,11 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 0, 0), "|")),
-            strPtr(
-                strNew(
-                    "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
-                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=0"
-                        " --stanza=test1 --type=backup remote")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 0, 0), "|"),
+            "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
+                "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=0"
+                " --stanza=test1 --type=backup remote",
             "remote protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -238,14 +232,12 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1, 0), "|")),
-            strPtr(
-                strNew(
-                    "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
-                        "|pgbackrest --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
-                        " --config-path=/path/config --log-level-file=info --log-level-stderr=error --log-subprocess --process=1"
-                        " --stanza=test1 --type=backup remote")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1, 0), "|"),
+            "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
+                "|pgbackrest --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
+                " --config-path=/path/config --log-level-file=info --log-level-stderr=error --log-subprocess --process=1"
+                " --stanza=test1 --type=backup remote",
             "remote protocol params with replacements");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -260,13 +252,11 @@ testRun(void)
         strLstAddZ(argList, "local");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 66, 0), "|")),
-            strPtr(
-                strNew(
-                    "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
-                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=3"
-                        " --stanza=test1 --type=backup remote")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 66, 0), "|"),
+            "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
+                "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=3"
+                " --stanza=test1 --type=backup remote",
             "remote protocol params for backup local");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -279,13 +269,11 @@ testRun(void)
         strLstAddZ(argList, "backup");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 0), "|")),
-            strPtr(
-                strNew(
-                    "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg1-host"
-                        "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/1"
-                        " --process=1 --stanza=test1 --type=db remote")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 0), "|"),
+            "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg1-host"
+                "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/1"
+                " --process=1 --stanza=test1 --type=db remote",
             "remote protocol params for db backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -304,13 +292,11 @@ testRun(void)
         strLstAddZ(argList, "local");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 1), "|")),
-            strPtr(
-                strNew(
-                    "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg2-host"
-                        "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/2"
-                        " --process=4 --stanza=test1 --type=db remote")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 1), "|"),
+            "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg2-host"
+                "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/2"
+                " --process=4 --stanza=test1 --type=db remote",
             "remote protocol params for db local");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -329,13 +315,11 @@ testRun(void)
         strLstAddZ(argList, "local");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 2), "|")),
-            strPtr(
-                strNew(
-                    "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg3-host"
-                        "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/3"
-                        " --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --stanza=test1 --type=db remote")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 2), "|"),
+            "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg3-host"
+                "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/3"
+                " --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --stanza=test1 --type=db remote",
             "remote protocol params for db local");
     }
 
@@ -355,14 +339,13 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR(strPtr(protocolCommandToLog(command)), "{command: command1}", "check log");
-        TEST_RESULT_STR(
-            strPtr(protocolCommandJson(command)), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "check json");
+        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: command1}", "check log");
+        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "check json");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(command, protocolCommandNew(strNew("command2")), "create command");
-        TEST_RESULT_STR(strPtr(protocolCommandToLog(command)), "{command: command2}", "check log");
-        TEST_RESULT_STR(strPtr(protocolCommandJson(command)), "{\"cmd\":\"command2\"}", "check json");
+        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: command2}", "check log");
+        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"command2\"}", "check json");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(protocolCommandFree(command), "free command");
@@ -398,53 +381,52 @@ testRun(void)
                 ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
                 // Throw errors
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with error text");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with error text");
                 ioWriteStrLine(write, strNew("{\"err\":25,\"out\":\"sample error message\",\"errStack\":\"stack data\"}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with no error text");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with no error text");
                 ioWriteStrLine(write, strNew("{\"err\":255}"));
                 ioWriteFlush(write);
 
                 // No output expected
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with parameters returned");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with parameters returned");
                 ioWriteStrLine(write, strNew("{\"out\":[\"bogus\"]}"));
                 ioWriteFlush(write);
 
                 // Send output
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"test\"}", "test command");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"test\"}", "test command");
                 ioWriteStrLine(write, strNew(".OUTPUT"));
                 ioWriteStrLine(write, strNew("{\"out\":[\"value1\",\"value2\"]}"));
                 ioWriteFlush(write);
 
                 // invalid line
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"invalid-line\"}", "invalid line command");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"invalid-line\"}", "invalid line command");
                 ioWrite(write, LF_BUF);
                 ioWriteFlush(write);
 
                 // error instead of output
-                TEST_RESULT_STR(
-                    strPtr(ioReadLine(read)), "{\"cmd\":\"error-instead-of-output\"}", "error instead of output command");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"error-instead-of-output\"}", "error instead of output command");
                 ioWriteStrLine(write, strNew("{\"err\":255}"));
                 ioWriteFlush(write);
 
                 // unexpected output
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"unexpected-output\"}", "unexpected output");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"unexpected-output\"}", "unexpected output");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
                 // invalid prefix
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"invalid-prefix\"}", "invalid prefix");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"invalid-prefix\"}", "invalid prefix");
                 ioWriteStrLine(write, strNew("~line"));
                 ioWriteFlush(write);
 
                 // Wait for exit
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"exit\"}", "exit command");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"exit\"}", "exit command");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -514,8 +496,8 @@ testRun(void)
                 TEST_RESULT_STR_Z(protocolClientReadLine(client), "OUTPUT", "check output");
                 TEST_ASSIGN(output, varVarLst(protocolClientReadOutput(client, true)), "execute command with output");
                 TEST_RESULT_UINT(varLstSize(output), 2, "check output size");
-                TEST_RESULT_STR(strPtr(varStr(varLstGet(output, 0))), "value1", "check value1");
-                TEST_RESULT_STR(strPtr(varStr(varLstGet(output, 1))), "value2", "check value2");
+                TEST_RESULT_STR_Z(varStr(varLstGet(output, 0)), "value1", "check value1");
+                TEST_RESULT_STR_Z(varStr(varLstGet(output, 1)), "value2", "check value2");
 
                 // Invalid line
                 TEST_RESULT_VOID(
@@ -562,14 +544,14 @@ testRun(void)
                 ioWriteOpen(write);
 
                 // Check greeting
-                TEST_RESULT_STR(
-                    strPtr(ioReadLine(read)), "{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}",
+                TEST_RESULT_STR_Z(
+                    ioReadLine(read), "{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}",
                     "check greeting");
 
                 // Noop
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"noop\"}")), "write noop");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush noop");
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{}", "noop result");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{}", "noop result");
 
                 // Invalid command
                 KeyValue *result = NULL;
@@ -578,26 +560,26 @@ testRun(void)
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush bogus");
                 TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
                 TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 39, "    check code");
-                TEST_RESULT_STR(strPtr(varStr(kvGet(result, VARSTRDEF("out")))), "invalid command 'bogus'", "    check message");
+                TEST_RESULT_STR_Z(varStr(kvGet(result, VARSTRDEF("out"))), "invalid command 'bogus'", "    check message");
                 TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Simple request
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"request-simple\"}")), "write simple request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"out\":true}", "simple request result");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "simple request result");
 
                 // Throw an assert error which will include a stack trace
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"assert\"}")), "write assert");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush assert error");
                 TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
                 TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 25, "    check code");
-                TEST_RESULT_STR(strPtr(varStr(kvGet(result, VARSTRDEF("out")))), "test assert", "    check message");
+                TEST_RESULT_STR_Z(varStr(kvGet(result, VARSTRDEF("out"))), "test assert", "    check message");
                 TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Complex request -- after process loop has been restarted
                 TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"request-complex\"}")), "write complex request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush complex request");
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"out\":false}", "complex request result");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":false}", "complex request result");
                 TEST_RESULT_STR_Z(ioReadLine(read), ".LINEOFTEXT", "complex request result");
                 TEST_RESULT_STR_Z(ioReadLine(read), ".", "complex request result");
 
@@ -681,17 +663,17 @@ testRun(void)
                 ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "command1");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "command1");
                 sleepMSec(4000);
                 ioWriteStrLine(write, strNew("{\"out\":1}"));
                 ioWriteFlush(write);
 
                 // Wait for exit
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"exit\"}", "exit command");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"exit\"}", "exit command");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -707,22 +689,22 @@ testRun(void)
                 ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"command2\",\"param\":[\"param1\"]}", "command2");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"command2\",\"param\":[\"param1\"]}", "command2");
                 sleepMSec(1000);
                 ioWriteStrLine(write, strNew("{\"out\":2}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"command3\",\"param\":[\"param1\"]}", "command3");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"command3\",\"param\":[\"param1\"]}", "command3");
 
                 ioWriteStrLine(write, strNew("{\"err\":39,\"out\":\"very serious error\"}"));
                 ioWriteFlush(write);
 
                 // Wait for exit
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"exit\"}", "exit command");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"exit\"}", "exit command");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -732,8 +714,7 @@ testRun(void)
                 TestParallelJobCallback data = {.jobList = lstNew(sizeof(ProtocolParallelJob *))};
                 ProtocolParallel *parallel = NULL;
                 TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
-                TEST_RESULT_STR(
-                    strPtr(protocolParallelToLog(parallel)), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
+                TEST_RESULT_STR_Z(protocolParallelToLog(parallel), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
 
                 // Add client
                 unsigned int clientTotal = 2;
@@ -795,7 +776,7 @@ testRun(void)
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
 
                 TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
-                TEST_RESULT_STR(strPtr(varStr(protocolParallelJobKey(job))), "job2", "check key is job2");
+                TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job2", "check key is job2");
                 TEST_RESULT_BOOL(
                     protocolParallelJobProcessId(job) >= 1 && protocolParallelJobProcessId(job) <= 2, true,
                     "check process id is valid");
@@ -807,10 +788,10 @@ testRun(void)
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
 
                 TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
-                TEST_RESULT_STR(strPtr(varStr(protocolParallelJobKey(job))), "job3", "check key is job3");
+                TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job3", "check key is job3");
                 TEST_RESULT_INT(protocolParallelJobErrorCode(job), 39, "check error code");
-                TEST_RESULT_STR(
-                    strPtr(protocolParallelJobErrorMessage(job)), "raised from test client 1: very serious error",
+                TEST_RESULT_STR_Z(
+                    protocolParallelJobErrorMessage(job), "raised from test client 1: very serious error",
                     "check error message");
                 TEST_RESULT_PTR(protocolParallelJobResult(job), NULL, "check result is null");
 
@@ -825,7 +806,7 @@ testRun(void)
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
 
                 TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
-                TEST_RESULT_STR(strPtr(varStr(protocolParallelJobKey(job))), "job1", "check key is job1");
+                TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job1", "check key is job1");
                 TEST_RESULT_INT(varIntForce(protocolParallelJobResult(job)), 1, "check result is 1");
 
                 TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
@@ -896,10 +877,10 @@ testRun(void)
         strLstAddZ(argList, "--type=db");
         harnessCfgLoad(cfgCmdLocal, argList);
 
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass before");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
         TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass after");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
 
@@ -923,7 +904,7 @@ testRun(void)
 
         TEST_RESULT_PTR(cfgOptionStr(cfgOptRepoCipherPass), NULL, "check cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "dcba", "check cipher pass after");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "dcba", "check cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
 

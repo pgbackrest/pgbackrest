@@ -27,7 +27,7 @@ testRun(void)
     if (testBegin("DEBUG_UNIT_EXTERN"))
     {
         const char *debugUnitExtern = STRINGIFY(DEBUG_UNIT_EXTERN);
-        TEST_RESULT_STR(debugUnitExtern, "static", "DEBUG_UNIT_EXTERN is static");
+        TEST_RESULT_Z(debugUnitExtern, "static", "DEBUG_UNIT_EXTERN is static");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

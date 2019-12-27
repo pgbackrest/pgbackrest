@@ -108,9 +108,9 @@ testRun(void)
         TEST_RESULT_INT(logLevelEnum("TRACE"), logLevelTrace, "log level 'TRACE' found");
 
         TEST_ERROR(logLevelStr(999), AssertError, "assertion 'logLevel <= LOG_LEVEL_MAX' failed");
-        TEST_RESULT_STR(logLevelStr(logLevelOff), "OFF", "log level 'OFF' found");
-        TEST_RESULT_STR(logLevelStr(logLevelInfo), "INFO", "log level 'INFO' found");
-        TEST_RESULT_STR(logLevelStr(logLevelTrace), "TRACE", "log level 'TRACE' found");
+        TEST_RESULT_Z(logLevelStr(logLevelOff), "OFF", "log level 'OFF' found");
+        TEST_RESULT_Z(logLevelStr(logLevelInfo), "INFO", "log level 'INFO' found");
+        TEST_RESULT_Z(logLevelStr(logLevelTrace), "TRACE", "log level 'TRACE' found");
     }
 
     // *****************************************************************************************************************************
@@ -196,7 +196,7 @@ testRun(void)
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
             logInternalFmt(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "format %d", 99), "log warn");
-        TEST_RESULT_STR(logBuffer, "P00   WARN: format 99\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P00   WARN: format 99\n", "    check log");
 
         // This won't be logged due to the range
         TEST_RESULT_VOID(
@@ -205,13 +205,13 @@ testRun(void)
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
             logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 26, "message"), "log error");
-        TEST_RESULT_STR(logBuffer, "P00  ERROR: [026]: message\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P00  ERROR: [026]: message\n", "    check log");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
             logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 26, "message1\nmessage2"),
             "log error with multiple lines");
-        TEST_RESULT_STR(logBuffer, "P00  ERROR: [026]: message1\nmessage2\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P00  ERROR: [026]: message1\nmessage2\n", "    check log");
 
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 999), "init logging to debug");
 
@@ -224,7 +224,7 @@ testRun(void)
         TEST_RESULT_VOID(
             logInternal(
                 logLevelDebug, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 999, "test.c", "test_func", 0, "message\nmessage2"), "log debug");
-        TEST_RESULT_STR(logBuffer, "P999  DEBUG:     test::test_func: message\nmessage2\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P999  DEBUG:     test::test_func: message\nmessage2\n", "    check log");
 
         // This won't be logged due to the range
         TEST_RESULT_VOID(
@@ -233,7 +233,7 @@ testRun(void)
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
             logInternal(logLevelTrace, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "test.c", "test_func", 0, "message"), "log debug");
-        TEST_RESULT_STR(logBuffer, "P000  TRACE:         test::test_func: message\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P000  TRACE:         test::test_func: message\n", "    check log");
 
         // Reopen the log file
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 99), "reduce log size");
@@ -242,10 +242,10 @@ testRun(void)
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
             logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 1, "test.c", "test_func", 0, "info message"), "log info");
-        TEST_RESULT_STR(logBuffer, "P01   INFO: info message\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P01   INFO: info message\n", "    check log");
         TEST_RESULT_VOID(
             logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 99, "test.c", "test_func", 0, "info message 2"), "log info");
-        TEST_RESULT_STR(logBuffer, "P99   INFO: info message 2\n", "    check log");
+        TEST_RESULT_Z(logBuffer, "P99   INFO: info message 2\n", "    check log");
 
         // Reopen invalid log file
         TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");

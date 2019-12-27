@@ -32,12 +32,12 @@ testRun(void)
         Buffer *output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (text)");
-        TEST_RESULT_STR(strNewBuf(output), "", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "", "    check output");
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (json)");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "{}", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "{}", "    check output");
 
         // Empty directory
         // -------------------------------------------------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory (text)");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "", "    check output");
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
@@ -72,7 +72,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "aaa\nbbb\nlink\npipe", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "aaa\nbbb\nlink\npipe", "    check output");
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
@@ -95,7 +95,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "pipe\nlink\nbbb\naaa", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb\naaa", "    check output");
 
         // Recurse
         // -------------------------------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "pipe\nlink\nbbb/ccc\nbbb\naaa", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb/ccc\nbbb\naaa", "    check output");
 
         // Filter
         // -------------------------------------------------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "aaa", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "aaa", "    check output");
 
         // Subdirectory
         // -------------------------------------------------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "subdirectory");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "ccc", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "ccc", "    check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Redirect stdout to a file
@@ -141,7 +141,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        TEST_RESULT_STR(strPtr(strNewBuf(storageGetP(storageNewReadP(storageTest, stdoutFile)))), "ccc\n", "    check text");
+        TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storageTest, stdoutFile))), "ccc\n", "    check text");
 
         // Too many paths
         // -------------------------------------------------------------------------------------------------------------------------

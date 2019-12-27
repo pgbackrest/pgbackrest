@@ -61,20 +61,20 @@ testRun(void)
         TEST_RESULT_PTR(regExpPrefix(strNew("ABC")), NULL, "expression without begin anchor has no prefix");
         TEST_RESULT_PTR(regExpPrefix(strNew("^.")), NULL, "expression with no regular character has no prefix");
 
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC^"))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC$"))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC*"))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC+"))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC-"))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC?"))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC("))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC["))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC{"))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC "))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC|"))), "ABC", "prefix stops at special character");
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC\\"))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC^")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC$")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC*")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC+")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC-")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC?")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC(")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC[")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC{")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC ")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC|")), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABC\\")), "ABC", "prefix stops at special character");
 
-        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABCDEF"))), "ABCDEF", "prefix is entire expression");
+        TEST_RESULT_STR_Z(regExpPrefix(strNew("^ABCDEF")), "ABCDEF", "prefix is entire expression");
     }
 
     // *****************************************************************************************************************************

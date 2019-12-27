@@ -79,7 +79,7 @@ testRun(void)
         Info *info = NULL;
 
         TEST_ASSIGN(info, infoNew(strNew("123xyz")), "infoNew(cipher)");
-        TEST_RESULT_STR(strPtr(infoCipherPass(info)), "123xyz", "    cipherPass is set");
+        TEST_RESULT_STR_Z(infoCipherPass(info), "123xyz", "    cipherPass is set");
 
         TEST_ASSIGN(info, infoNew(NULL), "infoNew(NULL)");
         TEST_RESULT_PTR(infoCipherPass(info), NULL, "    cipherPass is NULL");
@@ -99,7 +99,7 @@ testRun(void)
         TEST_ERROR(
             infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), FormatError,
             "expected format 5 but found 4");
-        TEST_RESULT_STR(strPtr(callbackContent), "", "    check callback content");
+        TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         // Checksum not found
         // --------------------------------------------------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ testRun(void)
         TEST_ERROR(
             infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), ChecksumError,
             "invalid checksum, actual 'a3765a8c2c1e5d35274a0b0ce118f4031faff0bd' but no checksum found");
-        TEST_RESULT_STR(strPtr(callbackContent), "", "    check callback content");
+        TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         // Checksum invalid
         // --------------------------------------------------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ testRun(void)
         TEST_ERROR(
             infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), ChecksumError,
             "invalid checksum, actual 'fe989a75dcf7a0261e57d210707c0db741462763' but expected 'BOGUS'");
-        TEST_RESULT_STR(strPtr(callbackContent), "", "    check callback content");
+        TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         // Crypto expected
         // --------------------------------------------------------------------------------------------------------------------------
@@ -141,7 +141,7 @@ testRun(void)
             infoNewLoad(read, harnessInfoLoadNewCallback, callbackContent), CryptoError,
             "cipher header invalid\n"
             "HINT: is or was the repo encrypted?");
-        TEST_RESULT_STR(strPtr(callbackContent), "", "    check callback content");
+        TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         // Base file with other content in cipher (this is to test that future additions don't break the code)
         // --------------------------------------------------------------------------------------------------------------------------
@@ -154,7 +154,7 @@ testRun(void)
 
         TEST_ASSIGN(
             info, infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with other cipher");
-        TEST_RESULT_STR(strPtr(callbackContent), "", "    check callback content");
+        TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
         TEST_RESULT_PTR(infoCipherPass(info), NULL, "    check cipher pass not set");
 
         // Base file with content
@@ -170,13 +170,13 @@ testRun(void)
 
         TEST_ASSIGN(
             info, infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with content");
-        TEST_RESULT_STR(strPtr(callbackContent), "[c] key=1\n[d] key=1\n", "    check callback content");
+        TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
         TEST_RESULT_PTR(infoCipherPass(info), NULL, "    check cipher pass not set");
 
         Buffer *contentSave = bufNew(0);
 
         TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNew("1")), "info save");
-        TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
 
         // File with content and cipher
         // --------------------------------------------------------------------------------------------------------------------------
@@ -195,14 +195,14 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with content and cipher");
-        TEST_RESULT_STR(strPtr(callbackContent), "[c] key=1\n[d] key=1\n", "    check callback content");
-        TEST_RESULT_STR(strPtr(infoCipherPass(info)), "somepass", "    check cipher pass set");
-        TEST_RESULT_STR(strPtr(infoBackrestVersion(info)), PROJECT_VERSION, "    check backrest version");
+        TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
+        TEST_RESULT_STR_Z(infoCipherPass(info), "somepass", "    check cipher pass set");
+        TEST_RESULT_STR_Z(infoBackrestVersion(info), PROJECT_VERSION, "    check backrest version");
 
         contentSave = bufNew(0);
 
         TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNew("1")), "info save");
-        TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
     }
 
     // *****************************************************************************************************************************

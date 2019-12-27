@@ -20,14 +20,14 @@ testRun(void)
         TEST_RESULT_PTR(mcvResult(mcv), NULL, "immediate result is null");
 
         TEST_RESULT_VOID(mcvUpdate(mcv, varNewStrZ("string1")), "update string1");
-        TEST_RESULT_STR(strPtr(varStr(mcvResult(mcv))), "string1", "result is string1");
+        TEST_RESULT_STR_Z(varStr(mcvResult(mcv)), "string1", "result is string1");
 
         TEST_RESULT_VOID(mcvUpdate(mcv, varNewStrZ("string2")), "update string2");
-        TEST_RESULT_STR(strPtr(varStr(mcvResult(mcv))), "string1", "result is string1");
+        TEST_RESULT_STR_Z(varStr(mcvResult(mcv)), "string1", "result is string1");
 
         TEST_RESULT_VOID(mcvUpdate(mcv, varNewUInt(555)), "update 555");
         TEST_RESULT_VOID(mcvUpdate(mcv, varNewStrZ("string2")), "update string2");
-        TEST_RESULT_STR(strPtr(varStr(mcvResult(mcv))), "string2", "result is string2");
+        TEST_RESULT_STR_Z(varStr(mcvResult(mcv)), "string2", "result is string2");
 
         TEST_RESULT_VOID(mcvFree(mcv), "free mcv");
 

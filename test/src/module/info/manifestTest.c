@@ -265,7 +265,7 @@ testRun(void)
 
         Buffer *contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER
@@ -387,7 +387,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER
@@ -510,7 +510,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER
@@ -600,7 +600,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER
@@ -682,7 +682,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER
@@ -821,7 +821,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER
@@ -932,7 +932,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER
@@ -1000,7 +1000,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER
@@ -1281,7 +1281,7 @@ testRun(void)
 
         Buffer *contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER_PRE
@@ -1331,7 +1331,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER_PRE
@@ -1385,7 +1385,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER_PRE
@@ -1437,7 +1437,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER_PRE
@@ -1497,7 +1497,7 @@ testRun(void)
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
                 TEST_MANIFEST_HEADER_PRE
@@ -1602,7 +1602,7 @@ testRun(void)
         Buffer *contentSave = bufNew(0);
 
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
 
         // Manifest with all features
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1914,7 +1914,7 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT
         );
 
-        TEST_RESULT_STR_STR(strNewBuf(contentSave), strNewBuf(contentCompare), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentCompare), "   check save");
 
         TEST_RESULT_VOID(manifestFileRemove(manifest, STRDEF("pg_data/PG_VERSION")), "remove file");
         TEST_ERROR(
@@ -2005,7 +2005,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
-        TEST_RESULT_STR(strPtr(manifestData(manifest)->backrestVersion), PROJECT_VERSION, "    check backrest version");
+        TEST_RESULT_STR_Z(manifestData(manifest)->backrestVersion, PROJECT_VERSION, "    check backrest version");
 
         storageRemoveP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
 

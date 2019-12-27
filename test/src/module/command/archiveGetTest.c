@@ -89,8 +89,8 @@ testRun(void)
                     "repo/archive/test1/10-2/8765432187654321/876543218765432187654321-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
             NULL);
 
-        TEST_RESULT_STR(
-            strPtr(archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual),
+        TEST_RESULT_STR_Z(
+            archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual,
             "10-2/8765432187654321/876543218765432187654321-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "segment found");
 
         // Write segment into an newer archive path
@@ -102,8 +102,8 @@ testRun(void)
                     "repo/archive/test1/10-4/8765432187654321/876543218765432187654321-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
             NULL);
 
-        TEST_RESULT_STR(
-            strPtr(archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual),
+        TEST_RESULT_STR_Z(
+            archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual,
             "10-4/8765432187654321/876543218765432187654321-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "newer segment found");
 
         // Get history file
@@ -113,11 +113,9 @@ testRun(void)
 
         storagePutP(storageNewWriteP(storageTest, strNew("repo/archive/test1/10-4/00000009.history")), NULL);
 
-        TEST_RESULT_STR(
-            strPtr(
-                archiveGetCheck(
-                    strNew("00000009.history"), cipherTypeNone, NULL).archiveFileActual), "10-4/00000009.history",
-                    "history file found");
+        TEST_RESULT_STR_Z(
+            archiveGetCheck(strNew("00000009.history"), cipherTypeNone, NULL).archiveFileActual, "10-4/00000009.history",
+            "history file found");
     }
 
     // *****************************************************************************************************************************
@@ -234,7 +232,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             archiveGetProtocol(PROTOCOL_COMMAND_ARCHIVE_GET_STR, paramList, server), true, "protocol archive get");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":0}\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, strNewFmt("spool/archive/test1/in/%s", strPtr(archiveFile))), true, "  check exists");
 
@@ -264,15 +262,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92), "|"),
             "000000010000000100000001|000000010000000100000002", "queue size smaller than min");
 
         // -------------------------------------------------------------------------------------------------------------------------
         queueSize = (16 * 1024 * 1024) * 3;
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92), "|"),
             "000000010000000100000001|000000010000000100000002|000000010000000100000003", "empty queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -286,13 +284,13 @@ testRun(void)
             storageNewWriteP(
                 storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF")), walSegmentBuffer);
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(queueNeed(strNew("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(queueNeed(strNew("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92), "|"),
             "000000010000000200000000|000000010000000200000001", "queue has wal < 9.3");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(storageListP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), "|")),
-            "0000000100000001000000FE", "check queue");
+        TEST_RESULT_STR_Z(
+            strLstJoin(storageListP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), "|"), "0000000100000001000000FE",
+            "check queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
         walSegmentSize = 1024 * 1024;
@@ -306,12 +304,12 @@ testRun(void)
             storageNewWriteP(
                 storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF")), walSegmentBuffer);
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11), "|"),
             "000000010000000B00000000|000000010000000B00000001|000000010000000B00000002", "queue has wal >= 9.3");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), sortOrderAsc), "|"),
             "000000010000000A00000FFE|000000010000000A00000FFF", "check queue");
     }
 
@@ -463,11 +461,8 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error")), false,
             "check 000000010000000100000003.error not in spool");
-        TEST_RESULT_STR(
-            strPtr(
-                strNewBuf(
-                    storageGetP(
-                        storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/global.error"))))),
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/global.error")))),
             "102\nlocal-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': "
                 "[2] No such file or directory",
             "check global error");

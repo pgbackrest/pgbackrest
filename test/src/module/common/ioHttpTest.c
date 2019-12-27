@@ -307,8 +307,8 @@ testRun(void)
     if (testBegin("httpUriEncode"))
     {
         TEST_RESULT_PTR(httpUriEncode(NULL, false), NULL, "null encodes to null");
-        TEST_RESULT_STR(strPtr(httpUriEncode(strNew("0-9_~/A Z.az"), false)), "0-9_~%2FA%20Z.az", "non-path encoding");
-        TEST_RESULT_STR(strPtr(httpUriEncode(strNew("0-9_~/A Z.az"), true)), "0-9_~/A%20Z.az", "path encoding");
+        TEST_RESULT_STR_Z(httpUriEncode(strNew("0-9_~/A Z.az"), false), "0-9_~%2FA%20Z.az", "non-path encoding");
+        TEST_RESULT_STR_Z(httpUriEncode(strNew("0-9_~/A Z.az"), true), "0-9_~/A%20Z.az", "path encoding");
     }
 
     // *****************************************************************************************************************************
@@ -330,13 +330,13 @@ testRun(void)
         TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key2"), strNew("value2b")), header, "add header");
 
         TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key1"), strNew("value1")), header, "add header");
-        TEST_RESULT_STR(strPtr(strLstJoin(httpHeaderList(header), ", ")), "key1, key2", "header list");
+        TEST_RESULT_STR_Z(strLstJoin(httpHeaderList(header), ", "), "key1, key2", "header list");
 
-        TEST_RESULT_STR(strPtr(httpHeaderGet(header, strNew("key1"))), "value1", "get value");
-        TEST_RESULT_STR(strPtr(httpHeaderGet(header, strNew("key2"))), "value2a, value2b", "get value");
+        TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key1")), "value1", "get value");
+        TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key2")), "value2a, value2b", "get value");
         TEST_RESULT_PTR(httpHeaderGet(header, strNew(BOGUS_STR)), NULL, "get missing value");
 
-        TEST_RESULT_STR(strPtr(httpHeaderToLog(header)), "{key1: 'value1', key2: 'value2a, value2b'}", "log output");
+        TEST_RESULT_STR_Z(httpHeaderToLog(header), "{key1: 'value1', key2: 'value2a, value2b'}", "log output");
 
         TEST_RESULT_VOID(httpHeaderFree(header), "free header");
 
@@ -349,18 +349,18 @@ testRun(void)
         httpHeaderAdd(header, strNew("secret"), strNew("secret-value"));
         httpHeaderAdd(header, strNew("public"), strNew("public-value"));
 
-        TEST_RESULT_STR(strPtr(httpHeaderToLog(header)), "{public: 'public-value', secret: <redacted>}", "log output");
+        TEST_RESULT_STR_Z(httpHeaderToLog(header), "{public: 'public-value', secret: <redacted>}", "log output");
 
         // Duplicate
         // -------------------------------------------------------------------------------------------------------------------------
         redact = strLstNew();
         strLstAddZ(redact, "public");
 
-        TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpHeaderDup(header, NULL))),
-            "{public: 'public-value', secret: <redacted>}", "dup and keep redactions");
-        TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpHeaderDup(header, redact))), "{public: <redacted>, secret: 'secret-value'}",
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpHeaderDup(header, NULL)), "{public: 'public-value', secret: <redacted>}",
+            "dup and keep redactions");
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpHeaderDup(header, redact)), "{public: <redacted>, secret: 'secret-value'}",
             "dup and change redactions");
         TEST_RESULT_PTR(httpHeaderDup(NULL, NULL), NULL, "dup null http header");
     }
@@ -385,17 +385,17 @@ testRun(void)
         TEST_RESULT_PTR(httpQueryAdd(query, strNew("key2"), strNew("value2")), query, "add query");
         TEST_ERROR(httpQueryAdd(query, strNew("key2"), strNew("value2")), AssertError, "key 'key2' already exists");
         TEST_RESULT_PTR(httpQueryPut(query, strNew("key2"), strNew("value2a")), query, "put query");
-        TEST_RESULT_STR(strPtr(httpQueryRender(query)), "key2=value2a", "render one query item");
+        TEST_RESULT_STR_Z(httpQueryRender(query), "key2=value2a", "render one query item");
 
         TEST_RESULT_PTR(httpQueryAdd(query, strNew("key1"), strNew("value 1?")), query, "add query");
-        TEST_RESULT_STR(strPtr(strLstJoin(httpQueryList(query), ", ")), "key1, key2", "query list");
-        TEST_RESULT_STR(strPtr(httpQueryRender(query)), "key1=value%201%3F&key2=value2a", "render two query items");
+        TEST_RESULT_STR_Z(strLstJoin(httpQueryList(query), ", "), "key1, key2", "query list");
+        TEST_RESULT_STR_Z(httpQueryRender(query), "key1=value%201%3F&key2=value2a", "render two query items");
 
-        TEST_RESULT_STR(strPtr(httpQueryGet(query, strNew("key1"))), "value 1?", "get value");
-        TEST_RESULT_STR(strPtr(httpQueryGet(query, strNew("key2"))), "value2a", "get value");
+        TEST_RESULT_STR_Z(httpQueryGet(query, strNew("key1")), "value 1?", "get value");
+        TEST_RESULT_STR_Z(httpQueryGet(query, strNew("key2")), "value2a", "get value");
         TEST_RESULT_PTR(httpQueryGet(query, strNew(BOGUS_STR)), NULL, "get missing value");
 
-        TEST_RESULT_STR(strPtr(httpQueryToLog(query)), "{key1: 'value 1?', key2: 'value2a'}", "log output");
+        TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: 'value 1?', key2: 'value2a'}", "log output");
 
         TEST_RESULT_VOID(httpQueryFree(query), "free query");
     }
@@ -408,7 +408,7 @@ testRun(void)
 
         // Reset statistics
         httpClientStatLocal = (HttpClientStat){0};
-        TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
+        TEST_RESULT_PTR(httpClientStatStr(), NULL, "no stats yet");
 
         TEST_ASSIGN(
             client, httpClientNew(strNew("localhost"), harnessTlsTestPort(), 500, testContainer(), NULL, NULL), "new client");
@@ -475,10 +475,10 @@ testRun(void)
         TEST_RESULT_VOID(
             httpClientRequest(client, strNew("GET"), strNew("/"), query, headerRequest, NULL, false), "request with no content");
         TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
-        TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
+        TEST_RESULT_STR_Z(httpClientResponseMessage(client), "OK", "    check response message");
         TEST_RESULT_UINT(httpClientEof(client), true, "    io is eof");
-        TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{connection: 'ack', key1: '0', key2: 'value2'}",
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpClientResponseHeader(client)),  "{connection: 'ack', key1: '0', key2: 'value2'}",
             "    check response headers");
 
         // Head request with content-length but no content
@@ -486,31 +486,30 @@ testRun(void)
             httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
             "head request with content-length");
         TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
-        TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
+        TEST_RESULT_STR_Z(httpClientResponseMessage(client), "OK", "    check response message");
         TEST_RESULT_BOOL(httpClientEof(client), true, "    io is eof");
         TEST_RESULT_BOOL(httpClientBusy(client), false, "    client is not busy");
-        TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{content-length: '380'}", "    check response headers");
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpClientResponseHeader(client)),  "{content-length: '380'}", "    check response headers");
 
         // Head request with transfer encoding but no content
         TEST_RESULT_VOID(
             httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
             "head request with transfer encoding");
         TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
-        TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
+        TEST_RESULT_STR_Z(httpClientResponseMessage(client), "OK", "    check response message");
         TEST_RESULT_BOOL(httpClientEof(client), true, "    io is eof");
         TEST_RESULT_BOOL(httpClientBusy(client), false, "    client is not busy");
-        TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{transfer-encoding: 'chunked'}",
-            "    check response headers");
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpClientResponseHeader(client)),  "{transfer-encoding: 'chunked'}", "    check response headers");
 
         // Error with content length 0
         TEST_RESULT_VOID(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "error with content length 0");
         TEST_RESULT_UINT(httpClientResponseCode(client), 404, "    check response code");
-        TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "Not Found", "    check response message");
-        TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{content-length: '0'}", "    check response headers");
+        TEST_RESULT_STR_Z(httpClientResponseMessage(client), "Not Found", "    check response message");
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpClientResponseHeader(client)),  "{content-length: '0'}", "    check response headers");
 
         // Error with content
         Buffer *buffer = NULL;
@@ -518,10 +517,10 @@ testRun(void)
         TEST_ASSIGN(
             buffer, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "error with content length");
         TEST_RESULT_UINT(httpClientResponseCode(client), 403, "    check response code");
-        TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "Auth Error", "    check response message");
-        TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{content-length: '7'}", "    check response headers");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "CONTENT", "    check response");
+        TEST_RESULT_STR_Z(httpClientResponseMessage(client), "Auth Error", "    check response message");
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpClientResponseHeader(client)),  "{content-length: '7'}", "    check response headers");
+        TEST_RESULT_STR_Z(strNewBuf(buffer),  "CONTENT", "    check response");
 
         // Request with content using content-length
         ioBufferSizeSet(30);
@@ -533,17 +532,17 @@ testRun(void)
                 httpHeaderAdd(httpHeaderNew(NULL), strNew("content-length"), strNew("30")),
                 BUFSTRDEF("012345678901234567890123456789"), true),
             "request with content length");
-        TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{connection: 'close', content-length: '32'}",
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpClientResponseHeader(client)),  "{connection: 'close', content-length: '32'}",
             "    check response headers");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901", "    check response");
+        TEST_RESULT_STR_Z(strNewBuf(buffer),  "01234567890123456789012345678901", "    check response");
         TEST_RESULT_UINT(httpClientRead(client, bufNew(1), true), 0, "    call internal read to check eof");
 
         // Request with eof before content complete with retry
         TEST_ASSIGN(
             buffer, httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, NULL, true),
             "request with content length retry");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901", "    check response");
+        TEST_RESULT_STR_Z(strNewBuf(buffer),  "01234567890123456789012345678901", "    check response");
         TEST_RESULT_UINT(httpClientRead(client, bufNew(1), true), 0, "    call internal read to check eof");
 
         // Request with eof before content and error
@@ -558,13 +557,12 @@ testRun(void)
         // Request with content using chunked encoding
         TEST_RESULT_VOID(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request with chunked encoding");
-        TEST_RESULT_STR(
-            strPtr(httpHeaderToLog(httpClientResponseHeader(client))),  "{transfer-encoding: 'chunked'}",
-            "    check response headers");
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpClientResponseHeader(client)),  "{transfer-encoding: 'chunked'}", "    check response headers");
 
         buffer = bufNew(35);
         TEST_RESULT_VOID(ioRead(httpClientIoRead(client), buffer),  "    read response");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901012", "    check response");
+        TEST_RESULT_STR_Z(strNewBuf(buffer),  "01234567890123456789012345678901012", "    check response");
 
         TEST_RESULT_BOOL(httpClientStatStr() != NULL, true, "check statistics exist");
 

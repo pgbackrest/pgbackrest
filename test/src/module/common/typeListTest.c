@@ -42,10 +42,10 @@ testRun(void)
 
         void *ptr = NULL;
         TEST_RESULT_VOID(lstAdd(list, &ptr), "add item");
-        TEST_RESULT_STR(strPtr(lstToLog(list)), "{size: 1}", "check log");
+        TEST_RESULT_STR_Z(lstToLog(list), "{size: 1}", "check log");
 
         TEST_RESULT_VOID(lstClear(list), "clear list");
-        TEST_RESULT_STR(strPtr(lstToLog(list)), "{size: 0}", "check log after clear");
+        TEST_RESULT_STR_Z(lstToLog(list), "{size: 0}", "check log after clear");
 
         TEST_RESULT_VOID(lstFree(list), "free list");
         TEST_RESULT_VOID(lstFree(lstNew(1)), "free empty list");
@@ -61,8 +61,8 @@ testRun(void)
         String *string3 = strNew("string3");
         TEST_RESULT_PTR(lstFindDefault(list, &string3, (void *)1), (void *)1, "    find string3 returns default");
         TEST_RESULT_BOOL(lstExists(list, &string3), false, "    string3 does not exist");
-        TEST_RESULT_STR(strPtr(*(String **)lstFind(list, &string2)), "string2", "    find string2");
-        TEST_RESULT_STR(strPtr(*(String **)lstFindDefault(list, &string2, NULL)), "string2", "    find string2 no default");
+        TEST_RESULT_STR_Z(*(String **)lstFind(list, &string2), "string2", "    find string2");
+        TEST_RESULT_STR_Z(*(String **)lstFindDefault(list, &string2, NULL), "string2", "    find string2 no default");
         TEST_RESULT_BOOL(lstExists(list, &string2), true, "    string2 exists");
 
         TEST_RESULT_BOOL(lstRemove(list, &string2), true, "    remove string2");

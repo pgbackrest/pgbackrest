@@ -179,11 +179,11 @@ testRun(void)
     {
         GzipDecompress *decompress = (GzipDecompress *)ioFilterDriver(gzipDecompressNew(false));
 
-        TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: false, done: false, availIn: 0}", "format object");
+        TEST_RESULT_STR_Z(gzipDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
 
         decompress->inputSame = true;
         decompress->done = true;
-        TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: true, done: true, availIn: 0}", "format object");
+        TEST_RESULT_STR_Z(gzipDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

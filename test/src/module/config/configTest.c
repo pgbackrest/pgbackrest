@@ -23,7 +23,7 @@ testRun(void)
             cfgCommandDefIdFromId(CFG_COMMAND_TOTAL), AssertError, "assertion 'commandId < cfgCmdNone' failed");
         TEST_RESULT_INT(cfgCommandDefIdFromId(cfgCmdBackup), cfgDefCmdBackup, "command id to def id");
 
-        TEST_RESULT_STR(cfgCommandName(cfgCmdBackup), "backup", "command name from id");
+        TEST_RESULT_Z(cfgCommandName(cfgCmdBackup), "backup", "command name from id");
 
         TEST_RESULT_INT(cfgOptionDefIdFromId(cfgOptPgHost + 6), cfgDefOptPgHost, "option id to def id");
 
@@ -45,7 +45,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptPgPath), 8, "option index total");
         TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptLogLevelConsole), 1, "option index total");
 
-        TEST_RESULT_STR(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
+        TEST_RESULT_Z(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
     }
 
     // *****************************************************************************************************************************
@@ -103,7 +103,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(cfgExe(), NULL, "exe defaults to null");
         TEST_RESULT_VOID(cfgExeSet(strNew("/path/to/exe")), "set exe");
-        TEST_RESULT_STR(strPtr(cfgExe()), "/path/to/exe", "exe is set");
+        TEST_RESULT_Z(strPtr(cfgExe()), "/path/to/exe", "exe is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(cfgOptionNegate(cfgOptConfig), false, "negate defaults to false");
@@ -190,7 +190,7 @@ testRun(void)
             cfgOptionSet(cfgOptStanza, cfgSourceParam, varNewDbl(1.1)), AssertError,
             "option 'stanza' must be set with String variant");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptStanza, cfgSourceConfig, varNewStrZ("db")), "set stanza");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptStanza)), "db", "stanza is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "db", "stanza is set");
         TEST_ERROR(
             cfgOptionInt(cfgOptStanza), AssertError,
             "assertion 'varType(configOptionValue[optionId].value) == varTypeInt64' failed");
@@ -210,14 +210,14 @@ testRun(void)
 
         cfgOptionValidSet(cfgOptRepoS3Host, true);
         cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("host.com")) ;
-        TEST_RESULT_STR(strPtr(cfgOptionHostPort(cfgOptRepoS3Host, &port)), "host.com", "check plain host");
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Host, &port), "host.com", "check plain host");
         TEST_RESULT_UINT(port, 55555, "check that port was not updated");
 
         cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777")) ;
-        TEST_RESULT_STR(strPtr(cfgOptionHostPort(cfgOptRepoS3Host, &port)), "myhost.com", "check host with port");
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Host, &port), "myhost.com", "check host with port");
         TEST_RESULT_UINT(port, 777, "check that port was updated");
 
-        TEST_RESULT_STR(strPtr(cfgOptionHostPort(cfgOptRepoS3Endpoint, &port)), NULL, "check null host");
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Endpoint, &port), NULL, "check null host");
         TEST_RESULT_UINT(port, 777, "check that port was not updated");
 
         cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777:888")) ;
@@ -244,7 +244,7 @@ testRun(void)
 
         TEST_ERROR(
             strPtr(varStr(cfgOptionDefaultValue(cfgOptDbInclude))), AssertError, "default value not available for option type 4");
-        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptType))), "incr", "backup type default");
+        TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptType)), "incr", "backup type default");
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptCompress)), "true", "backup compress default");
         TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptProtocolTimeout)), 1830, "backup protocol-timeout default");
         TEST_RESULT_INT(varIntForce(cfgOptionDefault(cfgOptCompressLevel)), 6, "backup compress-level default");
@@ -253,14 +253,14 @@ testRun(void)
         TEST_RESULT_VOID(cfgOptionSet(cfgOptPgHost, cfgSourceParam, varNewStrZ("backup")), "backup host set");
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgHost, varNewStrZ("backup-default")), "backup host default");
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgHost, varNewStrZ("backup-default2")), "reset backup host default");
-        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptPgHost))), "backup", "backup host value");
-        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptPgHost))), "backup-default2", "backup host default");
+        TEST_RESULT_STR_Z(varStr(cfgOption(cfgOptPgHost)), "backup", "backup host value");
+        TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptPgHost)), "backup-default2", "backup host default");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptPgSocketPath, cfgSourceDefault, NULL), "backup pg-socket-path set");
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, varNewStrZ("/to/socket")), "backup pg-socket-path default");
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, varNewStrZ("/to/socket2")), "reset backup pg-socket-path default");
-        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptPgSocketPath))), "/to/socket2", "backup pg-socket-path value");
-        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptPgSocketPath))), "/to/socket2", "backup pg-socket-path value default");
+        TEST_RESULT_STR_Z(varStr(cfgOption(cfgOptPgSocketPath)), "/to/socket2", "backup pg-socket-path value");
+        TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptPgSocketPath)), "/to/socket2", "backup pg-socket-path value default");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

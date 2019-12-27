@@ -125,7 +125,7 @@ testRun(void)
                 // Open the database, but don't free it so the server is forced to do it on shutdown
                 TEST_ASSIGN(db, dbNew(NULL, client, strNew("test")), "create db");
                 TEST_RESULT_VOID(dbOpen(db), "open db");
-                TEST_RESULT_STR(strPtr(dbWalSwitch(db)), "000000030000000200000003", "    wal switch");
+                TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "    wal switch");
                 TEST_RESULT_VOID(memContextCallbackClear(db->memContext), "clear context so close is not called");
 
                 TEST_RESULT_VOID(protocolClientFree(client), "free client");
@@ -512,7 +512,7 @@ testRun(void)
         TEST_RESULT_INT(result.standbyId, 0, "    check standby id");
         TEST_RESULT_BOOL(result.standby == NULL, true, "    check standby");
         TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_84, "    version set");
-        TEST_RESULT_STR(strPtr(dbPgDataPath(result.primary)), "/pgdata", "    path set");
+        TEST_RESULT_STR_Z(dbPgDataPath(result.primary), "/pgdata", "    path set");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
 
@@ -622,9 +622,9 @@ testRun(void)
 
         TEST_RESULT_INT(result.primaryId, 8, "    check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
-        TEST_RESULT_STR(strPtr(dbArchiveMode(result.primary)), "on", "    dbArchiveMode");
-        TEST_RESULT_STR(strPtr(dbArchiveCommand(result.primary)), PROJECT_BIN, "    dbArchiveCommand");
-        TEST_RESULT_STR(strPtr(dbWalSwitch(result.primary)), "000000010000000200000003", "    wal switch");
+        TEST_RESULT_STR_Z(dbArchiveMode(result.primary), "on", "    dbArchiveMode");
+        TEST_RESULT_STR_Z(dbArchiveCommand(result.primary), PROJECT_BIN, "    dbArchiveCommand");
+        TEST_RESULT_STR_Z(dbWalSwitch(result.primary), "000000010000000200000003", "    wal switch");
         TEST_RESULT_INT(result.standbyId, 1, "    check standby id");
         TEST_RESULT_BOOL(result.standby != NULL, true, "    check standby");
 

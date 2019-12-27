@@ -459,7 +459,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - skip");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":[3,0,0,null,null]}\n", "    check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[3,0,0,null,null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
         // Pg file missing - ignoreMissing=false
@@ -534,8 +534,8 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - pageChecksum");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)),
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
             "{\"out\":[1,9,9,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",{\"align\":false,\"valid\":false}]}\n",
             "    check result");
         bufUsedSet(serverWrite, 0);
@@ -576,9 +576,8 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - noop");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)), "{\"out\":[4,9,0,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n",
-            "    check result");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite), "{\"out\":[4,9,0,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -716,9 +715,8 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - copy, compress");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)), "{\"out\":[0,9,29,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n",
-            "    check result");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite), "{\"out\":[0,9,29,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -835,9 +833,8 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - recopy, encrypt");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)), "{\"out\":[2,9,32,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n",
-            "    check result");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite), "{\"out\":[2,9,32,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
     }
 
@@ -862,7 +859,7 @@ testRun(void)
 
         storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/backup.history/2019"));
 
-        TEST_RESULT_STR_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
+        TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when history is older");
@@ -875,7 +872,7 @@ testRun(void)
                     strPtr(backupLabelFormat(backupTypeFull, NULL, timestamp - 4)))),
             NULL);
 
-        TEST_RESULT_STR_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
+        TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when backup is older");
@@ -886,7 +883,7 @@ testRun(void)
                 strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabelFormat(backupTypeFull, NULL, timestamp - 2)))),
             NULL);
 
-        TEST_RESULT_STR_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
+        TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("advance time when backup is same");

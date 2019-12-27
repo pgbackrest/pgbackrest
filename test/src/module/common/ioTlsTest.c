@@ -208,7 +208,7 @@ testRun(void)
 
         // Reset statistics
         tlsClientStatLocal = (TlsClientStat){0};
-        TEST_RESULT_STR(tlsClientStatStr(), NULL, "no stats yet");
+        TEST_RESULT_PTR(tlsClientStatStr(), NULL, "no stats yet");
 
         testTlsServer();
         ioBufferSizeSet(12);
@@ -221,17 +221,17 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), input), "write input");
         ioWriteFlush(tlsClientIoWrite(client));
 
-        TEST_RESULT_STR(strPtr(ioReadLine(tlsClientIoRead(client))), "something:0", "read line");
+        TEST_RESULT_STR_Z(ioReadLine(tlsClientIoRead(client)), "something:0", "read line");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         Buffer *output = bufNew(12);
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 12, "read output");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "some content", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "some content", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         output = bufNew(8);
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 8, "read output");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "AND MORE", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "AND MORE", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         output = bufNew(12);
@@ -247,7 +247,7 @@ testRun(void)
 
         output = bufNew(12);
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 12, "read output");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "0123456789AB", "    check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "0123456789AB", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         output = bufNew(12);
