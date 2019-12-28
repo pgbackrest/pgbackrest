@@ -462,17 +462,14 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     if (!commandSet)
                     {
                         // Try getting the command from the valid command list
-                        TRY_BEGIN()
-                        {
-                            cfgCommandSet(cfgCommandId(argList[optind - 1]));
-                        }
-                        // Assert error means the command does not exist, which is correct for all usages but this one (since we
-                        // don't have any control over what the user passes), so modify the error code and message.
-                        CATCH(AssertError)
-                        {
+                        ConfigCommand commandId = cfgCommandId(argList[optind - 1], false);
+
+                        // Error when command does not exist
+                        if (commandId == cfgCmdNone)
                             THROW_FMT(CommandInvalidError, "invalid command '%s'", argList[optind - 1]);
-                        }
-                        TRY_END();
+
+                        //  Set the command
+                        cfgCommandSet(commandId);
 
                         if (cfgCommand() == cfgCmdHelp)
                             cfgCommandHelpSet(true);

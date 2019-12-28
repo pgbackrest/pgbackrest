@@ -12,7 +12,7 @@ CODE:
 
     ERROR_XS_BEGIN()
     {
-        RETVAL = cfgCommandId(commandName);
+        RETVAL = cfgCommandId(commandName, true);
     }
     ERROR_XS_END();
 OUTPUT:

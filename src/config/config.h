@@ -93,7 +93,10 @@ void cfgInit(void);
 ConfigDefineCommand cfgCommandDefIdFromId(ConfigCommand commandId);
 bool cfgCommandHelp(void);
 void cfgCommandHelpSet(bool helpParam);
-ConfigCommand cfgCommandId(const char *commandName);
+
+// Get command id by name.  If error is true then assert when the command does not exist.
+ConfigCommand cfgCommandId(const char *commandName, bool error);
+
 void cfgCommandParamSet(const StringList *param);
 void cfgCommandSet(ConfigCommand commandParam);
 
