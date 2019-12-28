@@ -18,7 +18,7 @@ CODE:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
         // Set the command so we can get the correct lock type to use
-        cfgCommandSet(cfgCommandId(command));
+        cfgCommandSet(cfgCommandId(command, true));
 
         // Attempt to acquire the lock
         if (cfgLockRequired())
