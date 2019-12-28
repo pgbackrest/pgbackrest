@@ -31,7 +31,7 @@ testRun(void)
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         TEST_RESULT_STR(
-            strLstJoin(cfgExecParam(cfgCmdLocal, cfgCmdRoleLocal, NULL, false), "|"),
+            strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleLocal, NULL, false), "|"),
             strNewFmt(
                 "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo"
                 "|--stanza=test1|local",

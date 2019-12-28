@@ -121,9 +121,6 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         // Option replacements
         KeyValue *optionReplace = kvNew();
 
-        // Add the command option
-        kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
-
         // Add the process id -- used when more than one process will be called
         kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(protocolId));
 
@@ -141,7 +138,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         // Always output errors on stderr for debugging purposes
         kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
-        result = strLstMove(cfgExecParam(cfgCmdLocal, cfgCmdRoleDefault, optionReplace, true), MEM_CONTEXT_OLD());
+        result = strLstMove(cfgExecParam(cfgCommand(), cfgCmdRoleLocal, optionReplace, true), MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
