@@ -439,7 +439,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAddZ(argList, "--stanza=test2");
-        strLstAddZ(argList, "archive-get-async");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET_ASYNC);
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "000000010000000100000002");
         strLstAddZ(argList, "000000010000000100000003");

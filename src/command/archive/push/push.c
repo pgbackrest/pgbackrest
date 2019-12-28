@@ -299,7 +299,7 @@ cmdArchivePush(void)
                     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
 
                     // Generate command options
-                    StringList *commandExec = cfgExecParam(cfgCmdArchivePushAsync, optionReplace, true);
+                    StringList *commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true);
                     strLstInsert(commandExec, 0, cfgExe());
                     strLstAdd(commandExec, strPath(walFile));
 
@@ -459,7 +459,7 @@ cmdArchivePushAsync(void)
             // Get a list of WAL files that are ready for processing
             jobData.walFileList = archivePushProcessList(jobData.walPath);
 
-            // The archive-push-async command should not have been called unless there are WAL files to process
+            // The archive-push:async command should not have been called unless there are WAL files to process
             if (strLstSize(jobData.walFileList) == 0)
                 THROW(AssertError, "no WAL files to process");
 

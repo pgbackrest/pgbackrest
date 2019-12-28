@@ -13,10 +13,11 @@ Exec Configuration
 Generate a list of options required for execution of a new command, replacing options as specified in optionReplace
 ***********************************************************************************************************************************/
 StringList *
-cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace, bool local)
+cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRole, const KeyValue *optionReplace, bool local)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, commandId);
+        FUNCTION_LOG_PARAM(ENUM, commandRole);
         FUNCTION_LOG_PARAM(KEY_VALUE, optionReplace);
         FUNCTION_LOG_PARAM(BOOL, local);                            // Will the new process be running on the same host?
     FUNCTION_LOG_END();
@@ -126,7 +127,12 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace, bool local)
         }
 
         // Add the requested command
-        strLstAddZ(result, cfgCommandName(commandId));
+        const String *commandRoleStr = cfgCommandRoleStr(commandRole);
+
+        strLstAdd(
+            result,
+            strNewFmt(
+                "%s%s", cfgCommandName(commandId), commandRoleStr == NULL ? "" : strPtr(strNewFmt(":%s", strPtr(commandRoleStr)))));
 
         // Move list to the calling context
         strLstMove(result, MEM_CONTEXT_OLD());

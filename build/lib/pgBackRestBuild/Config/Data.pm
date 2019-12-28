@@ -77,11 +77,11 @@ use pgBackRest::Version;
 ####################################################################################################################################
 use constant CFGCMD_ARCHIVE_GET                                     => 'archive-get';
     push @EXPORT, qw(CFGCMD_ARCHIVE_GET);
-use constant CFGCMD_ARCHIVE_GET_ASYNC                               => 'archive-get-async';
+use constant CFGCMD_ARCHIVE_GET_ASYNC                               => 'archive-get:async';
     push @EXPORT, qw(CFGCMD_ARCHIVE_GET_ASYNC);
 use constant CFGCMD_ARCHIVE_PUSH                                    => 'archive-push';
     push @EXPORT, qw(CFGCMD_ARCHIVE_PUSH);
-use constant CFGCMD_ARCHIVE_PUSH_ASYNC                              => 'archive-push-async';
+use constant CFGCMD_ARCHIVE_PUSH_ASYNC                              => 'archive-push:async';
     push @EXPORT, qw(CFGCMD_ARCHIVE_PUSH_ASYNC);
 use constant CFGCMD_BACKUP                                          => 'backup';
     push @EXPORT, qw(CFGCMD_BACKUP);

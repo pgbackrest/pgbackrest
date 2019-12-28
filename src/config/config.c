@@ -304,6 +304,68 @@ cfgCommandParamSet(const StringList *param)
 }
 
 /***********************************************************************************************************************************
+Get command role and convert command role from stringz to enum and vice versa
+***********************************************************************************************************************************/
+STRING_STATIC(CONFIG_COMMAND_ROLE_ASYNC_STR,                        "async");
+STRING_STATIC(CONFIG_COMMAND_ROLE_LOCAL_STR,                        "local");
+STRING_STATIC(CONFIG_COMMAND_ROLE_REMOTE_STR,                       "remote");
+
+ConfigCommandRole
+cfgCommandRoleEnum(const String *commandRole)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, commandRole);
+    FUNCTION_TEST_END();
+
+    if (commandRole == NULL)
+        FUNCTION_TEST_RETURN(cfgCmdRoleDefault);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_ASYNC_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleAsync);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_LOCAL_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleLocal);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_REMOTE_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleRemote);
+
+    THROW_FMT(AssertError, "invalid command role '%s'", strPtr(commandRole));
+}
+
+const String *
+cfgCommandRoleStr(ConfigCommandRole commandRole)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandRole);
+    FUNCTION_TEST_END();
+
+    const String *result = NULL;
+
+    switch (commandRole)
+    {
+        case cfgCmdRoleDefault:
+            break;
+
+        case cfgCmdRoleAsync:
+        {
+            result = CONFIG_COMMAND_ROLE_ASYNC_STR;
+            break;
+        }
+
+        case cfgCmdRoleLocal:
+        {
+            result = CONFIG_COMMAND_ROLE_LOCAL_STR;
+            break;
+        }
+
+        case cfgCmdRoleRemote:
+        {
+            result = CONFIG_COMMAND_ROLE_REMOTE_STR;
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Command parameters, if any
 ***********************************************************************************************************************************/
 const String *

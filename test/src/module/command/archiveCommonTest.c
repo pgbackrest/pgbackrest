@@ -112,7 +112,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "archive-get-async");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET_ASYNC);
         harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
 
         String *walSegment = strNew("000000010000000100000001");

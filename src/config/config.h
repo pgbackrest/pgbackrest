@@ -83,6 +83,28 @@ typedef enum
 } ConfigSource;
 
 /***********************************************************************************************************************************
+Command Role Enum
+
+Commands may have multiple processes that work together to implement their functionality.  These roles allow each process to know
+what it is supposed to do.
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Called directly by the user.  This is the main part of the command that may or may not spawn other command roles.
+    cfgCmdRoleDefault,
+
+    // Async worker that is spawned so the main process can return a result while work continues.  An async worker may spawn local
+    // or remote workers.
+    cfgCmdRoleAsync,
+
+    // Local worker for parallelizing jobs.  A local work may spawn a remote worker.
+    cfgCmdRoleLocal,
+
+    // Remote worker for accessing resources on another host
+    cfgCmdRoleRemote,
+} ConfigCommandRole;
+
+/***********************************************************************************************************************************
 Load Functions
 
 Used primarily by modules that need to manipulate the configuration.  These modules include, but are not limited to, config/parse.c,
@@ -99,6 +121,9 @@ void cfgCommandSet(ConfigCommand commandParam);
 
 const String *cfgExe(void);
 void cfgExeSet(const String *exeParam);
+
+ConfigCommandRole cfgCommandRoleEnum(const String *commandRole);
+const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
 
 const Variant *cfgOptionDefault(ConfigOption optionId);
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);

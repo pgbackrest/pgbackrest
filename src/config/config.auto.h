@@ -11,11 +11,11 @@ Command constants
 ***********************************************************************************************************************************/
 #define CFGCMD_ARCHIVE_GET                                          "archive-get"
     STRING_DECLARE(CFGCMD_ARCHIVE_GET_STR);
-#define CFGCMD_ARCHIVE_GET_ASYNC                                    "archive-get-async"
+#define CFGCMD_ARCHIVE_GET_ASYNC                                    "archive-get:async"
     STRING_DECLARE(CFGCMD_ARCHIVE_GET_ASYNC_STR);
 #define CFGCMD_ARCHIVE_PUSH                                         "archive-push"
     STRING_DECLARE(CFGCMD_ARCHIVE_PUSH_STR);
-#define CFGCMD_ARCHIVE_PUSH_ASYNC                                   "archive-push-async"
+#define CFGCMD_ARCHIVE_PUSH_ASYNC                                   "archive-push:async"
     STRING_DECLARE(CFGCMD_ARCHIVE_PUSH_ASYNC_STR);
 #define CFGCMD_BACKUP                                               "backup"
     STRING_DECLARE(CFGCMD_BACKUP_STR);

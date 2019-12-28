@@ -88,6 +88,20 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("command roles");
+
+        TEST_ERROR(cfgCommandRoleEnum(strNew(BOGUS_STR)), AssertError, "invalid command role 'BOGUS'");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleDefault, "command default role enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(strNew("async")), cfgCmdRoleAsync, "command async role enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(strNew("local")), cfgCmdRoleLocal, "command local role enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(strNew("remote")), cfgCmdRoleRemote, "command remote role enum");
+
+        TEST_RESULT_STR(cfgCommandRoleStr(cfgCmdRoleDefault), NULL, "command default role str");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleAsync), "async", "command async role str");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleLocal), "local", "command local role str");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "command remote role str");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help defaults to false");
         TEST_RESULT_VOID(cfgCommandHelpSet(true), "set command help");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "command help is set");

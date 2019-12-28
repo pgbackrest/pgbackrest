@@ -10,6 +10,6 @@ Exec Configuration
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-StringList *cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace, bool local);
+StringList *cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRole, const KeyValue *optionReplace, bool local);
 
 #endif

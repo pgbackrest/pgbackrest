@@ -147,7 +147,7 @@ sub buildConfig
 
         # Build command constant name
         $strCommandConst = "CFGCMD_" . uc($strCommand);
-        $strCommandConst =~ s/\-/_/g;
+        $strCommandConst =~ s/\-|\:/_/g;
 
         # Build C enum
         my $strCommandEnum = buildConfigCommandEnum($strCommand);

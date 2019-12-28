@@ -141,7 +141,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         // Always output errors on stderr for debugging purposes
         kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
-        result = strLstMove(cfgExecParam(cfgCmdLocal, optionReplace, true), MEM_CONTEXT_OLD());
+        result = strLstMove(cfgExecParam(cfgCmdLocal, cfgCmdRoleDefault, optionReplace, true), MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -308,7 +308,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Add the type
     kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
-    StringList *commandExec = cfgExecParam(cfgCmdRemote, optionReplace, false);
+    StringList *commandExec = cfgExecParam(cfgCmdRemote, cfgCmdRoleDefault, optionReplace, false);
     strLstInsert(commandExec, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
     strLstAdd(result, strLstJoin(commandExec, " "));
 

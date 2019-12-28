@@ -22,7 +22,7 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
 
     CFGDEFDATA_COMMAND
     (
-        CFGDEFDATA_COMMAND_NAME("archive-get-async")
+        CFGDEFDATA_COMMAND_NAME("archive-get:async")
     )
 
     CFGDEFDATA_COMMAND
@@ -38,7 +38,7 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
 
     CFGDEFDATA_COMMAND
     (
-        CFGDEFDATA_COMMAND_NAME("archive-push-async")
+        CFGDEFDATA_COMMAND_NAME("archive-push:async")
     )
 
     CFGDEFDATA_COMMAND

@@ -32,7 +32,7 @@ testRun(void)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
-                strLstAddZ(argList, "--command=archive-get-async");
+                strLstAddZ(argList, "--command=" CFGCMD_ARCHIVE_GET_ASYNC);
                 strLstAddZ(argList, "--process=1");
                 strLstAddZ(argList, "--type=backup");
                 strLstAddZ(argList, "--host-id=1");
