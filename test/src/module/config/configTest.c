@@ -16,8 +16,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("check known values"))
     {
-        TEST_ERROR(cfgCommandId(BOGUS_STR), AssertError, "invalid command 'BOGUS'");
-        TEST_RESULT_INT(cfgCommandId("archive-push"), cfgCmdArchivePush, "command id from name");
+        TEST_ERROR(cfgCommandId(BOGUS_STR, true), AssertError, "invalid command 'BOGUS'");
+        TEST_RESULT_INT(cfgCommandId(BOGUS_STR, false), cfgCmdNone, "command none id from bogus");
+        TEST_RESULT_INT(cfgCommandId("archive-push", true), cfgCmdArchivePush, "command id from name");
 
         TEST_ERROR(
             cfgCommandDefIdFromId(CFG_COMMAND_TOTAL), AssertError, "assertion 'commandId < cfgCmdNone' failed");
