@@ -307,7 +307,6 @@ sub libcAutoExportTag
             'CFGOPT_TARGET_TIMELINE',
             'CFGOPT_TYPE',
             'cfgCommandName',
-            'cfgOptionIndex',
             'cfgOptionIndexTotal',
             'cfgOptionName',
         ],
@@ -334,32 +333,12 @@ sub libcAutoExportTag
 
         crypto =>
         [
-            'CIPHER_MODE_ENCRYPT',
-            'CIPHER_MODE_DECRYPT',
             'cryptoHashOne',
         ],
 
         debug =>
         [
             'libcUvSize',
-        ],
-
-        encode =>
-        [
-            'ENCODE_TYPE_BASE64',
-            'decodeToBin',
-            'encodeToStr',
-        ],
-
-        lock =>
-        [
-            'lockAcquire',
-            'lockRelease',
-        ],
-
-        random =>
-        [
-            'cryptoRandomBytes',
         ],
 
         storage =>
