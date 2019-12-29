@@ -82,7 +82,6 @@ my $rhExport =
     {
         &BLD_EXPORTTYPE_SUB => [qw(
             cfgCommandName
-            cfgOptionIndex
             cfgOptionIndexTotal
             cfgOptionName
         )],
@@ -105,8 +104,6 @@ my $rhExport =
     'crypto' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(
-            CIPHER_MODE_ENCRYPT
-            CIPHER_MODE_DECRYPT
             cryptoHashOne
         )],
     },
@@ -115,33 +112,6 @@ my $rhExport =
     {
         &BLD_EXPORTTYPE_SUB => [qw(
             libcUvSize
-        )],
-    },
-
-    'encode' =>
-    {
-        &BLD_EXPORTTYPE_CONSTANT => [qw(
-            ENCODE_TYPE_BASE64
-        )],
-
-        &BLD_EXPORTTYPE_SUB => [qw(
-            decodeToBin
-            encodeToStr
-        )],
-    },
-
-    'lock' =>
-    {
-        &BLD_EXPORTTYPE_SUB => [qw(
-            lockAcquire
-            lockRelease
-        )],
-    },
-
-    'random' =>
-    {
-        &BLD_EXPORTTYPE_SUB => [qw(
-            cryptoRandomBytes
         )],
     },
 

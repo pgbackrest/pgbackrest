@@ -71,7 +71,6 @@ my @stryCFile =
     'common/io/read.c',
     'common/io/tls/client.c',
     'common/io/write.c',
-    'common/lock.c',
     'common/log.c',
     'common/memContext.c',
     'common/regExp.c',
