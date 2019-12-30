@@ -174,7 +174,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 1, 0), "|"),
             "--command=archive-get|--host-id=1|--log-level-file=off|--log-level-stderr=error|--process=0|--stanza=test1"
-                "|--type=backup|local",
+                "|--type=backup|archive-get:local",
             "local repo protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolLocalParam(protocolStorageTypePg, 2, 1), "|"),
             "--command=backup|--host-id=2|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg"
-                "|--process=1|--stanza=test1|--type=db|local",
+                "|--process=1|--stanza=test1|--type=db|backup:local",
             "local pg protocol params");
     }
 

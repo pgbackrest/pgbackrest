@@ -471,8 +471,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             const StringList *commandPart = strLstNewSplitZ(STR(command), ":");
 
-                            if (strLstSize(commandPart) == 2)
-                                commandId = cfgCommandId(strPtr(strLstGet(commandPart, 1)), false);
+                            if (strLstSize(commandPart) > 1)
+                                commandId = cfgCommandId(strPtr(strLstGet(commandPart, strLstSize(commandPart) - 1)), false);
                         }
 
                         // Error when command does not exist
