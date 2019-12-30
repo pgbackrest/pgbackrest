@@ -461,12 +461,23 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     // The first argument should be the command
                     if (!commandSet)
                     {
+                        const char *command = argList[optind - 1];
+
                         // Try getting the command from the valid command list
-                        ConfigCommand commandId = cfgCommandId(argList[optind - 1], false);
+                        ConfigCommand commandId = cfgCommandId(command, false);
+
+                        // If not successful then the command role may be a stand alone command, i.e. local or remote.
+                        if (commandId == cfgCmdNone)
+                        {
+                            const StringList *commandPart = strLstNewSplitZ(STR(command), ":");
+
+                            if (strLstSize(commandPart) == 2)
+                                commandId = cfgCommandId(strPtr(strLstGet(commandPart, 1)), false);
+                        }
 
                         // Error when command does not exist
                         if (commandId == cfgCmdNone)
-                            THROW_FMT(CommandInvalidError, "invalid command '%s'", argList[optind - 1]);
+                            THROW_FMT(CommandInvalidError, "invalid command '%s'", command);
 
                         //  Set the command
                         cfgCommandSet(commandId);

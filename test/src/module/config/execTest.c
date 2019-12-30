@@ -31,12 +31,20 @@ testRun(void)
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         TEST_RESULT_STR(
+            strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, NULL, false), "|"),
+            strNewFmt(
+                "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo"
+                "|--stanza=test1|archive-get:async",
+                testPath(), testPath()),
+            "exec archive-get -> archive-get:async");
+
+        TEST_RESULT_STR(
             strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleLocal, NULL, false), "|"),
             strNewFmt(
                 "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo"
-                "|--stanza=test1|local",
+                "|--stanza=test1|archive-get:local",
                 testPath(), testPath()),
-            "exec archive-get -> local");
+            "exec archive-get -> archive-get:local");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();

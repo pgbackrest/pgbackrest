@@ -13,11 +13,11 @@ Exec Configuration
 Generate a list of options required for execution of a new command, replacing options as specified in optionReplace
 ***********************************************************************************************************************************/
 StringList *
-cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRole, const KeyValue *optionReplace, bool local)
+cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const KeyValue *optionReplace, bool local)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, commandId);
-        FUNCTION_LOG_PARAM(ENUM, commandRole);
+        FUNCTION_LOG_PARAM(ENUM, commandRoleId);
         FUNCTION_LOG_PARAM(KEY_VALUE, optionReplace);
         FUNCTION_LOG_PARAM(BOOL, local);                            // Will the new process be running on the same host?
     FUNCTION_LOG_END();
@@ -26,15 +26,34 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRole, const KeyVa
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Loop though options and add the ones that apply to the specified command
+        // Get the command role
+        const String *commandRole = cfgCommandRoleStr(commandRoleId);
+
+        // Get the actual command id.  This is a bit confusing -- the command that is passed in can be transformed into a new
+        // command once the role has been added.  For example, the 'archive-push' command plus the 'async' role yields the
+        // 'archive-push:async' command.  The confusing part is that the 'backup' command plus the 'local' role yields the 'local'
+        // command.  This is something we'd like to improved internally, but for now it seems more important to get
+        // the interface correct since this is what the user sees (even if only in a ps list).
+        const String *commandActual = strNewFmt(
+            "%s%s", cfgCommandName(commandId), commandRole == NULL ? "" : strPtr(strNewFmt(":%s", strPtr(commandRole))));
+
+        ConfigCommand commandIdActual = cfgCommandId(strPtr(commandActual), false);
+
+        if (commandIdActual == cfgCmdNone)
+            commandIdActual = cfgCommandId(strPtr(commandRole), false);
+
+        CHECK(commandIdActual != cfgCmdNone);
+
+        ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(commandIdActual);
+
+        // Loop though options and add the ones that apply to the actual command
         result = strLstNew();
-        ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(commandId);
 
         for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         {
             ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
 
-            // Skip the option if it is not valid for the specified command or if is secure.  Also skip repo1-cipher-type because
+            // Skip the option if it is not valid for the actual command or if is secure.  Also skip repo1-cipher-type because
             // there's no point of passing it if the other process doesn't have access to repo1-cipher-pass.  There is probably a
             // better way to do this...
             if (!cfgDefOptionValid(commandDefId, optionDefId) || cfgDefOptionSecure(optionDefId) ||
@@ -126,13 +145,8 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRole, const KeyVa
             }
         }
 
-        // Add the requested command
-        const String *commandRoleStr = cfgCommandRoleStr(commandRole);
-
-        strLstAdd(
-            result,
-            strNewFmt(
-                "%s%s", cfgCommandName(commandId), commandRoleStr == NULL ? "" : strPtr(strNewFmt(":%s", strPtr(commandRoleStr)))));
+        // Add the command
+        strLstAdd(result, commandActual);
 
         // Move list to the calling context
         strLstMove(result, MEM_CONTEXT_OLD());

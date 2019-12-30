@@ -783,7 +783,7 @@ testRun(void)
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--type=backup"));
         strLstAdd(argList, strNew("--log-level-stderr=info"));
-        strLstAdd(argList, strNew("local"));
+        strLstAdd(argList, strNew("backup:local"));
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
