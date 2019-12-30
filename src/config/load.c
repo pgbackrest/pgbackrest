@@ -261,6 +261,9 @@ cfgLoadLogFile(void)
             else
                 strCatFmt(logFile, "%s.log", cfgCommandName(cfgCommand()));
 
+            // Replace : in the command names with -
+            strReplaceChr(logFile, ':', '-');
+
             if (!logFileSet(strPtr(logFile)))
                 cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
         }
