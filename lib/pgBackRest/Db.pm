@@ -183,9 +183,7 @@ sub connect
             if ($fDbVersion >= PG_VERSION_APPLICATION_NAME)
             {
                 # Set application name for monitoring and debugging
-                $self->{oDb}->query(
-                    "set application_name = '" . PROJECT_NAME . ' [' .
-                    (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'");
+                $self->{oDb}->query("set application_name = '" . PROJECT_NAME . ' [' . cfgCommandName(cfgCommandGet()) . "]'");
 
                 # Clear search path to prevent possible function overrides
                 $self->{oDb}->query("set search_path = 'pg_catalog'");
