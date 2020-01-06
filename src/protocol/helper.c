@@ -121,9 +121,6 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         // Option replacements
         KeyValue *optionReplace = kvNew();
 
-        // Add the command option
-        kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
-
         // Add the process id -- used when more than one process will be called
         kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(protocolId));
 

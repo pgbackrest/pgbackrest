@@ -779,7 +779,6 @@ testRun(void)
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--host-id=1"));
         strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--type=backup"));
         strLstAdd(argList, strNew("--log-level-stderr=info"));
@@ -794,11 +793,10 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--type=backup"));
         strLstAdd(argList, strNew("--log-level-stderr=info"));
-        strLstAdd(argList, strNew("remote"));
+        strLstAdd(argList, strNew("backup:remote"));
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;

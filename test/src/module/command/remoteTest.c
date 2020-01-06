@@ -33,10 +33,9 @@ testRun(void)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
-                strLstAddZ(argList, "--command=info");
                 strLstAddZ(argList, "--process=1");
                 strLstAddZ(argList, "--type=backup");
-                harnessCfgLoad(cfgCmdRemote, argList);
+                harnessCfgLoadRole(cfgCmdInfo, cfgCmdRoleRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -65,11 +64,10 @@ testRun(void)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, testProjectExe());
-                strLstAddZ(argList, "--command=" CFGCMD_ARCHIVE_GET_ASYNC);
                 strLstAddZ(argList, "--process=0");
                 strLstAddZ(argList, "--type=backup");
                 strLstAddZ(argList, "--lock-path=/bogus");
-                strLstAddZ(argList, "remote");
+                strLstAddZ(argList, "archive-get:async:remote");
                 harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
@@ -101,11 +99,10 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, testProjectExe());
                 strLstAddZ(argList, "--stanza=test");
-                strLstAddZ(argList, "--command=" CFGCMD_ARCHIVE_PUSH_ASYNC);
                 strLstAddZ(argList, "--process=0");
                 strLstAddZ(argList, "--type=backup");
                 strLstAddZ(argList, "--lock-path=/bogus");
-                strLstAddZ(argList, "remote");
+                strLstAddZ(argList, "archive-push:async:remote");
                 harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
@@ -135,10 +132,9 @@ testRun(void)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
-                strLstAddZ(argList, "--command=" CFGCMD_ARCHIVE_PUSH_ASYNC);
                 strLstAddZ(argList, "--process=0");
                 strLstAddZ(argList, "--type=backup");
-                harnessCfgLoad(cfgCmdRemote, argList);
+                harnessCfgLoadRole(cfgCmdArchivePushAsync, cfgCmdRoleRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -176,10 +172,9 @@ testRun(void)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
-                strLstAddZ(argList, "--command=" CFGCMD_ARCHIVE_PUSH_ASYNC);
                 strLstAddZ(argList, "--process=0");
                 strLstAddZ(argList, "--type=backup");
-                harnessCfgLoad(cfgCmdRemote, argList);
+                harnessCfgLoadRole(cfgCmdArchivePushAsyn, cfgCmdRoleRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }

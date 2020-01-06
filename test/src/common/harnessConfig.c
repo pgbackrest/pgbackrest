@@ -30,10 +30,11 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
 
 /**********************************************************************************************************************************/
 void
-harnessCfgLoad(ConfigCommand commandId, const StringList *argOriginalList)
+harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, const StringList *argList)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(ENUM, commandId);
+        FUNCTION_HARNESS_PARAM(ENUM, commandRoleId);
         FUNCTION_HARNESS_PARAM(STRING_LIST, argOriginalList);
     FUNCTION_HARNESS_END();
 
@@ -49,12 +50,30 @@ harnessCfgLoad(ConfigCommand commandId, const StringList *argOriginalList)
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
 
     // Insert the command so it does not interfere with parameters
-    strLstInsertZ(argList, 0, cfgCommandName(commandId));
+    const String *commandRole = cfgCommandRoleStr(commandRoleId);
+
+    strLstInsert(
+        argList, 0,
+        strNewFmt("%s%s", cfgCommandName(commandId), commandRole == NULL ? "" : strPtr(strNewFmt(":%s", strPtr(commandRole)))));
 
     // Insert the project exe
     strLstInsert(argList, 0, STRDEF(testProjectExe()));
 
     harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+harnessCfgLoad(ConfigCommand commandId, const StringList *argOriginalList)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(ENUM, commandId);
+        FUNCTION_HARNESS_PARAM(STRING_LIST, argOriginalList);
+    FUNCTION_HARNESS_END();
+
+    harnessCfgLoadRole(commandId, cfgCmdRoleDefault, argOriginalList);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

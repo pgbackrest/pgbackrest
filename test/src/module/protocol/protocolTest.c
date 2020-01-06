@@ -153,10 +153,9 @@ testRun(void)
         strLstAddZ(argList, "--pg7-path=/path/to");
         strLstAddZ(argList, "--pg7-host=test1");
         strLstAddZ(argList, "--host-id=7");
-        strLstAddZ(argList, "--command=backup");
         strLstAddZ(argList, "--type=db");
         strLstAddZ(argList, "--process=0");
-        strLstAddZ(argList, "local");
+        strLstAddZ(argList, "backup:local");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(pgIsLocal(7), false, "pg is remote");
@@ -173,8 +172,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 1, 0), "|"),
-            "--command=archive-get|--host-id=1|--log-level-file=off|--log-level-stderr=error|--process=0|--stanza=test1"
-                "|--type=backup|archive-get:local",
+            "--host-id=1|--log-level-file=off|--log-level-stderr=error|--process=0|--stanza=test1|--type=backup|archive-get:local",
             "local repo protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -189,8 +187,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strLstJoin(protocolLocalParam(protocolStorageTypePg, 2, 1), "|"),
-            "--command=backup|--host-id=2|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg"
-                "|--process=1|--stanza=test1|--type=db|backup:local",
+            "--host-id=2|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg|--process=1|--stanza=test1"
+                "|--type=db|backup:local",
             "local pg protocol params");
     }
 
@@ -214,8 +212,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 0, 0), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
-                "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=0"
-                " --stanza=test1 --type=backup remote",
+                "|pgbackrest --log-level-file=off --log-level-stderr=error --process=0 --stanza=test1 --type=backup remote",
             "remote protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -235,28 +232,27 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1, 0), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
-                "|pgbackrest --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
-                " --config-path=/path/config --log-level-file=info --log-level-stderr=error --log-subprocess --process=1"
-                " --stanza=test1 --type=backup remote",
+                "|pgbackrest --config=/path/pgbackrest.conf --config-include-path=/path/include --config-path=/path/config"
+                " --log-level-file=info --log-level-stderr=error --log-subprocess --process=1 --stanza=test1 --type=backup"
+                " archive-get:remote",
             "remote protocol params with replacements");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--command=archive-get");
         strLstAddZ(argList, "--process=3");
         strLstAddZ(argList, "--host-id=1");
         strLstAddZ(argList, "--type=backup");
         strLstAddZ(argList, "--repo1-host=repo-host");
-        strLstAddZ(argList, "local");
+        strLstAddZ(argList, "archive-get:local");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 66, 0), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
-                "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=3"
-                " --stanza=test1 --type=backup remote",
+                "|pgbackrest --log-level-file=off --log-level-stderr=error --process=3"
+                " --stanza=test1 --type=backup archive-get:remote",
             "remote protocol params for backup local");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -272,15 +268,14 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 0), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg1-host"
-                "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/1"
-                " --process=1 --stanza=test1 --type=db remote",
+                "|pgbackrest --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/1"
+                " --process=1 --stanza=test1 --type=db backup:remote",
             "remote protocol params for db backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--command=backup");
         strLstAddZ(argList, "--process=4");
         strLstAddZ(argList, "--host-id=2");
         strLstAddZ(argList, "--pg1-path=/path/to/1");
@@ -289,21 +284,20 @@ testRun(void)
         strLstAddZ(argList, "--pg2-path=/path/to/2");
         strLstAddZ(argList, "--pg2-host=pg2-host");
         strLstAddZ(argList, "--type=db");
-        strLstAddZ(argList, "local");
+        strLstAddZ(argList, "backup:local");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 1), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg2-host"
-                "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/2"
-                " --process=4 --stanza=test1 --type=db remote",
+                "|pgbackrest --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/2 --process=4 --stanza=test1"
+                " --type=db backup:remote",
             "remote protocol params for db local");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--command=backup");
         strLstAddZ(argList, "--process=4");
         strLstAddZ(argList, "--host-id=3");
         strLstAddZ(argList, "--pg1-path=/path/to/1");
@@ -312,14 +306,14 @@ testRun(void)
         strLstAddZ(argList, "--pg3-socket-path=/socket3");
         strLstAddZ(argList, "--pg3-port=3333");
         strLstAddZ(argList, "--type=db");
-        strLstAddZ(argList, "local");
+        strLstAddZ(argList, "backup:local");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 2), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg3-host"
-                "|pgbackrest --command=backup --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/3"
-                " --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --stanza=test1 --type=db remote",
+                "|pgbackrest --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/3 --pg1-port=3333"
+                " --pg1-socket-path=/socket3 --process=4 --stanza=test1 --type=db backup:remote",
             "remote protocol params for db local");
     }
 
@@ -872,10 +866,9 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
         strLstAddZ(argList, "--process=999");
-        strLstAddZ(argList, "--command=archive-get");
         strLstAddZ(argList, "--host-id=1");
         strLstAddZ(argList, "--type=db");
-        harnessCfgLoad(cfgCmdLocal, argList);
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
