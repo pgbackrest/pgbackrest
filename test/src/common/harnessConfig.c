@@ -30,16 +30,16 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
 
 /**********************************************************************************************************************************/
 void
-harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, const StringList *argList)
+harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, const StringList *argListParam)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(ENUM, commandId);
         FUNCTION_HARNESS_PARAM(ENUM, commandRoleId);
-        FUNCTION_HARNESS_PARAM(STRING_LIST, argOriginalList);
+        FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
     FUNCTION_HARNESS_END();
 
     // Make a copy of the arg list that we can modify
-    StringList *argList = strLstDup(argOriginalList);
+    StringList *argList = strLstDup(argListParam);
 
     // Set log path if valid
     if (cfgDefOptionValid(cfgCommandDefIdFromId(commandId), cfgDefOptLogPath))
@@ -66,14 +66,14 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
 
 /**********************************************************************************************************************************/
 void
-harnessCfgLoad(ConfigCommand commandId, const StringList *argOriginalList)
+harnessCfgLoad(ConfigCommand commandId, const StringList *argListParam)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(ENUM, commandId);
-        FUNCTION_HARNESS_PARAM(STRING_LIST, argOriginalList);
+        FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
     FUNCTION_HARNESS_END();
 
-    harnessCfgLoadRole(commandId, cfgCmdRoleDefault, argOriginalList);
+    harnessCfgLoadRole(commandId, cfgCmdRoleDefault, argListParam);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
