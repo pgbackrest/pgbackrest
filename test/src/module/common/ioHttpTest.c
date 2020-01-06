@@ -312,6 +312,16 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("httpLastModifiedToTime()"))
+    {
+        TEST_ERROR(httpLastModifiedToTime(STRDEF("Wed, 21 Bog 2015 07:28:00 GMT")), FormatError, "invalid month 'Bog'");
+        TEST_ERROR(
+            httpLastModifiedToTime(STRDEF("Wed,  1 Oct 2015 07:28:00 GMT")), FormatError,
+            "unable to convert base 10 string ' 1' to int");
+        TEST_RESULT_INT(httpLastModifiedToTime(STRDEF("Wed, 21 Oct 2015 07:28:00 GMT")), 1445412480, "convert gmt datetime");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("HttpHeader"))
     {
         HttpHeader *header = NULL;
