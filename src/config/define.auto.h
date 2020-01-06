@@ -62,7 +62,6 @@ typedef enum
     cfgDefOptBufferSize,
     cfgDefOptChecksumPage,
     cfgDefOptCmdSsh,
-    cfgDefOptCommand,
     cfgDefOptCompress,
     cfgDefOptCompressLevel,
     cfgDefOptCompressLevelNetwork,

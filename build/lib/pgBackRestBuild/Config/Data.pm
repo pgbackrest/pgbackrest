@@ -93,10 +93,6 @@ use constant CFGCMD_HELP                                            => 'help';
     push @EXPORT, qw(CFGCMD_HELP);
 use constant CFGCMD_INFO                                            => 'info';
     push @EXPORT, qw(CFGCMD_INFO);
-use constant CFGCMD_LOCAL                                           => 'local';
-    push @EXPORT, qw(CFGCMD_LOCAL);
-use constant CFGCMD_REMOTE                                          => 'remote';
-    push @EXPORT, qw(CFGCMD_REMOTE);
 use constant CFGCMD_RESTORE                                         => 'restore';
     push @EXPORT, qw(CFGCMD_RESTORE);
 use constant CFGCMD_STANZA_CREATE                                   => 'stanza-create';
@@ -151,8 +147,6 @@ use constant CFGOPT_OUTPUT                                          => 'output';
 
 # Command-line only local/remote options
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPT_COMMAND                                         => 'command';
-    push @EXPORT, qw(CFGOPT_COMMAND);
 use constant CFGOPT_PROCESS                                         => 'process';
     push @EXPORT, qw(CFGOPT_PROCESS);
 use constant CFGOPT_HOST_ID                                         => 'host-id';
@@ -646,18 +640,6 @@ my $rhCommandDefine =
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
     },
 
-    &CFGCMD_LOCAL =>
-    {
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
-    },
-
-    &CFGCMD_REMOTE =>
-    {
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
-    },
-
     &CFGCMD_RESTORE =>
     {
     },
@@ -725,8 +707,6 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
@@ -837,11 +817,6 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO =>
-            {
-                &CFGDEF_REQUIRED => false
-            },
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE =>
             {
                 &CFGDEF_REQUIRED => false
             },
@@ -973,24 +948,6 @@ my %hConfigDefine =
                 ]
             },
 
-            &CFGCMD_LOCAL =>
-            {
-                &CFGDEF_ALLOW_LIST =>
-                [
-                    &CFGOPTVAL_LOCAL_TYPE_DB,
-                    &CFGOPTVAL_LOCAL_TYPE_BACKUP,
-                ],
-            },
-
-            &CFGCMD_REMOTE =>
-            {
-                &CFGDEF_ALLOW_LIST =>
-                [
-                    &CFGOPTVAL_REMOTE_TYPE_DB,
-                    &CFGOPTVAL_REMOTE_TYPE_BACKUP,
-                ],
-            },
-
             &CFGCMD_RESTORE =>
             {
                 &CFGDEF_DEFAULT => CFGOPTVAL_RESTORE_TYPE_DEFAULT,
@@ -1038,16 +995,6 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_COMMAND =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
-        }
-    },
-
     &CFGOPT_HOST_ID =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,

@@ -145,7 +145,6 @@ sub libcAutoExportTag
             'CFGOPT_BUFFER_SIZE',
             'CFGOPT_CHECKSUM_PAGE',
             'CFGOPT_CMD_SSH',
-            'CFGOPT_COMMAND',
             'CFGOPT_COMPRESS',
             'CFGOPT_COMPRESS_LEVEL',
             'CFGOPT_COMPRESS_LEVEL_NETWORK',

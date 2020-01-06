@@ -73,8 +73,6 @@ Option constants
     STRING_DECLARE(CFGOPT_CHECKSUM_PAGE_STR);
 #define CFGOPT_CMD_SSH                                              "cmd-ssh"
     STRING_DECLARE(CFGOPT_CMD_SSH_STR);
-#define CFGOPT_COMMAND                                              "command"
-    STRING_DECLARE(CFGOPT_COMMAND_STR);
 #define CFGOPT_COMPRESS                                             "compress"
     STRING_DECLARE(CFGOPT_COMPRESS_STR);
 #define CFGOPT_COMPRESS_LEVEL                                       "compress-level"
@@ -396,7 +394,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            171
+#define CFG_OPTION_TOTAL                                            170
 
 /***********************************************************************************************************************************
 Command enum
@@ -440,7 +438,6 @@ typedef enum
     cfgOptBufferSize,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
-    cfgOptCommand,
     cfgOptCompress,
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,

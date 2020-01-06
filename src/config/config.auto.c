@@ -312,7 +312,6 @@ STRING_EXTERN(CFGOPT_BACKUP_STANDBY_STR,                            CFGOPT_BACKU
 STRING_EXTERN(CFGOPT_BUFFER_SIZE_STR,                               CFGOPT_BUFFER_SIZE);
 STRING_EXTERN(CFGOPT_CHECKSUM_PAGE_STR,                             CFGOPT_CHECKSUM_PAGE);
 STRING_EXTERN(CFGOPT_CMD_SSH_STR,                                   CFGOPT_CMD_SSH);
-STRING_EXTERN(CFGOPT_COMMAND_STR,                                   CFGOPT_COMMAND);
 STRING_EXTERN(CFGOPT_COMPRESS_STR,                                  CFGOPT_COMPRESS);
 STRING_EXTERN(CFGOPT_COMPRESS_LEVEL_STR,                            CFGOPT_COMPRESS_LEVEL);
 STRING_EXTERN(CFGOPT_COMPRESS_LEVEL_NETWORK_STR,                    CFGOPT_COMPRESS_LEVEL_NETWORK);
@@ -557,14 +556,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_CMD_SSH)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptCmdSsh)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_COMMAND)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptCommand)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
