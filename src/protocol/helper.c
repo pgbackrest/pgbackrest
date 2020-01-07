@@ -316,6 +316,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_PATH_STR), NULL);
     kvPut(optionReplace, VARSTR(CFGOPT_LOCK_PATH_STR), NULL);
 
+    // !!! NOT RIGHT -- THIS SHOULD WORK IF QUOTING IN EXE WAS RIGHT
+    if (cfgOptionTest(cfgOptTarget))
+        kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), VARSTRDEF("BOGUS"));
+
     // Only enable file logging on the remote when requested
     kvPut(
         optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR),
