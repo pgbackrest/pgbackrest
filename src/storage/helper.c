@@ -173,7 +173,7 @@ storagePgGet(unsigned int hostId, bool write)
 }
 
 /***********************************************************************************************************************************
-Get ready-only PostgreSQL storage for a specific host id
+Get read-only PostgreSQL storage for a specific host id
 ***********************************************************************************************************************************/
 const Storage *
 storagePgId(unsigned int hostId)
@@ -200,7 +200,7 @@ storagePgId(unsigned int hostId)
 }
 
 /***********************************************************************************************************************************
-Get ready-only PostgreSQL storage for the host-id or the default of 1
+Get read-only PostgreSQL storage for the host-id or the default of 1
 ***********************************************************************************************************************************/
 const Storage *
 storagePg(void)

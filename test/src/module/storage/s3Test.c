@@ -200,7 +200,11 @@ testS3Server(void)
 
         // File exists
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL));
-        harnessTlsServerReply(testS3ServerResponse(200, "OK", "content-length:9999", NULL));
+        harnessTlsServerReply(testS3ServerResponse(
+            200, "OK",
+            "content-length:9999\r\n"
+            "Last-Modified: Wed, 21 Oct 2015 07:28:00 GMT",
+            NULL));
 
         // InfoList()
         // -------------------------------------------------------------------------------------------------------------------------
@@ -213,6 +217,7 @@ testS3Server(void)
                 "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                 "    <Contents>"
                 "        <Key>path/to/test_file</Key>"
+                "        <LastModified>2009-10-12T17:50:30.000Z</LastModified>"
                 "        <Size>787</Size>"
                 "    </Contents>"
                 "   <CommonPrefixes>"
@@ -817,6 +822,7 @@ testRun(void)
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
         TEST_RESULT_UINT(info.size, 9999, "    check exists");
+        TEST_RESULT_UINT(info.timeModified, 1445412480, "    check time");
 
         // InfoList()
         // -------------------------------------------------------------------------------------------------------------------------
@@ -833,6 +839,7 @@ testRun(void)
         TEST_RESULT_UINT(testStorageInfoList[0].type, storageTypePath, "    check type");
         TEST_RESULT_STR_Z(testStorageInfoList[1].name, "test_file", "    check name");
         TEST_RESULT_UINT(testStorageInfoList[1].size, 787, "    check size");
+        TEST_RESULT_UINT(testStorageInfoList[1].timeModified, 1255369830, "    check time");
         TEST_RESULT_UINT(testStorageInfoList[1].type, storageTypeFile, "    check type");
 
         // storageDriverList()

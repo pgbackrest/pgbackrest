@@ -45,6 +45,8 @@ HTTP Constants
     STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
 #define HTTP_HEADER_ETAG                                            "etag"
     STRING_DECLARE(HTTP_HEADER_ETAG_STR);
+#define HTTP_HEADER_LAST_MODIFIED                                   "last-modified"
+    STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
 
 #define HTTP_RESPONSE_CODE_FORBIDDEN                                403
 #define HTTP_RESPONSE_CODE_NOT_FOUND                                404
