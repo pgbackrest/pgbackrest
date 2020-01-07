@@ -7,9 +7,6 @@ Restore Command
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
-#include <regex.h>  // CSHANG
-#include <stdlib.h> // CSHANG
-#include <stdio.h> // CSHANG
 
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
@@ -62,8 +59,6 @@ Recovery constants
     STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                       RECOVERY_TYPE_PRESERVE);
 #define RECOVERY_TYPE_STANDBY                                       "standby"
     STRING_STATIC(RECOVERY_TYPE_STANDBY_STR,                        RECOVERY_TYPE_STANDBY);
-#define RECOVERY_TYPE_TIME                                          "time"
-    STRING_STATIC(RECOVERY_TYPE_TIME_STR,                           RECOVERY_TYPE_TIME);
 
 /***********************************************************************************************************************************
 Validate restore path
@@ -124,8 +119,6 @@ getEpoch(const String *targetTime)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        struct tm tm = {0};
-
         // Build the regex to accept formats: YYYY-MM-DD HH:MM:SS with optional msec (up to 6 digits and separated from minutes by
         // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boudaries are UTC-12 to UTC+14
         String *expression = strNew("^(2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])(\\,[0-9]{1,6}|\\.[0-9]{1,6})?(((\\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\\+(14)(:?00)?))|((\\-(0[0-9]|1[0-1])(:?(00|30|45))?)|(\\-12)(:?00)?))?$");
@@ -137,24 +130,15 @@ getEpoch(const String *targetTime)
         {
             // Strip off the date and time and put the remainder into another string
             String *datetime = strSubN(targetTime, 0, 19);
-            String *timeTargetZone = strSub(targetTime, 19);
+            int dtYear = cvtZToInt(strPtr(strSubN(datetime, 0, 4)));
+            int dtMonth = cvtZToInt(strPtr(strSubN(datetime, 4, 2)));
+            int dtDay = cvtZToInt(strPtr(strSubN(datetime, 8, 2)));
+            int dtHour = cvtZToInt(strPtr(strSubN(datetime, 11, 2)));
+            int dtMinute = cvtZToInt(strPtr(strSubN(datetime, 14, 2)));
+            int dtSecond = cvtZToInt(strPtr(strSubN(datetime, 17, 2)));
+            int tzOffsetSeconds = 0;
 
-            // Check the format - if the values do not match after converting back and forth then date may be out of range,
-            // e.g. entering 2019-02-31 is invalid and will be caught here but not by the regex. strptime ignores timezone
-            // on some systems so handle that separately.
-            strptime(strPtr(datetime), "%F %T", &tm);
-            char timeCheck[20];
-            strftime(timeCheck, sizeof(timeCheck), "%F %T", &tm);
-            if (strCmpZ(datetime, timeCheck) != 0)
-            {
-                // CSHANG What error should this be - I made it an error since it passed the regex but if not an error, then WARN but should also indicate that backup set will use latest?
-                THROW_FMT(
-                    FormatError,
-                    "date %s is not valid\nHINT: is the month and day valid (example: MM-DD of 02-31 is not a valid date)?",
-                    strPtr(targetTime));
-            }
-            // Reset tm structure
-            tm = (const struct tm){0};
+            String *timeTargetZone = strSub(targetTime, 19);
 
             // Determine if the remainder contains a timezone offset. This offset is only valid if the system time is not UTC; if
             // it is UTC then the offset is ignored.
@@ -162,57 +146,38 @@ getEpoch(const String *targetTime)
             int idxMinus = strChr(timeTargetZone, '-');
             if (idxPlus != -1 || idxMinus != -1)
             {
-                String *timezoneOffset = strSub(timeTargetZone, (size_t)(idxPlus == -1 ? idxMinus : idxPlus)+1);
-                String *timezoneHour = strSubN(timezoneOffset, 0, 2);
-                String *timezoneMinute = strNew("00");
+                String *timezoneOffset = strSub(timeTargetZone, (size_t)(idxPlus == -1 ? idxMinus : idxPlus));
+
+                // Do no yet include the sign with the hour
+                int tzHour = cvtZToInt(strPtr(strSubN(timezoneOffset, 1, 2)));
+                int tzMinute = 0;
+
+                // If minutes are included in timezone offset then see if separated by a colon or not and extract accordingly
                 if (strSize(timezoneOffset) > 2)
                 {
                     int colonIdx = strChr(timezoneOffset, ':');
                     if (colonIdx != -1)
-                        timezoneMinute = strSubN(timezoneOffset, (size_t)colonIdx+1, 2);
+                        tzMinute = cvtZToInt(strPtr(strSubN(timezoneOffset, (size_t)colonIdx+1, 2)));
                     else
-                        timezoneMinute = strSubN(timezoneOffset, 2, 2);
+                        tzMinute = cvtZToInt(strPtr(strSubN(timezoneOffset, 2, 2)));
                 }
 
-                // Add the offset in a 4 digit format so it can be interpreted by strptime
-                strCatFmt(datetime, "%c%s%s", (idxPlus == -1 ? '-' : '+'), strPtr(timezoneHour), strPtr(timezoneMinute));
+                // Validate the timezone parts
+                tzPartsValid(tzHour, tzMinute);
+// CSHANG Should put in function accessible by all --- THIS IS NOT YET RIGHT -- need to add on the sign
+                // Convert the timezone parts into seconds
+                tzOffsetSeconds = (tzHour * 3600) + (tzMinute * 60);
             }
 
             // Convert the datetime with or without zone into local Epoch. set tm_isdst to -1 to force mktime to consider if DST.
             // For example, if system time is America/New_York then 2019-09-14 20:02:49 was a time in DST so the Epoch value should
             // be 1568505769 not 1568509369 which would be 2019-09-14 21:02:49 - an hour too late
-            strptime(strPtr(datetime), "%F %T%z", &tm);
-LOG_WARN("TM: %d-%d-%d %d:%d:%d DSF: %d, datetime: '%s'\n", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, strPtr(datetime));
 
-struct tm tmz = {0};
-// String *envTZ = strNew(getenv("TZ"));
-// setenv("TZ", "UTC", true);
-// LOG_WARN("TZ: %s, new TZ: %s", strPtr(envTZ), getenv("TZ"));
-strptime("2019-11-14 13:02:49-0200", "%F %T%z", &tmz);
-//CSHANG Maybe need to do something along these lines? NO, it doesn't matter because mktime will use the system time TZ
-// sscanf(
-//         "2019-11-14 13:02:49", "%d-%d-%d %d:%d:%d",
-//         &tmz.tm_year, &tmz.tm_mon, &tmz.tm_mday,
-//         &tmz.tm_hour, &tmz.tm_min, &tmz.tm_sec
-// );
-// tmz.tm_year -= 1900; /* years since 1900 */
-// tmz.tm_mon -= 1;     /* 0 - 11 range */
-// tmz.tm_isdst = -1;   /* automatically determine DST */
-tmz.tm_isdst = -1;
-time_t test = mktime(&tmz);
-char buffer[20];
-cvtTimeToZ(test, buffer, 20);
-LOG_WARN("cvtTimeToZ %s", buffer);
-// test += (2 * 3600);
-LOG_WARN("TMZ: %d-%d-%d %d:%d:%d DSF: %d for 2019-11-14 13:02:49-0200, mktime: %ld, plus offset: %ld\n", tmz.tm_year+1900, tmz.tm_mon+1, tmz.tm_mday, tmz.tm_hour, tmz.tm_min, tmz.tm_sec, tmz.tm_isdst, test, test + (2 * 3600));
-            tm.tm_isdst = -1;
-            result = mktime(&tm);
-// setenv("TZ", strPtr(envTZ), true);
-// LOG_WARN("Reset TZ: %s", getenv("TZ"));
+
         }
         else
         {
-            LOG_WARN(
+            LOG_WARN_FMT(
                 "automatic backup set selection cannot be performed with provided time format '%s', latest backup set will be used\n"
                 "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)",
                 strPtr(targetTime));
@@ -222,6 +187,7 @@ LOG_WARN("TMZ: %d-%d-%d %d:%d:%d DSF: %d for 2019-11-14 13:02:49-0200, mktime: %
 
     FUNCTION_LOG_RETURN(TIME, result);
 }
+
 
 /***********************************************************************************************************************************
 Get the backup set to restore
@@ -237,191 +203,6 @@ restoreBackupSet(InfoBackup *infoBackup)
 
     String *result = NULL;
 
-/* CSHANG check to see if the type=time then parse the target=DATETIME with * char *strptime(const char *s, const char *format, struct tm *tm);
-BUT in the following, it would not be valid since we're requiring no spaces
-pgbackrest --stanza=demo --delta  --type=time "--target=2019-10-01 15:24:27.503516+00"
-
-postgres=# select * from current_timestamp;
-       current_timestamp
--------------------------------
- 2019-11-13 17:24:59.153413+00
-
-From issues list:
-'--target=2019-09-03 09:42:23.580193+02'
-"--target="2019-09-03 23:00:00 CET"  --- DO NOT ACCEPT THIS FORMAT
-"--target=2019-05-27 22:00:00.00+00"
-"--target="2019-05-01 10:58:18.000000+01"
-"--target="2018-10-15 08:00:00.000000+02"
-"--target=2018-07-05 15:32:51.267192+00"
-"--target=2018-09-04 09:03:58.59367+00"
-"--target=2018-07-02 04:37:00"
-"--target=2018-06-15 11:45:10"
-"--target=2017-12-24 12:00:00"
-"--target=2017-08-17 14:32:48.894424-04"
-"--target=2017-02-09 13:24:06"
-
-^(19|2[0-9])[0-9]{2}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])((\+|-)[0-1][0-9]{3})?$
-matches:
-2016-12-15 09:20:08+1100
-
-^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}((\+|-)[0-1][0-9]{3})?$
-matches:
-2016-12-15 09:20:08+1100  -- but there must be 4 numbers
-
-1) The format "%Y%m%dT%H%M%SZ" however doesn't have any hyphens, colons or spaces - won't it need to? Or will we have to require them to put in 20191001T152427-503516 or something? ISO8601: A single point in time can be represented by concatenating a complete date expression, the letter "T" as a delimiter, and a valid time expression. For example, "2007-04-05T14:30". It is permitted to omit the "T" character by mutual agreement as in "200704051430".[30] Separating date and time parts with other characters such as space is not allowed in ISO 8601, but allowed in its profile RFC 3339.[31]. If a time zone designator is required, it follows the combined date and time. For example, "2007-04-05T14:30Z" or "2007-04-05T12:30-02:00".
-
-2)     The return value of the function is a pointer to the first character
-       not processed in this function call.  In case the input string
-       contains more characters than required by the format string, the
-       return value points right after the last consumed input character.
-       In case the whole input string is consumed, the return value points
-       to the null byte at the end of the string.  If strptime() fails to
-       match all of the format string and therefore an error occurred, the
-       function returns NULL.
-So can we use this to validate? Or maybe we need to run it through another function like mktime or something to see if we have valid result?
-
-3) ISO 8601: Midnight is a special case and may be referred to as either "00:00" or "24:00". The notation "00:00" is used at the beginning of a calendar day and is the more frequently used. At the end of a day use "24:00". "2007-04-05T24:00" is the same instant as "2007-04-06T00:00".
-
-4) Decimal fractions may be added to any of the three time elements. However, a fraction may only be added to the lowest order time element in the representation. A decimal mark, either a comma or a dot (without any preference as stated in resolution 10 of the 22nd General Conference CGPM in 2003,[24] but with a preference for a comma according to ISO 8601:2004)[25] is used as a separator between the time element and its fraction. To denote "14 hours, 30 and one half minutes", do not include a seconds figure. Represent it as "14:30,5", "1430,5", "14:30.5", or "1430.5". There is no limit on the number of decimal places for the decimal fraction. However, the number of decimal places needs to be agreed to by the communicating parties. For example, in Microsoft SQL Server, the precision of a decimal fraction is 3, i.e., "yyyy-mm-ddThh:mm:ss[.mmm]"
-
-5) In the following the start/stop time are the number of seconds since 00:00:00 UTC, January 1, 1970
-20191112-173146F={"backrest-format":5,"backrest-version":"2.19dev","backup-archive-start":"000000010000000000000002","ba
-ckup-archive-stop":"000000010000000000000002","backup-info-repo-size":2765713,"backup-info-repo-size-delta":2765713,"bac
-kup-info-size":23521617,"backup-info-size-delta":23521617,"backup-timestamp-start":1573579906,"backup-timestamp-stop":15
-73579919,"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":
-false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-6) strptime Locale Sensitive: The behavior of this function might be affected by the LC_CTYPE, LC_TIME, and LC_TOD categories of the current locale. This function is not available when LOCALETYPE(*CLD) is specified on the compilation command. For more information, see Understanding CCSIDs and Locales.
-
-7) On MacOS X (10.7.1), one of the 'bugs' listed in the strptime(3) manual page is:
-
-The %Z format specifier only accepts time zone abbreviations of the local time zone, or the value "GMT". This limitation is because of ambiguity due to of the over loading of time zone abbreviations. One such example is EST which is both Eastern Standard Time and Eastern Australia Summer Time.
-
-ISO 8601 date format
-Every component shown in the example below must be present when expressing a date in ISO 8601 format; this includes all punctuation characters and the "T" character. Within a string, the "T" indicates the beginning of the time element (directly following the date element). Although several date expressions exist, Remote Manager supports only the following format:
-Complete date plus hours, minutes and seconds:
-YYYY-MM-DDThh:mm:ss[.mmm]TZD (eg 2012-03-29T10:05:45-06:00)
-Where:
-YYYY = four-digit year
-MM = two-digit month (eg 03=March)
-DD = two-digit day of the month (01 through 31)
-T = a set character indicating the start of the time element
-hh = two digits of an hour (00 through 23, AM/PM not included)
-mm = two digits of a minute (00 through 59)
-ss = two digits of a second (00 through 59)
-mmm = three digits of a millisecond (000 through 999)
-TZD = time zone designator (Z or +hh:mm or -hh:mm), the + or - values indicate how far ahead or behind a time zone is from the UTC (Coordinated Universal Time) zone.
-
-RFC 822 time zone
-For formatting, the RFC 822 4-digit time zone format is used: +/-HHmm, which represents the current offset from GMT in hours and minutes.
-Hours must be 00 - 23, always expressed as two digits, and minutes must be 00 - 59.
-*/
-
-/* CSHANG On my MAC "%F %H:%M:%S%z" does not work with 2019-09-03 09:42:23+02 but on this system it does -- although it's not clear if the resulting value of 1567503743 is correct. At www.epochconverter.com 1567503743 it states:
-Assuming that this timestamp is in seconds:
-GMT: Tuesday, September 3, 2019 9:42:23 AM
-Your time zone: Tuesday, September 3, 2019 5:42:23 AM GMT-04:00 DST
-                So 2019-09-03 09:42:23 is correctly converted to GMT but then
-                You cannot leave off the offset timezone. But in the "%F %H:%M:%S %Z" format you can but what is weird is that 2019-09-03 09:42:23+02 in "%F %H:%M:%S%z" and 2019-09-03 09:42:23 in "%F %H:%M:%S %Z" produce the same result 1567503743 which seems like it is ignoring the timezone. +02 = 2 hours after UTC so subtract 2*60*60 from epoch?  posix/Etc/GMT-2   | +02    | 02:00:00   | f
-
-int tm_sec	seconds after the minute – [0, 61](until C99) / [0, 60] (since C99)[note 1]
-int tm_min	minutes after the hour – [0, 59]
-int tm_hour	hours since midnight – [0, 23]
-int tm_mday	day of the month – [1, 31]
-int tm_mon	months since January – [0, 11]
-int tm_year	years since 1900
-int tm_wday	days since Sunday – [0, 6]
-int tm_yday	days since January 1 – [0, 365]
-int tm_isdst	Daylight Saving Time flag. The value is positive if DST is in effect, zero if not and negative if no information is available
-
-1573754569
-Assuming that this timestamp is in seconds:
-GMT: Thursday, November 14, 2019 6:02:49 PM
-Your time zone: Thursday, November 14, 2019 1:02:49 PM GMT-05:00
-Relative: An hour ago
-
-#include <stdio.h>
-#include <time.h>
-
-int main()
-{
-   struct tm tm = {0};
-   struct tm *gmttm;
-   time_t value = 1573754569;
-   gmttm = gmtime(&value);
-// 1573754569
-   if (strptime("2019-11-14 13:02:49-0500", "%F %H:%M:%S%z", &tm) == NULL)
-      printf("ERROR");
-   else
-   {
-      printf("Hello, World! Time is %ld. Maketime %ld\n", value, mktime(&tm));
-      printf("%d-%d-%d %d:%d:%d DSF: %d", gmttm->tm_year+1900, gmttm->tm_mon+1, gmttm->tm_mday, gmttm->tm_hour, gmttm->tm_min, gmttm->tm_sec, gmttm->tm_isdst);
-   }
-
-   return 0;
-}
-
-WHAT WE KNOW:
-* time() function in C will return the current time in UTC regardless of the system time setting (I wrote a file on my system which is in EST to check)
-* strptime() (tested on MAC with timezone EST)
-    - if (strptime("2019-11-14 13:02:49-0500", "%F %H:%M:%S%z", &tm) == NULL) returns NULL when +/- is missing or is not followed by 4 digits)
-    - if %z is ommitted "2019-11-14 13:02:49" will actually use the local setting (in my case -0500) to produce the UTC (this can be dangerous)
-* someone used strptime to convert w/o timezone and then set the tm_isdst to -1 to let the mktime function figure DST out
-* date needs to be validated so that 2019-02-31 is not accepted - strptime ACCEPTS it!
-* YYYY-MM-DD HH:MM:SS (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) - but this accepts 2019-31-31
-* there are time zones for GMT-12 all the way to GMT+14 1200 and 1400 are the max. 30 and 45 minutes are valid in between.
-* Time zones in ISO 8601 are represented as local time (with the location unspecified), as UTC, or as an offset from UTC. If no UTC relation information is given with a time representation, the time is assumed to be in local time. If the time is in UTC, add a Z directly after the time without a space. Z is the zone designator for the zero UTC offset. "09:30 UTC" is therefore represented as "09:30Z" or "0930Z". "14:45:15 UTC" would be "14:45:15Z" or "144515Z". The strings +hh:mm, +hhmm, or +hh can be added to the time to indicate that the used local time zone is hh hours and mm minutes ahead of UTC. For time zones west of the zero meridian, which are behind UTC, the notation -hh:mm, -hhmm, or -hh is used instead. For example, Central European Time (CET) is +0100 and U.S./Canadian Eastern Standard Time (EST) is -0500. The following strings all indicate the same point of time: 12:00Z = 13:00+01:00 = 0700-0500
-* According to POSIX.1-2004, localtime() is required to behave as though tzset() was called, while localtime_r() does not have this requirement. For portable code tzset() should be called before localtime_r()
-
-/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9](,[0-9]{1,6}|\.[0-9]{1,6})?)(\+|\-){1}([0-9]{2}|[0-9]{4})$/g
-
-^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9](,[0-9]{1,6}|\.[0-9]{1,6})?)((\+[0-1][0-4](0[0-9]|[1-5][0-9])?)|(\-[0-1][0-2](0[0-9]|[1-5][0-9])?))$
-
-^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9](,[0-9]{1,6}|\.[0-9]{1,6})?)((\+[0-1][0-4](00|30|45)?)|(\-[0-1][0-2](00|30|45)?))$     -- must have a timezone
-
-^2[0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])(\,[0-9]{1,6}|\.[0-9]{1,6})?
-(((\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\+(14)(:?00)?))|((\-(0[0-9]|1[0-1])(:?(00|30|45))?)|(\-12)(:?00)?)))?$    -- timezone optional and colon in timezone optional
-
-This accepts the following:
-2011-08-12 13:08:19
-2011-08-12 13:08:19.333068
-2011-08-12 13:08:19+05:30
-2011-08-12 13:08:19+05
-2011-08-12 13:08:19.333068+05:30
-2011-08-12 13:08:19.333068+0530
-
-It maxes out at +1400 and -1200 It also only accepts years 2000 - 2999. Did not use \d as I read not always supported.
-
-
-1 minute	60 seconds
-1 hour	3600 seconds
-1 day	86400 seconds
-1 month (30.44 days)	2629743 seconds
-1 year (365.24 days)	31556926 seconds
-
-postgres=# select * from pg_timezone_names; -- displays all supported timezones
-
-postgres=# SELECT EXTRACT(timezone_hour FROM now()),EXTRACT(timezone_minute FROM now());
- date_part | date_part
------------+-----------
-         5 |        30
-(1 row)
-
-postgres=# select now();
-               now
-----------------------------------
- 2011-08-12 13:08:19.333068+05:30
-(1 row)
-
-OS Date/Time:
-postgres@xxxxx:~$ date
-Fri Aug 12 13:10:19 IST 2011
-
-                */
-
-// CSHANG Do we have to worry about --target-timeline?
-// CSHANG What about showing gmtime in info output? How does one arrive at the time to recover to? I'm assuming the postgres logs must have some data formatted but I see things like COMMIT 2017-11-30 12:39:05.086674 UTC, so wouldn't it be feasible to see CET or something? I want to know how we instruct them on finding the time to recover to
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If backup set to restore is default (i.e. latest) then get the actual set
@@ -432,43 +213,7 @@ Fri Aug 12 13:10:19 IST 2011
             if (infoBackupDataTotal(infoBackup) == 0)
                 THROW(BackupSetInvalidError, "no backup sets to restore");
 
-            time_t timeTargetEpoch = 0;
-
-            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
-            {
-                timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
-                // Else find the newest backup set with a stop time before the target recovery time
-                if (timeTargetEpoch != 0)
-                {
-LOG_WARN("input %s, timeTargetEpoch %" PRId64, strPtr(cfgOptionStr(cfgOptTarget)), timeTargetEpoch);
-                    // Search current backups from newest to oldest
-                    for (unsigned int keyIdx = infoBackupDataTotal(infoBackup) - 1; (int)keyIdx >= 0; keyIdx--)
-                    {
-                        // Get the backup data
-                        InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
-                        // CSHANG Should this be <= ?
-                        if (backupData.backupTimestampStop < timeTargetEpoch)
-                        {
-                            backupSet = backupData.backupLabel;
-                            break;
-                        }
-                    }
-
-                    if (backupSet == NULL)
-                    {
-                        char timeBufferStop[20];
-                        // CSHANG Which should we use? If we want them to put in a purely numeric value, then I'd argue for the first one
-                        cvtTimeToZ(timeTargetEpoch, timeBufferStop, sizeof(timeBufferStop));
-                        // strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime(&timeRecoveryTarget));
-
-                        // CSHANG Right now the second %s is for debugging
-                        THROW_FMT(BackupSetInvalidError, "unable to find backup set with stop time less than %s for target time %s", timeBufferStop, strPtr(cfgOptionStr(cfgOptTarget)));
-                    }
-                }
-            }
-
-            if (backupSet == NULL)
-                backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+            backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
         }
         // Otherwise check to make sure the specified backup set is valid
         else
