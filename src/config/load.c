@@ -251,7 +251,7 @@ cfgLoadLogFile(void)
                 cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all");
 
             // If local or remote command add command name and process id
-            if (cfgCommand() == cfgCmdLocal || cfgCommand() == cfgCmdRemote)
+            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
             {
                 strCatFmt(
                     logFile, "%s-%s-%03u.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),

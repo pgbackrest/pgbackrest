@@ -94,6 +94,7 @@ Store the current command
 This is generally set by the command parser but can also be set by during execute to change commands, i.e. backup -> expire.
 ***********************************************************************************************************************************/
 static ConfigCommand command = cfgCmdNone;
+static ConfigCommandRole commandRole = cfgCmdRoleDefault;
 
 /***********************************************************************************************************************************
 Store the location of the executable
@@ -136,6 +137,7 @@ cfgInit(void)
 
     // Reset configuration
     command = cfgCmdNone;
+    commandRole = cfgCmdRoleDefault;
     exe = NULL;
     help = false;
     paramList = NULL;
@@ -172,16 +174,25 @@ cfgCommand(void)
     FUNCTION_TEST_RETURN(command);
 }
 
+ConfigCommandRole
+cfgCommandRole(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(commandRole);
+}
+
 void
-cfgCommandSet(ConfigCommand commandParam)
+cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandParam);
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandParam <= cfgCmdNone);
+    ASSERT(commandId <= cfgCmdNone);
 
-    command = commandParam;
+    command = commandId;
+    commandRole = commandRoleId;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -325,7 +336,7 @@ cfgCommandRoleEnum(const String *commandRole)
     else if (strEq(commandRole, CONFIG_COMMAND_ROLE_REMOTE_STR))
         FUNCTION_TEST_RETURN(cfgCmdRoleRemote);
 
-    THROW_FMT(AssertError, "invalid command role '%s'", strPtr(commandRole));
+    THROW_FMT(CommandInvalidError, "invalid command role '%s'", strPtr(commandRole));
 }
 
 const String *
@@ -424,15 +435,11 @@ cfgLockRequired(void)
 Does the command require an immediate lock?
 ***********************************************************************************************************************************/
 bool
-cfgLockRemoteRequired(ConfigCommand commandId)
+cfgLockRemoteRequired()
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_VOID();
 
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN(configCommandData[commandId].lockRemoteRequired);
+    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].lockRemoteRequired);
 }
 
 /***********************************************************************************************************************************
@@ -449,21 +456,6 @@ cfgLockType(void)
 }
 
 /***********************************************************************************************************************************
-Get the remote lock type required for the command
-***********************************************************************************************************************************/
-LockType
-cfgLockRemoteType(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN((LockType)configCommandData[commandId].lockType);
-}
-
-/***********************************************************************************************************************************
 Does this command log to a file?
 ***********************************************************************************************************************************/
 bool
@@ -473,7 +465,7 @@ cfgLogFile(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].logFile);
+    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].logFile || cfgCommandRole() == cfgCmdRoleAsync);
 }
 
 /***********************************************************************************************************************************

@@ -33,9 +33,8 @@ bool cfgCommandInternal(ConfigCommand commandId);
 const char *cfgCommandName(ConfigCommand commandId);
 
 bool cfgLockRequired(void);
-bool cfgLockRemoteRequired(ConfigCommand commandId);
+bool cfgLockRemoteRequired();
 LockType cfgLockType(void);
-LockType cfgLockRemoteType(ConfigCommand commandId);
 
 bool cfgLogFile(void);
 LogLevel cfgLogLevelDefault(void);
@@ -120,7 +119,7 @@ void cfgCommandHelpSet(bool helpParam);
 ConfigCommand cfgCommandId(const char *commandName, bool error);
 
 void cfgCommandParamSet(const StringList *param);
-void cfgCommandSet(ConfigCommand commandParam);
+void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
 
 const String *cfgExe(void);
 void cfgExeSet(const String *exeParam);

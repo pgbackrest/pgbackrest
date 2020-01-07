@@ -317,8 +317,8 @@ cmdArchivePush(void)
 
                         // Execute the binary.  This statement will not return if it is successful.
                         THROW_ON_SYS_ERROR(
-                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1,
-                            ExecuteError, "unable to execute '" CFGCMD_ARCHIVE_PUSH_ASYNC "'");
+                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+                            "unable to execute asynchronous '" CFGCMD_ARCHIVE_PUSH "'");
                     }
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
@@ -434,7 +434,7 @@ cmdArchivePushAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    ASSERT(cfgCommand() == cfgCmdArchivePushAsync);
+    ASSERT(cfgCommand() == cfgCmdArchivePush);  // !!! AND ROLE = ASYNC
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

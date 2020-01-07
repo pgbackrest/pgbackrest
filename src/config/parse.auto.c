@@ -2233,6 +2233,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptStopAuto,
     },
 
+    // storage-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_STORAGE_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptStorageType,
+    },
+
     // tablespace-map option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2453,6 +2461,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptSpoolPath,
     cfgOptStartFast,
     cfgOptStopAuto,
+    cfgOptStorageType,
     cfgOptTablespaceMap,
     cfgOptTablespaceMapAll,
     cfgOptType,

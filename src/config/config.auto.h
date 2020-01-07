@@ -11,12 +11,8 @@ Command constants
 ***********************************************************************************************************************************/
 #define CFGCMD_ARCHIVE_GET                                          "archive-get"
     STRING_DECLARE(CFGCMD_ARCHIVE_GET_STR);
-#define CFGCMD_ARCHIVE_GET_ASYNC                                    "archive-get:async"
-    STRING_DECLARE(CFGCMD_ARCHIVE_GET_ASYNC_STR);
 #define CFGCMD_ARCHIVE_PUSH                                         "archive-push"
     STRING_DECLARE(CFGCMD_ARCHIVE_PUSH_STR);
-#define CFGCMD_ARCHIVE_PUSH_ASYNC                                   "archive-push:async"
-    STRING_DECLARE(CFGCMD_ARCHIVE_PUSH_ASYNC_STR);
 #define CFGCMD_BACKUP                                               "backup"
     STRING_DECLARE(CFGCMD_BACKUP_STR);
 #define CFGCMD_CHECK                                                "check"
@@ -27,12 +23,8 @@ Command constants
     STRING_DECLARE(CFGCMD_HELP_STR);
 #define CFGCMD_INFO                                                 "info"
     STRING_DECLARE(CFGCMD_INFO_STR);
-#define CFGCMD_LOCAL                                                "local"
-    STRING_DECLARE(CFGCMD_LOCAL_STR);
 #define CFGCMD_LS                                                   "ls"
     STRING_DECLARE(CFGCMD_LS_STR);
-#define CFGCMD_REMOTE                                               "remote"
-    STRING_DECLARE(CFGCMD_REMOTE_STR);
 #define CFGCMD_RESTORE                                              "restore"
     STRING_DECLARE(CFGCMD_RESTORE_STR);
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
@@ -48,7 +40,7 @@ Command constants
 #define CFGCMD_VERSION                                              "version"
     STRING_DECLARE(CFGCMD_VERSION_STR);
 
-#define CFG_COMMAND_TOTAL                                           20
+#define CFG_COMMAND_TOTAL                                           16
 
 /***********************************************************************************************************************************
 Option constants
@@ -379,6 +371,8 @@ Option constants
     STRING_DECLARE(CFGOPT_START_FAST_STR);
 #define CFGOPT_STOP_AUTO                                            "stop-auto"
     STRING_DECLARE(CFGOPT_STOP_AUTO_STR);
+#define CFGOPT_STORAGE_TYPE                                         "storage-type"
+    STRING_DECLARE(CFGOPT_STORAGE_TYPE_STR);
 #define CFGOPT_TABLESPACE_MAP                                       "tablespace-map"
     STRING_DECLARE(CFGOPT_TABLESPACE_MAP_STR);
 #define CFGOPT_TABLESPACE_MAP_ALL                                   "tablespace-map-all"
@@ -394,7 +388,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            170
+#define CFG_OPTION_TOTAL                                            171
 
 /***********************************************************************************************************************************
 Command enum
@@ -402,17 +396,13 @@ Command enum
 typedef enum
 {
     cfgCmdArchiveGet,
-    cfgCmdArchiveGetAsync,
     cfgCmdArchivePush,
-    cfgCmdArchivePushAsync,
     cfgCmdBackup,
     cfgCmdCheck,
     cfgCmdExpire,
     cfgCmdHelp,
     cfgCmdInfo,
-    cfgCmdLocal,
     cfgCmdLs,
-    cfgCmdRemote,
     cfgCmdRestore,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,
@@ -591,6 +581,7 @@ typedef enum
     cfgOptStanza,
     cfgOptStartFast,
     cfgOptStopAuto,
+    cfgOptStorageType,
     cfgOptTablespaceMap,
     cfgOptTablespaceMapAll,
     cfgOptTarget,
