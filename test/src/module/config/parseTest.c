@@ -778,9 +778,10 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--host-id=1"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to"));
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--type=backup"));
+        strLstAdd(argList, strNew("--storage-type=repo"));
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAdd(argList, strNew("backup:local"));
 
@@ -792,9 +793,10 @@ testRun(void)
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to"));
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--type=backup"));
+        strLstAdd(argList, strNew("--storage-type=repo"));
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAdd(argList, strNew("backup:remote"));
 

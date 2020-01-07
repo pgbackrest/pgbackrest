@@ -193,7 +193,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
 
     // Determine which storage should be used
     const Storage *storage = protocolStorageTypeEnum(
-        cfgOptionStr(cfgOptType)) == protocolStorageTypeRepo ? storageRepo() : storagePg();
+        cfgOptionStr(cfgOptStorageType)) == protocolStorageTypeRepo ? storageRepo() : storagePg();
     StorageInterface interface = storageInterface(storage);
     void *driver = storageDriver(storage);
 

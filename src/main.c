@@ -59,12 +59,25 @@ main(int argListSize, const char *argList[])
         // Load the configuration
         // -------------------------------------------------------------------------------------------------------------------------
         cfgLoad((unsigned int)argListSize, argList);
+        ConfigCommandRole commandRole = cfgCommandRole();
 
         // Display help
         // -------------------------------------------------------------------------------------------------------------------------
         if (cfgCommandHelp())
         {
             cmdHelp();
+        }
+        // Local role
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (commandRole == cfgCmdRoleLocal)
+        {
+            cmdLocal(STDIN_FILENO, STDOUT_FILENO);
+        }
+        // Remote role
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (commandRole == cfgCmdRoleRemote)
+        {
+            cmdRemote(STDIN_FILENO, STDOUT_FILENO);
         }
         else
         {
@@ -74,15 +87,11 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdArchiveGet:
                 {
-                    result = cmdArchiveGet();
-                    break;
-                }
+                    if (commandRole == cfgCmdRoleAsync)
+                        cmdArchiveGetAsync();
+                    else
+                        result = cmdArchiveGet();
 
-                // Archive get async command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdArchiveGetAsync:
-                {
-                    cmdArchiveGetAsync();
                     break;
                 }
 
@@ -90,15 +99,11 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdArchivePush:
                 {
-                    cmdArchivePush();
-                    break;
-                }
+                    if (commandRole == cfgCmdRoleAsync)
+                        cmdArchivePushAsync();
+                    else
+                        cmdArchivePush();
 
-                // Archive push async command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdArchivePushAsync:
-                {
-                    cmdArchivePushAsync();
                     break;
                 }
 
@@ -111,7 +116,7 @@ main(int argListSize, const char *argList[])
 
                     // Switch to expire command
                     cmdEnd(0, NULL);
-                    cfgCommandSet(cfgCmdExpire);
+                    cfgCommandSet(cfgCmdExpire, cfgCmdRoleDefault);
                     cfgLoadLogFile();
                     cmdBegin(true);
 
@@ -150,22 +155,6 @@ main(int argListSize, const char *argList[])
                 case cfgCmdInfo:
                 {
                     cmdInfo();
-                    break;
-                }
-
-                // Local command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdLocal:
-                {
-                    cmdLocal(STDIN_FILENO, STDOUT_FILENO);
-                    break;
-                }
-
-                // Remote command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdRemote:
-                {
-                    cmdRemote(STDIN_FILENO, STDOUT_FILENO);
                     break;
                 }
 

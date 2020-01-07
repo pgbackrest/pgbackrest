@@ -479,7 +479,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                                 // If command id is valid then get command role id
                                 if (commandId != cfgCmdNone)
-                                    commandRoleId = cfgCommandRoleEnum(strLstGet(commandPart, 0));
+                                    commandRoleId = cfgCommandRoleEnum(strLstGet(commandPart, 1));
                             }
                         }
 

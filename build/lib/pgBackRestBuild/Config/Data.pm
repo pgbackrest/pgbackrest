@@ -969,6 +969,7 @@ my %hConfigDefine =
     &CFGOPT_STORAGE_TYPE =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
         &CFGDEF_INTERNAL => true,
         &CFGDEF_ALLOW_LIST =>
         [
@@ -980,13 +981,20 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_INFO => {},
             &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
     &CFGOPT_HOST_ID =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
         &CFGDEF_INTERNAL => true,
         &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG > CFGDEF_INDEX_REPO ? CFGDEF_INDEX_PG : CFGDEF_INDEX_REPO],
         &CFGDEF_COMMAND =>
@@ -1001,6 +1009,7 @@ my %hConfigDefine =
     &CFGOPT_PROCESS =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
         &CFGDEF_INTERNAL => true,
         &CFGDEF_ALLOW_RANGE => [0, 1024],
         &CFGDEF_COMMAND =>
@@ -1008,7 +1017,13 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_INFO => {},
             &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1223,6 +1238,7 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
+            &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
@@ -1636,7 +1652,7 @@ my %hConfigDefine =
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
-        &CFGDEF_REQUIRED => true,
+        &CFGDEF_REQUIRED => false,  # THIS IS ONLY TO MAKE REMOTE WORK
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,

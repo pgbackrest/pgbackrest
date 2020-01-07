@@ -20,8 +20,8 @@ Constants
 STRING_EXTERN(PROTOCOL_SERVICE_LOCAL_STR,                           PROTOCOL_SERVICE_LOCAL);
 STRING_EXTERN(PROTOCOL_SERVICE_REMOTE_STR,                          PROTOCOL_SERVICE_REMOTE);
 
-STRING_STATIC(PROTOCOL_STORAGE_TYPE_PG_STR,                         "db");
-STRING_STATIC(PROTOCOL_STORAGE_TYPE_REPO_STR,                       "backup");
+STRING_STATIC(PROTOCOL_STORAGE_TYPE_PG_STR,                         "pg");
+STRING_STATIC(PROTOCOL_STORAGE_TYPE_REPO_STR,                       "repo");
 
 /***********************************************************************************************************************************
 Local variables
@@ -128,7 +128,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), VARUINT(hostId));
 
         // Add the storage type
-        kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
+        kvPut(optionReplace, VARSTR(CFGOPT_STORAGE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
         // Only enable file logging on the local when requested
         kvPut(
@@ -137,6 +137,9 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
 
         // Always output errors on stderr for debugging purposes
         kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
+
+        // Disable output to stdout since it is used by the protocol
+        kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
 
         result = strLstMove(cfgExecParam(cfgCommand(), cfgCmdRoleLocal, optionReplace, true), MEM_CONTEXT_OLD());
     }
@@ -274,17 +277,36 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
             cfgOptionSource(cfgOptPgPort + hostIdx) != cfgSourceDefault ? cfgOption(cfgOptPgPort + hostIdx) : NULL);
     }
 
-    // Remove pg options that are not needed on the remote.  This is to reduce clustter and make debugging options easier.
-    for (unsigned int pgIdx = 1; pgIdx < cfgOptionIndexTotal(cfgOptPgPath); pgIdx++)
+    // Remove pg options that are not needed on the remote.  This is to reduce clutter and make debugging options easier.
+    for (unsigned int pgIdx = 0; pgIdx < cfgOptionIndexTotal(cfgOptPgPath); pgIdx++)
     {
-        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgPath + pgIdx)), NULL);
-        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgSocketPath + pgIdx)), NULL);
-        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgPort + pgIdx)), NULL);
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgHost + pgIdx)), NULL);
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgHostCmd + pgIdx)), NULL);
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgHostConfig + pgIdx)), NULL);
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgHostConfigIncludePath + pgIdx)), NULL);
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgHostConfigPath + pgIdx)), NULL);
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgHostPort + pgIdx)), NULL);
+        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgHostUser + pgIdx)), NULL);
+
+        if (pgIdx > 0)
+        {
+            kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgPath + pgIdx)), NULL);
+            kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgSocketPath + pgIdx)), NULL);
+            kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgPort + pgIdx)), NULL);
+        }
     }
 
-    // Add the command option (or use the current command option if it is valid)
-    if (!cfgOptionTest(cfgOptCommand))
-        kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
+    // Remove repo options that are not needed on the remote.  This is to reduce clutter and make debugging options easier.
+    kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptRepoHost)), NULL);
+    kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptRepoHostCmd)), NULL);
+    kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptRepoHostConfig)), NULL);
+    kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptRepoHostConfigIncludePath)), NULL);
+    kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptRepoHostConfigPath)), NULL);
+    kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptRepoHostPort)), NULL);
+    kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptRepoHostUser)), NULL);
+
+    // Don't pass host-id to the remote.  The host will always be in index 1.
+    kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), NULL);
 
     // Add the process id (or use the current process id if it is valid)
     if (!cfgOptionTest(cfgOptProcess))
@@ -302,10 +324,13 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Always output errors on stderr for debugging purposes
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
-    // Add the type
-    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
+    // Disable output to stdout since it is used by the protocol
+    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
 
-    StringList *commandExec = cfgExecParam(cfgCmdRemote, cfgCmdRoleDefault, optionReplace, false);
+    // Add the type
+    kvPut(optionReplace, VARSTR(CFGOPT_STORAGE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
+
+    StringList *commandExec = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false);
     strLstInsert(commandExec, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
     strLstAdd(result, strLstJoin(commandExec, " "));
 

@@ -31,6 +31,7 @@ cfgLoadLogSetting(void)
     bool logTimestamp = true;
     unsigned int logProcessMax = 1;
 
+    // Need to set log levels to OFF by default for local/remote role
     if (cfgOptionValid(cfgOptLogLevelConsole))
         logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
 
@@ -136,7 +137,7 @@ cfgLoadUpdateOption(void)
     }
 
     // Warn when repo-retention-full is not set on a configured repo
-    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFull))
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFull) && cfgCommandRole() == cfgCmdRoleDefault)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoType); optionIdx++)
         {
@@ -247,22 +248,19 @@ cfgLoadLogFile(void)
         {
             // Construct log filename prefix
             String *logFile = strNewFmt(
-                "%s/%s-", strPtr(cfgOptionStr(cfgOptLogPath)),
-                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all");
+                "%s/%s-%s", strPtr(cfgOptionStr(cfgOptLogPath)),
+                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName(cfgCommand()));
 
-            // If local or remote command add command name and process id
-            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
+            // If local or remote role add command name and process id
+            if (cfgCommandRole() != cfgCmdRoleDefault)
             {
-                strCatFmt(
-                    logFile, "%s-%s-%03u.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
-                    cfgOptionUInt(cfgOptProcess));
-            }
-            // Else add command name
-            else
-                strCatFmt(logFile, "%s.log", cfgCommandName(cfgCommand()));
+                strCatFmt(logFile, "-%s", strPtr(cfgCommandRoleStr(cfgCommandRole())));
 
-            // Replace : in the command names with -
-            strReplaceChr(logFile, ':', '-');
+                if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
+                    strCatFmt(logFile, "-%03u", cfgOptionUInt(cfgOptProcess));
+            }
+
+            strCat(logFile, ".log");
 
             if (!logFileSet(strPtr(logFile)))
                 cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
@@ -308,7 +306,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             cmdBegin(true);
 
             // Acquire a lock if this command requires a lock
-            if (cfgLockRequired() && !cfgCommandHelp())
+            if (cfgCommandRole() == cfgCmdRoleDefault && cfgLockRequired() && !cfgCommandHelp())
                 lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
 
             // Update options that have complex rules

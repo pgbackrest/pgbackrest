@@ -435,7 +435,7 @@ cfgLockRequired(void)
 Does the command require an immediate lock?
 ***********************************************************************************************************************************/
 bool
-cfgLockRemoteRequired()
+cfgLockRemoteRequired(void)
 {
     FUNCTION_TEST_VOID();
 
