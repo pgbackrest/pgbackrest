@@ -21,6 +21,7 @@ STRING_EXTERN(PG_FILE_PGVERSION_STR,                                PG_FILE_PGVE
 STRING_EXTERN(PG_FILE_POSTGRESQLAUTOCONF_STR,                       PG_FILE_POSTGRESQLAUTOCONF);
 STRING_EXTERN(PG_FILE_POSTMASTERPID_STR,                            PG_FILE_POSTMASTERPID);
 STRING_EXTERN(PG_FILE_RECOVERYCONF_STR,                             PG_FILE_RECOVERYCONF);
+STRING_EXTERN(PG_FILE_RECOVERYDONE_STR,                             PG_FILE_RECOVERYDONE);
 STRING_EXTERN(PG_FILE_RECOVERYSIGNAL_STR,                           PG_FILE_RECOVERYSIGNAL);
 STRING_EXTERN(PG_FILE_STANDBYSIGNAL_STR,                            PG_FILE_STANDBYSIGNAL);
 
@@ -28,6 +29,18 @@ STRING_EXTERN(PG_PATH_GLOBAL_STR,                                   PG_PATH_GLOB
 
 STRING_EXTERN(PG_NAME_WAL_STR,                                      PG_NAME_WAL);
 STRING_EXTERN(PG_NAME_XLOG_STR,                                     PG_NAME_XLOG);
+
+// Wal path names depending on version
+STRING_STATIC(PG_PATH_PGWAL_STR,                                    "pg_wal");
+STRING_STATIC(PG_PATH_PGXLOG_STR,                                   "pg_xlog");
+
+// Transaction commit log path names depending on version
+STRING_STATIC(PG_PATH_PGCLOG_STR,                                   "pg_clog");
+STRING_STATIC(PG_PATH_PGXACT_STR,                                   "pg_xact");
+
+// Lsn name used in functions depnding on version
+STRING_STATIC(PG_NAME_LSN_STR,                                      "lsn");
+STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
 
 /***********************************************************************************************************************************
 Define default wal segment size
@@ -562,6 +575,124 @@ pgTablespaceId(unsigned int pgVersion)
     FUNCTION_TEST_RETURN(result);
 }
 
+/**********************************************************************************************************************************/
+uint64_t
+pgLsnFromStr(const String *lsn)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, lsn);
+    FUNCTION_TEST_END();
+
+    uint64_t result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        StringList *lsnPart = strLstNewSplit(lsn, FSLASH_STR);
+
+        CHECK(strLstSize(lsnPart) == 2);
+
+        result = (cvtZToUInt64Base(strPtr(strLstGet(lsnPart, 0)), 16) << 32) + cvtZToUInt64Base(strPtr(strLstGet(lsnPart, 1)), 16);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+String *
+pgLsnToStr(uint64_t lsn)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, lsn);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(strNewFmt("%x/%x", (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF)));
+}
+
+/**********************************************************************************************************************************/
+String *
+pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, timeline);
+        FUNCTION_TEST_PARAM(UINT64, lsn);
+        FUNCTION_TEST_PARAM(UINT, walSegmentSize);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(
+        strNewFmt("%08X%08X%08X", timeline, (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF) / walSegmentSize));
+}
+
+/**********************************************************************************************************************************/
+StringList *
+pgLsnRangeToWalSegmentList(
+    unsigned int pgVersion, uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+        FUNCTION_TEST_PARAM(UINT, timeline);
+        FUNCTION_TEST_PARAM(UINT64, lsnStart);
+        FUNCTION_TEST_PARAM(UINT64, lsnStop);
+        FUNCTION_TEST_PARAM(UINT, walSegmentSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(pgVersion != 0);
+    ASSERT(timeline != 0);
+    ASSERT(lsnStart <= lsnStop);
+    ASSERT(walSegmentSize != 0);
+    ASSERT(pgVersion > PG_VERSION_92 || walSegmentSize == PG_WAL_SEGMENT_SIZE_DEFAULT);
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = strLstNew();
+
+        // Skip the FF segment when PostgreSQL <= 9.2 (in this case segment size should always be 16MB)
+        bool skipFF = pgVersion <= PG_VERSION_92;
+
+        // Calculate the start and stop segments
+        unsigned int startMajor = (unsigned int)(lsnStart >> 32);
+        unsigned int startMinor = (unsigned int)(lsnStart & 0xFFFFFFFF) / walSegmentSize;
+
+        unsigned int stopMajor = (unsigned int)(lsnStop >> 32);
+        unsigned int stopMinor = (unsigned int)(lsnStop & 0xFFFFFFFF) / walSegmentSize;
+
+        unsigned int minorPerMajor = 0xFFFFFFFF / walSegmentSize;
+
+        // Create list
+        strLstAdd(result, strNewFmt("%08X%08X%08X", timeline, startMajor, startMinor));
+
+        while (!(startMajor == stopMajor && startMinor == stopMinor))
+        {
+            startMinor++;
+
+            if ((skipFF && startMinor == 0xFF) || (!skipFF && startMinor > minorPerMajor))
+            {
+                startMajor++;
+                startMinor = 0;
+            }
+
+            strLstAdd(result, strNewFmt("%08X%08X%08X", timeline, startMajor, startMinor));
+        }
+
+        strLstMove(result, MEM_CONTEXT_OLD());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+const String *
+pgLsnName(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_LSN_STR : PG_NAME_LOCATION_STR);
+}
+
 /***********************************************************************************************************************************
 Get WAL name (wal/xlog) for a PostgreSQL version
 ***********************************************************************************************************************************/
@@ -573,6 +704,28 @@ pgWalName(unsigned int pgVersion)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
+}
+
+/**********************************************************************************************************************************/
+const String *
+pgWalPath(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGWAL_STR : PG_PATH_PGXLOG_STR);
+}
+
+/**********************************************************************************************************************************/
+const String *
+pgXactPath(unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
 }
 
 /***********************************************************************************************************************************

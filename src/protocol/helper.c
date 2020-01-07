@@ -20,6 +20,9 @@ Constants
 STRING_EXTERN(PROTOCOL_SERVICE_LOCAL_STR,                           PROTOCOL_SERVICE_LOCAL);
 STRING_EXTERN(PROTOCOL_SERVICE_REMOTE_STR,                          PROTOCOL_SERVICE_REMOTE);
 
+STRING_STATIC(PROTOCOL_STORAGE_TYPE_PG_STR,                         "db");
+STRING_STATIC(PROTOCOL_STORAGE_TYPE_REPO_STR,                       "backup");
+
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
@@ -92,6 +95,8 @@ pgIsLocal(unsigned int hostId)
         FUNCTION_LOG_PARAM(UINT, hostId);
     FUNCTION_LOG_END();
 
+    ASSERT(hostId > 0);
+
     FUNCTION_LOG_RETURN(BOOL, !cfgOptionTest(cfgOptPgHost + hostId - 1));
 }
 
@@ -99,12 +104,15 @@ pgIsLocal(unsigned int hostId)
 Get the command line required for local protocol execution
 ***********************************************************************************************************************************/
 static StringList *
-protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protocolId)
+protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
+        FUNCTION_LOG_PARAM(UINT, hostId);
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
 
     StringList *result = NULL;
 
@@ -117,13 +125,13 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
         kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
 
         // Add the process id -- used when more than one process will be called
-        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARINT((int)protocolId));
+        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(protocolId));
 
-        // Add the host id -- for now this is hard-coded to 1
-        kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), VARINT(1));
+        // Add the host id
+        kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), VARUINT(hostId));
 
-        // Add the type
-        kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTRDEF("backup"));
+        // Add the storage type
+        kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
         // Only enable file logging on the local when requested
         kvPut(
@@ -144,12 +152,15 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
 Get the local protocol client
 ***********************************************************************************************************************************/
 ProtocolClient *
-protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolId)
+protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
+        FUNCTION_LOG_PARAM(UINT, hostId);
         FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
 
     protocolHelperInit();
 
@@ -158,7 +169,7 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolI
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            protocolHelper.clientLocalSize = cfgOptionUInt(cfgOptProcessMax);
+            protocolHelper.clientLocalSize = cfgOptionUInt(cfgOptProcessMax) + 1;
             protocolHelper.clientLocal = (ProtocolHelperClient *)memNew(
                 protocolHelper.clientLocalSize * sizeof(ProtocolHelperClient));
         }
@@ -176,7 +187,7 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolI
         {
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
-                cfgExe(), protocolLocalParam(protocolStorageType, protocolId),
+                cfgExe(), protocolLocalParam(protocolStorageType, hostId, protocolId),
                 strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u process", protocolId),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);
@@ -254,9 +265,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
         cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
-    // Use a C remote
-    kvPut(optionReplace, VARSTR(CFGOPT_C_STR), VARBOOL(true));
-
     // Copy pg options to index 0 since that's what the remote will be expecting
     if (hostIdx != 0)
     {
@@ -298,7 +306,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
     // Add the type
-    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), isRepo ? VARSTRDEF("backup") : VARSTRDEF("db"));
+    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
     StringList *commandExec = cfgExecParam(cfgCmdRemote, optionReplace, false);
     strLstInsert(commandExec, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
@@ -317,6 +325,8 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, hostId);
     FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
 
     // Is this a repo remote?
     bool isRepo = protocolStorageType == protocolStorageTypeRepo;
@@ -399,6 +409,33 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient->client);
 }
 
+/**********************************************************************************************************************************/
+void
+protocolRemoteFree(unsigned int hostId)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, hostId);
+    FUNCTION_LOG_END();
+
+    ASSERT(hostId > 0);
+
+    if (protocolHelper.clientRemote != NULL)
+    {
+        ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[hostId - 1];
+
+        if (protocolHelperClient->client != NULL)
+        {
+            protocolClientFree(protocolHelperClient->client);
+            execFree(protocolHelperClient->exec);
+
+            protocolHelperClient->client = NULL;
+            protocolHelperClient->exec = NULL;
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Send keepalives to all remotes
 ***********************************************************************************************************************************/
@@ -420,6 +457,45 @@ protocolKeepAlive(void)
 }
 
 /***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+ProtocolStorageType
+protocolStorageTypeEnum(const String *type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, type);
+    FUNCTION_TEST_END();
+
+    ASSERT(type != NULL);
+
+    if (strEq(type, PROTOCOL_STORAGE_TYPE_PG_STR))
+        FUNCTION_TEST_RETURN(protocolStorageTypePg);
+    else if (strEq(type, PROTOCOL_STORAGE_TYPE_REPO_STR))
+        FUNCTION_TEST_RETURN(protocolStorageTypeRepo);
+
+    THROW_FMT(AssertError, "invalid protocol storage type '%s'", strPtr(type));
+}
+
+const String *
+protocolStorageTypeStr(ProtocolStorageType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    switch (type)
+    {
+        case protocolStorageTypePg:
+            FUNCTION_TEST_RETURN(PROTOCOL_STORAGE_TYPE_PG_STR);
+
+        case protocolStorageTypeRepo:
+            FUNCTION_TEST_RETURN(PROTOCOL_STORAGE_TYPE_REPO_STR);
+    }
+
+    THROW_FMT(AssertError, "invalid protocol storage type %u", type);
+}
+
+/***********************************************************************************************************************************
 Free the protocol objects and shutdown processes
 ***********************************************************************************************************************************/
 void
@@ -430,19 +506,8 @@ protocolFree(void)
     if (protocolHelper.memContext != NULL)
     {
         // Free remotes
-        for (unsigned int clientIdx  = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
-        {
-            ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[clientIdx];
-
-            if (protocolHelperClient->client != NULL)
-            {
-                protocolClientFree(protocolHelperClient->client);
-                execFree(protocolHelperClient->exec);
-
-                protocolHelperClient->client = NULL;
-                protocolHelperClient->exec = NULL;
-            }
-        }
+        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+            protocolRemoteFree(clientIdx + 1);
 
         // Free locals
         for (unsigned int clientIdx  = 0; clientIdx < protocolHelper.clientLocalSize; clientIdx++)

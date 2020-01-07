@@ -1,14 +1,14 @@
 /***********************************************************************************************************************************
-Perl Configuration
+Zero-Terminated String Handler
 ***********************************************************************************************************************************/
-#ifndef PERL_CONFIG_H
-#define PERL_CONFIG_H
-
-#include "common/type/string.h"
+#ifndef COMMON_TYPE_STRINGZ_H
+#define COMMON_TYPE_STRINGZ_H
 
 /***********************************************************************************************************************************
-Functions
+Zero-terminated strings that are generally useful
 ***********************************************************************************************************************************/
-String *perlOptionJson(void);
+#define FALSE_Z                                                     "false"
+#define NULL_Z                                                      "null"
+#define TRUE_Z                                                      "true"
 
 #endif

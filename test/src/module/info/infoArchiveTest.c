@@ -37,7 +37,7 @@ testRun(void)
         InfoArchive *info = NULL;
 
         TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "    load new archive info");
-        TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
 
@@ -45,13 +45,13 @@ testRun(void)
         Buffer *contentSave = bufNew(0);
 
         TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentSave)), "info archive save");
-        TEST_RESULT_STR(strPtr(strNewBuf(contentSave)), strPtr(strNewBuf(contentLoad)), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
 
         // Create the same content by creating a new object
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             info, infoArchiveNew(PG_VERSION_94, 6569239123849665679, NULL), "infoArchiveNew() - no sub cipher");
-        TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
         TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 1, "    history set");
@@ -59,7 +59,7 @@ testRun(void)
         Buffer *contentCompare = bufNew(0);
 
         TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentCompare)), "info archive save");
-        TEST_RESULT_STR(strPtr(strNewBuf(contentCompare)), strPtr(strNewBuf(contentSave)), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "   check save");
 
         // Remove both files and recreate from scratch with cipher
         // -------------------------------------------------------------------------------------------------------------------------
@@ -74,9 +74,9 @@ testRun(void)
         TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentSave)), "    save new with cipher");
 
         TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentSave)), "    load encrypted archive info");
-        TEST_RESULT_STR(strPtr(infoArchiveId(info)), "10-1", "    archiveId set");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
-        TEST_RESULT_STR(strPtr(infoArchiveCipherPass(info)),
+        TEST_RESULT_STR_Z(infoArchiveCipherPass(info),
             "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "    cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(info->infoPg), 1, "    history set");
 
@@ -107,9 +107,9 @@ testRun(void)
         );
 
         TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "new archive info");
-        TEST_RESULT_STR(strPtr(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089)), "9.5-2", "  full match found");
+        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089), "9.5-2", "  full match found");
 
-        TEST_RESULT_STR(strPtr(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702)), "9.4-1", "  partial match found");
+        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702), "9.4-1", "  partial match found");
 
         TEST_ERROR(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095799), ArchiveMismatchError,
             "unable to retrieve the archive id for database version '9.4' and system-id '6625592122879095799'");

@@ -117,7 +117,7 @@ cvtBoolToZ(bool value, char *buffer, size_t bufferSize)
 const char *
 cvtBoolToConstZ(bool value)
 {
-    return value ? "true" : "false";
+    return value ? TRUE_Z : FALSE_Z;
 }
 
 /***********************************************************************************************************************************
@@ -382,7 +382,7 @@ cvtSSizeToZ(ssize_t value, char *buffer, size_t bufferSize)
 }
 
 /***********************************************************************************************************************************
-Convert time to zero-terminated string
+Convert time_t to zero-terminated string
 ***********************************************************************************************************************************/
 size_t
 cvtTimeToZ(time_t value, char *buffer, size_t bufferSize)
@@ -395,7 +395,7 @@ cvtTimeToZ(time_t value, char *buffer, size_t bufferSize)
 
     ASSERT(buffer != NULL);
 
-    size_t result = strftime(buffer, bufferSize, "%s", gmtime(&value));
+    size_t result = strftime(buffer, bufferSize, "%s", localtime(&value));
 
     if (result == 0)
         THROW(AssertError, "buffer overflow");

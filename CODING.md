@@ -189,21 +189,26 @@ This project implements variadic functions using macros (which are exempt from t
 ```c
 typedef struct StoragePathCreateParam
 {
-    VAR_PARAM_HEADER;
     bool errorOnExists;
     bool noParentCreate;
     mode_t mode;
 } StoragePathCreateParam;
 
-#define storagePathCreateP(this, pathExp, ...) \
-    storagePathCreate(this, pathExp, (StoragePathCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storagePathCreateP(this, pathExp, ...)                              \
+    storagePathCreate(this, pathExp, (StoragePathCreateParam){__VA_ARGS__})
+#define storagePathCreateP(this, pathExp)                                  \
+    storagePathCreate(this, pathExp, (StoragePathCreateParam){0})
 
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 ```
 Continuation characters should be aligned at column 132 (unlike the example above that has been shortened for display purposes).
 
-This function can now be called with variable parameters using the macro:
+This function can be called without variable parameters:
+```c
+storagePathCreateP(storageLocal(), "/tmp/pgbackrest");
 ```
+Or with variable parameters:
+```c
 storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mode = 0777);
 ```
 If the majority of functions in a module or object are variadic it is best to provide macros for all functions even if they do not have variable parameters. Do not use the base function when variadic macros exist.
@@ -214,7 +219,7 @@ If the majority of functions in a module or object are variadic it is best to pr
 
 #### Uncoverable Code
 
-The `uncoverable` keyword marks code that can never be covered. For instance, a function that never returns because it always throws a error. Uncoverable code should be rare to non-existent outside the common libraries and test code.
+The `uncoverable` keyword marks code that can never be covered. For instance, a function that never returns because it always throws an error. Uncoverable code should be rare to non-existent outside the common libraries and test code.
 ```c
 }   // {uncoverable - function throws error so never returns}
 ```

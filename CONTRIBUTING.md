@@ -11,7 +11,7 @@ This example is based on Ubuntu 19.04, but it should work on many versions of De
 pgbackrest-dev => Install development tools
 ```
 sudo apt-get install rsync git devscripts build-essential valgrind autoconf \
-       libssl-dev zlib1g-dev libperl-dev libxml2-dev libpq-dev libxml-checker-perl \
+       libssl-dev zlib1g-dev libxml2-dev libpq-dev libxml-checker-perl \
        libyaml-libyaml-perl libdbd-pg-perl
 ```
 
@@ -303,7 +303,7 @@ strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));     // add t
 strLstAddZ(argList, "info");                                            // add the command
 harnessCfgLoad(cfgCmdExpire, argList);                                  // load the command and option list into the test harness
 
-TEST_RESULT_STR(strPtr(infoRender()), "No stanzas exist in the repository.\n", "text - no stanzas");  // run the test
+TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text - no stanzas");  // run the test
 ```
 Tests are run via macros. All test macros expect the first parameter to be the function to call that is being tested. With the exception of TEST_RESULT_VOID, the second parameter is the expected result, and with the exception of TEST_ERROR, the third parameter is a short description of the test. The most common macros are:
 

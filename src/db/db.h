@@ -27,7 +27,41 @@ Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicat
 Functions
 ***********************************************************************************************************************************/
 void dbOpen(Db *this);
+
+// Start backup and return starting lsn and wal segment name
+typedef struct DbBackupStartResult
+{
+    String *lsn;
+    String *walSegmentName;
+} DbBackupStartResult;
+
+DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto);
+
+// Stop backup and return starting lsn, wal segment name, backup label, and tablspace map
+typedef struct DbBackupStopResult
+{
+    String *lsn;
+    String *walSegmentName;
+    String *backupLabel;
+    String *tablespaceMap;
+} DbBackupStopResult;
+
+DbBackupStopResult dbBackupStop(Db *this);
+
 bool dbIsStandby(Db *this);
+
+// Get list of databases in the cluster: select oid, datname, datlastsysoid from pg_database
+VariantList *dbList(Db *this);
+
+// Waits for replay on the standby to equal the target LSN
+void dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout);
+
+// Epoch time on the PostgreSQL host in ms
+TimeMSec dbTimeMSec(Db *this);
+
+// Get list of tablespaces in the cluster: select oid, datname, datlastsysoid from pg_database
+VariantList *dbTablespaceList(Db *this);
+
 String *dbWalSwitch(Db *this);
 void dbClose(Db *this);
 

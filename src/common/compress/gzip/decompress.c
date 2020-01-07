@@ -76,8 +76,12 @@ gzipDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
 
     ASSERT(this != NULL);
     ASSERT(this->stream != NULL);
-    ASSERT(compressed != NULL);
     ASSERT(uncompressed != NULL);
+
+    // There should never be a flush because in a valid compressed stream the end of data can be determined and done will be set.
+    // If a flush is received it means the compressed stream terminated early, e.g. a zero-length or truncated file.
+    if (compressed == NULL)
+        THROW(FormatError, "unexpected eof in compressed data");
 
     if (!this->inputSame)
     {

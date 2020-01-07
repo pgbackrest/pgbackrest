@@ -46,12 +46,12 @@ jsonToBoolInternal(const char *json, unsigned int *jsonPos)
 
     bool result;
 
-    if (strncmp(json + *jsonPos, "true", 4) == 0)
+    if (strncmp(json + *jsonPos, TRUE_Z, 4) == 0)
     {
         result = true;
         *jsonPos += 4;
     }
-    else if (strncmp(json + *jsonPos, "false", 5) == 0)
+    else if (strncmp(json + *jsonPos, FALSE_Z, 5) == 0)
     {
         result = false;
         *jsonPos += 5;
@@ -319,7 +319,7 @@ jsonToStr(const String *json)
 
     String *result = NULL;
 
-    if (strncmp(strPtr(json), "null", 4) == 0)
+    if (strncmp(strPtr(json), NULL_Z, 4) == 0)
         jsonPos += 4;
     else
         result = jsonToStrInternal(strPtr(json), &jsonPos);
@@ -529,7 +529,7 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
         // Null
         case 'n':
         {
-            if (strncmp(json + *jsonPos, "null", 4) == 0)
+            if (strncmp(json + *jsonPos, NULL_Z, 4) == 0)
                 *jsonPos += 4;
             else
                 THROW_FMT(JsonFormatError, "expected null at '%s'", json + *jsonPos);
@@ -661,7 +661,7 @@ jsonFromStrInternal(String *json, const String *string)
     // If string is null
     if (string == NULL)
     {
-        strCat(json, "null");
+        strCat(json, NULL_Z);
     }
     // Else escape and output string
     else
@@ -759,7 +759,7 @@ jsonFromKvInternal(const KeyValue *kv)
 
             // NULL value
             if (value == NULL)
-                strCat(result, "null");
+                strCat(result, NULL_Z);
             else
             {
                 switch (varType(value))
@@ -774,7 +774,7 @@ jsonFromKvInternal(const KeyValue *kv)
                     {
                         // If the array is empty, then do not add formatting, else process the array.
                         if (varVarLst(value) == NULL)
-                            strCat(result, "null");
+                            strCat(result, NULL_Z);
                         else if (varLstSize(varVarLst(value)) == 0)
                             strCat(result, "[]");
                         else
@@ -792,7 +792,7 @@ jsonFromKvInternal(const KeyValue *kv)
                                 // If array value is null
                                 if (arrayValue == NULL)
                                 {
-                                    strCat(result, "null");
+                                    strCat(result, NULL_Z);
                                 }
                                 // If the type is a string, add leading and trailing double quotes
                                 else if (varType(arrayValue) == varTypeString)
@@ -933,7 +933,7 @@ jsonFromVar(const Variant *var)
 
                     if (varSub == NULL)
                     {
-                        strCat(jsonStr, "null");
+                        strCat(jsonStr, NULL_Z);
                     }
                     else if (varType(varSub) == varTypeBool)
                     {

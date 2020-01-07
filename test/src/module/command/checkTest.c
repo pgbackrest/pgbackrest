@@ -21,6 +21,9 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // PQfinish() is strictly checked
+    harnessPqScriptStrictSet(true);
+
     Storage *storageTest = storagePosixNew(
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
@@ -367,7 +370,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ASSIGN(db, dbGet(false, false), "get primary and standby");
+        TEST_ASSIGN(db, dbGet(false, false, false), "get primary and standby");
 
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryId, db.primary, false), "valid db config");
 
@@ -429,7 +432,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ASSIGN(db, dbGet(true, true), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
         TEST_ERROR_FMT(
             checkDbConfig(PG_VERSION_92, db.primaryId, db.primary, false), FeatureNotSupportedError,
             "archive_mode=always not supported");

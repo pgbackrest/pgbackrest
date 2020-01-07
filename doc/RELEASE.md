@@ -26,7 +26,7 @@ to:
 use constant PROJECT_VERSION                                        => '2.14';
 ```
 
-## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.  The `u19` vm is also required.
+## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
 ```
 doc/release.pl --build
 ```
@@ -143,5 +143,5 @@ test/test.pl --vm=u18 --build-only
 Commit and push to integration:
 ```
 git commit -m "Begin v2.15 development."
-git push origin master
+git push origin integration
 ```

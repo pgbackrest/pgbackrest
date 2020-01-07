@@ -90,34 +90,6 @@ my $bLogWarnOnError = 0;
 # Store the last logged error
 my $oErrorLast;
 
-# Test globals
-my $bTest = false;
-my $fTestDelay;
-my $oTestPoint;
-
-####################################################################################################################################
-# Test constants
-####################################################################################################################################
-use constant TEST                                                   => 'TEST';
-    push @EXPORT, qw(TEST);
-use constant TEST_ENCLOSE                                           => 'PgBaCkReStTeSt';
-    push @EXPORT, qw(TEST_ENCLOSE);
-
-use constant TEST_MANIFEST_BUILD                                    => 'MANIFEST-BUILD';
-    push @EXPORT, qw(TEST_MANIFEST_BUILD);
-use constant TEST_BACKUP_RESUME                                     => 'BACKUP-RESUME';
-    push @EXPORT, qw(TEST_BACKUP_RESUME);
-use constant TEST_BACKUP_NORESUME                                   => 'BACKUP-NORESUME';
-    push @EXPORT, qw(TEST_BACKUP_NORESUME);
-use constant TEST_BACKUP_START                                      => 'BACKUP-START';
-    push @EXPORT, qw(TEST_BACKUP_START);
-use constant TEST_BACKUP_STOP                                       => 'BACKUP-STOP';
-    push @EXPORT, qw(TEST_BACKUP_STOP);
-use constant TEST_KEEP_ALIVE                                        => 'KEEP_ALIVE';
-    push @EXPORT, qw(TEST_KEEP_ALIVE);
-use constant TEST_ARCHIVE_PUSH_ASYNC_START                          => 'ARCHIVE-PUSH-ASYNC-START';
-    push @EXPORT, qw(TEST_ARCHIVE_PUSH_ASYNC_START);
-
 ####################################################################################################################################
 # logFileSet - set the file messages will be logged to
 ####################################################################################################################################
@@ -641,19 +613,8 @@ sub log
     my $strMessageFormat = $strMessage;
     my $iLogLevelRank = $oLogLevelRank{$strLevel}{rank};
 
-    # If test message
-    if ($strLevel eq TEST)
-    {
-        if (!defined($oTestPoint) || !defined($$oTestPoint{lc($strMessage)}))
-        {
-            return;
-        }
-
-        $iLogLevelRank = $oLogLevelRank{TRACE}{rank} + 1;
-        $strMessageFormat = TEST_ENCLOSE . '-' . $strMessageFormat . '-' . TEST_ENCLOSE;
-    }
-    # Else level rank must be valid
-    elsif (!defined($iLogLevelRank))
+    # Level rank must be valid
+    if (!defined($iLogLevelRank))
     {
         confess &log(ASSERT, "log level ${strLevel} does not exist");
     }
@@ -691,7 +652,7 @@ sub log
     }
 
     # Indent TRACE and debug levels so they are distinct from normal messages
-    if ($strLevel eq TRACE || $strLevel eq TEST)
+    if ($strLevel eq TRACE)
     {
         $strMessageFormat =~ s/\n/\n        /g;
         $strMessageFormat = '        ' . $strMessageFormat;
@@ -729,9 +690,8 @@ sub log
             syswrite(*STDERR, "${strMessage}\n");
             $rExtra->{bLogConsole} = true;
         }
-        # Else output to stdout if configured log level setting rank is greater than the display level rank or test flag is set.
-        elsif (!$rExtra->{bLogConsole} && $iLogDisplayLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
-               $bTest && $strLevel eq TEST)
+        # Else output to stdout if configured log level setting rank is greater than the display level rank
+        elsif (!$rExtra->{bLogConsole} && $iLogDisplayLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank})
         {
             if (!$bSuppressLog)
             {
@@ -744,12 +704,6 @@ sub log
                 #     $strStackTrace =~ s/\n/\n                                   /g;
                 #     syswrite(*STDOUT, $strStackTrace);
                 # }
-            }
-
-            # If in test mode and this is a test message then delay so the calling process has time to read the message
-            if ($bTest && $strLevel eq TEST && $fTestDelay > 0)
-            {
-                usleep($fTestDelay * 1000000);
             }
 
             $rExtra->{bLogConsole} = true;
@@ -816,50 +770,6 @@ sub logErrorLast
 }
 
 push @EXPORT, qw(logErrorLast);
-
-####################################################################################################################################
-# testSet
-#
-# Set test parameters.
-####################################################################################################################################
-sub testSet
-{
-    my $bTestParam = shift;
-    my $fTestDelayParam = shift;
-    my $oTestPointParam = shift;
-
-    # Set defaults
-    $bTest = defined($bTestParam) ? $bTestParam : false;
-    $fTestDelay = defined($bTestParam) ? $fTestDelayParam : $fTestDelay;
-    $oTestPoint = $oTestPointParam;
-
-    # Make sure that a delay is specified in test mode
-    if ($bTest && !defined($fTestDelay))
-    {
-        confess &log(ASSERT, 'iTestDelay must be provided when bTest is true');
-    }
-
-    # Test delay should be between 1 and 600 seconds
-    if (!($fTestDelay >= 0 && $fTestDelay <= 600))
-    {
-        confess &log(ERROR, 'test-delay must be between 1 and 600 seconds');
-    }
-}
-
-push @EXPORT, qw(testSet);
-
-####################################################################################################################################
-# testCheck - Check for a test message
-####################################################################################################################################
-sub testCheck
-{
-    my $strLog = shift;
-    my $strTest = shift;
-
-    return index($strLog, TEST_ENCLOSE . '-' . $strTest . '-' . TEST_ENCLOSE) != -1;
-}
-
-push @EXPORT, qw(testCheck);
 
 ####################################################################################################################################
 # logLevel - get the current log levels

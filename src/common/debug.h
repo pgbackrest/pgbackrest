@@ -7,6 +7,7 @@ Debug Routines
 #include "common/assert.h"
 #include "common/stackTrace.h"
 #include "common/type/convert.h"
+#include "common/type/stringz.h"
 
 /***********************************************************************************************************************************
 NDEBUG indicates to C library routines that debugging is off -- set a more readable flag to use when debugging is on
@@ -44,7 +45,7 @@ level is set to debug or trace.
 
     #define FUNCTION_LOG_END_BASE()                                                                                                \
             stackTraceTestStart();                                                                                                 \
-            LOG(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
+            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                           \
         }
 #else
     #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
@@ -55,7 +56,7 @@ level is set to debug or trace.
             stackTraceParamLog();
 
     #define FUNCTION_LOG_END_BASE()                                                                                                \
-            LOG(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
+            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                           \
         }
 #endif
 
@@ -83,7 +84,7 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
         char *buffer = stackTraceParamBuffer(#param);                                                                              \
                                                                                                                                    \
         if (param == NULL)                                                                                                         \
-            stackTraceParamAdd(typeToLog("null", buffer, STACK_TRACE_PARAM_MAX));                                                  \
+            stackTraceParamAdd(typeToLog(NULL_Z, buffer, STACK_TRACE_PARAM_MAX));                                                  \
         else                                                                                                                       \
         {                                                                                                                          \
             buffer[0] = '*';                                                                                                       \
@@ -98,7 +99,7 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
         char *buffer = stackTraceParamBuffer(#param);                                                                              \
                                                                                                                                    \
         if (param == NULL)                                                                                                         \
-            stackTraceParamAdd(typeToLog("null", buffer, STACK_TRACE_PARAM_MAX));                                                  \
+            stackTraceParamAdd(typeToLog(NULL_Z, buffer, STACK_TRACE_PARAM_MAX));                                                  \
         else if (*param == NULL)                                                                                                   \
             stackTraceParamAdd(typeToLog("*null", buffer, STACK_TRACE_PARAM_MAX));                                                 \
         else                                                                                                                       \
@@ -236,7 +237,7 @@ Macros to return function results (or void)
             char buffer[STACK_TRACE_PARAM_MAX];                                                                                    \
                                                                                                                                    \
             FUNCTION_LOG_##typeMacroPrefix##_FORMAT(FUNCTION_LOG_RETURN_result, buffer, sizeof(buffer));                           \
-            LOG(FUNCTION_LOG_LEVEL(), 0, "=> %s", buffer);                                                                         \
+            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "=> %s", buffer);                                                                     \
         }                                                                                                                          \
                                                                                                                                    \
         return FUNCTION_LOG_RETURN_result;                                                                                         \

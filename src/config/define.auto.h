@@ -60,7 +60,6 @@ typedef enum
     cfgDefOptArchiveTimeout,
     cfgDefOptBackupStandby,
     cfgDefOptBufferSize,
-    cfgDefOptC,
     cfgDefOptChecksumPage,
     cfgDefOptCmdSsh,
     cfgDefOptCommand,
@@ -90,7 +89,6 @@ typedef enum
     cfgDefOptNeutralUmask,
     cfgDefOptOnline,
     cfgDefOptOutput,
-    cfgDefOptPerlOption,
     cfgDefOptPgHost,
     cfgDefOptPgHostCmd,
     cfgDefOptPgHostConfig,
@@ -101,6 +99,7 @@ typedef enum
     cfgDefOptPgPath,
     cfgDefOptPgPort,
     cfgDefOptPgSocketPath,
+    cfgDefOptPgUser,
     cfgDefOptProcess,
     cfgDefOptProcessMax,
     cfgDefOptProtocolTimeout,
@@ -146,9 +145,6 @@ typedef enum
     cfgDefOptTargetAction,
     cfgDefOptTargetExclusive,
     cfgDefOptTargetTimeline,
-    cfgDefOptTest,
-    cfgDefOptTestDelay,
-    cfgDefOptTestPoint,
     cfgDefOptType,
 } ConfigDefineOption;
 

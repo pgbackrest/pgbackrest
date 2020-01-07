@@ -310,7 +310,6 @@ STRING_EXTERN(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX_STR,                    CFGOPT_ARCHI
 STRING_EXTERN(CFGOPT_ARCHIVE_TIMEOUT_STR,                           CFGOPT_ARCHIVE_TIMEOUT);
 STRING_EXTERN(CFGOPT_BACKUP_STANDBY_STR,                            CFGOPT_BACKUP_STANDBY);
 STRING_EXTERN(CFGOPT_BUFFER_SIZE_STR,                               CFGOPT_BUFFER_SIZE);
-STRING_EXTERN(CFGOPT_C_STR,                                         CFGOPT_C);
 STRING_EXTERN(CFGOPT_CHECKSUM_PAGE_STR,                             CFGOPT_CHECKSUM_PAGE);
 STRING_EXTERN(CFGOPT_CMD_SSH_STR,                                   CFGOPT_CMD_SSH);
 STRING_EXTERN(CFGOPT_COMMAND_STR,                                   CFGOPT_COMMAND);
@@ -340,7 +339,6 @@ STRING_EXTERN(CFGOPT_MANIFEST_SAVE_THRESHOLD_STR,                   CFGOPT_MANIF
 STRING_EXTERN(CFGOPT_NEUTRAL_UMASK_STR,                             CFGOPT_NEUTRAL_UMASK);
 STRING_EXTERN(CFGOPT_ONLINE_STR,                                    CFGOPT_ONLINE);
 STRING_EXTERN(CFGOPT_OUTPUT_STR,                                    CFGOPT_OUTPUT);
-STRING_EXTERN(CFGOPT_PERL_OPTION_STR,                               CFGOPT_PERL_OPTION);
 STRING_EXTERN(CFGOPT_PG1_HOST_STR,                                  CFGOPT_PG1_HOST);
 STRING_EXTERN(CFGOPT_PG2_HOST_STR,                                  CFGOPT_PG2_HOST);
 STRING_EXTERN(CFGOPT_PG3_HOST_STR,                                  CFGOPT_PG3_HOST);
@@ -421,6 +419,14 @@ STRING_EXTERN(CFGOPT_PG5_SOCKET_PATH_STR,                           CFGOPT_PG5_S
 STRING_EXTERN(CFGOPT_PG6_SOCKET_PATH_STR,                           CFGOPT_PG6_SOCKET_PATH);
 STRING_EXTERN(CFGOPT_PG7_SOCKET_PATH_STR,                           CFGOPT_PG7_SOCKET_PATH);
 STRING_EXTERN(CFGOPT_PG8_SOCKET_PATH_STR,                           CFGOPT_PG8_SOCKET_PATH);
+STRING_EXTERN(CFGOPT_PG1_USER_STR,                                  CFGOPT_PG1_USER);
+STRING_EXTERN(CFGOPT_PG2_USER_STR,                                  CFGOPT_PG2_USER);
+STRING_EXTERN(CFGOPT_PG3_USER_STR,                                  CFGOPT_PG3_USER);
+STRING_EXTERN(CFGOPT_PG4_USER_STR,                                  CFGOPT_PG4_USER);
+STRING_EXTERN(CFGOPT_PG5_USER_STR,                                  CFGOPT_PG5_USER);
+STRING_EXTERN(CFGOPT_PG6_USER_STR,                                  CFGOPT_PG6_USER);
+STRING_EXTERN(CFGOPT_PG7_USER_STR,                                  CFGOPT_PG7_USER);
+STRING_EXTERN(CFGOPT_PG8_USER_STR,                                  CFGOPT_PG8_USER);
 STRING_EXTERN(CFGOPT_PROCESS_STR,                                   CFGOPT_PROCESS);
 STRING_EXTERN(CFGOPT_PROCESS_MAX_STR,                               CFGOPT_PROCESS_MAX);
 STRING_EXTERN(CFGOPT_PROTOCOL_TIMEOUT_STR,                          CFGOPT_PROTOCOL_TIMEOUT);
@@ -466,9 +472,6 @@ STRING_EXTERN(CFGOPT_TARGET_STR,                                    CFGOPT_TARGE
 STRING_EXTERN(CFGOPT_TARGET_ACTION_STR,                             CFGOPT_TARGET_ACTION);
 STRING_EXTERN(CFGOPT_TARGET_EXCLUSIVE_STR,                          CFGOPT_TARGET_EXCLUSIVE);
 STRING_EXTERN(CFGOPT_TARGET_TIMELINE_STR,                           CFGOPT_TARGET_TIMELINE);
-STRING_EXTERN(CFGOPT_TEST_STR,                                      CFGOPT_TEST);
-STRING_EXTERN(CFGOPT_TEST_DELAY_STR,                                CFGOPT_TEST_DELAY);
-STRING_EXTERN(CFGOPT_TEST_POINT_STR,                                CFGOPT_TEST_POINT);
 STRING_EXTERN(CFGOPT_TYPE_STR,                                      CFGOPT_TYPE);
 
 /***********************************************************************************************************************************
@@ -538,14 +541,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_BUFFER_SIZE)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptBufferSize)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_C)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptC)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -778,14 +773,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_OUTPUT)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptOutput)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PERL_OPTION)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPerlOption)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -1431,6 +1418,70 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME(CFGOPT_PG1_USER)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG2_USER)
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG3_USER)
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG4_USER)
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG5_USER)
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG6_USER)
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG7_USER)
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_PG8_USER)
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME(CFGOPT_PROCESS)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptProcess)
@@ -1786,30 +1837,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_TARGET_TIMELINE)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptTargetTimeline)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_TEST)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTest)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_TEST_DELAY)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTestDelay)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_TEST_POINT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTestPoint)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

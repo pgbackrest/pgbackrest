@@ -12,7 +12,111 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.20dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.21dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fix handling of <id>\</id> in filenames.</p>
+
+                        <p><id>\</id> was not being properly escaped when calculating the manifest checksum which prevented the manifest from loading. Since instances of <id>\</id> in cluster filenames should be rare to nonexistent this does not seem likely to be a serious problem in the field.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p><backrest/> is now pure <proper>C</proper>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="mike.palmiotto"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>pg-user</br-option> option.</p>
+
+                        <p>Specifies the database user name when connecting to <postgres/>.  If not specified <backrest/> will connect with the local OS user or <id>PGUSER</id>, which was the previous behavior.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>The <cmd>backup</cmd> command is implemented entirely in C.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add basic time management functions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>httpLastModifiedToTime()</code> to parse HTTP <id>last-modified</id> header.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Parse dates in <code>storageS3InfoList()</code> and <code>storageS3Info()</code>.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2019-12-12" version="2.20" title="Bug Fixes">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-ideator id="milosz.suchy"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix archive-push/archive-get when <path>PGDATA</path> is symlinked.</p>
+
+                        <p>These commands tried to use <code>cwd()</code> as <path>PGDATA</path> but this would disagree with the path configured in pgBackRest if <path>PGDATA</path> was symlinked.  If <code>cwd()</code> does not match the <backrest/> path then <code>chdir()</code> to the path and make sure the next <code>cwd()</code> matches the result from the first call.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fix reference list when <file>backup.info</file> is reconstructed in <cmd>expire</cmd> command.</p>
+
+                        <p>Since the <cmd>backup</cmd> command is still using the <proper>Perl</proper> version of reconstruct this issue will not express unless <b>1)</b> there is a backup missing from <file>backup.info</file> and <b>2)</b> the <cmd>expire</cmd> command is run directly instead of running after <cmd>backup</cmd> as usual. This unlikely combination of events means this is probably not a problem in the field.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix segfault on unexpected EOF in <proper>gzip</proper> decompression.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <!-- cynthia.shang contributed tests -->
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add manifest build for new backups.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
         </release>
 
         <release date="2019-11-12" version="2.19" title="C Migrations and Bug Fixes">
@@ -76,6 +180,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Document how to contribute to <backrest/>.</p>
@@ -7787,6 +7892,16 @@
         <contributor id="mihail.shvein">
             <contributor-name-display>Mihail Shvein</contributor-name-display>
             <contributor-id type="github">M1hacka</contributor-id>
+        </contributor>
+
+        <contributor id="mike.palmiotto">
+            <contributor-name-display>Mike Palmiotto</contributor-name-display>
+            <contributor-id type="github">mpalmi</contributor-id>
+        </contributor>
+
+        <contributor id="milosz.suchy">
+            <contributor-name-display>Milosz Suchy</contributor-name-display>
+            <contributor-id type="github">Yuxael</contributor-id>
         </contributor>
 
         <contributor id="mohamad.el.rifai">

@@ -5,6 +5,7 @@ Remote Command
 
 #include <string.h>
 
+#include "command/control/common.h"
 #include "common/debug.h"
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
@@ -49,13 +50,20 @@ cmdRemote(int handleRead, int handleWrite)
             // Only try the lock if this is process 0, i.e. the remote started from the main process
             if (cfgOptionUInt(cfgOptProcess) == 0)
             {
-                ConfigCommand commandId = cfgCommandId(strPtr(cfgOptionStr(cfgOptCommand)));
+                ConfigCommand commandId = cfgCommandId(strPtr(cfgOptionStr(cfgOptCommand)), true);
 
                 // Acquire a lock if this command requires a lock
                 if (cfgLockRemoteRequired(commandId))
+                {
+                    // Make sure the local host is not stopped
+                    lockStopTest();
+
+                    // Acquire the lock
                     lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockRemoteType(commandId), 0, true);
+                }
             }
 
+            // Notify the client of success
             protocolServerResponse(server, NULL);
             success = true;
         }

@@ -21,8 +21,7 @@ matrix:
     - env: PGB_CI="test --vm=co7 --param=module=mock --param=module=real"
     - dist: bionic
       env:
-        - PGB_CI="test --vm=none"
-        - TZ="America/New_York"
+        - PGB_CI="test --vm=none --param=tz=America/New_York"
       services:
     - env: PGB_CI=" doc --vm=co6"
     - env: PGB_CI=" doc --vm=co7"

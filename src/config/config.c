@@ -226,14 +226,13 @@ cfgCommandDefIdFromId(ConfigCommand commandId)
     FUNCTION_TEST_RETURN((ConfigDefineCommand)commandId);
 }
 
-/***********************************************************************************************************************************
-Get command id by name
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 ConfigCommand
-cfgCommandId(const char *commandName)
+cfgCommandId(const char *commandName, bool error)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, commandName);
+        FUNCTION_TEST_PARAM(BOOL, error);
     FUNCTION_TEST_END();
 
     ASSERT(commandName != NULL);
@@ -244,7 +243,7 @@ cfgCommandId(const char *commandName)
         if (strcmp(commandName, configCommandData[commandId].name) == 0)
             break;
 
-    if (commandId == cfgCmdNone)
+    if (commandId == cfgCmdNone && error)
         THROW_FMT(AssertError, "invalid command '%s'", commandName);
 
     FUNCTION_TEST_RETURN(commandId);

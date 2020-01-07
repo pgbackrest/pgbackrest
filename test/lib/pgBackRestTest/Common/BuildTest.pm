@@ -32,22 +32,27 @@ sub buildPutDiffers
 {
     my $oStorage = shift;
     my $strFile = shift;
-    my $strContents = shift;
+    my $strContentNew = shift;
 
     # Attempt to load the file
     my $bSave = true;
     my $oFile = $oStorage->openRead($strFile, {bIgnoreMissing => true});
 
     # If file was found see if the content is the same
-    if (defined($oFile) && ${$oStorage->get($oFile)} eq $strContents)
+    if (defined($oFile))
     {
-        $bSave = false;
+        my $strContentFile = ${$oStorage->get($oFile)};
+
+        if ((defined($strContentFile) ? $strContentFile : '') eq (defined($strContentNew) ? $strContentNew : ''))
+        {
+            $bSave = false;
+        }
     }
 
     # Save if the contents are different or missing
     if ($bSave)
     {
-        $oStorage->put($oStorage->openWrite($strFile, {bPathCreate => true}), $strContents);
+        $oStorage->put($oStorage->openWrite($strFile, {bPathCreate => true}), $strContentNew);
     }
 
     # Was the file saved?

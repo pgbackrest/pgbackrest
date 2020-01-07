@@ -7,21 +7,30 @@ PostgreSQL Interface
 #include <stdint.h>
 #include <sys/types.h>
 
+#include "common/debug.h"
 #include "common/type/string.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
+#define PG_FILE_BACKUPLABEL                                         "backup_label"
+#define PG_FILE_BACKUPLABELOLD                                      "backup_label.old"
 #define PG_FILE_PGCONTROL                                           "pg_control"
+#define PG_FILE_PGFILENODEMAP                                       "pg_filenode.map"
+#define PG_FILE_PGINTERNALINIT                                      "pg_internal.init"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
     STRING_DECLARE(PG_FILE_PGVERSION_STR);
 #define PG_FILE_POSTGRESQLAUTOCONF                                  "postgresql.auto.conf"
     STRING_DECLARE(PG_FILE_POSTGRESQLAUTOCONF_STR);
+#define PG_FILE_POSTGRESQLAUTOCONFTMP                               "postgresql.auto.conf.tmp"
+#define PG_FILE_POSTMASTEROPTS                                      "postmaster.opts"
 #define PG_FILE_POSTMASTERPID                                       "postmaster.pid"
     STRING_DECLARE(PG_FILE_POSTMASTERPID_STR);
 #define PG_FILE_RECOVERYCONF                                        "recovery.conf"
     STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
+#define PG_FILE_RECOVERYDONE                                        "recovery.done"
+    STRING_DECLARE(PG_FILE_RECOVERYDONE_STR);
 #define PG_FILE_RECOVERYSIGNAL                                      "recovery.signal"
     STRING_DECLARE(PG_FILE_RECOVERYSIGNAL_STR);
 #define PG_FILE_STANDBYSIGNAL                                       "standby.signal"
@@ -32,6 +41,17 @@ Defines for various Postgres paths and files
 #define PG_PATH_BASE                                                "base"
 #define PG_PATH_GLOBAL                                              "global"
     STRING_DECLARE(PG_PATH_GLOBAL_STR);
+#define PG_PATH_PGMULTIXACT                                         "pg_multixact"
+#define PG_PATH_PGDYNSHMEM                                          "pg_dynshmem"
+#define PG_PATH_PGNOTIFY                                            "pg_notify"
+#define PG_PATH_PGREPLSLOT                                          "pg_replslot"
+#define PG_PATH_PGSERIAL                                            "pg_serial"
+#define PG_PATH_PGSNAPSHOTS                                         "pg_snapshots"
+#define PG_PATH_PGSTATTMP                                           "pg_stat_tmp"
+#define PG_PATH_PGSUBTRANS                                          "pg_subtrans"
+#define PG_PATH_PGTBLSPC                                            "pg_tblspc"
+
+#define PG_PREFIX_PGSQLTMP                                          "pgsql_tmp"
 
 #define PG_NAME_WAL                                                 "wal"
     STRING_DECLARE(PG_NAME_WAL_STR);
@@ -105,7 +125,27 @@ PgWal pgWalFromBuffer(const Buffer *walBuffer);
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_9.0_201008051
 String *pgTablespaceId(unsigned int pgVersion);
 
+// Convert a string to an lsn and vice versa
+uint64_t pgLsnFromStr(const String *lsn);
+String *pgLsnToStr(uint64_t lsn);
+
+// Convert a timeline and lsn to a wal segment
+String *pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize);
+
+// Convert a timeline and lsn range to a list of wal segments
+StringList *pgLsnRangeToWalSegmentList(
+    unsigned int pgVersion, uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize);
+
+// Get name used for lsn in functions (this was changed in PostgreSQL 10 for consistency since lots of names were changing)
+const String *pgLsnName(unsigned int pgVersion);
+
 const String *pgWalName(unsigned int pgVersion);
+
+// Get wal path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
+const String *pgWalPath(unsigned int pgVersion);
+
+// Get transaction commit log path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
+const String *pgXactPath(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
 Test Functions

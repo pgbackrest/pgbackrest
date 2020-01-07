@@ -232,8 +232,9 @@ parameters.
         if (strcmp(#type, "char *") == 0 && strstr(TEST_RESULT_resultStr, "\n") != NULL)                                           \
         {                                                                                                                          \
             THROW_FMT(                                                                                                             \
-                AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF:\n%s\n\n",                                           \
-                #statement, TEST_RESULT_resultStr, hrnDiff(TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr));                 \
+                AssertError,                                                                                                       \
+                "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF IS (- remove from expected, + add to expected):\n%s\n\n",         \
+                #statement, TEST_RESULT_resultStr, hrnDiff(TEST_RESULT_resultExpectedStr, TEST_RESULT_resultStr));                 \
         }                                                                                                                          \
         /* Throw error */                                                                                                          \
         else                                                                                                                       \
@@ -332,17 +333,19 @@ Macros to ease the use of common data types
 #define TEST_RESULT_SIZE_NE(statement, resultExpected, ...)                                                                        \
     TEST_RESULT_SIZE_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
-#define TEST_RESULT_STR_PARAM(statement, resultExpected, typeOp, ...)                                                              \
+#define TEST_RESULT_Z_PARAM(statement, resultExpected, typeOp, ...)                                                                \
     TEST_RESULT(statement, resultExpected, char *, "%s", TEST_TYPE_FORMAT_PTR, typeOp, TEST_TYPE_COMPARE_STR, __VA_ARGS__);
-#define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
-    TEST_RESULT_STR_PARAM(statement, resultExpected, ==, __VA_ARGS__);
-#define TEST_RESULT_STR_NE(statement, resultExpected, ...)                                                                         \
-    TEST_RESULT_STR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+#define TEST_RESULT_Z(statement, resultExpected, ...)                                                                              \
+    TEST_RESULT_Z_PARAM(statement, resultExpected, ==, __VA_ARGS__);
+#define TEST_RESULT_Z_NE(statement, resultExpected, ...)                                                                           \
+    TEST_RESULT_Z_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
-#define TEST_RESULT_STR_STR(statement, resultExpected, ...)                                                                        \
-    TEST_RESULT_STR(strPtr(statement), strPtr(resultExpected), __VA_ARGS__);
+#define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
+    TEST_RESULT_Z(strPtr(statement), strPtr(resultExpected), __VA_ARGS__);
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_STR(strPtr(statement), resultExpected, __VA_ARGS__);
+    TEST_RESULT_Z(strPtr(statement), resultExpected, __VA_ARGS__);
+#define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
+    TEST_RESULT_Z(statement, strPtr(resultExpected), __VA_ARGS__);
 
 #define TEST_RESULT_U16_HEX(statement, resultExpected, ...)                                                                        \
     TEST_RESULT(statement, resultExpected, uint16_t, "%04X", TEST_TYPE_FORMAT, ==, TEST_TYPE_COMPARE, __VA_ARGS__);

@@ -290,7 +290,7 @@ storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mo
             <section id="uncoverable">
                 <title>Uncoverable Code</title>
 
-                <p>The <id>uncoverable</id> keyword marks code that can never be covered.  For instance, a function that never returns because it always throws a error.  Uncoverable code should be rare to non-existent outside the common libraries and test code.</p>
+                <p>The <id>uncoverable</id> keyword marks code that can never be covered.  For instance, a function that never returns because it always throws an error.  Uncoverable code should be rare to non-existent outside the common libraries and test code.</p>
 
                 <code-block type="c">
 }   // {uncoverable - function throws error so never returns}

@@ -11,6 +11,9 @@ Callback for formatting info list results
 ***********************************************************************************************************************************/
 typedef struct HarnessStorageInfoListCallbackData
 {
+    const Storage *storage;                                         // Storage object when needed (e.g. fileCompressed = true)
+    const String *path;                                             // subpath when storage is specified
+
     String *content;                                                // String where content should be added
     bool modeOmit;                                                  // Should the specified mode be ommitted?
     mode_t modeFile;                                                // File to omit if modeOmit is true
@@ -19,6 +22,8 @@ typedef struct HarnessStorageInfoListCallbackData
     bool userOmit;                                                  // Should the current user be ommitted?
     bool groupOmit;                                                 // Should the current group be ommitted?
     bool sizeOmit;                                                  // Should the size be ommitted
+    bool rootPathOmit;                                              // Should the root path be ommitted?
+    bool fileCompressed;                                            // Files will be decompressed to get size
 } HarnessStorageInfoListCallbackData;
 
 void hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info);

@@ -112,7 +112,7 @@
         <render type="markdown">
             <render-source key="index" file="../../../README.md"/>
             <render-source key="coding" file="../../../CODING.md"/>
-            <!-- This needs to be uncommented when generating the contributing doc.  We are currently unable to get Docker in Docker running correctly in CI. -->
+            <!-- This needs to be uncommented when generating the contributing doc.  We are currently unable to get Docker in Docker running correctly in CI.  Note that a symlink must be created from /home/[test-user]/pgbackrest to /backrest. -->
             <!-- <render-source key="contributing" file="../../../CONTRIBUTING.md"/> -->
             <render-source key="test" file="../../../test/README.md"/>
             <render-source key="documentation" file="../../README.md"/>

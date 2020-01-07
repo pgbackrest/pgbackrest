@@ -84,12 +84,12 @@ testRun(void)
         cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoHostCmd)), strPtr(exe), "    check repo1-host-cmd");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exe, "    check repo1-host-cmd");
 
         cfgOptionSet(cfgOptRepoHostCmd, cfgSourceParam, varNewStr(exeOther));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoHostCmd)), strPtr(exeOther), "    check repo1-host-cmd");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exeOther, "    check repo1-host-cmd");
 
         cfgOptionSet(cfgOptRepoHost, cfgSourceParam, NULL);
 
@@ -106,11 +106,10 @@ testRun(void)
         cfgOptionSet(cfgOptPgHost + cfgOptionIndexTotal(cfgOptPgHost) - 1, cfgSourceParam, varNewStrZ("pgX-host"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg remote command is updated");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgHostCmd)), strPtr(exe), "    check pg1-host-cmd");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgHostCmd + 1)), strPtr(exeOther), "    check pg2-host-cmd is already set");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgHostCmd + 2)), NULL, "    check pg3-host-cmd is not set");
-        TEST_RESULT_STR(
-            strPtr(cfgOptionStr(cfgOptPgHostCmd + cfgOptionIndexTotal(cfgOptPgHost) - 1)), strPtr(exe), "    check pgX-host-cmd");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd), exe, "    check pg1-host-cmd");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + 1), exeOther, "    check pg2-host-cmd is already set");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + 2), NULL, "    check pg3-host-cmd is not set");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + cfgOptionIndexTotal(cfgOptPgHost) - 1), exe, "    check pgX-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
@@ -281,7 +280,7 @@ testRun(void)
         strLstAdd(argList, strNew("--repo1-path=/repo"));
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "invalid bucket with no verification");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3Bucket)), "bogus.bucket", "    check bucket value");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "bogus.bucket", "    check bucket value");
 
         // Valid bucket name
         argList = strLstNew();
@@ -293,7 +292,7 @@ testRun(void)
         strLstAdd(argList, strNew("--repo1-path=/repo"));
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "valid bucket name");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3Bucket)), "cool-bucket", "    check bucket value");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "cool-bucket", "    check bucket value");
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
         unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
@@ -315,7 +314,7 @@ testRun(void)
 
         // On the error case is tested here, success is tested in cfgLoad()
         TEST_RESULT_VOID(cfgLoadLogFile(), "attempt to open bogus log file");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptLogLevelFile)), "off", "log-level-file should now be off");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLogLevelFile), "off", "log-level-file should now be off");
     }
 
     // *****************************************************************************************************************************

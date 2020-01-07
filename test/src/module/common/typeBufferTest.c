@@ -126,33 +126,33 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("bufHex()"))
     {
-        TEST_RESULT_STR(strPtr(bufHex(BUFSTRDEF("ABC-CBA"))), "4142432d434241", "buffer to hex");
+        TEST_RESULT_STR_Z(bufHex(BUFSTRDEF("ABC-CBA")), "4142432d434241", "buffer to hex");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("bufCat*()"))
     {
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewC("123", 3), NULL))), "123", "cat null buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewC("123", 3), bufNew(0)))), "123", "cat empty buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewC("123", 3), BUFSTRDEF("ABC")))), "123ABC", "cat buffer");
+        TEST_RESULT_STR_Z(strNewBuf(bufCat(bufNewC("123", 3), NULL)), "123", "cat null buffer");
+        TEST_RESULT_STR_Z(strNewBuf(bufCat(bufNewC("123", 3), bufNew(0))), "123", "cat empty buffer");
+        TEST_RESULT_STR_Z(strNewBuf(bufCat(bufNewC("123", 3), BUFSTRDEF("ABC"))), "123ABC", "cat buffer");
 
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewC("123", 3), NULL, 0, 0))), "123", "cat sub null buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewC("123", 3), bufNew(0), 0, 0))), "123", "cat sub empty buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewC("123", 3), BUFSTRDEF("ABC"), 1, 2))), "123BC", "cat sub buffer");
+        TEST_RESULT_STR_Z(strNewBuf(bufCatSub(bufNewC("123", 3), NULL, 0, 0)), "123", "cat sub null buffer");
+        TEST_RESULT_STR_Z(strNewBuf(bufCatSub(bufNewC("123", 3), bufNew(0), 0, 0)), "123", "cat sub empty buffer");
+        TEST_RESULT_STR_Z(strNewBuf(bufCatSub(bufNewC("123", 3), BUFSTRDEF("ABC"), 1, 2)), "123BC", "cat sub buffer");
 
         Buffer *buffer = NULL;
         TEST_ASSIGN(buffer, bufNew(2), "new buffer with space");
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(buffer, BUFSTRDEF("AB")))), "AB", "cat buffer with space");
+        TEST_RESULT_STR_Z(strNewBuf(bufCat(buffer, BUFSTRDEF("AB"))), "AB", "cat buffer with space");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("bufToLog()"))
     {
         Buffer *buffer = bufNew(100);
-        TEST_RESULT_STR(strPtr(bufToLog(buffer)), "{used: 0, size: 100, limit: <off>}", "buf to log");
+        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100, limit: <off>}", "buf to log");
 
         bufLimitSet(buffer, 50);
-        TEST_RESULT_STR(strPtr(bufToLog(buffer)), "{used: 0, size: 100, limit: 50}", "buf to log");
+        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100, limit: 50}", "buf to log");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

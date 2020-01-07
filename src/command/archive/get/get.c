@@ -21,7 +21,6 @@ Archive Get Command
 #include "common/wait.h"
 #include "config/config.h"
 #include "config/exec.h"
-#include "perl/exec.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
@@ -132,7 +131,8 @@ cmdArchiveGet(void)
         String *walSegment = strBase(strLstGet(commandParam, 0));
 
         // Destination is wherever we were told to move the WAL segment
-        const String *walDestination = walPath(strLstGet(commandParam, 1));
+        const String *walDestination =
+            walPath(strLstGet(commandParam, 1), cfgOptionStr(cfgOptPgPath), STR(cfgCommandName(cfgCommand())));
 
         // Async get can only be performed on WAL segments, history or other files must use synchronous mode
         if (cfgOptionBool(cfgOptArchiveAsync) && walIsSegment(walSegment))
@@ -275,9 +275,9 @@ cmdArchiveGet(void)
 
         // Log whether or not the file was found
         if (result == 0)
-            LOG_INFO("found %s in the archive", strPtr(walSegment));
+            LOG_INFO_FMT("found %s in the archive", strPtr(walSegment));
         else
-            LOG_INFO("unable to find %s in the archive", strPtr(walSegment));
+            LOG_INFO_FMT("unable to find %s in the archive", strPtr(walSegment));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -335,7 +335,7 @@ cmdArchiveGetAsync(void)
             if (strLstSize(jobData.walSegmentList) < 1)
                 THROW(ParamInvalidError, "at least one wal segment is required");
 
-            LOG_INFO(
+            LOG_INFO_FMT(
                 "get %u WAL file(s) from archive: %s%s",
                 strLstSize(jobData.walSegmentList), strPtr(strLstGet(jobData.walSegmentList, 0)),
                 strLstSize(jobData.walSegmentList) == 1 ?
@@ -347,7 +347,7 @@ cmdArchiveGetAsync(void)
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, archiveGetAsyncCallback, &jobData);
 
             for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
-                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));
+                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
 
             // Process jobs
             do
@@ -367,19 +367,19 @@ cmdArchiveGetAsync(void)
                         // Get the archive file
                         if (varIntForce(protocolParallelJobResult(job)) == 0)
                         {
-                            LOG_DETAIL_PID(processId, "found %s in the archive", strPtr(walSegment));
+                            LOG_DETAIL_PID_FMT(processId, "found %s in the archive", strPtr(walSegment));
                         }
                         // If it does not exist write an ok file to indicate that it was checked
                         else
                         {
-                            LOG_DETAIL_PID(processId, "unable to find %s in the archive", strPtr(walSegment));
+                            LOG_DETAIL_PID_FMT(processId, "unable to find %s in the archive", strPtr(walSegment));
                             archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL);
                         }
                     }
                     // Else the job errored
                     else
                     {
-                        LOG_WARN_PID(
+                        LOG_WARN_PID_FMT(
                             processId,
                             "could not get %s from the archive (will be retried): [%d] %s", strPtr(walSegment),
                             protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));

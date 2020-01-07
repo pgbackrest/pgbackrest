@@ -7,8 +7,11 @@ Vagrant.configure(2) do |config|
     config.vm.box = "ubuntu/bionic64"
     config.vm.box_version = "20180719.0.0"
 
-    # vagrant plugin install vagrant-disksize
-    config.disksize.size = '64GB'
+    # Increase disk size if the vagrant-disksize plugin is available
+    # To install the plugin: vagrant plugin install vagrant-disksize
+    if Vagrant.has_plugin?('vagrant-disksize')
+      config.disksize.size = '64GB'
+    end
 
     config.vm.provider :virtualbox do |vb|
         vb.name = "pgbackrest-test"
@@ -68,13 +71,7 @@ Vagrant.configure(2) do |config|
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Build Tools' && date
         apt-get install -y devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
-             libxml2-dev liblz4-dev libpq-dev valgrind
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Build lcov' && date
-        wget -q -O - https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz | tar zx -C /root
-        make -q -C /root/lcov-1.14 install
-        rm -rf /root/lcov-1.14
+             libxml2-dev liblz4-dev libpq-dev valgrind lcov
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Docker' && date

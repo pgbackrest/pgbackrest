@@ -392,6 +392,12 @@ sub containerBuild
             }
         }
 
+        # If no specific version of lcov is requested then install the default package
+        if (!defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
+        {
+            $strScript .= ' lcov';
+        }
+
         #---------------------------------------------------------------------------------------------------------------------------
         $strScript .= sectionHeader() .
             "# Regenerate SSH keys\n" .
@@ -431,14 +437,18 @@ sub containerBuild
         $strScript .= certSetup($strOS);
 
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strLCovPath = '/root/lcov-1.14';
+        if (defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
+        {
+            my $strLCovVersion = $oVm->{$strOS}{&VMDEF_LCOV_VERSION};
+            my $strLCovPath = "/root/lcov-${strLCovVersion}";
 
-        $strScript .= sectionHeader() .
-            "# Build lcov\n" .
-            "    wget -q -O - https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz" .
-                " | tar zx -C /root && \\\n" .
-            "    make -C ${strLCovPath} install && \\\n" .
-            "    rm -rf ${strLCovPath}";
+            $strScript .= sectionHeader() .
+                "# Build lcov ${strLCovVersion}\n" .
+                "    wget -q -O - https://github.com/linux-test-project/lcov/releases/download/v${strLCovVersion}/" .
+                    "lcov-${strLCovVersion}.tar.gz | tar zx -C /root && \\\n" .
+                "    make -C ${strLCovPath} install && \\\n" .
+                "    rm -rf ${strLCovPath}";
+        }
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)

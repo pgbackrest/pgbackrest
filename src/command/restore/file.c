@@ -102,9 +102,9 @@ restoreFile(
                             {
                                 THROW_ON_SYS_ERROR_FMT(
                                     utime(
-                                        strPtr(storagePath(storagePg(), pgFile)),
+                                        strPtr(storagePathP(storagePg(), pgFile)),
                                         &((struct utimbuf){.actime = pgFileModified, .modtime = pgFileModified})) == -1,
-                                    FileInfoError, "unable to set time for '%s'", strPtr(storagePath(storagePg(), pgFile)));
+                                    FileInfoError, "unable to set time for '%s'", strPtr(storagePathP(storagePg(), pgFile)));
                             }
 
                             result = false;

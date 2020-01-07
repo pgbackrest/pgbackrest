@@ -73,6 +73,9 @@ main(int argListSize, const char *argList[])
     // Set neutral umask for testing
     umask(0000);
 
+    // Set timezone if specified
+    {[C_TEST_TZ]}
+
     // Ignore SIGPIPE and check for EPIPE errors on write() instead
     signal(SIGPIPE, SIG_IGN);
 

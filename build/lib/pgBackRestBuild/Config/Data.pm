@@ -23,10 +23,10 @@
 #               setting CFGDEF_REQUIRED in the CFGDEF_COMMAND section.
 #   In CFGDEF_COMMAND section:
 #       true - the option must be set somehow for the command, either by default (CFGDEF_DEFAULT) or by the user.
-# 	        &CFGCMD_CHECK =>
-#             {
-#                 &CFGDEF_REQUIRED => true
-#             },
+#           &CFGCMD_CHECK =>
+#           {
+#               &CFGDEF_REQUIRED => true
+#           },
 #       false - mainly used for overriding the CFGDEF_REQUIRED in the global section.
 #
 # CFGDEF_DEFAULT:
@@ -151,8 +151,6 @@ use constant CFGOPT_OUTPUT                                          => 'output';
 
 # Command-line only local/remote options
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPT_C                                               => 'c';
-    push @EXPORT, qw(CFGOPT_C);
 use constant CFGOPT_COMMAND                                         => 'command';
     push @EXPORT, qw(CFGOPT_COMMAND);
 use constant CFGOPT_PROCESS                                         => 'process';
@@ -168,15 +166,6 @@ use constant CFGOPT_RECURSE                                         => 'recurse'
     push @EXPORT, qw(CFGOPT_RECURSE);
 use constant CFGOPT_SORT                                            => 'sort';
     push @EXPORT, qw(CFGOPT_SORT);
-
-# Command-line only test options
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPT_TEST                                            => 'test';
-    push @EXPORT, qw(CFGOPT_TEST);
-use constant CFGOPT_TEST_DELAY                                      => 'test-delay';
-    push @EXPORT, qw(CFGOPT_TEST_DELAY);
-use constant CFGOPT_TEST_POINT                                      => 'test-point';
-    push @EXPORT, qw(CFGOPT_TEST_POINT);
 
 # General options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -210,10 +199,6 @@ use constant CFGOPT_LOG_PATH                                        => 'log-path
     push @EXPORT, qw(CFGOPT_LOG_PATH);
 use constant CFGOPT_SPOOL_PATH                                      => 'spool-path';
     push @EXPORT, qw(CFGOPT_SPOOL_PATH);
-
-# Perl
-use constant CFGOPT_PERL_OPTION                                     => 'perl-option';
-    push @EXPORT, qw(CFGOPT_PERL_OPTION);
 
 # Logging
 use constant CFGOPT_LOG_LEVEL_CONSOLE                               => 'log-level-console';
@@ -375,6 +360,8 @@ use constant CFGOPT_PG_PORT                                         => CFGDEF_PR
     push @EXPORT, qw(CFGOPT_PG_PORT);
 use constant CFGOPT_PG_SOCKET_PATH                                  => CFGDEF_PREFIX_PG . '-socket-path';
     push @EXPORT, qw(CFGOPT_PG_SOCKET_PATH);
+use constant CFGOPT_PG_USER                                         => CFGDEF_PREFIX_PG . '-user';
+    push @EXPORT, qw(CFGOPT_PG_USER);
 
 ####################################################################################################################################
 # Option values - for options that have a specific list of allowed values
@@ -789,6 +776,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE =>
             {
                 &CFGDEF_DEFAULT => false,
+                &CFGDEF_INTERNAL => true,
             },
 
             &CFGCMD_STANZA_DELETE =>
@@ -1050,17 +1038,6 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_C =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_DEFAULT => false,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_REMOTE => {},
-        }
-    },
-
     &CFGOPT_COMMAND =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
@@ -1134,43 +1111,6 @@ my %hConfigDefine =
         {
             &CFGCMD_STORAGE_LIST => {},
         }
-    },
-
-    # Command-line only test options
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_TEST =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_DEFAULT => false,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-        }
-    },
-
-    &CFGOPT_TEST_DELAY =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_DEFAULT => 5,
-        &CFGDEF_ALLOW_RANGE => [.1, 60],
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_TEST,
-            &CFGDEF_DEPEND_LIST => [true],
-        },
-        &CFGDEF_COMMAND => CFGOPT_TEST,
-    },
-
-    &CFGOPT_TEST_POINT =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_HASH,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_DEPEND => CFGOPT_TEST_DELAY,
-        &CFGDEF_COMMAND => CFGOPT_TEST,
     },
 
     # General options
@@ -1430,32 +1370,6 @@ my %hConfigDefine =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
             &CFGCMD_STORAGE_LIST => {},
-        },
-    },
-
-    &CFGOPT_PERL_OPTION =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_LIST,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_GET_ASYNC => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
         },
     },
 
@@ -2625,6 +2539,29 @@ my %hConfigDefine =
             'db?-socket-path' => {&CFGDEF_RESET => false},
         },
     },
+
+    &CFGOPT_PG_USER =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_REMOTE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+        },
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_PATH
+        },
+    },
 );
 
 ####################################################################################################################################
@@ -2700,6 +2637,13 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
 ####################################################################################################################################
 foreach my $strKey (sort(keys(%hConfigDefine)))
 {
+    # Error if prefix and index total are not both defined
+    if ((defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) && !defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL})) ||
+        (!defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) && defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL})))
+    {
+        confess &log(ASSERT, "CFGDEF_PREFIX and CFGDEF_INDEX_TOTAL must both be defined (or neither) for option '${strKey}'");
+    }
+
     # If the define is a scalar then copy the entire define from the referenced option
     if (defined($hConfigDefine{$strKey}{&CFGDEF_INHERIT}))
     {

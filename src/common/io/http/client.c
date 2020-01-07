@@ -32,6 +32,7 @@ STRING_EXTERN(HTTP_HEADER_CONTENT_MD5_STR,                          HTTP_HEADER_
 #define HTTP_HEADER_TRANSFER_ENCODING                               "transfer-encoding"
     STRING_STATIC(HTTP_HEADER_TRANSFER_ENCODING_STR,                HTTP_HEADER_TRANSFER_ENCODING);
 STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_ETAG);
+STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_LAST_MODIFIED);
 
 #define HTTP_VALUE_CONNECTION_CLOSE                                 "close"
     STRING_STATIC(HTTP_VALUE_CONNECTION_CLOSE_STR,                  HTTP_VALUE_CONNECTION_CLOSE);
@@ -435,7 +436,7 @@ httpClientRequest(
                 // Retry if wait time has not expired
                 if (wait != NULL && waitMore(wait))
                 {
-                    LOG_DEBUG("retry %s: %s", errorTypeName(errorType()), errorMessage());
+                    LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
 
                     httpClientStatLocal.retry++;

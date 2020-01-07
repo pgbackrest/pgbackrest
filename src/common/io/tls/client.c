@@ -651,7 +651,7 @@ tlsClientOpen(TlsClient *this)
                     // Retry if wait time has not expired
                     if (wait != NULL && waitMore(wait))
                     {
-                        LOG_DEBUG("retry %s: %s", errorTypeName(errorType()), errorMessage());
+                        LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                         retry = true;
 
                         tlsClientStatLocal.retry++;

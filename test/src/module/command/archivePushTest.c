@@ -67,12 +67,12 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000005.ready")), NULL);
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000006.ready")), NULL);
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath())), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath())), "|"),
             "000000010000000100000002|000000010000000100000005|000000010000000100000006", "ready list");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000003.ok", "remaining status list");
 
         // Test drop
@@ -168,8 +168,8 @@ testRun(void)
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
         TEST_RESULT_UINT(result.pgWalSegmentSize, 16 * 1024 * 1024, "check wal segment size");
-        TEST_RESULT_STR(strPtr(result.archiveId), "9.6-1", "check archive id");
-        TEST_RESULT_STR(strPtr(result.archiveCipherPass), NULL, "check archive cipher pass (not set in this test)");
+        TEST_RESULT_STR_Z(result.archiveId, "9.6-1", "check archive id");
+        TEST_RESULT_STR_Z(result.archiveCipherPass, NULL, "check archive cipher pass (not set in this test)");
     }
 
     // *****************************************************************************************************************************
@@ -181,12 +181,23 @@ testRun(void)
 
         TEST_ERROR(cmdArchivePush(), ParamRequiredError, "WAL segment to push required");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        StringList *argListTemp = strLstDup(argList);
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
+        TEST_ERROR(
+            cmdArchivePush(), OptionRequiredError,
+            "option 'pg1-path' must be specified when relative wal paths are used"
+            "\nHINT: is %f passed to archive-push instead of %p?"
+            "\nHINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
+
         // Create pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
 
-        StringList *argListTemp = strLstDup(argList);
+        argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
@@ -340,8 +351,8 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             archivePushProtocol(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR, paramList, server), true, "protocol archive put");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)),
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
             "{\"out\":\"WAL file '000000010000000100000002' already exists in the archive with the same checksum"
                 "\\nHINT: this is valid in some recovery scenarios but may also indicate a problem.\"}\n",
             "check result");
@@ -415,7 +426,8 @@ testRun(void)
         strLstAddZ(argList, "pg_wal/bogus");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        THROW_ON_SYS_ERROR(chdir(testPath()) != 0, PathMissingError, "unable to chdir()");
+        storagePathCreateP(storageTest, cfgOptionStr(cfgOptPgPath));
+        THROW_ON_SYS_ERROR(chdir(strPtr(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,
@@ -568,12 +580,12 @@ testRun(void)
 
         TEST_ERROR(cmdArchivePushAsync(), AssertError, "no WAL files to process");
 
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error"))))),
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")))),
             "25\nno WAL files to process", "check global.error");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "global.error", "check status files");
 
         // Push WAL
@@ -602,8 +614,8 @@ testRun(void)
                     TEST_64BIT() ? "f81d63dd5e258cd607534f3531bbd71442797e37" : "02d228126281e8e102b35a2737e45a0527946296")),
             true, "check repo for WAL 1 file");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000001.ok|000000010000000100000002.error", "check status files");
 
         // Create WAL 2 segment
@@ -631,8 +643,8 @@ testRun(void)
                     TEST_64BIT() ? "0aea6fa5d53500ce548b84a86bc3a29ae77fa048" : "408822a89ef44ef6740e785743bf1b870d8024a2")),
             true, "check repo for WAL 2 file");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000001.ok|000000010000000100000002.ok", "check status files");
 
         // Check that drop functionality works
@@ -651,22 +663,18 @@ testRun(void)
             "P00   WARN: dropped WAL file '000000010000000100000001' because archive queue exceeded 16MB\n"
             "P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");
 
-        TEST_RESULT_STR(
-            strPtr(
-                strNewBuf(
-                    storageGetP(
-                        storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok"))))),
+        TEST_RESULT_STR_Z(
+            strNewBuf(
+                storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")))),
             "0\ndropped WAL file '000000010000000100000001' because archive queue exceeded 16MB", "check WAL 1 warning");
 
-        TEST_RESULT_STR(
-            strPtr(
-                strNewBuf(
-                    storageGetP(
-                        storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok"))))),
+        TEST_RESULT_STR_Z(
+            strNewBuf(
+                storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok")))),
             "0\ndropped WAL file '000000010000000100000002' because archive queue exceeded 16MB", "check WAL 2 warning");
 
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000001.ok|000000010000000100000002.ok", "check status files");
         }
 

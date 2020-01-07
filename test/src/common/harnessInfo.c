@@ -51,9 +51,8 @@ harnessInfoChecksumCallback(void *callbackData, const String *section, const Str
     else
         ioFilterProcessIn(data->checksum, BUFSTRDEF(","));
 
-    ioFilterProcessIn(data->checksum, BUFSTRDEF("\""));
-    ioFilterProcessIn(data->checksum, BUFSTR(key));
-    ioFilterProcessIn(data->checksum, BUFSTRDEF("\":"));
+    ioFilterProcessIn(data->checksum, BUFSTR(jsonFromStr(key)));
+    ioFilterProcessIn(data->checksum, BUFSTRDEF(":"));
     ioFilterProcessIn(data->checksum, BUFSTR(value));
 }
 

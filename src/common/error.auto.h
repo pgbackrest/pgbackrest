@@ -54,7 +54,6 @@ ERROR_DECLARE(FeatureNotSupportedError);
 ERROR_DECLARE(ArchiveCommandInvalidError);
 ERROR_DECLARE(LinkExpectedError);
 ERROR_DECLARE(LinkDestinationError);
-ERROR_DECLARE(TablespaceInPgdataError);
 ERROR_DECLARE(HostInvalidError);
 ERROR_DECLARE(PathMissingError);
 ERROR_DECLARE(FileMoveError);

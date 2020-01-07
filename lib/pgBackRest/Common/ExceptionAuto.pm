@@ -109,8 +109,6 @@ use constant ERROR_LINK_EXPECTED                                    => 69;
 push @EXPORT, qw(ERROR_LINK_EXPECTED);
 use constant ERROR_LINK_DESTINATION                                 => 70;
 push @EXPORT, qw(ERROR_LINK_DESTINATION);
-use constant ERROR_TABLESPACE_IN_PGDATA                             => 71;
-push @EXPORT, qw(ERROR_TABLESPACE_IN_PGDATA);
 use constant ERROR_HOST_INVALID                                     => 72;
 push @EXPORT, qw(ERROR_HOST_INVALID);
 use constant ERROR_PATH_MISSING                                     => 73;

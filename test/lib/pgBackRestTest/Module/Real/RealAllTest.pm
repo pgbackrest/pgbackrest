@@ -25,6 +25,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
@@ -319,7 +320,7 @@ sub run
                 'fail on backup info file missing from non-empty dir', {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
 
             # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
-            storageDb()->pathCreate(
+            storageLocal()->pathCreate(
                 $oHostDbMaster->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
                 {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
             $self->controlGenerate(
@@ -397,17 +398,14 @@ sub run
             }
         }
 
-        my $oExecuteBackup = $oHostBackup->backupBegin(
-            CFGOPTVAL_BACKUP_TYPE_FULL, 'update during backup',
-            {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
-                strOptionalParam => ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384'});
-
         $oHostDbMaster->sqlExecute("update test set message = '$strFullMessage'");
 
         # Required to set hint bits to be sent to the standby to make the heap match on both sides
         $oHostDbMaster->sqlSelectOneTest('select message from test', $strFullMessage);
 
-        my $strFullBackup = $oHostBackup->backupEnd(CFGOPTVAL_BACKUP_TYPE_FULL, $oExecuteBackup);
+        my $strFullBackup = $oHostBackup->backup(
+            CFGOPTVAL_BACKUP_TYPE_FULL, 'update during backup',
+            {strOptionalParam => ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384'});
 
         # Enabled async archiving
         $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_ARCHIVE_ASYNC) => 'y'}});
@@ -478,7 +476,7 @@ sub run
                     my $strStandbyBackup = $oHostBackup->backup(
                         CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access at least one standby',
                         {bStandby => true,
-                         iExpectedExitStatus => ERROR_HOST_CONNECT,
+                         iExpectedExitStatus => ERROR_DB_CONNECT,
                          strOptionalParam => '--' .
                          cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, cfgOptionIndexTotal(CFGOPT_PG_PATH))) . '=' . BOGUS});
                 }
@@ -538,7 +536,9 @@ sub run
 
             $oHostDbMaster->stop();
 
-            $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_INCR, 'attempt backup when stopped', {iExpectedExitStatus => ERROR_STOP});
+            $oHostBackup->backup(
+                CFGOPTVAL_BACKUP_TYPE_INCR, 'attempt backup when stopped',
+                {iExpectedExitStatus => $oHostBackup == $oHostDbMaster ? ERROR_STOP : ERROR_DB_CONNECT});
 
             $oHostDbMaster->start();
         }
@@ -621,34 +621,16 @@ sub run
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be restarted', true)");
         }
 
-        # Exercise --delta checksum option
-        $oExecuteBackup = $oHostBackup->backupBegin(
-            CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
-            {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768' .
-                ' --delta'});
-
         # Drop a table
         $oHostDbMaster->sqlExecute('drop table test_remove');
         $oHostDbMaster->sqlWalRotate();
         $oHostDbMaster->sqlExecute("update test set message = '$strIncrMessage'", {bCommit => true});
 
-        # Check that application name is set
-        if ($oHostDbMaster->pgVersion() >= PG_VERSION_APPLICATION_NAME)
-        {
-            my $strApplicationNameExpected = PROJECT_NAME . ' [' . cfgCommandName(CFGCMD_BACKUP) . ']';
-            my $strApplicationName = $oHostDbMaster->sqlSelectOne(
-                "select application_name from pg_stat_activity where application_name like '" . PROJECT_NAME . "%'");
-
-            if (!defined($strApplicationName) || $strApplicationName ne $strApplicationNameExpected)
-            {
-                confess &log(ERROR,
-                    "application name '" . (defined($strApplicationName) ? $strApplicationName : '[null]') .
-                        "' does not match '" . $strApplicationNameExpected . "'");
-            }
-        }
-
-        my $strIncrBackup = $oHostBackup->backupEnd(CFGOPTVAL_BACKUP_TYPE_INCR, $oExecuteBackup);
+        # Exercise --delta checksum option
+        my $strIncrBackup = $oHostBackup->backup(
+            CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
+            {strOptionalParam =>
+                '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768 --delta'});
 
         # Ensure the check command runs properly with a tablespace unless there is a bogus host
         if (!$oHostBackup->bogusHost())
@@ -788,7 +770,7 @@ sub run
         # Version <= 8.4 always places a PG_VERSION file in the tablespace
         if ($oHostDbMaster->pgVersion() <= PG_VERSION_84)
         {
-            if (!storageDb()->exists("${strTablespacePath}/" . DB_FILE_PGVERSION))
+            if (!storageLocal()->exists("${strTablespacePath}/" . DB_FILE_PGVERSION))
             {
                 confess &log(ASSERT, "unable to find '" . DB_FILE_PGVERSION . "' in tablespace path '${strTablespacePath}'");
             }
@@ -806,14 +788,14 @@ sub run
                 '/PG_' . $oHostDbMaster->pgVersion() . qw{_} . $oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG);
 
             # Check that path exists
-            if (!storageDb()->pathExists($strTablespacePath))
+            if (!storageLocal()->pathExists($strTablespacePath))
             {
                 confess &log(ASSERT, "unable to find tablespace path '${strTablespacePath}'");
             }
         }
 
         # Make sure there are some files in the tablespace path (exclude PG_VERSION if <= 8.4 since that was tested above)
-        if (grep(!/^PG\_VERSION$/i, storageDb()->list($strTablespacePath)) == 0)
+        if (grep(!/^PG\_VERSION$/i, storageLocal()->list($strTablespacePath)) == 0)
         {
             confess &log(ASSERT, "no files found in tablespace path '${strTablespacePath}'");
         }
@@ -883,7 +865,7 @@ sub run
             # Save recovery file to test so we can use it in the next test
             $strRecoveryFile = $oHostDbMaster->pgVersion() >= PG_VERSION_12 ? 'postgresql.auto.conf' : DB_FILE_RECOVERYCONF;
 
-            storageDb()->copy(
+            storageLocal()->copy(
                 $oHostDbMaster->dbBasePath() . qw{/} . $strRecoveryFile, $self->testPath() . qw{/} . $strRecoveryFile);
 
             $oHostDbMaster->clusterStart();
@@ -905,7 +887,7 @@ sub run
             executeTest('rm -rf ' . $oHostDbMaster->tablespacePath(1) . "/*");
 
             # Restore recovery file that was saved in last test
-            storageDb()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
+            storageLocal()->move($self->testPath . "/${strRecoveryFile}", $oHostDbMaster->dbBasePath() . "/${strRecoveryFile}");
 
             # Also touch recovery.signal when required
             if ($oHostDbMaster->pgVersion() >= PG_VERSION_12)

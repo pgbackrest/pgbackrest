@@ -125,6 +125,7 @@ sub process
         $self->{bDryRun},
         $self->{bCleanup},
         $self->{bLogForce},
+        $self->{strLogLevelTestFile},
         $self->{strPgUser},
         $self->{strGroup},
     ) =
@@ -146,6 +147,7 @@ sub process
             {name => 'bDryRun'},
             {name => 'bCleanup'},
             {name => 'bLogForce'},
+            {name => 'strLogLevelTestFile'},
             {name => 'strPgUser'},
             {name => 'strGroup'},
         );
@@ -547,6 +549,7 @@ sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
 sub doExpect {return shift->{bExpect}}
 sub doLogForce {return shift->{bLogForce}}
+sub logLevelTestFile {return shift->{strLogLevelTestFile}}
 sub group {return shift->{strGroup}}
 sub isDryRun {return shift->{bDryRun}}
 sub expect {return shift->{oExpect}}

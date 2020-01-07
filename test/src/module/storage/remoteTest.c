@@ -65,13 +65,13 @@ testRun(void)
         TEST_RESULT_UINT(storageInterface(storageRemote).feature, storageInterface(storageTest).feature, "    check features");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeatureCompress), true, "    check compress feature");
-        TEST_RESULT_STR_STR(storagePath(storageRemote, NULL), strNewFmt("%s/repo", testPath()), "    check path");
+        TEST_RESULT_STR(storagePathP(storageRemote, NULL), strNewFmt("%s/repo", testPath()), "    check path");
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_FEATURE_STR, varLstNew(), server), true, "protocol feature");
-        TEST_RESULT_STR_STR(
+        TEST_RESULT_STR(
             strNewBuf(serverWrite),
             strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
             "check result");
@@ -106,7 +106,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_EXISTS_STR, paramList, server), true, "protocol exists");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -140,7 +140,7 @@ testRun(void)
         storagePathCreateP(storageTest, strNew("repo"));
         struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
         THROW_ON_SYS_ERROR(
-            utime(strPtr(storagePath(storageTest, strNew("repo"))), &utimeTest) != 0, FileWriteError, "unable to set time");
+            utime(strPtr(storagePathP(storageTest, strNew("repo"))), &utimeTest) != 0, FileWriteError, "unable to set time");
 
         StorageInfo info = {.exists = false};
         TEST_ASSIGN(info, storageInfoP(storageRemote, NULL), "valid path");
@@ -152,9 +152,9 @@ testRun(void)
         TEST_RESULT_UINT(info.timeModified, 1555160000, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
-        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
-        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+        TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file info");
@@ -170,14 +170,14 @@ testRun(void)
         TEST_RESULT_UINT(info.timeModified, 1555160001, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
-        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
-        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+        TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("special info");
 
-        TEST_SYSTEM_FMT("mkfifo -m 666 %s", strPtr(storagePath(storageTest, strNew("repo/fifo"))));
+        TEST_SYSTEM_FMT("mkfifo -m 666 %s", strPtr(storagePathP(storageTest, strNew("repo/fifo"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("fifo")), "valid fifo");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
@@ -187,14 +187,14 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0666, "    check mode");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
-        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
-        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+        TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("link info");
 
-        TEST_SYSTEM_FMT("ln -s ../repo/test %s", strPtr(storagePath(storageTest, strNew("repo/link"))));
+        TEST_SYSTEM_FMT("ln -s ../repo/test %s", strPtr(storagePathP(storageTest, strNew("repo/link"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, strNew("link")), "valid link");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
@@ -204,9 +204,9 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0777, "    check mode");
         TEST_RESULT_STR_Z(info.linkDestination, "../repo/test", "    check link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
-        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
-        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+        TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("link info follow");
@@ -219,9 +219,9 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0640, "    check mode");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
         TEST_RESULT_UINT(info.userId, getuid(), "    check user id");
-        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_UINT(info.groupId, getgid(), "    check group id");
-        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
+        TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("protocol storage types that are not tested elsewhere");
@@ -230,7 +230,7 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoteInfoWriteType(server, storageTypeSpecial), "write special type");
 
         ioWriteFlush(serverWriteIo);
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), ".p\n.s\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".p\n.s\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -241,7 +241,7 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoteInfoWrite(server, &info), "write link info");
 
         ioWriteFlush(serverWriteIo);
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), ".l\n.0\n.null\n.0\n.null\n.0\n.0\n.\"../\"\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".l\n.0\n.null\n.0\n.null\n.0\n.0\n.\"../\"\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -253,7 +253,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -265,8 +265,8 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)),
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
             hrnReplaceKey(
                 "{\"out\":true}\n"
                 ".f\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n.1555160001\n.6\n"
@@ -305,7 +305,7 @@ testRun(void)
 
         // Path timestamp must be set after file is created since file creation updates it
         struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR(utime(strPtr(storagePath(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
+        THROW_ON_SYS_ERROR(utime(strPtr(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
 
         TEST_RESULT_BOOL(
             storageInfoListP(storageRemote, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
@@ -324,8 +324,8 @@ testRun(void)
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)),
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
             hrnReplaceKey(
                 ".\".\"\n.p\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n.1555160000\n"
                 ".\"test\"\n.f\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n.1555160001\n.6\n"
@@ -348,11 +348,11 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateP(storageTest, strNew("repo/testy"));
-        TEST_RESULT_STR(strPtr(strLstJoin(storageListP(storageRemote, NULL), ",")), "testy" , "list path");
+        TEST_RESULT_STR_Z(strLstJoin(storageListP(storageRemote, NULL), ","), "testy" , "list path");
 
         storagePathCreateP(storageTest, strNew("repo/testy2\""));
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListP(storageRemote, strNewFmt("%s/repo", testPath())), sortOrderAsc), ",")),
+        TEST_RESULT_STR_Z(
+            strLstJoin(strLstSort(storageListP(storageRemote, strNewFmt("%s/repo", testPath())), sortOrderAsc), ","),
             "testy,testy2\"" , "list 2 paths");
 
         // Check protocol function directly
@@ -362,7 +362,7 @@ testRun(void)
         varLstAdd(paramList, varNewStr(strNew("^testy$")));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_LIST_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":[\"testy\"]}\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[\"testy\"]}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
     }
@@ -430,7 +430,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true,
             "protocol open read (missing)");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -456,8 +456,8 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)),
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
             "{\"out\":true}\n"
                 "BRBLOCK4\n"
                 "TESTBRBLOCK4\n"
@@ -485,8 +485,8 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read (sink)");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)),
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
             "{\"out\":true}\n"
                 "BRBLOCK0\n"
                 "{\"out\":{\"buffer\":null,\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"sink\":null,\"size\":8}}\n",
@@ -536,7 +536,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
         TEST_RESULT_UINT(storageWriteModeFile(write), STORAGE_MODE_FILE_DEFAULT, "file mode is default");
         TEST_RESULT_UINT(storageWriteModePath(write), STORAGE_MODE_PATH_DEFAULT, "path mode is default");
-        TEST_RESULT_STR(strPtr(storageWriteName(write)), hrnReplaceKey("{[path]}/repo/test.txt"), "check file name");
+        TEST_RESULT_STR_Z(storageWriteName(write), hrnReplaceKey("{[path]}/repo/test.txt"), "check file name");
         TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
@@ -601,14 +601,14 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)),
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
             "{}\n"
-                "{\"out\":{\"buffer\":null,\"size\":18}}\n",
+            "{\"out\":{\"buffer\":null,\"size\":18}}\n",
             "check result");
 
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test3.txt"))))), "ABC123456789012345",
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test3.txt")))), "ABC123456789012345",
             "check file");
 
         bufUsedSet(serverWrite, 0);
@@ -632,18 +632,17 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(serverWrite)),
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
             "{}\n"
-                "{}\n",
+            "{}\n",
             "check result");
 
         bufUsedSet(serverWrite, 0);
         ioBufferSizeSet(8192);
 
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test4.txt.pgbackrest.tmp"))))), "",
-            "check file");
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test4.txt.pgbackrest.tmp")))), "", "check file");
     }
 
     // *****************************************************************************************************************************
@@ -663,7 +662,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR, paramList, server), true, "protocol path exists");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
     }
@@ -722,7 +721,7 @@ testRun(void)
         TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strPtr(path))), "  get path info");
         TEST_RESULT_BOOL(info.exists, true, "  path exists");
         TEST_RESULT_INT(info.mode, 0777, "  mode is set");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{}\n", "  check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
         bufUsedSet(serverWrite, 0);
     }
 
@@ -750,7 +749,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), true,
             "  protocol path remove missing");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "  check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "  check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -762,7 +761,7 @@ testRun(void)
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), true,
             "  protocol path recurse remove");
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strPtr(path))), false, "  recurse path removed");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "  check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "  check result");
 
         bufUsedSet(serverWrite, 0);
     }
@@ -802,7 +801,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, paramList, server), true,
             "protocol file remove - no error on missing");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{}\n", "  check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
         bufUsedSet(serverWrite, 0);
 
         // Write the file to the repo via the remote and test the protocol
@@ -811,7 +810,7 @@ testRun(void)
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, paramList, server), true,
             "protocol file remove");
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strPtr(file))), false, "  confirm file removed");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{}\n", "  check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
         bufUsedSet(serverWrite, 0);
     }
 
@@ -835,7 +834,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), true,
             "protocol path sync");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{}\n", "  check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
         bufUsedSet(serverWrite, 0);
 
         paramList = varLstNew();

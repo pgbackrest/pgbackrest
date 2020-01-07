@@ -19,7 +19,6 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
@@ -1028,7 +1027,7 @@ sub build
                        $hManifest->{$strName}{link_destination}) . '/', "${strPath}/") == 0))
             {
                 confess &log(ERROR, 'tablespace symlink ' . $hManifest->{$strName}{link_destination} .
-                             ' destination must not be in $PGDATA', ERROR_TABLESPACE_IN_PGDATA);
+                             ' destination must not be in $PGDATA', ERROR_LINK_DESTINATION);
             }
         }
 
@@ -1108,9 +1107,7 @@ sub build
         # lead to an invalid diff/incr backup later when using timestamps to determine which files have changed.  Offline backups do
         # not wait because it makes testing much faster and Postgres should not be running (if it is the backup will not be
         # consistent anyway and the one-second resolution problem is the least of our worries).
-        my $lTimeBegin =
-            $oStorageDbMaster->can('protocol') ?
-                $oStorageDbMaster->protocol()->cmdExecute(OP_WAIT, [$bOnline]) : waitRemainder($bOnline);
+        my $lTimeBegin = waitRemainder($bOnline);
 
         # Check that links are valid
         $self->linkCheck();
@@ -1522,9 +1519,10 @@ sub isChecksumPage
 {
     my $strFile = shift;
 
-    if (($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_BASE . '|^' . MANIFEST_TARGET_PGTBLSPC . '\/') &&
+    if (($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_BASE . '\/[0-9]+\/|^' . MANIFEST_TARGET_PGTBLSPC .
+            '\/[0-9]+\/[^\/]+\/[0-9]+\/') &&
             $strFile !~ ('(' . DB_FILE_PGFILENODEMAP . '|' . DB_FILE_PGINTERNALINIT . '|' . DB_FILE_PGVERSION . ')$')) ||
-        ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_GLOBAL) &&
+        ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_GLOBAL . '\/') &&
             $strFile !~ ('(' . DB_FILE_PGFILENODEMAP . '|' . DB_FILE_PGINTERNALINIT . '|' . DB_FILE_PGVERSION . '|' .
             DB_FILE_PGCONTROL . ')$')))
     {

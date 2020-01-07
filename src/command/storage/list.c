@@ -7,7 +7,6 @@ Storage List Command
 
 #include "common/debug.h"
 #include "common/io/handleWrite.h"
-#include "common/memContext.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/json.h"
@@ -111,7 +110,6 @@ storageListRender(IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(IO_WRITE, write);
-
     FUNCTION_LOG_END();
 
     // Get sort order

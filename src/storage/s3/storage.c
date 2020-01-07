@@ -4,7 +4,6 @@ S3 Storage
 #include "build.auto.h"
 
 #include <string.h>
-#include <time.h>
 
 #include "common/crypto/hash.h"
 #include "common/encode.h"
@@ -59,6 +58,7 @@ STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
 STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
 STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
+STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
 STRING_STATIC(S3_XML_TAG_MESSAGE_STR,                               "Message");
 STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinuationToken");
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
@@ -306,7 +306,7 @@ storageS3Request(
 
                         if (strEq(errorCode, S3_ERROR_REQUEST_TIME_TOO_SKEWED_STR))
                         {
-                            LOG_DEBUG(
+                            LOG_DEBUG_FMT(
                                 "retry %s: %s", strPtr(errorCode),
                                 strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
 
@@ -360,7 +360,8 @@ storageS3Request(
                     {
                         strCat(error, "\n*** Response Headers ***:");
 
-                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
+                        for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList);
+                                responseHeaderIdx++)
                         {
                             const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
                             strCatFmt(error, "\n%s: %s", strPtr(key), strPtr(httpHeaderGet(responseHeader, key)));
@@ -378,7 +379,8 @@ storageS3Request(
             {
                 // On success move the buffer to the calling context
                 result.httpClient = httpClient;
-                result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientResponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
+                result.responseHeader = httpHeaderMove(
+                    httpHeaderDup(httpClientResponseHeader(httpClient), NULL), MEM_CONTEXT_OLD());
                 result.response = bufMove(response, MEM_CONTEXT_OLD());
             }
 
@@ -572,6 +574,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInterfaceInfoParam param)
         result.exists = true;
         result.type = storageTypeFile;
         result.size = cvtZToUInt64(strPtr(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
+        result.timeModified = httpLastModifiedToTime(httpHeaderGet(httpResult.responseHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -583,6 +586,22 @@ typedef struct StorageS3InfoListData
     StorageInfoListCallback callback;                               // User-supplied callback function
     void *callbackData;                                             // User-supplied callback data
 } StorageS3InfoListData;
+
+// Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t.  This format is very nearly ISO-8601 except for the inclusion of
+// milliseconds which are discarded here.
+static time_t
+storageS3CvtTime(const String *time)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, time);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(
+        epochFromParts(
+            cvtZToInt(strPtr(strSubN(time, 0, 4))), cvtZToInt(strPtr(strSubN(time, 5, 2))),
+            cvtZToInt(strPtr(strSubN(time, 8, 2))), cvtZToInt(strPtr(strSubN(time, 11, 2))),
+            cvtZToInt(strPtr(strSubN(time, 14, 2))), cvtZToInt(strPtr(strSubN(time, 17, 2)))));
+}
 
 static void
 storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
@@ -607,6 +626,8 @@ storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *nam
         .type = type,
         .name = name,
         .size = type == storageTypeFile ? cvtZToUInt64(strPtr(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true)))) : 0,
+        .timeModified = type == storageTypeFile ?
+            storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true))) : 0,
     };
 
     data->callback(data->callbackData, &info);

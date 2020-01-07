@@ -95,7 +95,7 @@ restorePathValidate(void)
         if ((cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce)) &&
             !storageExistsP(storagePg(), PG_FILE_PGVERSION_STR) && !storageExistsP(storagePg(), BACKUP_MANIFEST_FILE_STR))
         {
-            LOG_WARN(
+            LOG_WARN_FMT(
                 "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" BACKUP_MANIFEST_FILE "' in '%s' to"
                     " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                     " exist in the destination directories the restore will be aborted.",
@@ -555,7 +555,7 @@ restoreManifestMap(Manifest *manifest)
 
         if (!strEq(targetBase->path, pgPath))
         {
-            LOG_INFO("remap data directory to '%s'", strPtr(pgPath));
+            LOG_INFO_FMT("remap data directory to '%s'", strPtr(pgPath));
             manifestTargetUpdate(manifest, targetBase->name, pgPath, NULL);
         }
 
@@ -618,7 +618,7 @@ restoreManifestMap(Manifest *manifest)
                     // Remap tablespace if a mapping was found
                     if (tablespacePath != NULL)
                     {
-                        LOG_INFO("map tablespace '%s' to '%s'", strPtr(target->name), strPtr(tablespacePath));
+                        LOG_INFO_FMT("map tablespace '%s' to '%s'", strPtr(target->name), strPtr(tablespacePath));
 
                         manifestTargetUpdate(manifest, target->name, tablespacePath, NULL);
                         manifestLinkUpdate(manifest, strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strPtr(target->name)), tablespacePath);
@@ -666,7 +666,7 @@ restoreManifestMap(Manifest *manifest)
                 // Remap link if a mapping was found
                 if (linkPath != NULL)
                 {
-                    LOG_INFO("map link '%s' to '%s'", strPtr(link), strPtr(linkPath));
+                    LOG_INFO_FMT("map link '%s' to '%s'", strPtr(link), strPtr(linkPath));
                     manifestLinkUpdate(manifest, target->name, linkPath);
 
                     // If the link is a file separate the file name from the path to update the target
@@ -696,10 +696,10 @@ restoreManifestMap(Manifest *manifest)
                 else if (!linkAll)
                 {
                     if (target->file != NULL)
-                        LOG_WARN("file link '%s' will be restored as a file at the same location", strPtr(link));
+                        LOG_WARN_FMT("file link '%s' will be restored as a file at the same location", strPtr(link));
                     else
                     {
-                        LOG_WARN(
+                        LOG_WARN_FMT(
                             "contents of directory link '%s' will be restored in a directory at the same location",
                             strPtr(link));
                     }
@@ -782,7 +782,7 @@ Check ownership of items in the manifest
             const String *owner = strLstGet(type##List, ownerIdx);                                                                 \
                                                                                                                                    \
             if (type##Name() == NULL ||  !strEq(type##Name(), owner))                                                              \
-                LOG_WARN("unknown " #type " '%s' in backup manifest mapped to current " #type, strPtr(owner));                     \
+                LOG_WARN_FMT("unknown " #type " '%s' in backup manifest mapped to current " #type, strPtr(owner));                 \
         }                                                                                                                          \
     }                                                                                                                              \
     while (0)
@@ -826,10 +826,10 @@ restoreManifestOwner(Manifest *manifest)
             if (userNull || groupNull)
             {
                 if (userNull)
-                    LOG_WARN("unknown user in backup manifest mapped to '%s'", strPtr(pathInfo.user));
+                    LOG_WARN_FMT("unknown user in backup manifest mapped to '%s'", strPtr(pathInfo.user));
 
                 if (groupNull)
-                    LOG_WARN("unknown group in backup manifest mapped to '%s'", strPtr(pathInfo.group));
+                    LOG_WARN_FMT("unknown group in backup manifest mapped to '%s'", strPtr(pathInfo.group));
 
                 memContextSwitch(MEM_CONTEXT_OLD());
 
@@ -918,7 +918,7 @@ restoreCleanOwnership(
     {
         // If this is a newly created file/link/path then there's no need to log updated permissions
         if (!new)
-            LOG_DETAIL("update ownership for '%s'", strPtr(pgPath));
+            LOG_DETAIL_FMT("update ownership for '%s'", strPtr(pgPath));
 
         THROW_ON_SYS_ERROR_FMT(
             lchown(strPtr(pgPath), expectedUserId, expectedGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
@@ -944,7 +944,7 @@ restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *i
     // Update mode if not as expected
     if (manifestMode != info->mode)
     {
-        LOG_DETAIL("update mode for '%s' to %04o", strPtr(pgPath), manifestMode);
+        LOG_DETAIL_FMT("update mode for '%s' to %04o", strPtr(pgPath), manifestMode);
 
         THROW_ON_SYS_ERROR_FMT(
             chmod(strPtr(pgPath), manifestMode) == -1, FileOwnerError, "unable to set mode for '%s'", strPtr(pgPath));
@@ -1014,7 +1014,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             }
             else
             {
-                LOG_DETAIL("remove invalid file '%s'", strPtr(pgPath));
+                LOG_DETAIL_FMT("remove invalid file '%s'", strPtr(pgPath));
                 storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
             }
 
@@ -1029,7 +1029,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             {
                 if (!strEq(manifestLink->destination, info->linkDestination))
                 {
-                    LOG_DETAIL("remove link '%s' because destination changed", strPtr(pgPath));
+                    LOG_DETAIL_FMT("remove link '%s' because destination changed", strPtr(pgPath));
                     storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
                 }
                 else
@@ -1037,7 +1037,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             }
             else
             {
-                LOG_DETAIL("remove invalid link '%s'", strPtr(pgPath));
+                LOG_DETAIL_FMT("remove invalid link '%s'", strPtr(pgPath));
                 storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
             }
 
@@ -1071,7 +1071,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             }
             else
             {
-                LOG_DETAIL("remove invalid path '%s'", strPtr(pgPath));
+                LOG_DETAIL_FMT("remove invalid path '%s'", strPtr(pgPath));
                 storagePathRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true, .recurse = true);
             }
 
@@ -1081,7 +1081,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         // Special file types cannot exist in the manifest so just delete them
         case storageTypeSpecial:
         {
-            LOG_DETAIL("remove special file '%s'", strPtr(pgPath));
+            LOG_DETAIL_FMT("remove special file '%s'", strPtr(pgPath));
             storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
             break;
         }
@@ -1160,7 +1160,7 @@ restoreCleanBuild(Manifest *manifest)
             // Don't log check for the same path twice.  There can be multiple links to files in the same path, but logging it more
             // than once makes the logs noisy and looks like a bug.
             if (!strLstExists(pathChecked, cleanData->targetPath))
-                LOG_DETAIL("check '%s' exists", strPtr(cleanData->targetPath));
+                LOG_DETAIL_FMT("check '%s' exists", strPtr(cleanData->targetPath));
 
             StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true, .followLink = true);
             strLstAdd(pathChecked, cleanData->targetPath);
@@ -1217,7 +1217,7 @@ restoreCleanBuild(Manifest *manifest)
         if (manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP), NULL) != NULL &&
             manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
         {
-            LOG_DETAIL("skip '" PG_FILE_TABLESPACEMAP "' -- tablespace links will be created based on mappings");
+            LOG_DETAIL_FMT("skip '" PG_FILE_TABLESPACEMAP "' -- tablespace links will be created based on mappings");
             manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP));
         }
 
@@ -1226,7 +1226,7 @@ restoreCleanBuild(Manifest *manifest)
             strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR) &&
             manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF), NULL) != NULL)
         {
-            LOG_DETAIL("skip '" PG_FILE_POSTGRESQLAUTOCONF "' -- recovery type is preserve");
+            LOG_DETAIL_FMT("skip '" PG_FILE_POSTGRESQLAUTOCONF "' -- recovery type is preserve");
             manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF));
         }
 
@@ -1236,7 +1236,8 @@ restoreCleanBuild(Manifest *manifest)
         // so the file does not return, zombie-like, in the case of a host crash.
         if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
         {
-            LOG_DETAIL("remove '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' so cluster will not start if restore does not complete");
+            LOG_DETAIL_FMT(
+                "remove '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' so cluster will not start if restore does not complete");
             storageRemoveP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
             storagePathSyncP(storagePgWrite(), PG_PATH_GLOBAL_STR);
         }
@@ -1254,7 +1255,7 @@ restoreCleanBuild(Manifest *manifest)
                     // Only log when doing a delta restore because otherwise the targets should be empty.  We'll still run the clean
                     // to fix permissions/ownership on the target paths.
                     if (delta)
-                        LOG_INFO("remove invalid files/links/paths from '%s'", strPtr(cleanData->targetPath));
+                        LOG_INFO_FMT("remove invalid files/links/paths from '%s'", strPtr(cleanData->targetPath));
 
                     // Clean the target
                     storageInfoListP(
@@ -1302,13 +1303,13 @@ restoreCleanBuild(Manifest *manifest)
 
             if (link != NULL)
             {
-                const String *pgPath = storagePathP(storagePg(), manifestPgPath(link->name));
+                const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
                 StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
                 // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
                 if (!linkInfo.exists)
                 {
-                    LOG_DETAIL("create symlink '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
+                    LOG_DETAIL_FMT("create symlink '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
 
                     THROW_ON_SYS_ERROR_FMT(
                         symlink(strPtr(link->destination), strPtr(pgPath)) == -1, FileOpenError,
@@ -1319,13 +1320,13 @@ restoreCleanBuild(Manifest *manifest)
             // Create the path normally
             else
             {
-                const String *pgPath = storagePathP(storagePg(), manifestPgPath(path->name));
+                const String *pgPath = storagePathP(storagePg(), manifestPathPg(path->name));
                 StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
                 // Create the path if it is missing  If it exists it should already have the correct ownership and mode.
                 if (!pathInfo.exists)
                 {
-                    LOG_DETAIL("create path '%s'", strPtr(pgPath));
+                    LOG_DETAIL_FMT("create path '%s'", strPtr(pgPath));
 
                     storagePathCreateP(storagePgWrite(), pgPath, .mode = path->mode, .noParentCreate = true, .errorOnExists = true);
                     restoreCleanOwnership(storagePathP(storagePg(), pgPath), path->user, path->group, userId(), groupId(), true);
@@ -1339,13 +1340,13 @@ restoreCleanBuild(Manifest *manifest)
         {
             const ManifestLink *link = manifestLink(manifest, linkIdx);
 
-            const String *pgPath = storagePathP(storagePg(), manifestPgPath(link->name));
+            const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
             StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
             // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
             if (!linkInfo.exists)
             {
-                LOG_DETAIL("create symlink '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
+                LOG_DETAIL_FMT("create symlink '%s' to '%s'", strPtr(pgPath), strPtr(link->destination));
 
                 THROW_ON_SYS_ERROR_FMT(
                     symlink(strPtr(link->destination), strPtr(pgPath)) == -1, FileOpenError,
@@ -1411,7 +1412,7 @@ restoreSelectiveExpression(Manifest *manifest)
                 THROW(FormatError, "no databases found for selective restore\nHINT: is this a valid cluster?");
 
             // Log databases found
-            LOG_DETAIL("databases found for selective restore (%s)", strPtr(strLstJoin(dbList, ", ")));
+            LOG_DETAIL_FMT("databases found for selective restore (%s)", strPtr(strLstJoin(dbList, ", ")));
 
             // Remove included databases from the list
             const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
@@ -1479,7 +1480,7 @@ restoreSelectiveExpression(Manifest *manifest)
             // If all user databases have been selected then nothing to do
             if (expression == NULL)
             {
-                LOG_INFO("nothing to filter - all user databases have been selected");
+                LOG_INFO_FMT("nothing to filter - all user databases have been selected");
             }
             // Else return the expression
             else
@@ -1678,7 +1679,7 @@ restoreRecoveryWriteConf(const Manifest *manifest, unsigned int pgVersion, const
     // Only write recovery.conf if recovery type != none
     if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
     {
-        LOG_INFO("write %s", strPtr(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
+        LOG_INFO_FMT("write %s", strPtr(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
 
         // Use the data directory to set permissions and ownership for recovery file
         const ManifestPath *dataPath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
@@ -1784,7 +1785,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             strCatFmt(content, "%s", strPtr(restoreRecoveryConf(pgVersion, restoreLabel)));
         }
 
-        LOG_INFO(
+        LOG_INFO_FMT(
             "write %s%s", autoConf == NULL ? "" : "updated ", strPtr(storagePathP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)));
 
         // Use the data directory to set permissions and ownership for recovery file
@@ -1841,7 +1842,7 @@ restoreRecoveryWrite(const Manifest *manifest)
 
             if (!storageExistsP(storagePg(), recoveryFile))
             {
-                LOG_WARN(
+                LOG_WARN_FMT(
                     "recovery type is " RECOVERY_TYPE_PRESERVE " but recovery file does not exist at '%s'",
                     strPtr(storagePathP(storagePg(), recoveryFile)));
             }
@@ -2001,7 +2002,7 @@ restoreFilePgPath(const Manifest *manifest, const String *manifestName)
     ASSERT(manifest != NULL);
     ASSERT(manifestName != NULL);
 
-    String *result = strNewFmt("%s/%s", strPtr(manifestTargetBase(manifest)->path), strPtr(manifestPgPath(manifestName)));
+    String *result = strNewFmt("%s/%s", strPtr(manifestTargetBase(manifest)->path), strPtr(manifestPathPg(manifestName)));
 
     if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
         result = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(result));
@@ -2237,7 +2238,7 @@ cmdRestore(void)
         restoreManifestValidate(jobData.manifest, backupSet);
 
         // Log the backup set to restore
-        LOG_INFO("restore backup set %s", strPtr(backupSet));
+        LOG_INFO_FMT("restore backup set %s", strPtr(backupSet));
 
         // Map manifest
         restoreManifestMap(jobData.manifest);
@@ -2266,7 +2267,7 @@ cmdRestore(void)
             (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, restoreJobCallback, &jobData);
 
         for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
-            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));
+            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
 
         // Process jobs
         uint64_t sizeRestored = 0;
@@ -2309,7 +2310,7 @@ cmdRestore(void)
                     strLstAdd(pathSynced, pgPath);
 
                 // Sync the path
-                LOG_DETAIL("sync path '%s'", strPtr(pgPath));
+                LOG_DETAIL_FMT("sync path '%s'", strPtr(pgPath));
                 storagePathSyncP(storageLocalWrite(), pgPath);
             }
         }
@@ -2328,9 +2329,9 @@ cmdRestore(void)
             if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
                 continue;
 
-            const String *pgPath = storagePathP(storagePg(), manifestPgPath(manifestName));
+            const String *pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
 
-            LOG_DETAIL("sync path '%s'", strPtr(pgPath));
+            LOG_DETAIL_FMT("sync path '%s'", strPtr(pgPath));
             storagePathSyncP(storagePgWrite(), pgPath);
         }
 
@@ -2349,7 +2350,7 @@ cmdRestore(void)
             LOG_WARN("backup does not contain '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' -- cluster will not start");
 
         // Sync global path
-        LOG_DETAIL("sync path '%s'", strPtr(storagePathP(storagePg(), PG_PATH_GLOBAL_STR)));
+        LOG_DETAIL_FMT("sync path '%s'", strPtr(storagePathP(storagePg(), PG_PATH_GLOBAL_STR)));
         storagePathSyncP(storagePgWrite(), PG_PATH_GLOBAL_STR);
     }
     MEM_CONTEXT_TEMP_END();

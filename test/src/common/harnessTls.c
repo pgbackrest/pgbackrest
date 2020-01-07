@@ -152,7 +152,7 @@ void
 harnessTlsServerAccept(void)
 {
     struct sockaddr_in addr;
-    uint len = sizeof(addr);
+    unsigned int len = sizeof(addr);
 
     testClientSocket = accept(testServerSocket, (struct sockaddr *)&addr, &len);
 

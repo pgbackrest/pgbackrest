@@ -86,14 +86,17 @@ typedef enum
 Load Functions
 
 Used primarily by modules that need to manipulate the configuration.  These modules include, but are not limited to, config/parse.c,
-config/load.c, perl/config.c, and perl/exec.c.
+config/load.c.
 ***********************************************************************************************************************************/
 void cfgInit(void);
 
 ConfigDefineCommand cfgCommandDefIdFromId(ConfigCommand commandId);
 bool cfgCommandHelp(void);
 void cfgCommandHelpSet(bool helpParam);
-ConfigCommand cfgCommandId(const char *commandName);
+
+// Get command id by name.  If error is true then assert when the command does not exist.
+ConfigCommand cfgCommandId(const char *commandName, bool error);
+
 void cfgCommandParamSet(const StringList *param);
 void cfgCommandSet(ConfigCommand commandParam);
 

@@ -33,6 +33,7 @@ typedef struct BackupRegExpParam
     bool full;
     bool differential;
     bool incremental;
+    bool noAnchorEnd;
 } BackupRegExpParam;
 
 #define backupRegExpP(...)                                                                                                         \

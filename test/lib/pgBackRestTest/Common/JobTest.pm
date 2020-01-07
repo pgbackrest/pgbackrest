@@ -65,6 +65,7 @@ sub new
         $self->{iTestMax},
         $self->{strLogLevel},
         $self->{strLogLevelTest},
+        $self->{strLogLevelTestFile},
         $self->{bLogForce},
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
@@ -76,6 +77,7 @@ sub new
         $self->{bBackTrace},
         $self->{bProfile},
         $self->{iScale},
+        $self->{strTimeZone},
         $self->{bDebug},
         $self->{bDebugTestTrace},
         $self->{iBuildMax},
@@ -96,6 +98,7 @@ sub new
             {name => 'iTestMax'},
             {name => 'strLogLevel'},
             {name => 'strLogLevelTest'},
+            {name => 'strLogLevelTestFile'},
             {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
@@ -107,6 +110,7 @@ sub new
             {name => 'bBackTrace'},
             {name => 'bProfile'},
             {name => 'iScale'},
+            {name => 'strTimeZone', required => false},
             {name => 'bDebug'},
             {name => 'bDebugTestTrace'},
             {name => 'iBuildMax'},
@@ -231,8 +235,8 @@ sub run
                     $rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} = true;
                 }
 
-                # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
-                if ($self->{oTest}->{&TEST_VM} ne VM_NONE && (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ}))
+                # If testing Perl code (or C code that calls the binary) install binary
+                if ($self->{oTest}->{&TEST_VM} ne VM_NONE && (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_BIN_REQ}))
                 {
                     jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
                 }
@@ -277,7 +281,9 @@ sub run
                 $strCommandRunParam .
                 (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
                 ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
+                ($self->{strLogLevelTestFile} ne lc(TRACE) ? " --log-level-test-file=$self->{strLogLevelTestFile}" : '') .
                 ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
+                ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
                 ($self->{bLogForce} ? ' --log-force' : '') .
                 ($self->{bDryRun} ? ' --dry-run' : '') .
                 ($self->{bDryRun} ? ' --vm-out' : '') .
@@ -394,6 +400,16 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
                 $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
 
+                # Set timezone
+                if (defined($self->{strTimeZone}))
+                {
+                    $strTestC =~ s/\{\[C\_TEST\_TZ\]\}/setenv\("TZ", "$self->{strTimeZone}", true\);/g;
+                }
+                else
+                {
+                    $strTestC =~ s/\{\[C\_TEST\_TZ\]\}/\/\/ No timezone specified/g;
+                }
+
                 # Set default log level
                 my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});
                 $strTestC =~ s/\{\[C\_LOG\_LEVEL\_TEST\]\}/$strLogLevelTestC/g;
@@ -420,8 +436,7 @@ sub run
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/test.c", $strTestC);
 
                 # Create build.auto.h
-                my $strBuildAutoH =
-                    "#define HAVE_LIBPERL\n";
+                my $strBuildAutoH = "";
 
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/" . BUILD_AUTO_H, $strBuildAutoH);
 
@@ -438,8 +453,7 @@ sub run
 
                 # Flags that are common to all builds
                 my $strCommonFlags =
-                    '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200112L' .
-                        ' `perl -MExtUtils::Embed -e ccopts`' .
+                    '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200809L -D_FILE_OFFSET_BITS=64' .
                         ' `xml2-config --cflags`' . ($self->{bProfile} ? " -pg" : '') .
                         ' -I`pg_config --includedir`' .
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
@@ -491,7 +505,6 @@ sub run
                     "LDFLAGS=-lcrypto -lssl -lxml2 -lz" .
                         (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
-                        " `perl -MExtUtils::Embed -e ldopts`\n" .
                     "\n" .
                     "SRCS=" . join(' ', @stryCFile) . "\n" .
                     "OBJS=\$(SRCS:.c=.o)\n" .
@@ -500,7 +513,7 @@ sub run
                     "\t\$(CC) -o test.bin \$(OBJS) test.o"  . ($self->{bProfile} ? " -pg" : '') . " \$(LDFLAGS)\n" .
                     "\n" .
                     "test.o: testflags test.c${strTestDepend}\n" .
-	                "\t\$(CC) \$(COMMONFLAGS) \$(WARNINGFLAGS) \$(TESTFLAGS) -c test.c\n";
+                    "\t\$(CC) \$(COMMONFLAGS) \$(WARNINGFLAGS) \$(TESTFLAGS) -c test.c\n";
 
                 # Build C file dependencies
                 foreach my $strCFile (@stryCFile)
@@ -574,7 +587,7 @@ sub end
     my $strTestDone = $self->{oProcess}{test};
     my $iTestDoneIdx = $self->{oProcess}{idx};
 
-    my $iExitStatus = $oExecDone->end(undef, $self->{iVmMax} == 1);
+    my $iExitStatus = $oExecDone->end($self->{iVmMax} == 1);
 
     if (defined($iExitStatus))
     {
@@ -770,7 +783,7 @@ sub end
 }
 
 ####################################################################################################################################
-# Install C binary and library
+# Install C binary
 ####################################################################################################################################
 sub jobInstallC
 {
@@ -778,7 +791,6 @@ sub jobInstallC
     my $strVm = shift;
     my $strImage = shift;
 
-    # Install Perl C Library
     my $oVm = vmGet();
     my $strBuildPath = "${strBasePath}/test/.vagrant/bin/${strVm}";
     my $strBuildLibCPath = "${strBuildPath}/libc";

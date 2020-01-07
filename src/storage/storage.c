@@ -30,7 +30,6 @@ struct Storage
     mode_t modeFile;
     mode_t modePath;
     bool write;
-    bool pathEnforce;
     StoragePathExpressionCallback *pathExpressionFunction;
 };
 
@@ -75,9 +74,17 @@ storageNew(
     this->path = strDup(path);
     this->modeFile = modeFile;
     this->modePath = modePath;
-    this->pathEnforce = true;
     this->write = write;
     this->pathExpressionFunction = pathExpressionFunction;
+
+    // If path sync feature is enabled then path feature must be enabled
+    CHECK(!storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath));
+
+    // If hardlink feature is enabled then path feature must be enabled
+    CHECK(!storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath));
+
+    // If symlink feature is enabled then path feature must be enabled
+    CHECK(!storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath));
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
@@ -240,6 +247,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
+        FUNCTION_LOG_PARAM(BOOL, param.noPathEnforce);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -250,7 +258,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the path
-        String *file = storagePathP(this, fileExp);
+        String *file = storagePathP(this, fileExp, .noEnforce = param.noPathEnforce);
 
         // Call driver function
         result = storageInterfaceInfoP(this->driver, file, .followLink = param.followLink);
@@ -646,11 +654,12 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 Get the absolute path in the storage
 ***********************************************************************************************************************************/
 String *
-storagePath(const Storage *this, const String *pathExp)
+storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, this);
         FUNCTION_TEST_PARAM(STRING, pathExp);
+        FUNCTION_TEST_PARAM(BOOL, param.noEnforce);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -670,7 +679,7 @@ storagePath(const Storage *this, const String *pathExp)
             // Make sure the base storage path is contained within the path expression
             if (!strEqZ(this->path, "/"))
             {
-                if (this->pathEnforce && (!strBeginsWith(pathExp, this->path) ||
+                if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
                     !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/')))
                 {
                     THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(this->path));
@@ -953,22 +962,6 @@ storageInterface(const Storage *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->interface);
-}
-
-/***********************************************************************************************************************************
-Set whether absolute paths are required to be in the base path
-***********************************************************************************************************************************/
-void
-storagePathEnforceSet(Storage *this, bool enforce)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, this);
-        FUNCTION_TEST_PARAM(BOOL, enforce);
-    FUNCTION_TEST_END();
-
-    this->pathEnforce = enforce;
-
-    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

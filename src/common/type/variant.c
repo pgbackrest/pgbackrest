@@ -351,8 +351,8 @@ varBoolForce(const Variant *this)
             // List of false/true boolean string values.  Note that false/true values must be equal.
             static const char *const boolString[] =
             {
-                "n", "f", "0",  "no", "false", "off",
-                "y", "t", "1", "yes",  "true",  "on",
+                "n", "f", "0",  "no", FALSE_Z, "off",
+                "y", "t", "1", "yes",  TRUE_Z,  "on",
             };
 
             // Search for the string

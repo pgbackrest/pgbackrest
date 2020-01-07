@@ -159,7 +159,7 @@ sizeQualifierToMultiplier(char qualifier)
     FUNCTION_TEST_RETURN(result);
 }
 
-void
+static void
 convertToByte(String **value, double *valueDbl)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -462,17 +462,14 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     if (!commandSet)
                     {
                         // Try getting the command from the valid command list
-                        TRY_BEGIN()
-                        {
-                            cfgCommandSet(cfgCommandId(argList[optind - 1]));
-                        }
-                        // Assert error means the command does not exist, which is correct for all usages but this one (since we
-                        // don't have any control over what the user passes), so modify the error code and message.
-                        CATCH(AssertError)
-                        {
+                        ConfigCommand commandId = cfgCommandId(argList[optind - 1], false);
+
+                        // Error when command does not exist
+                        if (commandId == cfgCmdNone)
                             THROW_FMT(CommandInvalidError, "invalid command '%s'", argList[optind - 1]);
-                        }
-                        TRY_END();
+
+                        //  Set the command
+                        cfgCommandSet(commandId);
 
                         if (cfgCommand() == cfgCmdHelp)
                             cfgCommandHelpSet(true);
@@ -638,19 +635,19 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     // Warn if the option not found
                     if (optionList[optionIdx].name == NULL)
                     {
-                        LOG_WARN("environment contains invalid option '%s'", strPtr(key));
+                        LOG_WARN_FMT("environment contains invalid option '%s'", strPtr(key));
                         continue;
                     }
                     // Warn if negate option found in env
                     else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
                     {
-                        LOG_WARN("environment contains invalid negate option '%s'", strPtr(key));
+                        LOG_WARN_FMT("environment contains invalid negate option '%s'", strPtr(key));
                         continue;
                     }
                     // Warn if reset option found in env
                     else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
                     {
-                        LOG_WARN("environment contains invalid reset option '%s'", strPtr(key));
+                        LOG_WARN_FMT("environment contains invalid reset option '%s'", strPtr(key));
                         continue;
                     }
 
@@ -741,19 +738,19 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         // Warn if the option not found
                         if (optionList[optionIdx].name == NULL)
                         {
-                            LOG_WARN("configuration file contains invalid option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains invalid option '%s'", strPtr(key));
                             continue;
                         }
                         // Warn if negate option found in config
                         else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
                         {
-                            LOG_WARN("configuration file contains negate option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains negate option '%s'", strPtr(key));
                             continue;
                         }
                         // Warn if reset option found in config
                         else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
                         {
-                            LOG_WARN("configuration file contains reset option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains reset option '%s'", strPtr(key));
                             continue;
                         }
 
@@ -763,7 +760,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         /// Warn if this option should be command-line only
                         if (cfgDefOptionSection(optionDefId) == cfgDefSectionCommandLine)
                         {
-                            LOG_WARN("configuration file contains command-line only option '%s'", strPtr(key));
+                            LOG_WARN_FMT("configuration file contains command-line only option '%s'", strPtr(key));
                             continue;
                         }
 
@@ -786,7 +783,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             // Warn if it is in a command section
                             if (sectionIdx % 2 == 0)
                             {
-                                LOG_WARN(
+                                LOG_WARN_FMT(
                                     "configuration file contains option '%s' invalid for section '%s'", strPtr(key),
                                     strPtr(section));
                                 continue;
@@ -799,7 +796,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (cfgDefOptionSection(optionDefId) == cfgDefSectionStanza &&
                             strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
                         {
-                            LOG_WARN(
+                            LOG_WARN_FMT(
                                 "configuration file contains stanza-only option '%s' in global section '%s'", strPtr(key),
                                 strPtr(section));
                             continue;

@@ -229,25 +229,56 @@ walIsPartial(const String *walSegment)
 }
 
 /***********************************************************************************************************************************
-Generates the location of the wal directory using either an absolute path or cwd() and a relative path
+Generates the location of the wal directory using a relative wal path and the supplied pg path
 ***********************************************************************************************************************************/
 String *
-walPath(const String *walFile)
+walPath(const String *walFile, const String *pgPath, const String *command)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walFile);
+        FUNCTION_LOG_PARAM(STRING, pgPath);
+        FUNCTION_LOG_PARAM(STRING, command);
     FUNCTION_LOG_END();
 
     ASSERT(walFile != NULL);
+    ASSERT(command != NULL);
 
     String *result = NULL;
 
     if (!strBeginsWithZ(walFile, "/"))
     {
-        char currentWorkDir[4096];
+        // Error if walFile has a relative path and pgPath is not set
+        if (pgPath == NULL)
+        {
+            THROW_FMT(
+                OptionRequiredError,
+                "option '" CFGOPT_PG1_PATH "' must be specified when relative wal paths are used\n"
+                    "HINT: is %%f passed to %s instead of %%p?\n"
+                    "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
+                strPtr(command));
+        }
 
+        // Get the working directory
+        char currentWorkDir[4096];
         THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
-        result = strNewFmt("%s/%s", currentWorkDir, strPtr(walFile));
+
+        // Check if the working directory is the same as pgPath
+        if (!strEqZ(pgPath, currentWorkDir))
+        {
+            // If not we'll change the working directory to pgPath and see if that equals the working directory we got called with
+            THROW_ON_SYS_ERROR_FMT(chdir(strPtr(pgPath)) != 0, PathMissingError, "unable to chdir() to '%s'", strPtr(pgPath));
+
+            // Get the new working directory
+            char newWorkDir[4096];
+            THROW_ON_SYS_ERROR(getcwd(newWorkDir, sizeof(newWorkDir)) == NULL, FormatError, "unable to get cwd");
+
+            // Error if the new working directory is not equal to the original current working directory.  This means that
+            // PostgreSQL and pgBackrest have a different idea about where the PostgreSQL data directory is located.
+            if (strcmp(currentWorkDir, newWorkDir) != 0)
+                THROW_FMT(AssertError, "working path '%s' is not the same path as '%s'", currentWorkDir, strPtr(pgPath));
+        }
+
+        result = strNewFmt("%s/%s", strPtr(pgPath), strPtr(walFile));
     }
     else
         result = strDup(walFile);
@@ -339,6 +370,16 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
         while (result == NULL && wait != NULL && waitMore(wait));
     }
     MEM_CONTEXT_TEMP_END();
+
+    if (result == NULL && timeout != 0)
+    {
+        THROW_FMT(
+            ArchiveTimeoutError,
+            "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
+                "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+                "HINT: check the PostgreSQL server log for errors.",
+            strPtr(walSegment), timeout);
+    }
 
     FUNCTION_LOG_RETURN(STRING, result);
 }

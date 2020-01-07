@@ -46,18 +46,17 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("helpRenderText()"))
     {
-        TEST_RESULT_STR(
-            strPtr(helpRenderText(strNew("this is a short sentence"), 0, false, 80)), "this is a short sentence", "one line");
+        TEST_RESULT_STR_Z(helpRenderText(strNew("this is a short sentence"), 0, false, 80), "this is a short sentence", "one line");
 
-        TEST_RESULT_STR(
-            strPtr(helpRenderText(strNew("this is a short sentence"), 4, false, 14)),
+        TEST_RESULT_STR_Z(
+            helpRenderText(strNew("this is a short sentence"), 4, false, 14),
             "this is a\n"
             "    short\n"
             "    sentence",
             "three lines, no indent first");
 
-        TEST_RESULT_STR(
-            strPtr(helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), 2, true, 16)),
+        TEST_RESULT_STR_Z(
+            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), 2, true, 16),
             "  This is a\n"
             "  short\n"
             "  paragraph.\n"
@@ -70,11 +69,11 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("helpRenderValue()"))
     {
-        TEST_RESULT_STR(strPtr(helpRenderValue(varNewBool(true))), "y", "boolean y");
-        TEST_RESULT_STR(strPtr(helpRenderValue(varNewBool(false))), "n", "boolean n");
-        TEST_RESULT_STR(strPtr(helpRenderValue(varNewStrZ("test-string"))), "test-string", "string");
-        TEST_RESULT_STR(strPtr(helpRenderValue(varNewDbl(1.234))), "1.234", "double");
-        TEST_RESULT_STR(strPtr(helpRenderValue(varNewInt(1234))), "1234", "int");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(true)), "y", "boolean y");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(false)), "n", "boolean n");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewStrZ("test-string")), "test-string", "string");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewDbl(1.234)), "1.234", "double");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewInt(1234)), "1234", "int");
     }
 
     // *****************************************************************************************************************************
@@ -86,13 +85,13 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "help from empty command line");
-        TEST_RESULT_STR(strPtr(helpRender()), generalHelp, "    check text");
+        TEST_RESULT_STR_Z(helpRender(), generalHelp, "    check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "help from help command");
-        TEST_RESULT_STR(strPtr(helpRender()), generalHelp, "    check text");
+        TEST_RESULT_STR_Z(helpRender(), generalHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const char *commandHelp = strPtr(strNewFmt(
@@ -109,7 +108,7 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "version");
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "help for version command");
-        TEST_RESULT_STR(strPtr(helpRender()), commandHelp, "    check text");
+        TEST_RESULT_STR_Z(helpRender(), commandHelp, "    check text");
 
         // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
         // -------------------------------------------------------------------------------------------------------------------------
@@ -235,7 +234,7 @@ testRun(void)
         strLstAddZ(argList, "--db-include=db2");
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "help for restore command");
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
-        TEST_RESULT_STR(strPtr(helpRender()), commandHelp, "    check text");
+        TEST_RESULT_STR_Z(helpRender(), commandHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -280,13 +279,12 @@ testRun(void)
         strLstAddZ(argList, "buffer-size");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(strPtr(helpRender()), strPtr(strNewFmt("%s\ndefault: 4194304\n", optionHelp)), "    check text");
+        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ndefault: 4194304\n", optionHelp), "    check text");
 
         strLstAddZ(argList, "--buffer-size=32768");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(
-            strPtr(helpRender()), strPtr(strNewFmt("%s\ncurrent: 32768\ndefault: 4194304\n", optionHelp)), "    check text");
+        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 4194304\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strPtr(strNewFmt(
@@ -304,14 +302,13 @@ testRun(void)
         strLstAddZ(argList, "repo1-s3-host");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAddZ(argList, "--repo1-s3-host=s3-host");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR(
-            strPtr(helpRender()), strPtr(strNewFmt("%s\ncurrent: s3-host\n", optionHelp)), "    check text");
+        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: s3-host\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strPtr(strNewFmt(
@@ -334,7 +331,7 @@ testRun(void)
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, repo1-s3-host option");
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
-        TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strPtr(strNewFmt(
@@ -359,7 +356,7 @@ testRun(void)
         strLstAddZ(argList, "repo-hardlink");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for backup command, repo-hardlink option");
-        TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         // Check admonition
         // -------------------------------------------------------------------------------------------------------------------------
@@ -392,7 +389,7 @@ testRun(void)
         strLstAddZ(argList, "repo-retention-archive");
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for backup command, repo-retention-archive option");
-        TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check admonition text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check admonition text");
     }
 
     // *****************************************************************************************************************************
@@ -416,7 +413,7 @@ testRun(void)
 
         Storage *storage = storagePosixNew(
             strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
-        TEST_RESULT_STR(strPtr(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile)))), generalHelp, "    check text");
+        TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), generalHelp, "    check text");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

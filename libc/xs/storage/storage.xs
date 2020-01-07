@@ -22,7 +22,6 @@ CODE:
         memContextSwitch(MEM_CONTEXT_XS_OLD());
         RETVAL = storagePosixNew(
             path == NULL ? STRDEF("/") : path, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-        storagePathEnforceSet((Storage *)RETVAL, false);
         memContextSwitch(MEM_CONTEXT_XS_TEMP());
     }
     else if (strEqZ(type, "<REPO>"))
@@ -36,7 +35,6 @@ CODE:
 
         memContextSwitch(MEM_CONTEXT_XS_OLD());
         RETVAL = storagePosixNew(cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-        storagePathEnforceSet((Storage *)RETVAL, false);
         memContextSwitch(MEM_CONTEXT_XS_TEMP());
     }
     else
@@ -200,7 +198,7 @@ CODE:
     // Else a file is specified
     else
     {
-        info.name = strBase(storagePath(self, pathExp));
+        info.name = strBase(storagePathP(self, pathExp));
         strCat(data.json, strPtr(storageManifestXsInfo(NULL, &info)));
     }
 

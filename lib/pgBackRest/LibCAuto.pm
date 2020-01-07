@@ -143,7 +143,6 @@ sub libcAutoExportTag
             'CFGOPT_ARCHIVE_TIMEOUT',
             'CFGOPT_BACKUP_STANDBY',
             'CFGOPT_BUFFER_SIZE',
-            'CFGOPT_C',
             'CFGOPT_CHECKSUM_PAGE',
             'CFGOPT_CMD_SSH',
             'CFGOPT_COMMAND',
@@ -173,7 +172,6 @@ sub libcAutoExportTag
             'CFGOPT_NEUTRAL_UMASK',
             'CFGOPT_ONLINE',
             'CFGOPT_OUTPUT',
-            'CFGOPT_PERL_OPTION',
             'CFGOPT_PG_HOST',
             'CFGOPT_PG_HOST2',
             'CFGOPT_PG_HOST3',
@@ -254,6 +252,14 @@ sub libcAutoExportTag
             'CFGOPT_PG_SOCKET_PATH6',
             'CFGOPT_PG_SOCKET_PATH7',
             'CFGOPT_PG_SOCKET_PATH8',
+            'CFGOPT_PG_USER',
+            'CFGOPT_PG_USER2',
+            'CFGOPT_PG_USER3',
+            'CFGOPT_PG_USER4',
+            'CFGOPT_PG_USER5',
+            'CFGOPT_PG_USER6',
+            'CFGOPT_PG_USER7',
+            'CFGOPT_PG_USER8',
             'CFGOPT_PROCESS',
             'CFGOPT_PROCESS_MAX',
             'CFGOPT_PROTOCOL_TIMEOUT',
@@ -299,12 +305,8 @@ sub libcAutoExportTag
             'CFGOPT_TARGET_ACTION',
             'CFGOPT_TARGET_EXCLUSIVE',
             'CFGOPT_TARGET_TIMELINE',
-            'CFGOPT_TEST',
-            'CFGOPT_TEST_DELAY',
-            'CFGOPT_TEST_POINT',
             'CFGOPT_TYPE',
             'cfgCommandName',
-            'cfgOptionIndex',
             'cfgOptionIndexTotal',
             'cfgOptionName',
         ],
@@ -331,32 +333,12 @@ sub libcAutoExportTag
 
         crypto =>
         [
-            'CIPHER_MODE_ENCRYPT',
-            'CIPHER_MODE_DECRYPT',
             'cryptoHashOne',
         ],
 
         debug =>
         [
             'libcUvSize',
-        ],
-
-        encode =>
-        [
-            'ENCODE_TYPE_BASE64',
-            'decodeToBin',
-            'encodeToStr',
-        ],
-
-        lock =>
-        [
-            'lockAcquire',
-            'lockRelease',
-        ],
-
-        random =>
-        [
-            'cryptoRandomBytes',
         ],
 
         storage =>

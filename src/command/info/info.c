@@ -22,7 +22,6 @@ Info Command
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
 #include "info/manifest.h"
-#include "perl/exec.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
 
@@ -320,7 +319,7 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
                     }
                     else
                     {
-                        kvPut(varKv(link), KEY_NAME_VAR, VARSTR(manifestPgPath(target->name)));
+                        kvPut(varKv(link), KEY_NAME_VAR, VARSTR(manifestPathPg(target->name)));
                         kvPut(varKv(link), KEY_DESTINATION_VAR, VARSTR(target->path));
                         varLstAdd(linkSection, link);
                     }

@@ -1,6 +1,6 @@
 # Initialize configuration
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.20dev])
+AC_INIT([pgBackRest], [2.21dev])
 AC_CONFIG_SRCDIR([version.h])
 
 # Check compiler
@@ -32,12 +32,6 @@ fi
 
 # Set includes
 AC_SUBST(CINCLUDE, "-I. -I../libc")
-
-# Check required perl library
-LIBS_BEFORE_PERL=$LIBS
-AC_CHECK_LIB([perl], [perl_parse], [], [AC_MSG_ERROR([library 'perl' is required])], [`perl -MExtUtils::Embed -e ldopts`])
-LIBS="$LIBS_BEFORE_PERL `perl -MExtUtils::Embed -e ldopts`"
-AC_SUBST(CLIBRARY, "`perl -MExtUtils::Embed -e ccopts`")
 
 # Check required pq library
 AC_CHECK_LIB([pq], [PQconnectdb], [], [AC_MSG_ERROR([library 'pq' is required])])

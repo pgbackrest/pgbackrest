@@ -83,13 +83,10 @@
 
         <variable key="pg-group">postgres</variable>
 
-        <variable key="perl-lib-path">/usr/share/perl5</variable>
-        <variable key="perl-bin-path">/usr/bin</variable>
-
         <variable key="backrest-repo-path">/var/lib/pgbackrest</variable>
         <variable key="backrest-repo-cipher-type">aes-256-cbc</variable>
         <variable key="backrest-repo-cipher-pass">zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</variable>
-        <variable key="br-bin">{[perl-bin-path]}/pgbackrest</variable>
+        <variable key="br-bin">/usr/bin/pgbackrest</variable>
         <variable key="br-user">pgbackrest</variable>
         <variable key="br-group">{[br-user]}</variable>
         <variable key="br-home-path">/home/{[br-user]}</variable>
@@ -448,6 +445,23 @@
     <block-define if="'{[package]}' eq 'none'" id="br-install">
         <p><backrest/> needs to be installed from a package or installed manually as shown here.</p>
 
+        <execute-list host="{[host-build]}">
+            <title>Install dependencies</title>
+
+            <execute if="{[os-type-is-debian]}" user="root" pre="y">
+                <exe-cmd>
+                    apt-get install postgresql-client libxml2</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute if="{[os-type-is-centos]}" user="root" pre="y">
+                <exe-cmd>
+                    yum install postgresql-libs
+                </exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
         <execute-list host="{[br-install-host]}">
             <title>Copy <backrest/> binary from build host</title>
 
@@ -461,30 +475,7 @@
             </execute>
         </execute-list>
 
-        <!-- Perl installation -->
-        <p><backrest/> contains embedded Perl which requires some additional packages.</p>
-
-        <execute-list host="{[br-install-host]}">
-            <title>Install required Perl packages</title>
-
-            <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install perl</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
-                <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
-                    perl-Digest-SHA</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute if="{[os-type-is-centos7]}" user="root" pre="y">
-                <exe-cmd>yum install perl perl-Time-HiRes perl-Digest-SHA perl-JSON-PP</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-        </execute-list>
-
-        <p>Finally, <backrest/> requires log and configuration directories and a configuration file.</p>
+        <p><backrest/> requires log and configuration directories and a configuration file.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Create <backrest/> configuration file and directories</title>
@@ -638,7 +629,7 @@
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example, the <link section="/backup">Backup</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section.  Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
-        <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> {[pg-version]}, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the locations to install Perl libraries and executables may vary.
+        <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> {[pg-version]}, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the location to install the executable may vary.
 
         Configuration information and documentation for PostgreSQL can be found in the <postgres/> <link url='http://www.postgresql.org/docs/{[pg-version]}/static/index.html'>Manual</link>.</p>
 
@@ -766,42 +757,20 @@
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install build-essential libssl-dev libxml2-dev libperl-dev zlib1g-dev
-                            libpq-dev</exe-cmd>
+                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
+            <execute if="{[os-type-is-centos]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install build-essential gcc openssl-devel libxml2-devel
-                        postgresql-devel perl-ExtUtils-Embed
-                </exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute if="{[os-type-is-centos7]}" user="root" pre="y">
-                <exe-cmd>
-                    yum install build-essential gcc make openssl-devel libxml2-devel
-                        postgresql-devel perl-ExtUtils-Embed
+                    yum install make gcc postgresql-devel openssl-devel libxml2-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>
 
-        <p><backrest/> supports 32-bit distributions that build Perl with 64-bit integer support.</p>
-
         <execute-list host="{[host-build]}">
-            <title>Check for 64-bit integers</title>
-
-            <execute output="y">
-                <exe-cmd>perl -V | grep USE_64_BIT_INT</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <p>The <backrest/> executable is written in C.  This allows certain time-critical commands (like async <cmd>archive-push</cmd>/<cmd>archive-get</cmd>) to run more quickly.</p>
-
-        <execute-list host="{[host-build]}">
-            <title>Build <backrest/> package</title>
+            <title>Compile <backrest/></title>
 
             <execute>
                 <exe-cmd>cd /build/pgbackrest-release-{[version]}/src &amp;&amp; ./configure</exe-cmd>
@@ -2503,7 +2472,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
 
-            <execute user="{[br-user]}" err-expect="62" output="y">
+            <execute user="{[br-user]}" err-expect="56" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>\: stop file exists for all stanzas</exe-highlight>
             </execute>
@@ -2544,7 +2513,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
 
-            <execute user="{[br-user]}" err-expect="62" output="y">
+            <execute user="{[br-user]}" err-expect="56" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>\: stop file exists for stanza demo</exe-highlight>
             </execute>

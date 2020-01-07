@@ -386,7 +386,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
             // If a reference to a file exists, then it is in a previous backup and the delta calculation was already done
             if (file->reference != NULL)
-                strLstAdd(referenceList, file->reference);
+                strLstAddIfMissing(referenceList, file->reference);
             else
             {
                 backupSizeDelta += file->size;
@@ -673,7 +673,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                         if (manData->pgId == pgHistory.id && manData->pgSystemId == pgHistory.systemId &&
                             manData->pgVersion == pgHistory.version)
                         {
-                            LOG_WARN("backup '%s' found in repository added to " INFO_BACKUP_FILE, strPtr(backupLabel));
+                            LOG_WARN_FMT("backup '%s' found in repository added to " INFO_BACKUP_FILE, strPtr(backupLabel));
                             infoBackupDataAdd(infoBackup, manifest);
                             found = true;
                             break;
@@ -681,7 +681,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                     }
 
                     if (!found)
-                        LOG_WARN("invalid backup '%s' cannot be added to current backups", strPtr(manData->backupLabel));
+                        LOG_WARN_FMT("invalid backup '%s' cannot be added to current backups", strPtr(manData->backupLabel));
                 }
             }
         }
@@ -697,7 +697,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
             // Remove backup from the current list in the infoBackup object
             if (!storageExistsP(storage, manifestFileName))
             {
-                LOG_WARN("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(backupLabel));
+                LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strPtr(backupLabel));
                 infoBackupDataDelete(infoBackup, backupLabel);
             }
         }

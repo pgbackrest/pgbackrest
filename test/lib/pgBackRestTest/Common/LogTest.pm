@@ -22,6 +22,11 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 
 ####################################################################################################################################
+# Expect log cache for supplemental files so they are only added to expect logs when they have changed
+####################################################################################################################################
+my $hyExpectCache = undef;
+
+####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -148,15 +153,7 @@ sub supplementalAdd
     my $strComment = shift;
     my $strContent = shift;
 
-    my $strHeader = "+ supplemental file: " . $self->regExpReplaceAll($strFileName);
-
-    if (defined($strComment))
-    {
-        $self->{strLog} .= "\n" . $self->regExpReplaceAll($strComment) . "\n" . ('=' x '132') . "\n";
-    }
-
-    $self->{strLog} .= "\n${strHeader}\n" . ('-' x length($strHeader)) . "\n";
-
+    # Get content if it is not defined
     if (!defined($strContent))
     {
         open(my $hFile, '<', $strFileName)
@@ -164,14 +161,27 @@ sub supplementalAdd
 
         while (my $strLine = readline($hFile))
         {
-            $self->{strLog} .= $self->regExpReplaceAll($strLine);
+            $strContent .= $strLine;
         }
 
         close($hFile);
     }
-    else
+
+    # Only ouput when the content of this file has changed
+    if (!defined($hyExpectCache->{$strFileName}) || $hyExpectCache->{$strFileName} ne $strContent)
     {
-        if (defined($strContent) && length($strContent) > 0)
+        # $hyExpectCache->{$strFileName} = $strContent;
+
+        my $strHeader = "+ supplemental file: " . $self->regExpReplaceAll($strFileName);
+
+        if (defined($strComment))
+        {
+            $self->{strLog} .= "\n" . $self->regExpReplaceAll($strComment) . "\n" . ('=' x '132') . "\n";
+        }
+
+        $self->{strLog} .= "\n${strHeader}\n" . ('-' x length($strHeader)) . "\n";
+
+        if (length($strContent) > 0)
         {
             foreach my $strLine (split("\n", $strContent))
             {
@@ -438,6 +448,12 @@ sub regExpReplaceAll
         $strLine, 'TIMESTAMP-STR', "timestamp start\/stop: $strTimestampRegExp / $strTimestampRegExp",
         "${strTimestampRegExp} / ${strTimestampRegExp}\$", false);
     $strLine = $self->regExpReplace($strLine, 'CHECKSUM', 'checksum=[\"]{0,1}[0-f]{40}', '[0-f]{40}$', false);
+
+    $strLine = $self->regExpReplace($strLine, 'LOG-LEVEL-FILE', 'log-level-file=[a-z]+', '[a-z]+$', false);
+    $strLine = $self->regExpReplace($strLine, 'LOG-SUBPROCESS', 'log-subprocess=[a-z]+', '[a-z]+$', false);
+    $strLine = $self->regExpReplace($strLine, '', ' --log-subprocess', undef, false);
+    $strLine = $self->regExpReplace($strLine, '', ' --no-log-subprocess', undef, false);
+    $strLine = $self->regExpReplace($strLine, 'BUFFER-SIZE', 'buffer-size=[0-9a-z]+', '[0-9a-z]+$', false);
 
     $strLine = $self->regExpReplace($strLine, 'REMOTE-PROCESS-TERMINATED-MESSAGE',
         'remote process terminated.*: (ssh.*|no output from terminated process)$',

@@ -91,7 +91,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
     // If backup from standby is true then warn when a standby not found
     else if (cfgOptionBool(cfgOptBackupStandby))
     {
-        LOG_WARN("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
+        LOG_WARN_FMT("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -135,22 +135,10 @@ checkPrimary(const DbGetResult dbGroup)
         TimeMSec archiveTimeout = (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
         const String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, walSegment, archiveTimeout);
 
-        if (walSegmentFile != NULL)
-        {
-            LOG_INFO(
-                "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
-                strPtr(storagePath(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
-                strPtr(walSegmentFile)))));
-        }
-        else
-        {
-            THROW_FMT(
-                ArchiveTimeoutError,
-                "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
-                    "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-                    "HINT: check the PostgreSQL server log for errors.",
-                strPtr(walSegment), archiveTimeout);
-        }
+        LOG_INFO_FMT(
+            "WAL segment %s successfully archived to '%s'", strPtr(walSegment),
+            strPtr(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
+            strPtr(walSegmentFile)))));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -167,7 +155,7 @@ cmdCheck(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-        DbGetResult dbGroup = dbGet(false, false);
+        DbGetResult dbGroup = dbGet(false, false, false);
 
         if (dbGroup.standby == NULL && dbGroup.primary == NULL)
             THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");

@@ -21,7 +21,7 @@ typedef struct DbGetResult
     Db *standby;
 } DbGetResult;
 
-DbGetResult dbGet(bool primaryOnly, bool primaryRequired);
+DbGetResult dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired);
 
 /***********************************************************************************************************************************
 Macros for function logging

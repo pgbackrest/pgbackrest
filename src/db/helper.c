@@ -32,8 +32,8 @@ dbGetId(unsigned int pgId)
         {
             result = dbNew(
                 pgClientNew(
-                    cfgOptionStr(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), PG_DB_POSTGRES_STR, NULL,
-                    (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
+                    cfgOptionStr(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), PG_DB_POSTGRES_STR,
+                    cfgOptionStr(cfgOptPgUser + pgId - 1), (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
                 NULL, applicationName);
         }
         else
@@ -50,12 +50,15 @@ dbGetId(unsigned int pgId)
 Get primary cluster or primary and standby cluster
 ***********************************************************************************************************************************/
 DbGetResult
-dbGet(bool primaryOnly, bool primaryRequired)
+dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, primaryOnly);
         FUNCTION_LOG_PARAM(BOOL, primaryRequired);
+        FUNCTION_LOG_PARAM(BOOL, standbyRequired);
     FUNCTION_LOG_END();
+
+    ASSERT(!(primaryOnly && standbyRequired));
 
     DbGetResult result = {0};
 
@@ -89,7 +92,7 @@ dbGet(bool primaryOnly, bool primaryRequired)
                 }
                 CATCH_ANY()
                 {
-                    LOG_WARN("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
+                    LOG_WARN_FMT("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
                     db = NULL;
                 }
                 TRY_END();
@@ -127,6 +130,10 @@ dbGet(bool primaryOnly, bool primaryRequired)
         // Error if no primary was found
         if (result.primaryId == 0 && primaryRequired)
             THROW(DbConnectError, "unable to find primary cluster - cannot proceed");
+
+        // Error if no standby was found
+        if (result.standbyId == 0 && standbyRequired)
+            THROW(DbConnectError, "unable to find standby cluster - cannot proceed");
 
         dbMove(result.primary, MEM_CONTEXT_OLD());
         dbMove(result.standby, MEM_CONTEXT_OLD());

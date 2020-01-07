@@ -3,6 +3,8 @@ Storage Test Harness
 ***********************************************************************************************************************************/
 #include <inttypes.h>
 
+#include "common/debug.h"
+#include "common/compress/gzip/decompress.h"
 #include "common/user.h"
 #include "storage/storage.h"
 
@@ -14,6 +16,9 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 {
     HarnessStorageInfoListCallbackData *data = callbackData;
 
+    if (data->rootPathOmit && info->type == storageTypePath && strEq(info->name, DOT_STR))
+        return;
+
     strCatFmt(data->content, "%s {", strPtr(info->name));
 
     switch (info->type)
@@ -23,7 +28,23 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
             strCat(data->content, "file");
 
             if (!data->sizeOmit)
-                strCatFmt(data->content, ", s=%" PRIu64, info->size);
+            {
+                uint64_t size = info->size;
+
+                // If the file is compressed then decompress to get the real size
+                if (data->fileCompressed)
+                {
+                    ASSERT(data->storage != NULL);
+
+                    StorageRead *read = storageNewReadP(
+                        data->storage,
+                        data->path != NULL ? strNewFmt("%s/%s", strPtr(data->path), strPtr(info->name)) : info->name);
+                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), gzipDecompressNew(false));
+                    size = bufUsed(storageGetP(read));
+                }
+
+                strCatFmt(data->content, ", s=%" PRIu64, size);
+            }
 
             break;
         }

@@ -684,6 +684,10 @@ storagePosixNewInternal(
         if (!pathSync)
             driver->interface.pathSync = NULL;
 
+        // If this is a posix driver then add link features
+        if (strEq(type, STORAGE_POSIX_TYPE_STR))
+            driver->interface.feature |= (1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync);
+
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();

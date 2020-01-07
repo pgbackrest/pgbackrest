@@ -829,6 +829,15 @@
                         <example>/var/run/postgresql</example>
                     </config-key>
 
+                    <!-- CONFIG - STANZA SECTION - PG-USER KEY -->
+                    <config-key id="pg-user" name="PostgreSQL Database User">
+                        <summary><postgres/> database user.</summary>
+
+                        <text>The database user name used when connecting to <postgres/>.  If not specified <backrest/> will connect with the local OS user or <id>PGUSER</id>.</text>
+
+                        <example>backupuser</example>
+                    </config-key>
+
                     <!-- CONFIG - STANZA SECTION - PG-HOST-PORT KEY -->
                     <config-key id="pg-host-port" name="PostgreSQL Host Port">
                         <summary><postgres/> host port when <setting>pg-host</setting> is set.</summary>
@@ -1329,7 +1338,7 @@
                     <option id="force" name="Force">
                         <summary>Force stanza creation.</summary>
 
-                        <text><admonition type="caution">Use <br-option>--force</br-option> only as a last resort, when all else fails.  If data is missing from the repository then the recreated <file>.info</file> files will likely be corrupt.</admonition>If the required stanza <file>.info</file> files do not exist in the repository but backups or WAL segments do exist, then this option can be used to force the stanza to be created from the existing data in the repository.  This is most likely to be useful after corruption or an incomplete restore of the repository from elsewhere.</text>
+                        <text>This option is no longer supported.</text>
 
                         <example>n</example>
                     </option>
