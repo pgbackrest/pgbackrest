@@ -83,6 +83,26 @@ void timePartsValid(int hour, int minute, int second)
 }
 
 /**********************************************************************************************************************************/
+void tzPartsValid(int tzHour, int tzMinute)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, tzHour);
+        FUNCTION_TEST_PARAM(INT, tzMinute);
+    FUNCTION_TEST_END();
+
+    // Valid time zones range from GMT-12 all the way to GMT+14 (i.e. -1200 and +1400 are the min/max).
+    // ??? This is only a sanity check for basic validity of timezone offset of 15 minute intervals until the timezone
+    // database is implemented.
+    if (!(((tzHour > -12 && tzHour < 14) && (tzMinute == 0 || tzMinute == 15 || tzMinute == 30 || tzMinute == 45)) ||
+        (tzHour == -12 && tzMinute == 0) || (tzHour == 14 && tzMinute == 0)))
+    {
+        THROW_FMT(FormatError, "invalid timezone %02d%02d", tzHour, tzMinute);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 bool yearIsLeap(int year)
 {
     FUNCTION_TEST_BEGIN();

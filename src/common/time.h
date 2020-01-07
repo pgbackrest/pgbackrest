@@ -29,6 +29,9 @@ void datePartsValid(int year, int month, int day);
 // Are the time parts valid?
 void timePartsValid(int hour, int minute, int second);
 
+// Are the timezone offset parts valid?
+void tzPartsValid(int tzHour, int tzMinute);
+
 // Is the year a leap year?
 bool yearIsLeap(int year);
 

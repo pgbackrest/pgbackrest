@@ -33,7 +33,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("yearIsLeap(), dayOfYear(), timePartsValid(), and epochFromParts()"))
+    if (testBegin("yearIsLeap(), dayOfYear(), timePartsValid(), tzPartsValid(), and epochFromParts()"))
     {
         TEST_TITLE("is leap year");
 
@@ -68,6 +68,20 @@ testRun(void)
         TEST_ERROR(timePartsValid( 0,  0, -1), FormatError, "invalid time 00:00:-1");
         TEST_ERROR(timePartsValid( 0,  0, 60), FormatError, "invalid time 00:00:60");
         TEST_RESULT_VOID(timePartsValid(23, 59, 59), "valid time");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timezone parts valid");
+
+        TEST_ERROR(tzPartsValid(-13, 0), FormatError, "invalid timezone -1300");
+        TEST_ERROR(tzPartsValid(15, 0), FormatError, "invalid timezone 1500");
+        TEST_ERROR(tzPartsValid(0, 5), FormatError, "invalid timezone 0005");
+        TEST_ERROR(tzPartsValid(-12, 30), FormatError, "invalid timezone -1230");
+        TEST_ERROR(tzPartsValid(14, 45), FormatError, "invalid timezone 1445");
+        TEST_RESULT_VOID(tzPartsValid(-12, 0), "max negative timezone");
+        TEST_RESULT_VOID(tzPartsValid(14, 0), "max positive timezone");
+        TEST_RESULT_VOID(tzPartsValid(0, 15), "valid timezone minute 15");
+        TEST_RESULT_VOID(tzPartsValid(13, 45), "valid timezone minute 45");
+        TEST_RESULT_VOID(tzPartsValid(-3, 30), "valid timezone minute 30");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("time from parts");
