@@ -468,6 +468,9 @@ cmdArchivePushAsync(void)
                 strLstSize(jobData.walFileList) == 1 ?
                     "" : strPtr(strNewFmt("...%s", strPtr(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1)))));
 
+            // Acquire a lock
+            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
+
             // Drop files if queue max has been exceeded
             if (cfgOptionTest(cfgOptArchivePushQueueMax) && archivePushDrop(jobData.walPath, jobData.walFileList))
             {
