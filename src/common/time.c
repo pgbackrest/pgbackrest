@@ -47,7 +47,8 @@ sleepMSec(TimeMSec sleepMSec)
 }
 
 /**********************************************************************************************************************************/
-void datePartsValid(int year, int month, int day)
+void
+datePartsValid(int year, int month, int day)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, year);
@@ -68,7 +69,8 @@ void datePartsValid(int year, int month, int day)
 }
 
 /**********************************************************************************************************************************/
-void timePartsValid(int hour, int minute, int second)
+void
+timePartsValid(int hour, int minute, int second)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, hour);
@@ -83,7 +85,8 @@ void timePartsValid(int hour, int minute, int second)
 }
 
 /**********************************************************************************************************************************/
-void tzPartsValid(int tzHour, int tzMinute)
+void
+tzPartsValid(int tzHour, int tzMinute)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, tzHour);                           // signed hour part of timezone
@@ -127,7 +130,8 @@ tzOffsetSeconds(int tzHour, int tzMinute)
 }
 
 /**********************************************************************************************************************************/
-bool yearIsLeap(int year)
+bool
+yearIsLeap(int year)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, year);
@@ -137,7 +141,8 @@ bool yearIsLeap(int year)
 }
 
 /**********************************************************************************************************************************/
-int dayOfYear(int year, int month, int day)
+int
+dayOfYear(int year, int month, int day)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, year);
