@@ -217,7 +217,7 @@ cmdArchiveGet(void)
                     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
 
                     // Generate command options
-                    StringList *commandExec = cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, optionReplace, true);
+                    StringList *commandExec = cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, optionReplace, true, false);
                     strLstInsert(commandExec, 0, cfgExe());
 
                     // Clean the current queue using the list of WAL that we ideally want in the queue.  queueNeed()

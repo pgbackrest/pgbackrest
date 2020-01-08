@@ -141,7 +141,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         // Disable output to stdout since it is used by the protocol
         kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
 
-        result = strLstMove(cfgExecParam(cfgCommand(), cfgCmdRoleLocal, optionReplace, true), MEM_CONTEXT_OLD());
+        result = strLstMove(cfgExecParam(cfgCommand(), cfgCmdRoleLocal, optionReplace, true, false), MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -334,7 +334,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Add the type
     kvPut(optionReplace, VARSTR(CFGOPT_STORAGE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
-    StringList *commandExec = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false);
+    StringList *commandExec = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true);
     strLstInsert(commandExec, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
     strLstAdd(result, strLstJoin(commandExec, " "));
 
