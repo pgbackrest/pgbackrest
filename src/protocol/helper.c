@@ -220,31 +220,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Is this a repo remote?
     bool isRepo = protocolStorageType == protocolStorageTypeRepo;
 
-    // Fixed parameters for ssh command
-    StringList *result = strLstNew();
-    strLstAddZ(result, "-o");
-    strLstAddZ(result, "LogLevel=error");
-    strLstAddZ(result, "-o");
-    strLstAddZ(result, "Compression=no");
-    strLstAddZ(result, "-o");
-    strLstAddZ(result, "PasswordAuthentication=no");
-
-    // Append port if specified
-    ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort + hostIdx;
-
-    if (cfgOptionTest(optHostPort))
-    {
-        strLstAddZ(result, "-p");
-        strLstAdd(result, strNewFmt("%u", cfgOptionUInt(optHostPort)));
-    }
-
-    // Append user/host
-    strLstAdd(
-        result,
-        strNewFmt(
-            "%s@%s", strPtr(cfgOptionStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser + hostIdx)),
-            strPtr(cfgOptionStr(isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx))));
-
     // Option replacements
     KeyValue *optionReplace = kvNew();
 
@@ -318,7 +293,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     // !!! NOT RIGHT -- THIS SHOULD WORK IF QUOTING IN EXE WAS RIGHT
     if (cfgOptionTest(cfgOptTarget))
-        kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), VARSTRDEF("BOGUS"));
+        kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), VARSTRDEF("none"));
+
+    // !!! NOT RIGHT -- THIS SHOULD WORK IF QUOTING IN EXE WAS RIGHT
+    kvPut(optionReplace, VARSTR(CFGOPT_RECOVERY_OPTION_STR), NULL);
 
     // Only enable file logging on the remote when requested
     kvPut(
@@ -334,9 +312,35 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Add the type
     kvPut(optionReplace, VARSTR(CFGOPT_STORAGE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
-    StringList *commandExec = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true);
-    strLstInsert(commandExec, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
-    strLstAdd(result, strLstJoin(commandExec, " "));
+    // Get option list
+    StringList *result = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true);
+
+    // Insert pgbackrest exe
+    strLstInsert(result, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
+
+    // Insert user/host
+    strLstInsert(
+        result, 0,
+        strNewFmt(
+            "%s@%s", strPtr(cfgOptionStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser + hostIdx)),
+            strPtr(cfgOptionStr(isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx))));
+
+    // Insert port if specified
+    ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort + hostIdx;
+
+    if (cfgOptionTest(optHostPort))
+    {
+        strLstInsert(result, 0, strNewFmt("%u", cfgOptionUInt(optHostPort)));
+        strLstInsertZ(result, 0, "-p");
+    }
+
+    // Fixed parameters for ssh command
+    strLstInsertZ(result, 0, "PasswordAuthentication=no");
+    strLstInsertZ(result, 0, "-o");
+    strLstInsertZ(result, 0, "Compression=no");
+    strLstInsertZ(result, 0, "-o");
+    strLstInsertZ(result, 0, "LogLevel=error");
+    strLstInsertZ(result, 0, "-o");
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
