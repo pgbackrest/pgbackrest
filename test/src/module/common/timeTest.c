@@ -33,7 +33,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("yearIsLeap(), dayOfYear(), timePartsValid(), tzPartsValid(), and epochFromParts()"))
+    if (testBegin("yearIsLeap(), dayOfYear(), timePartsValid(), tzPartsValid(), tzOffsetSeconds(), and epochFromParts()"))
     {
         TEST_TITLE("is leap year");
 
@@ -84,12 +84,18 @@ testRun(void)
         TEST_RESULT_VOID(tzPartsValid(-3, 30), "valid timezone minute 30");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timezone offset in seconds");
+        TEST_RESULT_INT(tzOffsetSeconds(-3, 30), -12600, "negative timezone offset");
+        TEST_RESULT_INT(tzOffsetSeconds(13, 45), 49500, "positive timezone offset");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("time from parts");
 
-        TEST_RESULT_INT(epochFromParts(1970, 1, 1, 0, 0, 0), 0, "beginning of epoch");
-        TEST_RESULT_INT(epochFromParts(1996, 3, 3, 3, 3, 3), 825822183, "march of leap year");
-        TEST_RESULT_INT(epochFromParts(2000, 4, 4, 4, 4, 4), 954821044, "april of non-leap year");
-        TEST_RESULT_INT(epochFromParts(2038, 1, 19, 3, 14, 7), INT_MAX, "end of 32-bit signed int epoch");
+        TEST_RESULT_INT(epochFromParts(1970, 1, 1, 0, 0, 0, 0), 0, "beginning of epoch");
+        TEST_RESULT_INT(epochFromParts(1996, 3, 3, 3, 3, 3, 0), 825822183, "march of leap year");
+        TEST_RESULT_INT(epochFromParts(2000, 4, 4, 4, 4, 4, 0), 954821044, "april of non-leap year");
+        TEST_RESULT_INT(epochFromParts(2038, 1, 19, 3, 14, 7, 0), INT_MAX, "end of 32-bit signed int epoch");
+        TEST_RESULT_INT(epochFromParts(2020, 1, 8, 9, 18, 15, tzOffsetSeconds(-7, 0)), 1578500295, "epoch with timezone");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
