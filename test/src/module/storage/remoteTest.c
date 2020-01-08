@@ -33,7 +33,7 @@ testRun(void)
     strLstAddZ(argList, "--repo1-host=localhost");
     strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
     strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-    harnessCfgLoad(cfgCmdInfo, argList);
+    harnessCfgLoad(cfgCmdArchivePush, argList);
 
     // Set type since we'll be running local and remote tests here
     cfgOptionSet(cfgOptStorageType, cfgSourceParam, VARSTRDEF("repo"));
