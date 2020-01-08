@@ -59,6 +59,8 @@ Recovery constants
     STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                       RECOVERY_TYPE_PRESERVE);
 #define RECOVERY_TYPE_STANDBY                                       "standby"
     STRING_STATIC(RECOVERY_TYPE_STANDBY_STR,                        RECOVERY_TYPE_STANDBY);
+#define RECOVERY_TYPE_TIME                                          "time"
+    STRING_STATIC(RECOVERY_TYPE_TIME_STR,                           RECOVERY_TYPE_TIME);
 
 /***********************************************************************************************************************************
 Validate restore path
@@ -106,6 +108,9 @@ restorePathValidate(void)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Get epoch time from formatted string
+***********************************************************************************************************************************/
 static time_t
 getEpoch(const String *targetTime)
 {
@@ -121,7 +126,10 @@ getEpoch(const String *targetTime)
     {
         // Build the regex to accept formats: YYYY-MM-DD HH:MM:SS with optional msec (up to 6 digits and separated from minutes by
         // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boudaries are UTC-12 to UTC+14
-        String *expression = strNew("^(2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])(\\,[0-9]{1,6}|\\.[0-9]{1,6})?(((\\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\\+(14)(:?00)?))|((\\-(0[0-9]|1[0-1])(:?(00|30|45))?)|(\\-12)(:?00)?))?$");
+        String *expression = strNew(
+            "^(2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])"
+            "(\\,[0-9]{1,6}|\\.[0-9]{1,6})?(((\\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\\+(14)(:?00)?))|((\\-(0[0-9]|1[0-1])"
+            "(:?(00|30|45))?)|(\\-12)(:?00)?))?$");
 
         RegExp *regExp = regExpNew(expression);
 
@@ -130,56 +138,56 @@ getEpoch(const String *targetTime)
         {
             // Strip off the date and time and put the remainder into another string
             String *datetime = strSubN(targetTime, 0, 19);
+
             int dtYear = cvtZToInt(strPtr(strSubN(datetime, 0, 4)));
-            int dtMonth = cvtZToInt(strPtr(strSubN(datetime, 4, 2)));
+            int dtMonth = cvtZToInt(strPtr(strSubN(datetime, 5, 2)));
             int dtDay = cvtZToInt(strPtr(strSubN(datetime, 8, 2)));
             int dtHour = cvtZToInt(strPtr(strSubN(datetime, 11, 2)));
             int dtMinute = cvtZToInt(strPtr(strSubN(datetime, 14, 2)));
             int dtSecond = cvtZToInt(strPtr(strSubN(datetime, 17, 2)));
-            int tzOffsetSeconds = 0;
 
             String *timeTargetZone = strSub(targetTime, 19);
 
-            // Determine if the remainder contains a timezone offset. This offset is only valid if the system time is not UTC; if
-            // it is UTC then the offset is ignored.
+            // Determine if the remainder contains a timezone offset - if not, then local time is assumed
             int idxPlus = strChr(timeTargetZone, '+');
             int idxMinus = strChr(timeTargetZone, '-');
             if (idxPlus != -1 || idxMinus != -1)
             {
                 String *timezoneOffset = strSub(timeTargetZone, (size_t)(idxPlus == -1 ? idxMinus : idxPlus));
 
-                // Do no yet include the sign with the hour
-                int tzHour = cvtZToInt(strPtr(strSubN(timezoneOffset, 1, 2)));
+                // Include the sign with the hour
+                int tzHour = cvtZToInt(strPtr(strSubN(timezoneOffset, 0, 3)));
                 int tzMinute = 0;
 
                 // If minutes are included in timezone offset then see if separated by a colon or not and extract accordingly
-                if (strSize(timezoneOffset) > 2)
+                if (strSize(timezoneOffset) > 3)
                 {
                     int colonIdx = strChr(timezoneOffset, ':');
                     if (colonIdx != -1)
                         tzMinute = cvtZToInt(strPtr(strSubN(timezoneOffset, (size_t)colonIdx+1, 2)));
                     else
-                        tzMinute = cvtZToInt(strPtr(strSubN(timezoneOffset, 2, 2)));
+                        tzMinute = cvtZToInt(strPtr(strSubN(timezoneOffset, 3, 2)));
                 }
 
-                // Validate the timezone parts
-                tzPartsValid(tzHour, tzMinute);
-// CSHANG Should put in function accessible by all --- THIS IS NOT YET RIGHT -- need to add on the sign
-                // Convert the timezone parts into seconds
-                tzOffsetSeconds = (tzHour * 3600) + (tzMinute * 60);
+                result = epochFromParts(dtYear, dtMonth, dtDay, dtHour, dtMinute, dtSecond, tzOffsetSeconds(tzHour, tzMinute));
             }
-
-            // Convert the datetime with or without zone into local Epoch. set tm_isdst to -1 to force mktime to consider if DST.
-            // For example, if system time is America/New_York then 2019-09-14 20:02:49 was a time in DST so the Epoch value should
-            // be 1568505769 not 1568509369 which would be 2019-09-14 21:02:49 - an hour too late
-
-
+            // If there is no timezone offset, then assume it is local time
+            else
+            {
+                // Set tm_isdst to -1 to force mktime to consider if DST. For example, if system time is America/New_York then
+                // 2019-09-14 20:02:49 was a time in DST so the Epoch value should be 1568505769 (and not 1568509369 which would be
+                // 2019-09-14 21:02:49 - an hour too late)
+                result = mktime(
+                    &(struct tm){.tm_sec = dtSecond, .tm_min = dtMinute, .tm_hour = dtHour, .tm_mday = dtDay, .tm_mon = dtMonth - 1,
+                    .tm_year = dtYear - 1900, .tm_isdst = -1});
+            }
         }
         else
         {
             LOG_WARN_FMT(
-                "automatic backup set selection cannot be performed with provided time format '%s', latest backup set will be used\n"
-                "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)",
+                "automatic backup set selection cannot be performed with provided time format '%s', latest backup set will be used"
+                "\nHINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
+                " - if timezone is ommitted, local time is assumed (for UTC use +00)",
                 strPtr(targetTime));
         }
     }
@@ -213,7 +221,40 @@ restoreBackupSet(InfoBackup *infoBackup)
             if (infoBackupDataTotal(infoBackup) == 0)
                 THROW(BackupSetInvalidError, "no backup sets to restore");
 
-            backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+            time_t timeTargetEpoch = 0;
+
+            // If the recovery type is type, attempt to determine the backup set
+            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
+            {
+                timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
+
+                // Try to find the newest backup set with a stop time before the target recovery time
+                if (timeTargetEpoch != 0)
+                {
+                    // Search current backups from newest to oldest
+                    for (unsigned int keyIdx = infoBackupDataTotal(infoBackup) - 1; (int)keyIdx >= 0; keyIdx--)
+                    {
+                        // Get the backup data
+                        InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
+
+                        if (backupData.backupTimestampStop < timeTargetEpoch)
+                        {
+                            backupSet = backupData.backupLabel;
+                            break;
+                        }
+                    }
+
+                    if (backupSet == NULL)
+                    {
+                        THROW_FMT(
+                            BackupSetInvalidError, "unable to find backup set with stop time less than %s",
+                            strPtr(cfgOptionStr(cfgOptTarget)));
+                    }
+                }
+            }
+
+            if (backupSet == NULL)
+                backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
         }
         // Otherwise check to make sure the specified backup set is valid
         else

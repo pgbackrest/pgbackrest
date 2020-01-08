@@ -446,25 +446,30 @@ testRun(void)
     {
         TEST_TITLE("system time UTC");
 
-        // setenv("TZ", "UTC", true);
-        // TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49-0500")), 1573736569, "offset ignored");
-        // TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49")), 1573736569, "UTC");
+        setenv("TZ", "UTC", true);
+        TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
+        TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
+        TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("system time America/New_York");
 
         setenv("TZ", "America/New_York", true);
+        time_t testTime = 1573754569;
+        char timeBuffer[20];
+        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime(&testTime));
+        TEST_RESULT_Z(timeBuffer, "2019-11-14 13:02:49", "check timezone set");
         // TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49-0500")), 1573754569, "offset ignored, GMT-0500");
         // TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
         // TEST_RESULT_UINT(getEpoch(strNew("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
-        TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49-0200")), 1573743769, "GMT-0200");
+        // TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49-0200")), 1573743769, "GMT-0200");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // setenv("TZ", "Pacific/Fiji", true);
         //
         // TEST_RESULT_UINT(getEpoch(strNew("2019-11-22 07:57:06")), 1574362626, "Pacific/Fiji");
         //
-        // setenv("TZ", "UTC", true);
+        setenv("TZ", "UTC", true);
     }
 
     // *****************************************************************************************************************************
@@ -499,7 +504,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreBackupSet(infoBackup), BackupSetInvalidError, "backup set BOGUS is not valid");
-
+// CSHANG
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("target time");
         setenv("TZ", "America/New_York", true);

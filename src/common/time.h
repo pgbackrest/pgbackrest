@@ -42,7 +42,7 @@ bool yearIsLeap(int year);
 int dayOfYear(int year, int month, int day);
 
 // Return epoch time from date/time parts (year >= 1970, month 1-12, day 1-31, hour 0-23, minute 0-59, second 0-59, tzOffsetSecond
-// is the number of seconds plus or minus (+/-) the provided time)
+// is the number of seconds plus or minus (+/-) the provided time - if 0, then the datetime is assumed to be UTC)
 time_t epochFromParts(int year, int month, int day, int hour, int minute, int second, int tzOffsetSecond);
 
 /***********************************************************************************************************************************
