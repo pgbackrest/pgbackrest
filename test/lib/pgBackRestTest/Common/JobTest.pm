@@ -164,7 +164,7 @@ sub run
             ', module=' . $self->{oTest}->{&TEST_MODULE} .
             ', test=' . $self->{oTest}->{&TEST_NAME} .
             (defined($self->{oTest}->{&TEST_RUN}) ? ', run=' . join(',', sort(@{$self->{oTest}->{&TEST_RUN}})) : '') .
-            (defined($self->{oTest}->{&TEST_DB}) ? ', db=' . $self->{oTest}->{&TEST_DB} : '') .
+            (defined($self->{oTest}->{&TEST_DB}) ? ', pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
             ($self->{iTry} > 1 ? ' (retry ' . ($self->{iTry} - 1) . ')' : '');
 
         my $strImage = 'test-' . $self->{iVmIdx};
