@@ -465,11 +465,6 @@ use constant CFGDEF_LOG_FILE                                        => 'log-file
 use constant CFGDEF_LOG_LEVEL_DEFAULT                               => 'log-level-default';
     push @EXPORT, qw(CFGDEF_LOG_LEVEL_DEFAULT);
 
-# Defines the max log level that may be assigned for the output type.  For instance, it's not OK for the local and remote processes
-# to log anything but errors to stderr because it will cause the process to error on exit.
-use constant CFGDEF_LOG_LEVEL_STDERR_MAX                            => 'log-level-stderr-max';
-    push @EXPORT, qw(CFGDEF_LOG_LEVEL_STDERR_MAX);
-
 # Does the command require a lock?  This doesn't mean a lock can't be taken explicitly later, just controls whether a lock will be
 # acquired as soon at the command starts.
 use constant CFGDEF_LOCK_REQUIRED                                   => 'lock-required';
@@ -2423,12 +2418,6 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_DEFAULT}))
     {
         $rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_DEFAULT} = INFO;
-    }
-
-    # Default max stderr log level is TRACE
-    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_STDERR_MAX}))
-    {
-        $rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_STDERR_MAX} = TRACE;
     }
 
     # Default lock required is false

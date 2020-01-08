@@ -71,7 +71,6 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo, cfgCmdRoleDefault), "command set to info");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelDebug, "default log level is debug");
-        TEST_RESULT_INT(cfgLogLevelStdErrMax(), logLevelTrace, "max stderr log level is trace");
         TEST_RESULT_BOOL(cfgLogFile(), false, "log file is off");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "lock is not required");
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), false, "remote lock is not required");

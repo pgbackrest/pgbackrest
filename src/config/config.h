@@ -69,7 +69,6 @@ LockType cfgLockType(void);
 
 bool cfgLogFile(void);
 LogLevel cfgLogLevelDefault(void);
-LogLevel cfgLogLevelStdErrMax(void);
 
 bool cfgParameterAllowed(void);
 

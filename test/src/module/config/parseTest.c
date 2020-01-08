@@ -612,6 +612,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(BOGUS_STR ":" BOGUS_STR));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError, "invalid command 'BOGUS:BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--" BOGUS_STR));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError, "invalid option '--BOGUS'");
 

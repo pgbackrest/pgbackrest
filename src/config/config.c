@@ -24,7 +24,6 @@ typedef struct ConfigCommandData
 
     bool logFile:1;
     unsigned int logLevelDefault:4;
-    unsigned int logLevelStdErrMax:4;
 
     bool parameterAllowed:1;
 } ConfigCommandData;
@@ -47,8 +46,6 @@ typedef struct ConfigCommandData
     .logFile = logFileParam,
 #define CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDefaultParam)                                                                     \
     .logLevelDefault = logLevelDefaultParam,
-#define CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelStdErrMaxParam)                                                                \
-    .logLevelStdErrMax = logLevelStdErrMaxParam,
 #define CONFIG_COMMAND_NAME(nameParam)                                                                                             \
     .name = nameParam,
 #define CONFIG_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                    \
@@ -479,19 +476,6 @@ cfgLogLevelDefault(void)
     ASSERT(command != cfgCmdNone);
 
     FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelDefault);
-}
-
-/***********************************************************************************************************************************
-Get max stderr log level -- used to suppress error output for higher log levels, e.g. local and remote commands
-***********************************************************************************************************************************/
-LogLevel
-cfgLogLevelStdErrMax(void)
-{
-    FUNCTION_TEST_VOID();
-
-    ASSERT(command != cfgCmdNone);
-
-    FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelStdErrMax);
 }
 
 /***********************************************************************************************************************************

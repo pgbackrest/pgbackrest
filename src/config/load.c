@@ -38,10 +38,6 @@ cfgLoadLogSetting(void)
     if (cfgOptionValid(cfgOptLogLevelStderr))
     {
         logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
-
-        // If configured log level exceeds the max for a command, set it to the max
-        if (logLevelStdErr > cfgLogLevelStdErrMax())
-            logLevelStdErr = cfgLogLevelStdErrMax();
     }
 
     if (cfgOptionValid(cfgOptLogLevelFile))
@@ -242,7 +238,7 @@ Attempt to set the log file and turn file logging off if the file cannot be open
 void
 cfgLoadLogFile(void)
 {
-    if (cfgLogFile() && !cfgCommandHelp())
+    if ((cfgLogFile() || cfgOptionSource(cfgOptLogLevelFile) != cfgSourceDefault) && !cfgCommandHelp())
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
