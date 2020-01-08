@@ -33,9 +33,9 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--process=1");
-                strLstAddZ(argList, "--type=backup");
+                strLstAddZ(argList, "--storage-type=repo");
                 strLstAddZ(argList, "--host-id=1");
-                harnessCfgLoadRole(cfgCmdArchiveGetAsync, cfgCmdRoleLocal, argList);
+                harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
 
                 cmdLocal(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }

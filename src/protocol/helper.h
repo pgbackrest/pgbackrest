@@ -23,6 +23,9 @@ Constants
 #define PROTOCOL_SERVICE_REMOTE                                     "remote"
     STRING_DECLARE(PROTOCOL_SERVICE_REMOTE_STR);
 
+#define PROTOCOL_STORAGE_TYPE_PG                                    "pg"
+#define PROTOCOL_STORAGE_TYPE_REPO                                  "repo"
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/

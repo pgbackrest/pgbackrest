@@ -72,7 +72,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--pg1-path=/path/to/pg");
-                strLstAddZ(argList, "--type=db");
+                strLstAddZ(argList, "--storage-type=pg");
                 strLstAddZ(argList, "--process=0");
                 harnessCfgLoadRole(cfgCmdBackup, cfgCmdRoleRemote, argList);
 

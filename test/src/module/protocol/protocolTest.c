@@ -174,8 +174,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 1, 0), "|"),
-            "--host-id=1|--log-level-file=off|--log-level-stderr=error|--process=0|--stanza=test1|--storage-type=repo"
-                "|archive-get:local",
+            "--host-id=1|--log-level-console=off|--log-level-file=off|--log-level-stderr=error|--process=0|--stanza=test1"
+                "|--storage-type=repo|archive-get:local",
             "local repo protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -190,8 +190,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strLstJoin(protocolLocalParam(protocolStorageTypePg, 2, 1), "|"),
-            "--host-id=2|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg|--process=1"
-                "|--repo1-retention-full=1|--stanza=test1|--storage-type=pg|backup:local",
+            "--host-id=2|--log-level-console=off|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg"
+                "|--process=1|--repo1-retention-full=1|--stanza=test1|--storage-type=pg|backup:local",
             "local pg protocol params");
     }
 
@@ -215,8 +215,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 0, 0), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
-                "|pgbackrest --log-level-file=off --log-level-stderr=error --process=0 --stanza=test1 --storage-type=repo"
-                " archive-get:remote",
+                "|pgbackrest --log-level-console=off --log-level-file=off --log-level-stderr=error --process=0 --stanza=test1"
+                " --storage-type=repo archive-get:remote",
             "remote protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -237,8 +237,8 @@ testRun(void)
             strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1, 0), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
                 "|pgbackrest --config=/path/pgbackrest.conf --config-include-path=/path/include --config-path=/path/config"
-                " --log-level-file=info --log-level-stderr=error --log-subprocess --process=1 --stanza=test1 --storage-type=repo"
-                " archive-get:remote",
+                " --log-level-console=off --log-level-file=info --log-level-stderr=error --log-subprocess --process=1"
+                " --stanza=test1 --storage-type=repo archive-get:remote",
             "remote protocol params with replacements");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -255,8 +255,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 66, 0), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
-                "|pgbackrest --log-level-file=off --log-level-stderr=error --process=3 --stanza=test1 --storage-type=repo"
-                " archive-get:remote",
+                "|pgbackrest --log-level-console=off --log-level-file=off --log-level-stderr=error --process=3 --stanza=test1"
+                " --storage-type=repo archive-get:remote",
             "remote protocol params for backup local");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -272,8 +272,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 0), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg1-host"
-                "|pgbackrest --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/1 --process=1"
-                " --repo1-retention-full=1 --stanza=test1 --storage-type=pg backup:remote",
+                "|pgbackrest --log-level-console=off --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/1"
+                " --process=1 --repo1-retention-full=1 --stanza=test1 --storage-type=pg backup:remote",
             "remote protocol params for db backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -295,8 +295,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 1), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg2-host"
-                "|pgbackrest --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/2 --process=4"
-                " --repo1-retention-full=1 --stanza=test1 --storage-type=pg backup:remote",
+                "|pgbackrest --log-level-console=off --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/2"
+                " --process=4 --repo1-retention-full=1 --stanza=test1 --storage-type=pg backup:remote",
             "remote protocol params for db local");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -318,8 +318,9 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 2), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg3-host"
-                "|pgbackrest --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/3 --pg1-port=3333"
-                " --pg1-socket-path=/socket3 --process=4 --repo1-retention-full=1 --stanza=test1 --storage-type=pg backup:remote",
+                "|pgbackrest --log-level-console=off --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/3"
+                " --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --repo1-retention-full=1 --stanza=test1 --storage-type=pg"
+                " backup:remote",
             "remote protocol params for db local");
     }
 

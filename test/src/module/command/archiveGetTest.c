@@ -220,9 +220,10 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
-        harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         storagePathCreateP(storageTest, strNew("spool/archive/test1/in"));
@@ -323,8 +324,9 @@ testRun(void)
         strLstAdd(argCleanList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argCleanList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argCleanList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argCleanList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAddZ(argCleanList, "--stanza=test2");
-        harnessCfgLoad(cfgCmdArchiveGetAsync, argCleanList);
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argCleanList);
 
         TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
 
@@ -347,7 +349,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstDup(argCleanList);
         strLstAddZ(argList, "000000010000000100000001");
-        harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
 
         storagePathCreateP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
 
@@ -376,7 +378,7 @@ testRun(void)
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "000000010000000100000002");
         strLstAddZ(argList, "000000010000000100000003");
-        harnessCfgLoad(cfgCmdArchiveGetAsync, argList);
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
 
         storagePathCreateP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
 
@@ -438,8 +440,9 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAddZ(argList, "--stanza=test2");
-        strLstAddZ(argList, CFGCMD_ARCHIVE_GET_ASYNC);
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":async");
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "000000010000000100000002");
         strLstAddZ(argList, "000000010000000100000003");

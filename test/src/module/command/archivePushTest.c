@@ -42,7 +42,8 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
-        harnessCfgLoad(cfgCmdArchivePushAsync, argList);
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
         storagePathCreateP(storagePgWrite(), strNew("pg_wal/archive_status"));
         storagePathCreateP(storageTest, strNew("spool/archive/db/out"));
@@ -79,7 +80,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListDrop = strLstDup(argList);
         strLstAdd(argListDrop, strNewFmt("--archive-push-queue-max=%zu", (size_t)1024 * 1024 * 1024));
-        harnessCfgLoad(cfgCmdArchivePushAsync, argListDrop);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListDrop);
 
         // Write the files that we claim are in pg_wal
         Buffer *walBuffer = bufNew((size_t)16 * 1024 * 1024);
@@ -100,7 +101,7 @@ testRun(void)
         // Now set queue max low enough that WAL will be dropped
         argListDrop = strLstDup(argList);
         strLstAdd(argListDrop, strNewFmt("--archive-push-queue-max=%zu", (size_t)16 * 1024 * 1024 * 2));
-        harnessCfgLoad(cfgCmdArchivePushAsync, argListDrop);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListDrop);
 
         TEST_RESULT_BOOL(
             archivePushDrop(strNew("pg_wal"), archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath()))), true,
@@ -556,10 +557,11 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--no-compress");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAddZ(argList, "--log-subprocess");
-        harnessCfgLoad(cfgCmdArchivePushAsync, argList);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
         TEST_ERROR(cmdArchivePushAsync(), ParamRequiredError, "WAL path to push required");
 
@@ -576,7 +578,7 @@ testRun(void)
         storagePathCreateP(storagePgWrite(), strNew("pg_xlog/archive_status"));
 
         strLstAdd(argList, strNewFmt("%s/pg/pg_xlog", testPath()));
-        harnessCfgLoad(cfgCmdArchivePushAsync, argList);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
         TEST_ERROR(cmdArchivePushAsync(), AssertError, "no WAL files to process");
 
@@ -628,7 +630,7 @@ testRun(void)
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=1gb");
-        harnessCfgLoad(cfgCmdArchivePushAsync, argListTemp);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         harnessLogResult(
@@ -655,7 +657,7 @@ testRun(void)
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=16m");
-        harnessCfgLoad(cfgCmdArchivePushAsync, argListTemp);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         harnessLogResult(

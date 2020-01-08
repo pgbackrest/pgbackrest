@@ -20,8 +20,8 @@ Constants
 STRING_EXTERN(PROTOCOL_SERVICE_LOCAL_STR,                           PROTOCOL_SERVICE_LOCAL);
 STRING_EXTERN(PROTOCOL_SERVICE_REMOTE_STR,                          PROTOCOL_SERVICE_REMOTE);
 
-STRING_STATIC(PROTOCOL_STORAGE_TYPE_PG_STR,                         "pg");
-STRING_STATIC(PROTOCOL_STORAGE_TYPE_REPO_STR,                       "repo");
+STRING_STATIC(PROTOCOL_STORAGE_TYPE_PG_STR,                         PROTOCOL_STORAGE_TYPE_PG);
+STRING_STATIC(PROTOCOL_STORAGE_TYPE_REPO_STR,                       PROTOCOL_STORAGE_TYPE_REPO);
 
 /***********************************************************************************************************************************
 Local variables

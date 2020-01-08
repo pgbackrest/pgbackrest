@@ -36,6 +36,11 @@ typedef enum
     cfgCmdRoleRemote,
 } ConfigCommandRole;
 
+// Constants for the command roles
+#define CONFIG_COMMAND_ROLE_ASYNC                        "async"
+#define CONFIG_COMMAND_ROLE_LOCAL                        "local"
+#define CONFIG_COMMAND_ROLE_REMOTE                       "remote"
+
 /***********************************************************************************************************************************
 Constants
 
