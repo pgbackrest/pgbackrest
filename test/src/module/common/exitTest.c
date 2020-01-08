@@ -43,13 +43,13 @@ testRun(void)
     if (testBegin("exitSafe()"))
     {
         cfgInit();
-        cfgCommandSet(cfgCmdNone);
+        cfgCommandSet(cfgCmdNone, cfgCmdRoleDefault);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command")
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
-        cfgCommandSet(cfgCmdArchivePush);
+        cfgCommandSet(cfgCmdArchivePush, cfgCmdRoleDefault);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error")
         harnessLogResult("P00   INFO: archive-push command end: completed successfully");

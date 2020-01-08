@@ -83,7 +83,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), varLstNew(), server), false, "invalid function");
     }
 
-    // Do these tests against a db remote for coverage
+    // Do these tests against a pg remote for coverage
     // *****************************************************************************************************************************
     if (testBegin("storageExists()"))
     {
@@ -109,9 +109,6 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
-
-        cfgOptionSet(cfgOptStorageType, cfgSourceParam, VARSTRDEF("db"));
-        cfgOptionValidSet(cfgOptStorageType, true);
     }
 
     // *****************************************************************************************************************************
@@ -720,7 +717,7 @@ testRun(void)
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, paramList, server), "create parent and path");
         TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strPtr(path))), "  get path info");
         TEST_RESULT_BOOL(info.exists, true, "  path exists");
-        TEST_RESULT_INT(info.mode, 0777, "  mode is set");
+        TEST_RESULT_UINT(info.mode, 0777, "  mode is set");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
         bufUsedSet(serverWrite, 0);
     }
