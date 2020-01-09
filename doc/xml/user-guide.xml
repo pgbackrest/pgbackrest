@@ -1821,6 +1821,7 @@
     </section>
 
     <!-- SECTION => PITR -->
+<!-- CSHANG This section needs to be updated -->
     <section id="pitr" depend="quickstart/perform-backup">
         <title>Point-in-Time Recovery</title>
 

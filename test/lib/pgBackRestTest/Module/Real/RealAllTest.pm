@@ -137,6 +137,7 @@ sub run
         my $strXidMessage = 'xid';
         my $strNameMessage = 'name';
         my $strTimelineMessage = 'timeline';
+        # CSHANG my $strTimeAutoSelectMessage = 'time-auto-select';
 
         # Create two new databases
         if ($bTestLocal)
@@ -543,12 +544,17 @@ sub run
             $oHostDbMaster->start();
         }
 
-        # Setup the time target
+        # Setup the time targets
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->sqlExecute("update test set message = '$strTimeMessage'");
         $oHostDbMaster->sqlWalRotate();
         my $strTimeTarget = $oHostDbMaster->sqlSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
         &log(INFO, "        time target is ${strTimeTarget}");
+        # CSHANG
+        # $oHostDbMaster->sqlExecute("update test set message = '$strTimeAutoSelectMessage'");
+        # $oHostDbMaster->sqlWalRotate();
+        # my $strTimeTargetAutoSelect = $oHostDbMaster->sqlSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
+        # &log(INFO, "        auto select time target is ${strTimeTargetAutoSelect}");
 
         # Incr backup - fail on archive_mode=always when version >= 9.5
         #---------------------------------------------------------------------------------------------------------------------------
