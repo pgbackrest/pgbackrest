@@ -108,7 +108,7 @@ sub bldEnum
     $bInitCapFirst = defined($bInitCapFirst) ? $bInitCapFirst : true;
     my $bFirst = true;
 
-    my @stryName = split('\-|\:', $strName);
+    my @stryName = split('\-', $strName);
     $strName = undef;
 
     foreach my $strPart (@stryName)
