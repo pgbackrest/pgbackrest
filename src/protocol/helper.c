@@ -265,24 +265,29 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
         cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
-    // Copy pg options to index 0 since that's what the remote will be expecting
-    if (hostIdx != 0)
-    {
-        kvPut(optionReplace, VARSTR(CFGOPT_PG1_PATH_STR), cfgOption(cfgOptPgPath + hostIdx));
-        kvPut(
-            optionReplace, VARSTR(CFGOPT_PG1_SOCKET_PATH_STR),
-            cfgOptionSource(cfgOptPgSocketPath + hostIdx) != cfgSourceDefault ? cfgOption(cfgOptPgSocketPath + hostIdx) : NULL);
-        kvPut(
-            optionReplace, VARSTR(CFGOPT_PG1_PORT_STR),
-            cfgOptionSource(cfgOptPgPort + hostIdx) != cfgSourceDefault ? cfgOption(cfgOptPgPort + hostIdx) : NULL);
-    }
+    // Update/remove pg options that are sent to the remote
+    const String *pgHostPrefix = STR(cfgDefOptionName(cfgDefOptPgHost));
+    const String *pgPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_PG);
 
-    // Remove pg options that are not needed on the remote.  This is to reduce clustter and make debugging options easier.
-    for (unsigned int pgIdx = 1; pgIdx < cfgOptionIndexTotal(cfgOptPgPath); pgIdx++)
+    for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
-        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgPath + pgIdx)), NULL);
-        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgSocketPath + pgIdx)), NULL);
-        kvPut(optionReplace, VARSTRZ(cfgOptionName(cfgOptPgPort + pgIdx)), NULL);
+        const String *optionDefName = STR(cfgDefOptionName(cfgOptionDefIdFromId(optionId)));
+
+        if (strBeginsWith(optionDefName, pgPrefix) && !strBeginsWith(optionDefName, pgHostPrefix) && cfgOptionIndex(optionId) > 0)
+        {
+            // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects to
+            // find pg options in index 0 copy the option to index 0.
+            if (cfgOptionIndex(optionId) == hostIdx)
+            {
+                kvPut(
+                    optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
+                    cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
+            }
+
+            // Remove pg options that are not needed on the remote.  The remote is only going to look at index 0 so the options in
+            // higher indexes will not be used and just add clutter which makes debugging harder.
+            kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+        }
     }
 
     // Add the command option (or use the current command option if it is valid)
