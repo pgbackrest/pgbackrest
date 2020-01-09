@@ -11,9 +11,9 @@ Exec Configuration
 Functions
 ***********************************************************************************************************************************/
 // Generate a list of options required for execution of a new command, overriding options with the values in optionReplace when
-// present. If local is set the the new command must have access to the local configuration files and environment since only options
-// originally passed on the command-line will be added to the list.  Use quote when the options will be used as a concatenated
-// string rather than being passed directly to exec*() as a list.
+// present. If local is set then the new command must have access to the local configuration files and environment since only
+// options originally passed on the command-line will be added to the list.  Use quote when the options will be used as a
+// concatenated string rather than being passed directly to exec*() as a list.
 StringList *cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace, bool local, bool quote);
 
 #endif
