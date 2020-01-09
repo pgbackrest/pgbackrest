@@ -130,7 +130,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         // Add the host id
         kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), VARUINT(hostId));
 
-        // Add the storage type
+        // Add the remote type
         kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
         // Only enable file logging on the local when requested
@@ -305,7 +305,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Always output errors on stderr for debugging purposes
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
-    // Add the type
+    // Add the remote type
     kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
     StringList *commandExec = cfgExecParam(cfgCmdRemote, optionReplace, false, true);
