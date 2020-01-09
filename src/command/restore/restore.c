@@ -196,7 +196,6 @@ getEpoch(const String *targetTime)
     FUNCTION_LOG_RETURN(TIME, result);
 }
 
-
 /***********************************************************************************************************************************
 Get the backup set to restore
 ***********************************************************************************************************************************/
@@ -237,6 +236,7 @@ restoreBackupSet(InfoBackup *infoBackup)
                         // Get the backup data
                         InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
 
+                        // If the end of the backup is before the target time, then select this backup
                         if (backupData.backupTimestampStop < timeTargetEpoch)
                         {
                             backupSet = backupData.backupLabel;
@@ -246,8 +246,8 @@ restoreBackupSet(InfoBackup *infoBackup)
 
                     if (backupSet == NULL)
                     {
-                        THROW_FMT(
-                            BackupSetInvalidError, "unable to find backup set with stop time less than %s",
+                        LOG_WARN_FMT(
+                            "unable to find backup set with stop time less than '%s', latest backup set will be used",
                             strPtr(cfgOptionStr(cfgOptTarget)));
                     }
                 }
