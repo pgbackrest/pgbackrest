@@ -34,7 +34,7 @@ testRun(void)
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--command=archive-get-async");
                 strLstAddZ(argList, "--process=1");
-                strLstAddZ(argList, "--type=backup");
+                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
                 strLstAddZ(argList, "--host-id=1");
                 harnessCfgLoad(cfgCmdLocal, argList);
 

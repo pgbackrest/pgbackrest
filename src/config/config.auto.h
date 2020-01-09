@@ -313,6 +313,8 @@ Option constants
     STRING_DECLARE(CFGOPT_RECOVERY_OPTION_STR);
 #define CFGOPT_RECURSE                                              "recurse"
     STRING_DECLARE(CFGOPT_RECURSE_STR);
+#define CFGOPT_REMOTE_TYPE                                          "remote-type"
+    STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
 #define CFGOPT_REPO1_CIPHER_PASS                                    "repo1-cipher-pass"
     STRING_DECLARE(CFGOPT_REPO1_CIPHER_PASS_STR);
 #define CFGOPT_REPO1_CIPHER_TYPE                                    "repo1-cipher-type"
@@ -396,7 +398,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            171
+#define CFG_OPTION_TOTAL                                            172
 
 /***********************************************************************************************************************************
 Command enum
@@ -560,6 +562,7 @@ typedef enum
     cfgOptProtocolTimeout,
     cfgOptRecoveryOption,
     cfgOptRecurse,
+    cfgOptRemoteType,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,

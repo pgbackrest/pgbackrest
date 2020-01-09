@@ -3,6 +3,7 @@ Test Configuration Load
 ***********************************************************************************************************************************/
 #include "common/io/io.h"
 #include "common/log.h"
+#include "protocol/helper.h"
 #include "version.h"
 
 #include "common/harnessConfig.h"
@@ -416,7 +417,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--host-id=1"));
-        strLstAdd(argList, strNew("--type=backup"));
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
         strLstAdd(argList, strNew("local"));
 
@@ -430,7 +431,7 @@ testRun(void)
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
-        strLstAdd(argList, strNew("--type=backup"));
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
         strLstAdd(argList, strNew("--process=0"));
         strLstAdd(argList, strNew("remote"));

@@ -1701,6 +1701,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRecurse,
     },
 
+    // remote-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REMOTE_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
+    },
+
     // repo-cipher-pass option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2441,6 +2449,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
     cfgOptRecurse,
+    cfgOptRemoteType,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
     cfgOptRepoHost,

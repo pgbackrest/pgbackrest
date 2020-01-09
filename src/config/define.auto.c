@@ -2661,6 +2661,34 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("remote-type")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(true)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
+            (
+                "pg",
+                "repo"
+            )
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("repo-cipher-pass")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -4634,8 +4662,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
         )
 
@@ -4662,28 +4688,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     "* full - all database cluster files will be copied and there will be no dependencies on previous backups.\n"
                     "* incr - incremental from the last successful backup.\n"
                     "* diff - like an incremental backup but always based on the last full backup."
-                )
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
-
-                CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
-                (
-                    "db",
-                    "backup"
-                )
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
-
-                CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
-                (
-                    "db",
-                    "backup"
                 )
             )
 

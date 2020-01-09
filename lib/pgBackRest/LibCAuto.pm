@@ -17,6 +17,9 @@ sub libcAutoConstant
         CFGOPTVAL_LS_OUTPUT_TEXT                                         => 'text',
         CFGOPTVAL_LS_OUTPUT_JSON                                         => 'json',
 
+        CFGOPTVAL_REMOTE_TYPE_PG                                         => 'pg',
+        CFGOPTVAL_REMOTE_TYPE_REPO                                       => 'repo',
+
         CFGOPTVAL_REPO_CIPHER_TYPE_NONE                                  => 'none',
         CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                           => 'aes-256-cbc',
 
@@ -39,12 +42,6 @@ sub libcAutoConstant
         CFGOPTVAL_BACKUP_TYPE_FULL                                       => 'full',
         CFGOPTVAL_BACKUP_TYPE_DIFF                                       => 'diff',
         CFGOPTVAL_BACKUP_TYPE_INCR                                       => 'incr',
-
-        CFGOPTVAL_LOCAL_TYPE_DB                                          => 'db',
-        CFGOPTVAL_LOCAL_TYPE_BACKUP                                      => 'backup',
-
-        CFGOPTVAL_REMOTE_TYPE_DB                                         => 'db',
-        CFGOPTVAL_REMOTE_TYPE_BACKUP                                     => 'backup',
 
         CFGOPTVAL_RESTORE_TYPE_NAME                                      => 'name',
         CFGOPTVAL_RESTORE_TYPE_TIME                                      => 'time',
@@ -87,6 +84,8 @@ sub libcAutoExportTag
             'CFGOPTVAL_INFO_OUTPUT_JSON',
             'CFGOPTVAL_LS_OUTPUT_TEXT',
             'CFGOPTVAL_LS_OUTPUT_JSON',
+            'CFGOPTVAL_REMOTE_TYPE_PG',
+            'CFGOPTVAL_REMOTE_TYPE_REPO',
             'CFGOPTVAL_REPO_CIPHER_TYPE_NONE',
             'CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC',
             'CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL',
@@ -104,10 +103,6 @@ sub libcAutoExportTag
             'CFGOPTVAL_BACKUP_TYPE_FULL',
             'CFGOPTVAL_BACKUP_TYPE_DIFF',
             'CFGOPTVAL_BACKUP_TYPE_INCR',
-            'CFGOPTVAL_LOCAL_TYPE_DB',
-            'CFGOPTVAL_LOCAL_TYPE_BACKUP',
-            'CFGOPTVAL_REMOTE_TYPE_DB',
-            'CFGOPTVAL_REMOTE_TYPE_BACKUP',
             'CFGOPTVAL_RESTORE_TYPE_NAME',
             'CFGOPTVAL_RESTORE_TYPE_TIME',
             'CFGOPTVAL_RESTORE_TYPE_XID',
@@ -265,6 +260,7 @@ sub libcAutoExportTag
             'CFGOPT_PROTOCOL_TIMEOUT',
             'CFGOPT_RECOVERY_OPTION',
             'CFGOPT_RECURSE',
+            'CFGOPT_REMOTE_TYPE',
             'CFGOPT_REPO_CIPHER_PASS',
             'CFGOPT_REPO_CIPHER_TYPE',
             'CFGOPT_REPO_HARDLINK',

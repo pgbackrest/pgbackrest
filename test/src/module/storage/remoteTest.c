@@ -33,11 +33,11 @@ testRun(void)
     strLstAddZ(argList, "--repo1-host=localhost");
     strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
     strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-    harnessCfgLoad(cfgCmdInfo, argList);
+    harnessCfgLoad(cfgCmdArchivePush, argList);
 
     // Set type since we'll be running local and remote tests here
-    cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("backup"));
-    cfgOptionValidSet(cfgOptType, true);
+    cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("repo"));
+    cfgOptionValidSet(cfgOptRemoteType, true);
 
     // Set pg settings so we can run both db and backup remotes
     cfgOptionSet(cfgOptPgHost, cfgSourceParam, VARSTRDEF("localhost"));
@@ -83,7 +83,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), varLstNew(), server), false, "invalid function");
     }
 
-    // Do these tests against a db remote for coverage
+    // Do these tests against a pg remote for coverage
     // *****************************************************************************************************************************
     if (testBegin("storageExists()"))
     {
@@ -98,8 +98,8 @@ testRun(void)
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("db"));
-        cfgOptionValidSet(cfgOptType, true);
+        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
+        cfgOptionValidSet(cfgOptRemoteType, true);
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
@@ -109,9 +109,6 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
-
-        cfgOptionSet(cfgOptType, cfgSourceParam, VARSTRDEF("db"));
-        cfgOptionValidSet(cfgOptType, true);
     }
 
     // *****************************************************************************************************************************

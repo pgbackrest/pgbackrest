@@ -20,8 +20,8 @@ Constants
 STRING_EXTERN(PROTOCOL_SERVICE_LOCAL_STR,                           PROTOCOL_SERVICE_LOCAL);
 STRING_EXTERN(PROTOCOL_SERVICE_REMOTE_STR,                          PROTOCOL_SERVICE_REMOTE);
 
-STRING_STATIC(PROTOCOL_STORAGE_TYPE_PG_STR,                         "db");
-STRING_STATIC(PROTOCOL_STORAGE_TYPE_REPO_STR,                       "backup");
+STRING_STATIC(PROTOCOL_REMOTE_TYPE_PG_STR,                          PROTOCOL_REMOTE_TYPE_PG);
+STRING_STATIC(PROTOCOL_REMOTE_TYPE_REPO_STR,                        PROTOCOL_REMOTE_TYPE_REPO);
 
 /***********************************************************************************************************************************
 Local variables
@@ -131,7 +131,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), VARUINT(hostId));
 
         // Add the storage type
-        kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
+        kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
         // Only enable file logging on the local when requested
         kvPut(
@@ -306,7 +306,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
     // Add the type
-    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
+    kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
     StringList *commandExec = cfgExecParam(cfgCmdRemote, optionReplace, false);
     strLstInsert(commandExec, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
@@ -468,9 +468,9 @@ protocolStorageTypeEnum(const String *type)
 
     ASSERT(type != NULL);
 
-    if (strEq(type, PROTOCOL_STORAGE_TYPE_PG_STR))
+    if (strEq(type, PROTOCOL_REMOTE_TYPE_PG_STR))
         FUNCTION_TEST_RETURN(protocolStorageTypePg);
-    else if (strEq(type, PROTOCOL_STORAGE_TYPE_REPO_STR))
+    else if (strEq(type, PROTOCOL_REMOTE_TYPE_REPO_STR))
         FUNCTION_TEST_RETURN(protocolStorageTypeRepo);
 
     THROW_FMT(AssertError, "invalid protocol storage type '%s'", strPtr(type));
@@ -486,10 +486,10 @@ protocolStorageTypeStr(ProtocolStorageType type)
     switch (type)
     {
         case protocolStorageTypePg:
-            FUNCTION_TEST_RETURN(PROTOCOL_STORAGE_TYPE_PG_STR);
+            FUNCTION_TEST_RETURN(PROTOCOL_REMOTE_TYPE_PG_STR);
 
         case protocolStorageTypeRepo:
-            FUNCTION_TEST_RETURN(PROTOCOL_STORAGE_TYPE_REPO_STR);
+            FUNCTION_TEST_RETURN(PROTOCOL_REMOTE_TYPE_REPO_STR);
     }
 
     THROW_FMT(AssertError, "invalid protocol storage type %u", type);

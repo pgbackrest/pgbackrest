@@ -157,6 +157,8 @@ use constant CFGOPT_PROCESS                                         => 'process'
     push @EXPORT, qw(CFGOPT_PROCESS);
 use constant CFGOPT_HOST_ID                                         => 'host-id';
     push @EXPORT, qw(CFGOPT_HOST_ID);
+use constant CFGOPT_REMOTE_TYPE                                     => 'remote-type';
+    push @EXPORT, qw(CFGOPT_REMOTE_TYPE);
 
 # Command-line only storage options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -367,16 +369,12 @@ use constant CFGOPT_PG_USER                                         => CFGDEF_PR
 # Option values - for options that have a specific list of allowed values
 ####################################################################################################################################
 
-# Local/remote types
+# Storage types
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPTVAL_LOCAL_TYPE_DB                                => 'db';
-    push @EXPORT, qw(CFGOPTVAL_LOCAL_TYPE_DB);
-use constant CFGOPTVAL_LOCAL_TYPE_BACKUP                            => 'backup';
-    push @EXPORT, qw(CFGOPTVAL_LOCAL_TYPE_BACKUP);
-use constant CFGOPTVAL_REMOTE_TYPE_DB                               => CFGOPTVAL_LOCAL_TYPE_DB;
-    push @EXPORT, qw(CFGOPTVAL_REMOTE_TYPE_DB);
-use constant CFGOPTVAL_REMOTE_TYPE_BACKUP                           => CFGOPTVAL_LOCAL_TYPE_BACKUP;
-    push @EXPORT, qw(CFGOPTVAL_REMOTE_TYPE_BACKUP);
+use constant CFGOPTVAL_STORAGE_TYPE_PG                              => 'pg';
+    push @EXPORT, qw(CFGOPTVAL_STORAGE_TYPE_DB);
+use constant CFGOPTVAL_STORAGE_TYPE_REPO                            => 'repo';
+    push @EXPORT, qw(CFGOPTVAL_STORAGE_TYPE_BACKUP);
 
 # Backup type
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -973,24 +971,6 @@ my %hConfigDefine =
                 ]
             },
 
-            &CFGCMD_LOCAL =>
-            {
-                &CFGDEF_ALLOW_LIST =>
-                [
-                    &CFGOPTVAL_LOCAL_TYPE_DB,
-                    &CFGOPTVAL_LOCAL_TYPE_BACKUP,
-                ],
-            },
-
-            &CFGCMD_REMOTE =>
-            {
-                &CFGDEF_ALLOW_LIST =>
-                [
-                    &CFGOPTVAL_REMOTE_TYPE_DB,
-                    &CFGOPTVAL_REMOTE_TYPE_BACKUP,
-                ],
-            },
-
             &CFGCMD_RESTORE =>
             {
                 &CFGDEF_DEFAULT => CFGOPTVAL_RESTORE_TYPE_DEFAULT,
@@ -1073,6 +1053,23 @@ my %hConfigDefine =
                 &CFGDEF_REQUIRED => true,
             },
         },
+    },
+
+    &CFGOPT_REMOTE_TYPE =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_ALLOW_LIST =>
+        [
+            &CFGOPTVAL_STORAGE_TYPE_PG,
+            &CFGOPTVAL_STORAGE_TYPE_REPO,
+        ],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_REMOTE => {},
+        }
     },
 
     # Command-line only storage options
