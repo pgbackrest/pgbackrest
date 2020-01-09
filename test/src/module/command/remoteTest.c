@@ -67,7 +67,7 @@ testRun(void)
                 strLstAddZ(argList, "--process=0");
                 strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
                 strLstAddZ(argList, "--lock-path=/bogus");
-                strLstAddZ(argList, "--stanza=test");
+                strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
                 strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_REMOTE);
                 harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 

@@ -26,7 +26,7 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
-        strLstAddZ(argList, "--archive-async");
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
         harnessCfgLoad(cfgCmdArchivePush, argList);
@@ -112,7 +112,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--archive-async");
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
 
         String *walSegment = strNew("000000010000000100000001");

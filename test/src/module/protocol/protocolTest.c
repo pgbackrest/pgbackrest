@@ -150,14 +150,14 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--pg1-path=/path/to/bogus");
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/bogus");
         strLstAddZ(argList, "--pg7-path=/path/to");
         strLstAddZ(argList, "--pg7-host=test1");
         strLstAddZ(argList, "--host-id=7");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
         strLstAddZ(argList, "--process=0");
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "backup:local");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(pgIsLocal(7), false, "pg is remote");
@@ -249,7 +249,7 @@ testRun(void)
         strLstAddZ(argList, "--host-id=1");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAddZ(argList, "--repo1-host=repo-host");
-        strLstAddZ(argList, "archive-get:local");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR_Z(
@@ -288,8 +288,8 @@ testRun(void)
         strLstAddZ(argList, "--pg2-path=/path/to/2");
         strLstAddZ(argList, "--pg2-host=pg2-host");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "backup:local");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR_Z(
@@ -311,8 +311,8 @@ testRun(void)
         strLstAddZ(argList, "--pg3-socket-path=/socket3");
         strLstAddZ(argList, "--pg3-port=3333");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "backup:local");
+        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR_Z(

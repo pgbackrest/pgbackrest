@@ -23,7 +23,7 @@ testRun(void)
         strLstAddZ(argList, "--no-config");
         strLstAddZ(argList, "--reset-neutral-umask");
         strLstAddZ(argList, "--repo-cipher-type=aes-256-cbc");
-        strLstAddZ(argList, "--archive-async");
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAddZ(argList, "archive-get");
 
         // Set repo1-cipher-pass to make sure it is not passed on the command line

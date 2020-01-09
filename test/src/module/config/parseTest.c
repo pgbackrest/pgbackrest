@@ -786,12 +786,12 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--host-id=1"));
-        strLstAdd(argList, strNew("--pg1-path=/path/to"));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-stderr=info"));
-        strLstAdd(argList, strNew("backup:local"));
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
@@ -801,12 +801,12 @@ testRun(void)
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("--pg1-path=/path/to"));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-stderr=info"));
-        strLstAdd(argList, strNew("backup:remote"));
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
