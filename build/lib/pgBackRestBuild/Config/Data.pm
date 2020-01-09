@@ -961,31 +961,6 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_REMOTE_TYPE =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_ALLOW_LIST =>
-        [
-            &CFGOPTVAL_STORAGE_TYPE_PG,
-            &CFGOPTVAL_STORAGE_TYPE_REPO,
-        ],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_STORAGE_LIST => {},
-        },
-    },
-
     &CFGOPT_HOST_ID =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
@@ -1007,6 +982,31 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_INTERNAL => true,
         &CFGDEF_ALLOW_RANGE => [0, 1024],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
+        },
+    },
+
+    &CFGOPT_REMOTE_TYPE =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_ALLOW_LIST =>
+        [
+            &CFGOPTVAL_STORAGE_TYPE_PG,
+            &CFGOPTVAL_STORAGE_TYPE_REPO,
+        ],
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
