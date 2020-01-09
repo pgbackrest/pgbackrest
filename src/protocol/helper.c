@@ -314,8 +314,9 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_PATH_STR), NULL);
     kvPut(optionReplace, VARSTR(CFGOPT_LOCK_PATH_STR), NULL);
 
-    // ??? Don't pass restore options which are likely to contain spaces because they might get mangled on the way to the remote
-    // depending on how SSH is set up on the server.  These should be removed when option passing with spaces is resolved.
+    // ??? Don't pass restore options which the remote doesn't need and are likely to contain spaces because they might get mangled
+    // on the way to the remote depending on how SSH is set up on the server.  This code should be removed when option passing with
+    // spaces is resolved.
     kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), NULL);
     kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), NULL);
     kvPut(optionReplace, VARSTR(CFGOPT_TARGET_EXCLUSIVE_STR), NULL);

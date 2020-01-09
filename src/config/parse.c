@@ -467,7 +467,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         ConfigCommand commandId = cfgCommandId(command, false);
                         ConfigCommandRole commandRoleId = cfgCmdRoleDefault;
 
-                        // If not successful then the command role may be a stand alone command, i.e. local or remote.
+                        // If not successful then a command role may be appended
                         if (commandId == cfgCmdNone)
                         {
                             const StringList *commandPart = strLstNewSplitZ(STR(command), ":");

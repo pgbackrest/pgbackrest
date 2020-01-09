@@ -434,7 +434,7 @@ cmdArchivePushAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    ASSERT(cfgCommand() == cfgCmdArchivePush);  // !!! AND ROLE = ASYNC
+    ASSERT(cfgCommand() == cfgCmdArchivePush && cfgCommandRole() == cfgCmdRoleAsync);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
