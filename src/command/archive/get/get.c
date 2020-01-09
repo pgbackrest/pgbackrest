@@ -342,9 +342,6 @@ cmdArchiveGetAsync(void)
                     "" :
                     strPtr(strNewFmt("...%s", strPtr(strLstGet(jobData.walSegmentList, strLstSize(jobData.walSegmentList) - 1)))));
 
-            // Acquire a lock
-            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
-
             // Create the parallel executor
             ProtocolParallel *parallelExec = protocolParallelNew(
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, archiveGetAsyncCallback, &jobData);
