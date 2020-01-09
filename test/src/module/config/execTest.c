@@ -52,7 +52,7 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/db path", testPath()));
         strLstAddZ(argList, "--db-include=1");
         strLstAddZ(argList, "--db-include=2");
         strLstAddZ(argList, "--recovery-option=a=b");
@@ -68,9 +68,9 @@ testRun(void)
         kvPut(optionReplace, varNewStr(strNew("stanza")), NULL);
 
         TEST_RESULT_STR(
-            strLstJoin(cfgExecParam(cfgCmdRestore, cfgCmdRoleDefault, optionReplace, true, true), "|"),
+            strLstJoin(cfgExecParam(cfgCmdRestore, cfgCmdRoleDefault, optionReplace, true, false), "|"),
             strNewFmt(
-                "--db-include=1|--db-include=2|--pg1-path=%s/db|--recovery-option=a=b|--recovery-option=c=d"
+                "--db-include=1|--db-include=2|--pg1-path=%s/db path|--recovery-option=a=b|--recovery-option=c=d"
                     "|--repo1-path=/replace/path|restore",
                 testPath()),
             "exec restore -> restore");

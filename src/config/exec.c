@@ -9,9 +9,7 @@ Exec Configuration
 #include "common/log.h"
 #include "config/exec.h"
 
-/***********************************************************************************************************************************
-Generate a list of options required for execution of a new command, replacing options as specified in optionReplace
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StringList *
 cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const KeyValue *optionReplace, bool local, bool quote)
 {
