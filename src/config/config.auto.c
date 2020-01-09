@@ -356,6 +356,7 @@ STRING_EXTERN(CFGOPT_PROCESS_MAX_STR,                               CFGOPT_PROCE
 STRING_EXTERN(CFGOPT_PROTOCOL_TIMEOUT_STR,                          CFGOPT_PROTOCOL_TIMEOUT);
 STRING_EXTERN(CFGOPT_RECOVERY_OPTION_STR,                           CFGOPT_RECOVERY_OPTION);
 STRING_EXTERN(CFGOPT_RECURSE_STR,                                   CFGOPT_RECURSE);
+STRING_EXTERN(CFGOPT_REMOTE_TYPE_STR,                               CFGOPT_REMOTE_TYPE);
 STRING_EXTERN(CFGOPT_REPO1_CIPHER_PASS_STR,                         CFGOPT_REPO1_CIPHER_PASS);
 STRING_EXTERN(CFGOPT_REPO1_CIPHER_TYPE_STR,                         CFGOPT_REPO1_CIPHER_TYPE);
 STRING_EXTERN(CFGOPT_REPO1_HARDLINK_STR,                            CFGOPT_REPO1_HARDLINK);
@@ -390,7 +391,6 @@ STRING_EXTERN(CFGOPT_SPOOL_PATH_STR,                                CFGOPT_SPOOL
 STRING_EXTERN(CFGOPT_STANZA_STR,                                    CFGOPT_STANZA);
 STRING_EXTERN(CFGOPT_START_FAST_STR,                                CFGOPT_START_FAST);
 STRING_EXTERN(CFGOPT_STOP_AUTO_STR,                                 CFGOPT_STOP_AUTO);
-STRING_EXTERN(CFGOPT_STORAGE_TYPE_STR,                              CFGOPT_STORAGE_TYPE);
 STRING_EXTERN(CFGOPT_TABLESPACE_MAP_STR,                            CFGOPT_TABLESPACE_MAP);
 STRING_EXTERN(CFGOPT_TABLESPACE_MAP_ALL_STR,                        CFGOPT_TABLESPACE_MAP_ALL);
 STRING_EXTERN(CFGOPT_TARGET_STR,                                    CFGOPT_TARGET);
@@ -1439,6 +1439,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME(CFGOPT_REMOTE_TYPE)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRemoteType)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME(CFGOPT_REPO1_CIPHER_PASS)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoCipherPass)
@@ -1706,14 +1714,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_STOP_AUTO)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptStopAuto)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_STORAGE_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptStorageType)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

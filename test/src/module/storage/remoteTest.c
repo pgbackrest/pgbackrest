@@ -36,8 +36,8 @@ testRun(void)
     harnessCfgLoad(cfgCmdArchivePush, argList);
 
     // Set type since we'll be running local and remote tests here
-    cfgOptionSet(cfgOptStorageType, cfgSourceParam, VARSTRDEF("repo"));
-    cfgOptionValidSet(cfgOptStorageType, true);
+    cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("repo"));
+    cfgOptionValidSet(cfgOptRemoteType, true);
 
     // Set pg settings so we can run both db and backup remotes
     cfgOptionSet(cfgOptPgHost, cfgSourceParam, VARSTRDEF("localhost"));
@@ -98,8 +98,8 @@ testRun(void)
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionSet(cfgOptStorageType, cfgSourceParam, VARSTRDEF("pg"));
-        cfgOptionValidSet(cfgOptStorageType, true);
+        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
+        cfgOptionValidSet(cfgOptRemoteType, true);
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));

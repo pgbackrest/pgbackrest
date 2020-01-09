@@ -1693,6 +1693,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRecurse,
     },
 
+    // remote-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REMOTE_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
+    },
+
     // repo-cipher-pass option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2233,14 +2241,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptStopAuto,
     },
 
-    // storage-type option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_STORAGE_TYPE,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptStorageType,
-    },
-
     // tablespace-map option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2440,6 +2440,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
     cfgOptRecurse,
+    cfgOptRemoteType,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
@@ -2461,7 +2462,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptSpoolPath,
     cfgOptStartFast,
     cfgOptStopAuto,
-    cfgOptStorageType,
     cfgOptTablespaceMap,
     cfgOptTablespaceMapAll,
     cfgOptType,

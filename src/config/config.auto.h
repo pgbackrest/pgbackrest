@@ -303,6 +303,8 @@ Option constants
     STRING_DECLARE(CFGOPT_RECOVERY_OPTION_STR);
 #define CFGOPT_RECURSE                                              "recurse"
     STRING_DECLARE(CFGOPT_RECURSE_STR);
+#define CFGOPT_REMOTE_TYPE                                          "remote-type"
+    STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
 #define CFGOPT_REPO1_CIPHER_PASS                                    "repo1-cipher-pass"
     STRING_DECLARE(CFGOPT_REPO1_CIPHER_PASS_STR);
 #define CFGOPT_REPO1_CIPHER_TYPE                                    "repo1-cipher-type"
@@ -371,8 +373,6 @@ Option constants
     STRING_DECLARE(CFGOPT_START_FAST_STR);
 #define CFGOPT_STOP_AUTO                                            "stop-auto"
     STRING_DECLARE(CFGOPT_STOP_AUTO_STR);
-#define CFGOPT_STORAGE_TYPE                                         "storage-type"
-    STRING_DECLARE(CFGOPT_STORAGE_TYPE_STR);
 #define CFGOPT_TABLESPACE_MAP                                       "tablespace-map"
     STRING_DECLARE(CFGOPT_TABLESPACE_MAP_STR);
 #define CFGOPT_TABLESPACE_MAP_ALL                                   "tablespace-map-all"
@@ -547,6 +547,7 @@ typedef enum
     cfgOptProtocolTimeout,
     cfgOptRecoveryOption,
     cfgOptRecurse,
+    cfgOptRemoteType,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
@@ -581,7 +582,6 @@ typedef enum
     cfgOptStanza,
     cfgOptStartFast,
     cfgOptStopAuto,
-    cfgOptStorageType,
     cfgOptTablespaceMap,
     cfgOptTablespaceMapAll,
     cfgOptTarget,

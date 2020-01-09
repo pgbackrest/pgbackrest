@@ -147,8 +147,8 @@ use constant CFGOPT_PROCESS                                         => 'process'
     push @EXPORT, qw(CFGOPT_PROCESS);
 use constant CFGOPT_HOST_ID                                         => 'host-id';
     push @EXPORT, qw(CFGOPT_HOST_ID);
-use constant CFGOPT_STORAGE_TYPE                                    => 'storage-type';
-    push @EXPORT, qw(CFGOPT_STORAGE_TYPE);
+use constant CFGOPT_REMOTE_TYPE                                     => 'remote-type';
+    push @EXPORT, qw(CFGOPT_REMOTE_TYPE);
 
 # Command-line only storage options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -961,7 +961,7 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_STORAGE_TYPE =>
+    &CFGOPT_REMOTE_TYPE =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_REQUIRED => false,

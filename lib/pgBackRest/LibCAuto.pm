@@ -17,6 +17,9 @@ sub libcAutoConstant
         CFGOPTVAL_LS_OUTPUT_TEXT                                         => 'text',
         CFGOPTVAL_LS_OUTPUT_JSON                                         => 'json',
 
+        CFGOPTVAL_REMOTE_TYPE_PG                                         => 'pg',
+        CFGOPTVAL_REMOTE_TYPE_REPO                                       => 'repo',
+
         CFGOPTVAL_REPO_CIPHER_TYPE_NONE                                  => 'none',
         CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                           => 'aes-256-cbc',
 
@@ -31,9 +34,6 @@ sub libcAutoConstant
         CFGOPTVAL_SORT_NONE                                              => 'none',
         CFGOPTVAL_SORT_ASC                                               => 'asc',
         CFGOPTVAL_SORT_DESC                                              => 'desc',
-
-        CFGOPTVAL_STORAGE_TYPE_PG                                        => 'pg',
-        CFGOPTVAL_STORAGE_TYPE_REPO                                      => 'repo',
 
         CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE                            => 'pause',
         CFGOPTVAL_RESTORE_TARGET_ACTION_PROMOTE                          => 'promote',
@@ -84,6 +84,8 @@ sub libcAutoExportTag
             'CFGOPTVAL_INFO_OUTPUT_JSON',
             'CFGOPTVAL_LS_OUTPUT_TEXT',
             'CFGOPTVAL_LS_OUTPUT_JSON',
+            'CFGOPTVAL_REMOTE_TYPE_PG',
+            'CFGOPTVAL_REMOTE_TYPE_REPO',
             'CFGOPTVAL_REPO_CIPHER_TYPE_NONE',
             'CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC',
             'CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL',
@@ -95,8 +97,6 @@ sub libcAutoExportTag
             'CFGOPTVAL_SORT_NONE',
             'CFGOPTVAL_SORT_ASC',
             'CFGOPTVAL_SORT_DESC',
-            'CFGOPTVAL_STORAGE_TYPE_PG',
-            'CFGOPTVAL_STORAGE_TYPE_REPO',
             'CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE',
             'CFGOPTVAL_RESTORE_TARGET_ACTION_PROMOTE',
             'CFGOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN',
@@ -255,6 +255,7 @@ sub libcAutoExportTag
             'CFGOPT_PROTOCOL_TIMEOUT',
             'CFGOPT_RECOVERY_OPTION',
             'CFGOPT_RECURSE',
+            'CFGOPT_REMOTE_TYPE',
             'CFGOPT_REPO_CIPHER_PASS',
             'CFGOPT_REPO_CIPHER_TYPE',
             'CFGOPT_REPO_HARDLINK',
@@ -289,7 +290,6 @@ sub libcAutoExportTag
             'CFGOPT_STANZA',
             'CFGOPT_START_FAST',
             'CFGOPT_STOP_AUTO',
-            'CFGOPT_STORAGE_TYPE',
             'CFGOPT_TABLESPACE_MAP',
             'CFGOPT_TABLESPACE_MAP_ALL',
             'CFGOPT_TARGET',
