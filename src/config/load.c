@@ -31,7 +31,6 @@ cfgLoadLogSetting(void)
     bool logTimestamp = true;
     unsigned int logProcessMax = 1;
 
-    // Need to set log levels to OFF by default for local/remote role
     if (cfgOptionValid(cfgOptLogLevelConsole))
         logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
 
