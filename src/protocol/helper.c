@@ -288,8 +288,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         }
         else if (strBeginsWith(optionDefName, pgPrefix) && cfgOptionIndex(optionId) > 0)
         {
-            // If this index matches the host-id then this is a pg option that the remote needs.  Since the remote expects to find
-            // pg options in index 0 copy the option to index 0.
+            // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects to
+            // find pg options in index 0 copy the option to index 0.
             if (cfgOptionIndex(optionId) == hostIdx)
             {
                 kvPut(
