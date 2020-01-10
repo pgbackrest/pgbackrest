@@ -89,7 +89,10 @@ storageListRenderCallback(void *data, const StorageInfo *info)
         }
 
         if (info->type == storageTypeFile)
+        {
             ioWriteStr(listData->write, strNewFmt(",\"size\":%" PRIu64, info->size));
+            ioWriteStr(listData->write, strNewFmt(",\"time\":%" PRId64, (int64_t)info->timeModified));
+        }
 
         if (info->type == storageTypeLink)
             ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strPtr(jsonFromStr(info->linkDestination))));
