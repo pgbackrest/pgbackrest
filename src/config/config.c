@@ -310,9 +310,7 @@ cfgCommandParamSet(const StringList *param)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Get command role and convert command role from stringz to enum and vice versa
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 STRING_STATIC(CONFIG_COMMAND_ROLE_ASYNC_STR,                        CONFIG_COMMAND_ROLE_ASYNC);
 STRING_STATIC(CONFIG_COMMAND_ROLE_LOCAL_STR,                        CONFIG_COMMAND_ROLE_LOCAL);
 STRING_STATIC(CONFIG_COMMAND_ROLE_REMOTE_STR,                       CONFIG_COMMAND_ROLE_REMOTE);

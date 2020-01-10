@@ -129,11 +129,12 @@ ConfigCommand cfgCommandId(const char *commandName, bool error);
 void cfgCommandParamSet(const StringList *param);
 void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
 
-const String *cfgExe(void);
-void cfgExeSet(const String *exeParam);
-
+// Convert command role from String to enum and vice versa
 ConfigCommandRole cfgCommandRoleEnum(const String *commandRole);
 const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
+
+const String *cfgExe(void);
+void cfgExeSet(const String *exeParam);
 
 const Variant *cfgOptionDefault(ConfigOption optionId);
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
