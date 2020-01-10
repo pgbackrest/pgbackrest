@@ -137,7 +137,7 @@ sub run
         my $strXidMessage = 'xid';
         my $strNameMessage = 'name';
         my $strTimelineMessage = 'timeline';
-        # CSHANG my $strTimeAutoSelectMessage = 'time-auto-select';
+        my $strTimeAutoSelectMessage = 'time-auto-select';
 
         # Create two new databases
         if ($bTestLocal)
@@ -550,11 +550,11 @@ sub run
         $oHostDbMaster->sqlWalRotate();
         my $strTimeTarget = $oHostDbMaster->sqlSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
         &log(INFO, "        time target is ${strTimeTarget}");
-        # CSHANG
-        # $oHostDbMaster->sqlExecute("update test set message = '$strTimeAutoSelectMessage'");
-        # $oHostDbMaster->sqlWalRotate();
-        # my $strTimeTargetAutoSelect = $oHostDbMaster->sqlSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
-        # &log(INFO, "        auto select time target is ${strTimeTargetAutoSelect}");
+
+        $oHostDbMaster->sqlExecute("update test set message = '$strTimeAutoSelectMessage'");
+        $oHostDbMaster->sqlWalRotate();
+        my $strTimeTargetAutoSelect = $oHostDbMaster->sqlSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
+        &log(INFO, "        auto select time target is ${strTimeTargetAutoSelect}");
 
         # Incr backup - fail on archive_mode=always when version >= 9.5
         #---------------------------------------------------------------------------------------------------------------------------
@@ -925,6 +925,7 @@ sub run
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimeMessage);
+# CSHANG Add a restore like the one above but with the string set to cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) instead of $strFullBackup
 
         # Restore (restore type = xid, exclusive)
         #---------------------------------------------------------------------------------------------------------------------------
