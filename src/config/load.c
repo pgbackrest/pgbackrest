@@ -244,16 +244,12 @@ cfgLoadLogFile(void)
             // Construct log filename prefix
             String *logFile = strNewFmt(
                 "%s/%s-%s", strPtr(cfgOptionStr(cfgOptLogPath)),
-                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName(cfgCommand()));
+                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all",
+                strPtr(cfgCommandRoleNameParam(cfgCommand(), cfgCommandRole(), DASH_STR)));
 
-            // If local or remote role add command name and process id
-            if (cfgCommandRole() != cfgCmdRoleDefault)
-            {
-                strCatFmt(logFile, "-%s", strPtr(cfgCommandRoleStr(cfgCommandRole())));
-
-                if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
-                    strCatFmt(logFile, "-%03u", cfgOptionUInt(cfgOptProcess));
-            }
+            // If local or remote role add process id
+            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
+                strCatFmt(logFile, "-%03u", cfgOptionUInt(cfgOptProcess));
 
             strCat(logFile, ".log");
 

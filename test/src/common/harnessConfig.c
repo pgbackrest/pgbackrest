@@ -50,11 +50,7 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
 
     // Insert the command so it does not interfere with parameters
-    const String *commandRole = cfgCommandRoleStr(commandRoleId);
-
-    strLstInsert(
-        argList, 0,
-        strNewFmt("%s%s", cfgCommandName(commandId), commandRole == NULL ? "" : strPtr(strNewFmt(":%s", strPtr(commandRole)))));
+    strLstInsert(argList, 0, cfgCommandRoleNameParam(commandId, commandRoleId, COLON_STR));
 
     // Insert the project exe
     strLstInsert(argList, 0, STRDEF(testProjectExe()));

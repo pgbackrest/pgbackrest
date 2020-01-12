@@ -63,6 +63,9 @@ ConfigCommandRole cfgCommandRole(void);
 bool cfgCommandInternal(ConfigCommand commandId);
 const char *cfgCommandName(ConfigCommand commandId);
 
+// Get command:role name
+String *cfgCommandRoleName(void);
+
 bool cfgLockRequired(void);
 bool cfgLockRemoteRequired(void);
 LockType cfgLockType(void);
@@ -128,6 +131,9 @@ ConfigCommand cfgCommandId(const char *commandName, bool error);
 
 void cfgCommandParamSet(const StringList *param);
 void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
+
+// Get command/role name with custom separator
+String *cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const String *separator);
 
 // Convert command role from String to enum and vice versa
 ConfigCommandRole cfgCommandRoleEnum(const String *commandRole);

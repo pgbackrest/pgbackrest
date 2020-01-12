@@ -51,7 +51,7 @@ cmdBegin(bool logOption)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Basic info on command start
-            String *info = strNewFmt("%s command begin", cfgCommandName(cfgCommand()));
+            String *info = strNewFmt("%s command begin", strPtr(cfgCommandRoleName()));
 
             if (logOption)
             {
@@ -199,7 +199,7 @@ cmdEnd(int code, const String *errorMessage)
                 LOG_INFO(strPtr(httpClientStat));
 
             // Basic info on command end
-            String *info = strNewFmt("%s command end: ", cfgCommandName(cfgCommand()));
+            String *info = strNewFmt("%s command end: ", strPtr(cfgCommandRoleName()));
 
             if (errorMessage == NULL)
             {

@@ -272,6 +272,31 @@ cfgCommandName(ConfigCommand commandId)
     FUNCTION_TEST_RETURN(configCommandData[commandId].name);
 }
 
+String *
+cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const String *separator)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
+        FUNCTION_TEST_PARAM(STRING, separator);
+    FUNCTION_TEST_END();
+
+    String *result = strNew(cfgCommandName(commandId));
+
+    if (commandRoleId != cfgCmdRoleDefault)
+        strCatFmt(result, "%s%s", strPtr(separator), strPtr(cfgCommandRoleStr(commandRoleId)));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+String *
+cfgCommandRoleName(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_TEST_RETURN(cfgCommandRoleNameParam(cfgCommand(), cfgCommandRole(), COLON_STR));
+}
+
 /***********************************************************************************************************************************
 Command parameters, if any
 ***********************************************************************************************************************************/

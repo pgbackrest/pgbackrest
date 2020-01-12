@@ -58,9 +58,11 @@ testRun(void)
         TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command begins as none");
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault), "command set to backup");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "command is backup");
+        TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "command:role is backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault), "command set to backup");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleLocal), "command set to backup:local");
+        TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup:local", "command:role is backup:local");
         TEST_RESULT_INT(cfgCommandInternal(cfgCmdBackup), false, "backup is external");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelInfo, "default log level is info");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");

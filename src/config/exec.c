@@ -126,10 +126,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
         }
 
         // Add the command
-        const String *commandRole = cfgCommandRoleStr(commandRoleId);
-        strLstAdd(
-            result,
-            strNewFmt("%s%s", cfgCommandName(commandId), commandRole == NULL ? "" : strPtr(strNewFmt(":%s", strPtr(commandRole)))));
+        strLstAdd(result, cfgCommandRoleNameParam(commandId, commandRoleId, COLON_STR));
 
         // Move list to the calling context
         strLstMove(result, MEM_CONTEXT_OLD());
