@@ -283,6 +283,8 @@ use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_RE
     push @EXPORT, qw(CFGOPT_REPO_S3_REGION);
 use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
     push @EXPORT, qw(CFGOPT_REPO_S3_TOKEN);
+use constant CFGOPT_REPO_S3_URI_STYLE                               => CFGDEF_REPO_S3 . '-uri-style';
+    push @EXPORT, qw(CFGOPT_REPO_S3_URI_STYLE);
 use constant CFGOPT_REPO_S3_VERIFY_TLS                              => CFGDEF_REPO_S3 . '-verify-tls';
     push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_TLS);
 
@@ -400,6 +402,13 @@ use constant CFGOPTVAL_REPO_CIPHER_TYPE_NONE                        => 'none';
     push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_NONE);
 use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-cbc';
     push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+
+# Repo S3 URI style
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPTVAL_REPO_S3_URI_STYLE_HOST                       => 'host';
+    push @EXPORT, qw(CFGOPTVAL_REPO_S3_URI_STYLE_HOST);
+use constant CFGOPTVAL_REPO_S3_URI_STYLE_PATH                       => 'path';
+    push @EXPORT, qw(CFGOPTVAL_REPO_S3_URI_STYLE_PATH);
 
 # Info output
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1837,6 +1846,22 @@ my %hConfigDefine =
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_KEY,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_S3_URI_STYLE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => CFGOPTVAL_REPO_S3_URI_STYLE_HOST,
+        &CFGDEF_ALLOW_LIST =>
+        [
+            &CFGOPTVAL_REPO_S3_URI_STYLE_HOST,
+            &CFGOPTVAL_REPO_S3_URI_STYLE_PATH,
+        ],
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+        &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
     },
 
     &CFGOPT_REPO_S3_VERIFY_TLS =>

@@ -369,6 +369,7 @@ storageRepoGet(const String *type, bool write)
 
         result = storageS3New(
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,
+            strEqZ(cfgOptionStr(cfgOptRepoS3UriStyle), STORAGE_S3_URI_STYLE_HOST) ? storageS3UriStyleHost : storageS3UriStylePath,
             cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key), cfgOptionStr(cfgOptRepoS3KeySecret),
             cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL, STORAGE_S3_PARTSIZE_MIN,
             STORAGE_S3_DELETE_MAX, host, port, STORAGE_S3_TIMEOUT_DEFAULT, cfgOptionBool(cfgOptRepoS3VerifyTls),

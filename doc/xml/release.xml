@@ -36,6 +36,10 @@
 
                         <p>Specifies the database user name when connecting to <postgres/>.  If not specified <backrest/> will connect with the local OS user or <id>PGUSER</id>, which was the previous behavior.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Allow path-style URIs in <proper>S3</proper> driver.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>

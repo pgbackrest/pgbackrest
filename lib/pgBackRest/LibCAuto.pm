@@ -27,6 +27,9 @@ sub libcAutoConstant
         CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                       => 'diff',
         CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR                       => 'incr',
 
+        CFGOPTVAL_REPO_S3_URI_STYLE_HOST                                 => 'host',
+        CFGOPTVAL_REPO_S3_URI_STYLE_PATH                                 => 'path',
+
         CFGOPTVAL_REPO_TYPE_CIFS                                         => 'cifs',
         CFGOPTVAL_REPO_TYPE_POSIX                                        => 'posix',
         CFGOPTVAL_REPO_TYPE_S3                                           => 's3',
@@ -91,6 +94,8 @@ sub libcAutoExportTag
             'CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL',
             'CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF',
             'CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR',
+            'CFGOPTVAL_REPO_S3_URI_STYLE_HOST',
+            'CFGOPTVAL_REPO_S3_URI_STYLE_PATH',
             'CFGOPTVAL_REPO_TYPE_CIFS',
             'CFGOPTVAL_REPO_TYPE_POSIX',
             'CFGOPTVAL_REPO_TYPE_S3',
@@ -286,6 +291,7 @@ sub libcAutoExportTag
             'CFGOPT_REPO_S3_PORT',
             'CFGOPT_REPO_S3_REGION',
             'CFGOPT_REPO_S3_TOKEN',
+            'CFGOPT_REPO_S3_URI_STYLE',
             'CFGOPT_REPO_S3_VERIFY_TLS',
             'CFGOPT_REPO_TYPE',
             'CFGOPT_RESUME',
