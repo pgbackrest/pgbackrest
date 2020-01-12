@@ -120,7 +120,9 @@ Constant strings that are generally useful
 ***********************************************************************************************************************************/
 STRING_DECLARE(BRACKETL_STR);
 STRING_DECLARE(BRACKETR_STR);
+STRING_DECLARE(COLON_STR);
 STRING_DECLARE(CR_STR);
+STRING_DECLARE(DASH_STR);
 STRING_DECLARE(DOT_STR);
 STRING_DECLARE(DOTDOT_STR);
 STRING_DECLARE(EMPTY_STR);
