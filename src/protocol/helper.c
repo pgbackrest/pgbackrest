@@ -267,6 +267,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     // Update/remove repo/pg options that are sent to the remote
     const String *repoHostPrefix = STR(cfgDefOptionName(cfgDefOptRepoHost));
+    const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
     const String *pgHostPrefix = STR(cfgDefOptionName(cfgDefOptPgHost));
     const String *pgPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_PG);
 
@@ -280,26 +281,39 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         {
             kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
         }
+        // !!!
+        else if (strBeginsWith(optionDefName, repoPrefix))
+        {
+            if (protocolStorageType == protocolStorageTypePg)
+                kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+        }
         // Remove pg host options that are not needed on the remote.  The remote is not expecting to see host settings and it could
         // get confused about the locality of pg, i.e. local or remote.
         else if (strBeginsWith(optionDefName, pgHostPrefix))
         {
             kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
         }
-        else if (strBeginsWith(optionDefName, pgPrefix) && cfgOptionIndex(optionId) > 0)
+        else if (strBeginsWith(optionDefName, pgPrefix))
         {
-            // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects to
-            // find pg options in index 0 copy the option to index 0.
-            if (cfgOptionIndex(optionId) == hostIdx)
+            if (protocolStorageType == protocolStorageTypeRepo)
             {
-                kvPut(
-                    optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
-                    cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
+                kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
             }
+            else if (cfgOptionIndex(optionId) > 0)
+            {
+                // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects
+                // to find pg options in index 0 copy the option to index 0.
+                if (cfgOptionIndex(optionId) == hostIdx)
+                {
+                    kvPut(
+                        optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
+                        cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
+                }
 
-            // Remove pg options that are not needed on the remote.  The remote is only going to look at index 0 so the options in
-            // higher indexes will not be used and just add clutter which makes debugging harder.
-            kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+                // Remove pg options that are not needed on the remote.  The remote is only going to look at index 0 so the options in
+                // higher indexes will not be used and just add clutter which makes debugging harder.
+                kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+            }
         }
     }
 

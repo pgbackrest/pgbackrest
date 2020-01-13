@@ -1656,7 +1656,7 @@ my %hConfigDefine =
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
-        &CFGDEF_REQUIRED => false,  # THIS IS ONLY TO MAKE REMOTE WORK
+        &CFGDEF_REQUIRED => true,
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
