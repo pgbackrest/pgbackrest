@@ -470,7 +470,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         // If not successful then a command role may be appended
                         if (commandId == cfgCmdNone)
                         {
-                            const StringList *commandPart = strLstNewSplitZ(STR(command), ":");
+                            const StringList *commandPart = strLstNewSplit(STR(command), COLON_STR);
 
                             if (strLstSize(commandPart) == 2)
                             {

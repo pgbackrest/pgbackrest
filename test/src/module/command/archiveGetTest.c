@@ -442,7 +442,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAddZ(argList, "--stanza=test2");
-        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":async");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "000000010000000100000002");
         strLstAddZ(argList, "000000010000000100000003");
