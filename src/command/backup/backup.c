@@ -743,8 +743,8 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(backupLabel)), .recurse = true);
                 }
             }
-            }
         }
+    }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(MANIFEST, result);
