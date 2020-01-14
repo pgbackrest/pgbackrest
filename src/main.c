@@ -88,10 +88,7 @@ main(int argListSize, const char *argList[])
                 case cfgCmdArchiveGet:
                 {
                     if (commandRole == cfgCmdRoleAsync)
-                    {
-                        lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
                         cmdArchiveGetAsync();
-                    }
                     else
                         result = cmdArchiveGet();
 
@@ -103,10 +100,7 @@ main(int argListSize, const char *argList[])
                 case cfgCmdArchivePush:
                 {
                     if (commandRole == cfgCmdRoleAsync)
-                    {
-                        lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
                         cmdArchivePushAsync();
-                    }
                     else
                         cmdArchivePush();
 

@@ -66,7 +66,7 @@ testRun(void)
         TEST_RESULT_INT(cfgCommandInternal(cfgCmdBackup), false, "backup is external");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelInfo, "default log level is info");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
-        TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
+        TEST_RESULT_BOOL(cfgLockRequired(), false, "lock is not required");
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "remote lock is required");
         TEST_RESULT_INT(cfgLockType(), lockTypeBackup, "lock is type backup");
         TEST_RESULT_BOOL(cfgParameterAllowed(), false, "parameters not allowed");
@@ -81,6 +81,17 @@ testRun(void)
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdStanzaCreate, cfgCmdRoleDefault), "command set to stanza-create");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
         TEST_RESULT_INT(cfgLockType(), lockTypeAll, "lock is type all");
+
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleAsync), "command set to archive-get:async");
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
+        TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
+
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo, cfgCmdRoleDefault), "command set to info");
+
+        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, VARSTRDEF("info"));
+        cfgOptionValidSet(cfgOptLogLevelFile, true);
+
+        TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command roles");

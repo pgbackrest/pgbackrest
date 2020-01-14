@@ -378,6 +378,8 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
         TEST_RESULT_INT(lstat(strPtr(strNewFmt("%s/db-backup.log", testPath())), &statLog), 0, "   check log file exists");
 
+        lockRelease(true);
+
         // Local command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -410,7 +412,43 @@ testRun(void)
         TEST_RESULT_INT(
             lstat(strPtr(strNewFmt("%s/all-info-remote-000.log", testPath())), &statLog), 0, "   check log file exists");
 
-        // Remote command opens log file with special filename
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote command without async");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
+        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
+        strLstAdd(argList, strNew("--process=1"));
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_REMOTE);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/test-archive-get-remote-001.log", testPath())), &statLog), 0, "   check log file exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local command with async");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
+        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        strLstAdd(argList, strNew("--process=1"));
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_LOCAL);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/test-archive-push-async-local-001.log", testPath())), &statLog), 0,
+            "   check log file exists");
+
+        // Async command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);

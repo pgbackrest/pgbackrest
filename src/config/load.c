@@ -237,22 +237,35 @@ Attempt to set the log file and turn file logging off if the file cannot be open
 void
 cfgLoadLogFile(void)
 {
-    if ((cfgLogFile() || cfgOptionSource(cfgOptLogLevelFile) != cfgSourceDefault) && !cfgCommandHelp())
+    if (cfgLogFile() && !cfgCommandHelp())
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Construct log filename prefix
             String *logFile = strNewFmt(
                 "%s/%s-%s", strPtr(cfgOptionStr(cfgOptLogPath)),
-                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all",
-                strPtr(cfgCommandRoleNameParam(cfgCommand(), cfgCommandRole(), DASH_STR)));
+                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName(cfgCommand()));
 
-            // If local or remote role add process id
+            // ??? Append async for local/remote archive async commands.  It would be good to find a more generic way to do this in
+            // case the async role is added to more commands.
+            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
+            {
+                if (cfgOptionValid(cfgOptArchiveAsync) && cfgOptionBool(cfgOptArchiveAsync))
+                    strCatFmt(logFile, "-async");
+            }
+
+            // Add command role if it is not default
+            if (cfgCommandRole() != cfgCmdRoleDefault)
+                strCatFmt(logFile, "-%s", strPtr(cfgCommandRoleStr(cfgCommandRole())));
+
+            // Add process id if local or remote role
             if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
                 strCatFmt(logFile, "-%03u", cfgOptionUInt(cfgOptProcess));
 
+            // Add extension
             strCat(logFile, ".log");
 
+            // Attempt to open log file
             if (!logFileSet(strPtr(logFile)))
                 cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
         }
@@ -297,7 +310,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             cmdBegin(true);
 
             // Acquire a lock if this command requires a lock
-            if (cfgCommandRole() == cfgCmdRoleDefault && cfgLockRequired() && !cfgCommandHelp())
+            if (cfgLockRequired() && !cfgCommandHelp())
                 lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
 
             // Update options that have complex rules

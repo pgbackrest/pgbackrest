@@ -448,7 +448,12 @@ cfgLockRequired(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].lockRequired);
+    // Local roles never take a lock and the remote role has special logic for locking.
+    FUNCTION_TEST_RETURN(
+        // The default role when a lock is required for the command
+        (configCommandData[cfgCommand()].lockRequired && cfgCommandRole() == cfgCmdRoleDefault) ||
+        // Any command when the role is async
+        cfgCommandRole() == cfgCmdRoleAsync);
 }
 
 /***********************************************************************************************************************************
@@ -485,7 +490,13 @@ cfgLogFile(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].logFile || cfgCommandRole() == cfgCmdRoleAsync);
+    FUNCTION_TEST_RETURN(
+        // If the command always logs to a file
+        configCommandData[cfgCommand()].logFile ||
+        // Or if log-level-file was explicitly set as a param/env var
+        cfgOptionSource(cfgOptLogLevelFile) == cfgSourceParam ||
+        // Or the role is async
+        cfgCommandRole() == cfgCmdRoleAsync);
 }
 
 /***********************************************************************************************************************************
