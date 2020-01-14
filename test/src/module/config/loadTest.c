@@ -453,6 +453,7 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
         strLstAdd(argList, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testPath()));
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
 
