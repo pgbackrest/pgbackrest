@@ -25,8 +25,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdRemote()"))
     {
-        // No remote lock required
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no lock is required because process is > 0 (not the main remote)");
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
@@ -56,8 +57,9 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // Remote lock not required
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no remote lock is required for this command");
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
@@ -91,8 +93,9 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // Remote lock required but errors out
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote lock is required but lock path is invalid");
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
@@ -125,8 +128,9 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // Remote lock required
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote lock is required and succeeds");
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
@@ -165,7 +169,7 @@ testRun(void)
         HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("stop file exists");
+        TEST_TITLE("remote lock is required but stop file exists");
 
         HARNESS_FORK_BEGIN()
         {
