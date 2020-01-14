@@ -413,7 +413,7 @@ testRun(void)
             lstat(strPtr(strNewFmt("%s/all-info-remote-000.log", testPath())), &statLog), 0, "   check log file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remote command without async");
+        TEST_TITLE("remote command without archive-async option");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -430,7 +430,7 @@ testRun(void)
             lstat(strPtr(strNewFmt("%s/test-archive-get-remote-001.log", testPath())), &statLog), 0, "   check log file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("local command with async");
+        TEST_TITLE("local command with archive-async option");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -448,8 +448,9 @@ testRun(void)
             lstat(strPtr(strNewFmt("%s/test-archive-push-async-local-001.log", testPath())), &statLog), 0,
             "   check log file exists");
 
-        // Async command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive-get command with async role");
+
         argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
         strLstAdd(argList, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testPath()));
