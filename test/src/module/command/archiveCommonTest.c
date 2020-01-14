@@ -26,7 +26,7 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
-        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
         harnessCfgLoad(cfgCmdArchivePush, argList);
