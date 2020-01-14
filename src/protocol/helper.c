@@ -274,31 +274,34 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
         const String *optionDefName = STR(cfgDefOptionName(cfgOptionDefIdFromId(optionId)));
+        bool remove = false;
 
         // Remove repo host options that are not needed on the remote.  The remote is not expecting to see host settings and it
         // could get confused about the locality of the repo, i.e. local or remote.
         if (strBeginsWith(optionDefName, repoHostPrefix))
         {
-            kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+            remove = true;
         }
-        // !!!
+        // Remove repo options when the remote type is pg since they won't be used
         else if (strBeginsWith(optionDefName, repoPrefix))
         {
             if (protocolStorageType == protocolStorageTypePg)
-                kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+                remove = true;
         }
         // Remove pg host options that are not needed on the remote.  The remote is not expecting to see host settings and it could
         // get confused about the locality of pg, i.e. local or remote.
         else if (strBeginsWith(optionDefName, pgHostPrefix))
         {
-            kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+            remove = true;
         }
         else if (strBeginsWith(optionDefName, pgPrefix))
         {
+            // Remove pg options when the remote type is repo since they won't be used
             if (protocolStorageType == protocolStorageTypeRepo)
             {
-                kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+                remove = true;
             }
+            // Else move/remove pg options with index > 0 since the won't be used
             else if (cfgOptionIndex(optionId) > 0)
             {
                 // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects
@@ -312,9 +315,14 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
                 // Remove pg options that are not needed on the remote.  The remote is only going to look at index 0 so the options in
                 // higher indexes will not be used and just add clutter which makes debugging harder.
-                kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+                remove = true;
             }
         }
+
+        // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient because
+        // cfgExecParam() won't have to search through as large a list looking for overrides.
+        if (remove && cfgOptionTest(optionId))
+            kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
     }
 
     // Don't pass host-id to the remote.  The host will always be in index 0.
