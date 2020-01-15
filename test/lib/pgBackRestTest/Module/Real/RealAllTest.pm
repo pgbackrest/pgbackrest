@@ -910,6 +910,21 @@ sub run
             $oHostDbMaster->sqlExecute("update test set message = '$strTimelineMessage'");
         }
 
+        # Restore (restore type = time, inclusive) - automatically select backup set if default
+        #---------------------------------------------------------------------------------------------------------------------------
+        &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_TIME . ' (auto-select backup set)');
+
+        $oHostDbMaster->clusterStop();
+
+        $oHostDbMaster->restore(
+            undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTargetAutoSelect,
+                strTargetAction => $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
+                strTargetTimeline => $oHostDbMaster->pgVersion() >= PG_VERSION_12 ? 'current' : undef});
+
+        $oHostDbMaster->clusterStart();
+        $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimeAutoSelectMessage);
+
         # Restore (restore type = time, inclusive) - there is no exclusive time test because I can't find a way to find the
         # exact commit time of a transaction.
         #---------------------------------------------------------------------------------------------------------------------------
@@ -925,7 +940,6 @@ sub run
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimeMessage);
-# CSHANG Add a restore like the one above but with the string set to cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) instead of $strFullBackup
 
         # Restore (restore type = xid, exclusive)
         #---------------------------------------------------------------------------------------------------------------------------
