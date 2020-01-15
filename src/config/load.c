@@ -37,10 +37,6 @@ cfgLoadLogSetting(void)
     if (cfgOptionValid(cfgOptLogLevelStderr))
     {
         logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
-
-        // If configured log level exceeds the max for a command, set it to the max
-        if (logLevelStdErr > cfgLogLevelStdErrMax())
-            logLevelStdErr = cfgLogLevelStdErrMax();
     }
 
     if (cfgOptionValid(cfgOptLogLevelFile))
@@ -136,7 +132,7 @@ cfgLoadUpdateOption(void)
     }
 
     // Warn when repo-retention-full is not set on a configured repo
-    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFull))
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFull) && cfgCommandRole() == cfgCmdRoleDefault)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoType); optionIdx++)
         {
@@ -247,20 +243,29 @@ cfgLoadLogFile(void)
         {
             // Construct log filename prefix
             String *logFile = strNewFmt(
-                "%s/%s-", strPtr(cfgOptionStr(cfgOptLogPath)),
-                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all");
+                "%s/%s-%s", strPtr(cfgOptionStr(cfgOptLogPath)),
+                cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName(cfgCommand()));
 
-            // If local or remote command add command name and process id
-            if (cfgCommand() == cfgCmdLocal || cfgCommand() == cfgCmdRemote)
+            // ??? Append async for local/remote archive async commands.  It would be good to find a more generic way to do this in
+            // case the async role is added to more commands.
+            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
             {
-                strCatFmt(
-                    logFile, "%s-%s-%03u.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
-                    cfgOptionUInt(cfgOptProcess));
+                if (cfgOptionValid(cfgOptArchiveAsync) && cfgOptionBool(cfgOptArchiveAsync))
+                    strCatFmt(logFile, "-async");
             }
-            // Else add command name
-            else
-                strCatFmt(logFile, "%s.log", cfgCommandName(cfgCommand()));
 
+            // Add command role if it is not default
+            if (cfgCommandRole() != cfgCmdRoleDefault)
+                strCatFmt(logFile, "-%s", strPtr(cfgCommandRoleStr(cfgCommandRole())));
+
+            // Add process id if local or remote role
+            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
+                strCatFmt(logFile, "-%03u", cfgOptionUInt(cfgOptProcess));
+
+            // Add extension
+            strCat(logFile, ".log");
+
+            // Attempt to open log file
             if (!logFileSet(strPtr(logFile)))
                 cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
         }

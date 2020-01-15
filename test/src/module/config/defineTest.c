@@ -58,7 +58,6 @@ testRun(void)
             "assertion 'optionDefId < cfgDefOptionTotal()' failed");
         TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptCompressLevel), "6", "option default exists");
         TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptType), "default", "command default exists");
-        TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdLocal, cfgDefOptType), NULL, "command default does not exist");
         TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptRepoHost), NULL, "default does not exist");
 
         TEST_RESULT_BOOL(cfgDefOptionDepend(cfgDefCmdRestore, cfgDefOptRepoS3Key), true, "has depend option");

@@ -461,15 +461,34 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     // The first argument should be the command
                     if (!commandSet)
                     {
+                        const char *command = argList[optind - 1];
+
                         // Try getting the command from the valid command list
-                        ConfigCommand commandId = cfgCommandId(argList[optind - 1], false);
+                        ConfigCommand commandId = cfgCommandId(command, false);
+                        ConfigCommandRole commandRoleId = cfgCmdRoleDefault;
+
+                        // If not successful then a command role may be appended
+                        if (commandId == cfgCmdNone)
+                        {
+                            const StringList *commandPart = strLstNewSplit(STR(command), COLON_STR);
+
+                            if (strLstSize(commandPart) == 2)
+                            {
+                                // Get command id
+                                commandId = cfgCommandId(strPtr(strLstGet(commandPart, 0)), false);
+
+                                // If command id is valid then get command role id
+                                if (commandId != cfgCmdNone)
+                                    commandRoleId = cfgCommandRoleEnum(strLstGet(commandPart, 1));
+                            }
+                        }
 
                         // Error when command does not exist
                         if (commandId == cfgCmdNone)
-                            THROW_FMT(CommandInvalidError, "invalid command '%s'", argList[optind - 1]);
+                            THROW_FMT(CommandInvalidError, "invalid command '%s'", command);
 
                         //  Set the command
-                        cfgCommandSet(commandId);
+                        cfgCommandSet(commandId, commandRoleId);
 
                         if (cfgCommand() == cfgCmdHelp)
                             cfgCommandHelpSet(true);
@@ -596,7 +615,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         }
 
         // Enable logging (except for local and remote commands) so config file warnings will be output
-        if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote && resetLogLevel)
+        if (cfgCommandRole() != cfgCmdRoleLocal && cfgCommandRole() != cfgCmdRoleRemote && resetLogLevel)
             logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 1);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a

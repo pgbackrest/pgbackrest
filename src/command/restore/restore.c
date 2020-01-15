@@ -1217,7 +1217,7 @@ restoreRecoveryOption(unsigned int pgVersion)
                 VARSTR(
                     strNewFmt(
                         "%s %s %%f \"%%p\"", strPtr(cfgExe()),
-                        strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, optionReplace, true, true), " ")))));
+                        strPtr(strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleDefault, optionReplace, true, true), " ")))));
         }
 
         // If recovery type is immediate

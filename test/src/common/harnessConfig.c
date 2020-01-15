@@ -30,15 +30,16 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
 
 /**********************************************************************************************************************************/
 void
-harnessCfgLoad(ConfigCommand commandId, const StringList *argOriginalList)
+harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, const StringList *argListParam)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(ENUM, commandId);
-        FUNCTION_HARNESS_PARAM(STRING_LIST, argOriginalList);
+        FUNCTION_HARNESS_PARAM(ENUM, commandRoleId);
+        FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
     FUNCTION_HARNESS_END();
 
     // Make a copy of the arg list that we can modify
-    StringList *argList = strLstDup(argOriginalList);
+    StringList *argList = strLstDup(argListParam);
 
     // Set log path if valid
     if (cfgDefOptionValid(cfgCommandDefIdFromId(commandId), cfgDefOptLogPath))
@@ -49,12 +50,26 @@ harnessCfgLoad(ConfigCommand commandId, const StringList *argOriginalList)
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
 
     // Insert the command so it does not interfere with parameters
-    strLstInsertZ(argList, 0, cfgCommandName(commandId));
+    strLstInsert(argList, 0, cfgCommandRoleNameParam(commandId, commandRoleId, COLON_STR));
 
     // Insert the project exe
     strLstInsert(argList, 0, STRDEF(testProjectExe()));
 
     harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+harnessCfgLoad(ConfigCommand commandId, const StringList *argListParam)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(ENUM, commandId);
+        FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
+    FUNCTION_HARNESS_END();
+
+    harnessCfgLoadRole(commandId, cfgCmdRoleDefault, argListParam);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

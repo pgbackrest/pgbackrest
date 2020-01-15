@@ -153,14 +153,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCmdSsh,
     },
 
-    // command option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_COMMAND,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptCommand,
-    },
-
     // compress option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2343,7 +2335,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptBufferSize,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
-    cfgOptCommand,
     cfgOptCompress,
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,

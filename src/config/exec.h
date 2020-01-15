@@ -14,6 +14,7 @@ Functions
 // present. If local is set then the new command must have access to the local configuration files and environment since only
 // options originally passed on the command-line will be added to the list.  Use quote when the options will be used as a
 // concatenated string rather than being passed directly to exec*() as a list.
-StringList *cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace, bool local, bool quote);
+StringList *cfgExecParam(
+    ConfigCommand commandId, ConfigCommandRole commandRoleId, const KeyValue *optionReplace, bool local, bool quote);
 
 #endif

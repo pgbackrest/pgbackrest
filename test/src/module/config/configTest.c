@@ -56,37 +56,56 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command begins as none");
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "command set to backup");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault), "command set to backup");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "command is backup");
+        TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "command:role is backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "command set to backup");
-        TEST_RESULT_INT(cfgCommandInternal(cfgCmdLocal), true, "local is internal");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleLocal), "command set to backup:local");
+        TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup:local", "command:role is backup:local");
         TEST_RESULT_INT(cfgCommandInternal(cfgCmdBackup), false, "backup is external");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelInfo, "default log level is info");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
-        TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
-        TEST_RESULT_BOOL(cfgLockRemoteRequired(cfgCmdBackup), true, "remote lock is required");
+        TEST_RESULT_BOOL(cfgLockRequired(), false, "lock is not required");
+        TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "remote lock is required");
         TEST_RESULT_INT(cfgLockType(), lockTypeBackup, "lock is type backup");
-        TEST_RESULT_INT(cfgLockRemoteType(cfgCmdBackup), lockTypeBackup, "remote lock is type backup");
         TEST_RESULT_BOOL(cfgParameterAllowed(), false, "parameters not allowed");
 
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo), "command set to info");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo, cfgCmdRoleDefault), "command set to info");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelDebug, "default log level is debug");
-        TEST_RESULT_INT(cfgLogLevelStdErrMax(), logLevelTrace, "max stderr log level is trace");
         TEST_RESULT_BOOL(cfgLogFile(), false, "log file is off");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "lock is not required");
-        TEST_RESULT_BOOL(cfgLockRemoteRequired(cfgCmdInfo), false, "remote lock is not required");
+        TEST_RESULT_BOOL(cfgLockRemoteRequired(), false, "remote lock is not required");
         TEST_RESULT_INT(cfgLockType(), lockTypeNone, "lock is type none");
-        TEST_RESULT_INT(cfgLockRemoteType(cfgCmdInfo), lockTypeNone, "remote lock is type none");
 
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdStanzaCreate), "command set to stanza-create");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdStanzaCreate, cfgCmdRoleDefault), "command set to stanza-create");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
         TEST_RESULT_INT(cfgLockType(), lockTypeAll, "lock is type all");
 
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdLocal), "command set to local");
-        TEST_RESULT_INT(cfgLogLevelStdErrMax(), logLevelError, "max stderr log level is error");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleAsync), "command set to archive-get:async");
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
+
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo, cfgCmdRoleDefault), "command set to info");
+
+        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, VARSTRDEF("info"));
+        cfgOptionValidSet(cfgOptLogLevelFile, true);
+
+        TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("command roles");
+
+        TEST_ERROR(cfgCommandRoleEnum(strNew(BOGUS_STR)), CommandInvalidError, "invalid command role 'BOGUS'");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleDefault, "command default role enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(strNew("async")), cfgCmdRoleAsync, "command async role enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(strNew("local")), cfgCmdRoleLocal, "command local role enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(strNew("remote")), cfgCmdRoleRemote, "command remote role enum");
+
+        TEST_RESULT_STR(cfgCommandRoleStr(cfgCmdRoleDefault), NULL, "command default role str");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleAsync), "async", "command async role str");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleLocal), "local", "command local role str");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "command remote role str");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help defaults to false");
@@ -207,7 +226,7 @@ testRun(void)
         unsigned int port = 55555;
 
         cfgInit();
-        cfgCommandSet(cfgCmdBackup);
+        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
 
         cfgOptionValidSet(cfgOptRepoS3Host, true);
         cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("host.com")) ;
@@ -241,7 +260,7 @@ testRun(void)
     if (testBegin("cfgOptionDefault() and cfgOptionDefaultSet()"))
     {
         TEST_RESULT_VOID(cfgInit(), "config init");
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "backup command");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault), "backup command");
 
         TEST_ERROR(
             strPtr(varStr(cfgOptionDefaultValue(cfgOptDbInclude))), AssertError, "default value not available for option type 4");

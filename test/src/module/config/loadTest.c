@@ -35,36 +35,6 @@ testRun(void)
         TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
         TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
         TEST_RESULT_BOOL(logTimestamp, true, "timestamp logging is on");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
-        cfgCommandSet(cfgCmdLocal);
-
-        cfgOptionValidSet(cfgOptLogLevelConsole, true);
-        cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("info"));
-        cfgOptionValidSet(cfgOptLogLevelStderr, true);
-        cfgOptionSet(cfgOptLogLevelStderr, cfgSourceParam, varNewStrZ("error"));
-        cfgOptionValidSet(cfgOptLogLevelFile, true);
-        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("debug"));
-        cfgOptionValidSet(cfgOptLogTimestamp, true);
-        cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(false));
-
-        TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings no defaults");
-        TEST_RESULT_INT(logLevelStdOut, logLevelInfo, "console logging is info");
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
-        TEST_RESULT_INT(logLevelFile, logLevelDebug, "file logging is debugging");
-        TEST_RESULT_BOOL(logTimestamp, false, "timestamp logging is off");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
-        cfgCommandSet(cfgCmdLocal);
-
-        cfgOptionValidSet(cfgOptLogLevelStderr, true);
-        cfgOptionSet(cfgOptLogLevelStderr, cfgSourceParam, varNewStrZ("info"));
-
-        TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings reset stderr");
-
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
     }
 
     // *****************************************************************************************************************************
@@ -74,7 +44,7 @@ testRun(void)
         String *exeOther = strNew("/other/path/to/pgbackrest");
 
         cfgInit();
-        cfgCommandSet(cfgCmdBackup);
+        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
         cfgExeSet(exe);
 
         cfgOptionValidSet(cfgOptRepoHost, true);
@@ -148,7 +118,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
-        cfgCommandSet(cfgCmdBackup);
+        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
         cfgExeSet(exe);
 
         cfgOptionValidSet(cfgOptPgHost, true);
@@ -408,18 +378,20 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
         TEST_RESULT_INT(lstat(strPtr(strNewFmt("%s/db-backup.log", testPath())), &statLog), 0, "   check log file exists");
 
+        lockRelease(true);
+
         // Local command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--host-id=1"));
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
-        strLstAdd(argList, strNew("local"));
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
         TEST_RESULT_INT(
@@ -429,16 +401,68 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
-        strLstAdd(argList, strNew("--log-level-file=warn"));
+        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
+        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
         strLstAdd(argList, strNew("--process=0"));
-        strLstAdd(argList, strNew("remote"));
+        strLstAddZ(argList, CFGCMD_INFO ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
         TEST_RESULT_INT(
-            lstat(strPtr(strNewFmt("%s/all-backup-remote-000.log", testPath())), &statLog), 0, "   check log file exists");
+            lstat(strPtr(strNewFmt("%s/all-info-remote-000.log", testPath())), &statLog), 0, "   check log file exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote command without archive-async option");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
+        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
+        strLstAdd(argList, strNew("--process=1"));
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_REMOTE);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/test-archive-get-remote-001.log", testPath())), &statLog), 0, "   check log file exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local command with archive-async option");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
+        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        strLstAdd(argList, strNew("--process=1"));
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_LOCAL);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/test-archive-push-async-local-001.log", testPath())), &statLog), 0,
+            "   check log file exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive-get command with async role");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAdd(argList, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testPath()));
+        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/test-archive-get-async.log", testPath())), &statLog), 0, "   check log file exists");
+
+        lockRelease(true);
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

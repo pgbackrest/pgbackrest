@@ -121,9 +121,6 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         // Option replacements
         KeyValue *optionReplace = kvNew();
 
-        // Add the command option
-        kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
-
         // Add the process id -- used when more than one process will be called
         kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(protocolId));
 
@@ -141,7 +138,10 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         // Always output errors on stderr for debugging purposes
         kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
-        result = strLstMove(cfgExecParam(cfgCmdLocal, optionReplace, true, false), MEM_CONTEXT_OLD());
+        // Disable output to stdout since it is used by the protocol
+        kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
+
+        result = strLstMove(cfgExecParam(cfgCommand(), cfgCmdRoleLocal, optionReplace, true, false), MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -265,34 +265,68 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
         cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
-    // Update/remove pg options that are sent to the remote
+    // Update/remove repo/pg options that are sent to the remote
+    const String *repoHostPrefix = STR(cfgDefOptionName(cfgDefOptRepoHost));
+    const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
     const String *pgHostPrefix = STR(cfgDefOptionName(cfgDefOptPgHost));
     const String *pgPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_PG);
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
         const String *optionDefName = STR(cfgDefOptionName(cfgOptionDefIdFromId(optionId)));
+        bool remove = false;
 
-        if (strBeginsWith(optionDefName, pgPrefix) && !strBeginsWith(optionDefName, pgHostPrefix) && cfgOptionIndex(optionId) > 0)
+        // Remove repo host options that are not needed on the remote.  The remote is not expecting to see host settings and it
+        // could get confused about the locality of the repo, i.e. local or remote.
+        if (strBeginsWith(optionDefName, repoHostPrefix))
         {
-            // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects to
-            // find pg options in index 0 copy the option to index 0.
-            if (cfgOptionIndex(optionId) == hostIdx)
-            {
-                kvPut(
-                    optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
-                    cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
-            }
-
-            // Remove pg options that are not needed on the remote.  The remote is only going to look at index 0 so the options in
-            // higher indexes will not be used and just add clutter which makes debugging harder.
-            kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+            remove = true;
         }
+        // Remove repo options when the remote type is pg since they won't be used
+        else if (strBeginsWith(optionDefName, repoPrefix))
+        {
+            if (protocolStorageType == protocolStorageTypePg)
+                remove = true;
+        }
+        // Remove pg host options that are not needed on the remote.  The remote is not expecting to see host settings and it could
+        // get confused about the locality of pg, i.e. local or remote.
+        else if (strBeginsWith(optionDefName, pgHostPrefix))
+        {
+            remove = true;
+        }
+        else if (strBeginsWith(optionDefName, pgPrefix))
+        {
+            // Remove pg options when the remote type is repo since they won't be used
+            if (protocolStorageType == protocolStorageTypeRepo)
+            {
+                remove = true;
+            }
+            // Else move/remove pg options with index > 0 since they won't be used
+            else if (cfgOptionIndex(optionId) > 0)
+            {
+                // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects
+                // to find pg options in index 0, copy the option to index 0.
+                if (cfgOptionIndex(optionId) == hostIdx)
+                {
+                    kvPut(
+                        optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
+                        cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
+                }
+
+                // Remove pg options that are not needed on the remote.  The remote is only going to look at index 0 so the options
+                // in higher indexes will not be used and just add clutter which makes debugging harder.
+                remove = true;
+            }
+        }
+
+        // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient because
+        // cfgExecParam() won't have to search through as large a list looking for overrides.
+        if (remove && cfgOptionTest(optionId))
+            kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
     }
 
-    // Add the command option (or use the current command option if it is valid)
-    if (!cfgOptionTest(cfgOptCommand))
-        kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
+    // Don't pass host-id to the remote.  The host will always be in index 0.
+    kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), NULL);
 
     // Add the process id (or use the current process id if it is valid)
     if (!cfgOptionTest(cfgOptProcess))
@@ -302,6 +336,17 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_PATH_STR), NULL);
     kvPut(optionReplace, VARSTR(CFGOPT_LOCK_PATH_STR), NULL);
 
+    // ??? Don't pass restore options which the remote doesn't need and are likely to contain spaces because they might get mangled
+    // on the way to the remote depending on how SSH is set up on the server.  This code should be removed when option passing with
+    // spaces is resolved.
+    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), NULL);
+    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), NULL);
+    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_EXCLUSIVE_STR), NULL);
+    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_ACTION_STR), NULL);
+    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), NULL);
+    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_TIMELINE_STR), NULL);
+    kvPut(optionReplace, VARSTR(CFGOPT_RECOVERY_OPTION_STR), NULL);
+
     // Only enable file logging on the remote when requested
     kvPut(
         optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR),
@@ -310,10 +355,13 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Always output errors on stderr for debugging purposes
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
+    // Disable output to stdout since it is used by the protocol
+    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
+
     // Add the remote type
     kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
-    StringList *commandExec = cfgExecParam(cfgCmdRemote, optionReplace, false, true);
+    StringList *commandExec = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true);
     strLstInsert(commandExec, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
     strLstAdd(result, strLstJoin(commandExec, " "));
 
