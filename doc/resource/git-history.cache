@@ -1,5 +1,10 @@
 [
     {
+        "commit": "2c0ba0820d3e4adea31ef6b8ee201be653ef9579",
+        "date": "2020-01-15 13:21:52 -0700",
+        "subject": "v2.21: C Migration Complete"
+    },
+    {
         "commit": "8d3710b2fe94c90783374d19a435bded1903fe1b",
         "date": "2020-01-15 12:24:58 -0700",
         "subject": "Fix options being ignored by asynchronous commands.",
