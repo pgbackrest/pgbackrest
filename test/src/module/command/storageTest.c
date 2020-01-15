@@ -63,7 +63,7 @@ testRun(void)
         cfgOptionSet(cfgOptSort, cfgSourceParam, VARSTRDEF("asc"));
 
         storagePathCreateP(storageTest, strNew("repo/bbb"));
-        storagePutP(storageNewWriteP(storageTest, strNew("repo/aaa")), BUFSTRDEF("TESTDATA"));
+        storagePutP(storageNewWriteP(storageTest, strNew("repo/aaa"), .timeModified = 1578671569), BUFSTRDEF("TESTDATA"));
         storagePutP(storageNewWriteP(storageTest, strNew("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
 
         ASSERT(system(strPtr(strNewFmt("ln -s ../bbb %s/repo/link", testPath()))) == 0);
@@ -81,7 +81,7 @@ testRun(void)
             strNewBuf(output),
                 "{"
                     "\".\":{\"type\":\"path\"},"
-                    "\"aaa\":{\"type\":\"file\",\"size\":8},"
+                    "\"aaa\":{\"type\":\"file\",\"size\":8,\"time\":1578671569},"
                     "\"bbb\":{\"type\":\"path\"},"
                     "\"link\":{\"type\":\"link\",\"destination\":\"../bbb\"},"
                     "\"pipe\":{\"type\":\"special\"}"

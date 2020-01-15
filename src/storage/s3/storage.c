@@ -98,6 +98,7 @@ struct StorageS3
     const String *securityToken;                                    // Security token, if any
     size_t partSize;                                                // Part size for multi-part upload
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
+    StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
     unsigned int port;                                              // Host port
 
@@ -257,6 +258,10 @@ storageS3Request(
     StorageS3RequestResult result = {0};
     unsigned int retryRemaining = 2;
     bool done;
+
+    // When using path-style URIs the bucket name needs to be prepended
+    if (this->uriStyle == storageS3UriStylePath)
+        uri = strNewFmt("/%s%s", strPtr(this->bucket), strPtr(uri));
 
     do
     {
@@ -917,9 +922,9 @@ static const StorageInterface storageInterfaceS3 =
 Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, const String *region, const String *accessKey, const String *secretAccessKey,
-    const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host, unsigned int port, TimeMSec timeout,
-    bool verifyPeer, const String *caFile, const String *caPath)
+    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, const String *accessKey,
+    const String *secretAccessKey, const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host,
+    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -927,6 +932,7 @@ storageS3New(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING, endPoint);
+        FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_LOG_PARAM(STRING, region);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
@@ -962,7 +968,9 @@ storageS3New(
         driver->securityToken = strDup(securityToken);
         driver->partSize = partSize;
         driver->deleteMax = deleteMax;
-        driver->bucketEndpoint = strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint));
+        driver->uriStyle = uriStyle;
+        driver->bucketEndpoint = uriStyle == storageS3UriStyleHost ?
+            strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(endPoint);
         driver->port = port;
 
         // Force the signing key to be generated on the first run

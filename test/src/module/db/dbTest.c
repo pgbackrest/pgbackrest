@@ -72,10 +72,9 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--pg1-path=/path/to/pg");
-                strLstAddZ(argList, "--command=backup");
-                strLstAddZ(argList, "--type=db");
+                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
                 strLstAddZ(argList, "--process=0");
-                harnessCfgLoad(cfgCmdRemote, argList);
+                harnessCfgLoadRole(cfgCmdBackup, cfgCmdRoleRemote, argList);
 
                 // Set script
                 harnessPqScriptSet((HarnessPq [])

@@ -9,16 +9,16 @@ Exec Configuration
 #include "common/log.h"
 #include "config/exec.h"
 
-/***********************************************************************************************************************************
-Generate a list of options required for execution of a new command, replacing options as specified in optionReplace
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 StringList *
-cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace, bool local)
+cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const KeyValue *optionReplace, bool local, bool quote)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, commandId);
+        FUNCTION_LOG_PARAM(ENUM, commandRoleId);
         FUNCTION_LOG_PARAM(KEY_VALUE, optionReplace);
         FUNCTION_LOG_PARAM(BOOL, local);                            // Will the new process be running on the same host?
+        FUNCTION_LOG_PARAM(BOOL, quote);                            // Do parameters with spaces need to be quoted?
     FUNCTION_LOG_END();
 
     StringList *result = NULL;
@@ -116,7 +116,7 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace, bool local)
                     {
                         const String *value = strLstGet(valueList, valueListIdx);
 
-                        if (strchr(strPtr(value), ' ') != NULL)
+                        if (quote && strchr(strPtr(value), ' ') != NULL)
                             value = strNewFmt("\"%s\"", strPtr(value));
 
                         strLstAdd(result, strNewFmt("--%s=%s", cfgOptionName(optionId), strPtr(value)));
@@ -125,8 +125,8 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace, bool local)
             }
         }
 
-        // Add the requested command
-        strLstAddZ(result, cfgCommandName(commandId));
+        // Add the command
+        strLstAdd(result, cfgCommandRoleNameParam(commandId, commandRoleId, COLON_STR));
 
         // Move list to the calling context
         strLstMove(result, MEM_CONTEXT_OLD());

@@ -455,6 +455,19 @@
                         <example>us-east-1</example>
                     </config-key>
 
+                    <!-- CONFIG - REPO SECTION - REPO-S3-URI-STYLE KEY -->
+                    <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
+                        <summary>S3 URI Style.</summary>
+
+                        <text>The following URI styles are supported:
+                        <ul>
+                            <li><id>host</id> - Connect to <id>bucket.endpoint</id> host.</li>
+                            <li><id>path</id> - Connect to <id>endpoint</id> host and prepend bucket to URIs.</li>
+                        </ul></text>
+
+                        <example>path</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-TLS KEY -->
                     <config-key id="repo-s3-verify-tls" name="S3 Repository Verify TLS">
                         <summary>Verify S3 server certificate.</summary>

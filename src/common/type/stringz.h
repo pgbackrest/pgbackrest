@@ -7,6 +7,8 @@ Zero-Terminated String Handler
 /***********************************************************************************************************************************
 Zero-terminated strings that are generally useful
 ***********************************************************************************************************************************/
+#define COLON_Z                                                     ":"
+#define DASH_Z                                                      "-"
 #define FALSE_Z                                                     "false"
 #define NULL_Z                                                      "null"
 #define TRUE_Z                                                      "true"

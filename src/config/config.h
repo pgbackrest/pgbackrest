@@ -15,6 +15,33 @@ config/parse.c sets the command and options and determines which options are val
 #include "config/config.auto.h"
 
 /***********************************************************************************************************************************
+Command Role Enum
+
+Commands may have multiple processes that work together to implement their functionality.  These roles allow each process to know
+what it is supposed to do.
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Called directly by the user.  This is the main part of the command that may or may not spawn other command roles.
+    cfgCmdRoleDefault,
+
+    // Async worker that is spawned so the main process can return a result while work continues.  An async worker may spawn local
+    // or remote workers.
+    cfgCmdRoleAsync,
+
+    // Local worker for parallelizing jobs.  A local work may spawn a remote worker.
+    cfgCmdRoleLocal,
+
+    // Remote worker for accessing resources on another host
+    cfgCmdRoleRemote,
+} ConfigCommandRole;
+
+// Constants for the command roles
+#define CONFIG_COMMAND_ROLE_ASYNC                        "async"
+#define CONFIG_COMMAND_ROLE_LOCAL                        "local"
+#define CONFIG_COMMAND_ROLE_REMOTE                       "remote"
+
+/***********************************************************************************************************************************
 Constants
 
 Constants for configuration options.
@@ -29,17 +56,22 @@ Command Functions
 Access the current command and command parameters.
 ***********************************************************************************************************************************/
 ConfigCommand cfgCommand(void);
+
+// Current command role (async, local, remote)
+ConfigCommandRole cfgCommandRole(void);
+
 bool cfgCommandInternal(ConfigCommand commandId);
 const char *cfgCommandName(ConfigCommand commandId);
 
+// Get command:role name
+String *cfgCommandRoleName(void);
+
 bool cfgLockRequired(void);
-bool cfgLockRemoteRequired(ConfigCommand commandId);
+bool cfgLockRemoteRequired(void);
 LockType cfgLockType(void);
-LockType cfgLockRemoteType(ConfigCommand commandId);
 
 bool cfgLogFile(void);
 LogLevel cfgLogLevelDefault(void);
-LogLevel cfgLogLevelStdErrMax(void);
 
 bool cfgParameterAllowed(void);
 
@@ -98,7 +130,14 @@ void cfgCommandHelpSet(bool helpParam);
 ConfigCommand cfgCommandId(const char *commandName, bool error);
 
 void cfgCommandParamSet(const StringList *param);
-void cfgCommandSet(ConfigCommand commandParam);
+void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
+
+// Get command/role name with custom separator
+String *cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const String *separator);
+
+// Convert command role from String to enum and vice versa
+ConfigCommandRole cfgCommandRoleEnum(const String *commandRole);
+const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
 
 const String *cfgExe(void);
 void cfgExeSet(const String *exeParam);

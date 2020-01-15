@@ -21,7 +21,9 @@ Constant strings that are generally useful
 ***********************************************************************************************************************************/
 STRING_EXTERN(BRACKETL_STR,                                         "[");
 STRING_EXTERN(BRACKETR_STR,                                         "]");
+STRING_EXTERN(COLON_STR,                                            COLON_Z);
 STRING_EXTERN(CR_STR,                                               "\r");
+STRING_EXTERN(DASH_STR,                                             DASH_Z);
 STRING_EXTERN(DOT_STR,                                              ".");
 STRING_EXTERN(DOTDOT_STR,                                           "..");
 STRING_EXTERN(EMPTY_STR,                                            "");

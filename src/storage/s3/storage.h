@@ -13,6 +13,18 @@ Storage type
     STRING_DECLARE(STORAGE_S3_TYPE_STR);
 
 /***********************************************************************************************************************************
+URI style
+***********************************************************************************************************************************/
+typedef enum
+{
+    storageS3UriStyleHost,
+    storageS3UriStylePath,
+} StorageS3UriStyle;
+
+#define STORAGE_S3_URI_STYLE_HOST                                   "host"
+#define STORAGE_S3_URI_STYLE_PATH                                   "path"
+
+/***********************************************************************************************************************************
 Defaults
 ***********************************************************************************************************************************/
 #define STORAGE_S3_TIMEOUT_DEFAULT                                  60000
@@ -24,8 +36,8 @@ Constructor
 ***********************************************************************************************************************************/
 Storage *storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, const String *region, const String *accessKey, const String *secretAccessKey,
-    const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host, unsigned int port, TimeMSec timeout,
-    bool verifyPeer, const String *caFile, const String *caPath);
+    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, const String *accessKey,
+    const String *secretAccessKey, const String *securityToken, size_t partSize, unsigned int deleteMax, const String *host,
+    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif

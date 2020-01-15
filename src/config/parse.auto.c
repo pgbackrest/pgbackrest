@@ -153,14 +153,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCmdSsh,
     },
 
-    // command option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = CFGOPT_COMMAND,
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptCommand,
-    },
-
     // compress option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -1701,6 +1693,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRecurse,
     },
 
+    // remote-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REMOTE_TYPE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
+    },
+
     // repo-cipher-pass option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2112,6 +2112,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Token,
     },
 
+    // repo-s3-uri-style option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_S3_URI_STYLE,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3UriStyle,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_S3_URI_STYLE,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3UriStyle,
+    },
+
     // repo-s3-verify-tls option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2323,7 +2335,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptBufferSize,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
-    cfgOptCommand,
     cfgOptCompress,
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,
@@ -2441,6 +2452,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
     cfgOptRecurse,
+    cfgOptRemoteType,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
@@ -2480,6 +2492,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoS3Port,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
+    cfgOptRepoS3UriStyle,
     cfgOptRepoS3VerifyTls,
     cfgOptTarget,
     cfgOptTargetAction,

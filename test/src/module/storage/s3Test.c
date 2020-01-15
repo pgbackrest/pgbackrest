@@ -9,14 +9,14 @@ Test S3 Storage
 /***********************************************************************************************************************************
 Test server
 ***********************************************************************************************************************************/
-#define S3_TEST_HOST                                                "bucket.s3.amazonaws.com"
+#define S3_TEST_HOST                                                "s3.amazonaws.com"
 #define DATE_REPLACE                                                "????????"
 #define DATETIME_REPLACE                                            "????????T??????Z"
 #define SHA256_REPLACE                                                                                                             \
     "????????????????????????????????????????????????????????????????"
 
 static const char *
-testS3ServerRequest(const char *verb, const char *uri, const char *content)
+testS3ServerRequest(const char *verb, const char *uri, const char *content, StorageS3UriStyle uriStyle)
 {
     String *request = strNewFmt(
         "%s %s HTTP/1.1\r\n"
@@ -40,9 +40,13 @@ testS3ServerRequest(const char *verb, const char *uri, const char *content)
         strCatFmt(request, "content-md5:%s\r\n", md5Hash);
     }
 
+    if (uriStyle == storageS3UriStyleHost)
+        strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
+    else
+        strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
+
     strCatFmt(
         request,
-        "host:" S3_TEST_HOST "\r\n"
         "x-amz-content-sha256:%s\r\n"
         "x-amz-date:" DATETIME_REPLACE "\r\n"
         "\r\n",
@@ -88,29 +92,29 @@ testS3Server(void)
         // storageS3NewRead() and StorageS3FileRead
         // -------------------------------------------------------------------------------------------------------------------------
         // Ignore missing file
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/fi%26le.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/fi%26le.txt", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
 
         // Error on missing file
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
 
         // Get file
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, "this is a sample file"));
 
         // Get zero-length file
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file0.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file0.txt", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
         // Throw non-404 error
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(303, "Some bad status", NULL, "CONTENT"));
 
         // storageS3NewWrite() and StorageWriteS3
         // -------------------------------------------------------------------------------------------------------------------------
         // File is written all at once
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD", storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(
             403, "Forbidden", NULL,
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -125,15 +129,15 @@ testS3Server(void)
                 "</Error>"));
 
         harnessTlsServerAccept();
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD"));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD", storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
         // Zero-length file
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", ""));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "", storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
         // File is written in chunks with nothing left over on close
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_POST, "/file.txt?uploads=", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_POST, "/file.txt?uploads=", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(
             200, "OK", NULL,
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -143,9 +147,11 @@ testS3Server(void)
                 "<UploadId>WxRt</UploadId>"
                 "</InitiateMultipartUploadResult>"));
 
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", "1234567890123456"));
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", "1234567890123456", storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", "etag:WxRt1", NULL));
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", "7890123456789012"));
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", "7890123456789012", storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", "eTag:WxRt2", NULL));
 
         harnessTlsServerExpect(testS3ServerRequest(
@@ -154,11 +160,12 @@ testS3Server(void)
                 "<CompleteMultipartUpload>"
                 "<Part><PartNumber>1</PartNumber><ETag>WxRt1</ETag></Part>"
                 "<Part><PartNumber>2</PartNumber><ETag>WxRt2</ETag></Part>"
-                "</CompleteMultipartUpload>\n"));
+                "</CompleteMultipartUpload>\n",
+            storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
         // File is written in chunks with something left over on close
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_POST, "/file.txt?uploads=", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_POST, "/file.txt?uploads=", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(
             200, "OK", NULL,
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -168,9 +175,11 @@ testS3Server(void)
                 "<UploadId>RR55</UploadId>"
                 "</InitiateMultipartUploadResult>"));
 
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", "1234567890123456"));
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", "1234567890123456", storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", "etag:RR551", NULL));
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", "7890"));
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", "7890", storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", "eTag:RR552", NULL));
 
         harnessTlsServerExpect(testS3ServerRequest(
@@ -179,27 +188,28 @@ testS3Server(void)
                 "<CompleteMultipartUpload>"
                 "<Part><PartNumber>1</PartNumber><ETag>RR551</ETag></Part>"
                 "<Part><PartNumber>2</PartNumber><ETag>RR552</ETag></Part>"
-                "</CompleteMultipartUpload>\n"));
+                "</CompleteMultipartUpload>\n",
+            storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
         // storageDriverExists()
         // -------------------------------------------------------------------------------------------------------------------------
         // File missing
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/BOGUS", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/BOGUS", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
 
         // File exists
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", "content-length:999", NULL));
 
         // Info()
         // -------------------------------------------------------------------------------------------------------------------------
         // File missing
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/BOGUS", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/BOGUS", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
 
         // File exists
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_HEAD, "/subdir/file1.txt", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(
             200, "OK",
             "content-length:9999\r\n"
@@ -209,7 +219,7 @@ testS3Server(void)
         // InfoList()
         // -------------------------------------------------------------------------------------------------------------------------
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F", NULL));
+            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -228,10 +238,10 @@ testS3Server(void)
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
         // Throw errors
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse( 344, "Another bad status", NULL, NULL));
 
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(
             344, "Another bad status with xml", NULL,
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -239,7 +249,7 @@ testS3Server(void)
                 "<Code>SomeOtherCode</Code>"
                 "</Error>"));
 
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(
             403, "Forbidden", NULL,
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -247,7 +257,7 @@ testS3Server(void)
                 "<Code>RequestTimeTooSkewed</Code>"
                 "<Message>The difference between the request time and the current time is too large.</Message>"
                 "</Error>"));
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(
             403, "Forbidden", NULL,
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -255,7 +265,7 @@ testS3Server(void)
                 "<Code>RequestTimeTooSkewed</Code>"
                 "<Message>The difference between the request time and the current time is too large.</Message>"
                 "</Error>"));
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(testS3ServerResponse(
             403, "Forbidden", NULL,
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -265,7 +275,7 @@ testS3Server(void)
                 "</Error>"));
 
         // list a file/path in root
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -280,7 +290,8 @@ testS3Server(void)
                 "</ListBucketResult>"));
 
         // list a file in root with expression
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=test", NULL));
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=test", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -293,7 +304,7 @@ testS3Server(void)
 
         // list files with continuation
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F", NULL));
+            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -316,7 +327,7 @@ testS3Server(void)
                 HTTP_VERB_GET,
                 "/?continuation-token=1ueGcxLPRx1Tr%2FXYExHnhbYLgveDs2J%2Fwm36Hy4vbOwM%3D&delimiter=%2F&list-type=2"
                     "&prefix=path%2Fto%2F",
-                NULL));
+                NULL, storageS3UriStyleHost));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -332,7 +343,7 @@ testS3Server(void)
 
         // list files with expression
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2Ftest", NULL));
+            testS3ServerRequest(HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2Ftest", NULL, storageS3UriStyleHost));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -357,8 +368,13 @@ testS3Server(void)
 
         // storageDriverPathRemove()
         // -------------------------------------------------------------------------------------------------------------------------
+        // Switch to path-style URIs
+        harnessTlsServerClose();
+        harnessTlsServerAccept();
+
         // delete files from root
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2", NULL));
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_GET, "/bucket/?list-type=2", NULL, storageS3UriStylePath));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -373,18 +389,20 @@ testS3Server(void)
                 "</ListBucketResult>"));
 
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
+            testS3ServerRequest(HTTP_VERB_POST, "/bucket/?delete=",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 "<Delete><Quiet>true</Quiet>"
                 "<Object><Key>test1.txt</Key></Object>"
                 "<Object><Key>path1/xxx.zzz</Key></Object>"
-                "</Delete>\n"));
+                "</Delete>\n",
+            storageS3UriStylePath));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL, "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"></DeleteResult>"));
 
         // nothing to do in empty subpath
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=path%2F", NULL));
+        harnessTlsServerExpect(
+            testS3ServerRequest(HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F", NULL, storageS3UriStylePath));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -394,7 +412,7 @@ testS3Server(void)
 
         // delete with continuation
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=path%2Fto%2F", NULL));
+            testS3ServerRequest(HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2Fto%2F", NULL, storageS3UriStylePath));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -410,7 +428,9 @@ testS3Server(void)
                 "</ListBucketResult>"));
 
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_GET, "/?continuation-token=continue&list-type=2&prefix=path%2Fto%2F", NULL));
+            testS3ServerRequest(
+                HTTP_VERB_GET, "/bucket/?continuation-token=continue&list-type=2&prefix=path%2Fto%2F", NULL,
+                storageS3UriStylePath));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -425,25 +445,27 @@ testS3Server(void)
                 "</ListBucketResult>"));
 
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
+            testS3ServerRequest(HTTP_VERB_POST, "/bucket/?delete=",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 "<Delete><Quiet>true</Quiet>"
                 "<Object><Key>path/to/test1.txt</Key></Object>"
                 "<Object><Key>path/to/test3.txt</Key></Object>"
-                "</Delete>\n"));
+                "</Delete>\n",
+            storageS3UriStylePath));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
+            testS3ServerRequest(HTTP_VERB_POST, "/bucket/?delete=",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 "<Delete><Quiet>true</Quiet>"
                 "<Object><Key>path/to/test2.txt</Key></Object>"
-                "</Delete>\n"));
+                "</Delete>\n",
+            storageS3UriStylePath));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
 
         // delete error
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=path%2F", NULL));
+            testS3ServerRequest(HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F", NULL, storageS3UriStylePath));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -458,12 +480,13 @@ testS3Server(void)
                 "</ListBucketResult>"));
 
         harnessTlsServerExpect(
-            testS3ServerRequest(HTTP_VERB_POST, "/?delete=",
+            testS3ServerRequest(HTTP_VERB_POST, "/bucket/?delete=",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 "<Delete><Quiet>true</Quiet>"
                 "<Object><Key>path/sample.txt</Key></Object>"
                 "<Object><Key>path/sample2.txt</Key></Object>"
-                "</Delete>\n"));
+                "</Delete>\n",
+            storageS3UriStylePath));
         harnessTlsServerReply(
             testS3ServerResponse(
                 200, "OK", NULL,
@@ -475,7 +498,7 @@ testS3Server(void)
         // storageDriverRemove()
         // -------------------------------------------------------------------------------------------------------------------------
         // remove file
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_DELETE, "/path/to/test.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_DELETE, "/bucket/path/to/test.txt", NULL, storageS3UriStylePath));
         harnessTlsServerReply(testS3ServerResponse(204, "No Content", NULL, NULL));
 
         harnessTlsServerClose();
@@ -669,8 +692,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StorageS3 *driver = (StorageS3 *)storageDriver(
             storageS3New(
-                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, 2, NULL, 0, 0, testContainer(),
-                NULL, NULL));
+                path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2, NULL, 0,
+                0, testContainer(), NULL, NULL));
 
         HttpHeader *header = httpHeaderNew(NULL);
 
@@ -717,8 +740,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         driver = (StorageS3 *)storageDriver(
             storageS3New(
-                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, securityToken, 16, 2, NULL, 0, 0,
-                testContainer(), NULL, NULL));
+                path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, securityToken, 16, 2,
+                NULL, 0, 0, testContainer(), NULL, NULL));
 
         TEST_RESULT_VOID(
             storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
@@ -737,8 +760,8 @@ testRun(void)
         testS3Server();
 
         Storage *s3 = storageS3New(
-            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, 2, host, port, 1000, testContainer(),
-            NULL, NULL);
+            path, true, NULL, bucket, endPoint, storageS3UriStyleHost, region, accessKey, secretAccessKey, NULL, 16, 2, host, port,
+            1000, testContainer(), NULL, NULL);
 
         // Coverage for noop functions
         // -------------------------------------------------------------------------------------------------------------------------
@@ -767,7 +790,7 @@ testRun(void)
             "*** Request Headers ***:\n"
             "authorization: <redacted>\n"
             "content-length: 0\n"
-            "host: " S3_TEST_HOST "\n"
+            "host: bucket." S3_TEST_HOST "\n"
             "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
             "x-amz-date: <redacted>\n"
             "*** Response Headers ***:\n"
@@ -854,7 +877,7 @@ testRun(void)
             "*** Request Headers ***:\n"
             "authorization: <redacted>\n"
             "content-length: 0\n"
-            "host: " S3_TEST_HOST "\n"
+            "host: bucket." S3_TEST_HOST "\n"
             "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
             "x-amz-date: <redacted>");
         TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
@@ -864,7 +887,7 @@ testRun(void)
             "*** Request Headers ***:\n"
             "authorization: <redacted>\n"
             "content-length: 0\n"
-            "host: " S3_TEST_HOST "\n"
+            "host: bucket." S3_TEST_HOST "\n"
             "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
             "x-amz-date: <redacted>\n"
             "*** Response Headers ***:\n"
@@ -878,7 +901,7 @@ testRun(void)
             "*** Request Headers ***:\n"
             "authorization: <redacted>\n"
             "content-length: 0\n"
-            "host: " S3_TEST_HOST "\n"
+            "host: bucket." S3_TEST_HOST "\n"
             "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
             "x-amz-date: <redacted>\n"
             "*** Response Headers ***:\n"
@@ -900,6 +923,11 @@ testRun(void)
 
         // storageDriverPathRemove()
         // -------------------------------------------------------------------------------------------------------------------------
+        // Switch to path-style URIs
+        s3 = storageS3New(
+            path, true, NULL, bucket, endPoint, storageS3UriStylePath, region, accessKey, secretAccessKey, NULL, 16, 2, host, port,
+            1000, testContainer(), NULL, NULL);
+
         TEST_ERROR(
             storagePathRemoveP(s3, strNew("/")), AssertError,
             "assertion 'param.recurse || storageFeature(this, storageFeaturePath)' failed");

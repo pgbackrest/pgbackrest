@@ -11,12 +11,8 @@ Command constants
 ***********************************************************************************************************************************/
 #define CFGCMD_ARCHIVE_GET                                          "archive-get"
     STRING_DECLARE(CFGCMD_ARCHIVE_GET_STR);
-#define CFGCMD_ARCHIVE_GET_ASYNC                                    "archive-get-async"
-    STRING_DECLARE(CFGCMD_ARCHIVE_GET_ASYNC_STR);
 #define CFGCMD_ARCHIVE_PUSH                                         "archive-push"
     STRING_DECLARE(CFGCMD_ARCHIVE_PUSH_STR);
-#define CFGCMD_ARCHIVE_PUSH_ASYNC                                   "archive-push-async"
-    STRING_DECLARE(CFGCMD_ARCHIVE_PUSH_ASYNC_STR);
 #define CFGCMD_BACKUP                                               "backup"
     STRING_DECLARE(CFGCMD_BACKUP_STR);
 #define CFGCMD_CHECK                                                "check"
@@ -27,12 +23,8 @@ Command constants
     STRING_DECLARE(CFGCMD_HELP_STR);
 #define CFGCMD_INFO                                                 "info"
     STRING_DECLARE(CFGCMD_INFO_STR);
-#define CFGCMD_LOCAL                                                "local"
-    STRING_DECLARE(CFGCMD_LOCAL_STR);
 #define CFGCMD_LS                                                   "ls"
     STRING_DECLARE(CFGCMD_LS_STR);
-#define CFGCMD_REMOTE                                               "remote"
-    STRING_DECLARE(CFGCMD_REMOTE_STR);
 #define CFGCMD_RESTORE                                              "restore"
     STRING_DECLARE(CFGCMD_RESTORE_STR);
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
@@ -48,7 +40,7 @@ Command constants
 #define CFGCMD_VERSION                                              "version"
     STRING_DECLARE(CFGCMD_VERSION_STR);
 
-#define CFG_COMMAND_TOTAL                                           20
+#define CFG_COMMAND_TOTAL                                           16
 
 /***********************************************************************************************************************************
 Option constants
@@ -73,8 +65,6 @@ Option constants
     STRING_DECLARE(CFGOPT_CHECKSUM_PAGE_STR);
 #define CFGOPT_CMD_SSH                                              "cmd-ssh"
     STRING_DECLARE(CFGOPT_CMD_SSH_STR);
-#define CFGOPT_COMMAND                                              "command"
-    STRING_DECLARE(CFGOPT_COMMAND_STR);
 #define CFGOPT_COMPRESS                                             "compress"
     STRING_DECLARE(CFGOPT_COMPRESS_STR);
 #define CFGOPT_COMPRESS_LEVEL                                       "compress-level"
@@ -313,6 +303,8 @@ Option constants
     STRING_DECLARE(CFGOPT_RECOVERY_OPTION_STR);
 #define CFGOPT_RECURSE                                              "recurse"
     STRING_DECLARE(CFGOPT_RECURSE_STR);
+#define CFGOPT_REMOTE_TYPE                                          "remote-type"
+    STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
 #define CFGOPT_REPO1_CIPHER_PASS                                    "repo1-cipher-pass"
     STRING_DECLARE(CFGOPT_REPO1_CIPHER_PASS_STR);
 #define CFGOPT_REPO1_CIPHER_TYPE                                    "repo1-cipher-type"
@@ -363,6 +355,8 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_S3_REGION_STR);
 #define CFGOPT_REPO1_S3_TOKEN                                       "repo1-s3-token"
     STRING_DECLARE(CFGOPT_REPO1_S3_TOKEN_STR);
+#define CFGOPT_REPO1_S3_URI_STYLE                                   "repo1-s3-uri-style"
+    STRING_DECLARE(CFGOPT_REPO1_S3_URI_STYLE_STR);
 #define CFGOPT_REPO1_S3_VERIFY_TLS                                  "repo1-s3-verify-tls"
     STRING_DECLARE(CFGOPT_REPO1_S3_VERIFY_TLS_STR);
 #define CFGOPT_REPO1_TYPE                                           "repo1-type"
@@ -396,7 +390,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            171
+#define CFG_OPTION_TOTAL                                            172
 
 /***********************************************************************************************************************************
 Command enum
@@ -404,17 +398,13 @@ Command enum
 typedef enum
 {
     cfgCmdArchiveGet,
-    cfgCmdArchiveGetAsync,
     cfgCmdArchivePush,
-    cfgCmdArchivePushAsync,
     cfgCmdBackup,
     cfgCmdCheck,
     cfgCmdExpire,
     cfgCmdHelp,
     cfgCmdInfo,
-    cfgCmdLocal,
     cfgCmdLs,
-    cfgCmdRemote,
     cfgCmdRestore,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,
@@ -440,7 +430,6 @@ typedef enum
     cfgOptBufferSize,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
-    cfgOptCommand,
     cfgOptCompress,
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,
@@ -560,6 +549,7 @@ typedef enum
     cfgOptProtocolTimeout,
     cfgOptRecoveryOption,
     cfgOptRecurse,
+    cfgOptRemoteType,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
@@ -585,6 +575,7 @@ typedef enum
     cfgOptRepoS3Port,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
+    cfgOptRepoS3UriStyle,
     cfgOptRepoS3VerifyTls,
     cfgOptRepoType,
     cfgOptResume,

@@ -299,7 +299,7 @@ cmdArchivePush(void)
                     kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
 
                     // Generate command options
-                    StringList *commandExec = cfgExecParam(cfgCmdArchivePushAsync, optionReplace, true);
+                    StringList *commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
                     strLstInsert(commandExec, 0, cfgExe());
                     strLstAdd(commandExec, strPath(walFile));
 
@@ -317,8 +317,8 @@ cmdArchivePush(void)
 
                         // Execute the binary.  This statement will not return if it is successful.
                         THROW_ON_SYS_ERROR(
-                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1,
-                            ExecuteError, "unable to execute '" CFGCMD_ARCHIVE_PUSH_ASYNC "'");
+                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+                            "unable to execute asynchronous '" CFGCMD_ARCHIVE_PUSH "'");
                     }
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
@@ -434,7 +434,7 @@ cmdArchivePushAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    ASSERT(cfgCommand() == cfgCmdArchivePushAsync);
+    ASSERT(cfgCommand() == cfgCmdArchivePush && cfgCommandRole() == cfgCmdRoleAsync);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -459,7 +459,7 @@ cmdArchivePushAsync(void)
             // Get a list of WAL files that are ready for processing
             jobData.walFileList = archivePushProcessList(jobData.walPath);
 
-            // The archive-push-async command should not have been called unless there are WAL files to process
+            // The archive-push:async command should not have been called unless there are WAL files to process
             if (strLstSize(jobData.walFileList) == 0)
                 THROW(AssertError, "no WAL files to process");
 

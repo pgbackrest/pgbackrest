@@ -24,7 +24,6 @@ typedef struct ConfigCommandData
 
     bool logFile:1;
     unsigned int logLevelDefault:4;
-    unsigned int logLevelStdErrMax:4;
 
     bool parameterAllowed:1;
 } ConfigCommandData;
@@ -47,8 +46,6 @@ typedef struct ConfigCommandData
     .logFile = logFileParam,
 #define CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDefaultParam)                                                                     \
     .logLevelDefault = logLevelDefaultParam,
-#define CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelStdErrMaxParam)                                                                \
-    .logLevelStdErrMax = logLevelStdErrMaxParam,
 #define CONFIG_COMMAND_NAME(nameParam)                                                                                             \
     .name = nameParam,
 #define CONFIG_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                    \
@@ -94,6 +91,7 @@ Store the current command
 This is generally set by the command parser but can also be set by during execute to change commands, i.e. backup -> expire.
 ***********************************************************************************************************************************/
 static ConfigCommand command = cfgCmdNone;
+static ConfigCommandRole commandRole = cfgCmdRoleDefault;
 
 /***********************************************************************************************************************************
 Store the location of the executable
@@ -136,6 +134,7 @@ cfgInit(void)
 
     // Reset configuration
     command = cfgCmdNone;
+    commandRole = cfgCmdRoleDefault;
     exe = NULL;
     help = false;
     paramList = NULL;
@@ -172,16 +171,25 @@ cfgCommand(void)
     FUNCTION_TEST_RETURN(command);
 }
 
+ConfigCommandRole
+cfgCommandRole(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(commandRole);
+}
+
 void
-cfgCommandSet(ConfigCommand commandParam)
+cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandParam);
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandParam <= cfgCmdNone);
+    ASSERT(commandId <= cfgCmdNone);
 
-    command = commandParam;
+    command = commandId;
+    commandRole = commandRoleId;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -264,6 +272,31 @@ cfgCommandName(ConfigCommand commandId)
     FUNCTION_TEST_RETURN(configCommandData[commandId].name);
 }
 
+String *
+cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const String *separator)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
+        FUNCTION_TEST_PARAM(STRING, separator);
+    FUNCTION_TEST_END();
+
+    String *result = strNew(cfgCommandName(commandId));
+
+    if (commandRoleId != cfgCmdRoleDefault)
+        strCatFmt(result, "%s%s", strPtr(separator), strPtr(cfgCommandRoleStr(commandRoleId)));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+String *
+cfgCommandRoleName(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_TEST_RETURN(cfgCommandRoleNameParam(cfgCommand(), cfgCommandRole(), COLON_STR));
+}
+
 /***********************************************************************************************************************************
 Command parameters, if any
 ***********************************************************************************************************************************/
@@ -300,6 +333,66 @@ cfgCommandParamSet(const StringList *param)
     MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+STRING_STATIC(CONFIG_COMMAND_ROLE_ASYNC_STR,                        CONFIG_COMMAND_ROLE_ASYNC);
+STRING_STATIC(CONFIG_COMMAND_ROLE_LOCAL_STR,                        CONFIG_COMMAND_ROLE_LOCAL);
+STRING_STATIC(CONFIG_COMMAND_ROLE_REMOTE_STR,                       CONFIG_COMMAND_ROLE_REMOTE);
+
+ConfigCommandRole
+cfgCommandRoleEnum(const String *commandRole)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, commandRole);
+    FUNCTION_TEST_END();
+
+    if (commandRole == NULL)
+        FUNCTION_TEST_RETURN(cfgCmdRoleDefault);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_ASYNC_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleAsync);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_LOCAL_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleLocal);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_REMOTE_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleRemote);
+
+    THROW_FMT(CommandInvalidError, "invalid command role '%s'", strPtr(commandRole));
+}
+
+const String *
+cfgCommandRoleStr(ConfigCommandRole commandRole)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandRole);
+    FUNCTION_TEST_END();
+
+    const String *result = NULL;
+
+    switch (commandRole)
+    {
+        case cfgCmdRoleDefault:
+            break;
+
+        case cfgCmdRoleAsync:
+        {
+            result = CONFIG_COMMAND_ROLE_ASYNC_STR;
+            break;
+        }
+
+        case cfgCmdRoleLocal:
+        {
+            result = CONFIG_COMMAND_ROLE_LOCAL_STR;
+            break;
+        }
+
+        case cfgCmdRoleRemote:
+        {
+            result = CONFIG_COMMAND_ROLE_REMOTE_STR;
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -355,22 +448,23 @@ cfgLockRequired(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].lockRequired);
+    // Local roles never take a lock and the remote role has special logic for locking
+    FUNCTION_TEST_RETURN(
+        // If a lock is required for the command and the role is default
+        (configCommandData[cfgCommand()].lockRequired && cfgCommandRole() == cfgCmdRoleDefault) ||
+        // Or any command when the role is async
+        cfgCommandRole() == cfgCmdRoleAsync);
 }
 
 /***********************************************************************************************************************************
 Does the command require an immediate lock?
 ***********************************************************************************************************************************/
 bool
-cfgLockRemoteRequired(ConfigCommand commandId)
+cfgLockRemoteRequired(void)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_VOID();
 
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN(configCommandData[commandId].lockRemoteRequired);
+    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].lockRemoteRequired);
 }
 
 /***********************************************************************************************************************************
@@ -387,21 +481,6 @@ cfgLockType(void)
 }
 
 /***********************************************************************************************************************************
-Get the remote lock type required for the command
-***********************************************************************************************************************************/
-LockType
-cfgLockRemoteType(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN((LockType)configCommandData[commandId].lockType);
-}
-
-/***********************************************************************************************************************************
 Does this command log to a file?
 ***********************************************************************************************************************************/
 bool
@@ -411,7 +490,13 @@ cfgLogFile(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].logFile);
+    FUNCTION_TEST_RETURN(
+        // If the command always logs to a file
+        configCommandData[cfgCommand()].logFile ||
+        // Or log-level-file was explicitly set as a param/env var
+        cfgOptionSource(cfgOptLogLevelFile) == cfgSourceParam ||
+        // Or the role is async
+        cfgCommandRole() == cfgCmdRoleAsync);
 }
 
 /***********************************************************************************************************************************
@@ -425,19 +510,6 @@ cfgLogLevelDefault(void)
     ASSERT(command != cfgCmdNone);
 
     FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelDefault);
-}
-
-/***********************************************************************************************************************************
-Get max stderr log level -- used to suppress error output for higher log levels, e.g. local and remote commands
-***********************************************************************************************************************************/
-LogLevel
-cfgLogLevelStdErrMax(void)
-{
-    FUNCTION_TEST_VOID();
-
-    ASSERT(command != cfgCmdNone);
-
-    FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelStdErrMax);
 }
 
 /***********************************************************************************************************************************

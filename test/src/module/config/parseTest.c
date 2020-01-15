@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Configuration Parse
 ***********************************************************************************************************************************/
+#include "protocol/helper.h"
 #include "storage/storage.intern.h"
 
 #define TEST_BACKREST_EXE                                           "pgbackrest"
@@ -612,6 +613,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(BOGUS_STR ":" BOGUS_STR));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError, "invalid command 'BOGUS:BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--" BOGUS_STR));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError, "invalid option '--BOGUS'");
 
@@ -778,12 +786,12 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--host-id=1"));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--type=backup"));
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-stderr=info"));
-        strLstAdd(argList, strNew("local"));
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
@@ -793,12 +801,12 @@ testRun(void)
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
+        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--type=backup"));
+        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-stderr=info"));
-        strLstAdd(argList, strNew("remote"));
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;

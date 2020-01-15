@@ -247,5 +247,5 @@ cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
     // Calculate the HMAC
     HMAC(hashType, bufPtr(key), (int)bufUsed(key), bufPtr(message), bufUsed(message), bufPtr(result), NULL);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_LOG_RETURN(BUFFER, result);
 }
