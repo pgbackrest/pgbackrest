@@ -515,7 +515,7 @@ storageS3ListInternal(
 
                 // Get the continuation token and store it in the outer temp context
                 memContextSwitch(MEM_CONTEXT_OLD());
-                continuationToken = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
+                    continuationToken = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
                 memContextSwitch(MEM_CONTEXT_TEMP());
             }
             MEM_CONTEXT_TEMP_END();
@@ -827,12 +827,12 @@ storageS3PathRemoveCallback(StorageS3 *this, void *callbackData, const String *n
         // If there is something to delete then create the request
         if (data->xml == NULL)
         {
-            MemContext *memContextOld = memContextSwitch(data->memContext);
-
-            data->xml = xmlDocumentNew(S3_XML_TAG_DELETE_STR);
-            xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_QUIET_STR), TRUE_STR);
-
-            memContextSwitch(memContextOld);
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->xml = xmlDocumentNew(S3_XML_TAG_DELETE_STR);
+                xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_QUIET_STR), TRUE_STR);
+            }
+            MEM_CONTEXT_END();
         }
 
         // Add to delete list
