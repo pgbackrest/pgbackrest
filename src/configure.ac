@@ -1,6 +1,6 @@
 # Initialize configuration
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.21dev])
+AC_INIT([pgBackRest], [2.22dev])
 AC_CONFIG_SRCDIR([version.h])
 
 # Check compiler

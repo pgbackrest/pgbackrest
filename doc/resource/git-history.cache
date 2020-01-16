@@ -1,5 +1,283 @@
 [
     {
+        "commit": "2c0ba0820d3e4adea31ef6b8ee201be653ef9579",
+        "date": "2020-01-15 13:21:52 -0700",
+        "subject": "v2.21: C Migration Complete"
+    },
+    {
+        "commit": "8d3710b2fe94c90783374d19a435bded1903fe1b",
+        "date": "2020-01-15 12:24:58 -0700",
+        "subject": "Fix options being ignored by asynchronous commands.",
+        "body": "The local, remote, archive-get-async, and archive-push-async commands were used to run functionality that was not directly available to the user. Unfortunately that meant they would not pick up options from the command that the user expected, e.g. backup, archive-get, etc.\n\nRemove the internal commands and add roles which allow pgBackRest to determine what functionality is required without implementing special commands. This way the options are loaded from the expected command section.\n\nSince remote is no longer a specific command with its own options, more manipulation is required when calling remote. This might be something we can improve in the config system but it may be worth leaving as is because it is a one-off, for now at least."
+    },
+    {
+        "commit": "c43ec9d38c7cd543d7a832f1e362705658ca5c12",
+        "date": "2020-01-15 08:19:32 -0700",
+        "subject": "Fix function return logging type.",
+        "body": "This was working because the stack was being cleaned up by a try block at the call site."
+    },
+    {
+        "commit": "f8a29c266e1e9b6e207fdd74478e3aca9b728cb9",
+        "date": "2020-01-13 20:36:42 -0700",
+        "subject": "Clarify comment."
+    },
+    {
+        "commit": "a7738ebba3cfd3a732c5de997a113746136133af",
+        "date": "2020-01-13 13:21:28 -0700",
+        "subject": "Update comments in command/remote module."
+    },
+    {
+        "commit": "a969a860abea7384572a1244913bcfbd8851545d",
+        "date": "2020-01-13 11:13:37 -0700",
+        "subject": "Fix misaligned braces."
+    },
+    {
+        "commit": "fe263e87b1822b051ccea3fc0a8fea64f944dd7b",
+        "date": "2020-01-12 11:31:06 -0700",
+        "subject": "Allow path-style URIs in S3 driver.",
+        "body": "Although path-style URIs have been deprecated by AWS, they may still be used with products like Minio because no additional DNS configuration is required.\n\nPath-style URIs must be explicitly enabled since it is not clear how they can be auto-detected reliably.  More importantly, faulty detection could cause regressions in current installations."
+    },
+    {
+        "commit": "069345d33959eb7b2ff0f4ae2b2ec65023ac7186",
+        "date": "2020-01-12 11:00:10 -0700",
+        "subject": "Add string constants."
+    },
+    {
+        "commit": "3f89ecf8d9b848c2ca063581bc75064d9d353255",
+        "date": "2020-01-10 09:39:33 -0700",
+        "subject": "Add time to storage ls JSON output.",
+        "body": "Time is supported in all drivers with the update to S3 at 61538f93, so it is now possible to add time to the ls command and have it work on all repo types."
+    },
+    {
+        "commit": "0fe7bb2ec4d6ba10af8f2a6fd736e2c4cbdb2af2",
+        "date": "2020-01-09 12:20:13 -0700",
+        "subject": "Improve code that updates/removes pg options passed to a remote.",
+        "body": "The prior code was updating/removing hard-coded options but new options are added all the time and there was no indication that this code needed to be updated.  For example, dc1e7ca2 added the pg-user option but this code was not updated.\n\nInstead find the options to update/remove dynamically.  The new code uses prefixes, which is not perfect, but the patterns for pg options are pretty well established and this seems safer than the existing code."
+    },
+    {
+        "commit": "4c8653fc8bc6e8b3070c59ba12af4e5f2131c21c",
+        "date": "2020-01-09 11:56:03 -0700",
+        "subject": "Update inaccurate comments."
+    },
+    {
+        "commit": "2e11389ed4db29d530ec8e480134c44eab9a5896",
+        "date": "2020-01-09 11:52:51 -0700",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "0c5c78e5e16b10f79dcfa023c6276a65ad87481d",
+        "date": "2020-01-09 09:23:15 -0700",
+        "subject": "Make quoting in cfgExeParam() optional.",
+        "body": "Parameter lists that are passed directly to exec*() do not need quoting when spaces are present.  Worse, the quotes will not be stripped and the option value will be garbled.\n\nUnfortunately this still does not fix all issues with quoting since we don't know how it might need to be escaped to work with SSH command configuration.  The answer seems to be to pass the options in the protocol layer but that's beyond the scope of this commit."
+    },
+    {
+        "commit": "7de5ce23ad387602125f478ceec2c834703080d5",
+        "date": "2020-01-08 18:59:02 -0700",
+        "subject": "Add internal remote-type option.",
+        "body": "This option was overloaded on the general type option but it makes sense to split this out since the meaning is pretty different.\n\nRename the values to conform to current standards, i.e. pg and repo, now that the Perl code won't care anymore."
+    },
+    {
+        "commit": "7a1871c341c2ae530927bcf018792733530fc417",
+        "date": "2020-01-08 09:54:44 -0700",
+        "subject": "Fix test log message to match pg-version parameter name.",
+        "body": "It was confusing that this part of the log message did not match the parameter name, which made reproducing test failures from CI a little harder."
+    },
+    {
+        "commit": "8e1f78b4c82d3b4f7ecbdb053df1c8fd46bf3c1e",
+        "date": "2020-01-07 12:20:51 -0700",
+        "subject": "Remove obsolete Perl code missed in f0ef73db."
+    },
+    {
+        "commit": "a84ae6be04fc21c52c04284004836292089fa0e1",
+        "date": "2020-01-06 16:16:48 -0700",
+        "subject": "Fix comment typos."
+    },
+    {
+        "commit": "61538f932c58c3bb0afad5b6c16cf997604e3606",
+        "date": "2020-01-06 15:53:53 -0700",
+        "subject": "Parse dates in storageS3InfoList() and storageS3Info().",
+        "body": "Previously dates were not being filled by these functions which was fine since dates were not used.\n\nWe plan to use dates for the ls command plus it makes sense for the driver to be complete since it will be used as an example."
+    },
+    {
+        "commit": "d2fb4f977ceba499f134ad363ea3170f0d9ef5b9",
+        "date": "2020-01-06 15:24:49 -0700",
+        "subject": "Add httpLastModifiedToTime() to parse HTTP last-modified header."
+    },
+    {
+        "commit": "a08298ce1b9ee96a9f84b613848327f7f60eb063",
+        "date": "2020-01-06 15:18:52 -0700",
+        "subject": "Add basic time management functions.",
+        "body": "These are similar to what mktime() and strptime() do but they ignore the local system timezone which saves having to munge the TZ env variable to do time conversions."
+    },
+    {
+        "commit": "fc47907fe32560e8d3086287023d6f727027a0a1",
+        "date": "2020-01-03 09:32:52 -0700",
+        "subject": "Update LICENSE.txt for 2020."
+    },
+    {
+        "commit": "011bcb48697ddb56fe1396502a36254718f74dfa",
+        "date": "2019-12-29 21:22:18 -0700",
+        "subject": "Remove command option from Perl db application name.",
+        "body": "The command option will be removed from the C code so it needs to be removed here as well.\n\nThis code is now used only for testing so it's not important that it be so precise."
+    },
+    {
+        "commit": "33e328abbf5992caccc15ff42ca2dca14502c983",
+        "date": "2019-12-28 18:30:32 -0700",
+        "subject": "Remove unused LibC code.",
+        "body": "The code was made obsolete by the migration to C."
+    },
+    {
+        "commit": "e72a9dd0d2b6aad58a5d845112631253382e20e2",
+        "date": "2019-12-28 13:37:03 -0700",
+        "subject": "Add error parameter to cfgCommandId().",
+        "body": "This allows commands to be checked for validity without generating an error."
+    },
+    {
+        "commit": "d28837a300d4b585792c049dce25fd73387408b3",
+        "date": "2019-12-28 13:31:59 -0700",
+        "subject": "Remove obsolete function declaration."
+    },
+    {
+        "commit": "d41eea685a732fa80d99d0af0fc52746e13d1152",
+        "date": "2019-12-26 18:08:27 -0700",
+        "subject": "Change meaning of TEST_RESULT_STR() macro.",
+        "body": "This macro was created before the String object existed so subsequent usage with String always included a lot of strPtr() wrapping.\n\nTEST_RESULT_STR_Z() had already been introduced but a wholesale replacement of TEST_RESULT_STR() was not done since the priority was on the C migration.\n\nUpdate all calls to (old) TEST_RESULT_STR() with one of the following variants: (new) TEST_RESULT_STR(), TEST_RESULT_STR_Z(), TEST_RESULT_Z(), TEST_RESULT_Z_STR()."
+    },
+    {
+        "commit": "02d3918b3233276651fff443b7fcee3f325cf263",
+        "date": "2019-12-19 19:37:55 -0500",
+        "subject": "Remove duplicate header and extra linefeed."
+    },
+    {
+        "commit": "74c3842595f49b81be341faf56f2343e9a5c60c8",
+        "date": "2019-12-19 16:25:46 -0500",
+        "subject": "Remove errant tabs and fix spacing."
+    },
+    {
+        "commit": "7dfea6b71728bc4985021ce8eb993c1376344581",
+        "date": "2019-12-19 16:20:11 -0500",
+        "subject": "Remove errant tab."
+    },
+    {
+        "commit": "dc1e7ca22dbdae2556513468433b0591d7cf5a44",
+        "date": "2019-12-19 11:26:38 -0500",
+        "subject": "Add pg-user option.",
+        "body": "Specifies the database user name when connecting to PostgreSQL.\n\nIf not specified pgBackRest will connect with the local OS user or PGUSER, which was the previous behavior."
+    },
+    {
+        "commit": "9452084dd174925c554273eb2f8b224c89069123",
+        "date": "2019-12-17 23:32:39 -0500",
+        "subject": "Fix misspellings of libpq."
+    },
+    {
+        "commit": "63a855e2f7108f54100b973e23e4bcf3005a1647",
+        "date": "2019-12-17 23:26:52 -0500",
+        "subject": "Fix misaligned continuation character."
+    },
+    {
+        "commit": "2f7e139534de54fb19fa46edf7eeb7ecf00d8284",
+        "date": "2019-12-17 22:35:30 -0500",
+        "subject": "Error if option prefix and index total are not both defined.",
+        "body": "They are both required for indexed options."
+    },
+    {
+        "commit": "d780d084b7b4ad0950bd35b905c778c3a47e8860",
+        "date": "2019-12-17 21:56:02 -0500",
+        "subject": "Add comments about increasing Vagrantfile disk size."
+    },
+    {
+        "commit": "d89d9f1c52b9fc7bf4827d1b367da6e8520a79d2",
+        "date": "2019-12-17 21:47:19 -0500",
+        "subject": "Skip vagrant disksize option if no plugin.",
+        "body": "Previously, `vagrant up` would bail if no `vagrant-disksize` plugin was\ninstalled. This option is just a nice-to-have, so skip it rather than\nbailing."
+    },
+    {
+        "commit": "ac35dcac39699b5ecae5f3d178cb837bac1446dc",
+        "date": "2019-12-17 21:28:40 -0500",
+        "subject": "Add note about symlink required for contributing documentation to build."
+    },
+    {
+        "commit": "3394a5017091e57b0adc296b43ac00010a223c3d",
+        "date": "2019-12-17 21:25:54 -0500",
+        "subject": "Remove unused Perl library missed in f0ef73db."
+    },
+    {
+        "commit": "620386f034fd97371c467bda4dc0d90f423bf663",
+        "date": "2019-12-17 20:14:45 -0500",
+        "subject": "Remove integration tests that are now covered in the unit tests.",
+        "body": "Most of these tests are just checking that errors are thrown when required.  These are well covered in various unit tests.\n\nThe \"cannot resume\" tests are also well covered in the backup unit tests.\n\nFinally, config warnings are well covered in the config unit tests.\n\nThere is more to be done here, but this accounts for the low-hanging fruit."
+    },
+    {
+        "commit": "977ec2e307c5487df9ed6fadebd486a92c75f269",
+        "date": "2019-12-17 15:23:07 -0500",
+        "subject": "Integration test improvements for disk and memory efficiency.",
+        "body": "Set log-level-file=off when more that one test will run.  In this case is it impossible to see the logs anyway since they will be automatically cleaned up after the test.  This improves performance pretty dramatically since trace-level logging is expensive.  If a singe integration test is run then log-level-file is trace by default but can be changed with the --log-level-test-file option.\n\nReduce buffer-size to 64k to save memory during testing and allow more processes to run in parallel.\n\nUpdate log replacement rules so that these options can change without affecting expect logs."
+    },
+    {
+        "commit": "ccea30b8d8970acf9c1826c5c988d819aabf2d0f",
+        "date": "2019-12-14 10:20:23 -0500",
+        "subject": "Increase memory in ramdisk for Travis CI testing.",
+        "body": "The co6 tests were occasionally running out of space so bump up the size of the ramdisk a bit to hopefully prevent this.\n\nA longer term solution would be to disable the trace-level file logs when running on Travis CI since they seem to be using most of the space."
+    },
+    {
+        "commit": "6bd280f7bd667305317a7c825d913dac9719c475",
+        "date": "2019-12-14 09:53:50 -0500",
+        "subject": "Don't warn when stop-auto is enabled on PostgreSQL >= 9.6.",
+        "body": "PostgreSQL >= 9.6 uses non-exclusive backup which has implicit stop-auto since the backup will stop when the connection is terminated.\n\nThe warning was made more verbose in 1f2ce45e but this now seems like a bad idea since there are likely users with mixed version environments where stop-auto is enabled globally.  There's no reason to fill their logs with warnings over a harmless option.  If anything we should warn when stop-auto is explicitly set to false but this doesn't seem very important either.\n\nRevert to the prior behavior, which is to warn and reset when stop-auto is enabled on PostgreSQL < 9.3."
+    },
+    {
+        "commit": "03849840b813fdfdc2e00874fa8e3bbe9ac95338",
+        "date": "2019-12-13 21:33:13 -0500",
+        "subject": "Fix handling of \\ in filenames.",
+        "body": "\\ was not being properly escaped when calculating the manifest checksum which prevented the manifest from loading.\n\nUse jsonFromStr() to properly quote and escape \\.\n\nSince instances of \\ in cluster filenames should be rare to nonexistent this does not seem likely to be a serious problem in the field."
+    },
+    {
+        "commit": "f0ef73db7009cd6e08740d270a6ee7565efc9f8c",
+        "date": "2019-12-13 17:55:41 -0500",
+        "subject": "pgBackRest is now pure C.",
+        "body": "Remove embedded Perl from the distributed binary.  This includes code, configure, Makefile, and packages.  The distributed binary is now pure C.\n\nRemove storagePathEnforceSet() from the C Storage object which allowed Perl to write outside of the storage base directory.  Update mock/all and real/all integration tests to use storageLocal() where they were violating this rule.\n\nRemove \"c\" option that allowed the remote to tell if it was being called from C or Perl.\n\nCode to convert options to JSON for passing to Perl (perl/config.c) has been moved to LibC since it is still required for Perl integration tests.\n\nUpdate build and installation instructions in the user guide.\n\nRemove all Perl unit tests.\n\nRemove obsolete Perl code.  In particular this included all the Perl protocol code which required modifications to the Perl storage, manifest, and db objects that are still required for integration testing but only run locally.  Any remaining Perl code is required for testing, documentation, or code generation.\n\nRename perlReq to binReq in define.yaml to indicate that the binary is required for a test.  This had been the actual meaning for quite some time but the key was never renamed."
+    },
+    {
+        "commit": "1f2ce45e6b613edfb628ac40fd2369c9455692ba",
+        "date": "2019-12-13 17:14:26 -0500",
+        "subject": "The backup command is implemented entirely in C.",
+        "body": "For the most part this is a direct migration of the Perl code into C except as noted below.\n\nA backup can now be initiated from a linked directory.  The link will not be stored in the manifest or recreated on restore.  If a link or directory does not already exist in the restore location then a directory will be created.\n\nThe logic for creating backup labels has been improved and it should no longer be possible to get a backup label earlier than the latest backup even with timezone changes or clock skew.  This has never been an issue in the field that we know of, but we found it in testing.\n\nFor online backups all times are fetched from the PostgreSQL primary host (before only copy start was).  This doesn't affect backup integrity but it does prevent clock skew between hosts affecting backup duration reporting.\n\nArchive copy now works as expected when the archive and backup have different compression settings, i.e. when one is compressed and the other is not.  This was a long-standing bug in the Perl code.\n\nResume will now work even if hardlink settings have been changed."
+    },
+    {
+        "commit": "e206093beb43981f11b532f05897c383f93d8f63",
+        "date": "2019-12-12 18:52:16 -0500",
+        "subject": "Allow end anchor to be excluded in backupRegExp().",
+        "body": "This is useful for matching files in the backup history directory which have characters after the backup label."
+    },
+    {
+        "commit": "8acfb6adf410571464c956ad161ad3df227b73a5",
+        "date": "2019-12-12 16:43:34 -0500",
+        "subject": "Add pgLsnRangeToWalSegmentList() to convert lsn range to wal segments."
+    },
+    {
+        "commit": "81295fd3889ce05829b6443aa29032ccffdfef3e",
+        "date": "2019-12-12 16:28:26 -0500",
+        "subject": "Move not found error into walSegmentFind().",
+        "body": "This error is also needed in backup so move it here to centralize it."
+    },
+    {
+        "commit": "1378d9c58b05f2f45352df155463ab8cd55276a6",
+        "date": "2019-12-12 16:21:51 -0500",
+        "subject": "Fix bad arithmetic in pgLsnToWalSegment().",
+        "body": "/ takes precedence over & but the appropriate parens were not provided.\n\nBy some bad luck the tests worked either way, so add a new test that only works the correct way to prevent a regression."
+    },
+    {
+        "commit": "676be2c77390587bb36c9d88bcf1a54d333ee0f3",
+        "date": "2019-12-12 16:11:09 -0500",
+        "subject": "Add pgWalPath() to return version-specific WAL path.",
+        "body": "Also update the manifest module to use the new function."
+    },
+    {
+        "commit": "94cb9540f1c94746d78ae4efb16246b26daf79a0",
+        "date": "2019-12-12 09:05:10 -0500",
+        "subject": "Begin v2.21 development."
+    },
+    {
         "commit": "39fc2b7ad68d97cf5f23757e8a341428935621f4",
         "date": "2019-12-12 08:20:21 -0500",
         "subject": "v2.20: Bug Fixes"

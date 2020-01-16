@@ -770,14 +770,10 @@
         </execute-list>
 
         <execute-list host="{[host-build]}">
-            <title>Compile <backrest/></title>
+            <title>Configure and compile <backrest/></title>
 
             <execute>
-                <exe-cmd>cd /build/pgbackrest-release-{[version]}/src &amp;&amp; ./configure</exe-cmd>
-            </execute>
-
-            <execute>
-                <exe-cmd>make -s -C /build/pgbackrest-release-{[version]}/src</exe-cmd>
+                <exe-cmd>cd /build/pgbackrest-release-{[version]}/src &amp;&amp; ./configure &amp;&amp; make</exe-cmd>
             </execute>
         </execute-list>
     </section>

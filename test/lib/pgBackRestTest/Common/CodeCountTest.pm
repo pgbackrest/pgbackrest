@@ -93,16 +93,15 @@ sub codeCountScan
         {
             $strClass = 'test/module';
         }
-        elsif ($strFile =~ '^src/' || $strFile =~ '^lib/' || $strFile =~ '^libc/')
+        elsif ($strFile =~ '^src/')
         {
-            if ($strFile =~ '\.auto\..$' || $strFile =~ 'Auto\.pm$')
-            {
-                $strClass = 'core/auto';
-            }
-            else
-            {
-                $strClass = 'core';
-            }
+            $strClass = 'core';
+        }
+
+        # Append auto if an auto-generated file
+        if ($strFile =~ '\.auto\..$' | $strFile =~ 'Auto\.pm$')
+        {
+            $strClass .= '/auto';
         }
 
         # Force unrecognized file types
