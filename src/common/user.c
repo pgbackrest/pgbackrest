@@ -34,18 +34,18 @@ userInitInternal(void)
 
     MEM_CONTEXT_BEGIN(memContextTop())
     {
-        userLocalData.memContext = memContextNew("UserLocalData");
-    }
-    MEM_CONTEXT_END();
+        MEM_CONTEXT_NEW_BEGIN("UserLocalData")
+        {
+            userLocalData.memContext = MEM_CONTEXT_NEW();
 
-    MEM_CONTEXT_BEGIN(userLocalData.memContext)
-    {
-        userLocalData.userId = getuid();
-        userLocalData.userName = userNameFromId(userLocalData.userId);
-        userLocalData.userRoot = userLocalData.userId == 0;
+            userLocalData.userId = getuid();
+            userLocalData.userName = userNameFromId(userLocalData.userId);
+            userLocalData.userRoot = userLocalData.userId == 0;
 
-        userLocalData.groupId = getgid();
-        userLocalData.groupName = groupNameFromId(userLocalData.groupId);
+            userLocalData.groupId = getgid();
+            userLocalData.groupName = groupNameFromId(userLocalData.groupId);
+        }
+        MEM_CONTEXT_NEW_END();
     }
     MEM_CONTEXT_END();
 
