@@ -307,7 +307,7 @@ iniParse(Ini *this, const String *content)
             MEM_CONTEXT_TEMP_END();
         }
     }
-    MEM_CONTEXT_END()
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
