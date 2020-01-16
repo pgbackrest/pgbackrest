@@ -464,6 +464,10 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-TARGET', " \\-\\-target\\=\\\".*UTC", "[^\\\"]+UTC\$");
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-TARGET', "^recovery_target_time \\= \\'.*UTC", "[^\\']+UTC\$");
 
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-TARGET', "\\, target \\'.*\\+00", "[^\\']+\\+00\$");
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-TARGET', " \\-\\-target\\=\\\".*\\+00", "[^\\\"]+\\+00\$");
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-TARGET', "^recovery_target_time \\= \\'.*\\+00", "[^\\']+\\+00\$");
+
     # Full test xid-based recovery (this expressions only work when time-based expressions above have already been applied
     $strLine = $self->regExpReplace($strLine, 'XID-TARGET', "\\, target \\'[0-9]+", "[0-9]+\$");
     $strLine = $self->regExpReplace($strLine, 'XID-TARGET', " \\-\\-target\\=\\\"[0-9]+", "[0-9]+\$");
