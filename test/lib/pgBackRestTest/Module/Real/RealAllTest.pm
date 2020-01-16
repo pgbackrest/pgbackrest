@@ -137,7 +137,6 @@ sub run
         my $strXidMessage = 'xid';
         my $strNameMessage = 'name';
         my $strTimelineMessage = 'timeline';
-        my $strTimeAutoSelectMessage = 'time-auto-select';
 
         # Create two new databases
         if ($bTestLocal)
@@ -548,13 +547,8 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->sqlExecute("update test set message = '$strTimeMessage'");
         $oHostDbMaster->sqlWalRotate();
-        my $strTimeTarget = $oHostDbMaster->sqlSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
+        my $strTimeTarget = $oHostDbMaster->sqlSelectOne("select current_timestamp");
         &log(INFO, "        time target is ${strTimeTarget}");
-
-        $oHostDbMaster->sqlExecute("update test set message = '$strTimeAutoSelectMessage'");
-        $oHostDbMaster->sqlWalRotate();
-        my $strTimeTargetAutoSelect = $oHostDbMaster->sqlSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
-        &log(INFO, "        auto select time target is ${strTimeTargetAutoSelect}");
 
         # Incr backup - fail on archive_mode=always when version >= 9.5
         #---------------------------------------------------------------------------------------------------------------------------
@@ -910,33 +904,19 @@ sub run
             $oHostDbMaster->sqlExecute("update test set message = '$strTimelineMessage'");
         }
 
-        # Restore (restore type = time, inclusive) - automatically select backup set if default
-        #---------------------------------------------------------------------------------------------------------------------------
-        &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_TIME . ' (auto-select backup set)');
-
-        $oHostDbMaster->clusterStop();
-
-        $oHostDbMaster->restore(
-            undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTargetAutoSelect,
-                strTargetAction => $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
-                strTargetTimeline => $oHostDbMaster->pgVersion() >= PG_VERSION_12 ? 'current' : undef});
-
-        $oHostDbMaster->clusterStart();
-        $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimeAutoSelectMessage);
-
-        # Restore (restore type = time, inclusive) - there is no exclusive time test because I can't find a way to find the
-        # exact commit time of a transaction.
+        # Restore (restore type = time, inclusive, automatically select backup) - there is no exclusive time test because I can't
+        # find a way to find the exact commit time of a transaction.
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_TIME);
 
         $oHostDbMaster->clusterStop();
 
         $oHostDbMaster->restore(
-            undef, $strFullBackup,
+            undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
             {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget,
                 strTargetAction => $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
-                strTargetTimeline => $oHostDbMaster->pgVersion() >= PG_VERSION_12 ? 'current' : undef});
+                strTargetTimeline => $oHostDbMaster->pgVersion() >= PG_VERSION_12 ? 'current' : undef,
+                strBackupExpected => $strFullBackup});
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimeMessage);
