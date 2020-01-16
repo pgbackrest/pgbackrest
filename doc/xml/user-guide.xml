@@ -1821,7 +1821,6 @@
     </section>
 
     <!-- SECTION => PITR -->
-<!-- CSHANG This section needs to be updated -->
     <section id="pitr" depend="quickstart/perform-backup">
         <title>Point-in-Time Recovery</title>
 
@@ -1943,10 +1942,10 @@
             </execute>
         </execute-list>
 
-        <p>Now take a new backup and attempt recovery from the new backup.</p>
+        <p>Now take a new backup and attempt recovery from the new backup by specifying the new backup with the <br-option>{[dash]}-set</br-option> option.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Perform a backup then attempt recovery from that backup</title>
+            <title>Perform a backup then attempt recovery from the last backup</title>
 
             <execute user="postgres" show="n" variable-key="backup-last">
                 <exe-cmd>{[cmd-backup-last]}</exe-cmd>
@@ -1962,6 +1961,7 @@
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
+                     {[dash]}-set={[backup-last]}
                      {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" --target-action=promote restore</exe-cmd>
             </execute>
 
@@ -2005,10 +2005,10 @@
             </execute>
         </execute-list>
 
-        <p>The default behavior for restore is to use the last backup but an earlier backup can be specified with the <br-option>{[dash]}-set</br-option> option.</p>
+        <p>The default behavior for time-based restore, if the <br-option>{[dash]}-set</br-option> option is not set, is to attempt to discover an earlier backup to play forward from; if a backup set cannot be found, then restore will default to the latest backup which, as shown earlier, may not give the desired result.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/>, restore from the selected backup, and start <postgres/></title>
+            <title>Stop <postgres/>, allow <backrest/> to discover the backup, and start <postgres/></title>
 
             <execute user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
@@ -2018,7 +2018,7 @@
                 <exe-cmd>
                     {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
                         {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}"
-                        {[dash]}-set={[backup-last]} --target-action=promote restore
+                        --target-action=promote restore
                 </exe-cmd>
             </execute>
 
