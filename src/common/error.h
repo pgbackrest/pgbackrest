@@ -84,37 +84,39 @@ unsigned int errorTryDepth(void);
 Begin a block where errors can be thrown
 ***********************************************************************************************************************************/
 #define TRY_BEGIN()                                                                                                                \
-do                                                                                                                                 \
-{                                                                                                                                  \
-    if (errorInternalTry(__FILE__, __func__, __LINE__) && setjmp(*errorInternalJump()) >= 0)                                       \
+    do                                                                                                                             \
     {                                                                                                                              \
-        while (errorInternalProcess(false))                                                                                        \
-            if (errorInternalStateTry())
+        if (errorInternalTry(__FILE__, __func__, __LINE__) && setjmp(*errorInternalJump()) >= 0)                                   \
+        {                                                                                                                          \
+            while (errorInternalProcess(false))                                                                                    \
+            {                                                                                                                      \
+                if (errorInternalStateTry())
 
 /***********************************************************************************************************************************
 Catch a specific error thrown in the try block
 ***********************************************************************************************************************************/
 #define CATCH(errorTypeCatch)                                                                                                      \
-    else if (errorInternalStateCatch(&errorTypeCatch))
+                else if (errorInternalStateCatch(&errorTypeCatch))
 
 /***********************************************************************************************************************************
 Catch any error thrown in the try block
 ***********************************************************************************************************************************/
 #define CATCH_ANY()                                                                                                                \
-    else if (errorInternalStateCatch(&RuntimeError))
+                else if (errorInternalStateCatch(&RuntimeError))
 
 /***********************************************************************************************************************************
 Code to run whether the try block was successful or not
 ***********************************************************************************************************************************/
 #define FINALLY()                                                                                                                  \
-    else if (errorInternalStateFinal())
+                else if (errorInternalStateFinal())
 
 /***********************************************************************************************************************************
 End the try block
 ***********************************************************************************************************************************/
 #define TRY_END()                                                                                                                  \
-    }                                                                                                                              \
-} while (0)
+            }                                                                                                                      \
+        }                                                                                                                          \
+    } while (0)
 
 /***********************************************************************************************************************************
 Throw an error
