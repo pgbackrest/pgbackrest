@@ -13,6 +13,17 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.22dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Automate detection of a backup set during restore if a target time is provided but the <br-option>set</br-option> option has not been provided. If a backup set for the given target time cannot not be found, the latest (default) backup set will be used.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
         </release>
 
         <release date="2020-01-15" version="2.21" title="C Migration Complete">
@@ -53,14 +64,6 @@
 
                     <release-item>
                         <p>Allow path-style URIs in <proper>S3</proper> driver.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
-                        </release-item-contributor-list>
-
-                        <p>Automate detection of a backup set during restore if a target time is provided but the <br-option>set</br-option> option has not been provided. If a backup set for the given target time cannot not be found, the latest (default) backup set will be used.</p>
                     </release-item>
                 </release-feature-list>
 
