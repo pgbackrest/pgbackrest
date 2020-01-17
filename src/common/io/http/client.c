@@ -452,7 +452,7 @@ httpClientRequest(
             RETHROW();
 
         // Move the result buffer (if any) to the parent context
-        bufMove(result, MEM_CONTEXT_OLD());
+        bufMove(result, memContextPrior());
 
         httpClientStatLocal.request++;
     }

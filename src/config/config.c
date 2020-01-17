@@ -686,9 +686,11 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
                 }
 
                 // Set the host
-                memContextSwitch(MEM_CONTEXT_OLD());
-                result = strDup(strLstGet(hostPart, 0));
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = strDup(strLstGet(hostPart, 0));
+                }
+                MEM_CONTEXT_PRIOR_END();
 
                 // Set the port and error if it is not a positive integer
                 TRY_BEGIN()
@@ -708,9 +710,11 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
             // Else there is no port and just copy the host
             else
             {
-                memContextSwitch(MEM_CONTEXT_OLD());
-                result = strDup(host);
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = strDup(host);
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
         }
         MEM_CONTEXT_TEMP_END();

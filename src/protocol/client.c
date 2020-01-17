@@ -208,7 +208,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
         if (outputRequired)
         {
             // Just move the entire response kv since the output is the largest part if it
-            kvMove(responseKv, MEM_CONTEXT_OLD());
+            kvMove(responseKv, memContextPrior());
         }
         // Else if no output is required then there should not be any
         else if (result != NULL)
@@ -322,9 +322,11 @@ protocolClientReadLine(ProtocolClient *this)
         else if (strPtr(result)[0] != '.')
             THROW_FMT(FormatError, "invalid prefix in '%s'", strPtr(result));
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strSub(result, 1);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strSub(result, 1);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

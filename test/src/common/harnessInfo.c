@@ -94,7 +94,7 @@ harnessInfoChecksum(const String *info)
         bufCat(result, BUFSTR(jsonFromVar(ioFilterResult(data.checksum))));
         bufCat(result, BUFSTRDEF("\n"));
 
-        bufMove(result, MEM_CONTEXT_OLD());
+        bufMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -107,7 +107,7 @@ archivePushReadyList(const String *walPath)
                 strSubN(strLstGet(readyListRaw, readyIdx), 0, strSize(strLstGet(readyListRaw, readyIdx)) - STATUS_EXT_READY_SIZE));
         }
 
-        strLstMove(result, MEM_CONTEXT_OLD());
+        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -173,7 +173,7 @@ archivePushProcessList(const String *walPath)
         }
 
         // Return all ready files that are not in the ok list
-        result = strLstMove(strLstMergeAnti(readyList, okList), MEM_CONTEXT_OLD());
+        result = strLstMove(strLstMergeAnti(readyList, okList), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -233,13 +233,15 @@ archivePushCheck(CipherType cipherType, const String *cipherPass)
                 archiveInfo.systemId);
         }
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result.pgVersion = controlInfo.version;
-        result.pgSystemId = controlInfo.systemId;
-        result.pgWalSegmentSize = controlInfo.walSegmentSize;
-        result.archiveId = strDup(archiveId);
-        result.archiveCipherPass = strDup(infoArchiveCipherPass(info));
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.pgVersion = controlInfo.version;
+            result.pgSystemId = controlInfo.systemId;
+            result.pgWalSegmentSize = controlInfo.walSegmentSize;
+            result.archiveId = strDup(archiveId);
+            result.archiveCipherPass = strDup(infoArchiveCipherPass(info));
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

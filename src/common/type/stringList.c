@@ -538,7 +538,7 @@ strLstMergeAnti(const StringList *this, const StringList *anti)
                 strLstAdd(result, listItem);
         }
 
-        strLstMove(result, MEM_CONTEXT_OLD());
+        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

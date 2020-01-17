@@ -83,7 +83,7 @@ testRun(void)
             for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
                 TEST_RESULT_VOID(lstAdd(list, &listIdx), "add item %d", listIdx);
 
-            lstMove(list, MEM_CONTEXT_OLD());
+            lstMove(list, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
 

@@ -151,9 +151,11 @@ restoreBackupSet(InfoBackup *infoBackup)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strPtr(backupSet));
         }
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(backupSet);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(backupSet);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -493,16 +495,16 @@ restoreManifestOwner(Manifest *manifest)
                 if (groupNull)
                     LOG_WARN_FMT("unknown group in backup manifest mapped to '%s'", strPtr(pathInfo.group));
 
-                memContextSwitch(MEM_CONTEXT_OLD());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    const String *user = strDup(pathInfo.user);
+                    const String *group = strDup(pathInfo.group);
 
-                const String *user = strDup(pathInfo.user);
-                const String *group = strDup(pathInfo.group);
-
-                RESTORE_MANIFEST_OWNER_NULL_UPDATE(File, user, group)
-                RESTORE_MANIFEST_OWNER_NULL_UPDATE(Link, user, group)
-                RESTORE_MANIFEST_OWNER_NULL_UPDATE(Path, user, group)
-
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(File, user, group)
+                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Link, user, group)
+                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Path, user, group)
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
         }
         // Else set owners to NULL.  This means we won't make any attempt to update ownership and will just leave it as written by
@@ -1147,9 +1149,11 @@ restoreSelectiveExpression(Manifest *manifest)
             // Else return the expression
             else
             {
-                memContextSwitch(MEM_CONTEXT_OLD());
-                result = strDup(expression);
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = strDup(expression);
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1285,8 +1289,8 @@ restoreRecoveryOption(unsigned int pgVersion)
         if (cfgOptionTest(cfgOptTargetTimeline))
             kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
 
-        // Move to calling context
-        kvMove(result, MEM_CONTEXT_OLD());
+        // Move to prior context
+        kvMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1318,10 +1322,12 @@ restoreRecoveryConf(unsigned int pgVersion, const String *restoreLabel)
             strCatFmt(result, "%s = '%s'\n", strPtr(varStr(optionKey)), strPtr(varStr(kvGet(optionKv, optionKey))));
         }
 
-        // Move to calling context
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(result);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        // Move to prior context
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(result);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1626,8 +1632,8 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
             lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
 
-        // Move process queues to calling context
-        lstMove(*queueList, MEM_CONTEXT_OLD());
+        // Move process queues to prior context
+        lstMove(*queueList, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1840,7 +1846,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 lstRemoveIdx(queue, 0);
 
                 // Assign job to result
-                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), MEM_CONTEXT_OLD());
+                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), memContextPrior());
 
                 // Break out of the loop early since we found a job
                 break;

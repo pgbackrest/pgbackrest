@@ -97,10 +97,12 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
 
         if (archiveFileActual != NULL)
         {
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result.archiveFileActual = strNewFmt("%s/%s", strPtr(archiveId), strPtr(archiveFileActual));
-            result.cipherPass = strDup(infoArchiveCipherPass(info));
-            memContextSwitch(MEM_CONTEXT_TEMP());
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.archiveFileActual = strNewFmt("%s/%s", strPtr(archiveId), strPtr(archiveFileActual));
+                result.cipherPass = strDup(infoArchiveCipherPass(info));
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
     }
     MEM_CONTEXT_TEMP_END();

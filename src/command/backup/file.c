@@ -107,11 +107,13 @@ backupFile(
                         // If it matches and is a reference to a previous backup then no need to copy the file
                         if (repoFileHasReference)
                         {
-                            memContextSwitch(MEM_CONTEXT_OLD());
-                            result.backupCopyResult = backupCopyResultNoOp;
-                            result.copySize = pgTestSize;
-                            result.copyChecksum = strDup(pgTestChecksum);
-                            memContextSwitch(MEM_CONTEXT_TEMP());
+                            MEM_CONTEXT_PRIOR_BEGIN()
+                            {
+                                result.backupCopyResult = backupCopyResultNoOp;
+                                result.copySize = pgTestSize;
+                                result.copyChecksum = strDup(pgTestChecksum);
+                            }
+                            MEM_CONTEXT_PRIOR_END();
                         }
                     }
                 }
@@ -162,11 +164,13 @@ backupFile(
                         // No need to recopy if checksum/size match
                         if (pgFileSize == pgTestSize && strEq(pgFileChecksum, pgTestChecksum))
                         {
-                            memContextSwitch(MEM_CONTEXT_OLD());
-                            result.backupCopyResult = backupCopyResultChecksum;
-                            result.copySize = pgTestSize;
-                            result.copyChecksum = strDup(pgTestChecksum);
-                            memContextSwitch(MEM_CONTEXT_TEMP());
+                            MEM_CONTEXT_PRIOR_BEGIN()
+                            {
+                                result.backupCopyResult = backupCopyResultChecksum;
+                                result.copySize = pgTestSize;
+                                result.copyChecksum = strDup(pgTestChecksum);
+                            }
+                            MEM_CONTEXT_PRIOR_END();
                         }
                         // Else recopy when repo file is not as expected
                         else
@@ -221,24 +225,24 @@ backupFile(
             // Open the source and destination and copy the file
             if (storageCopy(read, write))
             {
-                memContextSwitch(MEM_CONTEXT_OLD());
-
-                // Get sizes and checksum
-                result.copySize = varUInt64Force(
-                    ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE_STR));
-                result.copyChecksum = strDup(
-                    varStr(ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE_STR)));
-                result.repoSize =
-                    varUInt64Force(ioFilterGroupResult(ioWriteFilterGroup(storageWriteIo(write)), SIZE_FILTER_TYPE_STR));
-
-                // Get results of page checksum validation
-                if (pgFileChecksumPage)
+                MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result.pageChecksumResult = kvDup(
-                        varKv(ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE_STR)));
-                }
+                    // Get sizes and checksum
+                    result.copySize = varUInt64Force(
+                        ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE_STR));
+                    result.copyChecksum = strDup(
+                        varStr(ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE_STR)));
+                    result.repoSize =
+                        varUInt64Force(ioFilterGroupResult(ioWriteFilterGroup(storageWriteIo(write)), SIZE_FILTER_TYPE_STR));
 
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                    // Get results of page checksum validation
+                    if (pgFileChecksumPage)
+                    {
+                        result.pageChecksumResult = kvDup(
+                            varKv(ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE_STR)));
+                    }
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
             // Else if source file is missing and the read setup indicated ignore a missing file, the database removed it so skip it
             else

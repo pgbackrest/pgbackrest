@@ -1580,7 +1580,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
-            TEST_RESULT_VOID(manifestMove(manifest, MEM_CONTEXT_OLD()), "move manifest");
+            TEST_RESULT_VOID(manifestMove(manifest, memContextPrior()), "move manifest");
         }
         MEM_CONTEXT_TEMP_END();
 

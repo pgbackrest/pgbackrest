@@ -2788,9 +2788,11 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
 
         strCat(pgPath, strPtr(target->path));
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strPathAbsolute(pgPath, manifestTargetBase(this)->path);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strPathAbsolute(pgPath, manifestTargetBase(this)->path);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

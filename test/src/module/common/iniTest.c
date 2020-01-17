@@ -134,8 +134,8 @@ testRun(void)
             TEST_RESULT_VOID(iniSet(ini, strNew("section1"), strNew("key1"), strNew("11")), "set section, key");
             TEST_RESULT_VOID(iniSet(ini, strNew("section1"), strNew("key2"), strNew("1.234")), "set section, key");
 
-            TEST_RESULT_VOID(iniMove(ini, MEM_CONTEXT_OLD()), "move ini");
-            TEST_RESULT_VOID(iniMove(NULL, MEM_CONTEXT_OLD()), "move null ini");
+            TEST_RESULT_VOID(iniMove(ini, memContextPrior()), "move ini");
+            TEST_RESULT_VOID(iniMove(NULL, memContextPrior()), "move null ini");
         }
         MEM_CONTEXT_TEMP_END();
 

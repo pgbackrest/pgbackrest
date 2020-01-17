@@ -565,9 +565,11 @@ pgTablespaceId(unsigned int pgVersion)
         {
             String *pgVersionStr = pgVersionToStr(pgVersion);
 
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result = strNewFmt("PG_%s_%u", strPtr(pgVersionStr), pgCatalogVersion(pgVersion));
-            memContextSwitch(MEM_CONTEXT_TEMP());
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result = strNewFmt("PG_%s_%u", strPtr(pgVersionStr), pgCatalogVersion(pgVersion));
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -675,7 +677,7 @@ pgLsnRangeToWalSegmentList(
             strLstAdd(result, strNewFmt("%08X%08X%08X", timeline, startMajor, startMinor));
         }
 
-        strLstMove(result, MEM_CONTEXT_OLD());
+        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -67,9 +67,9 @@ ioReadBuf(IoRead *read)
         }
         while (!ioReadEof(read));
 
-        // Resize the buffer and move to calling context
+        // Resize the buffer and move to prior context
         bufResize(result, bufUsed(result));
-        bufMove(result, MEM_CONTEXT_OLD());
+        bufMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

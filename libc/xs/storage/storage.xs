@@ -19,10 +19,12 @@ CODE:
 
     if (strEqZ(type, "<LOCAL>"))
     {
-        memContextSwitch(MEM_CONTEXT_XS_OLD());
-        RETVAL = storagePosixNew(
-            path == NULL ? STRDEF("/") : path, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-        memContextSwitch(MEM_CONTEXT_XS_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            RETVAL = storagePosixNew(
+                path == NULL ? STRDEF("/") : path, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     else if (strEqZ(type, "<REPO>"))
     {
@@ -33,9 +35,11 @@ CODE:
     {
         CHECK(path == NULL);
 
-        memContextSwitch(MEM_CONTEXT_XS_OLD());
-        RETVAL = storagePosixNew(cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
-        memContextSwitch(MEM_CONTEXT_XS_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            RETVAL = storagePosixNew(cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     else
         THROW_FMT(AssertError, "unexpected storage type '%s'", strPtr(type));

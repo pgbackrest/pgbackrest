@@ -288,7 +288,7 @@ testRun(void)
                 }
             }
 
-            strLstMove(list, MEM_CONTEXT_OLD());
+            strLstMove(list, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
 

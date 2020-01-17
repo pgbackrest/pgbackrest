@@ -330,7 +330,7 @@ pgClientQuery(PgClient *this, const String *query)
         }
         TRY_END();
 
-        varLstMove(result, MEM_CONTEXT_OLD());
+        varLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

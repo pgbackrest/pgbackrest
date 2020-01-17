@@ -142,13 +142,15 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInterfaceInfoParam param
             // Acknowledge command completed
             protocolClientReadOutput(this->client, false);
 
-            // Duplicate strings into the calling context
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result.name = strDup(result.name);
-            result.linkDestination = strDup(result.linkDestination);
-            result.user = strDup(result.user);
-            result.group = strDup(result.group);
-            memContextSwitch(MEM_CONTEXT_TEMP());
+            // Duplicate strings into the prior context
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.name = strDup(result.name);
+                result.linkDestination = strDup(result.linkDestination);
+                result.user = strDup(result.user);
+                result.group = strDup(result.group);
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -231,7 +233,7 @@ storageRemoteList(THIS_VOID, const String *path, StorageInterfaceListParam param
         protocolCommandParamAdd(command, VARSTR(path));
         protocolCommandParamAdd(command, VARSTR(param.expression));
 
-        result = strLstMove(strLstNewVarLst(varVarLst(protocolClientExecute(this->client, command, true))), MEM_CONTEXT_OLD());
+        result = strLstMove(strLstNewVarLst(varVarLst(protocolClientExecute(this->client, command, true))), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -504,9 +506,11 @@ storageRemoteNew(
             protocolClientReadOutput(driver->client, false);
 
             // Dup path into parent context
-            memContextSwitch(MEM_CONTEXT_OLD());
-            path = strDup(path);
-            memContextSwitch(MEM_CONTEXT_TEMP());
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                path = strDup(path);
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
         MEM_CONTEXT_TEMP_END();
 

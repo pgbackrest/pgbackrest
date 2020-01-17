@@ -110,9 +110,11 @@ perlOptionJson(void)
             kvPut(configKv, VARSTRZ(cfgOptionName(optionId)), optionVar);
         }
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = jsonFromKv(configKv);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = jsonFromKv(configKv);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

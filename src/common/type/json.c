@@ -118,14 +118,14 @@ jsonToNumberInternal(const char *json, unsigned int *jsonPos)
         String *resultStr = strNewN(json + beginPos, *jsonPos - beginPos);
 
         // Convert the string to a integer variant
-        memContextSwitch(MEM_CONTEXT_OLD());
-
-        if (intSigned)
-            result = varNewInt64(cvtZToInt64(strPtr(resultStr)));
-        else
-            result = varNewUInt64(cvtZToUInt64(strPtr(resultStr)));
-
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            if (intSigned)
+                result = varNewInt64(cvtZToInt64(strPtr(resultStr)));
+            else
+                result = varNewUInt64(cvtZToUInt64(strPtr(resultStr)));
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -442,9 +442,11 @@ jsonToVarLstInternal(const char *json, unsigned int *jsonPos)
                     jsonConsumeWhiteSpace(json, jsonPos);
                 }
 
-                memContextSwitch(MEM_CONTEXT_OLD());
-                varLstAdd(result, jsonToVarInternal(json, jsonPos));
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    varLstAdd(result, jsonToVarInternal(json, jsonPos));
+                }
+                MEM_CONTEXT_PRIOR_END();
 
                 jsonConsumeWhiteSpace(json, jsonPos);
             }
@@ -863,10 +865,12 @@ jsonFromKv(const KeyValue *kv)
     {
         String *jsonStr = jsonFromKvInternal(kv);
 
-        // Duplicate the string into the calling context
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(jsonStr);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        // Duplicate the string into the prior context
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(jsonStr);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -981,10 +985,12 @@ jsonFromVar(const Variant *var)
         else
             THROW(JsonFormatError, "variant type is invalid");
 
-        // Duplicate the string into the calling context
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(jsonStr);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        // Duplicate the string into the prior context
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(jsonStr);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

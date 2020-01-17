@@ -361,10 +361,12 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
                         strPtr(walSegment), strPtr(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
                 }
 
-                // Copy file name of WAL segment found into the calling context
-                memContextSwitch(MEM_CONTEXT_OLD());
-                result = strDup(strLstGet(list, 0));
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                // Copy file name of WAL segment found into the prior context
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = strDup(strLstGet(list, 0));
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
         }
         while (result == NULL && wait != NULL && waitMore(wait));
@@ -469,7 +471,7 @@ walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned i
             }
         }
 
-        strLstMove(result, MEM_CONTEXT_OLD());
+        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

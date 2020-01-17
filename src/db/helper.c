@@ -39,7 +39,7 @@ dbGetId(unsigned int pgId)
         else
             result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgId), applicationName);
 
-        dbMove(result, MEM_CONTEXT_OLD());
+        dbMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -135,8 +135,8 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
         if (result.standbyId == 0 && standbyRequired)
             THROW(DbConnectError, "unable to find standby cluster - cannot proceed");
 
-        dbMove(result.primary, MEM_CONTEXT_OLD());
-        dbMove(result.standby, MEM_CONTEXT_OLD());
+        dbMove(result.primary, memContextPrior());
+        dbMove(result.standby, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -128,8 +128,8 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
         // Add the command
         strLstAdd(result, cfgCommandRoleNameParam(commandId, commandRoleId, COLON_STR));
 
-        // Move list to the calling context
-        strLstMove(result, MEM_CONTEXT_OLD());
+        // Move list to the prior context
+        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

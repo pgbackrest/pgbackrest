@@ -19,9 +19,11 @@ INPUT:
 CODE:
     CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::PgClient"));
 
-    memContextSwitch(MEM_CONTEXT_XS_OLD());
-    RETVAL = pgClientNew(host, port, database, NULL, queryTimeout);
-    memContextSwitch(MEM_CONTEXT_XS_TEMP());
+    MEM_CONTEXT_PRIOR_BEGIN()
+    {
+        RETVAL = pgClientNew(host, port, database, NULL, queryTimeout);
+    }
+    MEM_CONTEXT_PRIOR_END();
 OUTPUT:
     RETVAL
 CLEANUP:

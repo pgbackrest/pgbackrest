@@ -669,14 +669,14 @@ strPathAbsolute(const String *this, const String *base)
                 strLstRemoveIdx(pathList, 0);
             }
 
-            memContextSwitch(MEM_CONTEXT_OLD());
-
-            if (strLstSize(baseList) == 1)
-                result = strDup(FSLASH_STR);
-            else
-                result = strLstJoin(baseList, "/");
-
-            memContextSwitch(MEM_CONTEXT_TEMP());
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                if (strLstSize(baseList) == 1)
+                    result = strDup(FSLASH_STR);
+                else
+                    result = strLstJoin(baseList, "/");
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
         MEM_CONTEXT_TEMP_END();
     }

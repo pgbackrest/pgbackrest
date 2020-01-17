@@ -334,8 +334,8 @@ testRun(void)
             TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param1"))), command, "add param");
             TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param2"))), command, "add param");
 
-            TEST_RESULT_PTR(protocolCommandMove(command, MEM_CONTEXT_OLD()), command, "move protocol command");
-            TEST_RESULT_PTR(protocolCommandMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null protocol command");
+            TEST_RESULT_PTR(protocolCommandMove(command, memContextPrior()), command, "move protocol command");
+            TEST_RESULT_PTR(protocolCommandMove(NULL, memContextPrior()), NULL, "move null protocol command");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -465,9 +465,9 @@ testRun(void)
                     TEST_ASSIGN(
                         client,
                         protocolClientMove(
-                            protocolClientNew(strNew("test client"), strNew("test"), read, write), MEM_CONTEXT_OLD()),
+                            protocolClientNew(strNew("test client"), strNew("test"), read, write), memContextPrior()),
                         "create client");
-                    TEST_RESULT_VOID(protocolClientMove(NULL, MEM_CONTEXT_OLD()), "move null client");
+                    TEST_RESULT_VOID(protocolClientMove(NULL, memContextPrior()), "move null client");
                 }
                 MEM_CONTEXT_TEMP_END();
 
@@ -604,9 +604,9 @@ testRun(void)
                     TEST_ASSIGN(
                         server,
                         protocolServerMove(
-                            protocolServerNew(strNew("test server"), strNew("test"), read, write), MEM_CONTEXT_OLD()),
+                            protocolServerNew(strNew("test server"), strNew("test"), read, write), memContextPrior()),
                         "create server");
-                    TEST_RESULT_VOID(protocolServerMove(NULL, MEM_CONTEXT_OLD()), "move null server");
+                    TEST_RESULT_VOID(protocolServerMove(NULL, memContextPrior()), "move null server");
                 }
                 MEM_CONTEXT_TEMP_END();
 
@@ -632,8 +632,8 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(job, protocolParallelJobNew(varNewStr(strNew("test")), protocolCommandNew(strNew("command"))), "new job");
-            TEST_RESULT_PTR(protocolParallelJobMove(job, MEM_CONTEXT_OLD()), job, "move job");
-            TEST_RESULT_PTR(protocolParallelJobMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null job");
+            TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
+            TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
         }
         MEM_CONTEXT_TEMP_END();
 
