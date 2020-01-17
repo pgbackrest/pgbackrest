@@ -16,6 +16,11 @@ TLS Client
 #include <netinet/in.h>
 #endif
 
+#ifdef __linux__
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
+
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
