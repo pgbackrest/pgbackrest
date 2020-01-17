@@ -1234,77 +1234,73 @@ varFree(Variant *this)
 
     if (this != NULL)
     {
-        MemContext *contextOld = memContextCurrent();
+        MemContext *memContext = NULL;
 
-        TRY_BEGIN()
+        switch (this->type)
         {
-                switch (this->type)
-                {
-                    case varTypeBool:
-                    {
-                        memContextSwitch(((VariantBool *)this)->memContext);
-                        break;
-                    }
+            case varTypeBool:
+            {
+                memContext = ((VariantBool *)this)->memContext;
+                break;
+            }
 
-                    case varTypeDouble:
-                    {
-                        memContextSwitch(((VariantDouble *)this)->memContext);
-                        break;
-                    }
+            case varTypeDouble:
+            {
+                memContext = ((VariantDouble *)this)->memContext;
+                break;
+            }
 
-                    case varTypeInt:
-                    {
-                        memContextSwitch(((VariantInt *)this)->memContext);
-                        break;
-                    }
+            case varTypeInt:
+            {
+                memContext = ((VariantInt *)this)->memContext;
+                break;
+            }
 
-                    case varTypeInt64:
-                    {
-                        memContextSwitch(((VariantInt64 *)this)->memContext);
-                        break;
-                    }
+            case varTypeInt64:
+            {
+                memContext = ((VariantInt64 *)this)->memContext;
+                break;
+            }
 
-                    case varTypeKeyValue:
-                    {
-                        memContextSwitch(((VariantKeyValue *)this)->memContext);
-                        kvFree(((VariantKeyValue *)this)->data);
-                        break;
-                    }
+            case varTypeKeyValue:
+            {
+                memContext = ((VariantKeyValue *)this)->memContext;
+                kvFree(((VariantKeyValue *)this)->data);
+                break;
+            }
 
-                    case varTypeString:
-                    {
-                        memContextSwitch(((VariantString *)this)->memContext);
-                        strFree(((VariantString *)this)->data);
-                        break;
-                    }
+            case varTypeString:
+            {
+                memContext = ((VariantString *)this)->memContext;
+                strFree(((VariantString *)this)->data);
+                break;
+            }
 
-                    case varTypeUInt:
-                    {
-                        memContextSwitch(((VariantUInt *)this)->memContext);
-                        break;
-                    }
+            case varTypeUInt:
+            {
+                memContext = ((VariantUInt *)this)->memContext;
+                break;
+            }
 
-                    case varTypeUInt64:
-                    {
-                        memContextSwitch(((VariantUInt64 *)this)->memContext);
-                        break;
-                    }
+            case varTypeUInt64:
+            {
+                memContext = ((VariantUInt64 *)this)->memContext;
+                break;
+            }
 
-                    case varTypeVariantList:
-                    {
-                        memContextSwitch(((VariantVariantList *)this)->memContext);
-                        varLstFree(((VariantVariantList *)this)->data);
-                        break;
-                    }
-                }
+            case varTypeVariantList:
+            {
+                memContext = ((VariantVariantList *)this)->memContext;
+                varLstFree(((VariantVariantList *)this)->data);
+                break;
+            }
+        }
 
+        MEM_CONTEXT_BEGIN(memContext)
+        {
             memFree(this);
         }
-        FINALLY()
-        {
-            memContextSwitch(contextOld);
-        }
-        TRY_END();
+        MEM_CONTEXT_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();
