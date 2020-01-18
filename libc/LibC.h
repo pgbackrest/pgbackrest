@@ -67,7 +67,7 @@ Core context handling macros, only intended to be called from other macros
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_XS_CORE_BEGIN(memContext)                                                                                      \
     /* Switch to the new memory context */                                                                                         \
-    MemContext *MEM_CONTEXT_memContextPrior = memContextSwitch(memContext);                                                        \
+    memContextPush(memContext);                                                                                                    \
                                                                                                                                    \
     /* Store any errors to be croaked to Perl at the end */                                                                        \
     bool MEM_CONTEXT_XS_croak = false;                                                                                             \
@@ -80,11 +80,6 @@ Core context handling macros, only intended to be called from other macros
     CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         MEM_CONTEXT_XS_croak = true;                                                                                               \
-    }                                                                                                                              \
-    /* Free the context on error */                                                                                                \
-    FINALLY()                                                                                                                      \
-    {                                                                                                                              \
-        memContextSwitch(memContextPrior());                                                                                       \
     }                                                                                                                              \
     TRY_END();
 
@@ -114,10 +109,10 @@ Simplifies creation of the memory context in constructors and includes error han
     /* Free context and croak on error */                                                                                          \
     if (MEM_CONTEXT_XS_croak)                                                                                                      \
     {                                                                                                                              \
-        memContextFree(MEM_CONTEXT_XS_memContext);                                                                                 \
-                                                                                                                                   \
         ERROR_XS()                                                                                                                 \
     }                                                                                                                              \
+    else                                                                                                                           \
+        memContextKeep();                                                                                                          \
 }
 
 #define MEM_CONTEXT_XS()                                                                                                           \
@@ -161,8 +156,8 @@ Simplifies switching to a temp memory context in functions and includes error ha
     /* Free the context on error */                                                                                                \
     FINALLY()                                                                                                                      \
     {                                                                                                                              \
-        memContextSwitch(memContextPrior());                                                                                       \
-        memContextFree(MEM_CONTEXT_XS_TEMP());                                                                                     \
+        memContextPop();                                                                                                           \
+        memContextDiscard();                                                                                                       \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \

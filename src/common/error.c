@@ -9,6 +9,7 @@ Error Handler
 #include <string.h>
 
 #include "common/error.h"
+#include "common/memContext.h"
 #include "common/stackTrace.h"
 
 /***********************************************************************************************************************************
@@ -349,7 +350,10 @@ errorInternalProcess(bool catch)
     }
     // Else if just entering error state clean up the stack
     else if (errorContext.tryList[errorContext.tryTotal].state == errorStateTry)
+    {
         stackTraceClean(errorTryDepth());
+        memContextClean(errorTryDepth());
+    }
 
     // Increment the state
     errorContext.tryList[errorContext.tryTotal].state++;

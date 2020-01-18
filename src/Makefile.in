@@ -332,7 +332,7 @@ common/encode.o: common/encode.c build.auto.h common/assert.h common/debug.h com
 common/encode/base64.o: common/encode/base64.c build.auto.h common/assert.h common/debug.h common/encode/base64.h common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h common/type/convert.h common/type/stringz.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/encode/base64.c -o common/encode/base64.o
 
-common/error.o: common/error.c build.auto.h common/error.auto.c common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h
+common/error.o: common/error.c build.auto.h common/error.auto.c common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CMAKE) -c common/error.c -o common/error.o
 
 common/exec.o: common/exec.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/exec.h common/io/filter/filter.h common/io/filter/group.h common/io/handleRead.h common/io/handleWrite.h common/io/io.h common/io/read.h common/io/read.intern.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/macro.h common/memContext.h common/object.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringz.h common/type/variant.h common/type/variantList.h common/wait.h
