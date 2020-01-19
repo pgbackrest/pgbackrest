@@ -47,12 +47,15 @@ storageReadNew(void *driver, const StorageReadInterface *interface)
 
     StorageRead *this = NULL;
 
-    this = memNew(sizeof(StorageRead));
-    this->memContext = memContextCurrent();
-    this->driver = driver;
-    this->interface = interface;
+    this = memNewRaw(sizeof(StorageRead));
 
-    this->io = ioReadNew(driver, interface->ioInterface);
+    *this = (StorageRead)
+    {
+        .memContext = memContextCurrent(),
+        .driver = driver,
+        .interface = interface,
+        .io = ioReadNew(driver, interface->ioInterface),
+    };
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }

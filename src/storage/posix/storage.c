@@ -676,9 +676,13 @@ storagePosixNewInternal(
 
     MEM_CONTEXT_NEW_BEGIN("StoragePosix")
     {
-        StoragePosix *driver = memNew(sizeof(StoragePosix));
-        driver->memContext = MEM_CONTEXT_NEW();
-        driver->interface = storageInterfacePosix;
+        StoragePosix *driver = memNewRaw(sizeof(StoragePosix));
+
+        *driver = (StoragePosix)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .interface = storageInterfacePosix,
+        };
 
         // Disable path sync when not supported
         if (!pathSync)

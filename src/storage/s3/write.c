@@ -244,28 +244,31 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
     MEM_CONTEXT_NEW_BEGIN("StorageWriteS3")
     {
-        StorageWriteS3 *driver = memNew(sizeof(StorageWriteS3));
-        driver->memContext = MEM_CONTEXT_NEW();
+        StorageWriteS3 *driver = memNewRaw(sizeof(StorageWriteS3));
 
-        driver->interface = (StorageWriteInterface)
+        *driver = (StorageWriteS3)
         {
-            .type = STORAGE_S3_TYPE_STR,
-            .name = strDup(name),
-            .atomic = true,
-            .createPath = true,
-            .syncFile = true,
-            .syncPath = true,
+            .memContext = MEM_CONTEXT_NEW(),
+            .storage = storage,
+            .partSize = partSize,
 
-            .ioInterface = (IoWriteInterface)
+            .interface = (StorageWriteInterface)
             {
-                .close = storageWriteS3Close,
-                .open = storageWriteS3Open,
-                .write = storageWriteS3,
+                .type = STORAGE_S3_TYPE_STR,
+                .name = strDup(name),
+                .atomic = true,
+                .createPath = true,
+                .syncFile = true,
+                .syncPath = true,
+
+                .ioInterface = (IoWriteInterface)
+                {
+                    .close = storageWriteS3Close,
+                    .open = storageWriteS3Open,
+                    .write = storageWriteS3,
+                },
             },
         };
-
-        driver->storage = storage;
-        driver->partSize = partSize;
 
         this = storageWriteNew(driver, &driver->interface);
     }

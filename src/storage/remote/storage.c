@@ -484,11 +484,15 @@ storageRemoteNew(
 
     MEM_CONTEXT_NEW_BEGIN("StorageRemote")
     {
-        StorageRemote *driver = memNew(sizeof(StorageRemote));
-        driver->memContext = MEM_CONTEXT_NEW();
-        driver->client = client;
-        driver->compressLevel = compressLevel;
-        driver->interface = storageInterfaceRemote;
+        StorageRemote *driver = memNewRaw(sizeof(StorageRemote));
+
+        *driver = (StorageRemote)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .client = client,
+            .compressLevel = compressLevel,
+            .interface = storageInterfaceRemote,
+        };
 
         const String *path = NULL;
 

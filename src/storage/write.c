@@ -48,13 +48,15 @@ storageWriteNew(void *driver, const StorageWriteInterface *interface)
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 
-    StorageWrite *this = memNew(sizeof(StorageWrite));
-    this->memContext = memContextCurrent();
+    StorageWrite *this = memNewRaw(sizeof(StorageWrite));
 
-    this->driver = driver;
-    this->interface = interface;
-
-    this->io = ioWriteNew(driver, interface->ioInterface);
+    *this = (StorageWrite)
+    {
+        .memContext = memContextCurrent(),
+        .driver = driver,
+        .interface = interface,
+        .io = ioWriteNew(driver, interface->ioInterface),
+    };
 
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
 }

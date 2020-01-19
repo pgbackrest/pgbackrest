@@ -76,7 +76,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationN
         *this = (Db)
         {
             .memContext = memContextCurrent(),
-            .client = pgClientMove(client, this->memContext),
+            .client = pgClientMove(client, memContextCurrent()),
             .remoteClient = remoteClient,
             .applicationName = strDup(applicationName),
         };

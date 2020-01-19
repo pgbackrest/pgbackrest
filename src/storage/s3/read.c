@@ -159,25 +159,28 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
 
     MEM_CONTEXT_NEW_BEGIN("StorageReadS3")
     {
-        StorageReadS3 *driver = memNew(sizeof(StorageReadS3));
-        driver->memContext = MEM_CONTEXT_NEW();
+        StorageReadS3 *driver = memNewRaw(sizeof(StorageReadS3));
 
-        driver->interface = (StorageReadInterface)
+        *driver = (StorageReadS3)
         {
-            .type = STORAGE_S3_TYPE_STR,
-            .name = strDup(name),
-            .ignoreMissing = ignoreMissing,
+            .memContext = MEM_CONTEXT_NEW(),
+            .storage = storage,
 
-            .ioInterface = (IoReadInterface)
+            .interface = (StorageReadInterface)
             {
-                .close = storageReadS3Close,
-                .eof = storageReadS3Eof,
-                .open = storageReadS3Open,
-                .read = storageReadS3,
+                .type = STORAGE_S3_TYPE_STR,
+                .name = strDup(name),
+                .ignoreMissing = ignoreMissing,
+
+                .ioInterface = (IoReadInterface)
+                {
+                    .close = storageReadS3Close,
+                    .eof = storageReadS3Eof,
+                    .open = storageReadS3Open,
+                    .read = storageReadS3,
+                },
             },
         };
-
-        driver->storage = storage;
 
         this = storageReadNew(driver, &driver->interface);
     }
