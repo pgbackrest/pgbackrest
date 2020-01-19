@@ -71,12 +71,15 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationN
 
     MEM_CONTEXT_NEW_BEGIN("Db")
     {
-        this = memNew(sizeof(Db));
-        this->memContext = memContextCurrent();
+        this = memNewRaw(sizeof(Db));
 
-        this->client = pgClientMove(client, this->memContext);
-        this->remoteClient = remoteClient;
-        this->applicationName = strDup(applicationName);
+        *this = (Db)
+        {
+            .memContext = memContextCurrent(),
+            .client = pgClientMove(client, this->memContext),
+            .remoteClient = remoteClient,
+            .applicationName = strDup(applicationName),
+        };
     }
     MEM_CONTEXT_NEW_END();
 

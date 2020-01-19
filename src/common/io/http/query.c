@@ -35,9 +35,13 @@ httpQueryNew(void)
     MEM_CONTEXT_NEW_BEGIN("HttpQuery")
     {
         // Allocate state and set context
-        this = memNew(sizeof(HttpQuery));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->kv = kvNew();
+        this = memNewRaw(sizeof(HttpQuery));
+
+        *this = (HttpQuery)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .kv = kvNew(),
+        };
     }
     MEM_CONTEXT_NEW_END();
 

@@ -55,11 +55,15 @@ lstNewParam(size_t itemSize, ListParam param)
     MEM_CONTEXT_NEW_BEGIN("List")
     {
         // Create object
-        this = memNew(sizeof(List));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->itemSize = itemSize;
-        this->sortOrder = param.sortOrder;
-        this->comparator = param.comparator;
+        this = memNewRaw(sizeof(List));
+
+        *this = (List)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .itemSize = itemSize,
+            .sortOrder = param.sortOrder,
+            .comparator = param.comparator,
+        };
     }
     MEM_CONTEXT_NEW_END();
 

@@ -174,8 +174,11 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, u
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
             protocolHelper.clientLocalSize = cfgOptionUInt(cfgOptProcessMax) + 1;
-            protocolHelper.clientLocal = (ProtocolHelperClient *)memNew(
+            protocolHelper.clientLocal = (ProtocolHelperClient *)memNewRaw(
                 protocolHelper.clientLocalSize * sizeof(ProtocolHelperClient));
+
+            for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientLocalSize; clientIdx++)
+                protocolHelper.clientLocal[clientIdx] = (ProtocolHelperClient){.exec = NULL};
         }
         MEM_CONTEXT_END();
     }
@@ -401,8 +404,11 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
             ASSERT(cfgDefOptionIndexTotal(cfgDefOptPgPath) >= cfgDefOptionIndexTotal(cfgDefOptRepoPath));
 
             protocolHelper.clientRemoteSize = cfgDefOptionIndexTotal(cfgDefOptPgPath) + 1;
-            protocolHelper.clientRemote = (ProtocolHelperClient *)memNew(
+            protocolHelper.clientRemote = (ProtocolHelperClient *)memNewRaw(
                 protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
+
+            for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+                protocolHelper.clientRemote[clientIdx] = (ProtocolHelperClient){.exec = NULL};
         }
         MEM_CONTEXT_END();
     }
@@ -576,8 +582,7 @@ protocolFree(void)
                 protocolClientFree(protocolHelperClient->client);
                 execFree(protocolHelperClient->exec);
 
-                protocolHelperClient->client = NULL;
-                protocolHelperClient->exec = NULL;
+                *protocolHelperClient = (ProtocolHelperClient){.exec = NULL};
             }
         }
     }

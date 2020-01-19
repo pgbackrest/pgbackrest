@@ -61,14 +61,17 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
 
     MEM_CONTEXT_NEW_BEGIN("PgClient")
     {
-        this = memNew(sizeof(PgClient));
-        this->memContext = memContextCurrent();
+        this = memNewRaw(sizeof(PgClient));
 
-        this->host = strDup(host);
-        this->port = port;
-        this->database = strDup(database);
-        this->user = strDup(user);
-        this->queryTimeout = queryTimeout;
+        *this = (PgClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            this->host = strDup(host),
+            this->port = port,
+            this->database = strDup(database),
+            this->user = strDup(user),
+            this->queryTimeout = queryTimeout,
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -253,7 +256,7 @@ pgClientQuery(PgClient *this, const String *query)
                     int columnTotal = PQnfields(pgResult);
 
                     // Get column types
-                    Oid *columnType = memNew(sizeof(int) * (size_t)columnTotal);
+                    Oid *columnType = memNewRaw(sizeof(int) * (size_t)columnTotal);
 
                     for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
                         columnType[columnIdx] = PQftype(pgResult, columnIdx);

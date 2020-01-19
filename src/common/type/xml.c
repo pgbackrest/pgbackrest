@@ -147,8 +147,12 @@ xmlNodeNew(xmlNodePtr node)
 
     ASSERT(node != NULL);
 
-    XmlNode *this = memNew(sizeof(XmlNode));
-    this->node = node;
+    XmlNode *this = memNewRaw(sizeof(XmlNode));
+
+    *this = (XmlNode)
+    {
+        .node = node,
+    };
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -408,10 +412,13 @@ xmlDocumentNew(const String *rootName)
 
     MEM_CONTEXT_NEW_BEGIN("XmlDocument")
     {
-        this = memNew(sizeof(XmlDocument));
-        this->memContext = MEM_CONTEXT_NEW();
+        this = memNewRaw(sizeof(XmlDocument));
 
-        this->xml = xmlNewDoc(BAD_CAST "1.0");
+        *this = (XmlDocument)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .xml = xmlNewDoc(BAD_CAST "1.0"),
+        };
 
         // Set callback to ensure xml document is freed
         memContextCallbackSet(this->memContext, xmlDocumentFreeResource, this);
@@ -445,8 +452,12 @@ xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize)
 
     MEM_CONTEXT_NEW_BEGIN("XmlDocument")
     {
-        this = memNew(sizeof(XmlDocument));
-        this->memContext = MEM_CONTEXT_NEW();
+        this = memNewRaw(sizeof(XmlDocument));
+
+        *this = (XmlDocument)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+        };
 
         if ((this->xml = xmlReadMemory((const char *)buffer, (int)bufferSize, "noname.xml", NULL, 0)) == NULL)
             THROW_FMT(FormatError, "invalid xml");

@@ -64,8 +64,12 @@ ioSinkNew(void)
 
     MEM_CONTEXT_NEW_BEGIN("IoSink")
     {
-        IoSink *driver = memNew(sizeof(IoSink));
-        driver->memContext = memContextCurrent();
+        IoSink *driver = memNewRaw(sizeof(IoSink));
+
+        *driver = (IoSink)
+        {
+            .memContext = memContextCurrent(),
+        };
 
         this = ioFilterNewP(SINK_FILTER_TYPE_STR, driver, NULL, .inOut = ioSinkProcess);
     }

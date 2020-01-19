@@ -55,16 +55,18 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
 
     MEM_CONTEXT_NEW_BEGIN("ProtocolParallel")
     {
-        this = memNew(sizeof(ProtocolParallel));
-        this->memContext = memContextCurrent();
-        this->timeout = timeout;
+        this = memNewRaw(sizeof(ProtocolParallel));
 
-        this->callbackFunction = callbackFunction;
-        this->callbackData = callbackData;
-
-        this->clientList = lstNew(sizeof(ProtocolClient *));
-        this->jobList = lstNew(sizeof(ProtocolParallelJob *));
-        this->state = protocolParallelJobStatePending;
+        *this = (ProtocolParallel)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .timeout = timeout,
+            .callbackFunction = callbackFunction,
+            .callbackData = callbackData,
+            .clientList = lstNew(sizeof(ProtocolClient *)),
+            .jobList = lstNew(sizeof(ProtocolParallelJob *)),
+            .state = protocolParallelJobStatePending,
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -114,7 +116,10 @@ protocolParallelProcess(ProtocolParallel *this)
     {
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->clientJobList = (ProtocolParallelJob **)memNew(sizeof(ProtocolParallelJob *) * lstSize(this->clientList));
+            this->clientJobList = (ProtocolParallelJob **)memNewRaw(sizeof(ProtocolParallelJob *) * lstSize(this->clientList));
+
+            for (unsigned int clientJobIdx = 0; clientJobIdx < lstSize(this->clientList); clientJobIdx++)
+                this->clientJobList[clientJobIdx] = NULL;
         }
         MEM_CONTEXT_END();
 

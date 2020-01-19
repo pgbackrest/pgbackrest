@@ -83,10 +83,14 @@ ioHandleWriteNew(const String *name, int handle)
 
     MEM_CONTEXT_NEW_BEGIN("IoHandleWrite")
     {
-        IoHandleWrite *driver = memNew(sizeof(IoHandleWrite));
-        driver->memContext = memContextCurrent();
-        driver->name = strDup(name);
-        driver->handle = handle;
+        IoHandleWrite *driver = memNewRaw(sizeof(IoHandleWrite));
+
+        *driver = (IoHandleWrite)
+        {
+            .memContext = memContextCurrent(),
+            .name = strDup(name),
+            .handle = handle,
+        };
 
         this = ioWriteNewP(driver, .handle = ioHandleWriteHandle, .write = ioHandleWrite);
     }

@@ -146,11 +146,15 @@ ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
 
     MEM_CONTEXT_NEW_BEGIN("IoHandleRead")
     {
-        IoHandleRead *driver = memNew(sizeof(IoHandleRead));
-        driver->memContext = memContextCurrent();
-        driver->name = strDup(name);
-        driver->handle = handle;
-        driver->timeout = timeout;
+        IoHandleRead *driver = memNewRaw(sizeof(IoHandleRead));
+
+        *driver = (IoHandleRead)
+        {
+            .memContext = memContextCurrent(),
+            .name = strDup(name),
+            .handle = handle,
+            .timeout = timeout,
+        };
 
         this = ioReadNewP(driver, .block = true, .eof = ioHandleReadEof, .handle = ioHandleReadHandle, .read = ioHandleRead);
     }

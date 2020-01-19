@@ -46,10 +46,13 @@ protocolCommandNew(const String *command)
 
     MEM_CONTEXT_NEW_BEGIN("ProtocolCommand")
     {
-        this = memNew(sizeof(ProtocolCommand));
-        this->memContext = memContextCurrent();
+        this = memNewRaw(sizeof(ProtocolCommand));
 
-        this->command = strDup(command);
+        *this = (ProtocolCommand)
+        {
+            .memContext = memContextCurrent(),
+            .command = strDup(command),
+        };
     }
     MEM_CONTEXT_NEW_END();
 

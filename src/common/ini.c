@@ -38,12 +38,13 @@ iniNew(void)
 
     MEM_CONTEXT_NEW_BEGIN("Ini")
     {
-        // Create object
-        this = memNew(sizeof(Ini));
-        this->memContext = MEM_CONTEXT_NEW();
+        this = memNewRaw(sizeof(Ini));
 
-        // Allocate key value store
-        this->store = kvNew();
+        *this = (Ini)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .store = kvNew(),
+        };
     }
     MEM_CONTEXT_NEW_END();
 

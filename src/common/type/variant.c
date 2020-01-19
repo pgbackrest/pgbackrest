@@ -155,10 +155,14 @@ varDup(const Variant *this)
 
             case varTypeKeyValue:
             {
-                VariantKeyValue *keyValue = memNew(sizeof(VariantKeyValue));
-                keyValue->memContext = memContextCurrent();
-                keyValue->type = varTypeKeyValue;
-                keyValue->data = kvDup(varKv(this));
+                VariantKeyValue *keyValue = memNewRaw(sizeof(VariantKeyValue));
+
+                *keyValue = (VariantKeyValue)
+                {
+                    .memContext = memContextCurrent(),
+                    .type = varTypeKeyValue,
+                    .data = kvDup(varKv(this)),
+                };
 
                 result = (Variant *)keyValue;
                 break;
@@ -294,10 +298,14 @@ varNewBool(bool data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantBool *this = memNew(sizeof(VariantBool));
-    this->memContext = memContextCurrent();
-    this->type = varTypeBool;
-    this->data = data;
+    VariantBool *this = memNewRaw(sizeof(VariantBool));
+
+    *this = (VariantBool)
+    {
+        .memContext = memContextCurrent(),
+        .type = varTypeBool,
+        .data = data,
+    };
 
     FUNCTION_TEST_RETURN((Variant *)this);
 }
@@ -399,10 +407,14 @@ varNewDbl(double data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantDouble *this = memNew(sizeof(VariantDouble));
-    this->memContext = memContextCurrent();
-    this->type = varTypeDouble;
-    this->data = data;
+    VariantDouble *this = memNewRaw(sizeof(VariantDouble));
+
+    *this = (VariantDouble)
+    {
+        .memContext = memContextCurrent(),
+        .type = varTypeDouble,
+        .data = data,
+    };
 
     FUNCTION_TEST_RETURN((Variant *)this);
 }
@@ -499,10 +511,14 @@ varNewInt(int data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantInt *this = memNew(sizeof(VariantInt));
-    this->memContext = memContextCurrent();
-    this->type = varTypeInt;
-    this->data = data;
+    VariantInt *this = memNewRaw(sizeof(VariantInt));
+
+    *this = (VariantInt)
+    {
+        .memContext = memContextCurrent(),
+        .type = varTypeInt,
+        .data = data,
+    };
 
     FUNCTION_TEST_RETURN((Variant *)this);
 }
@@ -617,10 +633,14 @@ varNewInt64(int64_t data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantInt64 *this = memNew(sizeof(VariantInt64));
-    this->memContext = memContextCurrent();
-    this->type = varTypeInt64;
-    this->data = data;
+    VariantInt64 *this = memNewRaw(sizeof(VariantInt64));
+
+    *this = (VariantInt64)
+    {
+        .memContext = memContextCurrent(),
+        .type = varTypeInt64,
+        .data = data,
+    };
 
     FUNCTION_TEST_RETURN((Variant *)this);
 }
@@ -723,10 +743,14 @@ varNewUInt(unsigned int data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantUInt *this = memNew(sizeof(VariantUInt));
-    this->memContext = memContextCurrent();
-    this->type = varTypeUInt;
-    this->data = data;
+    VariantUInt *this = memNewRaw(sizeof(VariantUInt));
+
+    *this = (VariantUInt)
+    {
+        .memContext = memContextCurrent(),
+        .type = varTypeUInt,
+        .data = data,
+    };
 
     FUNCTION_TEST_RETURN((Variant *)this);
 }
@@ -850,10 +874,14 @@ varNewUInt64(uint64_t data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantUInt64 *this = memNew(sizeof(VariantUInt64));
-    this->memContext = memContextCurrent();
-    this->type = varTypeUInt64;
-    this->data = data;
+    VariantUInt64 *this = memNewRaw(sizeof(VariantUInt64));
+
+    *this = (VariantUInt64)
+    {
+        .memContext = memContextCurrent(),
+        .type = varTypeUInt64,
+        .data = data,
+    };
 
     FUNCTION_TEST_RETURN((Variant *)this);
 }
@@ -968,9 +996,13 @@ varNewKv(KeyValue *data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantKeyValue *this = memNew(sizeof(VariantKeyValue));
-    this->memContext = memContextCurrent();
-    this->type = varTypeKeyValue;
+    VariantKeyValue *this = memNewRaw(sizeof(VariantKeyValue));
+
+    *this = (VariantKeyValue)
+    {
+        .memContext = memContextCurrent(),
+        .type = varTypeKeyValue,
+    };
 
     if (data != NULL)
         this->data = kvMove(data, memContextCurrent());
@@ -1010,10 +1042,14 @@ varNewStr(const String *data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantString *this = memNew(sizeof(VariantString));
-    this->memContext = memContextCurrent();
-    this->type = varTypeString;
-    this->data = strDup(data);
+    VariantString *this = memNewRaw(sizeof(VariantString));
+
+    *this = (VariantString)
+    {
+        .memContext = memContextCurrent(),
+        .type = varTypeString,
+        .data = strDup(data),
+    };
 
     FUNCTION_TEST_RETURN((Variant *)this);
 }
@@ -1143,9 +1179,13 @@ varNewVarLst(const VariantList *data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantVariantList *this = memNew(sizeof(VariantVariantList));
-    this->memContext = memContextCurrent();
-    this->type = varTypeVariantList;
+    VariantVariantList *this = memNewRaw(sizeof(VariantVariantList));
+
+    *this = (VariantVariantList)
+    {
+        .memContext = memContextCurrent(),
+        .type = varTypeVariantList,
+    };
 
     if (data != NULL)
         this->data = varLstDup(data);

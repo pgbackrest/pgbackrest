@@ -52,12 +52,16 @@ ioReadNew(void *driver, IoReadInterface interface)
 
     MEM_CONTEXT_NEW_BEGIN("IoRead")
     {
-        this = memNew(sizeof(IoRead));
-        this->memContext = memContextCurrent();
-        this->driver = driver;
-        this->interface = interface;
-        this->filterGroup = ioFilterGroupNew();
-        this->input = bufNew(ioBufferSize());
+        this = memNewRaw(sizeof(IoRead));
+
+        *this = (IoRead)
+        {
+            .memContext = memContextCurrent(),
+            .driver = driver,
+            .interface = interface,
+            .filterGroup = ioFilterGroupNew(),
+            .input = bufNew(ioBufferSize()),
+        };
     }
     MEM_CONTEXT_NEW_END();
 

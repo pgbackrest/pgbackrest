@@ -142,16 +142,19 @@ tlsClientNew(
 
     MEM_CONTEXT_NEW_BEGIN("TlsClient")
     {
-        this = memNew(sizeof(TlsClient));
-        this->memContext = MEM_CONTEXT_NEW();
+        this = memNewRaw(sizeof(TlsClient));
 
-        this->host = strDup(host);
-        this->port = port;
-        this->timeout = timeout;
-        this->verifyPeer = verifyPeer;
+        *this = (TlsClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .host = strDup(host),
+            .port = port,
+            .timeout = timeout,
+            .verifyPeer = verifyPeer,
 
-        // Initialize socket to -1 so we know when it is disconnected
-        this->socket = -1;
+            // Initialize socket to -1 so we know when it is disconnected
+            .socket = -1,
+        };
 
         // Setup TLS context
         // -------------------------------------------------------------------------------------------------------------------------

@@ -76,9 +76,13 @@ strNew(const char *string)
     CHECK_SIZE(stringSize);
 
     // Create object
-    String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
-    this->size = (unsigned int)stringSize;
+    String *this = memNewRaw(sizeof(String));
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)stringSize,
+    };
 
     // Allocate and assign string
     this->buffer = memNewRaw(this->size + 1);
@@ -106,9 +110,13 @@ strNewBuf(const Buffer *buffer)
     CHECK_SIZE(bufUsed(buffer));
 
     // Create object
-    String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
-    this->size = (unsigned int)bufUsed(buffer);
+    String *this = memNewRaw(sizeof(String));
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)bufUsed(buffer),
+    };
 
     // Allocate and assign string
     this->buffer = memNewRaw(this->size + 1);
@@ -131,8 +139,12 @@ strNewFmt(const char *format, ...)
     ASSERT(format != NULL);
 
     // Create object
-    String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
+    String *this = memNewRaw(sizeof(String));
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+    };
 
     // Determine how long the allocated string needs to be
     va_list argumentList;
@@ -172,9 +184,13 @@ strNewN(const char *string, size_t size)
     CHECK_SIZE(size);
 
     // Create object
-    String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
-    this->size = (unsigned int)size;
+    String *this = memNewRaw(sizeof(String));
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)size,
+    };
 
     // Allocate and assign string
     this->buffer = memNewRaw(this->size + 1);

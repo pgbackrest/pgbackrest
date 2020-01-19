@@ -58,10 +58,14 @@ infoPgNewInternal(InfoPgType type)
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    InfoPg *this = memNew(sizeof(InfoPg));
-    this->memContext = memContextCurrent();
-    this->type = type;
-    this->history = lstNew(sizeof(InfoPgData));
+    InfoPg *this = memNewRaw(sizeof(InfoPg));
+
+    *this = (InfoPg)
+    {
+        .memContext = memContextCurrent(),
+        .type = type,
+        .history = lstNew(sizeof(InfoPgData)),
+    };
 
     FUNCTION_TEST_RETURN(this);
 }

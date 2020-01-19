@@ -45,8 +45,12 @@ infoArchiveNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    InfoArchive *this = memNew(sizeof(InfoArchive));
-    this->memContext = memContextCurrent();
+    InfoArchive *this = memNewRaw(sizeof(InfoArchive));
+
+    *this = (InfoArchive)
+    {
+        .memContext = memContextCurrent(),
+    };
 
     FUNCTION_TEST_RETURN(this);
 }

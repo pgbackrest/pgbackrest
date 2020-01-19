@@ -126,22 +126,21 @@ execNew(const String *command, const StringList *param, const String *name, Time
 
     MEM_CONTEXT_NEW_BEGIN("Exec")
     {
-        this = memNew(sizeof(Exec));
-        this->memContext = MEM_CONTEXT_NEW();
+        this = memNewRaw(sizeof(Exec));
 
-        this->command = strDup(command);
+        *this = (Exec)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .command = strDup(command),
+            .name = strDup(name),
+            .timeout = timeout,
 
-        // Parameter list is optional but if not specified we need to build one with the command
-        if (param == NULL)
-            this->param = strLstNew();
-        else
-            this->param = strLstDup(param);
+            // Parameter list is optional but if not specified we need to build one with the command
+            .param = param == NULL ? strLstNew() : strLstDup(param),
+        };
 
         // The first parameter must be the command
         strLstInsert(this->param, 0, this->command);
-
-        this->name = strDup(name);
-        this->timeout = timeout;
     }
     MEM_CONTEXT_NEW_END();
 

@@ -41,11 +41,13 @@ waitNew(TimeMSec waitTime)
     MEM_CONTEXT_NEW_BEGIN("wait")
     {
         // Create object
-        this = memNew(sizeof(Wait));
-        this->memContext = MEM_CONTEXT_NEW();
+        this = memNewRaw(sizeof(Wait));
 
-        // Store time
-        this->waitTime = waitTime;
+        *this = (Wait)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .waitTime = waitTime,
+        };
 
         // Calculate first sleep time -- start with 1/10th of a second for anything >= 1 second
         if (this->waitTime >= MSEC_PER_SEC)

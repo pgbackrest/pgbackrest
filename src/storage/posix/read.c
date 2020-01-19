@@ -204,27 +204,30 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
 
     MEM_CONTEXT_NEW_BEGIN("StorageReadPosix")
     {
-        StorageReadPosix *driver = memNew(sizeof(StorageReadPosix));
-        driver->memContext = MEM_CONTEXT_NEW();
+        StorageReadPosix *driver = memNewRaw(sizeof(StorageReadPosix));
 
-        driver->interface = (StorageReadInterface)
+        *driver = (StorageReadPosix)
         {
-            .type = STORAGE_POSIX_TYPE_STR,
-            .name = strDup(name),
-            .ignoreMissing = ignoreMissing,
+            .memContext = MEM_CONTEXT_NEW(),
+            .storage = storage,
+            .handle = -1,
 
-            .ioInterface = (IoReadInterface)
+            .interface = (StorageReadInterface)
             {
-                .close = storageReadPosixClose,
-                .eof = storageReadPosixEof,
-                .handle = storageReadPosixHandle,
-                .open = storageReadPosixOpen,
-                .read = storageReadPosix,
+                .type = STORAGE_POSIX_TYPE_STR,
+                .name = strDup(name),
+                .ignoreMissing = ignoreMissing,
+
+                .ioInterface = (IoReadInterface)
+                {
+                    .close = storageReadPosixClose,
+                    .eof = storageReadPosixEof,
+                    .handle = storageReadPosixHandle,
+                    .open = storageReadPosixOpen,
+                    .read = storageReadPosix,
+                },
             },
         };
-
-        driver->storage = storage;
-        driver->handle = -1;
 
         this = storageReadNew(driver, &driver->interface);
     }

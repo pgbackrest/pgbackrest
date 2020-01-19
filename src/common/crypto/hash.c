@@ -153,8 +153,12 @@ cryptoHashNew(const String *type)
 
     MEM_CONTEXT_NEW_BEGIN("CryptoHash")
     {
-        CryptoHash *driver = memNew(sizeof(CryptoHash));
-        driver->memContext = MEM_CONTEXT_NEW();
+        CryptoHash *driver = memNewRaw(sizeof(CryptoHash));
+
+        *driver = (CryptoHash)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+        };
 
         // Lookup digest
         if ((driver->hashType = EVP_get_digestbyname(strPtr(type))) == NULL)

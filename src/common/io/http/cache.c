@@ -51,17 +51,19 @@ httpClientCacheNew(
     MEM_CONTEXT_NEW_BEGIN("HttpClientCache")
     {
         // Allocate state and set context
-        this = memNew(sizeof(HttpClientCache));
-        this->memContext = MEM_CONTEXT_NEW();
+        this = memNewRaw(sizeof(HttpClientCache));
 
-        this->host = strDup(host);
-        this->port = port;
-        this->timeout = timeout;
-        this->verifyPeer = verifyPeer;
-        this->caFile = strDup(caFile);
-        this->caPath = strDup(caPath);
-
-        this->clientList = lstNew(sizeof(HttpClient *));
+        *this = (HttpClientCache)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .host = strDup(host),
+            .port = port,
+            .timeout = timeout,
+            .verifyPeer = verifyPeer,
+            .caFile = strDup(caFile),
+            .caPath = strDup(caPath),
+            .clientList = lstNew(sizeof(HttpClient *)),
+        };
     }
     MEM_CONTEXT_NEW_END();
 

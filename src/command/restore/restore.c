@@ -769,7 +769,7 @@ restoreCleanBuild(Manifest *manifest)
         bool delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
 
         // Allocate data for each target
-        RestoreCleanCallbackData *cleanDataList = memNew(sizeof(RestoreCleanCallbackData) * manifestTargetTotal(manifest));
+        RestoreCleanCallbackData *cleanDataList = memNewRaw(sizeof(RestoreCleanCallbackData) * manifestTargetTotal(manifest));
 
         // Step 1: Check permissions and validity (is the directory empty without delta?) if the target directory exists
         // -------------------------------------------------------------------------------------------------------------------------
@@ -779,8 +779,12 @@ restoreCleanBuild(Manifest *manifest)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
 
-            cleanData->manifest = manifest;
-            cleanData->target = manifestTarget(manifest, targetIdx);
+            *cleanData = (RestoreCleanCallbackData)
+            {
+                .manifest = manifest,
+                .target = manifestTarget(manifest, targetIdx),
+            };
+
             cleanData->targetName = cleanData->target->name;
             cleanData->targetPath = manifestTargetPath(manifest, cleanData->target);
             cleanData->basePath = strEq(cleanData->targetName, MANIFEST_TARGET_PGDATA_STR);

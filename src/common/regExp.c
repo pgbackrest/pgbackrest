@@ -69,8 +69,12 @@ regExpNew(const String *expression)
 
     MEM_CONTEXT_NEW_BEGIN("RegExp")
     {
-        this = memNew(sizeof(RegExp));
-        this->memContext = MEM_CONTEXT_NEW();
+        this = memNewRaw(sizeof(RegExp));
+
+        *this = (RegExp)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+        };
 
         // Compile the regexp and process errors
         int result = 0;
