@@ -110,6 +110,9 @@ testRun(void)
         TEST_RESULT_INT(memContextTop()->contextChildListSize, MEM_CONTEXT_INITIAL_SIZE, "initial top context child list size");
 
         memContextPush(memContext);
+
+        TEST_ERROR(memContextKeep(), AssertError, "new context expected but current context 'test1' found");
+        TEST_ERROR(memContextDiscard(), AssertError, "new context expected but current context 'test1' found");
         TEST_RESULT_PTR(memContext, memContextCurrent(), "current context is now test1");
 
         // Create enough mem contexts to use up the initially allocated block
@@ -185,6 +188,7 @@ testRun(void)
         memNew(sizeof(size_t));
 
         MemContext *memContext = memContextNew("test-alloc");
+        TEST_ERROR(memContextPop(), AssertError, "current context expected but new context 'test-alloc' found");
         memContextKeep();
         memContextPush(memContext);
 
