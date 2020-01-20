@@ -71,7 +71,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationN
 
     MEM_CONTEXT_NEW_BEGIN("Db")
     {
-        this = memNewRaw(sizeof(Db));
+        this = memNew(sizeof(Db));
 
         *this = (Db)
         {

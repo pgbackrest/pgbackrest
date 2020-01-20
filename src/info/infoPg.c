@@ -58,7 +58,7 @@ infoPgNewInternal(InfoPgType type)
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    InfoPg *this = memNewRaw(sizeof(InfoPg));
+    InfoPg *this = memNew(sizeof(InfoPg));
 
     *this = (InfoPg)
     {

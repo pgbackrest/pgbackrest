@@ -57,7 +57,7 @@ testObjectNew(void)
 
     MEM_CONTEXT_NEW_BEGIN(STRINGIFY(TestObject))
     {
-        this = memNewRaw(sizeof(TestObject));
+        this = memNew(sizeof(TestObject));
 
         *this = (TestObject)
         {

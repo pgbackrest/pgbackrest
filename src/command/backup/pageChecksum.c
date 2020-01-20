@@ -219,7 +219,7 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, size_t pa
 
     MEM_CONTEXT_NEW_BEGIN("PageChecksum")
     {
-        PageChecksum *driver = memNewRaw(sizeof(PageChecksum));
+        PageChecksum *driver = memNew(sizeof(PageChecksum));
 
         *driver = (PageChecksum)
         {

@@ -69,7 +69,7 @@ regExpNew(const String *expression)
 
     MEM_CONTEXT_NEW_BEGIN("RegExp")
     {
-        this = memNewRaw(sizeof(RegExp));
+        this = memNew(sizeof(RegExp));
 
         *this = (RegExp)
         {

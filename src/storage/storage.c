@@ -64,7 +64,7 @@ storageNew(
     ASSERT(interface.pathRemove != NULL);
     ASSERT(interface.remove != NULL);
 
-    Storage *this = (Storage *)memNewRaw(sizeof(Storage));
+    Storage *this = (Storage *)memNew(sizeof(Storage));
 
     *this = (Storage)
     {

@@ -155,7 +155,7 @@ varDup(const Variant *this)
 
             case varTypeKeyValue:
             {
-                VariantKeyValue *keyValue = memNewRaw(sizeof(VariantKeyValue));
+                VariantKeyValue *keyValue = memNew(sizeof(VariantKeyValue));
 
                 *keyValue = (VariantKeyValue)
                 {
@@ -298,7 +298,7 @@ varNewBool(bool data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantBool *this = memNewRaw(sizeof(VariantBool));
+    VariantBool *this = memNew(sizeof(VariantBool));
 
     *this = (VariantBool)
     {
@@ -407,7 +407,7 @@ varNewDbl(double data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantDouble *this = memNewRaw(sizeof(VariantDouble));
+    VariantDouble *this = memNew(sizeof(VariantDouble));
 
     *this = (VariantDouble)
     {
@@ -511,7 +511,7 @@ varNewInt(int data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantInt *this = memNewRaw(sizeof(VariantInt));
+    VariantInt *this = memNew(sizeof(VariantInt));
 
     *this = (VariantInt)
     {
@@ -633,7 +633,7 @@ varNewInt64(int64_t data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantInt64 *this = memNewRaw(sizeof(VariantInt64));
+    VariantInt64 *this = memNew(sizeof(VariantInt64));
 
     *this = (VariantInt64)
     {
@@ -743,7 +743,7 @@ varNewUInt(unsigned int data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantUInt *this = memNewRaw(sizeof(VariantUInt));
+    VariantUInt *this = memNew(sizeof(VariantUInt));
 
     *this = (VariantUInt)
     {
@@ -874,7 +874,7 @@ varNewUInt64(uint64_t data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantUInt64 *this = memNewRaw(sizeof(VariantUInt64));
+    VariantUInt64 *this = memNew(sizeof(VariantUInt64));
 
     *this = (VariantUInt64)
     {
@@ -996,7 +996,7 @@ varNewKv(KeyValue *data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantKeyValue *this = memNewRaw(sizeof(VariantKeyValue));
+    VariantKeyValue *this = memNew(sizeof(VariantKeyValue));
 
     *this = (VariantKeyValue)
     {
@@ -1042,7 +1042,7 @@ varNewStr(const String *data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantString *this = memNewRaw(sizeof(VariantString));
+    VariantString *this = memNew(sizeof(VariantString));
 
     *this = (VariantString)
     {
@@ -1179,7 +1179,7 @@ varNewVarLst(const VariantList *data)
     FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
-    VariantVariantList *this = memNewRaw(sizeof(VariantVariantList));
+    VariantVariantList *this = memNew(sizeof(VariantVariantList));
 
     *this = (VariantVariantList)
     {

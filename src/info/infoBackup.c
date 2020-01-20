@@ -74,7 +74,7 @@ infoBackupNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    InfoBackup *this = memNewRaw(sizeof(InfoBackup));
+    InfoBackup *this = memNew(sizeof(InfoBackup));
 
     *this = (InfoBackup)
     {

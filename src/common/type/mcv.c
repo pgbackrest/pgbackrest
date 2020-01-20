@@ -38,7 +38,7 @@ mcvNew(void)
 
     MEM_CONTEXT_NEW_BEGIN("MostCommonValue")
     {
-        this = memNewRaw(sizeof(MostCommonValue));
+        this = memNew(sizeof(MostCommonValue));
 
         *this = (MostCommonValue)
         {

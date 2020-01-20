@@ -100,7 +100,7 @@ ioBufferReadNew(const Buffer *buffer)
 
     MEM_CONTEXT_NEW_BEGIN("IoBufferRead")
     {
-        IoBufferRead *driver = memNewRaw (sizeof(IoBufferRead));
+        IoBufferRead *driver = memNew(sizeof(IoBufferRead));
 
         *driver = (IoBufferRead)
         {

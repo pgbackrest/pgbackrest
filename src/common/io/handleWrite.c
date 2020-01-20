@@ -83,7 +83,7 @@ ioHandleWriteNew(const String *name, int handle)
 
     MEM_CONTEXT_NEW_BEGIN("IoHandleWrite")
     {
-        IoHandleWrite *driver = memNewRaw(sizeof(IoHandleWrite));
+        IoHandleWrite *driver = memNew(sizeof(IoHandleWrite));
 
         *driver = (IoHandleWrite)
         {

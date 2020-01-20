@@ -55,7 +55,7 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
 
     MEM_CONTEXT_NEW_BEGIN("ProtocolParallel")
     {
-        this = memNewRaw(sizeof(ProtocolParallel));
+        this = memNew(sizeof(ProtocolParallel));
 
         *this = (ProtocolParallel)
         {
@@ -116,10 +116,7 @@ protocolParallelProcess(ProtocolParallel *this)
     {
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->clientJobList = (ProtocolParallelJob **)memNewRaw(sizeof(ProtocolParallelJob *) * lstSize(this->clientList));
-
-            for (unsigned int clientJobIdx = 0; clientJobIdx < lstSize(this->clientList); clientJobIdx++)
-                this->clientJobList[clientJobIdx] = NULL;
+            this->clientJobList = memNewPtrArray(lstSize(this->clientList));
         }
         MEM_CONTEXT_END();
 

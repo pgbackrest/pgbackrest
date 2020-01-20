@@ -50,7 +50,7 @@ ioWriteNew(void *driver, IoWriteInterface interface)
 
     MEM_CONTEXT_NEW_BEGIN("IoWrite")
     {
-        this = memNewRaw(sizeof(IoWrite));
+        this = memNew(sizeof(IoWrite));
 
         *this = (IoWrite)
         {

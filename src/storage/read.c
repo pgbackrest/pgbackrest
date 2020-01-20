@@ -47,7 +47,7 @@ storageReadNew(void *driver, const StorageReadInterface *interface)
 
     StorageRead *this = NULL;
 
-    this = memNewRaw(sizeof(StorageRead));
+    this = memNew(sizeof(StorageRead));
 
     *this = (StorageRead)
     {

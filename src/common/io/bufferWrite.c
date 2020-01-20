@@ -64,7 +64,7 @@ ioBufferWriteNew(Buffer *buffer)
 
     MEM_CONTEXT_NEW_BEGIN("IoBufferWrite")
     {
-        IoBufferWrite *driver = memNewRaw(sizeof(IoBufferWrite));
+        IoBufferWrite *driver = memNew(sizeof(IoBufferWrite));
 
         *driver = (IoBufferWrite)
         {

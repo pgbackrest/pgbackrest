@@ -142,7 +142,7 @@ tlsClientNew(
 
     MEM_CONTEXT_NEW_BEGIN("TlsClient")
     {
-        this = memNewRaw(sizeof(TlsClient));
+        this = memNew(sizeof(TlsClient));
 
         *this = (TlsClient)
         {

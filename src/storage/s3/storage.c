@@ -959,7 +959,7 @@ storageS3New(
 
     MEM_CONTEXT_NEW_BEGIN("StorageS3")
     {
-        StorageS3 *driver = memNewRaw(sizeof(StorageS3));
+        StorageS3 *driver = memNew(sizeof(StorageS3));
 
         *driver = (StorageS3)
         {

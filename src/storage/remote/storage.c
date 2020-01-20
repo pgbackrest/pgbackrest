@@ -484,7 +484,7 @@ storageRemoteNew(
 
     MEM_CONTEXT_NEW_BEGIN("StorageRemote")
     {
-        StorageRemote *driver = memNewRaw(sizeof(StorageRemote));
+        StorageRemote *driver = memNew(sizeof(StorageRemote));
 
         *driver = (StorageRemote)
         {

@@ -55,7 +55,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
     MEM_CONTEXT_NEW_BEGIN("ProtocolServer")
     {
-        this = memNewRaw(sizeof(ProtocolServer));
+        this = memNew(sizeof(ProtocolServer));
 
         *this = (ProtocolServer)
         {

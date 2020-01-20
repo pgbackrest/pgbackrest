@@ -52,7 +52,7 @@ kvNew(void)
     MEM_CONTEXT_NEW_BEGIN("KeyValue")
     {
         // Allocate state and set context
-        this = memNewRaw(sizeof(KeyValue));
+        this = memNew(sizeof(KeyValue));
 
         *this = (KeyValue)
         {

@@ -195,7 +195,7 @@ storageWriteRemoteNew(
 
     MEM_CONTEXT_NEW_BEGIN("StorageWriteRemote")
     {
-        this = memNewRaw(sizeof(StorageWriteRemote));
+        this = memNew(sizeof(StorageWriteRemote));
 
         *this = (StorageWriteRemote)
         {

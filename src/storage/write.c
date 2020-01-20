@@ -48,7 +48,7 @@ storageWriteNew(void *driver, const StorageWriteInterface *interface)
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 
-    StorageWrite *this = memNewRaw(sizeof(StorageWrite));
+    StorageWrite *this = memNew(sizeof(StorageWrite));
 
     *this = (StorageWrite)
     {

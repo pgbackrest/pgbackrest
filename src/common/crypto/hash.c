@@ -153,7 +153,7 @@ cryptoHashNew(const String *type)
 
     MEM_CONTEXT_NEW_BEGIN("CryptoHash")
     {
-        CryptoHash *driver = memNewRaw(sizeof(CryptoHash));
+        CryptoHash *driver = memNew(sizeof(CryptoHash));
 
         *driver = (CryptoHash)
         {

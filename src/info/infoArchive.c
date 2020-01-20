@@ -45,7 +45,7 @@ infoArchiveNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    InfoArchive *this = memNewRaw(sizeof(InfoArchive));
+    InfoArchive *this = memNew(sizeof(InfoArchive));
 
     *this = (InfoArchive)
     {

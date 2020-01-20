@@ -576,7 +576,7 @@ strLstPtr(const StringList *this)
 
     ASSERT(this != NULL);
 
-    const char **list = memNewRaw((strLstSize(this) + 1) * sizeof(char *));
+    const char **list = memNew((strLstSize(this) + 1) * sizeof(char *));
 
     for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
     {

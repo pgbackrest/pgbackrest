@@ -51,7 +51,7 @@ httpClientCacheNew(
     MEM_CONTEXT_NEW_BEGIN("HttpClientCache")
     {
         // Allocate state and set context
-        this = memNewRaw(sizeof(HttpClientCache));
+        this = memNew(sizeof(HttpClientCache));
 
         *this = (HttpClientCache)
         {

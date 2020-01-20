@@ -118,7 +118,7 @@ ioBufferNew(void)
 
     MEM_CONTEXT_NEW_BEGIN("IoBuffer")
     {
-        IoBuffer *driver = memNewRaw(sizeof(IoBuffer));
+        IoBuffer *driver = memNew(sizeof(IoBuffer));
 
         *driver = (IoBuffer)
         {

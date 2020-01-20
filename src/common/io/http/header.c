@@ -35,7 +35,7 @@ httpHeaderNew(const StringList *redactList)
     MEM_CONTEXT_NEW_BEGIN("HttpHeader")
     {
         // Allocate state and set context
-        this = memNewRaw(sizeof(HttpHeader));
+        this = memNew(sizeof(HttpHeader));
 
         *this = (HttpHeader)
         {
@@ -68,7 +68,7 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
         MEM_CONTEXT_NEW_BEGIN("HttpHeader")
         {
             // Allocate state and set context
-            this = memNewRaw(sizeof(HttpHeader));
+            this = memNew(sizeof(HttpHeader));
 
             *this = (HttpHeader)
             {

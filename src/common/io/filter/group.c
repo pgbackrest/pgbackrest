@@ -67,7 +67,7 @@ ioFilterGroupNew(void)
 
     MEM_CONTEXT_NEW_BEGIN("IoFilterGroup")
     {
-        this = memNewRaw(sizeof(IoFilterGroup));
+        this = memNew(sizeof(IoFilterGroup));
 
         *this = (IoFilterGroup)
         {

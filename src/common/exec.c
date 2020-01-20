@@ -126,7 +126,7 @@ execNew(const String *command, const StringList *param, const String *name, Time
 
     MEM_CONTEXT_NEW_BEGIN("Exec")
     {
-        this = memNewRaw(sizeof(Exec));
+        this = memNew(sizeof(Exec));
 
         *this = (Exec)
         {

@@ -194,7 +194,7 @@ httpClientNew(
 
     MEM_CONTEXT_NEW_BEGIN("HttpClient")
     {
-        this = memNewRaw(sizeof(HttpClient));
+        this = memNew(sizeof(HttpClient));
 
         *this = (HttpClient)
         {

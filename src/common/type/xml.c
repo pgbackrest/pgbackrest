@@ -147,7 +147,7 @@ xmlNodeNew(xmlNodePtr node)
 
     ASSERT(node != NULL);
 
-    XmlNode *this = memNewRaw(sizeof(XmlNode));
+    XmlNode *this = memNew(sizeof(XmlNode));
 
     *this = (XmlNode)
     {
@@ -412,7 +412,7 @@ xmlDocumentNew(const String *rootName)
 
     MEM_CONTEXT_NEW_BEGIN("XmlDocument")
     {
-        this = memNewRaw(sizeof(XmlDocument));
+        this = memNew(sizeof(XmlDocument));
 
         *this = (XmlDocument)
         {
@@ -452,7 +452,7 @@ xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize)
 
     MEM_CONTEXT_NEW_BEGIN("XmlDocument")
     {
-        this = memNewRaw(sizeof(XmlDocument));
+        this = memNew(sizeof(XmlDocument));
 
         *this = (XmlDocument)
         {

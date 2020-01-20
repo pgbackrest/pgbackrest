@@ -41,7 +41,7 @@ waitNew(TimeMSec waitTime)
     MEM_CONTEXT_NEW_BEGIN("wait")
     {
         // Create object
-        this = memNewRaw(sizeof(Wait));
+        this = memNew(sizeof(Wait));
 
         *this = (Wait)
         {

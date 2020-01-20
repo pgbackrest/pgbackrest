@@ -64,7 +64,7 @@ ioSinkNew(void)
 
     MEM_CONTEXT_NEW_BEGIN("IoSink")
     {
-        IoSink *driver = memNewRaw(sizeof(IoSink));
+        IoSink *driver = memNew(sizeof(IoSink));
 
         *driver = (IoSink)
         {

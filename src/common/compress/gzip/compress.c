@@ -173,7 +173,7 @@ gzipCompressNew(int level, bool raw)
 
     MEM_CONTEXT_NEW_BEGIN("GzipCompress")
     {
-        GzipCompress *driver = memNewRaw(sizeof(GzipCompress));
+        GzipCompress *driver = memNew(sizeof(GzipCompress));
 
         *driver = (GzipCompress)
         {

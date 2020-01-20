@@ -676,7 +676,7 @@ storagePosixNewInternal(
 
     MEM_CONTEXT_NEW_BEGIN("StoragePosix")
     {
-        StoragePosix *driver = memNewRaw(sizeof(StoragePosix));
+        StoragePosix *driver = memNew(sizeof(StoragePosix));
 
         *driver = (StoragePosix)
         {

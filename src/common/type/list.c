@@ -55,7 +55,7 @@ lstNewParam(size_t itemSize, ListParam param)
     MEM_CONTEXT_NEW_BEGIN("List")
     {
         // Create object
-        this = memNewRaw(sizeof(List));
+        this = memNew(sizeof(List));
 
         *this = (List)
         {
@@ -296,13 +296,13 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
             if (this->listSizeMax == 0)
             {
                 this->listSizeMax = LIST_INITIAL_SIZE;
-                this->list = memNewRaw(this->listSizeMax * this->itemSize);
+                this->list = memNew(this->listSizeMax * this->itemSize);
             }
             // Else the list needs to be extended
             else
             {
                 this->listSizeMax *= 2;
-                this->list = memGrowRaw(this->list, this->listSizeMax * this->itemSize);
+                this->list = memResize(this->list, this->listSizeMax * this->itemSize);
             }
         }
         MEM_CONTEXT_END();

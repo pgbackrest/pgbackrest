@@ -244,7 +244,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
     MEM_CONTEXT_NEW_BEGIN("StorageWriteS3")
     {
-        StorageWriteS3 *driver = memNewRaw(sizeof(StorageWriteS3));
+        StorageWriteS3 *driver = memNew(sizeof(StorageWriteS3));
 
         *driver = (StorageWriteS3)
         {

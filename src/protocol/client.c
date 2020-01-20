@@ -79,7 +79,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 
     MEM_CONTEXT_NEW_BEGIN("ProtocolClient")
     {
-        this = memNewRaw(sizeof(ProtocolClient));
+        this = memNew(sizeof(ProtocolClient));
 
         *this = (ProtocolClient)
         {

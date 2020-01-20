@@ -769,7 +769,7 @@ restoreCleanBuild(Manifest *manifest)
         bool delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
 
         // Allocate data for each target
-        RestoreCleanCallbackData *cleanDataList = memNewRaw(sizeof(RestoreCleanCallbackData) * manifestTargetTotal(manifest));
+        RestoreCleanCallbackData *cleanDataList = memNew(sizeof(RestoreCleanCallbackData) * manifestTargetTotal(manifest));
 
         // Step 1: Check permissions and validity (is the directory empty without delta?) if the target directory exists
         // -------------------------------------------------------------------------------------------------------------------------

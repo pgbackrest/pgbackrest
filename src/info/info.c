@@ -117,7 +117,7 @@ infoNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    Info *this = memNewRaw(sizeof(Info));
+    Info *this = memNew(sizeof(Info));
 
     *this = (Info)
     {

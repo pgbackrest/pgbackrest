@@ -45,7 +45,7 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 
     MEM_CONTEXT_NEW_BEGIN("ProtocolParallelJob")
     {
-        this = memNewRaw(sizeof(ProtocolParallelJob));
+        this = memNew(sizeof(ProtocolParallelJob));
 
         *this = (ProtocolParallelJob)
         {

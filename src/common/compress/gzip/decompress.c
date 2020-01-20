@@ -154,7 +154,7 @@ gzipDecompressNew(bool raw)
     MEM_CONTEXT_NEW_BEGIN("GzipDecompress")
     {
         // Allocate state and set context
-        GzipDecompress *driver = memNewRaw(sizeof(GzipDecompress));
+        GzipDecompress *driver = memNew(sizeof(GzipDecompress));
 
         *driver = (GzipDecompress)
         {

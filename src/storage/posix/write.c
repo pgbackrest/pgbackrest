@@ -247,7 +247,7 @@ storageWritePosixNew(
 
     MEM_CONTEXT_NEW_BEGIN("StorageWritePosix")
     {
-        StorageWritePosix *driver = memNewRaw(sizeof(StorageWritePosix));
+        StorageWritePosix *driver = memNew(sizeof(StorageWritePosix));
 
         *driver = (StorageWritePosix)
         {

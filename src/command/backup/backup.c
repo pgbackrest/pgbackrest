@@ -207,7 +207,7 @@ backupInit(const InfoBackup *infoBackup)
     ASSERT(infoBackup != NULL);
 
     // Initialize for offline backup
-    BackupData *result = memNewRaw(sizeof(BackupData));
+    BackupData *result = memNew(sizeof(BackupData));
     *result = (BackupData){.pgIdPrimary = 1};
 
     // Check that the PostgreSQL version supports backup from standby. The check is done using the stanza info because pg_control

@@ -50,7 +50,7 @@ ioFilterNew(const String *type, void *driver, VariantList *paramList, IoFilterIn
     // If the filter does not produce output then it should produce a result
     ASSERT(interface.in == NULL || (interface.result != NULL && interface.done == NULL && interface.inputSame == NULL));
 
-    IoFilter *this = memNewRaw(sizeof(IoFilter));
+    IoFilter *this = memNew(sizeof(IoFilter));
 
     *this = (IoFilter)
     {

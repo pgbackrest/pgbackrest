@@ -146,7 +146,7 @@ ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
 
     MEM_CONTEXT_NEW_BEGIN("IoHandleRead")
     {
-        IoHandleRead *driver = memNewRaw(sizeof(IoHandleRead));
+        IoHandleRead *driver = memNew(sizeof(IoHandleRead));
 
         *driver = (IoHandleRead)
         {

@@ -38,7 +38,7 @@ iniNew(void)
 
     MEM_CONTEXT_NEW_BEGIN("Ini")
     {
-        this = memNewRaw(sizeof(Ini));
+        this = memNew(sizeof(Ini));
 
         *this = (Ini)
         {

@@ -110,7 +110,7 @@ ioTestFilterSizeNew(const char *type)
 
     MEM_CONTEXT_NEW_BEGIN("IoTestFilterSize")
     {
-        IoTestFilterSize *driver = memNewRaw(sizeof(IoTestFilterSize));
+        IoTestFilterSize *driver = memNew(sizeof(IoTestFilterSize));
 
         *driver = (IoTestFilterSize)
         {
@@ -215,7 +215,7 @@ ioTestFilterMultiplyNew(const char *type, unsigned int multiplier, unsigned int 
 
     MEM_CONTEXT_NEW_BEGIN("IoTestFilterMultiply")
     {
-        IoTestFilterMultiply *driver = memNewRaw(sizeof(IoTestFilterMultiply));
+        IoTestFilterMultiply *driver = memNew(sizeof(IoTestFilterMultiply));
 
         *driver = (IoTestFilterMultiply)
         {

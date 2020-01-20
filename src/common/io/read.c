@@ -52,7 +52,7 @@ ioReadNew(void *driver, IoReadInterface interface)
 
     MEM_CONTEXT_NEW_BEGIN("IoRead")
     {
-        this = memNewRaw(sizeof(IoRead));
+        this = memNew(sizeof(IoRead));
 
         *this = (IoRead)
         {

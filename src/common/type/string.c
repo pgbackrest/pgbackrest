@@ -76,7 +76,7 @@ strNew(const char *string)
     CHECK_SIZE(stringSize);
 
     // Create object
-    String *this = memNewRaw(sizeof(String));
+    String *this = memNew(sizeof(String));
 
     *this = (String)
     {
@@ -85,7 +85,7 @@ strNew(const char *string)
     };
 
     // Allocate and assign string
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     strcpy(this->buffer, string);
 
     FUNCTION_TEST_RETURN(this);
@@ -110,7 +110,7 @@ strNewBuf(const Buffer *buffer)
     CHECK_SIZE(bufUsed(buffer));
 
     // Create object
-    String *this = memNewRaw(sizeof(String));
+    String *this = memNew(sizeof(String));
 
     *this = (String)
     {
@@ -119,7 +119,7 @@ strNewBuf(const Buffer *buffer)
     };
 
     // Allocate and assign string
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     memcpy(this->buffer, (char *)bufPtr(buffer), this->size);
     this->buffer[this->size] = 0;
 
@@ -139,7 +139,7 @@ strNewFmt(const char *format, ...)
     ASSERT(format != NULL);
 
     // Create object
-    String *this = memNewRaw(sizeof(String));
+    String *this = memNew(sizeof(String));
 
     *this = (String)
     {
@@ -157,7 +157,7 @@ strNewFmt(const char *format, ...)
 
     // Allocate and assign string
     this->size = (unsigned int)formatSize;
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     va_start(argumentList, format);
     vsnprintf(this->buffer, this->size + 1, format, argumentList);
     va_end(argumentList);
@@ -184,7 +184,7 @@ strNewN(const char *string, size_t size)
     CHECK_SIZE(size);
 
     // Create object
-    String *this = memNewRaw(sizeof(String));
+    String *this = memNew(sizeof(String));
 
     *this = (String)
     {
@@ -193,7 +193,7 @@ strNewN(const char *string, size_t size)
     };
 
     // Allocate and assign string
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     strncpy(this->buffer, string, this->size);
     this->buffer[this->size] = 0;
 
@@ -279,7 +279,7 @@ strResize(String *this, size_t requested)
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->buffer = memGrowRaw(this->buffer, this->size + this->extra + 1);
+            this->buffer = memResize(this->buffer, this->size + this->extra + 1);
         }
         MEM_CONTEXT_END();
     }
@@ -870,7 +870,7 @@ strTrim(String *this)
             MEM_CONTEXT_BEGIN(this->memContext)
             {
                 // Resize the buffer
-                this->buffer = memGrowRaw(this->buffer, this->size + 1);
+                this->buffer = memResize(this->buffer, this->size + 1);
             }
             MEM_CONTEXT_END();
         }
@@ -928,7 +928,7 @@ strTrunc(String *this, int idx)
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             // Resize the buffer
-            this->buffer = memGrowRaw(this->buffer, this->size + 1);
+            this->buffer = memResize(this->buffer, this->size + 1);
         }
         MEM_CONTEXT_END();
     }

@@ -198,7 +198,7 @@ storageReadRemoteNew(
 
     MEM_CONTEXT_NEW_BEGIN("StorageReadRemote")
     {
-        this = memNewRaw(sizeof(StorageReadRemote));
+        this = memNew(sizeof(StorageReadRemote));
 
         *this = (StorageReadRemote)
         {

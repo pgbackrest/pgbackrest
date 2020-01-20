@@ -204,7 +204,7 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
 
     MEM_CONTEXT_NEW_BEGIN("StorageReadPosix")
     {
-        StorageReadPosix *driver = memNewRaw(sizeof(StorageReadPosix));
+        StorageReadPosix *driver = memNew(sizeof(StorageReadPosix));
 
         *driver = (StorageReadPosix)
         {

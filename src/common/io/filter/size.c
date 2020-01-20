@@ -91,7 +91,7 @@ ioSizeNew(void)
 
     MEM_CONTEXT_NEW_BEGIN("IoSize")
     {
-        IoSize *driver = memNewRaw(sizeof(IoSize));
+        IoSize *driver = memNew(sizeof(IoSize));
 
         *driver = (IoSize)
         {

@@ -35,7 +35,7 @@ httpQueryNew(void)
     MEM_CONTEXT_NEW_BEGIN("HttpQuery")
     {
         // Allocate state and set context
-        this = memNewRaw(sizeof(HttpQuery));
+        this = memNew(sizeof(HttpQuery));
 
         *this = (HttpQuery)
         {

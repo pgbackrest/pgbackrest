@@ -159,7 +159,7 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
 
     MEM_CONTEXT_NEW_BEGIN("StorageReadS3")
     {
-        StorageReadS3 *driver = memNewRaw(sizeof(StorageReadS3));
+        StorageReadS3 *driver = memNew(sizeof(StorageReadS3));
 
         *driver = (StorageReadS3)
         {
