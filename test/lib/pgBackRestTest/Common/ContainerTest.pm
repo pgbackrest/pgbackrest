@@ -557,7 +557,7 @@ sub containerBuild
             '    ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .
             '    ' . userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP);
 
-        # Install Perl packages
+        # Fetch package source
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript .=  sectionHeader() .
