@@ -1,5 +1,108 @@
 [
     {
+        "commit": "94842ccecee642cc58f6c177c19e642d86a8d997",
+        "date": "2020-01-21 11:59:25 -0700",
+        "subject": "Fix comment."
+    },
+    {
+        "commit": "03d434c7e112eb3a8649e9c11149e08929f9651b",
+        "date": "2020-01-21 11:57:59 -0700",
+        "subject": "Remove RHEL package patch now that it has been merged upstream.",
+        "body": "Also revert 731ffcfb and update ContainerTest.pm for upstream changes."
+    },
+    {
+        "commit": "b89e6b7f69677fdaff3bb1ed5e908c843f72a4b5",
+        "date": "2020-01-21 10:29:46 -0700",
+        "subject": "Fix error in timeline conversion.",
+        "body": "The timeline is required to verify WAL segments in the archive after a backup. The conversion was performed base 10 instead of 16, which led to errors when the timeline was ≥ 0xA."
+    },
+    {
+        "commit": "c2da9aa907802a59a0c6fd5c111a1dbe7ea16c76",
+        "date": "2020-01-19 14:54:38 -0700",
+        "subject": "Fix invalid bufSize().",
+        "body": "bufUsed() should be used here to avoid a possible segfault or xml parse error when bufSize() > bufUsed()."
+    },
+    {
+        "commit": "c630bda1c184d475155220884f8a25fa4b788aaf",
+        "date": "2020-01-19 10:37:08 -0700",
+        "subject": "Remove Debian package patch now that it has been merged upstream."
+    },
+    {
+        "commit": "d9efbc3698f92b874abb6eff3298c44fd35b0d5c",
+        "date": "2020-01-18 10:46:48 -0700",
+        "subject": "Add UTF8 strings to manifest and restore tests.",
+        "body": "The most likely place to get UTF8 characters is in database names so make sure UTF8 works in the places where database names are processed."
+    },
+    {
+        "commit": "19c39fe1e262dd7c259e9f1e68d0695c43afefe3",
+        "date": "2020-01-17 22:54:19 -0700",
+        "subject": "Fix redundancy in comment."
+    },
+    {
+        "commit": "ec173f12fb9c26553b2021473dd62d73a006835a",
+        "date": "2020-01-17 13:29:49 -0700",
+        "subject": "Add MEM_CONTEXT_PRIOR() block and update current call sites.",
+        "body": "This macro block encapsulates the common pattern of switching to the prior (formerly called old) mem context to return results from a function.\n\nAlso rename MEM_CONTEXT_OLD() to memContextPrior().  This violates our convention of macros being in all caps but memContextPrior() will become a function very soon so this will reduce churn."
+    },
+    {
+        "commit": "b5fa9951e36641d0ad751f0c89751e84b5b1df0d",
+        "date": "2020-01-17 13:08:47 -0700",
+        "subject": "Use MEM_CONTEXT_BEGIN() block in varFree().",
+        "body": "We probably arrived at this unusual construction because of the complexity of getting the mem context.  Whether or not this is a good way to store the mem context, it still makes sense to use the standard pattern for switching mem contexts."
+    },
+    {
+        "commit": "c6d6b7dbefb62578be64133e36836fc936945555",
+        "date": "2020-01-17 11:58:41 -0700",
+        "subject": "Use MEM_CONTEXT_NEW_BEGIN() block instead of memContextNew().",
+        "body": "A few places were using just memContextNew(), probably because they did not immediately need to create anything in the new context, but it's better if we use the same pattern everywhere, even if it results in a few extra mem context switches."
+    },
+    {
+        "commit": "d3be1e41a4cdb5b7bbc40d73de8f185b22a97efd",
+        "date": "2020-01-16 16:23:40 -0700",
+        "subject": "Add braces and spaces for clarity.",
+        "body": "This should make it a little easier to see how the TRY macros work together."
+    },
+    {
+        "commit": "254f79803fca8cd591849b77d1266c79580ab08c",
+        "date": "2020-01-16 16:20:59 -0700",
+        "subject": "Use MEM_CONTEXT_BEGIN() block instead of memContextSwitch().",
+        "body": "This is the standard pattern but was missed here."
+    },
+    {
+        "commit": "8068a610d566cf9b5bcc79a3602a3a8442192bad",
+        "date": "2020-01-16 16:19:45 -0700",
+        "subject": "Use MEM_CONTEXT_NEW_BEGIN() block.",
+        "body": "This pattern makes more sense.  The prior code was probably copy-pasted from code with slightly different requirements."
+    },
+    {
+        "commit": "4274fcbf6f99f6d8414d2ba095809341bcf56797",
+        "date": "2020-01-16 14:42:01 -0700",
+        "subject": "Add missing semicolon.",
+        "body": "This worked when the FUNCTION_TEST_RETURN_VOID() macro expanded to nothing because of the final semicolon.  If the FUNCTION_TEST_RETURN_VOID() macro expanded to something then there was one semicolon too few."
+    },
+    {
+        "commit": "731ffcfb3d77e6a9d17091f9819cf3e21e25d951",
+        "date": "2020-01-16 14:29:04 -0700",
+        "subject": "Disable RHEL package builds since upstream is broken."
+    },
+    {
+        "commit": "e81629b4420759f80bd18017ee47b89942c90090",
+        "date": "2020-01-15 13:53:30 -0700",
+        "subject": "Reclassify Perl and LibC code as test/harness.",
+        "body": "These were still being included in the core totals but they are no longer used by core."
+    },
+    {
+        "commit": "193b78e150919470b33f3941be03f0ef589a3e79",
+        "date": "2020-01-15 13:40:17 -0700",
+        "subject": "Remove -s from make instructions.",
+        "body": "It's a good option but not required so let the user make the choice.\n\nAlso combine configure and make into a single line."
+    },
+    {
+        "commit": "9414ad2300f5ab87000da333fbbfa58228dae0c4",
+        "date": "2020-01-15 13:29:52 -0700",
+        "subject": "Begin v2.22 development."
+    },
+    {
         "commit": "2c0ba0820d3e4adea31ef6b8ee201be653ef9579",
         "date": "2020-01-15 13:21:52 -0700",
         "subject": "v2.21: C Migration Complete"
