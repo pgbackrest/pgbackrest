@@ -566,12 +566,17 @@ sub containerBuild
         }
         else
         {
+            # Fetching specific files is fragile but even a shallow clone of the entire pgrpms repo is very expensive.  Using
+            # 'git archive' does not seem to work: access denied or repository not exported: /git/pgrpms.git.
             $strScript .=  sectionHeader() .
                 "# Install pgBackRest package source\n" .
                 "    mkdir /root/package-src && \\\n" .
                 "    wget -O /root/package-src/pgbackrest-conf.patch " .
                     "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
                     "f=rpm/redhat/master/pgbackrest/master/pgbackrest-conf.patch;hb=refs/heads/master' && \\\n" .
+                "    wget -O /root/package-src/pgbackrest-libxmlinclude.patch " .
+                    "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
+                    "f=rpm/redhat/master/pgbackrest/master/pgbackrest-libxmlinclude.patch;hb=refs/heads/master' && \\\n" .
                 "    wget -O /root/package-src/pgbackrest.spec " .
                     "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
                     "f=rpm/redhat/master/pgbackrest/master/pgbackrest.spec;hb=refs/heads/master'";
