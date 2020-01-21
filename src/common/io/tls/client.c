@@ -619,7 +619,7 @@ tlsClientOpen(TlsClient *this)
                     int socketValue = 1;
 
                     THROW_ON_SYS_ERROR(
-                        setsockopt(this->socket, SOL_SOCKET, SO_KEEPALIVE, &socketValue, sizeof(int)) == -1, ProtocolError,
+                        setsockopt(this->socket, IPPROTO_TCP, SO_KEEPALIVE, &socketValue, sizeof(int)) == -1, ProtocolError,
                          "unable set SO_KEEPALIVE");
 
                     // Set per-connection keepalive options if they are available
@@ -627,18 +627,18 @@ tlsClientOpen(TlsClient *this)
                     socketValue = 3;
 
                     THROW_ON_SYS_ERROR(
-                        setsockopt(this->socket, SOL_SOCKET, TCP_KEEPIDLE, &socketValue, sizeof(int)) == -1, ProtocolError,
+                        setsockopt(this->socket, IPPROTO_TCP, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError,
+                         "unable set SO_KEEPCNT");
+
+		    socketValue = this->timeout / 4; /* first try + 3 failures to get to the timeout */
+
+		    THROW_ON_SYS_ERROR(
+                        setsockopt(this->socket, IPPROTO_TCP, TCP_KEEPIDLE, &socketValue, sizeof(int)) == -1, ProtocolError,
                          "unable set SO_KEEPIDLE");
 
                     THROW_ON_SYS_ERROR(
-                        setsockopt(this->socket, SOL_SOCKET, TCP_KEEPINTVL, &socketValue, sizeof(int)) == -1, ProtocolError,
+                        setsockopt(this->socket, IPPROTO_TCP, TCP_KEEPINTVL, &socketValue, sizeof(int)) == -1, ProtocolError,
                          "unable set SO_KEEPINTVL");
-
-                    socketValue = this->timeout / socketValue;
-
-                    THROW_ON_SYS_ERROR(
-                        setsockopt(this->socket, SOL_SOCKET, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError,
-                         "unable set SO_KEEPCNT");
 #endif
 
                     // Negotiate TLS
