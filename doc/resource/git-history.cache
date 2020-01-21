@@ -1,5 +1,10 @@
 [
     {
+        "commit": "bae6e1c9e3a035f3793739ef1b469015777aa70b",
+        "date": "2020-01-21 16:12:33 -0700",
+        "subject": "v2.22: Bug Fix"
+    },
+    {
         "commit": "94842ccecee642cc58f6c177c19e642d86a8d997",
         "date": "2020-01-21 11:59:25 -0700",
         "subject": "Fix comment."
