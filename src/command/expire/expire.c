@@ -61,7 +61,7 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
 
     // execute the real expiration and deletion
     // only if the dry-run mode is disabled
-    if (!cfgOptionBool(cfgOptDryRun))
+    if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
     {
         storageRemoveP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(removeBackupLabel)));
         storageRemoveP(
@@ -370,7 +370,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                                 // execute the real expiration and deletion
                                 // only if the dry-run mode is disabled
-                                if ( ! cfgOptionBool(cfgOptDryRun) )
+                                if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
                                     storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
                             }
 
@@ -516,10 +516,12 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 {
                                     // execute the real expiration and deletion
                                     // only if the dry-run mode is disabled
-                                    if ( ! cfgOptionBool(cfgOptDryRun) ){
+                                    if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
+                                    {
                                         storagePathRemoveP(
-                                            storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
-                                                                          strPtr(walPath)), .recurse = true);
+                                            storageRepoWrite(),
+                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
+                                            .recurse = true);
                                     }
 
                                     archiveExpire.total++;
@@ -563,13 +565,13 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                         if (removeArchive)
                                         {
                                             // // execute the real expiration and deletion only if the dry-run mode is disabled
-                                            if (!cfgOptionBool(cfgOptDryRun))
+                                            if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
                                             {
                                                 storageRemoveP(
                                                     storageRepoWrite(),
                                                     strNewFmt(
-                                                        STORAGE_REPO_ARCHIVE "/%s/%s/%s",
-                                                              strPtr(archiveId), strPtr(walPath), strPtr(walSubPath)));
+                                                        STORAGE_REPO_ARCHIVE "/%s/%s/%s", strPtr(archiveId), strPtr(walPath),
+                                                        strPtr(walSubPath)));
                                             }
 
                                             // Track that this archive was removed
@@ -631,10 +633,12 @@ removeExpiredBackup(InfoBackup *infoBackup)
             LOG_INFO_FMT("remove expired backup %s", strPtr(strLstGet(backupList, backupIdx)));
 
             // execute the real expiration and deletion only if the dry-run mode is disabled
-            if ( ! cfgOptionBool(cfgOptDryRun) )
+            if (cfgOptionValid(cfgOptDryRun) && !cfgOptionBool(cfgOptDryRun))
+            {
                 storagePathRemoveP(
                     storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(strLstGet(backupList, backupIdx))),
                     .recurse = true);
+            }
         }
     }
 
