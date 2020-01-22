@@ -150,6 +150,7 @@ sub libcAutoExportTag
             'CFGOPT_DB_INCLUDE',
             'CFGOPT_DB_TIMEOUT',
             'CFGOPT_DELTA',
+            'CFGOPT_DRY_RUN',
             'CFGOPT_EXCLUDE',
             'CFGOPT_FILTER',
             'CFGOPT_FORCE',

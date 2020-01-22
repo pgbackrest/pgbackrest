@@ -67,6 +67,7 @@ typedef enum
     cfgDefOptDbInclude,
     cfgDefOptDbTimeout,
     cfgDefOptDelta,
+    cfgDefOptDryRun,
     cfgDefOptExclude,
     cfgDefOptFilter,
     cfgDefOptForce,
