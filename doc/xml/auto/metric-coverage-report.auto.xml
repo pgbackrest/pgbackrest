@@ -107,7 +107,7 @@
     <table-cell>common</table-cell>
     <table-cell>151/151 (100.0%)</table-cell>
     <table-cell>490/490 (100.0%)</table-cell>
-    <table-cell>1558/1558 (100.0%)</table-cell>
+    <table-cell>1560/1560 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -163,7 +163,7 @@
     <table-cell>common/type</table-cell>
     <table-cell>249/249 (100.0%)</table-cell>
     <table-cell>554/554 (100.0%)</table-cell>
-    <table-cell>2900/2900 (100.0%)</table-cell>
+    <table-cell>2899/2899 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -198,14 +198,14 @@
     <table-cell>protocol</table-cell>
     <table-cell>66/66 (100.0%)</table-cell>
     <table-cell>182/182 (100.0%)</table-cell>
-    <table-cell>810/810 (100.0%)</table-cell>
+    <table-cell>812/812 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>storage</table-cell>
     <table-cell>67/67 (100.0%)</table-cell>
     <table-cell>194/194 (100.0%)</table-cell>
-    <table-cell>781/781 (100.0%)</table-cell>
+    <table-cell>783/783 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -240,5 +240,5 @@
     <table-cell>TOTAL</table-cell>
     <table-cell>1219/1219 (100.0%)</table-cell>
     <table-cell>5731/5732 (99.98%)</table-cell>
-    <table-cell>18520/18520 (100.0%)</table-cell>
+    <table-cell>18525/18525 (100.0%)</table-cell>
 </table-row>

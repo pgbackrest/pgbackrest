@@ -12,7 +12,25 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.22dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.23dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2020-01-21" version="2.22" title="Bug Fix">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lukas.ertl"/>
+                            <release-item-ideator id="eric.veldhuyzen"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix error in timeline conversion.</p>
+
+                        <p>The timeline is required to verify WAL segments in the archive after a backup.  The conversion was performed base <id>10</id> instead of <id>16</id>, which led to errors when the timeline was &amp;ge; <id>0xA</id>.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
         </release>
 
         <release date="2020-01-15" version="2.21" title="C Migration Complete">
@@ -7714,6 +7732,11 @@
             <contributor-id type="github">eradman</contributor-id>
         </contributor>
 
+        <contributor id="eric.veldhuyzen">
+            <contributor-name-display>Eric Veldhuyzen</contributor-name-display>
+            <contributor-id type="github">EricVeldhuyzen</contributor-id>
+        </contributor>
+
         <contributor id="evan.benoit">
             <contributor-name-display>Evan Benoit</contributor-name-display>
             <contributor-id type="github">evanbenoit</contributor-id>
@@ -7860,6 +7883,11 @@
         <contributor id="luca.ferrari">
             <contributor-name-display>Luca Ferrari</contributor-name-display>
             <contributor-id type="github">fluca1978</contributor-id>
+        </contributor>
+
+        <contributor id="lukas.ertl">
+            <contributor-name-display>Lukas Ertl</contributor-name-display>
+            <contributor-id type="github">lukasertl</contributor-id>
         </contributor>
 
         <contributor id="magnus.hagander">
