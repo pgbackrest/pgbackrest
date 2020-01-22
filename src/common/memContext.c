@@ -653,6 +653,55 @@ void memContextDiscard(void)
 }
 
 /**********************************************************************************************************************************/
+MemContext *
+memContextTop(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(&contextTop);
+}
+
+/**********************************************************************************************************************************/
+MemContext *
+memContextCurrent(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(memContextStack[memContextCurrentStackIdx].memContext);
+}
+
+/**********************************************************************************************************************************/
+const char *
+memContextName(MemContext *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    // Error if context is not active
+    if (this->state != memContextStateActive)
+        THROW(AssertError, "cannot get name for inactive context");
+
+    FUNCTION_TEST_RETURN(this->name);
+}
+
+/**********************************************************************************************************************************/
+MemContext *
+memContextPrior(void)
+{
+    FUNCTION_TEST_VOID();
+
+    ASSERT(memContextCurrentStackIdx > 0);
+
+    unsigned int priorIdx = 1;
+
+    while (memContextStack[memContextCurrentStackIdx - priorIdx].new)
+        priorIdx++;
+
+    FUNCTION_TEST_RETURN(memContextStack[memContextCurrentStackIdx - priorIdx].memContext);
+}
+
+/**********************************************************************************************************************************/
 void memContextClean(unsigned int tryDepth)
 {
     FUNCTION_TEST_BEGIN();
@@ -774,53 +823,4 @@ memContextFree(MemContext *this)
     }
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
-MemContext *
-memContextCurrent(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(memContextStack[memContextCurrentStackIdx].memContext);
-}
-
-
-MemContext *
-memContextPrior(void)
-{
-    FUNCTION_TEST_VOID();
-
-    ASSERT(memContextCurrentStackIdx > 0);
-
-    unsigned int priorIdx = 1;
-
-    while (memContextStack[memContextCurrentStackIdx - priorIdx].new)
-        priorIdx++;
-
-    FUNCTION_TEST_RETURN(memContextStack[memContextCurrentStackIdx - priorIdx].memContext);
-}
-
-MemContext *
-memContextTop(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(&contextTop);
-}
-
-const char *
-memContextName(MemContext *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    // Error if context is not active
-    if (this->state != memContextStateActive)
-        THROW(AssertError, "cannot get name for inactive context");
-
-    FUNCTION_TEST_RETURN(this->name);
 }
