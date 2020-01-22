@@ -207,6 +207,9 @@ dbOpen(Db *this)
         // but this is an extra level protection.
         dbExec(this, STRDEF("set search_path = 'pg_catalog'"));
 
+        // Set client encoding to UTF8.  This is the only encoding (other than ASCII) that we can safely work with.
+        dbExec(this, STRDEF("set client_encoding = 'UTF8'"));
+
         // Query the version and data_directory
         VariantList *row = dbQueryRow(
             this,

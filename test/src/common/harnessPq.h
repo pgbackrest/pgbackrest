@@ -45,6 +45,15 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_CONNECTDB, .param = "[\"" connectParam "\"]"},                                     \
     {.session = sessionParam, .function = HRNPQ_STATUS, .resultInt = CONNECTION_OK}
 
+#define HRNPQ_MACRO_SET_CLIENT_ENCODING(sessionParam)                                                                              \
+    {.session = sessionParam, .function = HRNPQ_SENDQUERY, .param = "[\"set client_encoding = 'UTF8'\"]", .resultInt = 1},         \
+    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
+    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
+    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},                                      \
+    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+
 #define HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam)                                                                                  \
     {.session = sessionParam, .function = HRNPQ_SENDQUERY, .param = "[\"set search_path = 'pg_catalog'\"]", .resultInt = 1},       \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
@@ -486,11 +495,13 @@ Macros to simplify dbOpen() for specific database versions
 #define HRNPQ_MACRO_OPEN_LE_91(sessionParam, connectParam, pgVersion, pgPathParam, archiveMode, archiveCommand)                    \
     HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
     HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
+    HRNPQ_MACRO_SET_CLIENT_ENCODING(sessionParam),                                                                                 \
     HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, pgVersion, pgPathParam, archiveMode, archiveCommand)
 
 #define HRNPQ_MACRO_OPEN_GE_92(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)      \
     HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
     HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
+    HRNPQ_MACRO_SET_CLIENT_ENCODING(sessionParam),                                                                                 \
     HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, pgVersion, pgPathParam, archiveMode, archiveCommand),                                 \
     HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam),                                                                                \
     HRNPQ_MACRO_IS_STANDBY_QUERY(sessionParam, standbyParam)
