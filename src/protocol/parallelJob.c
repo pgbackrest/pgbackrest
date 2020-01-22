@@ -46,11 +46,14 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
     MEM_CONTEXT_NEW_BEGIN("ProtocolParallelJob")
     {
         this = memNew(sizeof(ProtocolParallelJob));
-        this->memContext = memContextCurrent();
-        this->state = protocolParallelJobStatePending;
 
-        this->key = varDup(key);
-        this->command = protocolCommandMove(command, memContextCurrent());
+        *this = (ProtocolParallelJob)
+        {
+            .memContext = memContextCurrent(),
+            .state = protocolParallelJobStatePending,
+            .key = varDup(key),
+            .command = protocolCommandMove(command, memContextCurrent()),
+        };
     }
     MEM_CONTEXT_NEW_END();
 

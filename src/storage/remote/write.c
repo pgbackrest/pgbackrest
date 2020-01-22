@@ -196,34 +196,37 @@ storageWriteRemoteNew(
     MEM_CONTEXT_NEW_BEGIN("StorageWriteRemote")
     {
         this = memNew(sizeof(StorageWriteRemote));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        this->interface = (StorageWriteInterface)
+        *this = (StorageWriteRemote)
         {
-            .type = STORAGE_REMOTE_TYPE_STR,
-            .name = strDup(name),
-            .atomic = atomic,
-            .compressible = compressible,
-            .compressLevel = compressLevel,
-            .createPath = createPath,
-            .group = strDup(group),
-            .modeFile = modeFile,
-            .modePath = modePath,
-            .syncFile = syncFile,
-            .syncPath = syncPath,
-            .user = strDup(user),
-            .timeModified = timeModified,
+            .memContext = MEM_CONTEXT_NEW(),
+            .storage = storage,
+            .client = client,
 
-            .ioInterface = (IoWriteInterface)
+            .interface = (StorageWriteInterface)
             {
-                .close = storageWriteRemoteClose,
-                .open = storageWriteRemoteOpen,
-                .write = storageWriteRemote,
+                .type = STORAGE_REMOTE_TYPE_STR,
+                .name = strDup(name),
+                .atomic = atomic,
+                .compressible = compressible,
+                .compressLevel = compressLevel,
+                .createPath = createPath,
+                .group = strDup(group),
+                .modeFile = modeFile,
+                .modePath = modePath,
+                .syncFile = syncFile,
+                .syncPath = syncPath,
+                .user = strDup(user),
+                .timeModified = timeModified,
+
+                .ioInterface = (IoWriteInterface)
+                {
+                    .close = storageWriteRemoteClose,
+                    .open = storageWriteRemoteOpen,
+                    .write = storageWriteRemote,
+                },
             },
         };
-
-        this->storage = storage;
-        this->client = client;
 
         this->write = storageWriteNew(this, &this->interface);
     }

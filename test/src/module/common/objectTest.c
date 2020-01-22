@@ -58,7 +58,11 @@ testObjectNew(void)
     MEM_CONTEXT_NEW_BEGIN(STRINGIFY(TestObject))
     {
         this = memNew(sizeof(TestObject));
-        this->memContext = memContextCurrent();
+
+        *this = (TestObject)
+        {
+            .memContext = memContextCurrent(),
+        };
 
         memContextCallbackSet(this->memContext, testObjectFreeResource, (void *)1);
     }

@@ -56,10 +56,14 @@ lstNewParam(size_t itemSize, ListParam param)
     {
         // Create object
         this = memNew(sizeof(List));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->itemSize = itemSize;
-        this->sortOrder = param.sortOrder;
-        this->comparator = param.comparator;
+
+        *this = (List)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .itemSize = itemSize,
+            .sortOrder = param.sortOrder,
+            .comparator = param.comparator,
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -292,13 +296,13 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
             if (this->listSizeMax == 0)
             {
                 this->listSizeMax = LIST_INITIAL_SIZE;
-                this->list = memNewRaw(this->listSizeMax * this->itemSize);
+                this->list = memNew(this->listSizeMax * this->itemSize);
             }
             // Else the list needs to be extended
             else
             {
                 this->listSizeMax *= 2;
-                this->list = memGrowRaw(this->list, this->listSizeMax * this->itemSize);
+                this->list = memResize(this->list, this->listSizeMax * this->itemSize);
             }
         }
         MEM_CONTEXT_END();

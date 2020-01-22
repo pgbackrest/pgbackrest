@@ -190,6 +190,7 @@ typedef struct TestBackupPqScriptParam
     bool noWal;                                                     // Don't write test WAL segments
     bool walCompress;                                               // Compress the archive files
     unsigned int walTotal;                                          // Total WAL to write
+    unsigned int timeline;                                          // Timeline to use for WAL files
 } TestBackupPqScriptParam;
 
 #define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                                           \
@@ -200,6 +201,9 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 {
     const char *pg1Path = strPtr(strNewFmt("%s/pg1", testPath()));
     const char *pg2Path = strPtr(strNewFmt("%s/pg2", testPath()));
+
+    // If no timeline specified then use timeline 1
+    param.timeline = param.timeline == 0 ? 1 : param.timeline;
 
     // Read pg_control to get info about the cluster
     PgControl pgControl = pgControlFromFile(storagePg());
@@ -212,9 +216,9 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         lsnStart + ((param.walTotal == 0 ? 0 : param.walTotal - 1) * pgControl.walSegmentSize) + (pgControl.walSegmentSize / 2);
 
     const char *lsnStartStr = strPtr(pgLsnToStr(lsnStart));
-    const char *walSegmentStart = strPtr(pgLsnToWalSegment(1, lsnStart, pgControl.walSegmentSize));
+    const char *walSegmentStart = strPtr(pgLsnToWalSegment(param.timeline, lsnStart, pgControl.walSegmentSize));
     const char *lsnStopStr = strPtr(pgLsnToStr(lsnStop));
-    const char *walSegmentStop = strPtr(pgLsnToWalSegment(1, lsnStop, pgControl.walSegmentSize));
+    const char *walSegmentStop = strPtr(pgLsnToWalSegment(param.timeline, lsnStop, pgControl.walSegmentSize));
 
     // Write WAL segments to the archive
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -222,7 +226,8 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     {
         InfoArchive *infoArchive = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
         const String *archiveId = infoArchiveId(infoArchive);
-        StringList *walSegmentList = pgLsnRangeToWalSegmentList(pgControl.version, 1, lsnStart, lsnStop, pgControl.walSegmentSize);
+        StringList *walSegmentList = pgLsnRangeToWalSegmentList(
+            pgControl.version, param.timeline, lsnStart, lsnStop, pgControl.walSegmentSize);
 
         Buffer *walBuffer = bufNew((size_t)pgControl.walSegmentSize);
         bufUsedSet(walBuffer, bufSize(walBuffer));
@@ -2200,14 +2205,15 @@ testRun(void)
                     &(struct utimbuf){.actime = backupTimeStart, .modtime = backupTimeStart}) != 0, FileWriteError,
                 "unable to set time");
 
-            // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart);
+            // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 0000000105DB8EB000000000, lsn = 5db8eb0/0\n"
+                "P00   INFO: backup start archive = 0000002C05DB8EB000000000, lsn = 5db8eb0/0\n"
+                "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
@@ -2217,9 +2223,9 @@ testRun(void)
                 "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
                 "P00   INFO: incr backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
-                "P00   INFO: backup stop archive = 0000000105DB8EB000000000, lsn = 5db8eb0/80000\n"
+                "P00   INFO: backup stop archive = 0000002C05DB8EB000000000, lsn = 5db8eb0/80000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00   INFO: check archive for segment(s) 0000000105DB8EB000000000:0000000105DB8EB000000000\n"
+                "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000000\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I");
 
             TEST_RESULT_STR_Z(

@@ -81,11 +81,13 @@ testRun(void)
                 {
                     HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
+                    HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
                     HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, "/pgdata", NULL, NULL),
                     HRNPQ_MACRO_CLOSE(1),
 
                     HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
+                    HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
                     HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, "/pgdata", NULL, NULL),
                     HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
                     HRNPQ_MACRO_CLOSE(1),
@@ -470,6 +472,7 @@ testRun(void)
         {
             HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
+            HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
             HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, "/pgdata", NULL, NULL),
             HRNPQ_MACRO_SET_APPLICATION_NAME(1),
             HRNPQ_MACRO_IS_STANDBY_QUERY(1, true),
@@ -486,6 +489,7 @@ testRun(void)
         {
             HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
+            HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
             HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, "/pgdata", NULL, NULL),
             HRNPQ_MACRO_SET_APPLICATION_NAME(1),
             HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),

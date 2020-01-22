@@ -1706,7 +1706,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            unsigned int timeline = cvtZToUInt(strPtr(strSubN(manifestData(manifest)->archiveStart, 0, 8)));
+            unsigned int timeline = cvtZToUIntBase(strPtr(strSubN(manifestData(manifest)->archiveStart, 0, 8)), 16);
             uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
             uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 

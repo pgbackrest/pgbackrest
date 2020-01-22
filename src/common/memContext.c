@@ -72,14 +72,13 @@ static unsigned int memContextCurrentStackIdx = 0;
 static unsigned int memContextMaxStackIdx = 0;
 
 /***********************************************************************************************************************************
-Wrapper around malloc()
+Wrapper around malloc() with error handling
 ***********************************************************************************************************************************/
 static void *
-memAllocInternal(size_t size, bool zero)
+memAllocInternal(size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, size);
-        FUNCTION_TEST_PARAM(BOOL, zero);
     FUNCTION_TEST_END();
 
     // Allocate memory
@@ -89,25 +88,40 @@ memAllocInternal(size_t size, bool zero)
     if (buffer == NULL)
         THROW_FMT(MemoryError, "unable to allocate %zu bytes", size);
 
-    // Zero the memory when requested
-    if (zero)
-        memset(buffer, 0, size);
+    // Return the buffer
+    FUNCTION_TEST_RETURN(buffer);
+}
+
+/***********************************************************************************************************************************
+Allocate an array of pointers and set all entries to NULL
+***********************************************************************************************************************************/
+static void *
+memAllocPtrArrayInternal(size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    // Allocate memory
+    void **buffer = memAllocInternal(size * sizeof(void *));
+
+    // Set all pointers to NULL
+    for (size_t ptrIdx = 0; ptrIdx < size; ptrIdx++)
+        buffer[ptrIdx] = NULL;
 
     // Return the buffer
     FUNCTION_TEST_RETURN(buffer);
 }
 
 /***********************************************************************************************************************************
-Wrapper around realloc()
+Wrapper around realloc() with error handling
 ***********************************************************************************************************************************/
 static void *
-memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew, bool zeroNew)
+memReAllocInternal(void *bufferOld, size_t sizeNew)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, bufferOld);
-        FUNCTION_TEST_PARAM(SIZE, sizeOld);
         FUNCTION_TEST_PARAM(SIZE, sizeNew);
-        FUNCTION_TEST_PARAM(BOOL, zeroNew);
     FUNCTION_TEST_END();
 
     ASSERT(bufferOld != NULL);
@@ -119,9 +133,28 @@ memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew, bool zeroNew
     if (bufferNew == NULL)
         THROW_FMT(MemoryError, "unable to reallocate %zu bytes", sizeNew);
 
-    // Zero the new memory when requested - old memory is left untouched else why bother with a realloc?
-    if (zeroNew)
-        memset((unsigned char *)bufferNew + sizeOld, 0, sizeNew - sizeOld);
+    // Return the buffer
+    FUNCTION_TEST_RETURN(bufferNew);
+}
+
+/***********************************************************************************************************************************
+Wrapper around realloc() with error handling
+***********************************************************************************************************************************/
+static void *
+memReAllocPtrArrayInternal(void *bufferOld, size_t sizeOld, size_t sizeNew)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, bufferOld);
+        FUNCTION_TEST_PARAM(SIZE, sizeOld);
+        FUNCTION_TEST_PARAM(SIZE, sizeNew);
+    FUNCTION_TEST_END();
+
+    // Allocate memory
+    void **bufferNew = memReAllocInternal(bufferOld, sizeNew * sizeof(void *));
+
+    // Set all new pointers to NULL
+    for (size_t ptrIdx = sizeOld; ptrIdx < sizeNew; ptrIdx++)
+        bufferNew[ptrIdx] = NULL;
 
     // Return the buffer
     FUNCTION_TEST_RETURN(bufferNew);
@@ -174,7 +207,7 @@ memContextNewIndex(MemContext *memContext, bool allowFree)
         if (memContext->contextChildListSize == 0)
         {
             // Allocate memory before modifying anything else in case there is an error
-            memContext->contextChildList = memAllocInternal(sizeof(MemContext *) * MEM_CONTEXT_INITIAL_SIZE, true);
+            memContext->contextChildList = memAllocPtrArrayInternal(MEM_CONTEXT_INITIAL_SIZE);
 
             // Set new list size
             memContext->contextChildListSize = MEM_CONTEXT_INITIAL_SIZE;
@@ -186,9 +219,8 @@ memContextNewIndex(MemContext *memContext, bool allowFree)
             unsigned int contextChildListSizeNew = memContext->contextChildListSize * 2;
 
             // ReAllocate memory before modifying anything else in case there is an error
-            memContext->contextChildList = memReAllocInternal(
-                memContext->contextChildList, sizeof(MemContext *) * memContext->contextChildListSize,
-                sizeof(MemContext *) * contextChildListSizeNew, true);
+            memContext->contextChildList = memReAllocPtrArrayInternal(
+                memContext->contextChildList, memContext->contextChildListSize, contextChildListSizeNew);
 
             // Set new list size
             memContext->contextChildListSize = contextChildListSizeNew;
@@ -216,25 +248,32 @@ memContextNew(const char *name)
     unsigned int contextIdx = memContextNewIndex(contextCurrent, true);
 
     // If the context has not been allocated yet
-    if (!contextCurrent->contextChildList[contextIdx])
-        contextCurrent->contextChildList[contextIdx] = memAllocInternal(sizeof(MemContext), true);
+    if (contextCurrent->contextChildList[contextIdx] == NULL)
+        contextCurrent->contextChildList[contextIdx] = memAllocInternal(sizeof(MemContext));
 
     // Get the context
     MemContext *this = contextCurrent->contextChildList[contextIdx];
 
-    // Create initial space for allocations
-    this->allocList = memAllocInternal(sizeof(MemContextAlloc) * MEM_CONTEXT_ALLOC_INITIAL_SIZE, true);
-    this->allocListSize = MEM_CONTEXT_ALLOC_INITIAL_SIZE;
+    *this = (MemContext)
+    {
+        // Create initial space for allocations
+        .allocList = memAllocInternal(sizeof(MemContextAlloc) * MEM_CONTEXT_ALLOC_INITIAL_SIZE),
+        .allocListSize = MEM_CONTEXT_ALLOC_INITIAL_SIZE,
 
-    // Set the context name
-    this->name = name;
+        // Set the context name
+        .name = name,
 
-    // Set new context active
-    this->state = memContextStateActive;
+        // Set new context active
+        .state = memContextStateActive,
 
-    // Set current context as the parent
-    this->contextParent = contextCurrent;
-    this->contextParentIdx = contextIdx;
+        // Set current context as the parent
+        .contextParent = contextCurrent,
+        .contextParentIdx = contextIdx,
+    };
+
+    // Initialize allocation list
+    for (unsigned int allocIdx = 0; allocIdx < MEM_CONTEXT_ALLOC_INITIAL_SIZE; allocIdx++)
+        this->allocList[allocIdx] = (MemContextAlloc){.active = false};
 
     // Possible free context must be in the next position
     contextCurrent->contextChildFreeIdx++;
@@ -306,15 +345,12 @@ memContextCallbackClear(MemContext *this)
 }
 
 /***********************************************************************************************************************************
-Allocate memory in the memory context and optionally zero it.
+Allocate memory in the memory context and optionally zero it
 ***********************************************************************************************************************************/
-static void *
-memContextAlloc(size_t size, bool zero)
+static MemContextAlloc *
+memContextAllocFind(void)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(SIZE, size);
-        FUNCTION_TEST_PARAM(BOOL, zero);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_VOID();
 
     // Find space for the new allocation
     MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
@@ -330,7 +366,11 @@ memContextAlloc(size_t size, bool zero)
         if (contextCurrent->allocListSize == 0)
         {
             // Allocate memory before modifying anything else in case there is an error
-            contextCurrent->allocList = memAllocInternal(sizeof(MemContextAlloc) * MEM_CONTEXT_ALLOC_INITIAL_SIZE, true);
+            contextCurrent->allocList = memAllocInternal(sizeof(MemContextAlloc) * MEM_CONTEXT_ALLOC_INITIAL_SIZE);
+
+            // Initialize allocations in list
+            for (unsigned int allocIdx = 0; allocIdx < MEM_CONTEXT_ALLOC_INITIAL_SIZE; allocIdx++)
+                contextCurrent->allocList[allocIdx] = (MemContextAlloc){.active = false};
 
             // Set new size
             contextCurrent->allocListSize = MEM_CONTEXT_ALLOC_INITIAL_SIZE;
@@ -342,23 +382,21 @@ memContextAlloc(size_t size, bool zero)
             unsigned int allocListSizeNew = contextCurrent->allocListSize * 2;
 
             // ReAllocate memory before modifying anything else in case there is an error
-            contextCurrent->allocList = memReAllocInternal(
-                contextCurrent->allocList, sizeof(MemContextAlloc) * contextCurrent->allocListSize,
-                sizeof(MemContextAlloc) * allocListSizeNew, true);
+            contextCurrent->allocList = memReAllocInternal(contextCurrent->allocList, sizeof(MemContextAlloc) * allocListSizeNew);
+
+            // Initialize new allocations in list
+            for (unsigned int allocIdx = contextCurrent->allocListSize; allocIdx < allocListSizeNew; allocIdx++)
+                contextCurrent->allocList[allocIdx] = (MemContextAlloc){.active = false};
 
             // Set new size
             contextCurrent->allocListSize = allocListSizeNew;
         }
     }
 
-    // Allocate the memory
-    contextCurrent->allocList[contextCurrent->allocFreeIdx].active = true;
-    contextCurrent->allocList[contextCurrent->allocFreeIdx].size = (unsigned int)size;
-    contextCurrent->allocList[contextCurrent->allocFreeIdx].buffer = memAllocInternal(size, zero);
     contextCurrent->allocFreeIdx++;
 
     // Return buffer
-    FUNCTION_TEST_RETURN(contextCurrent->allocList[contextCurrent->allocFreeIdx - 1].buffer);
+    FUNCTION_TEST_RETURN(&contextCurrent->allocList[contextCurrent->allocFreeIdx - 1]);
 }
 
 /***********************************************************************************************************************************
@@ -396,12 +434,41 @@ memNew(size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(memContextAlloc(size, true));
+    MemContextAlloc *alloc = memContextAllocFind();
+
+    *alloc = (MemContextAlloc)
+    {
+        .active = true,
+        .size = (unsigned int)size,
+        .buffer = memAllocInternal(size),
+    };
+
+    FUNCTION_TEST_RETURN(alloc->buffer);
 }
 
 /**********************************************************************************************************************************/
 void *
-memGrowRaw(const void *buffer, size_t size)
+memNewPtrArray(size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    MemContextAlloc *alloc = memContextAllocFind();
+
+    *alloc = (MemContextAlloc)
+    {
+        .active = true,
+        .size = (unsigned int)(size * sizeof(void *)),
+        .buffer = memAllocPtrArrayInternal(size),
+    };
+
+    FUNCTION_TEST_RETURN(alloc->buffer);
+}
+
+/**********************************************************************************************************************************/
+void *
+memResize(const void *buffer, size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, buffer);
@@ -414,21 +481,10 @@ memGrowRaw(const void *buffer, size_t size)
     MemContextAlloc *alloc = &(memContextStack[memContextCurrentStackIdx].memContext->allocList[memFind(buffer)]);
 
     // Grow the buffer
-    alloc->buffer = memReAllocInternal(alloc->buffer, alloc->size, size, false);
+    alloc->buffer = memReAllocInternal(alloc->buffer, size);
     alloc->size = (unsigned int)size;
 
     FUNCTION_TEST_RETURN(alloc->buffer);
-}
-
-/**********************************************************************************************************************************/
-void *
-memNewRaw(size_t size)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(SIZE, size);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(memContextAlloc(size, false));
 }
 
 /**********************************************************************************************************************************/

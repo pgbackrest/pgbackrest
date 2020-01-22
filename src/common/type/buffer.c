@@ -53,13 +53,16 @@ bufNew(size_t size)
     {
         // Create object
         this = memNew(sizeof(Buffer));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->size = size;
-        this->used = 0;
+
+        *this = (Buffer)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .size = size,
+        };
 
         // Allocate buffer
         if (size > 0)
-            this->buffer = memNewRaw(this->size);
+            this->buffer = memNew(this->size);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -291,7 +294,7 @@ bufResize(Buffer *this, size_t size)
                 if (this->buffer == NULL)
                     this->buffer = memNew(size);
                 else
-                    this->buffer = memGrowRaw(this->buffer, size);
+                    this->buffer = memResize(this->buffer, size);
             }
             MEM_CONTEXT_END();
 

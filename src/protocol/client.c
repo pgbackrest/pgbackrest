@@ -80,13 +80,16 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
     MEM_CONTEXT_NEW_BEGIN("ProtocolClient")
     {
         this = memNew(sizeof(ProtocolClient));
-        this->memContext = memContextCurrent();
 
-        this->name = strDup(name);
-        this->errorPrefix = strNewFmt("raised from %s", strPtr(this->name));
-        this->read = read;
-        this->write = write;
-        this->keepAliveTime = timeMSec();
+        *this = (ProtocolClient)
+        {
+            .memContext = memContextCurrent(),
+            .name = strDup(name),
+            .errorPrefix = strNewFmt("raised from %s", strPtr(name)),
+            .read = read,
+            .write = write,
+            .keepAliveTime = timeMSec(),
+        };
 
         // Read, parse, and check the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()

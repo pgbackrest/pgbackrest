@@ -108,16 +108,16 @@ const char *memContextName(MemContext *this);
 /***********************************************************************************************************************************
 Memory management functions
 
-All these functions operate in the current memory context, including memGrowRaw() and memFree().
+All these functions operate in the current memory context, including memResize() and memFree().
 ***********************************************************************************************************************************/
-// Allocate memory in the current memory context and zero the contents
+// Allocate memory in the current memory context
 void *memNew(size_t size);
 
-// Allocate memory in the current memory context with initialization
-void *memNewRaw(size_t size);
+// Allocate requested number of pointers and initialize them to NULL
+void *memNewPtrArray(size_t size);
 
-// Reallocate to the new size, either larger or smaller, and do not initialize the new portion, if any
-void *memGrowRaw(const void *buffer, size_t size);
+// Reallocate to the new size.  Original buffer pointer is undefined on return.
+void *memResize(const void *buffer, size_t size);
 
 // Free memory allocation
 void memFree(void *buffer);

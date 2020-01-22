@@ -72,11 +72,14 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationN
     MEM_CONTEXT_NEW_BEGIN("Db")
     {
         this = memNew(sizeof(Db));
-        this->memContext = memContextCurrent();
 
-        this->client = pgClientMove(client, this->memContext);
-        this->remoteClient = remoteClient;
-        this->applicationName = strDup(applicationName);
+        *this = (Db)
+        {
+            .memContext = memContextCurrent(),
+            .client = pgClientMove(client, memContextCurrent()),
+            .remoteClient = remoteClient,
+            .applicationName = strDup(applicationName),
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -206,6 +209,9 @@ dbOpen(Db *this)
         // Set search_path to prevent overrides of the functions we expect to call.  All queries should also be schema-qualified,
         // but this is an extra level protection.
         dbExec(this, STRDEF("set search_path = 'pg_catalog'"));
+
+        // Set client encoding to UTF8.  This is the only encoding (other than ASCII) that we can safely work with.
+        dbExec(this, STRDEF("set client_encoding = 'UTF8'"));
 
         // Query the version and data_directory
         VariantList *row = dbQueryRow(
