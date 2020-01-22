@@ -6,6 +6,34 @@ AC_CONFIG_SRCDIR([version.h])
 # Check compiler
 AC_PROG_CC_C99
 
+# Check operating system
+#
+# Platform specific setup
+#
+#############################
+AC_CANONICAL_HOST
+# Check for which host we are on and setup a few things
+# specifically based on the host
+case $host_os in
+  darwin* )
+        # Do something specific for mac
+        CSTANDARD="-std=c99 -D_DARWIN_C_SOURCE"
+        ;;
+  linux*)
+        # Do something specific for linux
+        CSTANDARD="-std=c99 -D_POSIX_C_SOURCE=200809L"
+        ;;
+   *BSD*)
+        # Do something specific for BSD
+        CSTANDARD="-std=c99"
+        ;;
+    *)
+        #Default Case
+        AC_MSG_ERROR([Your platform is not currently supported])
+        ;;
+esac
+AC_SUBST(CSTANDARD,$CSTANDARD)
+
 # Enable internal test code and assertions by undefining NDEBUG
 warning='-Wall -Wextra -Wno-clobbered -Wno-missing-field-initializers'
 
@@ -33,7 +61,8 @@ fi
 # Set includes
 AC_SUBST(CINCLUDE, "-I.")
 
-# Check required pq library
+# Check required pq library using pg_config
+LIBS="$LIBS -L`pg_config --libdir`"
 AC_CHECK_LIB([pq], [PQconnectdb], [], [AC_MSG_ERROR([library 'pq' is required])])
 AC_SUBST(CINCLUDE, "$CINCLUDE -I`pg_config --includedir`")
 
