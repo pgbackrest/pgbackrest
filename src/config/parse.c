@@ -445,8 +445,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         opterr = false;
 
         // List of parsed options
-        ParseOption parseOptionList[CFG_OPTION_TOTAL];
-        memset(&parseOptionList, 0, sizeof(parseOptionList));
+        ParseOption parseOptionList[CFG_OPTION_TOTAL] = {{.found = 0}};
 
         // Only the first non-option parameter should be treated as a command so track if the command has been set
         bool commandSet = false;

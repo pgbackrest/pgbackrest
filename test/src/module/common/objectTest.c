@@ -61,7 +61,7 @@ testObjectNew(void)
 
         *this = (TestObject)
         {
-            .memContext = memContextCurrent(),
+            .memContext = MEM_CONTEXT_NEW(),
         };
 
         memContextCallbackSet(this->memContext, testObjectFreeResource, (void *)1);
