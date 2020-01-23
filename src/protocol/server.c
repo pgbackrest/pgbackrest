@@ -59,11 +59,11 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
         *this = (ProtocolServer)
         {
-            this->memContext = memContextCurrent(),
-            this->name = strDup(name),
-            this->read = read,
-            this->write = write,
-            this->handlerList = lstNew(sizeof(ProtocolServerProcessHandler)),
+            .memContext = memContextCurrent(),
+            .name = strDup(name),
+            .read = read,
+            .write = write,
+            .handlerList = lstNew(sizeof(ProtocolServerProcessHandler)),
         };
 
         // Send the protocol greeting

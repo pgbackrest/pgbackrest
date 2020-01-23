@@ -124,14 +124,15 @@ stackTracePush(const char *fileName, const char *functionName, LogLevel function
     backtrace_full(backTraceState, 2, backTraceCallback, backTraceCallbackError, NULL);
 #endif
 
-    // This struct could be holding old trace data so init to zero
-    StackTraceData *data = &stackTrace[stackSize];
-    memset(data, 0, sizeof(StackTraceData));
-
     // Set function info
-    data->fileName = fileName;
-    data->functionName = functionName;
-    data->tryDepth = errorTryDepth();
+    StackTraceData *data = &stackTrace[stackSize];
+
+    *data = (StackTraceData)
+    {
+        .fileName = fileName,
+        .functionName = functionName,
+        .tryDepth = errorTryDepth(),
+    };
 
     // Set param pointer
     if (stackSize == 0)

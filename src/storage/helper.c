@@ -32,7 +32,7 @@ STRING_EXTERN(STORAGE_PATH_BACKUP_STR,                              STORAGE_PATH
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
-static struct
+static struct StorageHelper
 {
     MemContext *memContext;                                         // Mem context for storage helper
 
@@ -534,7 +534,7 @@ storageHelperFree(void)
     if (storageHelper.memContext != NULL)
         memContextFree(storageHelper.memContext);
 
-    memset(&storageHelper, 0, sizeof(storageHelper));
+    storageHelper = (struct StorageHelper){.memContext = NULL};
 
     FUNCTION_TEST_RETURN_VOID();
 }

@@ -345,7 +345,7 @@ memContextCallbackClear(MemContext *this)
 }
 
 /***********************************************************************************************************************************
-Allocate memory in the memory context and optionally zero it
+Find an available allocation in the memory context
 ***********************************************************************************************************************************/
 static MemContextAlloc *
 memContextAllocFind(void)
@@ -815,7 +815,7 @@ memContextFree(MemContext *this)
             this->state = memContextStateActive;
         // Else reset the memory context so it can be reused
         else
-            memset(this, 0, sizeof(MemContext));
+            *this = (MemContext){.state = memContextStateFree};
 
         // Rethrow the error that was caught in the callback
         if (rethrow)
