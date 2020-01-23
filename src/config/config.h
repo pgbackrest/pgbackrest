@@ -23,7 +23,7 @@ what it is supposed to do.
 typedef enum
 {
     // Called directly by the user.  This is the main part of the command that may or may not spawn other command roles.
-    cfgCmdRoleDefault,
+    cfgCmdRoleDefault = 0,
 
     // Async worker that is spawned so the main process can return a result while work continues.  An async worker may spawn local
     // or remote workers.

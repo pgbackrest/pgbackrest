@@ -145,7 +145,7 @@ testRun(void)
         String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
-        ParseOption parseOptionList[CFG_OPTION_TOTAL] = {{.found = 0}};
+        ParseOption parseOptionList[CFG_OPTION_TOTAL] = {{.found = false}};
 
         StringList *value = strLstNew();
         strLstAdd(value, configFile);
