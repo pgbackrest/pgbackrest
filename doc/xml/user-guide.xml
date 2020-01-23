@@ -1957,14 +1957,18 @@
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr backup</exe-cmd>
             </execute>
 
+            <execute user="postgres" show="n" variable-key="backup-last-incr">
+                <exe-cmd>{[cmd-backup-last]}</exe-cmd>
+            </execute>
+
             <execute user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
             </execute>
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                     {[dash]}-set={[backup-last]}
-                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" --target-action=promote restore</exe-cmd>
+                     {[dash]}-set={[backup-last-incr]}
+                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" {[dash]}-target-action=promote restore</exe-cmd>
             </execute>
 
             <execute user="root" show="n">
@@ -2020,7 +2024,7 @@
                 <exe-cmd>
                     {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
                         {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}"
-                        --target-action=promote restore
+                        {[dash]}-target-action=promote restore
                 </exe-cmd>
             </execute>
 
