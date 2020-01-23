@@ -2043,6 +2043,8 @@ testRun(void)
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+
             storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), relation);
 
             // Zeroed file which will fail on alignment
@@ -2050,14 +2052,17 @@ testRun(void)
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+
             storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/2"), .timeModified = backupTimeStart), relation);
 
             // File with bad page checksums
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
             memset(bufPtr(relation), 0, bufSize(relation));
-            ((PageHeaderData *)(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 0))->pd_upper = 0xFF;
-            ((PageHeaderData *)(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 2))->pd_upper = 0xFE;
-            ((PageHeaderData *)(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 3))->pd_upper = 0xEF;
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0xFE};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0xEF};
             bufUsedSet(relation, bufSize(relation));
 
             storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart), relation);
@@ -2065,7 +2070,9 @@ testRun(void)
             // File with bad page checksum
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
-            ((PageHeaderData *)(bufPtr(relation) + PG_PAGE_SIZE_DEFAULT * 1))->pd_upper = 0x08;
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x08};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
             bufUsedSet(relation, bufSize(relation));
 
             storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/4"), .timeModified = backupTimeStart), relation);
