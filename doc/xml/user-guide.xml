@@ -264,7 +264,7 @@
 
         # Install base packages
         RUN apt-get update &amp;&amp; \
-            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates 2>&amp;1
+            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates locales 2>&amp;1
 
         # Install CA certificate
         RUN update-ca-certificates
@@ -286,6 +286,12 @@
         # Add doc user with sudo privileges
         RUN adduser --disabled-password --gecos "" {[host-user]} &amp;&amp; \
             echo '%{[host-user]} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+        # Set UTF8 encoding
+        RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &amp;&amp; \
+            dpkg-reconfigure --frontend=noninteractive locales &amp;&amp; \
+            update-locale LANG=en_US.UTF-8
+        ENV LANG en_US.UTF-8
 
         RUN {[minio-client-install]}
 

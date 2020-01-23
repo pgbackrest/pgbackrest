@@ -15,6 +15,11 @@ Test Restore Command
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
+Special string constants
+***********************************************************************************************************************************/
+#define UTF8_DB_NAME                                                "这个用汉语怎么说"
+
+/***********************************************************************************************************************************
 Test data for backup.info
 ***********************************************************************************************************************************/
 #define TEST_RESTORE_BACKUP_INFO_DB                                                                                                \
@@ -1134,7 +1139,7 @@ testRun(void)
         strLstAddZ(argListClean, "--pg1-path=/pg");
 
         StringList *argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=test1");
+        strLstAddZ(argList, "--db-include=" UTF8_DB_NAME);
         harnessCfgLoad(cfgCmdRestore, argList);
 
         Manifest *manifest = NULL;
@@ -1162,13 +1167,13 @@ testRun(void)
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("postgres"), .id = 12173, .lastSystemId = 12168});
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template0"), .id = 12168, .lastSystemId = 12168});
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test1"), .id = 16384, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF(UTF8_DB_NAME), .id = 16384, .lastSystemId = 12168});
             manifestFileAdd(
                 manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
-        TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include 'test1' does not exist");
+        TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include '" UTF8_DB_NAME "' does not exist");
 
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1)");
 

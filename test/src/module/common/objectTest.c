@@ -83,8 +83,8 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(testObject, testObjectNew(), "new test object");
-            TEST_RESULT_VOID(testObjectMove(testObject, MEM_CONTEXT_OLD()), "move object to parent context");
-            TEST_RESULT_VOID(testObjectMove(NULL, MEM_CONTEXT_OLD()), "move null object");
+            TEST_RESULT_VOID(testObjectMove(testObject, memContextPrior()), "move object to parent context");
+            TEST_RESULT_VOID(testObjectMove(NULL, memContextPrior()), "move null object");
         }
         MEM_CONTEXT_TEMP_END();
 

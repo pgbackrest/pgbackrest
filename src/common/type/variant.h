@@ -9,9 +9,12 @@ old context and then back. Below is a simplified example:
     MEM_CONTEXT_TEMP_BEGIN()   <--- begins a new temporary context
     {
         String *resultStr = strNewN("myNewStr"); <--- creates a string in the temporary memory context
-        memContextSwitch(MEM_CONTEXT_OLD()); <--- switch to old context so creation of the variant from the string is in old context
-        result = varNewUInt64(cvtZToUInt64(strPtr(resultStr))); <--- recreates variant from the string in the old context.
-        memContextSwitch(MEM_CONTEXT_TEMP()); <--- switch back to the temporary context
+
+        MEM_CONTEXT_PRIOR_BEGIN() <--- switch to old context so creation of the variant from the string is in old context
+        {
+            result = varNewUInt64(cvtZToUInt64(strPtr(resultStr))); <--- recreates variant from the string in the old context.
+        }
+        MEM_CONTEXT_PRIOR_END(); <--- switch back to the temporary context
     }
     MEM_CONTEXT_TEMP_END(); <-- frees everything created inside this temporary memory context - i.e resultStr
 ***********************************************************************************************************************************/

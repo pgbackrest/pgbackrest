@@ -207,6 +207,9 @@ dbOpen(Db *this)
         // but this is an extra level protection.
         dbExec(this, STRDEF("set search_path = 'pg_catalog'"));
 
+        // Set client encoding to UTF8.  This is the only encoding (other than ASCII) that we can safely work with.
+        dbExec(this, STRDEF("set client_encoding = 'UTF8'"));
+
         // Query the version and data_directory
         VariantList *row = dbQueryRow(
             this,
@@ -328,10 +331,12 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
         VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
 
         // Return results
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result.lsn = strDup(varStr(varLstGet(row, 0)));
-        result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.lsn = strDup(varStr(varLstGet(row, 0)));
+            result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -411,20 +416,20 @@ dbBackupStop(Db *this)
             dbPgVersion(this) >= PG_VERSION_96 ? strSize(strTrim(strDup(varStr(varLstGet(row, 3))))) == 0 : false;
 
         // Return results
-        memContextSwitch(MEM_CONTEXT_OLD());
-
-        result.lsn = strDup(varStr(varLstGet(row, 0)));
-        result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
-
-        if (dbPgVersion(this) >= PG_VERSION_96)
+        MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result.backupLabel = strDup(varStr(varLstGet(row, 2)));
+            result.lsn = strDup(varStr(varLstGet(row, 0)));
+            result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
 
-            if (!tablespaceMapEmpty)
-                result.tablespaceMap = strDup(varStr(varLstGet(row, 3)));
+            if (dbPgVersion(this) >= PG_VERSION_96)
+            {
+                result.backupLabel = strDup(varStr(varLstGet(row, 2)));
+
+                if (!tablespaceMapEmpty)
+                    result.tablespaceMap = strDup(varStr(varLstGet(row, 3)));
+            }
         }
-
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -628,10 +633,12 @@ dbWalSwitch(Db *this)
         const String *walFileName = varStr(
             dbQueryColumn(this, strNewFmt("select pg_catalog.pg_%sfile_name(pg_catalog.pg_switch_%s())::text", walName, walName)));
 
-        // Copy WAL segment name to the calling context
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(walFileName);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        // Copy WAL segment name to the prior context
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(walFileName);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

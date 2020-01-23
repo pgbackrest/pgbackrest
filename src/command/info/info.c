@@ -802,9 +802,11 @@ infoRender(void)
         else
             resultStr = jsonFromVar(varNewVarLst(infoList));
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(resultStr);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(resultStr);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

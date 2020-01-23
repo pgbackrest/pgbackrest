@@ -9,9 +9,12 @@ old context and then back. Below is a simplified example:
     MEM_CONTEXT_TEMP_BEGIN()   <--- begins a new temporary context
     {
         String *resultStr = strNewN("myNewStr"); <--- creates a string in the temporary memory context
-        memContextSwitch(MEM_CONTEXT_OLD());  <--- switch to the old context so the duplication of the string is in that context
-        result = strDup(resultStr);           <--- recreates a copy of the string in the old context where "result" was created.
-        memContextSwitch(MEM_CONTEXT_TEMP()); <--- switch back to the temporary context
+
+        MEM_CONTEXT_PRIOR_BEGIN() <--- switch to the old context so the duplication of the string is in that context
+        {
+            result = strDup(resultStr); <--- recreates a copy of the string in the old context where "result" was created
+        }
+        MEM_CONTEXT_PRIOR_END(); <--- switch back to the temporary context
     }
     MEM_CONTEXT_TEMP_END(); <-- frees everything created inside this temporary memory context - i.e resultStr
 ***********************************************************************************************************************************/

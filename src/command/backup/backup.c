@@ -161,9 +161,11 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
             sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
         }
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = strDup(result);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(result);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -443,7 +445,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(checksumPagePrior));
                 }
 
-                manifestMove(result, MEM_CONTEXT_OLD());
+                manifestMove(result, memContextPrior());
             }
             else
             {
@@ -732,7 +734,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 // If the backup is usable then return the manifest
                 if (usable)
                 {
-                    result = manifestMove(manifestResume, MEM_CONTEXT_OLD());
+                    result = manifestMove(manifestResume, memContextPrior());
                 }
                 // Else warn and remove the unusable backup
                 else
@@ -865,12 +867,14 @@ backupStart(BackupData *backupData)
             DbBackupStartResult dbBackupStartResult = dbBackupStart(
                 backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto));
 
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result.lsn = strDup(dbBackupStartResult.lsn);
-            result.walSegmentName = strDup(dbBackupStartResult.walSegmentName);
-            result.dbList = dbList(backupData->dbPrimary);
-            result.tablespaceList = dbTablespaceList(backupData->dbPrimary);
-            memContextSwitch(MEM_CONTEXT_TEMP());
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.lsn = strDup(dbBackupStartResult.lsn);
+                result.walSegmentName = strDup(dbBackupStartResult.walSegmentName);
+                result.dbList = dbList(backupData->dbPrimary);
+                result.tablespaceList = dbTablespaceList(backupData->dbPrimary);
+            }
+            MEM_CONTEXT_PRIOR_END();
 
             LOG_INFO_FMT("backup start archive = %s, lsn = %s", strPtr(result.walSegmentName), strPtr(result.lsn));
 
@@ -1011,11 +1015,13 @@ backupStop(BackupData *backupData, Manifest *manifest)
 
             DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
 
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result.timestamp = backupTime(backupData, false);
-            result.lsn = strDup(dbBackupStopResult.lsn);
-            result.walSegmentName = strDup(dbBackupStopResult.walSegmentName);
-            memContextSwitch(MEM_CONTEXT_TEMP());
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.timestamp = backupTime(backupData, false);
+                result.lsn = strDup(dbBackupStopResult.lsn);
+                result.walSegmentName = strDup(dbBackupStopResult.walSegmentName);
+            }
+            MEM_CONTEXT_PRIOR_END();
 
             LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strPtr(result.walSegmentName), strPtr(result.lsn));
 
@@ -1378,8 +1384,8 @@ backupProcessQueue(Manifest *manifest, List **queueList)
         for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
             lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
 
-        // Move process queues to calling context
-        lstMove(*queueList, MEM_CONTEXT_OLD());
+        // Move process queues to prior context
+        lstMove(*queueList, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1475,7 +1481,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 lstRemoveIdx(queue, 0);
 
                 // Assign job to result
-                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), MEM_CONTEXT_OLD());
+                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), memContextPrior());
 
                 // Break out of the loop early since we found a job
                 break;
@@ -1700,7 +1706,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            unsigned int timeline = cvtZToUInt(strPtr(strSubN(manifestData(manifest)->archiveStart, 0, 8)));
+            unsigned int timeline = cvtZToUIntBase(strPtr(strSubN(manifestData(manifest)->archiveStart, 0, 8)), 16);
             uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
             uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 

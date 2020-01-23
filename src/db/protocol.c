@@ -49,12 +49,14 @@ dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *
     {
         if (strEq(command, PROTOCOL_COMMAND_DB_OPEN_STR))
         {
-            // If the db list does not exist then create it in the calling context (which should be persistent)
+            // If the db list does not exist then create it in the prior context (which should be persistent)
             if (dbProtocolLocal.pgClientList == NULL)
             {
-                memContextSwitch(MEM_CONTEXT_OLD());
-                dbProtocolLocal.pgClientList = lstNew(sizeof(PgClient *));
-                memContextSwitch(MEM_CONTEXT_TEMP());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    dbProtocolLocal.pgClientList = lstNew(sizeof(PgClient *));
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
 
             // Add db to the list

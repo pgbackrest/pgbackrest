@@ -62,7 +62,11 @@ storageHelperInit(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            storageHelper.memContext = memContextNew("storageHelper");
+            MEM_CONTEXT_NEW_BEGIN("StorageHelper")
+            {
+                storageHelper.memContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
         }
         MEM_CONTEXT_END();
     }

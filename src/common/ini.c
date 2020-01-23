@@ -200,7 +200,7 @@ iniSectionKeyList(const Ini *this, const String *section)
         else
             result = strLstNew();
 
-        strLstMove(result, MEM_CONTEXT_OLD());
+        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -226,7 +226,7 @@ iniSectionList(const Ini *this)
         // Get the sections from the keyList
         result = strLstNewVarLst(kvKeyList(this->store));
 
-        strLstMove(result, MEM_CONTEXT_OLD());
+        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -307,7 +307,7 @@ iniParse(Ini *this, const String *content)
             MEM_CONTEXT_TEMP_END();
         }
     }
-    MEM_CONTEXT_END()
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -389,9 +389,11 @@ iniLoad(
                             THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", lineIdx + 1, linePtr);
 
                         // Assign section
-                        memContextSwitch(MEM_CONTEXT_OLD());
-                        section = strNewN(linePtr + 1, strSize(line) - 2);
-                        memContextSwitch(MEM_CONTEXT_TEMP());
+                        MEM_CONTEXT_PRIOR_BEGIN()
+                        {
+                            section = strNewN(linePtr + 1, strSize(line) - 2);
+                        }
+                        MEM_CONTEXT_PRIOR_END();
                     }
                     // Else it should be a key/value
                     else

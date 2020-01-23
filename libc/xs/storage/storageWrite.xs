@@ -28,7 +28,7 @@ CODE:
             storage, file, .modeFile = mode, .user = user, .group = group, .timeModified = (time_t)timeModified,
             .noCreatePath = storageFeature(storage, storageFeaturePath) ? !pathCreate : false, .noSyncPath = !atomic,
             .noAtomic = !atomic),
-        MEM_CONTEXT_XS_OLD());
+        memContextPrior());
 OUTPUT:
     RETVAL
 CLEANUP:

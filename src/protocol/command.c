@@ -104,9 +104,11 @@ protocolCommandJson(const ProtocolCommand *this)
         if (this->parameterList != NULL)
             kvPut(command, VARSTR(PROTOCOL_KEY_PARAMETER_STR), this->parameterList);
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = jsonFromKv(command);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = jsonFromKv(command);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -175,7 +175,11 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, Tim
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            lockMemContext = memContextNew("Lock");
+            MEM_CONTEXT_NEW_BEGIN("Lock")
+            {
+                lockMemContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
         }
         MEM_CONTEXT_END();
     }

@@ -188,7 +188,11 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            harnessLog.memContext = memContextNew("harnessLog");
+            MEM_CONTEXT_NEW_BEGIN("HarnessLog")
+            {
+                harnessLog.memContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
         }
         MEM_CONTEXT_END();
     }

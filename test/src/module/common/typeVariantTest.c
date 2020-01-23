@@ -411,8 +411,8 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(list, varLstNew(), "new list");
-            TEST_RESULT_PTR(varLstMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null to old context");
-            TEST_RESULT_PTR(varLstMove(list, MEM_CONTEXT_OLD()), list, "move var list to old context");
+            TEST_RESULT_PTR(varLstMove(NULL, memContextPrior()), NULL, "move null to old context");
+            TEST_RESULT_PTR(varLstMove(list, memContextPrior()), list, "move var list to old context");
         }
         MEM_CONTEXT_TEMP_END();
 

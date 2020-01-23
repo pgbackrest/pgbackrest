@@ -292,7 +292,7 @@ storagePosixList(THIS_VOID, const String *path, StorageInterfaceListParam param)
                 }
 
                 // Move finished list up to the old context
-                strLstMove(result, MEM_CONTEXT_OLD());
+                strLstMove(result, memContextPrior());
             }
             MEM_CONTEXT_TEMP_END();
         }

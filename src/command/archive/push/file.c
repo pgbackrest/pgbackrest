@@ -88,12 +88,14 @@ archivePushFile(
 
                 if (strEq(walSegmentChecksum, walSegmentRepoChecksum))
                 {
-                    memContextSwitch(MEM_CONTEXT_OLD());
-                    result = strNewFmt(
-                        "WAL file '%s' already exists in the archive with the same checksum"
-                            "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                        strPtr(archiveFile));
-                    memContextSwitch(MEM_CONTEXT_TEMP());
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        result = strNewFmt(
+                            "WAL file '%s' already exists in the archive with the same checksum"
+                                "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
+                            strPtr(archiveFile));
+                    }
+                    MEM_CONTEXT_PRIOR_END();
                 }
                 else
                     THROW_FMT(ArchiveDuplicateError, "WAL file '%s' already exists in the archive", strPtr(archiveFile));

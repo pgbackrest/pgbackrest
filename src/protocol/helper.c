@@ -55,7 +55,11 @@ protocolHelperInit(void)
         // Create a mem context to store protocol objects
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            protocolHelper.memContext = memContextNew("ProtocolHelper");
+            MEM_CONTEXT_NEW_BEGIN("ProtocolHelper")
+            {
+                protocolHelper.memContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
         }
         MEM_CONTEXT_END();
     }
@@ -141,7 +145,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         // Disable output to stdout since it is used by the protocol
         kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
 
-        result = strLstMove(cfgExecParam(cfgCommand(), cfgCmdRoleLocal, optionReplace, true, false), MEM_CONTEXT_OLD());
+        result = strLstMove(cfgExecParam(cfgCommand(), cfgCmdRoleLocal, optionReplace, true, false), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

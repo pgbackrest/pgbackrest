@@ -60,8 +60,8 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(client, pgClientNew(NULL, 5433, strNew("postg '\\res"), NULL, 3000), "new client");
-            TEST_RESULT_VOID(pgClientMove(client, MEM_CONTEXT_OLD()), "move client");
-            TEST_RESULT_VOID(pgClientMove(NULL, MEM_CONTEXT_OLD()), "move null client");
+            TEST_RESULT_VOID(pgClientMove(client, memContextPrior()), "move client");
+            TEST_RESULT_VOID(pgClientMove(NULL, memContextPrior()), "move null client");
         }
         MEM_CONTEXT_TEMP_END();
 

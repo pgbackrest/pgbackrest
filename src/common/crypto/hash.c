@@ -212,9 +212,11 @@ cryptoHashOne(const String *type, const Buffer *message)
 
         const Buffer *buffer = cryptoHash((CryptoHash *)ioFilterDriver(hash));
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = bufDup(buffer);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = bufDup(buffer);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -330,8 +330,8 @@ testRun(void)
         {
             TEST_ASSIGN(header, httpHeaderNew(NULL), "new header");
 
-            TEST_RESULT_PTR(httpHeaderMove(header, MEM_CONTEXT_OLD()), header, "move to new context");
-            TEST_RESULT_PTR(httpHeaderMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null to new context");
+            TEST_RESULT_PTR(httpHeaderMove(header, memContextPrior()), header, "move to new context");
+            TEST_RESULT_PTR(httpHeaderMove(NULL, memContextPrior()), NULL, "move null to new context");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -384,8 +384,8 @@ testRun(void)
         {
             TEST_ASSIGN(query, httpQueryNew(), "new query");
 
-            TEST_RESULT_PTR(httpQueryMove(query, MEM_CONTEXT_OLD()), query, "move to new context");
-            TEST_RESULT_PTR(httpQueryMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null to new context");
+            TEST_RESULT_PTR(httpQueryMove(query, memContextPrior()), query, "move to new context");
+            TEST_RESULT_PTR(httpQueryMove(NULL, memContextPrior()), NULL, "move null to new context");
         }
         MEM_CONTEXT_TEMP_END();
 

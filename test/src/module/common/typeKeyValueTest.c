@@ -31,8 +31,8 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(store, kvNew(), "new store");
-            TEST_RESULT_PTR(kvMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null to old context");
-            TEST_RESULT_PTR(kvMove(store, MEM_CONTEXT_OLD()), store, "move kv to old context");
+            TEST_RESULT_PTR(kvMove(NULL, memContextPrior()), NULL, "move null to old context");
+            TEST_RESULT_PTR(kvMove(store, memContextPrior()), store, "move kv to old context");
         }
         MEM_CONTEXT_TEMP_END();
 

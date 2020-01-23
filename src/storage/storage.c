@@ -226,7 +226,7 @@ storageGet(StorageRead *file, StorageGetParam param)
             }
 
             // Move buffer to parent context on success
-            bufMove(result, MEM_CONTEXT_OLD());
+            bufMove(result, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -267,12 +267,14 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         if (!result.exists && !param.ignoreMissing)
             THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO_MISSING, strPtr(file));
 
-        // Dup the strings into the calling context
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result.linkDestination = strDup(result.linkDestination);
-        result.user = strDup(result.user);
-        result.group = strDup(result.group);
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        // Dup the strings into the prior context
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.linkDestination = strDup(result.linkDestination);
+            result.user = strDup(result.user);
+            result.group = strDup(result.group);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -531,7 +533,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
         }
 
         // Move list up to the old context
-        result = strLstMove(result, MEM_CONTEXT_OLD());
+        result = strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -602,7 +604,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
         result = storageReadMove(
             storageInterfaceNewReadP(
                 this->driver, storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible),
-            MEM_CONTEXT_OLD());
+            memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -643,7 +645,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
                 .modePath = param.modePath != 0 ? param.modePath : this->modePath, .user = param.user, .group = param.group,
                 .timeModified = param.timeModified, .createPath = !param.noCreatePath, .syncFile = !param.noSyncFile,
                 .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .compressible = param.compressible),
-            MEM_CONTEXT_OLD());
+            memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

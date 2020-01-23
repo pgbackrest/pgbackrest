@@ -11,6 +11,11 @@ Test Backup Manifest Handler
 #include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
+Special string constants
+***********************************************************************************************************************************/
+#define SHRUG_EMOJI                                                 "¯\\_(ツ)_/¯"
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -1580,7 +1585,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
-            TEST_RESULT_VOID(manifestMove(manifest, MEM_CONTEXT_OLD()), "move manifest");
+            TEST_RESULT_VOID(manifestMove(manifest, memContextPrior()), "move manifest");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -1657,6 +1662,7 @@ testRun(void)
             "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
             "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
+            SHRUG_EMOJI "={\"db-id\":18000,\"db-last-system-id\":12168}\n"
 
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
@@ -1777,6 +1783,12 @@ testRun(void)
         dbRow = varLstNew();
         varLstAdd(dbRow, varNewUInt64(1));
         varLstAdd(dbRow, varNewStrZ("template1"));
+        varLstAdd(dbRow, varNewUInt64(12168));
+        varLstAdd(dbList, varNewVarLst(dbRow));
+
+        dbRow = varLstNew();
+        varLstAdd(dbRow, varNewUInt64(18000));
+        varLstAdd(dbRow, varNewStrZ(SHRUG_EMOJI));
         varLstAdd(dbRow, varNewUInt64(12168));
         varLstAdd(dbList, varNewVarLst(dbRow));
 

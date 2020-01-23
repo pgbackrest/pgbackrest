@@ -18,7 +18,7 @@ INPUT:
 CODE:
     CHECK(strEqZ(class, PACKAGE_NAME_LIBC "::StorageRead"));
 
-    RETVAL = storageReadMove(storageNewReadP(storage, file, .ignoreMissing = ignoreMissing), MEM_CONTEXT_XS_OLD());
+    RETVAL = storageReadMove(storageNewReadP(storage, file, .ignoreMissing = ignoreMissing), memContextPrior());
 OUTPUT:
     RETVAL
 CLEANUP:

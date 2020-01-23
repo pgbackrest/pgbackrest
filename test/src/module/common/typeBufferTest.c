@@ -18,7 +18,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(buffer, bufNew(256), "new buffer");
-            bufMove(buffer, MEM_CONTEXT_OLD());
+            bufMove(buffer, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
 

@@ -864,7 +864,7 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(file, storageReadMove(storageNewReadP(storageTest, fileName), MEM_CONTEXT_OLD()), "new read file");
+            TEST_ASSIGN(file, storageReadMove(storageNewReadP(storageTest, fileName), memContextPrior()), "new read file");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -994,7 +994,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(file, storageWriteMove(storageNewWriteP(storageTest, fileName), MEM_CONTEXT_OLD()), "new write file");
+            TEST_ASSIGN(file, storageWriteMove(storageNewWriteP(storageTest, fileName), memContextPrior()), "new write file");
         }
         MEM_CONTEXT_TEMP_END();
 
