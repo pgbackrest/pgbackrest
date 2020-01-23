@@ -779,8 +779,12 @@ restoreCleanBuild(Manifest *manifest)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
 
-            cleanData->manifest = manifest;
-            cleanData->target = manifestTarget(manifest, targetIdx);
+            *cleanData = (RestoreCleanCallbackData)
+            {
+                .manifest = manifest,
+                .target = manifestTarget(manifest, targetIdx),
+            };
+
             cleanData->targetName = cleanData->target->name;
             cleanData->targetPath = manifestTargetPath(manifest, cleanData->target);
             cleanData->basePath = strEq(cleanData->targetName, MANIFEST_TARGET_PGDATA_STR);

@@ -53,11 +53,13 @@ kvNew(void)
     {
         // Allocate state and set context
         this = memNew(sizeof(KeyValue));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        // Initialize list
-        this->list = lstNew(sizeof(KeyValuePair));
-        this->keyList = varLstNew();
+        *this = (KeyValue)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .list = lstNew(sizeof(KeyValuePair)),
+            .keyList = varLstNew(),
+        };
     }
     MEM_CONTEXT_NEW_END();
 

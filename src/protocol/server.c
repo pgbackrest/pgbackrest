@@ -56,13 +56,15 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
     MEM_CONTEXT_NEW_BEGIN("ProtocolServer")
     {
         this = memNew(sizeof(ProtocolServer));
-        this->memContext = memContextCurrent();
 
-        this->name = strDup(name);
-        this->read = read;
-        this->write = write;
-
-        this->handlerList = lstNew(sizeof(ProtocolServerProcessHandler));
+        *this = (ProtocolServer)
+        {
+            .memContext = memContextCurrent(),
+            .name = strDup(name),
+            .read = read,
+            .write = write,
+            .handlerList = lstNew(sizeof(ProtocolServerProcessHandler)),
+        };
 
         // Send the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()

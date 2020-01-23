@@ -194,12 +194,14 @@ httpClientNew(
 
     MEM_CONTEXT_NEW_BEGIN("HttpClient")
     {
-        // Allocate state and set context
         this = memNew(sizeof(HttpClient));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        this->timeout = timeout;
-        this->tls = tlsClientNew(host, port, timeout, verifyPeer, caFile, caPath);
+        *this = (HttpClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .timeout = timeout,
+            .tls = tlsClientNew(host, port, timeout, verifyPeer, caFile, caPath),
+        };
 
         httpClientStatLocal.object++;
     }

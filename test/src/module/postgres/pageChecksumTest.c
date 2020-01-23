@@ -47,19 +47,21 @@ testRun(void)
         // Zero the pages
         memset(testPage(0), 0, TEST_PAGE_TOTAL * TEST_PAGE_SIZE);
 
+        for (unsigned int pageIdx = 0; pageIdx < TEST_PAGE_TOTAL; pageIdx++)
+            *(PageHeader)testPage(pageIdx) = (PageHeaderData){.pd_upper = 0x0};
+
         // Pages with pd_upper = 0 should always return true no matter the block no
         TEST_RESULT_BOOL(pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0, 0), true, "pd_upper is 0, block 0");
         TEST_RESULT_BOOL(pageChecksumTest(testPage(1), 999, TEST_PAGE_SIZE, 0, 0), true, "pd_upper is 0, block 999");
 
         // Partial pages are always invalid
-        ((PageHeader)testPage(0))->pd_upper = 0x00FF;
+        *(PageHeader)testPage(0) = (PageHeaderData){.pd_upper = 0x00FF};
         ((PageHeader)testPage(0))->pd_checksum = pageChecksum(testPage(0), 0, TEST_PAGE_SIZE);
         TEST_RESULT_BOOL(pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 1, 1), true, "valid page");
         TEST_RESULT_BOOL(pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE / 2, 1, 1), false, "invalid partial page");
 
         // Update pd_upper and check for failure no matter the block no
-        ((PageHeader)testPage(0))->pd_upper = 0x00FF;
-        ((PageHeader)testPage(0))->pd_checksum = 0;
+        *(PageHeader)testPage(0) = (PageHeaderData){.pd_upper = 0x00FF, .pd_checksum = 0};
         TEST_RESULT_BOOL(pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0xFFFF, 0xFFFF), false, "badchecksum, page 0");
         TEST_RESULT_BOOL(
             pageChecksumTest(testPage(0), 9999, TEST_PAGE_SIZE, 0xFFFF, 0xFFFF), false, "badchecksum, page 9999");

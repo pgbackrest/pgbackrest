@@ -64,18 +64,20 @@ storageNew(
     ASSERT(interface.pathRemove != NULL);
     ASSERT(interface.remove != NULL);
 
-    Storage *this = NULL;
-    this = (Storage *)memNew(sizeof(Storage));
-    this->memContext = memContextCurrent();
-    this->driver = driver;
-    this->interface = interface;
-    this->type = type;
+    Storage *this = (Storage *)memNew(sizeof(Storage));
 
-    this->path = strDup(path);
-    this->modeFile = modeFile;
-    this->modePath = modePath;
-    this->write = write;
-    this->pathExpressionFunction = pathExpressionFunction;
+    *this = (Storage)
+    {
+        .memContext = memContextCurrent(),
+        .driver = driver,
+        .interface = interface,
+        .type = type,
+        .path = strDup(path),
+        .modeFile = modeFile,
+        .modePath = modePath,
+        .write = write,
+        .pathExpressionFunction = pathExpressionFunction,
+    };
 
     // If path sync feature is enabled then path feature must be enabled
     CHECK(!storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath));

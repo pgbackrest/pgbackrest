@@ -143,15 +143,18 @@ tlsClientNew(
     MEM_CONTEXT_NEW_BEGIN("TlsClient")
     {
         this = memNew(sizeof(TlsClient));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        this->host = strDup(host);
-        this->port = port;
-        this->timeout = timeout;
-        this->verifyPeer = verifyPeer;
+        *this = (TlsClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .host = strDup(host),
+            .port = port,
+            .timeout = timeout,
+            .verifyPeer = verifyPeer,
 
-        // Initialize socket to -1 so we know when it is disconnected
-        this->socket = -1;
+            // Initialize socket to -1 so we know when it is disconnected
+            .socket = -1,
+        };
 
         // Setup TLS context
         // -------------------------------------------------------------------------------------------------------------------------
@@ -573,12 +576,12 @@ tlsClientOpen(TlsClient *this)
                 TRY_BEGIN()
                 {
                     // Set hits that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
-                    struct addrinfo hints;
-
-                    memset(&hints, 0, sizeof(hints));
-                    hints.ai_family = AF_UNSPEC;
-                    hints.ai_socktype = SOCK_STREAM;
-                    hints.ai_protocol = IPPROTO_TCP;
+                    struct addrinfo hints = (struct addrinfo)
+                    {
+                        .ai_family = AF_UNSPEC,
+                        .ai_socktype = SOCK_STREAM,
+                        .ai_protocol = IPPROTO_TCP,
+                    };
 
                     // Convert the port to a zero-terminated string for use with getaddrinfo()
                     char port[CVT_BASE10_BUFFER_SIZE];

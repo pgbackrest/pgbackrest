@@ -62,13 +62,16 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
     MEM_CONTEXT_NEW_BEGIN("PgClient")
     {
         this = memNew(sizeof(PgClient));
-        this->memContext = memContextCurrent();
 
-        this->host = strDup(host);
-        this->port = port;
-        this->database = strDup(database);
-        this->user = strDup(user);
-        this->queryTimeout = queryTimeout;
+        *this = (PgClient)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .host = strDup(host),
+            .port = port,
+            .database = strDup(database),
+            .user = strDup(user),
+            .queryTimeout = queryTimeout,
+        };
     }
     MEM_CONTEXT_NEW_END();
 

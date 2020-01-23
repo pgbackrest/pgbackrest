@@ -118,7 +118,11 @@ infoNewInternal(void)
     FUNCTION_TEST_VOID();
 
     Info *this = memNew(sizeof(Info));
-    this->memContext = memContextCurrent();
+
+    *this = (Info)
+    {
+        .memContext = memContextCurrent(),
+    };
 
     FUNCTION_TEST_RETURN(this);
 }

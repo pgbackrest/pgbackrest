@@ -126,6 +126,9 @@ testRun(void)
         Buffer *bufferOut = bufNew(0);
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0};
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0};
 
         IoWrite *write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0));
@@ -144,9 +147,15 @@ testRun(void)
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
         // Page 0 has bogus checksum
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_upper = 0x01;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.walid = 0xF0F0F0F0;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.xrecoff = 0xF0F0F0F0;
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageWalRecPtr)
+            {
+                .walid = 0xF0F0F0F0,
+                .xrecoff = 0xF0F0F0F0,
+            },
+        };
 
         write = ioBufferWriteNew(bufferOut);
 
@@ -171,34 +180,79 @@ testRun(void)
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
         // Page 0 has bogus checksum
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_upper = 0x01;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.walid = 0xF0F0F0F0;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_lsn.xrecoff = 0xF0F0F0F0;
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageWalRecPtr)
+            {
+                .walid = 0xF0F0F0F0,
+                .xrecoff = 0xF0F0F0F0,
+            },
+        };
 
         // Page 1 has bogus checksum but lsn above the limit
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_upper = 0x01;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_lsn.walid = 0xFACEFACE;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_lsn.xrecoff = 0x00000000;
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageWalRecPtr)
+            {
+                .walid = 0xFACEFACE,
+                .xrecoff = 0x00000000,
+            },
+        };
 
         // Page 2 has bogus checksum
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_upper = 0x01;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_lsn.xrecoff = 0x2;
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageWalRecPtr)
+            {
+                .xrecoff = 0x2,
+            },
+        };
 
         // Page 3 has bogus checksum
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_upper = 0x01;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_lsn.xrecoff = 0x3;
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageWalRecPtr)
+            {
+                .xrecoff = 0x3,
+            },
+        };
 
         // Page 4 has bogus checksum
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x04)))->pd_upper = 0x01;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x04)))->pd_lsn.xrecoff = 0x4;
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x04)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageWalRecPtr)
+            {
+                .xrecoff = 0x4,
+            },
+        };
+
+        // Page 5 is zero
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x05)) = (PageHeaderData){.pd_upper = 0x00};
 
         // Page 6 has bogus checksum
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x06)))->pd_upper = 0x01;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x06)))->pd_lsn.xrecoff = 0x6;
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x06)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageWalRecPtr)
+            {
+                .xrecoff = 0x6,
+            },
+        };
 
         // Page 7 has bogus checksum (and is misaligned but large enough to test)
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)))->pd_upper = 0x01;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)))->pd_lsn.xrecoff = 0x7;
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageWalRecPtr)
+            {
+                .xrecoff = 0x7,
+            },
+        };
 
         write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
@@ -217,6 +271,8 @@ testRun(void)
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+
         write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
             ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_DEFAULT, 0xFACEFACE00000000));
@@ -233,6 +289,8 @@ testRun(void)
         buffer = bufNew(513);
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
         write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
