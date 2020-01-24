@@ -3050,6 +3050,8 @@ CINCLUDE="-I. -I../libc"
 
 
 # Check required pq library
+LIBS="$LIBS -L`pg_config --libdir`"
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQconnectdb in -lpq" >&5
 $as_echo_n "checking for PQconnectdb in -lpq... " >&6; }
