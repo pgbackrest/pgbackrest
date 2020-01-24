@@ -3046,7 +3046,7 @@ else
 fi
 
 # Set includes
-CINCLUDE="-I. -I../libc"
+CINCLUDE="-I."
 
 
 # Check required pq library

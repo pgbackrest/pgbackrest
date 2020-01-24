@@ -31,7 +31,7 @@ else
 fi
 
 # Set includes
-AC_SUBST(CINCLUDE, "-I. -I../libc")
+AC_SUBST(CINCLUDE, "-I.")
 
 # Check required pq library
 AC_SUBST(LIBS, "$LIBS -L`pg_config --libdir`")
