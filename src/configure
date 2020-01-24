@@ -1324,7 +1324,7 @@ Some influential environment variables:
   LIBS        libraries to pass to the linker, e.g. -l<library>
   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
-  XML2_CONFIG path to xml2-config utility
+  XML2_CONFIG path to xml2 config utility
   CPP         C preprocessor
 
 Use these variables to override the choices made by `configure' or to help
@@ -3009,10 +3009,6 @@ fi
 
 
 
-# Wrap AC_PATH_PROGS to check if the value is already set before looking for programs. AC_PATH_PROGS preserves the value only if it
-# looks like an absolute path.
-
-
 # Enable internal test code and assertions by undefining NDEBUG
 warning='-Wall -Wextra -Wno-clobbered -Wno-missing-field-initializers'
 
@@ -3202,73 +3198,12 @@ fi
 
 
 # Check required xml library
+
 if test -z "$XML2_CONFIG"; then
-    for ac_prog in xml2-config
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_XML2_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $XML2_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_XML2_CONFIG="$XML2_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_XML2_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-XML2_CONFIG=$ac_cv_path_XML2_CONFIG
-if test -n "$XML2_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XML2_CONFIG" >&5
-$as_echo "$XML2_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+    XML2_CONFIG="pkg-config libxml-2.0"
 fi
 
-
-  test -n "$XML2_CONFIG" && break
-done
-
-else
-    # Report the value of XML2_CONFIG in configure's output
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XML2_CONFIG" >&5
-$as_echo_n "checking for XML2_CONFIG... " >&6; }
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XML2_CONFIG" >&5
-$as_echo "$XML2_CONFIG" >&6; }
-fi
-
-
-if test -n "$XML2_CONFIG"; then
-    for ac_option in `$XML2_CONFIG --cflags`; do
-        case $ac_option in
-            -I*|-D*) CPPFLAGS="$CPPFLAGS $ac_option";;
-        esac
-    done
-        for pgac_option in `$XML2_CONFIG --libs`; do
-        case $ac_option in
-            -L*) LDFLAGS="$LDFLAGS $ac_option";;
-        esac
-    done
-fi
+CPPFLAGS="$CPPFLAGS `$XML2_CONFIG --cflags`"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSaveToBuffer in -lxml2" >&5
 $as_echo_n "checking for xmlSaveToBuffer in -lxml2... " >&6; }
@@ -3722,7 +3657,7 @@ else
 fi
 
 
-CLIBRARY="$CLIBRARY `$XML2_CONFIG --cflags`"
+CLIBRARY="$CLIBRARY `pkg-config libxml-2.0 --cflags`"
 
 
 # Check required gzip library

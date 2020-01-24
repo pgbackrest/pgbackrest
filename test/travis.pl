@@ -132,7 +132,8 @@ eval
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
     processExec(
-        'sudo apt-get install -y rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libxml-checker-perl libyaml-libyaml-perl',
+        'sudo apt-get install -y rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libxml-checker-perl libyaml-libyaml-perl' .
+            ' pkg-config',
         {bSuppressStdErr => true});
     processEnd();
 

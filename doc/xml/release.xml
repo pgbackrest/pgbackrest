@@ -13,6 +13,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.23dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-contributor id="adrian.vondendriesch"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <file>pkg-config</file> instead of <file>xml2-config</file> for <proper>libxml2</proper> build options.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
         </release>
 
         <release date="2020-01-21" version="2.22" title="Bug Fix">
