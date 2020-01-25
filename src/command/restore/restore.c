@@ -125,7 +125,7 @@ getEpoch(const String *targetTime)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the regex to accept formats: YYYY-MM-DD HH:MM:SS with optional msec (up to 6 digits and separated from minutes by
-        // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boudaries are UTC-12 to UTC+14
+        // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boundaries are UTC-12 to UTC+14
         String *expression = strNew(
             "^(2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])"
             "(\\,[0-9]{1,6}|\\.[0-9]{1,6})?(((\\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\\+(14)(:?00)?))|((\\-(0[0-9]|1[0-1])"
