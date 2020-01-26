@@ -1381,8 +1381,8 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         // Sort the queues
-        for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
-            lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
+        for (unsigned int queueIdx = 0; queueIdx < lstSize(*queueList); queueIdx++)
+            lstSort(*(List **)lstGet(*queueList, queueIdx), sortOrderDesc);
 
         // Move process queues to prior context
         lstMove(*queueList, memContextPrior());
