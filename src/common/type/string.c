@@ -77,11 +77,15 @@ strNew(const char *string)
 
     // Create object
     String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
-    this->size = (unsigned int)stringSize;
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)stringSize,
+    };
 
     // Allocate and assign string
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     strcpy(this->buffer, string);
 
     FUNCTION_TEST_RETURN(this);
@@ -107,11 +111,15 @@ strNewBuf(const Buffer *buffer)
 
     // Create object
     String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
-    this->size = (unsigned int)bufUsed(buffer);
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)bufUsed(buffer),
+    };
 
     // Allocate and assign string
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     memcpy(this->buffer, (char *)bufPtr(buffer), this->size);
     this->buffer[this->size] = 0;
 
@@ -132,7 +140,11 @@ strNewFmt(const char *format, ...)
 
     // Create object
     String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+    };
 
     // Determine how long the allocated string needs to be
     va_list argumentList;
@@ -145,7 +157,7 @@ strNewFmt(const char *format, ...)
 
     // Allocate and assign string
     this->size = (unsigned int)formatSize;
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     va_start(argumentList, format);
     vsnprintf(this->buffer, this->size + 1, format, argumentList);
     va_end(argumentList);
@@ -173,11 +185,15 @@ strNewN(const char *string, size_t size)
 
     // Create object
     String *this = memNew(sizeof(String));
-    this->memContext = memContextCurrent();
-    this->size = (unsigned int)size;
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)size,
+    };
 
     // Allocate and assign string
-    this->buffer = memNewRaw(this->size + 1);
+    this->buffer = memNew(this->size + 1);
     strncpy(this->buffer, string, this->size);
     this->buffer[this->size] = 0;
 
@@ -263,7 +279,7 @@ strResize(String *this, size_t requested)
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->buffer = memGrowRaw(this->buffer, this->size + this->extra + 1);
+            this->buffer = memResize(this->buffer, this->size + this->extra + 1);
         }
         MEM_CONTEXT_END();
     }
@@ -854,7 +870,7 @@ strTrim(String *this)
             MEM_CONTEXT_BEGIN(this->memContext)
             {
                 // Resize the buffer
-                this->buffer = memGrowRaw(this->buffer, this->size + 1);
+                this->buffer = memResize(this->buffer, this->size + 1);
             }
             MEM_CONTEXT_END();
         }
@@ -912,7 +928,7 @@ strTrunc(String *this, int idx)
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             // Resize the buffer
-            this->buffer = memGrowRaw(this->buffer, this->size + 1);
+            this->buffer = memResize(this->buffer, this->size + 1);
         }
         MEM_CONTEXT_END();
     }

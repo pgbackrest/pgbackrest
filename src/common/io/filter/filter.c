@@ -51,11 +51,15 @@ ioFilterNew(const String *type, void *driver, VariantList *paramList, IoFilterIn
     ASSERT(interface.in == NULL || (interface.result != NULL && interface.done == NULL && interface.inputSame == NULL));
 
     IoFilter *this = memNew(sizeof(IoFilter));
-    this->memContext = memContextCurrent();
-    this->type = type;
-    this->driver = driver;
-    this->paramList = paramList;
-    this->interface = interface;
+
+    *this = (IoFilter)
+    {
+        .memContext = memContextCurrent(),
+        .type = type,
+        .driver = driver,
+        .paramList = paramList,
+        .interface = interface,
+    };
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

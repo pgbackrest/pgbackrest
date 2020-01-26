@@ -75,8 +75,12 @@ infoBackupNewInternal(void)
     FUNCTION_TEST_VOID();
 
     InfoBackup *this = memNew(sizeof(InfoBackup));
-    this->memContext = memContextCurrent();
-    this->backup = lstNewP(sizeof(InfoBackupData), .comparator =  lstComparatorStr);
+
+    *this = (InfoBackup)
+    {
+        .memContext = memContextCurrent(),
+        .backup = lstNewP(sizeof(InfoBackupData), .comparator =  lstComparatorStr),
+    };
 
     FUNCTION_TEST_RETURN(this);
 }

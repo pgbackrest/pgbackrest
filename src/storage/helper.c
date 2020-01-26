@@ -32,7 +32,7 @@ STRING_EXTERN(STORAGE_PATH_BACKUP_STR,                              STORAGE_PATH
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
-static struct
+static struct StorageHelper
 {
     MemContext *memContext;                                         // Mem context for storage helper
 
@@ -193,7 +193,7 @@ storagePgId(unsigned int hostId)
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             if (storageHelper.storagePg == NULL)
-                storageHelper.storagePg = memNew(sizeof(Storage *) * cfgDefOptionIndexTotal(cfgDefOptPgPath));
+                storageHelper.storagePg = memNewPtrArray(cfgDefOptionIndexTotal(cfgDefOptPgPath));
 
             storageHelper.storagePg[hostId - 1] = storagePgGet(hostId, false);
         }
@@ -230,7 +230,7 @@ storagePgIdWrite(unsigned int hostId)
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             if (storageHelper.storagePgWrite == NULL)
-                storageHelper.storagePgWrite = memNew(sizeof(Storage *) * cfgDefOptionIndexTotal(cfgDefOptPgPath));
+                storageHelper.storagePgWrite = memNewPtrArray(cfgDefOptionIndexTotal(cfgDefOptPgPath));
 
             storageHelper.storagePgWrite[hostId - 1] = storagePgGet(hostId, true);
         }
@@ -534,7 +534,7 @@ storageHelperFree(void)
     if (storageHelper.memContext != NULL)
         memContextFree(storageHelper.memContext);
 
-    memset(&storageHelper, 0, sizeof(storageHelper));
+    storageHelper = (struct StorageHelper){.memContext = NULL};
 
     FUNCTION_TEST_RETURN_VOID();
 }

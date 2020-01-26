@@ -56,17 +56,17 @@ testRun(void)
 
         // Test if the buffer was overrun
         // -------------------------------------------------------------------------------------------------------------------------
-        size_t bufferSize = 256;
-        unsigned char *buffer = memNew(bufferSize + 1);
+        unsigned char buffer[256] = {0};
 
-        cryptoRandomBytes(buffer, bufferSize);
-        TEST_RESULT_BOOL(buffer[bufferSize] == 0, true, "check that buffer did not overrun (though random byte could be 0)");
+        cryptoRandomBytes(buffer, sizeof(buffer) - 1);
+        TEST_RESULT_BOOL(
+            buffer[sizeof(buffer) - 1] == 0, true, "check that buffer did not overrun (though random byte could be 0)");
 
         // Count bytes that are not zero (there shouldn't be all zeroes)
         // -------------------------------------------------------------------------------------------------------------------------
         int nonZeroTotal = 0;
 
-        for (unsigned int charIdx = 0; charIdx < bufferSize; charIdx++)
+        for (unsigned int charIdx = 0; charIdx < sizeof(buffer) - 1; charIdx++)
             if (buffer[charIdx] != 0)                               // {uncoverable_branch - ok if there are no zeros}
                 nonZeroTotal++;
 

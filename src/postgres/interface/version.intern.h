@@ -124,12 +124,15 @@ Create a pg_control file for testing
     {                                                                                                                              \
         ASSERT(buffer != NULL);                                                                                                    \
                                                                                                                                    \
-        ((ControlFileData *)buffer)->system_identifier = pgControl.systemId;                                                       \
-        ((ControlFileData *)buffer)->pg_control_version = PG_CONTROL_VERSION;                                                      \
-        ((ControlFileData *)buffer)->catalog_version_no = CATALOG_VERSION_NO;                                                      \
-        ((ControlFileData *)buffer)->blcksz = pgControl.pageSize;                                                                  \
-        ((ControlFileData *)buffer)->xlog_seg_size = pgControl.walSegmentSize;                                                     \
-        ((ControlFileData *)buffer)->data_checksum_version = pgControl.pageChecksum;                                               \
+        *(ControlFileData *)buffer = (ControlFileData)                                                                             \
+        {                                                                                                                          \
+            .system_identifier = pgControl.systemId,                                                                               \
+            .pg_control_version = PG_CONTROL_VERSION,                                                                              \
+            .catalog_version_no = CATALOG_VERSION_NO,                                                                              \
+            .blcksz = pgControl.pageSize,                                                                                          \
+            .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
+            .data_checksum_version = pgControl.pageChecksum,                                                                       \
+        };                                                                                                                         \
     }
 
 #elif PG_VERSION >= PG_VERSION_83
@@ -141,11 +144,14 @@ Create a pg_control file for testing
         ASSERT(buffer != NULL);                                                                                                    \
         ASSERT(!pgControl.pageChecksum);                                                                                           \
                                                                                                                                    \
-        ((ControlFileData *)buffer)->system_identifier = pgControl.systemId;                                                       \
-        ((ControlFileData *)buffer)->pg_control_version = PG_CONTROL_VERSION;                                                      \
-        ((ControlFileData *)buffer)->catalog_version_no = CATALOG_VERSION_NO;                                                      \
-        ((ControlFileData *)buffer)->blcksz = pgControl.pageSize;                                                                  \
-        ((ControlFileData *)buffer)->xlog_seg_size = pgControl.walSegmentSize;                                                     \
+        *(ControlFileData *)buffer = (ControlFileData)                                                                             \
+        {                                                                                                                          \
+            .system_identifier = pgControl.systemId,                                                                               \
+            .pg_control_version = PG_CONTROL_VERSION,                                                                              \
+            .catalog_version_no = CATALOG_VERSION_NO,                                                                              \
+            .blcksz = pgControl.pageSize,                                                                                          \
+            .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
+        };                                                                                                                         \
     }
 
 #endif

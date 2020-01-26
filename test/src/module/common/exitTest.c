@@ -27,6 +27,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
+        cfgInit();
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(errorTypeCode(&TermError), false)

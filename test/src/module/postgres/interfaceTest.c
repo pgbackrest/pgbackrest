@@ -56,8 +56,12 @@ testRun(void)
         Buffer *result = bufNew(PG_CONTROL_SIZE);
         memset(bufPtr(result), 0, bufSize(result));
         bufUsedSet(result, bufSize(result));
-        ((PgControlCommon *)bufPtr(result))->controlVersion = 501;
-        ((PgControlCommon *)bufPtr(result))->catalogVersion = 19780101;
+
+        *(PgControlCommon *)bufPtr(result) = (PgControlCommon)
+        {
+            .controlVersion = 501,
+            .catalogVersion = 19780101,
+        };
 
         TEST_ERROR(
             pgControlFromBuffer(result), VersionNotSupportedError,
@@ -184,7 +188,8 @@ testRun(void)
         Buffer *result = bufNew((size_t)16 * 1024 * 1024);
         memset(bufPtr(result), 0, bufSize(result));
         bufUsedSet(result, bufSize(result));
-        ((PgWalCommon *)bufPtr(result))->magic = 777;
+
+        *(PgWalCommon *)bufPtr(result) = (PgWalCommon){.magic = 777};
 
         TEST_ERROR(pgWalFromBuffer(result), FormatError, "first page header in WAL file is expected to be in long format");
 

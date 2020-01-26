@@ -220,14 +220,16 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, size_t pa
     MEM_CONTEXT_NEW_BEGIN("PageChecksum")
     {
         PageChecksum *driver = memNew(sizeof(PageChecksum));
-        driver->memContext = memContextCurrent();
 
-        driver->pageNoOffset = segmentNo * segmentPageTotal;
-        driver->pageSize = pageSize;
-        driver->lsnLimit = lsnLimit;
-
-        driver->valid = true;
-        driver->align = true;
+        *driver = (PageChecksum)
+        {
+            .memContext = memContextCurrent(),
+            .pageNoOffset = segmentNo * segmentPageTotal,
+            .pageSize = pageSize,
+            .lsnLimit = lsnLimit,
+            .valid = true,
+            .align = true,
+        };
 
         // Create param list
         VariantList *paramList = varLstNew();

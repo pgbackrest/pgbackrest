@@ -111,7 +111,11 @@ ioTestFilterSizeNew(const char *type)
     MEM_CONTEXT_NEW_BEGIN("IoTestFilterSize")
     {
         IoTestFilterSize *driver = memNew(sizeof(IoTestFilterSize));
-        driver->memContext = MEM_CONTEXT_NEW();
+
+        *driver = (IoTestFilterSize)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+        };
 
         this = ioFilterNewP(strNew(type), driver, NULL, .in = ioTestFilterSizeProcess, .result = ioTestFilterSizeResult);
     }
@@ -212,11 +216,15 @@ ioTestFilterMultiplyNew(const char *type, unsigned int multiplier, unsigned int 
     MEM_CONTEXT_NEW_BEGIN("IoTestFilterMultiply")
     {
         IoTestFilterMultiply *driver = memNew(sizeof(IoTestFilterMultiply));
-        driver->memContext = MEM_CONTEXT_NEW();
-        driver->bufferFilter = ioBufferNew();
-        driver->multiplier = multiplier;
-        driver->flushTotal = flushTotal;
-        driver->flushChar = flushChar;
+
+        *driver = (IoTestFilterMultiply)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .bufferFilter = ioBufferNew(),
+            .multiplier = multiplier,
+            .flushTotal = flushTotal,
+            .flushChar = flushChar,
+        };
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(type));
