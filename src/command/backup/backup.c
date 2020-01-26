@@ -1042,13 +1042,14 @@ Log the results of a job and throw errors
 ***********************************************************************************************************************************/
 static uint64_t
 backupJobResult(
-    Manifest *manifest, const String *host, const String *const fileName, ProtocolParallelJob *const job, const uint64_t sizeTotal,
-    uint64_t sizeCopied, unsigned int pageSize)
+    Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
+    const uint64_t sizeTotal, uint64_t sizeCopied, unsigned int pageSize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(STRING_LIST, fileRemove);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM(UINT64, sizeCopied);
@@ -1098,11 +1099,13 @@ backupJobResult(
                 LOG_DETAIL_PID_FMT(
                     processId, "checksum resumed file %s (%s)%s", strPtr(fileLog), strPtr(logProgress), strPtr(logChecksum));
             }
-            // Else if the file was removed during backup then remove from manifest
+            // Else if the file was removed during backup add it to the list of files to be removed from the manifest when the
+            // backup is complete.  It can't be removed right now because that will invalidate the pointers that are being used for
+            // processing.
             else if (copyResult == backupCopyResultSkip)
             {
                 LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strPtr(fileLog));
-                manifestFileRemove(manifest, file->name);
+                strLstAdd(fileRemove, file->name);
             }
             // Else file was copied so update manifest
             else
@@ -1196,8 +1199,8 @@ backupJobResult(
 
                 // Update file info and remove any reference to the file's existence in a prior backup
                 manifestFileUpdate(
-                    manifest, file->name, copySize, repoSize, copySize > 0 ? strPtr(copyChecksum) : "", VARSTR(NULL),
-                    file->checksumPage, checksumPageError, checksumPageErrorList);
+                    manifest, file->name, copySize, repoSize, strPtr(copyChecksum), VARSTR(NULL), file->checksumPage,
+                    checksumPageError, checksumPageErrorList);
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1587,6 +1590,9 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         for (unsigned int processIdx = 2; processIdx <= processMax; processIdx++)
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgId, processIdx));
 
+        // Maintain a list of files that need to be removed from the manifest when the backup is complete
+        StringList *fileRemove = strLstNew();
+
         // Determine how often the manifest will be saved (every one percent or threshold size, whichever is greater)
         uint64_t manifestSaveLast = 0;
         uint64_t manifestSaveSize = sizeTotal / 100;
@@ -1613,7 +1619,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgId(pgId) : backupData->storagePrimary,
                             manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
-                        job, sizeTotal, sizeCopied, backupData->pageSize);
+                        fileRemove, job, sizeTotal, sizeCopied, backupData->pageSize);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
@@ -1632,6 +1638,11 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             while (!protocolParallelDone(parallelExec));
         }
         MEM_CONTEXT_TEMP_END();
+
+        // Remove files from the manifest that were removed during the backup.  This must happen after processing to avoid
+        // invalidating pointers by deleting items from the list.
+        for (unsigned int fileRemoveIdx = 0; fileRemoveIdx < strLstSize(fileRemove); fileRemoveIdx++)
+            manifestFileRemove(manifest, strLstGet(fileRemove, fileRemoveIdx));
 
         // Log references or create hardlinks for all files
         const char *const compressExt = jobData.compress ? "." GZIP_EXT : "";
