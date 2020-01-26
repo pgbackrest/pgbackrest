@@ -1199,8 +1199,8 @@ backupJobResult(
 
                 // Update file info and remove any reference to the file's existence in a prior backup
                 manifestFileUpdate(
-                    manifest, file->name, copySize, repoSize, strPtr(copyChecksum), VARSTR(NULL), file->checksumPage,
-                    checksumPageError, checksumPageErrorList);
+                    manifest, file->name, copySize, repoSize, copySize > 0 ? strPtr(copyChecksum) : "", VARSTR(NULL),
+                    file->checksumPage, checksumPageError, checksumPageErrorList);
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1384,8 +1384,8 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         // Sort the queues
-        for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
-            lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
+        for (unsigned int queueIdx = 0; queueIdx < lstSize(*queueList); queueIdx++)
+            lstSort(*(List **)lstGet(*queueList, queueIdx), sortOrderDesc);
 
         // Move process queues to prior context
         lstMove(*queueList, memContextPrior());
@@ -1638,6 +1638,12 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             while (!protocolParallelDone(parallelExec));
         }
         MEM_CONTEXT_TEMP_END();
+
+#ifdef DEBUG
+        // Ensure that all processing queues are empty
+        for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData.queueList); queueIdx++)
+            ASSERT(lstSize(*(List **)lstGet(jobData.queueList, queueIdx)) == 0);
+#endif
 
         // Remove files from the manifest that were removed during the backup.  This must happen after processing to avoid
         // invalidating pointers by deleting items from the list.
