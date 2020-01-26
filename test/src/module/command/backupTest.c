@@ -1297,21 +1297,21 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when postmaster.pid exists");
+        TEST_TITLE("report job error");
 
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(STRDEF("command")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), job, 0, 0, 0), AssertError, "error message");
+        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0, 0), AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remove skipped file");
+        TEST_TITLE("report host/100% progress on noop result");
 
         // Create job that skips file
         job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(STRDEF("command")));
 
         VariantList *result = varLstNew();
-        varLstAdd(result, varNewUInt64(backupCopyResultSkip));
+        varLstAdd(result, varNewUInt64(backupCopyResultNoOp));
         varLstAdd(result, varNewUInt64(0));
         varLstAdd(result, varNewUInt64(0));
         varLstAdd(result, NULL);
@@ -1323,9 +1323,10 @@ testRun(void)
         Manifest *manifest = manifestNewInternal();
         manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
 
-        TEST_RESULT_UINT(backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), job, 0, 0, 0), 0, "log skip result");
+        TEST_RESULT_UINT(
+            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, 0, 0), 0, "log noop result");
 
-        TEST_RESULT_LOG("P00 DETAIL: skip file removed by database host:log-test");
+        TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:log-test (0B, 100%)");
     }
 
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
@@ -1900,7 +1901,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 9.6 back-standby full backup");
+        TEST_TITLE("online 9.6 backup-standby full backup");
 
         backupTimeStart = BACKUP_EPOCH + 1200000;
 
@@ -1945,6 +1946,15 @@ testRun(void)
             // that they were copied from the right place.
             storagePutP(storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), NULL);
             storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("DATA"));
+            storagePutP(
+                storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/2"), .timeModified = backupTimeStart),
+                BUFSTRDEF("D"));
+            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/2")), BUFSTRDEF("DATA"));
+
+            // Create a file on the primary that does not exist on the standby to test that the file is removed from the manifest
+            storagePutP(
+                storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/0"), .timeModified = backupTimeStart),
+                BUFSTRDEF("DATA"));
 
             // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
             harnessLogLevelSet(logLevelWarn);
@@ -1979,6 +1989,7 @@ testRun(void)
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
                 "pg_data/base/1/1 {file, s=4}\n"
+                "pg_data/base/1/2 {file, s=4}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data/pg_xlog {path}\n"
