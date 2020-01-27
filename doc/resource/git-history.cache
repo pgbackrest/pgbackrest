@@ -1,5 +1,10 @@
 [
     {
+        "commit": "2358d3448507f5dc4fd50edf65172285bca69c4b",
+        "date": "2020-01-26 22:38:21 -0700",
+        "subject": "v2.23: Bug Fix"
+    },
+    {
         "commit": "7ab07dc580989452d807332bc91d26a42e5a0d3a",
         "date": "2020-01-26 21:58:59 -0700",
         "subject": "Validate checksums are set in the manifest on backup/restore.",
