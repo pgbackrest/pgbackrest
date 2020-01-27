@@ -10,7 +10,9 @@ TLS Client
 #include <strings.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
+
 
 #ifdef __FreeBSD__
 #include <netinet/in.h>
