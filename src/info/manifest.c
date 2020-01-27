@@ -2287,7 +2287,7 @@ manifestValidate(Manifest *this, bool strict)
             if (file->checksumSha1[0] == '\0')
                 strCatFmt(error, "\nmissing checksum for file '%s'", strPtr(file->name));
 
-            // These are strict checks !!!
+            // These are strict checks to be performed only after a backup and before the final manifest save
             if (strict)
             {
                 // Zero-length files must have a specific checksum
