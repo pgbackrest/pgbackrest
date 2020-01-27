@@ -903,8 +903,12 @@ restoreCleanBuild(Manifest *manifest)
         {
             RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
 
-            cleanData->manifest = manifest;
-            cleanData->target = manifestTarget(manifest, targetIdx);
+            *cleanData = (RestoreCleanCallbackData)
+            {
+                .manifest = manifest,
+                .target = manifestTarget(manifest, targetIdx),
+            };
+
             cleanData->targetName = cleanData->target->name;
             cleanData->targetPath = manifestTargetPath(manifest, cleanData->target);
             cleanData->basePath = strEq(cleanData->targetName, MANIFEST_TARGET_PGDATA_STR);
@@ -2022,6 +2026,9 @@ cmdRestore(void)
         jobData.manifest = manifestLoadFile(
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupSet)),
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+
+        // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
+        manifestValidate(jobData.manifest, false);
 
         // Get the cipher subpass used to decrypt files in the backup
         jobData.cipherSubPass = manifestCipherSubPass(jobData.manifest);

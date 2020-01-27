@@ -1767,6 +1767,34 @@ testRun(void)
 
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest validation");
+
+        // Munge files to produce errors
+        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, false, false, NULL);
+        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, NULL, true, false, NULL);
+
+        TEST_ERROR(
+            manifestValidate(manifest, false), FormatError,
+            "manifest validation failed:\n"
+            "missing checksum for file 'pg_data/postgresql.conf'");
+
+        TEST_ERROR(
+            manifestValidate(manifest, true), FormatError,
+            "manifest validation failed:\n"
+            "invalid checksum '6e99b589e550e68e934fd235ccba59fe5b592a9e' for zero size file 'pg_data/base/32768/33000.32767'\n"
+            "missing checksum for file 'pg_data/postgresql.conf'\n"
+            "repo size must be > 0 for file 'pg_data/postgresql.conf'");
+
+        // Undo changes made to files
+        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, NULL, true, false, NULL);
+        manifestFileUpdate(
+            manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", NULL, false,
+            false, NULL);
+
+        TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
             "manifest complete without db");
@@ -1846,7 +1874,7 @@ testRun(void)
         TEST_RESULT_PTR(file, NULL, "    return default NULL");
 
         TEST_RESULT_VOID(
-            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, NULL, false, false, NULL),
+            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL),
             "update file");
         TEST_RESULT_VOID(
             manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL),

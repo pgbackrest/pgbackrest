@@ -960,23 +960,26 @@ storageS3New(
     MEM_CONTEXT_NEW_BEGIN("StorageS3")
     {
         StorageS3 *driver = memNew(sizeof(StorageS3));
-        driver->memContext = MEM_CONTEXT_NEW();
-        driver->interface = storageInterfaceS3;
 
-        driver->bucket = strDup(bucket);
-        driver->region = strDup(region);
-        driver->accessKey = strDup(accessKey);
-        driver->secretAccessKey = strDup(secretAccessKey);
-        driver->securityToken = strDup(securityToken);
-        driver->partSize = partSize;
-        driver->deleteMax = deleteMax;
-        driver->uriStyle = uriStyle;
-        driver->bucketEndpoint = uriStyle == storageS3UriStyleHost ?
-            strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(endPoint);
-        driver->port = port;
+        *driver = (StorageS3)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .interface = storageInterfaceS3,
+            .bucket = strDup(bucket),
+            .region = strDup(region),
+            .accessKey = strDup(accessKey),
+            .secretAccessKey = strDup(secretAccessKey),
+            .securityToken = strDup(securityToken),
+            .partSize = partSize,
+            .deleteMax = deleteMax,
+            .uriStyle = uriStyle,
+            .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
+                strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(endPoint),
+            .port = port,
 
-        // Force the signing key to be generated on the first run
-        driver->signingKeyDate = YYYYMMDD_STR;
+            // Force the signing key to be generated on the first run
+            .signingKeyDate = YYYYMMDD_STR,
+        };
 
         // Create the http client cache used to service requests
         driver->httpClientCache = httpClientCacheNew(

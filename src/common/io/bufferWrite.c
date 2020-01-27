@@ -65,8 +65,12 @@ ioBufferWriteNew(Buffer *buffer)
     MEM_CONTEXT_NEW_BEGIN("IoBufferWrite")
     {
         IoBufferWrite *driver = memNew(sizeof(IoBufferWrite));
-        driver->memContext = memContextCurrent();
-        driver->write = buffer;
+
+        *driver = (IoBufferWrite)
+        {
+            .memContext = memContextCurrent(),
+            .write = buffer,
+        };
 
         this = ioWriteNewP(driver, .write = ioBufferWrite);
     }

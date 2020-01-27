@@ -28,7 +28,7 @@ Object type
 typedef struct GzipDecompress
 {
     MemContext *memContext;                                         // Context to store data
-    z_stream *stream;                                               // Decompression stream state
+    z_stream stream;                                                // Decompression stream state
 
     int result;                                                     // Result of last operation
     bool inputSame;                                                 // Is the same input required on the next process call?
@@ -43,7 +43,7 @@ gzipDecompressToLog(const GzipDecompress *this)
 {
     return strNewFmt(
         "{inputSame: %s, done: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        this->stream->avail_in);
+        this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_GZIP_DECOMPRESS_TYPE                                                                                          \
@@ -56,7 +56,7 @@ Free inflate stream
 ***********************************************************************************************************************************/
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(GZIP_DECOMPRESS, LOG, logLevelTrace)
 {
-    inflateEnd(this->stream);
+    inflateEnd(&this->stream);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -75,7 +75,6 @@ gzipDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->stream != NULL);
     ASSERT(uncompressed != NULL);
 
     // There should never be a flush because in a valid compressed stream the end of data can be determined and done will be set.
@@ -85,23 +84,23 @@ gzipDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
 
     if (!this->inputSame)
     {
-        this->stream->avail_in = (unsigned int)bufUsed(compressed);
-        this->stream->next_in = bufPtr(compressed);
+        this->stream.avail_in = (unsigned int)bufUsed(compressed);
+        this->stream.next_in = bufPtr(compressed);
     }
 
-    this->stream->avail_out = (unsigned int)bufRemains(uncompressed);
-    this->stream->next_out = bufPtr(uncompressed) + bufUsed(uncompressed);
+    this->stream.avail_out = (unsigned int)bufRemains(uncompressed);
+    this->stream.next_out = bufPtr(uncompressed) + bufUsed(uncompressed);
 
-    this->result = gzipError(inflate(this->stream, Z_NO_FLUSH));
+    this->result = gzipError(inflate(&this->stream, Z_NO_FLUSH));
 
     // Set buffer used space
-    bufUsedSet(uncompressed, bufSize(uncompressed) - (size_t)this->stream->avail_out);
+    bufUsedSet(uncompressed, bufSize(uncompressed) - (size_t)this->stream.avail_out);
 
     // Is decompression done?
     this->done = this->result == Z_STREAM_END;
 
     // Is the same input expected on the next call?
-    this->inputSame = this->done ? false : this->stream->avail_in != 0;
+    this->inputSame = this->done ? false : this->stream.avail_in != 0;
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -156,11 +155,15 @@ gzipDecompressNew(bool raw)
     {
         // Allocate state and set context
         GzipDecompress *driver = memNew(sizeof(GzipDecompress));
-        driver->memContext = MEM_CONTEXT_NEW();
+
+        *driver = (GzipDecompress)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .stream = {.zalloc = NULL},
+        };
 
         // Create gzip stream
-        driver->stream = memNew(sizeof(z_stream));
-        gzipError(driver->result = inflateInit2(driver->stream, gzipWindowBits(raw)));
+        gzipError(driver->result = inflateInit2(&driver->stream, gzipWindowBits(raw)));
 
         // Set free callback to ensure gzip context is freed
         memContextCallbackSet(driver->memContext, gzipDecompressFreeResource, driver);

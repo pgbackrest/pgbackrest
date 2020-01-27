@@ -199,26 +199,29 @@ storageReadRemoteNew(
     MEM_CONTEXT_NEW_BEGIN("StorageReadRemote")
     {
         this = memNew(sizeof(StorageReadRemote));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        this->interface = (StorageReadInterface)
+        *this = (StorageReadRemote)
         {
-            .type = STORAGE_REMOTE_TYPE_STR,
-            .name = strDup(name),
-            .compressible = compressible,
-            .compressLevel = compressLevel,
-            .ignoreMissing = ignoreMissing,
+            .memContext = MEM_CONTEXT_NEW(),
+            .storage = storage,
+            .client = client,
 
-            .ioInterface = (IoReadInterface)
+            .interface = (StorageReadInterface)
             {
-                .eof = storageReadRemoteEof,
-                .open = storageReadRemoteOpen,
-                .read = storageReadRemote,
+                .type = STORAGE_REMOTE_TYPE_STR,
+                .name = strDup(name),
+                .compressible = compressible,
+                .compressLevel = compressLevel,
+                .ignoreMissing = ignoreMissing,
+
+                .ioInterface = (IoReadInterface)
+                {
+                    .eof = storageReadRemoteEof,
+                    .open = storageReadRemoteOpen,
+                    .read = storageReadRemote,
+                },
             },
         };
-
-        this->storage = storage;
-        this->client = client;
 
         this->read = storageReadNew(this, &this->interface);
     }

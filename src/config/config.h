@@ -23,7 +23,7 @@ what it is supposed to do.
 typedef enum
 {
     // Called directly by the user.  This is the main part of the command that may or may not spawn other command roles.
-    cfgCmdRoleDefault,
+    cfgCmdRoleDefault = 0,
 
     // Async worker that is spawned so the main process can return a result while work continues.  An async worker may spawn local
     // or remote workers.
@@ -124,7 +124,7 @@ void cfgInit(void);
 
 ConfigDefineCommand cfgCommandDefIdFromId(ConfigCommand commandId);
 bool cfgCommandHelp(void);
-void cfgCommandHelpSet(bool helpParam);
+void cfgCommandHelpSet(bool help);
 
 // Get command id by name.  If error is true then assert when the command does not exist.
 ConfigCommand cfgCommandId(const char *commandName, bool error);
@@ -140,7 +140,7 @@ ConfigCommandRole cfgCommandRoleEnum(const String *commandRole);
 const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
 
 const String *cfgExe(void);
-void cfgExeSet(const String *exeParam);
+void cfgExeSet(const String *exe);
 
 const Variant *cfgOptionDefault(ConfigOption optionId);
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);

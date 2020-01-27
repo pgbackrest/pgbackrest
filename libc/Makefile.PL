@@ -131,7 +131,7 @@ WriteMakefile
         -std=c99
         -D_POSIX_C_SOURCE=200112L
         -D_FILE_OFFSET_BITS=64
-        `xml2-config --cflags`
+        `pkg-config libxml-2.0 --cflags`
         -I`pg_config --includedir`
     )),
 

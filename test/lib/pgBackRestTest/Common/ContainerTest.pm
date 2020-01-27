@@ -380,7 +380,7 @@ sub containerBuild
                 "    apt-get -y install openssh-server wget sudo gcc make valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
-                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev";
+                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config";
 
             if ($strOS eq VM_U12)
             {

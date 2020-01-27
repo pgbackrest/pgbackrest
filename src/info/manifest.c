@@ -370,7 +370,7 @@ manifestNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    Manifest *this = memNewRaw(sizeof(Manifest));
+    Manifest *this = memNew(sizeof(Manifest));
 
     *this = (Manifest)
     {
@@ -2257,6 +2257,52 @@ manifestSave(Manifest *this, IoWrite *write)
 
         // Save manifest
         infoSave(this->info, write, manifestSaveCallback, &saveData);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+manifestValidate(Manifest *this, bool strict)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(BOOL, strict);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *error = strNew("");
+
+        // Validate files
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
+        {
+            const ManifestFile *file = manifestFile(this, fileIdx);
+
+            // All files must have a checksum
+            if (file->checksumSha1[0] == '\0')
+                strCatFmt(error, "\nmissing checksum for file '%s'", strPtr(file->name));
+
+            // These are strict checks !!!
+            if (strict)
+            {
+                // Zero-length files must have a specific checksum
+                if (file->size == 0 && !strEqZ(HASH_TYPE_SHA1_ZERO_STR, file->checksumSha1))
+                    strCatFmt(error, "\ninvalid checksum '%s' for zero size file '%s'", file->checksumSha1, strPtr(file->name));
+
+                // Non-zero size files must have non-zero repo size
+                if (file->sizeRepo == 0 && file->size != 0)
+                    strCatFmt(error, "\nrepo size must be > 0 for file '%s'", strPtr(file->name));
+            }
+        }
+
+        // Throw exception when there are errors
+        if (strSize(error) > 0)
+            THROW_FMT(FormatError, "manifest validation failed:%s", strPtr(error));
     }
     MEM_CONTEXT_TEMP_END();
 

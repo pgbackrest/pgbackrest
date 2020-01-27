@@ -248,35 +248,40 @@ storageWritePosixNew(
     MEM_CONTEXT_NEW_BEGIN("StorageWritePosix")
     {
         StorageWritePosix *driver = memNew(sizeof(StorageWritePosix));
-        driver->memContext = MEM_CONTEXT_NEW();
 
-        driver->interface = (StorageWriteInterface)
+        *driver = (StorageWritePosix)
         {
-            .type = STORAGE_POSIX_TYPE_STR,
-            .name = strDup(name),
-            .atomic = atomic,
-            .createPath = createPath,
-            .group = strDup(group),
-            .modeFile = modeFile,
-            .modePath = modePath,
-            .syncFile = syncFile,
-            .syncPath = syncPath,
-            .user = strDup(user),
-            .timeModified = timeModified,
+            .memContext = MEM_CONTEXT_NEW(),
+            .storage = storage,
+            .path = strPath(name),
+            .handle = -1,
 
-            .ioInterface = (IoWriteInterface)
+            .interface = (StorageWriteInterface)
             {
-                .close = storageWritePosixClose,
-                .handle = storageWritePosixHandle,
-                .open = storageWritePosixOpen,
-                .write = storageWritePosix,
+                .type = STORAGE_POSIX_TYPE_STR,
+                .name = strDup(name),
+                .atomic = atomic,
+                .createPath = createPath,
+                .group = strDup(group),
+                .modeFile = modeFile,
+                .modePath = modePath,
+                .syncFile = syncFile,
+                .syncPath = syncPath,
+                .user = strDup(user),
+                .timeModified = timeModified,
+
+                .ioInterface = (IoWriteInterface)
+                {
+                    .close = storageWritePosixClose,
+                    .handle = storageWritePosixHandle,
+                    .open = storageWritePosixOpen,
+                    .write = storageWritePosix,
+                },
             },
         };
 
-        driver->storage = storage;
+        // Create temp file name
         driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(name)) : driver->interface.name;
-        driver->path = strPath(name);
-        driver->handle = -1;
 
         this = storageWriteNew(driver, &driver->interface);
     }

@@ -153,10 +153,10 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "online source is set");
         TEST_ERROR(
             cfgOptionDbl(cfgOptOnline), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeDouble' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeDouble' failed");
         TEST_ERROR(
             cfgOptionInt64(cfgOptOnline), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeInt64' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeInt64' failed");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, varNewInt64(1)), "set compress-level");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 1, "compress-level is set");
@@ -165,7 +165,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceDefault, "compress source is set");
         TEST_ERROR(
             cfgOptionBool(cfgOptCompressLevel), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeBool' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeBool' failed");
 
         TEST_RESULT_VOID(
             cfgOptionSet(cfgOptArchivePushQueueMax, cfgSourceParam, varNewInt64(999999999999)), "set archive-push-queue-max");
@@ -179,7 +179,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptProtocolTimeout), cfgSourceConfig, "protocol-timeout source is set");
         TEST_ERROR(
             cfgOptionKv(cfgOptProtocolTimeout), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeKeyValue' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeKeyValue' failed");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceConfig, NULL), "set protocol-timeout to NULL");
         TEST_RESULT_PTR(cfgOption(cfgOptProtocolTimeout), NULL, "protocol-timeout is not set");
@@ -191,8 +191,8 @@ testRun(void)
         TEST_RESULT_INT(varLstSize(kvKeyList(cfgOptionKv(cfgOptRecoveryOption))), 0, "recovery-option is set");
         TEST_ERROR(
             cfgOptionLst(cfgOptRecoveryOption), AssertError,
-            "assertion 'configOptionValue[optionId].value == NULL"
-                " || varType(configOptionValue[optionId].value) == varTypeVariantList' failed");
+            "assertion 'configStatic.option[optionId].value == NULL"
+                " || varType(configStatic.option[optionId].value) == varTypeVariantList' failed");
 
         TEST_RESULT_INT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "db-include defaults to empty");
         TEST_ERROR(
@@ -202,8 +202,8 @@ testRun(void)
         TEST_RESULT_INT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "db-include is set");
         TEST_ERROR(
             cfgOptionStr(cfgOptDbInclude), AssertError,
-            "assertion 'configOptionValue[optionId].value == NULL"
-                " || varType(configOptionValue[optionId].value) == varTypeString' failed");
+            "assertion 'configStatic.option[optionId].value == NULL"
+                " || varType(configStatic.option[optionId].value) == varTypeString' failed");
 
         TEST_RESULT_PTR(cfgOptionStr(cfgOptStanza), NULL, "stanza defaults to null");
         TEST_ERROR(
@@ -213,7 +213,7 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "db", "stanza is set");
         TEST_ERROR(
             cfgOptionInt(cfgOptStanza), AssertError,
-            "assertion 'varType(configOptionValue[optionId].value) == varTypeInt64' failed");
+            "assertion 'varType(configStatic.option[optionId].value) == varTypeInt64' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cfgInit(), "config init resets value");

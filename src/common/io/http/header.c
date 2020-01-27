@@ -36,10 +36,13 @@ httpHeaderNew(const StringList *redactList)
     {
         // Allocate state and set context
         this = memNew(sizeof(HttpHeader));
-        this->memContext = MEM_CONTEXT_NEW();
 
-        this->redactList = strLstDup(redactList);
-        this->kv = kvNew();
+        *this = (HttpHeader)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .redactList = strLstDup(redactList),
+            .kv = kvNew(),
+        };
     }
     MEM_CONTEXT_NEW_END();
 
@@ -61,15 +64,17 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 
     if (header != NULL)
     {
-
         MEM_CONTEXT_NEW_BEGIN("HttpHeader")
         {
             // Allocate state and set context
             this = memNew(sizeof(HttpHeader));
-            this->memContext = MEM_CONTEXT_NEW();
 
-            this->redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList);
-            this->kv = kvDup(header->kv);
+            *this = (HttpHeader)
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+                .redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList),
+                .kv = kvDup(header->kv),
+            };
         }
         MEM_CONTEXT_NEW_END();
     }

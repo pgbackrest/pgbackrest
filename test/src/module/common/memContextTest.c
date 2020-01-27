@@ -43,49 +43,31 @@ testRun(void)
         // valgrind will accept
         if (TEST_64BIT())
         {
-            TEST_ERROR(memAllocInternal((size_t)5629499534213120, false), MemoryError, "unable to allocate 5629499534213120 bytes");
+            TEST_ERROR(memAllocInternal((size_t)5629499534213120), MemoryError, "unable to allocate 5629499534213120 bytes");
             TEST_ERROR(memFreeInternal(NULL), AssertError, "assertion 'buffer != NULL' failed");
 
             // Check that bad realloc is caught
-            void *buffer = memAllocInternal(sizeof(size_t), false);
+            void *buffer = memAllocInternal(sizeof(size_t));
             TEST_ERROR(
-                memReAllocInternal(buffer, sizeof(size_t), (size_t)5629499534213120, false), MemoryError,
+                memReAllocInternal(buffer, (size_t)5629499534213120), MemoryError,
                 "unable to reallocate 5629499534213120 bytes");
             memFreeInternal(buffer);
         }
 
-        // Normal memory allocation
-        void *buffer = memAllocInternal(sizeof(size_t), false);
-        buffer = memReAllocInternal(buffer, sizeof(size_t), sizeof(size_t) * 2, false);
-        memFreeInternal(buffer);
+        // Memory allocation
+        void *buffer = memAllocInternal(sizeof(size_t));
 
-        // Zeroed memory allocation
-        unsigned char *buffer2 = memAllocInternal(sizeof(size_t), true);
+        // Memory reallocation
+        memset(buffer, 0xC7, sizeof(size_t));
+
+        unsigned char *buffer2 = memReAllocInternal(buffer, sizeof(size_t) * 2);
+
         int expectedTotal = 0;
-
-        for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-            expectedTotal += buffer2[charIdx] == 0;
-
-        TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all bytes are 0");
-
-        // Zeroed memory reallocation
-        memset(buffer2, 0xC7, sizeof(size_t));
-
-        buffer2 = memReAllocInternal(buffer2, sizeof(size_t), sizeof(size_t) * 2, true);
-
-        expectedTotal = 0;
 
         for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
             expectedTotal += buffer2[charIdx] == 0xC7;
 
         TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all old bytes are filled");
-
-        expectedTotal = 0;
-
-        for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-            expectedTotal += (buffer2 + sizeof(size_t))[charIdx] == 0;
-
-        TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all new bytes are 0");
         memFreeInternal(buffer2);
     }
 
@@ -175,22 +157,14 @@ testRun(void)
     if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
     {
         memContextSwitch(memContextTop());
-        memNew(sizeof(size_t));
+        memNewPtrArray(1);
 
         MemContext *memContext = memContextNew("test-alloc");
         memContextSwitch(memContext);
 
         for (int allocIdx = 0; allocIdx <= MEM_CONTEXT_ALLOC_INITIAL_SIZE; allocIdx++)
         {
-            unsigned char *buffer = memNew(sizeof(size_t));
-
-            // Check that the buffer is zeroed
-            int expectedTotal = 0;
-
-            for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-                expectedTotal += buffer[charIdx] == 0;
-
-            TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all bytes are 0");
+            memNew(sizeof(size_t));
 
             TEST_RESULT_INT(
                 memContextCurrent()->allocListSize,
@@ -198,12 +172,11 @@ testRun(void)
                 "allocation list size");
         }
 
-
-        unsigned char *buffer = memNewRaw(sizeof(size_t));
+        unsigned char *buffer = memNew(sizeof(size_t));
 
         // Grow memory
         memset(buffer, 0xFE, sizeof(size_t));
-        buffer = memGrowRaw(buffer, sizeof(size_t) * 2);
+        buffer = memResize(buffer, sizeof(size_t) * 2);
 
         // Check that original portion of the buffer is preserved
         int expectedTotal = 0;

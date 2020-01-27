@@ -420,18 +420,18 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
     MEM_CONTEXT_NEW_BEGIN("CipherBlock")
     {
         CipherBlock *driver = memNew(sizeof(CipherBlock));
-        driver->memContext = MEM_CONTEXT_NEW();
 
-        // Set mode, encrypt or decrypt
-        driver->mode = mode;
-
-        // Set cipher and digest
-        driver->cipher = cipher;
-        driver->digest = digest;
+        *driver = (CipherBlock)
+        {
+            .memContext = MEM_CONTEXT_NEW(),
+            .mode = mode,
+            .cipher = cipher,
+            .digest = digest,
+            .passSize = bufUsed(pass),
+        };
 
         // Store the passphrase
-        driver->passSize = bufUsed(pass);
-        driver->pass = memNewRaw(driver->passSize);
+        driver->pass = memNew(driver->passSize);
         memcpy(driver->pass, bufPtr(pass), driver->passSize);
 
         // Create param list
