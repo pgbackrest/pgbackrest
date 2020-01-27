@@ -1200,8 +1200,8 @@ backupJobResult(
 
                 // Update file info and remove any reference to the file's existence in a prior backup
                 manifestFileUpdate(
-                    manifest, file->name, copySize, repoSize, copySize > 0 ? strPtr(copyChecksum) : "", VARSTR(NULL),
-                    file->checksumPage, checksumPageError, checksumPageErrorList);
+                    manifest, file->name, copySize, repoSize, strPtr(copyChecksum), VARSTR(NULL), file->checksumPage,
+                    checksumPageError, checksumPageErrorList);
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1841,9 +1841,9 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
     {
         const String *const backupLabel = manifestData(manifest)->backupLabel;
 
-        // Validation and final save of the backup manifest
+        // Validation and final save of the backup manifest.  Validate in strict mode to catch as many potential issues as possible.
         // -------------------------------------------------------------------------------------------------------------------------
-        manifestValidate(manifest);
+        manifestValidate(manifest, true);
 
         backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)));
 

@@ -1770,17 +1770,29 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest validation");
 
+        // Munge files to produce errors
+        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, false, false, NULL);
+        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, NULL, true, false, NULL);
+
         TEST_ERROR(
-            manifestValidate(manifest), FormatError,
+            manifestValidate(manifest, false), FormatError,
             "manifest validation failed:\n"
             "missing checksum for file 'pg_data/postgresql.conf'");
 
-        // Add checksum so file will validate
+        TEST_ERROR(
+            manifestValidate(manifest, true), FormatError,
+            "manifest validation failed:\n"
+            "invalid checksum '6e99b589e550e68e934fd235ccba59fe5b592a9e' for zero size file 'pg_data/base/32768/33000.32767'\n"
+            "missing checksum for file 'pg_data/postgresql.conf'\n"
+            "repo size must be > 0 for file 'pg_data/postgresql.conf'");
+
+        // Undo changes made to files
+        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, NULL, true, false, NULL);
         manifestFileUpdate(
             manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", NULL, false,
             false, NULL);
 
-        TEST_RESULT_VOID(manifestValidate(manifest), "successful validate");
+        TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
