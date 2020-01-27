@@ -1,5 +1,68 @@
 [
     {
+        "commit": "7ab07dc580989452d807332bc91d26a42e5a0d3a",
+        "date": "2020-01-26 21:58:59 -0700",
+        "subject": "Validate checksums are set in the manifest on backup/restore.",
+        "body": "This is a modest start but it addresses the specific issue that was caused by the bug fixed in 45ec694a.  This validation will produce an immediate error rather than erroring out partway through the restore.\n\nMore validations are planned but this is the most important one and seems safest for this release."
+    },
+    {
+        "commit": "45ec694af22dda84b124f0df242bbcfdd28726d1",
+        "date": "2020-01-26 13:19:13 -0700",
+        "subject": "Fix missing files corrupting the manifest.",
+        "body": "If a file was removed by PostgreSQL during the backup (or was missing from the standby) then the next file might not be copied and updated in the manifest. If this happened then the backup would error when restored.\n\nThe issue was that removing files from the manifest invalidated the pointers stored in the processing queues.  When a file was removed, all the pointers shifted to the next file in the list, causing a file to be unprocessed.  Since the unprocessed file was still in the manifest it would be saved with no checksum, causing a failure on restore.\n\nWhen process-max was > 1 then the bug would often not express since the file had already been pulled from the queue and updates to the manifest are done by name rather than by pointer."
+    },
+    {
+        "commit": "9b47ff2746b74bf41d20fa43d6ed2697b0a99087",
+        "date": "2020-01-26 12:29:53 -0700",
+        "subject": "Sort last processing queue on backup from standby.",
+        "body": "The last queue was not being sorted when a primary queue was added first.\n\nThis did not affect the backup or integrity but could lead to slightly lower performance since large files were not always copied first."
+    },
+    {
+        "commit": "0444d3741423004e0f94116b528d94090c1e4303",
+        "date": "2020-01-24 10:43:47 -0700",
+        "subject": "Remove obsolete include to ../libc."
+    },
+    {
+        "commit": "b1c5885017c035320804c5d16ed57b149a33ab10",
+        "date": "2020-01-24 10:40:42 -0700",
+        "subject": "Add lib path for libpq in case it is in a non-standard location."
+    },
+    {
+        "commit": "90abc3cf170a3d5da8bbc5307cf5032d6af5ed6c",
+        "date": "2020-01-24 10:08:05 -0700",
+        "subject": "Use pkg-config instead of xml2-config for libxml2 build options.",
+        "body": "pkg-config is a generic way to get build options rather than relying on a package-specific utility.\n\nXML2_CONFIG can be used to override this utility for systems that do not ship pkg-config."
+    },
+    {
+        "commit": "b134175fc7a98836f49f20d552f7c31138b66b1b",
+        "date": "2020-01-23 14:15:58 -0700",
+        "subject": "Use designated initializers to initialize structs.",
+        "body": "Previously memNew() used memset() to initialize all struct members to 0, NULL, false, etc.  While this appears to work in practice, it is a violation of the C specification.  For instance, NULL == 0 must be true but neither NULL nor 0 must be represented with all zero bits.\n\nInstead use designated initializers to initialize structs.  These guarantee that struct members will be properly initialized even if they are not specified in the initializer.  Note that due to a quirk in the C99 specification at least one member must be explicitly initialized even if it needs to be the default value.\n\nSince pre-zeroed memory is no longer required, adjust memAllocInternal()/memReallocInternal() to return raw memory and update dependent functions accordingly.  All instances of memset() have been removed except in debug/test code where needed.\n\nAdd memMewPtrArray() to allocate an array of pointers and automatically set all pointers to NULL.\n\nRename memGrowRaw() to the more logical memResize()."
+    },
+    {
+        "commit": "cf2024beafba82b3899d9c46c7ea64716835a292",
+        "date": "2020-01-21 18:47:14 -0700",
+        "subject": "Add XML2_CONFIG environment variable to configure.",
+        "body": "This allows the default 'xml2-config' to be replaced with, e.g. 'pkg-config libxml-2.0', for libxml2 configuration."
+    },
+    {
+        "commit": "600a51815feacb149add2bb777d6a3b4d284c8aa",
+        "date": "2020-01-21 18:42:22 -0700",
+        "subject": "Set client_encoding to UTF8 on PostgreSQL connect.",
+        "body": "This is the only non-ASCII character encoding we have tested so make sure that's all we get from PostgreSQL."
+    },
+    {
+        "commit": "1706c599bd1c4d1eeac5bf44d1811e0259809027",
+        "date": "2020-01-21 18:37:43 -0700",
+        "subject": "Set encoding to UTF8 for Debian documentation containers.",
+        "body": "This allows testing multi-byte encodings in PostgreSQL."
+    },
+    {
+        "commit": "382ddfd79dfec12f4cdf821f36a47dd404a51356",
+        "date": "2020-01-21 16:43:44 -0700",
+        "subject": "Begin v2.23 development."
+    },
+    {
         "commit": "bae6e1c9e3a035f3793739ef1b469015777aa70b",
         "date": "2020-01-21 16:12:33 -0700",
         "subject": "v2.22: Bug Fix"
