@@ -2263,6 +2263,40 @@ manifestSave(Manifest *this, IoWrite *write)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
+void
+manifestValidate(Manifest *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *error = strNew("");
+
+        // Validate files
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
+        {
+            const ManifestFile *file = manifestFile(this, fileIdx);
+
+            // All files must have a checksum ??? It would be better to check this for zero-size files but the checksum needs to be
+            // set by backup and currently it is not.
+            if (file->size != 0 && file->checksumSha1[0] == '\0')
+                strCatFmt(error, "\nmissing checksum for file '%s'", strPtr(file->name));
+        }
+
+        // Throw exception when there are errors
+        if (strSize(error) > 0)
+            THROW_FMT(FormatError, "manifest validation failed:%s", strPtr(error));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Ensure that symlinks do not point to the same directory or a subdirectory of another link
 ***********************************************************************************************************************************/

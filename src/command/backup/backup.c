@@ -1841,8 +1841,10 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
     {
         const String *const backupLabel = manifestData(manifest)->backupLabel;
 
-        // Final save of the backup manifest
+        // Validation and final save of the backup manifest
         // -------------------------------------------------------------------------------------------------------------------------
+        manifestValidate(manifest);
+
         backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)));
 
         storageCopy(

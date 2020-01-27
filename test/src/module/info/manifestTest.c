@@ -1767,6 +1767,22 @@ testRun(void)
 
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest validation");
+
+        TEST_ERROR(
+            manifestValidate(manifest), FormatError,
+            "manifest validation failed:\n"
+            "missing checksum for file 'pg_data/postgresql.conf'");
+
+        // Add checksum so file will validate
+        manifestFileUpdate(
+            manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", NULL, false,
+            false, NULL);
+
+        TEST_RESULT_VOID(manifestValidate(manifest), "successful validate");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
             "manifest complete without db");
@@ -1846,7 +1862,7 @@ testRun(void)
         TEST_RESULT_PTR(file, NULL, "    return default NULL");
 
         TEST_RESULT_VOID(
-            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, NULL, false, false, NULL),
+            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL),
             "update file");
         TEST_RESULT_VOID(
             manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL),

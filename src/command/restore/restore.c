@@ -1903,6 +1903,9 @@ cmdRestore(void)
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strPtr(backupSet)),
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
 
+        // Validate manifest
+        manifestValidate(jobData.manifest);
+
         // Get the cipher subpass used to decrypt files in the backup
         jobData.cipherSubPass = manifestCipherSubPass(jobData.manifest);
 

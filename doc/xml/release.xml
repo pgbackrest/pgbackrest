@@ -37,6 +37,15 @@
 
                         <p>Use <file>pkg-config</file> instead of <file>xml2-config</file> for <proper>libxml2</proper> build options.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Validate checksums are set in the manifest on <cmd>backup</cmd>/<cmd>restore</cmd>.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-core-list>
         </release>

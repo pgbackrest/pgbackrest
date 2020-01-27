@@ -180,6 +180,9 @@ void manifestLinkCheck(const Manifest *this);
 Manifest *manifestMove(Manifest *this, MemContext *parentNew);
 void manifestSave(Manifest *this, IoWrite *write);
 
+// Validate a completed manifest
+void manifestValidate(Manifest *this);
+
 /***********************************************************************************************************************************
 Db functions and getters/setters
 ***********************************************************************************************************************************/
