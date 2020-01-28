@@ -13,7 +13,12 @@ Memory Context Manager
 /***********************************************************************************************************************************
 Memory context states
 ***********************************************************************************************************************************/
-typedef enum {memContextStateFree = 0, memContextStateFreeing, memContextStateActive} MemContextState;
+typedef enum
+{
+    memContextStateFree = 0,
+    memContextStateFreeing,
+    memContextStateActive
+} MemContextState;
 
 /***********************************************************************************************************************************
 Contains information about a memory allocation
@@ -61,7 +66,7 @@ Mem context stack used to pop mem contexts and cleanup after an error
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_STACK_MAX                                       128
 
-static struct
+static struct MemContextStack
 {
     MemContext *memContext;
     bool new;
@@ -281,9 +286,12 @@ memContextNew(const char *name)
     // Add to the mem context stack so it will be automatically freed on error if memContextKeep() has not been called
     memContextMaxStackIdx++;
 
-    memContextStack[memContextMaxStackIdx].memContext = this;
-    memContextStack[memContextMaxStackIdx].new = true;
-    memContextStack[memContextMaxStackIdx].tryDepth = errorTryDepth();
+    memContextStack[memContextMaxStackIdx] = (struct MemContextStack)
+    {
+        .memContext = this,
+        .new = true,
+        .tryDepth = errorTryDepth(),
+    };
 
     // Return context
     FUNCTION_TEST_RETURN(this);
@@ -575,9 +583,12 @@ memContextPush(MemContext *this)
     memContextMaxStackIdx++;
     memContextCurrentStackIdx = memContextMaxStackIdx;
 
-    memContextStack[memContextCurrentStackIdx].memContext = this;
-    memContextStack[memContextCurrentStackIdx].new = false;
-    memContextStack[memContextCurrentStackIdx].tryDepth = errorTryDepth();
+    memContextStack[memContextCurrentStackIdx] = (struct MemContextStack)
+    {
+        .memContext = this,
+        .new = false,
+        .tryDepth = errorTryDepth(),
+    };
 
     FUNCTION_TEST_RETURN_VOID();
 }

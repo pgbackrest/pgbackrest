@@ -50,7 +50,7 @@ memContextPop();
 <The memory context must now be kept or discarded>
 memContextKeep()/memContextDiscard();
 
-There is no need implement any error handling.  The mem context system will automatically clean up any mem contexts that were
+There is no need to implement any error handling.  The mem context system will automatically clean up any mem contexts that were
 created but not marked as keep when an error occurs and reset the current mem context to whatever it was at the beginning of the
 nearest try block.
 
