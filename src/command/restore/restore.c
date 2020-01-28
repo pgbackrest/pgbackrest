@@ -783,15 +783,15 @@ restoreCleanBuild(Manifest *manifest)
             {
                 .manifest = manifest,
                 .target = manifestTarget(manifest, targetIdx),
+                .delta = delta,
+                .fileIgnore = strLstNew(),
             };
 
             cleanData->targetName = cleanData->target->name;
             cleanData->targetPath = manifestTargetPath(manifest, cleanData->target);
             cleanData->basePath = strEq(cleanData->targetName, MANIFEST_TARGET_PGDATA_STR);
-            cleanData->delta = delta;
 
             // Ignore backup.manifest while cleaning since it may exist from an prior incomplete restore
-            cleanData->fileIgnore = strLstNew();
             strLstAdd(cleanData->fileIgnore, BACKUP_MANIFEST_FILE_STR);
 
             // Also ignore recovery files when recovery type = preserve
