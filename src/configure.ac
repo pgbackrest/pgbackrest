@@ -34,7 +34,6 @@ fi
 AC_SUBST(CINCLUDE, "-I.")
 
 # Check required pq library
-AC_SUBST(LIBS, "$LIBS -L`pg_config --libdir`")
 AC_CHECK_LIB([pq], [PQconnectdb], [], [AC_MSG_ERROR([library 'pq' is required])])
 AC_SUBST(CINCLUDE, "$CINCLUDE -I`pg_config --includedir`")
 
