@@ -23,6 +23,9 @@ testHttpServer(void)
             "GET / HTTP/1.1\r\n"
             "\r\n");
 
+        sleepMSec(600);
+        harnessTlsServerClose();
+
         // Test invalid http version
         harnessTlsServerAccept();
 
