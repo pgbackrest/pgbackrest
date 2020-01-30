@@ -1944,18 +1944,27 @@
             </execute>
         </execute-list>
 
-        <p>Now take a new backup and attempt recovery from the new backup.</p>
+        <p>Now take a new backup and attempt recovery from the new backup by specifying the <br-option>{[dash]}-set</br-option> option. The <cmd>info</cmd> command can be used to find the new backup label.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Perform a backup then attempt recovery from that backup</title>
+            <title>Perform a backup and get backup info</title>
+
+            <execute user="postgres">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr backup</exe-cmd>
+            </execute>
 
             <execute user="postgres" show="n" variable-key="backup-last">
                 <exe-cmd>{[cmd-backup-last]}</exe-cmd>
             </execute>
 
-            <execute user="postgres">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr backup</exe-cmd>
+            <execute user="postgres" filter="n" output="y">
+                <exe-cmd>{[project-exe]} info</exe-cmd>
+                <exe-highlight>{[backup-last]}</exe-highlight>
             </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Attempt recovery from the specified backup</title>
 
             <execute user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
@@ -1963,7 +1972,8 @@
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" --target-action=promote restore</exe-cmd>
+                     {[dash]}-set={[backup-last]}
+                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" {[dash]}-target-action=promote restore</exe-cmd>
             </execute>
 
             <execute user="root" show="n">
@@ -1995,21 +2005,10 @@
             </execute>
         </execute-list>
 
-        <p>Using an earlier backup will allow <postgres/> to play forward to the correct time.  The <cmd>info</cmd> command can be used to find the next to last backup.</p>
+        <p>The default behavior for time-based restore, if the <br-option>{[dash]}-set</br-option> option is not specified, is to attempt to discover an earlier backup to play forward from. If a backup set cannot be found, then restore will default to the latest backup which, as shown earlier, may not give the desired result.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Get backup info for the {[postgres-cluster-demo]} cluster</title>
-
-            <execute user="postgres" filter="n" output="y">
-                <exe-cmd>{[project-exe]} info</exe-cmd>
-                <exe-highlight>{[backup-last]}</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>The default behavior for restore is to use the last backup but an earlier backup can be specified with the <br-option>{[dash]}-set</br-option> option.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/>, restore from the selected backup, and start <postgres/></title>
+            <title>Stop <postgres/>, restore from auto-selected backup, and start <postgres/></title>
 
             <execute user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
@@ -2019,7 +2018,7 @@
                 <exe-cmd>
                     {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
                         {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}"
-                        {[dash]}-set={[backup-last]} --target-action=promote restore
+                        {[dash]}-target-action=promote restore
                 </exe-cmd>
             </execute>
 

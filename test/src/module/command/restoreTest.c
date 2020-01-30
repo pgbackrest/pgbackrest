@@ -55,7 +55,7 @@ Test data for backup.info
     "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
     "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","          \
     "\"20161219-212741F_20161219-212803D\"],"                                                                                      \
-    "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"incr\",\"db-id\":1,"             \
+    "\"backup-timestamp-start\":1482182884,\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,"             \
     "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"                                 \
     "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
 
@@ -447,6 +447,44 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("getEpoch()"))
+    {
+        TEST_TITLE("system time UTC");
+
+        setenv("TZ", "UTC", true);
+        TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
+        TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
+        TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
+        TEST_ERROR_FMT(getEpoch(strNew("2020-13-08 16:18:15")), FormatError, "invalid date 2020-13-08");
+        TEST_ERROR_FMT(getEpoch(strNew("2020-01-08 16:68:15")), FormatError, "invalid time 16:68:15");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("system time America/New_York");
+
+        setenv("TZ", "America/New_York", true);
+        time_t testTime = 1573754569;
+        char timeBuffer[20];
+        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime(&testTime));
+        TEST_RESULT_Z(timeBuffer, "2019-11-14 13:02:49", "check timezone set");
+        TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49-0500")), 1573754569, "offset same as local");
+        TEST_RESULT_UINT(getEpoch(strNew("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
+        TEST_RESULT_UINT(getEpoch(strNew("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
+        TEST_RESULT_UINT(getEpoch(strNew("2018-04-27 04:29:00+04:30")), 1524787140, "GMT+0430");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid target time format");
+
+        TEST_RESULT_UINT(getEpoch(strNew("Tue, 15 Nov 1994 12:45:26")), 0, "invalid date time format");
+        TEST_RESULT_LOG(
+            "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
+            " latest backup set will be used\n"
+            "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
+            " (+/- HH or HHMM or HH:MM) - if timezone is ommitted, local time is assumed (for UTC use +00)");
+
+        setenv("TZ", "UTC", true);
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("restoreBackupSet()"))
     {
         const String *pgPath = strNewFmt("%s/pg", testPath());
@@ -478,6 +516,54 @@ testRun(void)
         harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreBackupSet(infoBackup), BackupSetInvalidError, "backup set BOGUS is not valid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("target time");
+        setenv("TZ", "UTC", true);
+
+        infoBackup = infoBackupNewLoad(
+            ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB)));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--type=time");
+        strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
+
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212803D", "backup set found");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--type=time");
+        strLstAddZ(argList, "--target=2016-12-19 16:27:30-0500");
+
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212918I", "default to latest backup set");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', latest backup set will be"
+            " used");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strPtr(pgPath)));
+        strLstAddZ(argList, "--type=time");
+        strLstAddZ(argList, "--target=Tue, 15 Nov 1994 12:45:26");
+
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212918I", "time invalid format, default latest");
+        TEST_RESULT_LOG(
+            "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
+            " latest backup set will be used\n"
+            "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
+            " (+/- HH or HHMM or HH:MM) - if timezone is ommitted, local time is assumed (for UTC use +00)");
     }
 
     // *****************************************************************************************************************************
