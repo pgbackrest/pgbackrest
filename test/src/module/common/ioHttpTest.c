@@ -165,15 +165,31 @@ testHttpServer(void)
             "Transfer-Encoding: chunked\r\n"
             "\r\n");
 
-        // Error with content length 0 (with a few slow down errors)
+        // Head request with connection close but no content
+        harnessTlsServerExpect(
+            "HEAD / HTTP/1.1\r\n"
+            "\r\n");
+
+        harnessTlsServerReply(
+            "HTTP/1.1 200 OK\r\n"
+            "Connection:close\r\n"
+            "\r\n");
+
+        harnessTlsServerClose();
+
+        harnessTlsServerAccept();
+
+        // Error with content (with a few slow down errors)
         harnessTlsServerExpect(
             "GET / HTTP/1.1\r\n"
             "\r\n");
 
         harnessTlsServerReply(
             "HTTP/1.1 503 Slow Down\r\n"
+            "content-length:3\r\n"
             "Connection:close\r\n"
-            "\r\n");
+            "\r\n"
+            "123");
 
         harnessTlsServerClose();
 
@@ -185,7 +201,10 @@ testHttpServer(void)
 
         harnessTlsServerReply(
             "HTTP/1.1 503 Slow Down\r\n"
+            "Transfer-Encoding:chunked\r\n"
             "Connection:close\r\n"
+            "\r\n"
+            "0\r\n"
             "\r\n");
 
         harnessTlsServerClose();
@@ -225,7 +244,6 @@ testHttpServer(void)
 
         harnessTlsServerReply(
             "HTTP/1.1 200 OK\r\n"
-            "content-length:32\r\n"
             "Connection:close\r\n"
             "\r\n"
             "01234567890123456789012345678901");
@@ -476,7 +494,7 @@ testRun(void)
         TEST_ERROR(httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), ServiceError, "[503] Slow Down");
 
         // Request with no content
-        client->timeout = 500;
+        client->timeout = 2000;
 
         HttpHeader *headerRequest = httpHeaderNew(NULL);
         httpHeaderAdd(headerRequest, strNew("host"), strNew("myhost.com"));
@@ -516,6 +534,17 @@ testRun(void)
         TEST_RESULT_STR_Z(
             httpHeaderToLog(httpClientResponseHeader(client)),  "{transfer-encoding: 'chunked'}", "    check response headers");
 
+        // Head request with connection close but no content
+        TEST_RESULT_VOID(
+            httpClientRequest(client, strNew("HEAD"), strNew("/"), NULL, httpHeaderNew(NULL), NULL, true),
+            "head request with connection close");
+        TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
+        TEST_RESULT_STR_Z(httpClientResponseMessage(client), "OK", "    check response message");
+        TEST_RESULT_BOOL(httpClientEof(client), true, "    io is eof");
+        TEST_RESULT_BOOL(httpClientBusy(client), false, "    client is not busy");
+        TEST_RESULT_STR_Z(
+            httpHeaderToLog(httpClientResponseHeader(client)),  "{connection: 'close'}", "    check response headers");
+
         // Error with content length 0
         TEST_RESULT_VOID(
             httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "error with content length 0");
@@ -546,7 +575,7 @@ testRun(void)
                 BUFSTRDEF("012345678901234567890123456789"), true),
             "request with content length");
         TEST_RESULT_STR_Z(
-            httpHeaderToLog(httpClientResponseHeader(client)),  "{connection: 'close', content-length: '32'}",
+            httpHeaderToLog(httpClientResponseHeader(client)),  "{connection: 'close'}",
             "    check response headers");
         TEST_RESULT_STR_Z(strNewBuf(buffer),  "01234567890123456789012345678901", "    check response");
         TEST_RESULT_UINT(httpClientRead(client, bufNew(1), true), 0, "    call internal read to check eof");

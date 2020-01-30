@@ -94,58 +94,68 @@ httpClientRead(THIS_VOID, Buffer *buffer, bool block)
 
     if (!this->contentEof)
     {
-        do
+        // If close was requested and no content specified then the server may send content up until the eof
+        if (this->closeOnContentEof && !this->contentChunked && this->contentSize == 0)
         {
-            // If chunked content and no content remaining
-            if (this->contentChunked && this->contentRemaining == 0)
-            {
-                // Read length of next chunk
-                MEM_CONTEXT_TEMP_BEGIN()
-                {
-                    this->contentRemaining = cvtZToUInt64Base(strPtr(strTrim(ioReadLine(tlsClientIoRead(this->tls)))), 16);
-                }
-                MEM_CONTEXT_TEMP_END();
-
-                // If content remaining is still zero then eof
-                if (this->contentRemaining == 0)
-                    this->contentEof = true;
-            }
-
-            // Read if there is content remaining
-            if (this->contentRemaining > 0)
-            {
-                // If the buffer is larger than the content that needs to be read then limit the buffer size so the read won't block
-                // or read too far.  Casting to size_t is safe on 32-bit because we know the max buffer size is defined as less than
-                // 2^32 so content remaining can't be more than that.
-                if (bufRemains(buffer) > this->contentRemaining)
-                    bufLimitSet(buffer, bufSize(buffer) - (bufRemains(buffer) - (size_t)this->contentRemaining));
-
-                actualBytes = bufRemains(buffer);
-                this->contentRemaining -= ioRead(tlsClientIoRead(this->tls), buffer);
-
-                // Error if EOF but content read is not complete
-                if (ioReadEof(tlsClientIoRead(this->tls)))
-                    THROW(FileReadError, "unexpected EOF reading HTTP content");
-
-                // Clear limit (this works even if the limit was not set and it is easier than checking)
-                bufLimitClear(buffer);
-            }
-
-            // If no content remaining
-            if (this->contentRemaining == 0)
-            {
-                // If chunked then consume the blank line that follows every chunk.  There might be more chunk data so loop back
-                // around to check.
-                if (this->contentChunked)
-                {
-                    ioReadLine(tlsClientIoRead(this->tls));
-                }
-                // If total content size was provided then this is eof
-                else
-                    this->contentEof = true;
-            }
+            ioRead(tlsClientIoRead(this->tls), buffer);
+            this->contentEof = ioReadEof(tlsClientIoRead(this->tls));
         }
-        while (!bufFull(buffer) && !this->contentEof);
+        // Else read using specified encoding or size
+        else
+        {
+            do
+            {
+                // If chunked content and no content remaining
+                if (this->contentChunked && this->contentRemaining == 0)
+                {
+                    // Read length of next chunk
+                    MEM_CONTEXT_TEMP_BEGIN()
+                    {
+                        this->contentRemaining = cvtZToUInt64Base(strPtr(strTrim(ioReadLine(tlsClientIoRead(this->tls)))), 16);
+                    }
+                    MEM_CONTEXT_TEMP_END();
+
+                    // If content remaining is still zero then eof
+                    if (this->contentRemaining == 0)
+                        this->contentEof = true;
+                }
+
+                // Read if there is content remaining
+                if (this->contentRemaining > 0)
+                {
+                    // If the buffer is larger than the content that needs to be read then limit the buffer size so the read won't
+                    // block or read too far.  Casting to size_t is safe on 32-bit because we know the max buffer size is defined as
+                    // less than 2^32 so content remaining can't be more than that.
+                    if (bufRemains(buffer) > this->contentRemaining)
+                        bufLimitSet(buffer, bufSize(buffer) - (bufRemains(buffer) - (size_t)this->contentRemaining));
+
+                    actualBytes = bufRemains(buffer);
+                    this->contentRemaining -= ioRead(tlsClientIoRead(this->tls), buffer);
+
+                    // Error if EOF but content read is not complete
+                    if (ioReadEof(tlsClientIoRead(this->tls)))
+                        THROW(FileReadError, "unexpected EOF reading HTTP content");
+
+                    // Clear limit (this works even if the limit was not set and it is easier than checking)
+                    bufLimitClear(buffer);
+                }
+
+                // If no content remaining
+                if (this->contentRemaining == 0)
+                {
+                    // If chunked then consume the blank line that follows every chunk.  There might be more chunk data so loop back
+                    // around to check.
+                    if (this->contentChunked)
+                    {
+                        ioReadLine(tlsClientIoRead(this->tls));
+                    }
+                    // If total content size was provided then this is eof
+                    else
+                        this->contentEof = true;
+                }
+            }
+            while (!bufFull(buffer) && !this->contentEof);
+        }
 
         // If the server notified that it would close the connection after sending content then close the client side
         if (this->contentEof && this->closeOnContentEof)
@@ -389,7 +399,8 @@ httpClientRequest(
                 }
 
                 // Was content returned in the response?  HEAD will report content but not actually return any.
-                bool contentExists = (this->contentChunked || this->contentSize > 0) && !strEq(verb, HTTP_VERB_HEAD_STR);
+                bool contentExists =
+                    (this->contentChunked || this->contentSize > 0 || this->closeOnContentEof) && !strEq(verb, HTTP_VERB_HEAD_STR);
                 this->contentEof = !contentExists;
 
                 // If all content should be returned from this function then read the buffer.  Also read the response if there has
