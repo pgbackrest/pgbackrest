@@ -455,6 +455,8 @@ testRun(void)
         TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
         TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
         TEST_RESULT_UINT(getEpoch(strNew("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
+        TEST_ERROR_FMT(getEpoch(strNew("2020-13-08 16:18:15")), FormatError, "invalid date 2020-13-08");
+        TEST_ERROR_FMT(getEpoch(strNew("2020-01-08 16:68:15")), FormatError, "invalid time 16:68:15");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("system time America/New_York");
@@ -474,7 +476,7 @@ testRun(void)
 
         TEST_RESULT_UINT(getEpoch(strNew("Tue, 15 Nov 1994 12:45:26")), 0, "invalid date time format");
         TEST_RESULT_LOG(
-            "P00   WARN: automatic backup set selection cannot be performed with provided time format 'Tue, 15 Nov 1994 12:45:26',"
+            "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
             " latest backup set will be used\n"
             "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
             " (+/- HH or HHMM or HH:MM) - if timezone is ommitted, local time is assumed (for UTC use +00)");
@@ -558,7 +560,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212918I", "time invalid format, default latest");
         TEST_RESULT_LOG(
-            "P00   WARN: automatic backup set selection cannot be performed with provided time format 'Tue, 15 Nov 1994 12:45:26',"
+            "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
             " latest backup set will be used\n"
             "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
             " (+/- HH or HHMM or HH:MM) - if timezone is ommitted, local time is assumed (for UTC use +00)");

@@ -2014,7 +2014,7 @@
         <p>The default behavior for time-based restore, if the <br-option>{[dash]}-set</br-option> option is not set, is to attempt to discover an earlier backup to play forward from; if a backup set cannot be found, then restore will default to the latest backup which, as shown earlier, may not give the desired result.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/>, allow <backrest/> to discover the backup, and start <postgres/></title>
+            <title>Stop <postgres/>, restore from auto-selected backup, and start <postgres/></title>
 
             <execute user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>

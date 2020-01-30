@@ -126,10 +126,8 @@ getEpoch(const String *targetTime)
     {
         // Build the regex to accept formats: YYYY-MM-DD HH:MM:SS with optional msec (up to 6 digits and separated from minutes by
         // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boundaries are UTC-12 to UTC+14
-        String *expression = strNew(
-            "^(2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])"
-            "(\\,[0-9]{1,6}|\\.[0-9]{1,6})?(((\\+(0[0-9]|1[0-3])(:?(00|30|45))?)|(\\+(14)(:?00)?))|((\\-(0[0-9]|1[0-1])"
-            "(:?(00|30|45))?)|(\\-12)(:?00)?))?$");
+        const String *expression = STRDEF(
+            "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}((\\,|\\.)[0-9]{1,6})?((\\+|\\-)[0-9]{2}(:?)([0-9]{2})?)?$");
 
         RegExp *regExp = regExpNew(expression);
 
@@ -146,28 +144,30 @@ getEpoch(const String *targetTime)
             int dtMinute = cvtZToInt(strPtr(strSubN(datetime, 14, 2)));
             int dtSecond = cvtZToInt(strPtr(strSubN(datetime, 17, 2)));
 
+            // Confirm date and time parts are valid
+            datePartsValid(dtYear, dtMonth, dtDay);
+            timePartsValid(dtHour, dtMinute, dtSecond);
+
             String *timeTargetZone = strSub(targetTime, 19);
 
-            // Determine if the remainder contains a timezone offset - if not, then local time is assumed
-            int idxPlus = strChr(timeTargetZone, '+');
-            int idxMinus = strChr(timeTargetZone, '-');
-            if (idxPlus != -1 || idxMinus != -1)
+            // Find the + or - indicating a timezone offset was provided (there may be milliseconds before the timezone, so need to
+            // skip). If a timezone offset was not provided, then local time is assumed.
+            int idxSign = strChr(timeTargetZone, '+');
+            if (idxSign == -1)
+                idxSign = strChr(timeTargetZone, '-');
+
+            if (idxSign != -1)
             {
-                String *timezoneOffset = strSub(timeTargetZone, (size_t)(idxPlus == -1 ? idxMinus : idxPlus));
+                String *timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
 
                 // Include the sign with the hour
                 int tzHour = cvtZToInt(strPtr(strSubN(timezoneOffset, 0, 3)));
                 int tzMinute = 0;
 
-                // If minutes are included in timezone offset then see if separated by a colon or not and extract accordingly
+                // If minutes are included in timezone offset then extract the minutes based on whether a colon separates them from
+                // the hour
                 if (strSize(timezoneOffset) > 3)
-                {
-                    int colonIdx = strChr(timezoneOffset, ':');
-                    if (colonIdx != -1)
-                        tzMinute = cvtZToInt(strPtr(strSubN(timezoneOffset, (size_t)colonIdx+1, 2)));
-                    else
-                        tzMinute = cvtZToInt(strPtr(strSubN(timezoneOffset, 3, 2)));
-                }
+                    tzMinute = cvtZToInt(strPtr(strSubN(timezoneOffset, 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2)));
 
                 result = epochFromParts(dtYear, dtMonth, dtDay, dtHour, dtMinute, dtSecond, tzOffsetSeconds(tzHour, tzMinute));
             }
@@ -185,7 +185,7 @@ getEpoch(const String *targetTime)
         else
         {
             LOG_WARN_FMT(
-                "automatic backup set selection cannot be performed with provided time format '%s', latest backup set will be used"
+                "automatic backup set selection cannot be performed with provided time '%s', latest backup set will be used"
                 "\nHINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
                 " - if timezone is ommitted, local time is assumed (for UTC use +00)",
                 strPtr(targetTime));
@@ -222,7 +222,7 @@ restoreBackupSet(InfoBackup *infoBackup)
 
             time_t timeTargetEpoch = 0;
 
-            // If the recovery type is type, attempt to determine the backup set
+            // If the recovery type is time, attempt to determine the backup set
             if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
             {
                 timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
@@ -253,6 +253,7 @@ restoreBackupSet(InfoBackup *infoBackup)
                 }
             }
 
+            // If a backup set was not found or the recovery type was not time, then use the latest backup
             if (backupSet == NULL)
                 backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
         }
