@@ -85,6 +85,51 @@ timePartsValid(int hour, int minute, int second)
 }
 
 /**********************************************************************************************************************************/
+void
+tzPartsValid(int tzHour, int tzMinute)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, tzHour);                           // signed hour part of timezone
+        FUNCTION_TEST_PARAM(INT, tzMinute);                         // minutes part of timezone
+    FUNCTION_TEST_END();
+
+    // Valid time zones range from GMT-12 all the way to GMT+14 (i.e. -1200 and +1400 are the min/max).
+    // ??? This is only a sanity check for basic validity of timezone offset of 15 minute intervals until the timezone
+    // database is implemented.
+    if (!(((tzHour > -12 && tzHour < 14) && (tzMinute % 15 == 0)) || (tzHour == -12 && tzMinute == 0) ||
+        (tzHour == 14 && tzMinute == 0)))
+    {
+        THROW_FMT(FormatError, "invalid timezone %02d%02d", tzHour, tzMinute);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+int
+tzOffsetSeconds(int tzHour, int tzMinute)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, tzHour);                           // signed hour part of timezone (e.g. -7)
+        FUNCTION_TEST_PARAM(INT, tzMinute);                         // minutes part of timezone
+    FUNCTION_TEST_END();
+
+    // Validate the timezone hour and minute
+    tzPartsValid(tzHour, tzMinute);
+
+    int sign = 1;
+
+    // Preserve the sign and convert the hours to a positive number for calculating seconds
+    if (tzHour < 0)
+    {
+        sign = -1;
+        tzHour = sign * tzHour;
+    }
+
+    FUNCTION_TEST_RETURN(sign * (tzHour * 3600 + tzMinute * 60));
+}
+
+/**********************************************************************************************************************************/
 bool
 yearIsLeap(int year)
 {
@@ -118,7 +163,7 @@ dayOfYear(int year, int month, int day)
 
 /**********************************************************************************************************************************/
 time_t
-epochFromParts(int year, int month, int day, int hour, int minute, int second)
+epochFromParts(int year, int month, int day, int hour, int minute, int second, int tzOffsetSecond)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, year);
@@ -127,13 +172,14 @@ epochFromParts(int year, int month, int day, int hour, int minute, int second)
         FUNCTION_TEST_PARAM(INT, hour);
         FUNCTION_TEST_PARAM(INT, minute);
         FUNCTION_TEST_PARAM(INT, second);
+        FUNCTION_TEST_PARAM(INT, tzOffsetSecond);
     FUNCTION_TEST_END();
 
     timePartsValid(hour, minute, second);
 
     // Return epoch using calculation from https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
     FUNCTION_TEST_RETURN(
-        second + minute * 60 + hour * 3600 +
+        -1 * tzOffsetSecond + second + minute * 60 + hour * 3600 +
         (dayOfYear(year, month, day) - 1) * 86400 + (year - 1900 - 70) * 31536000 +
         ((year - 1900 - 69) / 4) * 86400 - ((year - 1900 - 1) / 100) * 86400 + ((year - 1900 + 299) / 400) * 86400);
 }

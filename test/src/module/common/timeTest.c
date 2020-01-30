@@ -33,7 +33,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("yearIsLeap(), dayOfYear(), timePartsValid(), and epochFromParts()"))
+    if (testBegin("yearIsLeap(), dayOfYear(), timePartsValid(), tzPartsValid(), tzOffsetSeconds(), and epochFromParts()"))
     {
         TEST_TITLE("is leap year");
 
@@ -70,12 +70,32 @@ testRun(void)
         TEST_RESULT_VOID(timePartsValid(23, 59, 59), "valid time");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timezone parts valid");
+
+        TEST_ERROR(tzPartsValid(-13, 0), FormatError, "invalid timezone -1300");
+        TEST_ERROR(tzPartsValid(15, 0), FormatError, "invalid timezone 1500");
+        TEST_ERROR(tzPartsValid(0, 5), FormatError, "invalid timezone 0005");
+        TEST_ERROR(tzPartsValid(-12, 30), FormatError, "invalid timezone -1230");
+        TEST_ERROR(tzPartsValid(14, 45), FormatError, "invalid timezone 1445");
+        TEST_RESULT_VOID(tzPartsValid(-12, 0), "max negative timezone");
+        TEST_RESULT_VOID(tzPartsValid(14, 0), "max positive timezone");
+        TEST_RESULT_VOID(tzPartsValid(0, 15), "valid timezone minute 15");
+        TEST_RESULT_VOID(tzPartsValid(13, 45), "valid timezone minute 45");
+        TEST_RESULT_VOID(tzPartsValid(-3, 30), "valid timezone minute 30");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timezone offset in seconds");
+        TEST_RESULT_INT(tzOffsetSeconds(-3, 30), -12600, "negative timezone offset");
+        TEST_RESULT_INT(tzOffsetSeconds(13, 45), 49500, "positive timezone offset");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("time from parts");
 
-        TEST_RESULT_INT(epochFromParts(1970, 1, 1, 0, 0, 0), 0, "beginning of epoch");
-        TEST_RESULT_INT(epochFromParts(1996, 3, 3, 3, 3, 3), 825822183, "march of leap year");
-        TEST_RESULT_INT(epochFromParts(2000, 4, 4, 4, 4, 4), 954821044, "april of non-leap year");
-        TEST_RESULT_INT(epochFromParts(2038, 1, 19, 3, 14, 7), INT_MAX, "end of 32-bit signed int epoch");
+        TEST_RESULT_INT(epochFromParts(1970, 1, 1, 0, 0, 0, 0), 0, "beginning of epoch");
+        TEST_RESULT_INT(epochFromParts(1996, 3, 3, 3, 3, 3, 0), 825822183, "march of leap year");
+        TEST_RESULT_INT(epochFromParts(2000, 4, 4, 4, 4, 4, 0), 954821044, "april of non-leap year");
+        TEST_RESULT_INT(epochFromParts(2038, 1, 19, 3, 14, 7, 0), INT_MAX, "end of 32-bit signed int epoch");
+        TEST_RESULT_INT(epochFromParts(2020, 1, 8, 9, 18, 15, tzOffsetSeconds(-7, 0)), 1578500295, "epoch with timezone");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
