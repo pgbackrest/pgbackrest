@@ -17,7 +17,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="kikijolicoeur"/>
+                            <release-item-ideator id="christian.roux"/>
                         </release-item-contributor-list>
 
                         <p>Read HTTP content to eof when size/encoding not specified.</p>
@@ -7927,8 +7927,8 @@
             <contributor-id type="github">keithf4</contributor-id>
         </contributor>
 
-        <contributor id="kikijolicoeur">
-            <contributor-name-display>kikijolicoeur</contributor-name-display>
+        <contributor id="christian.roux">
+            <contributor-name-display>Christian ROUX</contributor-name-display>
             <contributor-id type="github">kikijolicoeur</contributor-id>
         </contributor>
 
